@@ -1,0 +1,46 @@
+# Ralph Progress Log
+Started: 2026-02-12T22:00:00Z
+Feature: CRM + Estimating Phase 1
+Branch: ralph/crm-estimating-phase1
+
+## Codebase Patterns
+- **Stack:** Next.js 16, React 19, TypeScript, Supabase, Clerk auth, Tailwind + shadcn/ui
+- **Package manager:** npm (not pnpm/bun)
+- **Test framework:** Vitest with jsdom, setup in __tests__/setup.ts (imports @testing-library/jest-dom/vitest)
+- **Test config:** vitest.config.ts — tests in __tests__/**/*.test.{ts,tsx}, alias @ = project root
+- **Test commands:** npm run test (Vitest), npm run lint (ESLint), npm run typecheck (tsc --noEmit), npm run build (next build)
+- **Existing test count:** 22 tests across 4 files
+- **Test pattern for API routes:** Mock Clerk auth via vi.mock('@clerk/nextjs/server'), mock Supabase via vi.mock('@/lib/supabase/server'), test route handler functions directly (import { GET, POST } from route path), use NextRequest constructor for making test requests
+- **Existing mock pattern:** See __tests__/api/projects.test.ts for mockSupabaseChain() helper — chains .from().select().eq().order().limit() etc.
+- **Existing helpers:** makeRequest(url, init?) function for creating NextRequest objects
+- **Supabase types:** Run `supabase gen types typescript --project-id owfjnfdqpzpvzvdobpxa 2>/dev/null > types/supabase.ts` — stderr MUST be piped to /dev/null
+- **Supabase push:** `supabase db push` (NOT `supabase db reset`)
+- **API route pattern:** Clerk auth guard → Zod validation → typed Supabase query → NextResponse.json()
+- **Auth in routes:** `const { userId } = await auth()` — returns null if not authenticated → return 401
+- **Supabase in routes:** `const supabase = await createUserClient()` — RLS-scoped via Clerk JWT
+- **Supabase client files:** lib/supabase/client.ts (browser), lib/supabase/server.ts (server with Clerk JWT)
+- **ERPNext client:** lib/erp/client.ts — ErpClient class with get(), list(), create(), update(), delete() methods
+- **API client (frontend):** lib/api-client.ts — apiFetch(path, opts?) with params, body, error handling
+- **UI components:** shadcn/ui in components/ui/, layout in components/Layout/
+- **Key existing components:** ResponsiveTable (components/ui/responsive-table.tsx), MDMLogo, MobileNavigationDrawer, DivisionSelector, Badge, Card, Button, Sheet, Avatar, DropdownMenu, Command palette
+- **Existing hooks:** useDashboard, useRBAC (useUserRBAC), useCurrentUser, useDivision — check these for data fetching patterns before creating new hooks
+- **RLS helpers in public schema:** public.krewpact_user_id(), public.krewpact_roles(), public.krewpact_divisions(), public.is_platform_admin() — from 00002_rls_policies.sql
+- **COALESCE in UNIQUE constraints:** Use CREATE UNIQUE INDEX, not inline UNIQUE with COALESCE
+- **RLS functions MUST be in public schema:** NOT auth schema (managed Supabase restricts auth schema writes)
+- **Foundation schema (already applied in 00001):** divisions, users, roles, user_roles, user_divisions, audit_logs
+- **RLS policies (already applied in 00002):** division/role/user/audit_log policies + helper functions
+- **6 divisions seeded:** contracting, homes, wood, telecom, group-inc, management
+- **13 roles seeded:** platform_admin, executive, operations_manager, project_manager, project_coordinator, estimator, field_supervisor, accounting, payroll_admin, client_owner, client_delegate, trade_partner_admin, trade_partner_user
+- **Supabase project ID:** owfjnfdqpzpvzvdobpxa
+- **Canonical schema reference:** docs/architecture/KrewPact-Backend-SQL-Schema-Draft.sql — adapt, don't copy blindly (drop FKs to tables not in this phase)
+- **Navigation items defined in:** components/Layout/MobileNavigationDrawer.tsx (navigationItems array) and likely a similar desktop sidebar component
+- **CLAUDE.md:** Always read project CLAUDE.md at root for full conventions
+- **TDD discipline:** Write failing tests FIRST, then implement, then verify all pass. Never skip tests.
+
+## Test Target per Checkpoint
+- After US-010 (CRM checkpoint): 80+ total tests
+- After US-015 (Estimating checkpoint): 130+ total tests
+- After US-021 (UI checkpoint): 170+ total tests
+- After US-023 (final): 190+ total tests
+
+---
