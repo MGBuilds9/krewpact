@@ -13,10 +13,10 @@ function AuthContent() {
       <div className="w-full max-w-md space-y-6 px-4">
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-heading font-bold text-foreground">
-            BuildAxis
+            KrewPact
           </h1>
           <p className="text-muted-foreground">
-            Construction Management Platform
+            Construction Operations Platform
           </p>
         </div>
 

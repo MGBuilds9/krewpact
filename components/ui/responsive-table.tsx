@@ -22,7 +22,7 @@ interface Column<T> {
   className?: string;
 }
 
-interface ResponsiveTableProps<T> {
+interface ResponsiveTableProps<T extends Record<string, unknown>> {
   data: T[];
   columns: Column<T>[];
   onView?: (item: T) => void;
@@ -33,7 +33,7 @@ interface ResponsiveTableProps<T> {
   keyExtractor: (item: T) => string;
 }
 
-export function ResponsiveTable<T>({
+export function ResponsiveTable<T extends Record<string, unknown>>({
   data,
   columns,
   onView,
@@ -60,7 +60,7 @@ export function ResponsiveTable<T>({
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <CardTitle className="text-base">
-                    {columns[0]?.render ? columns[0].render(item) : String((item as any)[columns[0]?.key])}
+                    {columns[0]?.render ? columns[0].render(item) : String(item[columns[0]?.key])}
                   </CardTitle>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -102,7 +102,7 @@ export function ResponsiveTable<T>({
                         {column.mobileLabel || column.label}:
                       </span>
                       <div className="text-sm text-right max-w-[60%]">
-                        {column.render ? column.render(item) : String((item as any)[column.key] || '-')}
+                        {column.render ? column.render(item) : String(item[column.key] || '-')}
                       </div>
                     </div>
                   ))}
@@ -156,7 +156,7 @@ export function ResponsiveTable<T>({
                       column.className
                     )}
                   >
-                    {column.render ? column.render(item) : String((item as any)[column.key] || '-')}
+                    {column.render ? column.render(item) : String(item[column.key] || '-')}
                   </td>
                 ))}
                 {(onView || onEdit || onDelete) && (

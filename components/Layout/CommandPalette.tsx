@@ -66,25 +66,29 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   const pathname = usePathname();
   const { data: currentUser } = useCurrentUser();
   const [searchQuery, setSearchQuery] = useState('');
-  const [recentPages, setRecentPages] = useState<string[]>([]);
+  const [recentPages, setRecentPages] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return [];
+    const stored = localStorage.getItem('recentPages');
+    return stored ? JSON.parse(stored) : [];
+  });
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     Projects: true,
     Resources: true,
     System: true,
   });
 
-  useEffect(() => {
-    const stored = localStorage.getItem('recentPages');
-    if (stored) {
-      setRecentPages(JSON.parse(stored));
-    }
-  }, []);
+  const lastPathRef = React.useRef(pathname);
 
   useEffect(() => {
-    if (pathname !== '/dashboard' && pathname !== '/') {
-      const newRecent = [pathname, ...recentPages.filter((p) => p !== pathname)].slice(0, 5);
-      setRecentPages(newRecent);
-      localStorage.setItem('recentPages', JSON.stringify(newRecent));
+    if (pathname !== '/dashboard' && pathname !== '/' && pathname !== lastPathRef.current) {
+      lastPathRef.current = pathname;
+      const stored = localStorage.getItem('recentPages');
+      const current = stored ? JSON.parse(stored) : [];
+      const updatedRecent = [pathname, ...current.filter((p: string) => p !== pathname)].slice(0, 5);
+      localStorage.setItem('recentPages', JSON.stringify(updatedRecent));
+      queueMicrotask(() => {
+        setRecentPages(updatedRecent);
+      });
     }
   }, [pathname]);
 

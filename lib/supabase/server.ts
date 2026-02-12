@@ -21,10 +21,17 @@ export function createServiceClient(): SupabaseClient {
 /**
  * User client — uses Clerk JWT to authenticate as the current user.
  * Respects RLS policies. Use for all user-scoped data access.
+ *
+ * Requires Clerk JWT template "supabase" configured with claims:
+ *   sub, role: "authenticated", krewpact_user_id, krewpact_divisions, krewpact_roles
  */
 export async function createUserClient(): Promise<SupabaseClient> {
   const { getToken } = await auth();
   const token = await getToken({ template: 'supabase' });
+
+  if (!token) {
+    throw new Error('No Clerk session — user must be authenticated');
+  }
 
   return createClient(supabaseUrl, supabaseAnonKey, {
     global: {

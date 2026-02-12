@@ -111,9 +111,11 @@ CREATE TABLE user_roles (
   starts_at TIMESTAMPTZ,
   ends_at TIMESTAMPTZ,
   assigned_by UUID REFERENCES users(id) ON DELETE SET NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  UNIQUE(user_id, role_id, COALESCE(division_id, '00000000-0000-0000-0000-000000000000'::uuid))
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE UNIQUE INDEX user_roles_unique_assignment
+  ON user_roles(user_id, role_id, COALESCE(division_id, '00000000-0000-0000-0000-000000000000'::uuid));
 
 CREATE UNIQUE INDEX user_roles_one_primary_per_user ON user_roles(user_id) WHERE is_primary = TRUE;
 

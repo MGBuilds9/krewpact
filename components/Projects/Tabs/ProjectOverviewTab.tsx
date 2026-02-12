@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -21,9 +22,14 @@ interface ProjectOverviewTabProps {
 
 export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
   const budgetProgress = project.budget ? ((project.spent || 0) / project.budget) * 100 : 0;
-  const daysElapsed = project.start_date
-    ? Math.floor((Date.now() - new Date(project.start_date).getTime()) / (1000 * 60 * 60 * 24))
-    : 0;
+  const [now] = React.useState(() => Date.now());
+  const daysElapsed = React.useMemo(
+    () =>
+      project.start_date
+        ? Math.floor((now - new Date(project.start_date).getTime()) / (1000 * 60 * 60 * 24))
+        : 0,
+    [project.start_date, now],
+  );
   const totalDays =
     project.start_date && project.end_date
       ? Math.floor(

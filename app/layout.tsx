@@ -20,8 +20,8 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: 'BuildAxis | Construction Management',
-  description: 'Construction management platform for MDM Construction',
+  title: 'KrewPact | Construction Operations Platform',
+  description: 'Construction operations platform for MDM Group Inc.',
 };
 
 export default function RootLayout({

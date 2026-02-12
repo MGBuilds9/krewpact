@@ -38,6 +38,7 @@ export function DivisionProvider({ children }: { children: ReactNode }) {
   const { data: currentUser } = useCurrentUser();
   const queryClient = useQueryClient();
   const [activeDivisionId, setActiveDivisionId] = useState<string | null>(null);
+  const hasInitialized = React.useRef(false);
 
   const {
     data: userDivisions = [],
@@ -56,14 +57,18 @@ export function DivisionProvider({ children }: { children: ReactNode }) {
 
   // Set active division on first load
   useEffect(() => {
-    if (userDivisions.length > 0 && !activeDivisionId) {
-      const savedId =
-        typeof window !== 'undefined' ? localStorage.getItem('activeDivisionId') : null;
+    if (!hasInitialized.current && userDivisions.length > 0 && !activeDivisionId) {
+      hasInitialized.current = true;
+      const savedId = typeof window !== 'undefined' ? localStorage.getItem('activeDivisionId') : null;
       if (savedId && userDivisions.some((d) => d.id === savedId)) {
-        setActiveDivisionId(savedId);
+        queueMicrotask(() => setActiveDivisionId(savedId));
       } else {
         const primary = userDivisions.find((d) => d.is_primary);
-        setActiveDivisionId(primary ? primary.id : userDivisions[0].id);
+        const newId = primary ? primary.id : userDivisions[0].id;
+        queueMicrotask(() => setActiveDivisionId(newId));
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('activeDivisionId', newId);
+        }
       }
     }
   }, [userDivisions, activeDivisionId]);

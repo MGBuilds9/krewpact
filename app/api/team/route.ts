@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const supabase = await createUserClient();
-    let query = supabase
+    const query = supabase
       .from('users')
       .select('*')
       .eq('is_internal', true)

@@ -1,4 +1,5 @@
-// @ts-nocheck
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck — recharts types are incompatible with strict mode
 'use client';
 
 import * as React from 'react';
