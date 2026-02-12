@@ -76,7 +76,7 @@ export function MobileNavigationDrawer({ isOpen, onClose }: MobileNavigationDraw
         <SheetHeader className="p-6 pb-4">
           <div className="flex items-center justify-between">
             <SheetTitle className="text-xl font-bold bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent">
-              MDM Hub
+              KrewPact
             </SheetTitle>
             <Button
               variant="ghost"

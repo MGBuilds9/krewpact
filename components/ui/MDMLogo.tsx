@@ -7,10 +7,10 @@ interface MDMLogoProps {
 }
 
 const sizeMap = {
-  sm: { logo: 28, hub: 'text-xs', gap: 'gap-1.5' },
-  md: { logo: 36, hub: 'text-sm', gap: 'gap-2' },
-  lg: { logo: 48, hub: 'text-base', gap: 'gap-2.5' },
-  xl: { logo: 64, hub: 'text-lg', gap: 'gap-3' },
+  sm: { logo: 28, label: 'text-xs', gap: 'gap-1.5' },
+  md: { logo: 36, label: 'text-sm', gap: 'gap-2' },
+  lg: { logo: 48, label: 'text-base', gap: 'gap-2.5' },
+  xl: { logo: 64, label: 'text-lg', gap: 'gap-3' },
 };
 
 function LogoMark({ height }: { height: number }) {
@@ -64,8 +64,8 @@ export function MDMLogo({ size = 'md', showText = true, className = '' }: MDMLog
       <LogoMark height={s.logo} />
       {showText && (
         <div className="flex flex-col leading-tight">
-          <span className={`${s.hub} font-semibold tracking-wide text-[#EF7922]`}>
-            HUB
+          <span className={`${s.label} font-semibold tracking-wide text-[#EF7922]`}>
+            KrewPact
           </span>
         </div>
       )}
