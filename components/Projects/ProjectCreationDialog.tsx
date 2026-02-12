@@ -1,0 +1,44 @@
+'use client';
+
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Plus } from 'lucide-react';
+import { ProjectCreationForm } from './ProjectCreationForm';
+
+interface ProjectCreationDialogProps {
+  onProjectCreated?: () => void;
+}
+
+export function ProjectCreationDialog({ onProjectCreated }: ProjectCreationDialogProps) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button>
+          <Plus className="h-4 w-4 mr-2" />
+          New Project
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Create New Project</DialogTitle>
+        </DialogHeader>
+        <ProjectCreationForm
+          onClose={() => setIsOpen(false)}
+          onSuccess={() => {
+            onProjectCreated?.();
+            setIsOpen(false);
+          }}
+        />
+      </DialogContent>
+    </Dialog>
+  );
+}

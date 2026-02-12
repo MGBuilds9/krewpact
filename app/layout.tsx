@@ -1,0 +1,49 @@
+import type { Metadata } from 'next';
+import { Inter, Outfit } from 'next/font/google';
+import { ClerkProvider } from '@clerk/nextjs';
+import { ThemeProvider } from '@/components/theme-provider';
+import { QueryProvider } from '@/lib/query-client';
+import { Toaster } from 'sonner';
+import './globals.css';
+
+// Clerk requires valid keys at render time — force dynamic rendering
+export const dynamic = 'force-dynamic';
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+});
+
+const outfit = Outfit({
+  subsets: ['latin'],
+  variable: '--font-outfit',
+});
+
+export const metadata: Metadata = {
+  title: 'BuildAxis | Construction Management',
+  description: 'Construction management platform for MDM Construction',
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <ClerkProvider>
+      <html lang="en" suppressHydrationWarning>
+        <body className={`${inter.variable} ${outfit.variable} font-sans antialiased`}>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <QueryProvider>{children}</QueryProvider>
+            <Toaster richColors position="bottom-right" />
+          </ThemeProvider>
+        </body>
+      </html>
+    </ClerkProvider>
+  );
+}

@@ -1,0 +1,120 @@
+'use client';
+
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { apiFetch } from '@/lib/api-client';
+
+export interface DivisionWithRole {
+  id: string;
+  name: string;
+  code: string | null;
+  description: string | null;
+  is_active: boolean;
+  manager_id: string | null;
+  settings: unknown;
+  created_at: string;
+  updated_at: string;
+  user_role: string;
+  is_primary: boolean;
+}
+
+export interface DivisionContextType {
+  activeDivision: DivisionWithRole | null;
+  userDivisions: DivisionWithRole[];
+  isLoading: boolean;
+  isError: boolean;
+  error: Error | null;
+  setActiveDivision: (divisionId: string) => void;
+  refreshDivisions: () => void;
+  hasMultipleDivisions: boolean;
+  canAccessDivision: (divisionId: string) => boolean;
+  getDivisionRole: (divisionId: string) => string | null;
+}
+
+const DivisionContext = createContext<DivisionContextType | undefined>(undefined);
+
+export function DivisionProvider({ children }: { children: ReactNode }) {
+  const { data: currentUser } = useCurrentUser();
+  const queryClient = useQueryClient();
+  const [activeDivisionId, setActiveDivisionId] = useState<string | null>(null);
+
+  const {
+    data: userDivisions = [],
+    isLoading,
+    isError,
+    error,
+    refetch: refreshDivisions,
+  } = useQuery({
+    queryKey: ['user-divisions', currentUser?.id],
+    queryFn: () =>
+      apiFetch<DivisionWithRole[]>('/api/user/divisions', {
+        params: { user_id: currentUser!.id },
+      }),
+    enabled: !!currentUser?.id,
+  });
+
+  // Set active division on first load
+  useEffect(() => {
+    if (userDivisions.length > 0 && !activeDivisionId) {
+      const savedId =
+        typeof window !== 'undefined' ? localStorage.getItem('activeDivisionId') : null;
+      if (savedId && userDivisions.some((d) => d.id === savedId)) {
+        setActiveDivisionId(savedId);
+      } else {
+        const primary = userDivisions.find((d) => d.is_primary);
+        setActiveDivisionId(primary ? primary.id : userDivisions[0].id);
+      }
+    }
+  }, [userDivisions, activeDivisionId]);
+
+  const activeDivision = userDivisions.find((d) => d.id === activeDivisionId) || null;
+
+  const setActiveDivision = (divisionId: string) => {
+    const hasAccess = userDivisions.some((d) => d.id === divisionId);
+    if (!hasAccess) return;
+
+    setActiveDivisionId(divisionId);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('activeDivisionId', divisionId);
+    }
+    queryClient.invalidateQueries();
+  };
+
+  const hasMultipleDivisions = userDivisions.length > 1;
+
+  const canAccessDivision = (divisionId: string): boolean =>
+    userDivisions.some((d) => d.id === divisionId);
+
+  const getDivisionRole = (divisionId: string): string | null => {
+    const division = userDivisions.find((d) => d.id === divisionId);
+    return division?.user_role || null;
+  };
+
+  return (
+    <DivisionContext.Provider
+      value={{
+        activeDivision,
+        userDivisions,
+        isLoading,
+        isError,
+        error: error as Error | null,
+        setActiveDivision,
+        refreshDivisions,
+        hasMultipleDivisions,
+        canAccessDivision,
+        getDivisionRole,
+      }}
+    >
+      {children}
+    </DivisionContext.Provider>
+  );
+}
+
+export function useDivision() {
+  const context = useContext(DivisionContext);
+  if (context === undefined) {
+    throw new Error('useDivision must be used within a DivisionProvider');
+  }
+  return context;
+}

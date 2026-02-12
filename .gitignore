@@ -1,0 +1,36 @@
+# dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# next.js
+.next/
+out/
+
+# testing
+coverage/
+
+# env files
+.env
+.env.local
+.env.*.local
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+
+# turbo
+.turbo
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# old nested planning pack (docs now in docs/)
+/krewpact/
