@@ -252,22 +252,18 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
+### Feb 13, 2026 — CRM + Estimating Phase 1 (Ralph Loop — 23 stories, 549 tests)
+- **Changes:** Full CRM + Estimating module via Ralph autonomous loop (20 iterations, 6 batches). 141 files changed across 27 commits. Schema: 2 migrations (8 enums, 22 tables, 16 indexes, 17 triggers, RLS on all). API: 21 new endpoints (accounts, contacts, leads, opportunities, activities, estimates, lines, versions, ERP sync). UI: 9 new pages, 7 new components (StageProgressBar, ActivityTimeline, PipelineView, OpportunityCard, LineItemEditor, TotalsPanel, VersionHistory), 34 React Query hooks. Infra: test helpers, typed Supabase clients, Zod validators (16 schemas), ERP sync mock. Updated 13 existing routes to canonical schema.
+- **Decisions:** Zod 4 `z.record(z.unknown())` crashes — use `z.object({}).passthrough()` workaround. tsc 5.9.3 crashes with `createClient<Database>()` on 28+ tables — use ungeneric `createClient()`. Lead stage transitions as pure functions (testable without mocking). Estimate calculations as pure functions (calculateLineTotal, calculateEstimateTotals). HST 13% hardcoded for Ontario. Pipeline view as CSS grid (no drag-and-drop for MVP).
+- **Tests:** 549/549 passing across 44 test files. 0 lint errors, typecheck clean, build success (61 routes).
+- **PR:** https://github.com/MGBuilds9/krewpact/pull/1
+- **Next steps:** Merge PR. Phase 1 remaining: CI/CD pipeline, Clerk webhook receiver, Vercel deployment + env vars. Then Phase 2: Contracting + Projects (proposals, BoldSign e-sign, project execution).
+
 ### Feb 12, 2026 — MDM Unified Growth Intelligence System (Phase 0)
-- **Changes:** Archived MDM-Hub (superseded by KrewPact). Added Sales AGI tables from LeadForge merge (lead_scoring_rules, lead_score_history, outreach_sequences, sequence_steps, sequence_enrollments, email_templates, outreach_events, enrichment_jobs, bidding_opportunities). Extended `leads` table with scoring + enrichment fields. Added pgvector extension + RAG tables (knowledge_embeddings, ai_chat_sessions, ai_chat_messages). Added unified_events table for cross-system event bus. Added canonical division seeds (6 MDM divisions). Added canonical role seeds (13 roles). Updated CLAUDE.md with unified architecture docs.
-- **Decisions:** KrewPact confirmed as nucleus of all MDM systems. MDM-Hub archived. LeadForge automation merges into KrewPact. Sage → ERPNext migration planned. Single Supabase instance for all services. pgvector for RAG/knowledge layer.
-- **Next steps:** Phase 1 (KrewPact MVP Foundation), Phase 2 (Sales AGI + CRM), begin ERPNext evaluation, website API integration.
+- **Changes:** Archived MDM-Hub. Added Sales AGI tables from LeadForge merge. Added pgvector + RAG tables. Added unified_events bus. Canonical division + role seeds.
+- **Decisions:** KrewPact = nucleus. Single Supabase. pgvector for RAG.
 
-### Feb 10, 2026 — Architecture critical review + resolution + /scope skill
-- **Changes:** Created `KrewPact-Architecture-Resolution.md` (23 issues resolved). Created `/scope` skill for project kickoff. Updated `CLAUDE.md` with resolved architecture. Updated Infrastructure doc (removed Supabase VM, n8n, rewrote deployment table). Updated Integration Contracts (removed 2PC, fixed `building_axis_id`→`krewpact_id`). Updated Access Plan (resolved BFF + Redis decisions). Updated Master Plan (P0/P1/P2 scope, 99.5% uptime).
-- **Decisions:** Managed Supabase (not self-hosted). Cloudflare Tunnel for ERPNext connectivity. Upstash Redis for BullMQ. PRD roles canonical (Security doc roles retired). krewpact.com unified domain. Clerk→Supabase JWT bridge design. MVP scoped to 25 features/12 weeks. Offline deferred to P2. M365 deferred. n8n removed.
-- **Next steps:** Run `/scope` to scaffold Next.js project, confirm env vars, start Phase 0 (Foundation).
-
-### Feb 12, 2026 — Repo Hygiene #2: Verification
-- **Status:** Verified tests (24/24 files, 422 tests passing) and build.
-- **Fixes:** Updated test fixtures to use valid v4 UUIDs (fixed Zod validation errors).
-- **PRs:** None open.
-
-### Feb 12, 2026 — Repo Hygiene #1
-- **Status:** Verified clean state. 22/22 tests passing. No open PRs.
-- **Dependencies:** Next.js 16.1.6, React 19.2.3, Vitest 4.0.18.
+- Feb 12: Repo Hygiene #2 — Verified 422 tests, fixed UUID fixtures.
+- Feb 12: Repo Hygiene #1 — Verified clean state. 22/22 tests.
+- Feb 10: Architecture resolution (23 issues) + /scope skill.
 
