@@ -152,7 +152,7 @@
         "Lint passes"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": "Separate the stage transition logic into a pure function (lib/crm/lead-stages.ts) so it can be tested without mocking. ALLOWED_TRANSITIONS should be a Record<lead_stage, lead_stage[]> map. The stage route should: 1) fetch current lead, 2) validate transition, 3) update lead stage, 4) return updated lead."
     },
     {

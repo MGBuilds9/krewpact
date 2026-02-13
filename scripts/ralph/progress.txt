@@ -142,3 +142,18 @@ Branch: ralph/crm-estimating-phase1
   - Contacts search: use or() filter for multi-column search (`first_name.ilike.%search%,last_name.ilike.%search%`)
   - Route files follow exact pattern from projects/route.ts and projects/[id]/route.ts
 ---
+## 2026-02-12 — US-007: Leads CRUD API with stage transitions and tests
+- Created lib/crm/lead-stages.ts: pure functions for stage transition validation (ALLOWED_TRANSITIONS map + validateTransition())
+- Created 3 API route files: leads/route.ts (GET+POST), leads/[id]/route.ts (GET+PATCH+DELETE), leads/[id]/stage/route.ts (POST stage transition)
+- Created 2 test files: __tests__/lib/crm/lead-stages.test.ts (12 tests), __tests__/api/crm/leads.test.ts (23 tests)
+- Total 35 new tests, all passing
+- Leads route: GET supports division_id, stage, assigned_to, search, limit, offset filters. POST creates with default stage='new'.
+- Stage transition route: validates Zod schema (lost_reason required for lost), fetches current lead, validates transition via pure function, updates stage
+- Terminal states: won and lost have no allowed transitions out
+- All 217 tests pass, typecheck clean, lint 0 errors (10 pre-existing warnings), build succeeds
+- **Learnings for future iterations:**
+  - Stage transition logic should be a pure function in lib/crm/ — testable without mocking Supabase or Clerk
+  - Stage route pattern: Zod validate body → fetch current entity → validate business rule → update. Three DB calls per transition.
+  - ALLOWED_TRANSITIONS as Record<Stage, Stage[]> is clean and easy to test exhaustively
+  - The mock Supabase client returns the same data for all chained calls (select, update, etc.) — for stage transition tests, the mock returns currentLead for both the fetch and update calls. Since we're testing HTTP status codes (200 vs 400), this is sufficient.
+---
