@@ -1,0 +1,14 @@
+pull_request_rules:
+  - name: Auto-merge labeled PRs
+    conditions:
+      - label=auto-merge
+      - "#review-threads-unresolved=0"
+    actions:
+      merge:
+        method: squash
+
+  - name: Delete branch after merge
+    conditions:
+      - merged
+    actions:
+      delete_head_branch: {}
