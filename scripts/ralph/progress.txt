@@ -9,12 +9,12 @@ Branch: ralph/crm-estimating-phase1
 - **Test framework:** Vitest with jsdom, setup in __tests__/setup.ts (imports @testing-library/jest-dom/vitest)
 - **Test config:** vitest.config.ts — tests in __tests__/**/*.test.{ts,tsx}, alias @ = project root
 - **Test commands:** npm run test (Vitest), npm run lint (ESLint), npm run typecheck (tsc --noEmit), npm run build (next build)
-- **Existing test count:** 22 tests across 4 files
+- **Existing test count:** 422 tests across 24 files
 - **Test pattern for API routes:** Mock Clerk auth via vi.mock('@clerk/nextjs/server'), mock Supabase via vi.mock('@/lib/supabase/server'), test route handler functions directly (import { GET, POST } from route path), use NextRequest constructor for making test requests
 - **Shared test helpers (US-001):** Import from `@/__tests__/helpers` — mockSupabaseClient(config?), mockClerkAuth(mockFn, userId?), mockClerkUnauth(mockFn), makeRequest(path, init?), makeJsonRequest(path, body, method?), factory functions (makeAccount, makeContact, makeLead, makeOpportunity, makeActivity, makeEstimate, makeEstimateLine), resetFixtureCounter(), TEST_IDS
 - **mockSupabaseClient per-table config:** `mockSupabaseClient({ tables: { accounts: { data: [...], error: null } } })` — each table gets its own response
 - **TypeScript + mock Supabase:** When calling .insert() or .update() on mock client in tests, cast `from` result to `any` to avoid Supabase generic type errors: `const from = client.from('table') as any;`
-- **Existing mock pattern (legacy):** __tests__/api/projects.test.ts still uses old inline mockSupabaseChain() — future stories should migrate to shared helpers
+- **Existing mock pattern:** All test files use shared helpers (mockSupabaseClient, mockClerkAuth, etc.) — projects.test.ts migrated in US-016
 - **Supabase types:** Run `supabase gen types typescript --project-id owfjnfdqpzpvzvdobpxa 2>/dev/null > types/supabase.ts` — stderr MUST be piped to /dev/null
 - **CRITICAL: createClient<Database> crashes tsc 5.9.3:** Passing `<Database>` generic to `createClient()` causes "Map maximum size exceeded" RangeError in TypeScript 5.9.3 when Database has 28+ tables. WORKAROUND: Call `createClient()` without the generic. Import `Database` type directly from `@/types/supabase` for manual type assertions where needed. Both client files import and re-export `Database` for convenience.
 - **Supabase auto-detection:** @supabase/supabase-js v2.95.3 has `__InternalSupabase` field in generated types, but `createClient()` default generic is `Database = any` — NO automatic type enforcement. Table name validation only happens with explicit `<Database>` generic (which crashes tsc).
@@ -295,4 +295,34 @@ Branch: ralph/crm-estimating-phase1
   - For rounding tests, test the pure functions directly — no need to mock API routes for math validation
   - The full happy path test is long but valuable — it exercises the complete estimate lifecycle in one flow, validating that all route handlers work together correctly
   - Total test breakdown at checkpoint: 22 original + 27 helpers + 38 RLS + 13 types + 58 CRM validators + 24 accounts/contacts + 35 leads + 15 opportunities + 14 activities + 20 CRM integration + 35 estimating validators + 21 calculations + 18 estimate status + 17 estimates API + 18 lines API + 10 versions API + 17 estimating integration = 402
+---
+## 2026-02-13 — US-016: Fix existing API routes to canonical schema with tests
+- Updated 13 API route files to canonical column names matching 00003_crm_operations.sql migration
+- Updated 10 hooks: useProjects, useTasks, useTeam, useUsers, useExpenses, useReports, useNotifications, useDashboard, useProjectReports
+- Updated 10 UI pages: projects, project detail, dashboard, expenses, reports, reports/new, notifications, schedule, admin, team
+- Updated 6 project tab components: ProjectOverviewTab, ProjectBudgetTab, ProjectReportsTab, ProjectTasksTab, ProjectTimelineTab, ProjectCreationForm
+- **Column renames:**
+  - Projects: name→project_name, code→project_number, budget→baseline_budget/current_budget, address→site_address (JSONB), end_date→target_completion_date, client_*→account_id/contact_id, manager_id removed
+  - Tasks: assigned_to→assigned_user_id, due_date→due_at, default status pending→todo
+  - Expenses: table expenses→expense_claims, currency→currency_code, added user_id/tax_amount
+  - Notifications: read boolean→state enum (queued/sent/delivered/failed/read), added channel/read_at
+  - Reports: table reports→project_daily_logs, columns log_date/work_summary/crew_count/weather/delays/safety_notes, user→submitted_user
+  - Team: removed is_internal filter, added user_divisions inner join, is_active→status field
+  - Dashboard: pendingReports→openLeads
+- Rewrote __tests__/api/projects.test.ts using shared helpers (15 tests, was 7 with inline mocks)
+- Created __tests__/api/team.test.ts (5 tests): auth, list, division filter, search, error handling
+- Created __tests__/api/expenses.test.ts (7 tests): auth, list, table name, status filter, create auth, create, validation
+- Added 5 factory functions to fixtures.ts: makeProject, makeTask, makeExpenseClaim, makeNotification, makeDailyLog
+- Removed REPORT_TYPES export from useProjectReports, removed client_info toggle from ProjectCreationForm, simplified form to 4 steps
+- **Quality checkpoint results:**
+  - Lint: 0 errors (18 pre-existing warnings, 0 new)
+  - Typecheck: clean
+  - Tests: 422/422 passed (20 new tests)
+  - Build: success
+- **Learnings for future iterations:**
+  - When hooks/types change (e.g. Project interface drops `code`), ALL UI consumers must be updated in the same commit. Typecheck catches these immediately since UI references typed hook returns.
+  - site_address is a JSONB column — ProjectCreationForm now has separate fields (street/city/province/postal_code) composed into a single JSONB object on submit. The ProjectOverviewTab uses a formatAddress() helper to display it.
+  - The `is_internal` field never existed on the canonical users table — filter by `status === 'active'` instead, or join through user_divisions.
+  - When converting read/write boolean to state enum (notifications), mark-all-read needs `{ state: 'read', read_at: new Date().toISOString() }`.
+  - Total test breakdown: 402 previous + 15 rewritten projects + 5 team + 7 expenses - 7 old projects = 422
 ---

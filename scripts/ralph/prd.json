@@ -353,7 +353,7 @@
         "Lint passes"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": "Key column differences to watch for: projects probably has different column names from Hub, expenses table is now expense_claims, users table has no is_internal column (use user_divisions join instead). Read each existing route, compare to types/supabase.ts generated types, fix mismatches."
     },
     {
