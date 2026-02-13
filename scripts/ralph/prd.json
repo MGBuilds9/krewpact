@@ -107,7 +107,7 @@
         "All existing tests still pass"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": "Write ALL tests first. Run them — they should all pass since they test Zod schema validation (no API needed). This is pure validation logic. Use z.refine() for the lead stage lost_reason check and activity entity ID requirement."
     },
     {

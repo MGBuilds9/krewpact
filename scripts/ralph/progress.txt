@@ -40,6 +40,8 @@ Branch: ralph/crm-estimating-phase1
 - **Navigation items defined in:** components/Layout/MobileNavigationDrawer.tsx (navigationItems array) and likely a similar desktop sidebar component
 - **CLAUDE.md:** Always read project CLAUDE.md at root for full conventions
 - **TDD discipline:** Write failing tests FIRST, then implement, then verify all pass. Never skip tests.
+- **Zod 4.3.6 gotchas:** `z.record(z.unknown())` crashes — use `z.record(z.string(), z.any())`. UUID validation is strict RFC 4122 — test fixture UUIDs (00000000-...) won't pass `z.string().uuid()`. Use proper v4 UUIDs like `a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11` in validator tests.
+- **CRM validators:** lib/validators/crm.ts — 11 schemas + 11 inferred types. Lead stages: new/qualified/estimating/proposal_sent/won/lost. Opportunity stages: intake/site_visit/estimating/proposal/negotiation/contracted/closed_lost. Activity types: call/email/meeting/note/task.
 
 ## Test Target per Checkpoint
 - After US-010 (CRM checkpoint): 80+ total tests
@@ -108,4 +110,20 @@ Branch: ralph/crm-estimating-phase1
   - @supabase/supabase-js v2.95.3 `__InternalSupabase` does NOT enable auto-detection. `createClient()` without generic defaults to `any`. Table name validation only works with explicit `<Database>` generic.
   - Existing routes (projects, tasks, expenses, dashboard, notifications, reports, team) use non-canonical column names (e.g. `name` vs `project_name`, `expenses` vs `expense_claims`, `assigned_to` vs `assigned_user_id`, `read` vs `state`). These compile because Supabase client is untyped (any). They'll be fixed in US-016.
   - Lint warnings: type alias `_Foo` pattern triggers @typescript-eslint/no-unused-vars. Use `const x: (keyof Tables)[]` pattern instead for compile-time checks.
+---
+## 2026-02-12 — US-005: CRM Zod validators with comprehensive validation tests
+- Created lib/validators/crm.ts with 11 schemas: accountCreate, accountUpdate, contactCreate, contactUpdate, leadCreate, leadUpdate, leadStageTransition, opportunityCreate, opportunityUpdate, activityCreate, activityUpdate
+- Created __tests__/validators/crm.test.ts with 58 tests covering all validation scenarios
+- Exported 11 inferred TypeScript types (AccountCreate, ContactCreate, LeadCreate, etc.)
+- Used z.refine() for conditional validation: lost_reason required when stage=lost, at least one entity ID required for activities
+- Files changed: lib/validators/crm.ts, __tests__/validators/crm.test.ts
+- All 158 tests pass (100 existing + 58 new), typecheck clean, lint 0 errors (10 pre-existing warnings), build succeeds
+- **Learnings for future iterations:**
+  - Zod 4.3.6: `z.record(z.unknown())` crashes at runtime with "Cannot read properties of undefined (reading '_zod')". Use `z.record(z.string(), z.any())` instead for flexible JSON objects (like billing_address, shipping_address).
+  - Zod 4.3.6 UUID validation is strict RFC 4122: rejects `00000000-0000-0000-0000-000000000001` (invalid version byte at position 13). Test fixture UUIDs like TEST_DIVISION_ID won't pass z.string().uuid(). For validator tests, use proper v4 UUIDs like `a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11`. The nil UUID `00000000-...00000` is accepted.
+  - Zod 4 type inference: use `z.infer<typeof schema>` (TypeScript-only, not a runtime value). Works identically to Zod 3 syntax.
+  - Lead stages (DB enum): new, qualified, estimating, proposal_sent, won, lost
+  - Opportunity stages (DB enum): intake, site_visit, estimating, proposal, negotiation, contracted, closed_lost
+  - Activity types: call, email, meeting, note, task
+  - Existing project routes (app/api/projects/route.ts) already use z.string().uuid() for division_id — consistent with new validators.
 ---
