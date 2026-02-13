@@ -347,3 +347,24 @@ Branch: ralph/crm-estimating-phase1
   - Navigation items in both Navigation.tsx and MobileNavigationDrawer.tsx must stay in sync (two separate arrays). The isActive check should use startsWith for route groups like /crm/*.
   - Total test breakdown: 422 previous + 10 CRM hooks + 7 estimate hooks = 439
 ---
+## 2026-02-13 — US-018: Leads list + detail pages with component tests
+- Created components/CRM/StageProgressBar.tsx: reusable stage visualization with aria-current="step" and data-completed/data-lost attributes for accessible testing
+- Created components/CRM/ActivityTimeline.tsx: reusable timeline with activity type icons (Phone/Mail/Calendar/StickyNote/ListTodo) and color-coded badges
+- Created app/(dashboard)/crm/leads/page.tsx: leads list with search input, stage dropdown filter, New Lead button. Uses Card-based list matching projects page pattern (not ResponsiveTable).
+- Created app/(dashboard)/crm/leads/[id]/page.tsx: lead detail with StageProgressBar, Next Stage / Mark Lost buttons, Convert to Opportunity action (won stage), info card (all fields), ActivityTimeline
+- Created 3 test files:
+  - __tests__/components/CRM/StageProgressBar.test.tsx (6 tests): renders stages, highlights current, marks completed, handles won/lost/new
+  - __tests__/components/CRM/ActivityTimeline.test.tsx (5 tests): renders activities, empty state, activity type badges, date formatting, details display
+  - __tests__/pages/crm/leads.test.tsx (6 tests): renders list, empty state, search input, new lead button, loading skeleton, stage badges
+- **Quality checkpoint results:**
+  - Lint: 0 errors (21 pre-existing warnings, 0 new)
+  - Typecheck: clean
+  - Tests: 456/456 passed (17 new)
+  - Build: success
+- **Learnings for future iterations:**
+  - Page tests mock next/navigation (useRouter, usePathname, useParams), hooks (useCRM), and contexts (DivisionContext, useIsMobile) via vi.mock
+  - TypeScript doesn't narrow types in nested closures after early returns — add explicit `if (!lead) return;` guard in closures that reference nullable data
+  - Card-based list pattern (from projects page) is more appropriate for entity lists than ResponsiveTable when you want richer card content
+  - StageProgressBar renders "Lost" separately at the bottom (not inline with pipeline stages) since lost is a terminal state from any stage
+  - Total test breakdown: 439 previous + 6 StageProgressBar + 5 ActivityTimeline + 6 leads page = 456
+---

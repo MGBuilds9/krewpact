@@ -394,8 +394,8 @@
         "All tests pass"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": "Use existing ResponsiveTable (components/ui/responsive-table.tsx) for list view. Stage badges: new=gray, qualified=blue, estimating=yellow, proposal_sent=purple, won=green, lost=red. Use shadcn/ui Badge with variant colors."
+      "passes": true,
+      "notes": "COMPLETED: 17 new tests (6 StageProgressBar + 5 ActivityTimeline + 6 leads page). Uses Card-based list (matching projects page pattern) instead of ResponsiveTable for richer lead cards. StageProgressBar uses aria-current='step' and data-completed/data-lost attributes for testability. ActivityTimeline has icons per activity type. Lead detail page has stage progression bar, next/lost transition buttons, Convert to Opportunity action (on won stage), full info card, and activity timeline. Stage badge colors: new=gray, qualified=blue, estimating=yellow, proposal_sent=purple, won=green, lost=red."
     },
     {
       "id": "US-019",
