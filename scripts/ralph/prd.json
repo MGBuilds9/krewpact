@@ -18,7 +18,7 @@
         "Lint passes (npm run lint)"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "CRITICAL: This must be the first story. All subsequent API tests depend on these helpers. Study __tests__/api/projects.test.ts for the existing mockSupabaseChain pattern — generalize it. The mock Supabase client must support: .from(table).select().eq().order().limit() chains, .from(table).insert().select().single() chains, .from(table).update().eq().select().single() chains, .from(table).delete().eq() chains. Each should accept {data, error} to configure the response."
     },
     {

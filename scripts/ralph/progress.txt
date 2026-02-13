@@ -11,8 +11,10 @@ Branch: ralph/crm-estimating-phase1
 - **Test commands:** npm run test (Vitest), npm run lint (ESLint), npm run typecheck (tsc --noEmit), npm run build (next build)
 - **Existing test count:** 22 tests across 4 files
 - **Test pattern for API routes:** Mock Clerk auth via vi.mock('@clerk/nextjs/server'), mock Supabase via vi.mock('@/lib/supabase/server'), test route handler functions directly (import { GET, POST } from route path), use NextRequest constructor for making test requests
-- **Existing mock pattern:** See __tests__/api/projects.test.ts for mockSupabaseChain() helper — chains .from().select().eq().order().limit() etc.
-- **Existing helpers:** makeRequest(url, init?) function for creating NextRequest objects
+- **Shared test helpers (US-001):** Import from `@/__tests__/helpers` — mockSupabaseClient(config?), mockClerkAuth(mockFn, userId?), mockClerkUnauth(mockFn), makeRequest(path, init?), makeJsonRequest(path, body, method?), factory functions (makeAccount, makeContact, makeLead, makeOpportunity, makeActivity, makeEstimate, makeEstimateLine), resetFixtureCounter(), TEST_IDS
+- **mockSupabaseClient per-table config:** `mockSupabaseClient({ tables: { accounts: { data: [...], error: null } } })` — each table gets its own response
+- **TypeScript + mock Supabase:** When calling .insert() or .update() on mock client in tests, cast `from` result to `any` to avoid Supabase generic type errors: `const from = client.from('table') as any;`
+- **Existing mock pattern (legacy):** __tests__/api/projects.test.ts still uses old inline mockSupabaseChain() — future stories should migrate to shared helpers
 - **Supabase types:** Run `supabase gen types typescript --project-id owfjnfdqpzpvzvdobpxa 2>/dev/null > types/supabase.ts` — stderr MUST be piped to /dev/null
 - **Supabase push:** `supabase db push` (NOT `supabase db reset`)
 - **API route pattern:** Clerk auth guard → Zod validation → typed Supabase query → NextResponse.json()
@@ -43,4 +45,14 @@ Branch: ralph/crm-estimating-phase1
 - After US-021 (UI checkpoint): 170+ total tests
 - After US-023 (final): 190+ total tests
 
+---
+## 2026-02-12 — US-001: Test infrastructure: mock factories and test helpers
+- Created __tests__/helpers/ directory with 5 files: mock-supabase.ts, mock-auth.ts, mock-request.ts, fixtures.ts, index.ts
+- Added 27 validation tests in helpers.test.ts
+- Total tests: 49 (22 existing + 27 new), all passing
+- Typecheck clean, lint 0 errors (10 pre-existing warnings)
+- **Learnings for future iterations:**
+  - mockSupabaseClient uses `then` property on chain objects for thenable resolution (Supabase PostgREST queries are thenables)
+  - When testing .insert()/.update() chains against typed mock client, cast `from` result to `any` to avoid TS2769 overload errors
+  - mockClerkAuth configures mockResolvedValue (doesn't call the mock) — test the resolved values, not call count
 ---
