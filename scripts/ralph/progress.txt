@@ -173,3 +173,16 @@ Branch: ralph/crm-estimating-phase1
   - Zod UUID validation is strict — `b1ffcd00-0d1c-5fg9-cc7e-7cc0ce491b22` fails because 'g' is invalid hex. Always use valid hex chars in test UUIDs.
   - GET /[id] uses `.select('*, opportunity_stage_history(*)')` to join stage history via Supabase relationship
 ---
+## 2026-02-12 — US-009: Activities API with polymorphic entity linking and tests
+- Created app/api/crm/activities/route.ts (GET with multi-entity filters + POST with Zod validation)
+- Created app/api/crm/activities/[id]/route.ts (GET, PATCH, DELETE)
+- Created __tests__/api/crm/activities.test.ts with 14 tests
+- GET supports filters: opportunity_id, lead_id, account_id, contact_id, activity_type, limit, offset
+- POST validates via activityCreateSchema (refine ensures at least one entity ID)
+- Files changed: 3 new files (2 routes + 1 test)
+- All 246 tests pass, typecheck clean, lint 0 errors (10 pre-existing warnings)
+- **Learnings for future iterations:**
+  - Activities route follows identical pattern to opportunities/leads/accounts/contacts — just more filter params
+  - The Zod refine() on activityCreateSchema handles the "at least one entity" validation server-side. POST returns 400 if no entity ID provided.
+  - Activities don't have stage transitions or history — simpler CRUD than opportunities or leads
+---

@@ -191,7 +191,7 @@
         "Lint passes"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": "Validation: at least one of opportunity_id/lead_id/account_id/contact_id must be non-null. This is enforced by the Zod schema refine() from US-005."
     },
     {
