@@ -21,7 +21,7 @@ export function makeRequest(path: string, init?: RequestInit): NextRequest {
  */
 export function makeJsonRequest(
   path: string,
-  body: Record<string, unknown>,
+  body: Record<string, unknown> | Record<string, unknown>[],
   method: string = 'POST',
 ): NextRequest {
   return makeRequest(path, {

@@ -241,3 +241,19 @@ Branch: ralph/crm-estimating-phase1
   - Status transition allowed paths: draft→review, review→sent, review→draft, sent→approved, sent→rejected. Terminal: approved, rejected, superseded.
   - `any→superseded` from PRD notes: implemented via ALLOWED_STATUS_TRANSITIONS but currently not exposed in normal transitions (superseded is typically set programmatically when creating a new version). The superseded status itself is terminal once set.
 ---
+## 2026-02-12 — US-013: Estimate lines API with batch operations and recalculation
+- Created app/api/estimates/[id]/lines/route.ts (GET list, POST single line, PUT batch replace)
+- Created app/api/estimates/[id]/lines/[lineId]/route.ts (PATCH update, DELETE remove)
+- Created __tests__/api/estimates/lines.test.ts with 18 tests
+- Updated __tests__/helpers/mock-request.ts: makeJsonRequest body type now accepts arrays
+- **Recalculation flow:** After every line mutation (POST/PUT/PATCH/DELETE), `recalculateParentTotals()` fetches all lines → `calculateEstimateTotals(lines)` → updates parent estimate's subtotal_amount, tax_amount, total_amount
+- **PUT batch:** deletes all existing lines → inserts new lines with calculated line_totals → recalculates parent
+- **PATCH single:** fetches current line values for missing fields → recalculates line_total → updates → recalculates parent
+- Files changed: 4 new files (2 routes + 1 test + 1 helper update)
+- All 375 tests pass (18 new), typecheck clean, lint 0 errors on changed files, build succeeds
+- **Learnings for future iterations:**
+  - Mock Supabase returns same data for all operations on the same table (both `.single()` and thenable). When a route does multiple operations on the same table (e.g. insert + recalculate fetch), the `data` config applies to both. Use `Array.isArray()` guard: `const rawLines = Array.isArray(allLines) ? allLines : allLines ? [allLines] : []` to handle both shapes.
+  - Don't use `(supabase as any)` — the client is already untyped (`any`) since `createClient()` is called without `<Database>` generic. Direct `supabase.from()` calls work and avoid `@typescript-eslint/no-explicit-any` lint errors.
+  - `makeJsonRequest` body type was `Record<string, unknown>` — needed to widen to `Record<string, unknown> | Record<string, unknown>[]` for PUT batch endpoints that accept arrays.
+  - `recalculateParentTotals` is duplicated in both route files — could be extracted to a shared module in `lib/estimating/` but kept local for simplicity since only 2 consumers.
+---

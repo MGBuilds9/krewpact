@@ -284,8 +284,8 @@
         "Lint passes"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": "Recalculation flow: after insert/update/delete line → fetch all lines for estimate → calculateEstimateTotals(lines) → update estimate record with new totals. PUT batch: delete all existing lines for estimate, insert new lines, recalculate. This should be wrapped in a transaction or use upsert pattern."
+      "passes": true,
+      "notes": "Recalculation flow: after insert/update/delete line → fetch all lines for estimate → calculateEstimateTotals(lines) → update estimate record with new totals. PUT batch: delete all existing lines for estimate, insert new lines, recalculate. COMPLETED: 18 new tests. recalculateParentTotals() is a shared helper in both route files. Array.isArray() guard needed because mock Supabase returns same data shape for both .single() and thenable queries on same table."
     },
     {
       "id": "US-014",
