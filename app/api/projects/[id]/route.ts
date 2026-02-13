@@ -4,24 +4,20 @@ import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 
 const updateSchema = z.object({
-  name: z.string().min(1).max(200).optional(),
-  code: z.string().max(50).optional(),
-  description: z.string().max(5000).optional(),
-  status: z.string().max(50).optional(),
+  project_name: z.string().min(1).max(200).optional(),
+  project_number: z.string().min(1).max(50).optional(),
+  status: z.enum(['planning', 'active', 'on_hold', 'substantial_complete', 'closed', 'cancelled']).optional(),
+  site_address: z.record(z.string(), z.any()).nullable().optional(),
+  baseline_budget: z.number().nonnegative().nullable().optional(),
+  current_budget: z.number().nonnegative().nullable().optional(),
   start_date: z.string().nullable().optional(),
-  end_date: z.string().nullable().optional(),
-  budget: z.number().nonnegative().nullable().optional(),
-  contract_value: z.number().nonnegative().nullable().optional(),
+  target_completion_date: z.string().nullable().optional(),
+  actual_completion_date: z.string().nullable().optional(),
   division_id: z.string().uuid().nullable().optional(),
-  manager_id: z.string().uuid().nullable().optional(),
-  client_name: z.string().max(200).nullable().optional(),
-  client_contact: z.string().max(200).nullable().optional(),
-  client_email: z.string().email().nullable().optional(),
-  client_phone: z.string().max(50).nullable().optional(),
-  address: z.string().max(500).nullable().optional(),
-  city: z.string().max(100).nullable().optional(),
-  province: z.string().max(100).nullable().optional(),
-  postal_code: z.string().max(20).nullable().optional(),
+  account_id: z.string().uuid().nullable().optional(),
+  contact_id: z.string().uuid().nullable().optional(),
+  contract_id: z.string().uuid().nullable().optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
 });
 
 type RouteContext = { params: Promise<{ id: string }> };

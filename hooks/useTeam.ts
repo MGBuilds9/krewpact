@@ -9,9 +9,9 @@ export interface TeamMember {
   last_name: string | null;
   email: string;
   avatar_url: string | null;
-  is_internal: boolean;
-  is_active: boolean;
+  status: string;
   created_at: string;
+  user_divisions?: { division_id: string; is_primary: boolean; left_at: string | null }[];
 }
 
 export function useTeamMembers(search?: string) {

@@ -14,10 +14,10 @@ export async function GET(_req: NextRequest, context: RouteContext) {
   const supabase = await createUserClient();
 
   const { data, error } = await supabase
-    .from('reports')
-    .select('*, user:users(first_name, last_name)')
+    .from('project_daily_logs')
+    .select('*, submitted_user:users!project_daily_logs_submitted_by_fkey(first_name, last_name)')
     .eq('project_id', id)
-    .order('report_date', { ascending: false });
+    .order('log_date', { ascending: false });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

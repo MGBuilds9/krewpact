@@ -19,34 +19,35 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  try {
-    const supabase = await createUserClient();
-    const query = supabase
-      .from('users')
-      .select('*')
-      .eq('is_internal', true)
-      .order('first_name');
+  const supabase = await createUserClient();
 
-    const { data, error } = await query;
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
+  // Query users who have active user_divisions entries (left_at IS NULL)
+  let query = supabase
+    .from('users')
+    .select('*, user_divisions!inner(division_id, is_primary, left_at)')
+    .is('user_divisions.left_at', null)
+    .order('first_name');
 
-    // Client-side search filtering (Supabase text search is limited)
-    let filtered = data || [];
-    if (parsed.data.search) {
-      const term = parsed.data.search.toLowerCase();
-      filtered = filtered.filter(
-        (u) =>
-          u.first_name?.toLowerCase().includes(term) ||
-          u.last_name?.toLowerCase().includes(term) ||
-          u.email?.toLowerCase().includes(term),
-      );
-    }
-
-    return NextResponse.json(filtered);
-  } catch (error) {
-    console.error('Team GET error:', error);
-    return NextResponse.json({ error: 'Failed to fetch team' }, { status: 500 });
+  if (parsed.data.division_id) {
+    query = query.eq('user_divisions.division_id', parsed.data.division_id);
   }
+
+  const { data, error } = await query;
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  // Client-side search filtering
+  let filtered = data || [];
+  if (parsed.data.search) {
+    const term = parsed.data.search.toLowerCase();
+    filtered = filtered.filter(
+      (u: Record<string, unknown>) =>
+        (u.first_name as string)?.toLowerCase().includes(term) ||
+        (u.last_name as string)?.toLowerCase().includes(term) ||
+        (u.email as string)?.toLowerCase().includes(term),
+    );
+  }
+
+  return NextResponse.json(filtered);
 }

@@ -8,10 +8,16 @@ export interface Task {
   project_id: string;
   title: string;
   description: string | null;
-  status: 'pending' | 'todo' | 'in_progress' | 'done' | 'completed';
+  status: 'todo' | 'in_progress' | 'blocked' | 'done' | 'cancelled';
   priority: 'low' | 'medium' | 'high';
-  assigned_to: string | null;
-  due_date: string | null;
+  assigned_user_id: string | null;
+  milestone_id: string | null;
+  due_at: string | null;
+  start_at: string | null;
+  completed_at: string | null;
+  blocked_reason: string | null;
+  metadata: unknown;
+  created_by: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -22,8 +28,10 @@ export interface TaskCreate {
   description?: string;
   status?: string;
   priority?: string;
-  assigned_to?: string;
-  due_date?: string;
+  assigned_user_id?: string;
+  milestone_id?: string;
+  due_at?: string;
+  start_at?: string;
 }
 
 export interface TaskUpdate {
@@ -31,8 +39,10 @@ export interface TaskUpdate {
   description?: string;
   status?: string;
   priority?: string;
-  assigned_to?: string | null;
-  due_date?: string | null;
+  assigned_user_id?: string | null;
+  milestone_id?: string | null;
+  due_at?: string | null;
+  start_at?: string | null;
 }
 
 export function useTasks(projectId?: string) {

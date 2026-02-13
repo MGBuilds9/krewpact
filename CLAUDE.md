@@ -261,3 +261,13 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 - **Changes:** Created `KrewPact-Architecture-Resolution.md` (23 issues resolved). Created `/scope` skill for project kickoff. Updated `CLAUDE.md` with resolved architecture. Updated Infrastructure doc (removed Supabase VM, n8n, rewrote deployment table). Updated Integration Contracts (removed 2PC, fixed `building_axis_id`→`krewpact_id`). Updated Access Plan (resolved BFF + Redis decisions). Updated Master Plan (P0/P1/P2 scope, 99.5% uptime).
 - **Decisions:** Managed Supabase (not self-hosted). Cloudflare Tunnel for ERPNext connectivity. Upstash Redis for BullMQ. PRD roles canonical (Security doc roles retired). krewpact.com unified domain. Clerk→Supabase JWT bridge design. MVP scoped to 25 features/12 weeks. Offline deferred to P2. M365 deferred. n8n removed.
 - **Next steps:** Run `/scope` to scaffold Next.js project, confirm env vars, start Phase 0 (Foundation).
+
+### Feb 12, 2026 — Repo Hygiene #2: Verification
+- **Status:** Verified tests (24/24 files, 422 tests passing) and build.
+- **Fixes:** Updated test fixtures to use valid v4 UUIDs (fixed Zod validation errors).
+- **PRs:** None open.
+
+### Feb 12, 2026 — Repo Hygiene #1
+- **Status:** Verified clean state. 22/22 tests passing. No open PRs.
+- **Dependencies:** Next.js 16.1.6, React 19.2.3, Vitest 4.0.18.
+

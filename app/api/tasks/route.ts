@@ -5,8 +5,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const getQuerySchema = z.object({
   project_id: z.string().uuid().optional(),
-  status: z.enum(['pending', 'todo', 'in_progress', 'done', 'completed']).optional(),
-  assigned_to: z.string().uuid().optional(),
+  status: z.enum(['todo', 'in_progress', 'blocked', 'done', 'cancelled']).optional(),
+  assigned_user_id: z.string().uuid().optional(),
   limit: z.coerce.number().min(1).max(100).optional(),
 });
 
@@ -14,10 +14,12 @@ const createSchema = z.object({
   project_id: z.string().uuid(),
   title: z.string().min(1).max(255),
   description: z.string().optional(),
-  status: z.enum(['pending', 'todo', 'in_progress', 'done', 'completed']).default('pending'),
+  status: z.enum(['todo', 'in_progress', 'blocked', 'done', 'cancelled']).default('todo'),
   priority: z.enum(['low', 'medium', 'high']).default('medium'),
-  assigned_to: z.string().uuid().optional(),
-  due_date: z.string().optional(),
+  assigned_user_id: z.string().uuid().optional(),
+  milestone_id: z.string().uuid().optional(),
+  due_at: z.string().optional(),
+  start_at: z.string().optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -33,30 +35,25 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { project_id, status, assigned_to, limit } = parsed.data;
+  const { project_id, status, assigned_user_id, limit } = parsed.data;
 
-  try {
-    const supabase = await createUserClient();
-    let query = supabase
-      .from('tasks')
-      .select('*')
-      .order('created_at', { ascending: false });
+  const supabase = await createUserClient();
+  let query = supabase
+    .from('tasks')
+    .select('*')
+    .order('created_at', { ascending: false });
 
-    if (project_id) query = query.eq('project_id', project_id);
-    if (status) query = query.eq('status', status);
-    if (assigned_to) query = query.eq('assigned_to', assigned_to);
-    if (limit) query = query.limit(limit);
+  if (project_id) query = query.eq('project_id', project_id);
+  if (status) query = query.eq('status', status);
+  if (assigned_user_id) query = query.eq('assigned_user_id', assigned_user_id);
+  if (limit) query = query.limit(limit);
 
-    const { data, error } = await query;
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json(data);
-  } catch (error) {
-    console.error('Tasks GET error:', error);
-    return NextResponse.json({ error: 'Failed to fetch tasks' }, { status: 500 });
+  const { data, error } = await query;
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  return NextResponse.json(data);
 }
 
 export async function POST(req: NextRequest) {
@@ -77,21 +74,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  try {
-    const supabase = await createUserClient();
-    const { data, error } = await supabase
-      .from('tasks')
-      .insert(parsed.data)
-      .select()
-      .single();
+  const supabase = await createUserClient();
+  const { data, error } = await supabase
+    .from('tasks')
+    .insert(parsed.data)
+    .select()
+    .single();
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json(data, { status: 201 });
-  } catch (error) {
-    console.error('Tasks POST error:', error);
-    return NextResponse.json({ error: 'Failed to create task' }, { status: 500 });
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  return NextResponse.json(data, { status: 201 });
 }

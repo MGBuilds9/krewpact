@@ -8,9 +8,7 @@ import {
   DollarSign,
   Calendar,
   MapPin,
-  User,
   Building,
-  FileText,
   TrendingUp,
   Clock,
 } from 'lucide-react';
@@ -20,8 +18,14 @@ interface ProjectOverviewTabProps {
   project: Project;
 }
 
+function formatAddress(siteAddress: Record<string, string> | null): string {
+  if (!siteAddress) return 'Not specified';
+  const parts = [siteAddress.street, siteAddress.city, siteAddress.province, siteAddress.postal_code].filter(Boolean);
+  return parts.length > 0 ? parts.join(', ') : 'Not specified';
+}
+
 export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
-  const budgetProgress = project.budget ? ((project.spent || 0) / project.budget) * 100 : 0;
+  const budgetProgress = project.baseline_budget ? (project.current_budget / project.baseline_budget) * 100 : 0;
   const [now] = React.useState(() => Date.now());
   const daysElapsed = React.useMemo(
     () =>
@@ -31,9 +35,9 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
     [project.start_date, now],
   );
   const totalDays =
-    project.start_date && project.end_date
+    project.start_date && project.target_completion_date
       ? Math.floor(
-          (new Date(project.end_date).getTime() - new Date(project.start_date).getTime()) /
+          (new Date(project.target_completion_date).getTime() - new Date(project.start_date).getTime()) /
             (1000 * 60 * 60 * 24),
         )
       : 0;
@@ -45,20 +49,20 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Budget</CardTitle>
+            <CardTitle className="text-sm font-medium">Baseline Budget</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${(project.budget || 0).toLocaleString()}</div>
+            <div className="text-2xl font-bold">${(project.baseline_budget || 0).toLocaleString()}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              ${(project.spent || 0).toLocaleString()} spent
+              Current: ${(project.current_budget || 0).toLocaleString()}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Budget Progress</CardTitle>
+            <CardTitle className="text-sm font-medium">Budget Utilization</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -103,8 +107,8 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
             <div className="flex items-start gap-3">
               <Building className="h-5 w-5 text-muted-foreground mt-0.5" />
               <div>
-                <p className="text-sm font-medium">Project Code</p>
-                <p className="text-sm text-muted-foreground">{project.code || 'Not specified'}</p>
+                <p className="text-sm font-medium">Project Number</p>
+                <p className="text-sm text-muted-foreground">{project.project_number || 'Not specified'}</p>
               </div>
             </div>
 
@@ -113,7 +117,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
               <div>
                 <p className="text-sm font-medium">Location</p>
                 <p className="text-sm text-muted-foreground">
-                  {project.address || 'Not specified'}
+                  {formatAddress(project.site_address)}
                 </p>
               </div>
             </div>
@@ -127,19 +131,9 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
                     ? new Date(project.start_date).toLocaleDateString()
                     : 'Not set'}
                   {' to '}
-                  {project.end_date
-                    ? new Date(project.end_date).toLocaleDateString()
+                  {project.target_completion_date
+                    ? new Date(project.target_completion_date).toLocaleDateString()
                     : 'Not set'}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3">
-              <FileText className="h-5 w-5 text-muted-foreground mt-0.5" />
-              <div>
-                <p className="text-sm font-medium">Description</p>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                  {project.description || 'No description provided'}
                 </p>
               </div>
             </div>
@@ -148,44 +142,15 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
 
         <Card>
           <CardHeader>
-            <CardTitle>Client Information</CardTitle>
+            <CardTitle>Account & Contact</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-start gap-3">
-              <User className="h-5 w-5 text-muted-foreground mt-0.5" />
-              <div>
-                <p className="text-sm font-medium">Client Name</p>
-                <p className="text-sm text-muted-foreground">
-                  {project.client_name || 'Not specified'}
-                </p>
-              </div>
-            </div>
-
-            {project.client_email && (
-              <div className="flex items-start gap-3">
-                <User className="h-5 w-5 text-muted-foreground mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium">Email</p>
-                  <p className="text-sm text-muted-foreground">{project.client_email}</p>
-                  <Badge variant="outline" className="mt-1 text-xs">
-                    Manager Only
-                  </Badge>
-                </div>
-              </div>
-            )}
-
-            {project.client_phone && (
-              <div className="flex items-start gap-3">
-                <User className="h-5 w-5 text-muted-foreground mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium">Phone</p>
-                  <p className="text-sm text-muted-foreground">{project.client_phone}</p>
-                  <Badge variant="outline" className="mt-1 text-xs">
-                    Manager Only
-                  </Badge>
-                </div>
-              </div>
-            )}
+            <p className="text-sm text-muted-foreground">
+              {project.account_id ? `Account: ${project.account_id}` : 'No account linked'}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {project.contact_id ? `Contact: ${project.contact_id}` : 'No contact linked'}
+            </p>
           </CardContent>
         </Card>
       </div>

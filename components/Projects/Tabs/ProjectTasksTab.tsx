@@ -38,7 +38,7 @@ export function ProjectTasksTab({ projectId }: ProjectTasksTabProps) {
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
-    assigned_to: '',
+    assigned_user_id: '',
   });
 
   const handleCreateTask = async () => {
@@ -47,11 +47,11 @@ export function ProjectTasksTab({ projectId }: ProjectTasksTabProps) {
         title: newTask.title,
         description: newTask.description,
         project_id: projectId,
-        assigned_to: newTask.assigned_to || undefined,
-        status: 'pending',
+        assigned_user_id: newTask.assigned_user_id || undefined,
+        status: 'todo',
         priority: 'medium',
       });
-      setNewTask({ title: '', description: '', assigned_to: '' });
+      setNewTask({ title: '', description: '', assigned_user_id: '' });
       setIsOpen(false);
       toast.success('Task created successfully');
     } catch {
@@ -108,8 +108,8 @@ export function ProjectTasksTab({ projectId }: ProjectTasksTabProps) {
               <div>
                 <label className="text-sm font-medium">Assign To</label>
                 <Select
-                  value={newTask.assigned_to}
-                  onValueChange={(value) => setNewTask({ ...newTask, assigned_to: value })}
+                  value={newTask.assigned_user_id}
+                  onValueChange={(value) => setNewTask({ ...newTask, assigned_user_id: value })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Unassigned" />
@@ -157,16 +157,16 @@ export function ProjectTasksTab({ projectId }: ProjectTasksTabProps) {
                       </p>
                     )}
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      {task.due_date && (
+                      {task.due_at && (
                         <div className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
-                          {new Date(task.due_date).toLocaleDateString()}
+                          {new Date(task.due_at).toLocaleDateString()}
                         </div>
                       )}
-                      {task.assigned_to && (
+                      {task.assigned_user_id && (
                         <div className="flex items-center gap-1">
                           <User className="h-3 w-3" />
-                          {users?.find((u) => u.id === task.assigned_to)?.first_name || 'Assigned'}
+                          {users?.find((u) => u.id === task.assigned_user_id)?.first_name || 'Assigned'}
                         </div>
                       )}
                     </div>

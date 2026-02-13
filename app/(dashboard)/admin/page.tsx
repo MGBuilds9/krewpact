@@ -102,8 +102,8 @@ export default function AdminPage() {
                       <p className="text-xs text-muted-foreground">{member.email}</p>
                     </div>
                   </div>
-                  <Badge variant={member.is_active ? 'default' : 'secondary'}>
-                    {member.is_active ? 'Active' : 'Inactive'}
+                  <Badge variant={member.status === 'active' ? 'default' : 'secondary'}>
+                    {member.status === 'active' ? 'Active' : 'Inactive'}
                   </Badge>
                 </div>
               ))}

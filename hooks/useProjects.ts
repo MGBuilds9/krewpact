@@ -5,29 +5,24 @@ import { apiFetch } from '@/lib/api-client';
 
 export interface Project {
   id: string;
-  name: string;
-  code: string | null;
-  description: string | null;
-  status: string | null;
+  project_name: string;
+  project_number: string;
+  status: 'planning' | 'active' | 'on_hold' | 'substantial_complete' | 'closed' | 'cancelled';
+  division_id: string;
+  site_address: Record<string, string> | null;
+  baseline_budget: number;
+  current_budget: number;
   start_date: string | null;
-  end_date: string | null;
-  budget: number | null;
-  contract_value: number | null;
-  division_id: string | null;
-  manager_id: string | null;
-  created_by: string | null;
-  client_name: string | null;
-  client_contact: string | null;
-  client_email: string | null;
-  client_phone: string | null;
-  address: string | null;
-  spent: number | null;
-  city: string | null;
-  province: string | null;
-  postal_code: string | null;
+  target_completion_date: string | null;
+  actual_completion_date: string | null;
+  baseline_schedule: unknown;
+  account_id: string | null;
+  contact_id: string | null;
+  contract_id: string | null;
   metadata: unknown;
-  created_at: string | null;
-  updated_at: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 interface UseProjectsOptions {

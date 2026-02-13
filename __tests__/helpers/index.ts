@@ -9,6 +9,11 @@ export {
   makeActivity,
   makeEstimate,
   makeEstimateLine,
+  makeProject,
+  makeTask,
+  makeExpenseClaim,
+  makeNotification,
+  makeDailyLog,
   resetFixtureCounter,
   TEST_IDS,
 } from './fixtures';

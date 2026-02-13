@@ -12,7 +12,7 @@ export async function GET(_req: NextRequest) {
 
   const { data, error } = await supabase
     .from('users')
-    .select('id, first_name, last_name, email, avatar_url, is_internal')
+    .select('id, first_name, last_name, email, avatar_url, status')
     .order('first_name');
 
   if (error) {

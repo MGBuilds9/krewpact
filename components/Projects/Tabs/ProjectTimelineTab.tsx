@@ -11,7 +11,7 @@ interface ProjectTimelineTabProps {
 
 export function ProjectTimelineTab({ project }: ProjectTimelineTabProps) {
   const startDate = project.start_date ? new Date(project.start_date) : null;
-  const endDate = project.end_date ? new Date(project.end_date) : null;
+  const endDate = project.target_completion_date ? new Date(project.target_completion_date) : null;
   const today = new Date();
 
   const milestones = [

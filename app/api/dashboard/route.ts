@@ -23,66 +23,62 @@ export async function GET(req: NextRequest) {
 
   const { division_id } = parsed.data;
 
-  try {
-    const supabase = await createUserClient();
+  const supabase = await createUserClient();
 
-    // Run all count queries in parallel for performance
-    const [projectsResult, expensesResult, reportsResult, notificationsResult, recentProjectsResult] =
-      await Promise.all([
-        // Active projects count
-        (() => {
-          let q = supabase
-            .from('projects')
-            .select('*', { count: 'exact', head: true })
-            .eq('status', 'active');
-          if (division_id) q = q.eq('division_id', division_id);
-          return q;
-        })(),
-
-        // Pending expenses count
-        supabase
-          .from('expenses')
+  // Run all count queries in parallel for performance
+  const [projectsResult, expensesResult, leadsResult, notificationsResult, recentProjectsResult] =
+    await Promise.all([
+      // Active projects count
+      (() => {
+        let q = supabase
+          .from('projects')
           .select('*', { count: 'exact', head: true })
-          .eq('status', 'submitted'),
+          .eq('status', 'active');
+        if (division_id) q = q.eq('division_id', division_id);
+        return q;
+      })(),
 
-        // Pending reports count
-        supabase
-          .from('reports')
+      // Pending expense claims count
+      supabase
+        .from('expense_claims')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'submitted'),
+
+      // Open leads count
+      (() => {
+        let q = supabase
+          .from('leads')
           .select('*', { count: 'exact', head: true })
-          .eq('status', 'submitted'),
+          .not('stage', 'in', '(won,lost)');
+        if (division_id) q = q.eq('division_id', division_id);
+        return q;
+      })(),
 
-        // Unread notifications count
-        supabase
-          .from('notifications')
-          .select('*', { count: 'exact', head: true })
-          .eq('read', false),
+      // Unread notifications count (state != 'read')
+      supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .neq('state', 'read'),
 
-        // Recent projects (5)
-        (() => {
-          let q = supabase
-            .from('projects')
-            .select('id, name, status, address, start_date, end_date, budget, spent')
-            .order('created_at', { ascending: false })
-            .limit(5);
-          if (division_id) q = q.eq('division_id', division_id);
-          return q;
-        })(),
-      ]);
+      // Recent projects (5)
+      (() => {
+        let q = supabase
+          .from('projects')
+          .select('id, project_name, project_number, status, site_address, start_date, target_completion_date, baseline_budget, current_budget')
+          .order('created_at', { ascending: false })
+          .limit(5);
+        if (division_id) q = q.eq('division_id', division_id);
+        return q;
+      })(),
+    ]);
 
-    return NextResponse.json({
-      atAGlance: {
-        activeProjects: projectsResult.count ?? 0,
-        pendingExpenses: expensesResult.count ?? 0,
-        pendingReports: reportsResult.count ?? 0,
-        unreadNotifications: notificationsResult.count ?? 0,
-      },
-      recentProjects: recentProjectsResult.data ?? [],
-    });
-  } catch (error) {
-    console.error('Dashboard API error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch dashboard data' },
-      { status: 500 },
-    );
-  }
+  return NextResponse.json({
+    atAGlance: {
+      activeProjects: projectsResult.count ?? 0,
+      pendingExpenses: expensesResult.count ?? 0,
+      openLeads: leadsResult.count ?? 0,
+      unreadNotifications: notificationsResult.count ?? 0,
+    },
+    recentProjects: recentProjectsResult.data ?? [],
+  });
 }

@@ -5,17 +5,18 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const querySchema = z.object({
   project_id: z.string().uuid().optional(),
-  report_type: z.string().optional(),
-  status: z.enum(['draft', 'submitted', 'reviewed']).optional(),
+  submitted_by: z.string().uuid().optional(),
   limit: z.coerce.number().min(1).max(100).optional(),
 });
 
 const createSchema = z.object({
-  report_type: z.string().min(1).max(100),
-  report_date: z.string(),
-  project_id: z.string().uuid().optional(),
-  division_id: z.string().uuid().optional(),
-  data: z.record(z.string(), z.unknown()).optional(),
+  project_id: z.string().uuid(),
+  log_date: z.string(),
+  work_summary: z.string().max(5000).optional(),
+  crew_count: z.number().int().nonnegative().optional(),
+  weather: z.record(z.string(), z.any()).optional(),
+  delays: z.string().max(2000).optional(),
+  safety_notes: z.string().max(2000).optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -29,30 +30,24 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { project_id, report_type, status, limit } = parsed.data;
+  const { project_id, submitted_by, limit } = parsed.data;
 
-  try {
-    const supabase = await createUserClient();
-    let query = supabase
-      .from('reports')
-      .select('*, user:users(first_name, last_name, avatar_url), project:projects(name)')
-      .order('report_date', { ascending: false });
+  const supabase = await createUserClient();
+  let query = supabase
+    .from('project_daily_logs')
+    .select('*, submitted_user:users!project_daily_logs_submitted_by_fkey(first_name, last_name, avatar_url), project:projects(project_name)')
+    .order('log_date', { ascending: false });
 
-    if (project_id) query = query.eq('project_id', project_id);
-    if (report_type) query = query.eq('report_type', report_type);
-    if (status) query = query.eq('status', status);
-    if (limit) query = query.limit(limit);
+  if (project_id) query = query.eq('project_id', project_id);
+  if (submitted_by) query = query.eq('submitted_by', submitted_by);
+  if (limit) query = query.limit(limit);
 
-    const { data, error } = await query;
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json(data);
-  } catch (error) {
-    console.error('Reports GET error:', error);
-    return NextResponse.json({ error: 'Failed to fetch reports' }, { status: 500 });
+  const { data, error } = await query;
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  return NextResponse.json(data);
 }
 
 export async function POST(req: NextRequest) {
@@ -73,21 +68,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  try {
-    const supabase = await createUserClient();
-    const { data, error } = await supabase
-      .from('reports')
-      .insert({ ...parsed.data, status: 'draft' })
-      .select()
-      .single();
+  const supabase = await createUserClient();
+  const { data, error } = await supabase
+    .from('project_daily_logs')
+    .insert(parsed.data)
+    .select()
+    .single();
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json(data, { status: 201 });
-  } catch (error) {
-    console.error('Reports POST error:', error);
-    return NextResponse.json({ error: 'Failed to create report' }, { status: 500 });
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  return NextResponse.json(data, { status: 201 });
 }

@@ -9,7 +9,7 @@ export interface User {
   last_name: string | null;
   email: string;
   avatar_url: string | null;
-  is_internal: boolean;
+  status: string;
 }
 
 export function useUsers() {

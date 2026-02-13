@@ -5,18 +5,19 @@ import { apiFetch } from '@/lib/api-client';
 
 export interface Expense {
   id: string;
+  user_id: string;
   amount: number;
+  tax_amount: number;
   category: string;
   description: string | null;
   status: string;
   expense_date: string;
-  receipt_url: string | null;
-  currency: string;
+  currency_code: string;
   project_id: string | null;
   division_id: string | null;
   created_at: string;
   user: { first_name: string | null; last_name: string | null; avatar_url: string | null } | null;
-  project: { name: string } | null;
+  project: { project_name: string } | null;
 }
 
 export interface ExpenseCreate {
@@ -26,8 +27,9 @@ export interface ExpenseCreate {
   project_id?: string;
   division_id?: string;
   expense_date: string;
-  receipt_url?: string;
-  currency?: string;
+  user_id: string;
+  tax_amount?: number;
+  currency_code?: string;
 }
 
 export function useExpenses(options?: { status?: string; projectId?: string }) {

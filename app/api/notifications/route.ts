@@ -21,30 +21,25 @@ export async function GET(req: NextRequest) {
 
   const { limit, unread_only } = parsed.data;
 
-  try {
-    const supabase = await createUserClient();
-    let query = supabase
-      .from('notifications')
-      .select('*')
-      .order('created_at', { ascending: false });
+  const supabase = await createUserClient();
+  let query = supabase
+    .from('notifications')
+    .select('*')
+    .order('created_at', { ascending: false });
 
-    if (unread_only === 'true') {
-      query = query.eq('read', false);
-    }
-    if (limit) {
-      query = query.limit(limit);
-    }
-
-    const { data, error } = await query;
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json(data);
-  } catch (error) {
-    console.error('Notifications GET error:', error);
-    return NextResponse.json({ error: 'Failed to fetch notifications' }, { status: 500 });
+  if (unread_only === 'true') {
+    query = query.neq('state', 'read');
   }
+  if (limit) {
+    query = query.limit(limit);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json(data);
 }
 
 export async function POST(req: NextRequest) {
@@ -66,23 +61,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  try {
-    const supabase = await createUserClient();
+  const supabase = await createUserClient();
 
-    if (parsed.data.action === 'mark_all_read') {
-      const { error } = await supabase
-        .from('notifications')
-        .update({ read: true })
-        .eq('read', false);
+  if (parsed.data.action === 'mark_all_read') {
+    const { error } = await supabase
+      .from('notifications')
+      .update({ state: 'read', read_at: new Date().toISOString() })
+      .neq('state', 'read');
 
-      if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
-      }
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Notifications POST error:', error);
-    return NextResponse.json({ error: 'Failed to process notification action' }, { status: 500 });
   }
+
+  return NextResponse.json({ success: true });
 }

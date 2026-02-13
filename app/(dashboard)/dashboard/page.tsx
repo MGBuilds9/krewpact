@@ -162,7 +162,7 @@ export default function DashboardPage() {
 
         <Card
           className="cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => router.push('/reports')}
+          onClick={() => router.push('/crm/leads')}
         >
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -170,8 +170,8 @@ export default function DashboardPage() {
                 <ClipboardList className="h-5 w-5 text-purple-600 dark:text-purple-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{atAGlance?.pendingReports ?? 0}</p>
-                <p className="text-xs text-muted-foreground">Pending Reports</p>
+                <p className="text-2xl font-bold">{atAGlance?.openLeads ?? 0}</p>
+                <p className="text-xs text-muted-foreground">Open Leads</p>
               </div>
             </div>
           </CardContent>
@@ -288,11 +288,13 @@ export default function DashboardPage() {
                       className={cn('w-2.5 h-2.5 rounded-full flex-shrink-0', getStatusColor(project.status))}
                     />
                     <div className="min-w-0">
-                      <p className="font-medium text-sm truncate">{project.name}</p>
-                      {project.address && (
+                      <p className="font-medium text-sm truncate">{project.project_name}</p>
+                      {project.site_address && (
                         <p className="text-xs text-muted-foreground flex items-center gap-1 truncate">
                           <MapPin className="h-3 w-3 flex-shrink-0" />
-                          {project.address}
+                          {typeof project.site_address === 'object'
+                            ? (project.site_address as Record<string, string>)?.street || ''
+                            : ''}
                         </p>
                       )}
                     </div>
@@ -301,9 +303,9 @@ export default function DashboardPage() {
                     <Badge variant="outline" className="text-xs capitalize">
                       {project.status.replace('_', ' ')}
                     </Badge>
-                    {project.budget && (
+                    {project.baseline_budget && (
                       <span className="text-xs text-muted-foreground hidden sm:inline">
-                        ${(project.budget / 1000).toFixed(0)}k
+                        ${(project.baseline_budget / 1000).toFixed(0)}k
                       </span>
                     )}
                   </div>
