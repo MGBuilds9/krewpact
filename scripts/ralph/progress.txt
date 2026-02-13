@@ -210,3 +210,17 @@ Branch: ralph/crm-estimating-phase1
   - Integration tests that chain multiple mock setups need `mockCreateUserClient.mockResolvedValue()` re-called before each route handler invocation — each call resets the mock.
   - Define valid v4 UUID constants at the top of integration test files for reuse across POST bodies and query params.
 ---
+## 2026-02-12 — US-011: Estimating Zod validators with calculation tests
+- Created lib/estimating/calculations.ts: pure functions — calculateLineTotal(), calculateEstimateTotals(), generateEstimateNumber()
+- Created lib/validators/estimating.ts: 5 schemas (estimateCreate, estimateUpdate, estimateLineCreate, estimateLineUpdate, estimateLineBatchUpdate) + 5 inferred types
+- Created __tests__/lib/estimating/calculations.test.ts with 21 tests (line total, estimate totals, HST, rounding, edge cases, stress test)
+- Created __tests__/validators/estimating.test.ts with 35 tests (valid/invalid creates, missing fields, boundaries, defaults, batch update)
+- Total: 56 new tests, all passing. Grand total: 322/322 tests
+- Typecheck clean, lint 0 errors (10 pre-existing warnings), build succeeds
+- **Learnings for future iterations:**
+  - Tax calculation: use `Math.round(subtotal * 13) / 100` instead of `Math.round(subtotal * 0.13 * 100) / 100` to avoid floating point multiplication errors (e.g. 999.99 * 0.13 = 129.9987 vs 999.99 * 13 = 12999.87 → /100 = 129.99... rounds to 130.00)
+  - Floating point accumulation: `reduce()` with rounding at each step: `Math.round((sum + line.line_total) * 100) / 100` prevents drift across many additions
+  - estimateLineCreateSchema uses `z.number().gt(0)` for quantity (strictly greater than zero, not `min(0)`)
+  - estimateLineBatchUpdateSchema extends estimateLineUpdateSchema with required `id` field — clean composition pattern
+  - Estimate statuses (DB enum): draft, review, sent, approved, rejected, superseded — needed for US-012 status transitions
+---

@@ -245,8 +245,8 @@
         "Lint passes"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": "calculateLineTotal formula: round(quantity * unitCost * (1 + markupPct/100), 2). calculateEstimateTotals: subtotal = sum of non-optional line totals, tax_amount = round(subtotal * 0.13, 2), total_amount = subtotal + tax_amount. All monetary values rounded to 2 decimal places."
+      "passes": true,
+      "notes": "calculateLineTotal formula: round(quantity * unitCost * (1 + markupPct/100), 2). calculateEstimateTotals: subtotal = sum of non-optional line totals, tax_amount = round(subtotal * 0.13, 2), total_amount = subtotal + tax_amount. All monetary values rounded to 2 decimal places. COMPLETED: 56 new tests (21 calc + 35 validator). Tax calculation uses integer math: Math.round(subtotal * 13) / 100 to avoid floating point issues."
     },
     {
       "id": "US-012",
