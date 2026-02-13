@@ -84,8 +84,8 @@
         "All existing tests still pass"
       ],
       "priority": 1,
-      "passes": false,
-      "notes": "Run: supabase gen types typescript --project-id owfjnfdqpzpvzvdobpxa 2>/dev/null > types/supabase.ts. IMPORTANT: When adding Database type to clients, existing API routes (projects, tasks, expenses, team) may error because they reference columns that don't match the canonical schema. Fix those routes to match. If a route references a table column that doesn't exist, update the route's Supabase query to use the correct column names from the generated types."
+      "passes": true,
+      "notes": "Run: supabase gen types typescript --project-id owfjnfdqpzpvzvdobpxa 2>/dev/null > types/supabase.ts. IMPORTANT: createClient<Database>() crashes tsc 5.9.3 with 'Map maximum size exceeded' when 28+ tables are in the Database type. Solution: call createClient() WITHOUT the generic — the __InternalSupabase field is present but auto-detection returns any. Database type is imported and re-exported for manual use. Explicit <Database> generic should be added when TypeScript fixes the Map size issue, or when a simpler type wrapper is created."
     },
     {
       "id": "US-005",

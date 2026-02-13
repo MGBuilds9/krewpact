@@ -16,6 +16,8 @@ Branch: ralph/crm-estimating-phase1
 - **TypeScript + mock Supabase:** When calling .insert() or .update() on mock client in tests, cast `from` result to `any` to avoid Supabase generic type errors: `const from = client.from('table') as any;`
 - **Existing mock pattern (legacy):** __tests__/api/projects.test.ts still uses old inline mockSupabaseChain() — future stories should migrate to shared helpers
 - **Supabase types:** Run `supabase gen types typescript --project-id owfjnfdqpzpvzvdobpxa 2>/dev/null > types/supabase.ts` — stderr MUST be piped to /dev/null
+- **CRITICAL: createClient<Database> crashes tsc 5.9.3:** Passing `<Database>` generic to `createClient()` causes "Map maximum size exceeded" RangeError in TypeScript 5.9.3 when Database has 28+ tables. WORKAROUND: Call `createClient()` without the generic. Import `Database` type directly from `@/types/supabase` for manual type assertions where needed. Both client files import and re-export `Database` for convenience.
+- **Supabase auto-detection:** @supabase/supabase-js v2.95.3 has `__InternalSupabase` field in generated types, but `createClient()` default generic is `Database = any` — NO automatic type enforcement. Table name validation only happens with explicit `<Database>` generic (which crashes tsc).
 - **Supabase push:** `supabase db push` (NOT `supabase db reset`)
 - **API route pattern:** Clerk auth guard → Zod validation → typed Supabase query → NextResponse.json()
 - **Auth in routes:** `const { userId } = await auth()` — returns null if not authenticated → return 401
@@ -94,4 +96,16 @@ Branch: ralph/crm-estimating-phase1
   - Notifications are strictly user-scoped; don't add admin bypass (privacy boundary)
   - Task comments: SELECT inherits from project membership, UPDATE/DELETE restricted to author only
   - Daily logs: UPDATE restricted to submitted_by (author), DELETE restricted to platform_admin
+---
+## 2026-02-12 — US-004: Regenerate TypeScript types and wire typed Supabase clients
+- Regenerated types/supabase.ts from live Supabase schema — now 1889 lines with all 28 tables + 13 enums
+- Wired Database type import into lib/supabase/client.ts and lib/supabase/server.ts (re-exported for consumers)
+- Created __tests__/types/supabase-types.test.ts with 13 compile-time tests verifying all table names, enums, and canonical column shapes
+- Files changed: types/supabase.ts, lib/supabase/client.ts, lib/supabase/server.ts, __tests__/types/supabase-types.test.ts
+- All 100 tests pass (87 existing + 13 new), typecheck clean, lint 0 errors (10 pre-existing warnings), build succeeds
+- **Learnings for future iterations:**
+  - `createClient<Database>()` with 28+ tables crashes tsc 5.9.3 with "Map maximum size exceeded" RangeError — this is a V8 Map size limit, not a heap issue. Workaround: don't pass `<Database>` generic to createClient, use `Database` type directly in tests/validators
+  - @supabase/supabase-js v2.95.3 `__InternalSupabase` does NOT enable auto-detection. `createClient()` without generic defaults to `any`. Table name validation only works with explicit `<Database>` generic.
+  - Existing routes (projects, tasks, expenses, dashboard, notifications, reports, team) use non-canonical column names (e.g. `name` vs `project_name`, `expenses` vs `expense_claims`, `assigned_to` vs `assigned_user_id`, `read` vs `state`). These compile because Supabase client is untyped (any). They'll be fixed in US-016.
+  - Lint warnings: type alias `_Foo` pattern triggers @typescript-eslint/no-unused-vars. Use `const x: (keyof Tables)[]` pattern instead for compile-time checks.
 ---
