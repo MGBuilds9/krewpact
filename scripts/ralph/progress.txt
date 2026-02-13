@@ -186,3 +186,27 @@ Branch: ralph/crm-estimating-phase1
   - The Zod refine() on activityCreateSchema handles the "at least one entity" validation server-side. POST returns 400 if no entity ID provided.
   - Activities don't have stage transitions or history — simpler CRUD than opportunities or leads
 ---
+## 2026-02-12 — US-010: E2E CHECKPOINT: CRM API full integration test flow
+- Created __tests__/integration/crm-flow.test.ts with 20 tests covering full CRM flow
+- **Test coverage:**
+  - Full happy path: account → contact → lead → stage transitions → opportunity → activity → pipeline
+  - Division isolation: sees own division, empty for other division
+  - Validation chain: empty name, invalid email, invalid transition, no entity
+  - Pipeline aggregation: 3 stages, multiple opps in same stage
+  - Stage history: GET with 3 transitions, PATCH inserts history record
+  - Search: matching results, no matches
+  - Cascading delete: account delete + contacts empty
+  - Auth boundary: all CRM endpoints return 401 without auth
+  - Lead stage progression: full lifecycle, lost from any stage, terminal states (won/lost)
+- **Quality checkpoint results:**
+  - Lint: 0 errors (10 pre-existing warnings, 0 new)
+  - Typecheck: clean
+  - Tests: 266/266 passed (20 new integration tests)
+  - Build: success
+- Files changed: 1 new file (__tests__/integration/crm-flow.test.ts)
+- **Learnings for future iterations:**
+  - CRITICAL: TEST_IDS UUIDs (00000000-...) fail Zod strict UUID validation in request bodies AND query params. Always use valid v4 UUIDs (like `a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11`) for any data that passes through Zod schemas. TEST_IDS are fine for fixture data returned by mocks (not validated by Zod).
+  - For stage transition tests, the mock must return the lead/opportunity at the CURRENT stage (pre-transition), not the target stage. The route fetches current state, validates the transition, then updates.
+  - Integration tests that chain multiple mock setups need `mockCreateUserClient.mockResolvedValue()` re-called before each route handler invocation — each call resets the mock.
+  - Define valid v4 UUID constants at the top of integration test files for reuse across POST bodies and query params.
+---

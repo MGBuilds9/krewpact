@@ -213,7 +213,7 @@
         "Build succeeds (npm run build)"
       ],
       "priority": 5,
-      "passes": false,
+      "passes": true,
       "notes": "CHECKPOINT — Do not proceed to US-011 until ALL tests pass and build succeeds. Run: npm run test && npm run typecheck && npm run build. This is the quality gate for the CRM module."
     },
     {
