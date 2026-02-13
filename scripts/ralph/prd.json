@@ -373,8 +373,8 @@
         "All existing tests pass"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": "Use the existing apiFetch from lib/api-client.ts for data fetching in hooks. If React Query is not installed, use SWR or the existing fetching pattern from hooks/useDashboard.ts. Check what data fetching library is already in use. CRM sub-nav should be tabs at the top of the CRM section, not a nested sidebar."
+      "passes": true,
+      "notes": "COMPLETED: 17 new hook tests (10 CRM + 7 Estimates). Uses React Query (@tanstack/react-query v5) with apiFetch from lib/api-client.ts. CRM hooks: 23 exports (accounts, contacts, leads, opportunities, activities, pipeline). Estimate hooks: 11 exports (estimates, lines, versions). Navigation updated in both Navigation.tsx and MobileNavigationDrawer.tsx with Building2 (CRM) and Calculator (Estimates) icons. CRM layout at app/(dashboard)/crm/layout.tsx with Leads/Accounts/Contacts/Opportunities tab-style navigation. Active state uses startsWith for nested route highlighting."
     },
     {
       "id": "US-018",

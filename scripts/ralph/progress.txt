@@ -326,3 +326,24 @@ Branch: ralph/crm-estimating-phase1
   - When converting read/write boolean to state enum (notifications), mark-all-read needs `{ state: 'read', read_at: new Date().toISOString() }`.
   - Total test breakdown: 402 previous + 15 rewritten projects + 5 team + 7 expenses - 7 old projects = 422
 ---
+## 2026-02-13 — US-017: CRM data hooks and navigation layout
+- Created hooks/useCRM.ts with 23 React Query hooks: useAccounts, useAccount, useCreateAccount, useUpdateAccount, useDeleteAccount, useContacts, useContact, useCreateContact, useUpdateContact, useDeleteContact, useLeads, useLead, useCreateLead, useUpdateLead, useDeleteLead, useLeadStageTransition, useOpportunities, useOpportunity, useCreateOpportunity, useUpdateOpportunity, usePipeline, useActivities, useCreateActivity
+- Created hooks/useEstimates.ts with 11 React Query hooks: useEstimates, useEstimate, useCreateEstimate, useUpdateEstimate, useDeleteEstimate, useEstimateLines, useAddEstimateLine, useBatchUpdateLines, useDeleteEstimateLine, useEstimateVersions, useCreateEstimateVersion
+- Updated components/Layout/Navigation.tsx: added Building2 (CRM) and Calculator (Estimates) icons + nav items, updated isActive to use startsWith for nested routes
+- Updated components/Layout/MobileNavigationDrawer.tsx: same nav items + isActive update
+- Created app/(dashboard)/crm/layout.tsx: sub-navigation tabs (Leads, Accounts, Contacts, Opportunities) styled to match shadcn/ui tabs appearance
+- Created app/(dashboard)/crm/page.tsx: redirect to /crm/leads
+- Created __tests__/hooks/useCRM.test.ts with 10 tests (accounts list, account by id, create account, leads with stage filter, lead stage transition, pipeline, activities, create activity)
+- Created __tests__/hooks/useEstimates.test.ts with 7 tests (estimates with status/division filters, estimate by id, estimate lines, add line, versions, create version)
+- **Quality checkpoint results:**
+  - Lint: 0 errors, 0 warnings on changed files
+  - Typecheck: clean
+  - Tests: 439/439 passed (17 new hook tests)
+  - Build: success
+- **Learnings for future iterations:**
+  - React Query hooks follow consistent pattern: useQuery for reads (queryKey includes entity + filters), useMutation for writes (invalidateQueries on success for cache busting)
+  - Hook tests use renderHook from @testing-library/react + QueryClientProvider wrapper with retry:false. Mock apiFetch via vi.mock('@/lib/api-client'). Use waitFor to await isSuccess.
+  - CRM sub-navigation uses Link components styled like tabs (not Radix Tabs which are for in-page content). Active state determined by pathname.startsWith(href + '/').
+  - Navigation items in both Navigation.tsx and MobileNavigationDrawer.tsx must stay in sync (two separate arrays). The isActive check should use startsWith for route groups like /crm/*.
+  - Total test breakdown: 422 previous + 10 CRM hooks + 7 estimate hooks = 439
+---

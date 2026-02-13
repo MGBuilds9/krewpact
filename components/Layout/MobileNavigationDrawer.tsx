@@ -16,6 +16,8 @@ import {
   Bell,
   DollarSign,
   ClipboardList,
+  Building2,
+  Calculator,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -33,6 +35,8 @@ interface MobileNavigationDrawerProps {
 
 const navigationItems = [
   { icon: Home, label: 'Dashboard', href: '/dashboard' },
+  { icon: Building2, label: 'CRM', href: '/crm' },
+  { icon: Calculator, label: 'Estimates', href: '/estimates' },
   { icon: FolderOpen, label: 'Projects', href: '/projects' },
   { icon: FileText, label: 'Documents', href: '/documents' },
   { icon: Calendar, label: 'Schedule', href: '/schedule' },
@@ -126,12 +130,14 @@ export function MobileNavigationDrawer({ isOpen, onClose }: MobileNavigationDraw
 
           {/* Navigation Items */}
           <nav className="space-y-2 mb-6">
-            {filteredItems.map((item) => (
+            {filteredItems.map((item) => {
+              const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+              return (
               <Button
                 key={item.label}
-                variant={pathname === item.href ? 'default' : 'ghost'}
+                variant={isActive ? 'default' : 'ghost'}
                 className={`w-full justify-start touch-target h-12 ${
-                  pathname === item.href
+                  isActive
                     ? 'bg-primary text-primary-foreground shadow-md'
                     : 'text-foreground hover:bg-accent hover:text-accent-foreground'
                 }`}
@@ -140,7 +146,8 @@ export function MobileNavigationDrawer({ isOpen, onClose }: MobileNavigationDraw
                 <item.icon className="h-5 w-5 mr-3" />
                 {item.label}
               </Button>
-            ))}
+              );
+            })}
           </nav>
 
           {/* Quick Actions */}
