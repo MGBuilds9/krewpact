@@ -1,0 +1,136 @@
+import { auth } from '@clerk/nextjs/server';
+import { createUserClient } from '@/lib/supabase/server';
+import { opportunityCreateSchema } from '@/lib/validators/crm';
+import { z } from 'zod';
+import { NextRequest, NextResponse } from 'next/server';
+
+const opportunityStages = [
+  'intake',
+  'site_visit',
+  'estimating',
+  'proposal',
+  'negotiation',
+  'contracted',
+  'closed_lost',
+] as const;
+
+const querySchema = z.object({
+  division_id: z.string().uuid().optional(),
+  stage: z.enum(opportunityStages).optional(),
+  owner_user_id: z.string().uuid().optional(),
+  view: z.enum(['list', 'pipeline']).optional(),
+  limit: z.coerce.number().int().positive().max(100).optional(),
+  offset: z.coerce.number().int().min(0).optional(),
+});
+
+export async function GET(req: NextRequest) {
+  const { userId } = await auth();
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const params = Object.fromEntries(req.nextUrl.searchParams);
+  const parsed = querySchema.safeParse(params);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
+
+  const { division_id, stage, owner_user_id, view, limit, offset } =
+    parsed.data;
+  const supabase = await createUserClient();
+
+  let query = supabase
+    .from('opportunities')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (division_id) {
+    query = query.eq('division_id', division_id);
+  }
+
+  if (stage) {
+    query = query.eq('stage', stage);
+  }
+
+  if (owner_user_id) {
+    query = query.eq('owner_user_id', owner_user_id);
+  }
+
+  if (limit) {
+    query = query.limit(limit);
+  }
+
+  if (offset) {
+    query = query.range(offset, offset + (limit ?? 50) - 1);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  // Pipeline view: group opportunities by stage with counts and totals
+  if (view === 'pipeline') {
+    const stageMap: Record<
+      string,
+      { opportunities: typeof data; total_value: number; count: number }
+    > = {};
+
+    for (const s of opportunityStages) {
+      stageMap[s] = { opportunities: [], total_value: 0, count: 0 };
+    }
+
+    for (const opp of data ?? []) {
+      const oppStage = (opp as Record<string, unknown>).stage as string;
+      const revenue =
+        ((opp as Record<string, unknown>).estimated_revenue as number) ?? 0;
+      if (stageMap[oppStage]) {
+        stageMap[oppStage].opportunities.push(opp);
+        stageMap[oppStage].total_value += revenue;
+        stageMap[oppStage].count += 1;
+      }
+    }
+
+    return NextResponse.json({ stages: stageMap });
+  }
+
+  return NextResponse.json(data);
+}
+
+export async function POST(req: NextRequest) {
+  const { userId } = await auth();
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+  }
+
+  const parsed = opportunityCreateSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
+
+  const supabase = await createUserClient();
+  const insertData = {
+    ...parsed.data,
+    stage: parsed.data.stage ?? 'intake',
+  };
+
+  const { data, error } = await supabase
+    .from('opportunities')
+    .insert(insertData)
+    .select()
+    .single();
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json(data, { status: 201 });
+}

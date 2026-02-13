@@ -172,7 +172,7 @@
         "Lint passes"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": "Pipeline view: group by stage, sum estimated_revenue per stage. Return as object keyed by stage name. Stage history insert should happen in the same PATCH handler — detect if 'stage' field changed by comparing before/after."
     },
     {

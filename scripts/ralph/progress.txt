@@ -157,3 +157,19 @@ Branch: ralph/crm-estimating-phase1
   - ALLOWED_TRANSITIONS as Record<Stage, Stage[]> is clean and easy to test exhaustively
   - The mock Supabase client returns the same data for all chained calls (select, update, etc.) — for stage transition tests, the mock returns currentLead for both the fetch and update calls. Since we're testing HTTP status codes (200 vs 400), this is sufficient.
 ---
+## 2026-02-12 — US-008: Opportunities CRUD + stage history API with tests
+- Created app/api/crm/opportunities/route.ts (GET with ?view=pipeline + POST)
+- Created app/api/crm/opportunities/[id]/route.ts (GET with stage_history join, PATCH with stage history recording, DELETE)
+- Created __tests__/api/crm/opportunities.test.ts with 15 tests
+- Pipeline view groups opportunities by stage with counts and total_value per stage
+- Stage history: PATCH detects stage change by fetching current → comparing → inserting into opportunity_stage_history
+- Tests also verify that non-stage updates do NOT write to history table (via from() call inspection)
+- Files changed: 3 new files (2 routes + 1 test)
+- All 232 tests pass, typecheck clean, lint 0 errors (10 pre-existing warnings), build succeeds
+- **Learnings for future iterations:**
+  - Pipeline view: cast opportunity fields via `(opp as Record<string, unknown>).stage` since mock client returns untyped data
+  - Stage history detection in PATCH: fetch current stage first, compare with parsed.data.stage, insert only if different
+  - Test for "no history when stage unchanged": inspect `client.from` mock calls array to verify `opportunity_stage_history` NOT called
+  - Zod UUID validation is strict — `b1ffcd00-0d1c-5fg9-cc7e-7cc0ce491b22` fails because 'g' is invalid hex. Always use valid hex chars in test UUIDs.
+  - GET /[id] uses `.select('*, opportunity_stage_history(*)')` to join stage history via Supabase relationship
+---
