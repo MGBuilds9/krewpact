@@ -303,8 +303,8 @@
         "Lint passes"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": "Version creation flow: 1) Fetch estimate + lines, 2) Build snapshot JSON, 3) Insert into estimate_versions(estimate_id, revision_no, snapshot, reason, created_by), 4) Update estimate SET revision_no = revision_no + 1."
+      "passes": true,
+      "notes": "Version creation flow: 1) Fetch estimate + lines, 2) Build snapshot JSON, 3) Insert into estimate_versions(estimate_id, revision_no, snapshot, reason, created_by), 4) Update estimate SET revision_no = revision_no + 1. COMPLETED: 10 new tests. Snapshot uses Object.fromEntries filter to strip estimate_lines from estimate data (avoids unused var lint warning). POST parses optional reason from body with try/catch fallback to null."
     },
     {
       "id": "US-015",

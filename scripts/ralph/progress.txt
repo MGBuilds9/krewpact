@@ -257,3 +257,16 @@ Branch: ralph/crm-estimating-phase1
   - `makeJsonRequest` body type was `Record<string, unknown>` — needed to widen to `Record<string, unknown> | Record<string, unknown>[]` for PUT batch endpoints that accept arrays.
   - `recalculateParentTotals` is duplicated in both route files — could be extracted to a shared module in `lib/estimating/` but kept local for simplicity since only 2 consumers.
 ---
+## 2026-02-12 — US-014: Estimate versioning API with snapshot tests
+- Created app/api/estimates/[id]/versions/route.ts (GET list + POST create snapshot)
+- Created __tests__/api/estimates/versions.test.ts with 10 tests
+- **Version creation flow:** 1) Fetch estimate with `estimate_lines(*)` join, 2) Separate estimate data from lines, 3) Build snapshot JSON `{ estimate, lines, created_at }`, 4) Insert into `estimate_versions`, 5) Increment estimate `revision_no`
+- **GET:** Returns versions sorted by revision_no descending, filtered by estimate_id
+- **POST:** Accepts optional `{ reason }` body, creates immutable snapshot, returns 201
+- Files changed: 2 new files (1 route + 1 test), 1 updated (prd.json)
+- All 385 tests pass (10 new), typecheck clean, lint 0 errors, build succeeds
+- **Learnings for future iterations:**
+  - To strip a key from a Record without triggering unused-var lint warnings, use `Object.fromEntries(Object.entries(obj).filter(([key]) => key !== 'unwanted_key'))` instead of destructuring with `_prefix`
+  - Version snapshot stores the CURRENT revision_no at snapshot time, then increments the estimate's revision_no. So revision_no in versions table matches the estimate state AT that point in time.
+  - POST body parsing uses try/catch with null fallback — an empty body `{}` is valid (reason is optional). The route doesn't use Zod validation since the only field is a simple optional string.
+---
