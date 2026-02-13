@@ -42,7 +42,7 @@
         "All existing 22 tests still pass"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "Run: supabase db push to apply. Verify with: supabase gen types typescript --project-id owfjnfdqpzpvzvdobpxa 2>/dev/null | head -50 (should show new tables). COALESCE in unique constraints must use CREATE UNIQUE INDEX, not inline UNIQUE. RLS functions already exist in public schema from 00002."
     },
     {

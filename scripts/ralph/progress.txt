@@ -56,3 +56,20 @@ Branch: ralph/crm-estimating-phase1
   - When testing .insert()/.update() chains against typed mock client, cast `from` result to `any` to avoid TS2769 overload errors
   - mockClerkAuth configures mockResolvedValue (doesn't call the mock) — test the resolved values, not call count
 ---
+## 2026-02-12 — US-002: CRM + Operations schema migration
+- Created supabase/migrations/00003_crm_operations.sql
+- **8 enums:** lead_stage, opportunity_stage, estimate_status, project_status, task_status, expense_status, notification_channel, notification_state
+- **22 tables:** accounts, contacts, leads, opportunities, activities, opportunity_stage_history, estimates, estimate_lines, estimate_versions, projects, project_members, milestones, tasks, task_comments, project_daily_logs, expense_claims, notifications, notification_preferences, erp_sync_map, erp_sync_jobs, erp_sync_events, erp_sync_errors
+- **16 indexes** from Resolution doc H6 + canonical schema
+- **17 updated_at triggers** for all tables with updated_at column
+- Dropped FKs to tables not in this phase: contract_terms, file_folders, file_metadata, portal_accounts, assemblies, cost_catalog_items — those columns are nullable UUID without FK constraint
+- Migration applied successfully via `supabase db push`
+- Generated types verified: all 22 new tables appear in `supabase gen types`
+- All 49 existing tests pass, typecheck clean, lint 0 errors (10 pre-existing warnings)
+- **Learnings for future iterations:**
+  - Already had: workflow_state, sync_status, sync_direction enums + set_updated_at() from 00001 — no need to recreate
+  - citext extension also from 00001 — contacts.email and leads.email use CITEXT as expected
+  - project_daily_logs has UNIQUE(project_id, log_date, submitted_by) — compound unique
+  - estimate_versions has UNIQUE(estimate_id, revision_no) — for versioning
+  - erp_sync_map has UNIQUE(entity_type, local_id, erp_doctype) — for dedup
+---
