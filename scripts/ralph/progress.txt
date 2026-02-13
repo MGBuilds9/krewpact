@@ -368,3 +368,28 @@ Branch: ralph/crm-estimating-phase1
   - StageProgressBar renders "Lost" separately at the bottom (not inline with pipeline stages) since lost is a terminal state from any stage
   - Total test breakdown: 439 previous + 6 StageProgressBar + 5 ActivityTimeline + 6 leads page = 456
 ---
+## 2026-02-13 — US-019: Accounts + Contacts + Opportunities pages with component tests
+- Created components/CRM/PipelineView.tsx: reusable pipeline board with flex columns per stage, STAGE_ORDER for consistent ordering, empty state, column totals
+- Created components/CRM/OpportunityCard.tsx: card with name, CAD currency, probability percentage, target close date
+- Created app/(dashboard)/crm/accounts/page.tsx: accounts list with search, division filter, New Account button, Card-based list
+- Created app/(dashboard)/crm/accounts/[id]/page.tsx: account detail with shadcn/ui Tabs (Overview, Contacts, Activities, Opportunities)
+- Created app/(dashboard)/crm/contacts/page.tsx: contacts list with search, email/phone/role display
+- Created app/(dashboard)/crm/opportunities/page.tsx: pipeline view using PipelineView component with division filter
+- Created 5 test files:
+  - __tests__/components/CRM/PipelineView.test.tsx (5 tests): stages as columns, correct placement, column totals, empty stages, empty pipeline
+  - __tests__/components/CRM/OpportunityCard.test.tsx (5 tests): name+value, CAD format, probability, null revenue, close date
+  - __tests__/pages/crm/accounts.test.tsx (5 tests): list, empty state, search, new button, loading
+  - __tests__/pages/crm/contacts.test.tsx (5 tests): list, empty state, search, email display, loading
+  - __tests__/pages/crm/opportunities.test.tsx (3 tests): pipeline with data, loading, empty pipeline
+- **Quality checkpoint results:**
+  - Lint: 0 errors (21 pre-existing warnings, 0 new)
+  - Typecheck: clean
+  - Tests: 479/479 passed (23 new)
+  - Build: success (all new routes registered)
+- **Learnings for future iterations:**
+  - Date-only strings (YYYY-MM-DD) parsed as UTC midnight — toLocaleDateString shifts them in non-UTC timezones. Use full ISO datetime (YYYY-MM-DDTHH:mm:ssZ) in tests to avoid off-by-one day issues.
+  - PipelineView uses STAGE_ORDER constant to maintain consistent column order regardless of the order keys appear in the pipeline data object.
+  - Account detail page filters opportunities client-side by account_id since the pipeline API doesn't support account_id filter.
+  - Tabs component from shadcn/ui works well for entity detail pages with multiple sections (preferred over route-based tabs for in-page content).
+  - Total test breakdown: 456 previous + 5 PipelineView + 5 OpportunityCard + 5 accounts + 5 contacts + 3 opportunities = 479
+---

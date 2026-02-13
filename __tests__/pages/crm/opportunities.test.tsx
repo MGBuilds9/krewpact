@@ -1,0 +1,106 @@
+'use client';
+
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import React from 'react';
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    back: vi.fn(),
+  }),
+  usePathname: () => '/crm/opportunities',
+  useParams: () => ({}),
+  useSearchParams: () => new URLSearchParams(),
+}));
+
+const mockUsePipeline = vi.fn();
+
+vi.mock('@/hooks/useCRM', () => ({
+  usePipeline: (...args: unknown[]) => mockUsePipeline(...args),
+}));
+
+vi.mock('@/contexts/DivisionContext', () => ({
+  useDivision: () => ({
+    activeDivision: { id: 'div-1', name: 'MDM Contracting', code: 'contracting' },
+    userDivisions: [{ id: 'div-1', name: 'MDM Contracting', code: 'contracting' }],
+    isLoading: false,
+  }),
+}));
+
+vi.mock('@/hooks/use-mobile', () => ({
+  useIsMobile: () => false,
+}));
+
+import OpportunitiesPage from '@/app/(dashboard)/crm/opportunities/page';
+
+describe('Opportunities Pipeline Page', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUsePipeline.mockReturnValue({
+      data: { stages: {} },
+      isLoading: false,
+      isError: false,
+    });
+  });
+
+  it('renders pipeline view with stages', () => {
+    mockUsePipeline.mockReturnValue({
+      data: {
+        stages: {
+          intake: {
+            opportunities: [
+              {
+                id: 'opp-1',
+                opportunity_name: 'Big Reno Job',
+                stage: 'intake',
+                estimated_revenue: 100000,
+                probability_pct: 50,
+                target_close_date: null,
+                lead_id: null,
+                account_id: null,
+                contact_id: null,
+                division_id: 'div-1',
+                owner_user_id: null,
+                created_at: '2026-02-12T10:00:00Z',
+                updated_at: '2026-02-12T10:00:00Z',
+              },
+            ],
+            total_value: 100000,
+            count: 1,
+          },
+          estimating: { opportunities: [], total_value: 0, count: 0 },
+        },
+      },
+      isLoading: false,
+      isError: false,
+    });
+
+    render(<OpportunitiesPage />);
+    expect(screen.getByText('Big Reno Job')).toBeDefined();
+  });
+
+  it('shows loading state', () => {
+    mockUsePipeline.mockReturnValue({
+      data: undefined,
+      isLoading: true,
+      isError: false,
+    });
+
+    const { container } = render(<OpportunitiesPage />);
+    const skeletons = container.querySelectorAll('[class*="animate-pulse"]');
+    expect(skeletons.length).toBeGreaterThan(0);
+  });
+
+  it('shows empty pipeline message when no stages data', () => {
+    mockUsePipeline.mockReturnValue({
+      data: { stages: {} },
+      isLoading: false,
+      isError: false,
+    });
+
+    render(<OpportunitiesPage />);
+    expect(screen.getByText(/no opportunities/i)).toBeDefined();
+  });
+});

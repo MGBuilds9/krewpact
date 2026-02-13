@@ -1,0 +1,207 @@
+'use client';
+
+import { useParams, useRouter } from 'next/navigation';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ArrowLeft, Mail, Phone, User } from 'lucide-react';
+import { useAccount, useContacts, useActivities, useOpportunities } from '@/hooks/useCRM';
+import { ActivityTimeline } from '@/components/CRM/ActivityTimeline';
+
+function formatCurrency(value: number | null): string {
+  if (value == null) return '-';
+  return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(value);
+}
+
+export default function AccountDetailPage() {
+  const params = useParams();
+  const router = useRouter();
+  const accountId = params.id as string;
+  const { data: account, isLoading } = useAccount(accountId);
+  const { data: contacts } = useContacts({ accountId });
+  const { data: activities } = useActivities({ accountId });
+  const { data: opportunities } = useOpportunities({ divisionId: account?.division_id ?? undefined });
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-24 w-full rounded-xl" />
+        <Skeleton className="h-48 w-full rounded-xl" />
+      </div>
+    );
+  }
+
+  if (!account) {
+    return (
+      <div className="text-center py-12">
+        <h2 className="text-2xl font-bold mb-2">Account not found</h2>
+        <p className="text-muted-foreground mb-4">
+          This account may have been deleted or you don&apos;t have access.
+        </p>
+        <Button onClick={() => router.push('/crm/accounts')}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Accounts
+        </Button>
+      </div>
+    );
+  }
+
+  const accountContacts = contacts ?? [];
+  const accountActivities = activities ?? [];
+  const accountOpportunities = (opportunities ?? []).filter(
+    (o) => o.account_id === accountId,
+  );
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-start gap-4">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => router.push('/crm/accounts')}
+          className="mt-1"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <div className="flex-1 min-w-0">
+          <h1 className="text-2xl font-bold tracking-tight truncate">{account.account_name}</h1>
+          {account.account_type && (
+            <p className="text-muted-foreground capitalize">{account.account_type}</p>
+          )}
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <Tabs defaultValue="overview">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="contacts">Contacts ({accountContacts.length})</TabsTrigger>
+          <TabsTrigger value="activities">Activities</TabsTrigger>
+          <TabsTrigger value="opportunities">Opportunities ({accountOpportunities.length})</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview">
+          <Card>
+            <CardHeader>
+              <CardTitle>Account Information</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <dt className="text-sm font-medium text-muted-foreground">Account Type</dt>
+                  <dd className="text-sm capitalize">{account.account_type || '-'}</dd>
+                </div>
+                <div>
+                  <dt className="text-sm font-medium text-muted-foreground">Created</dt>
+                  <dd className="text-sm">
+                    {new Date(account.created_at).toLocaleDateString('en-CA', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })}
+                  </dd>
+                </div>
+                {account.notes && (
+                  <div className="sm:col-span-2">
+                    <dt className="text-sm font-medium text-muted-foreground">Notes</dt>
+                    <dd className="text-sm whitespace-pre-wrap">{account.notes}</dd>
+                  </div>
+                )}
+              </dl>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="contacts">
+          <Card>
+            <CardContent className="pt-6">
+              {accountContacts.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <User className="mx-auto h-8 w-8 mb-2 opacity-50" />
+                  <p>No contacts yet</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {accountContacts.map((contact) => (
+                    <div
+                      key={contact.id}
+                      className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 cursor-pointer"
+                      onClick={() => router.push(`/crm/contacts/${contact.id}`)}
+                    >
+                      <div>
+                        <div className="font-medium text-sm">
+                          {contact.first_name} {contact.last_name}
+                          {contact.is_primary && (
+                            <span className="ml-2 text-xs text-primary">(Primary)</span>
+                          )}
+                        </div>
+                        {contact.role_title && (
+                          <div className="text-xs text-muted-foreground">{contact.role_title}</div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        {contact.email && (
+                          <span className="flex items-center gap-1">
+                            <Mail className="h-3 w-3" />
+                            {contact.email}
+                          </span>
+                        )}
+                        {contact.phone && (
+                          <span className="flex items-center gap-1">
+                            <Phone className="h-3 w-3" />
+                            {contact.phone}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="activities">
+          <Card>
+            <CardContent className="pt-6">
+              <ActivityTimeline activities={accountActivities} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="opportunities">
+          <Card>
+            <CardContent className="pt-6">
+              {accountOpportunities.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>No opportunities linked to this account</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {accountOpportunities.map((opp) => (
+                    <div
+                      key={opp.id}
+                      className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 cursor-pointer"
+                      onClick={() => router.push(`/crm/opportunities/${opp.id}`)}
+                    >
+                      <div>
+                        <div className="font-medium text-sm">{opp.opportunity_name}</div>
+                        <div className="text-xs text-muted-foreground capitalize">{opp.stage.replace('_', ' ')}</div>
+                      </div>
+                      <div className="text-sm font-medium">
+                        {formatCurrency(opp.estimated_revenue)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}

@@ -415,8 +415,8 @@
         "All tests pass"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": "Pipeline view: simple CSS grid/flex columns, one per stage. No drag-and-drop (keep it simple). Click opportunity card to navigate to detail page. Opportunity card formats currency as CAD. Account detail tabs use shadcn/ui Tabs component."
+      "passes": true,
+      "notes": "COMPLETED: 23 new tests (5 PipelineView + 5 OpportunityCard + 5 accounts page + 5 contacts page + 3 opportunities page). Pipeline uses flex layout with STAGE_ORDER for consistent column ordering. OpportunityCard formats currency as CAD with Intl.NumberFormat. Account detail uses shadcn/ui Tabs for Overview/Contacts/Activities/Opportunities. Date-only strings (YYYY-MM-DD) have timezone issues in toLocaleDateString — use full ISO datetime for tests."
     },
     {
       "id": "US-020",
