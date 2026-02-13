@@ -73,3 +73,25 @@ Branch: ralph/crm-estimating-phase1
   - estimate_versions has UNIQUE(estimate_id, revision_no) — for versioning
   - erp_sync_map has UNIQUE(entity_type, local_id, erp_doctype) — for dedup
 ---
+## 2026-02-12 — US-003: RLS policies for CRM + operations tables
+- Created supabase/migrations/00004_crm_rls_policies.sql
+- RLS ENABLED on all 22 tables from US-002
+- **Policy patterns:**
+  - Division-scoped (accounts, leads, opportunities, estimates): `division_id::text IN (SELECT jsonb_array_elements_text(public.krewpact_divisions()))` + platform_admin bypass
+  - Parent-inherited (contacts→accounts, estimate_lines→estimates, estimate_versions→estimates, opportunity_stage_history→opportunities, task_comments→tasks): subquery to parent table's division
+  - Activities: polymorphic — checks division via linked opportunity OR lead OR account OR contact
+  - Project tables: member-based SELECT + division-scoped modify + platform_admin
+  - Expense claims: user-owned + accounting role + platform_admin visibility
+  - Notifications: strictly user-scoped (even admin only sees own)
+  - ERP sync tables: platform_admin + operations_manager only
+- Immutability enforced: no UPDATE/DELETE on opportunity_stage_history, estimate_versions, erp_sync_events, erp_sync_errors
+- Created __tests__/rls/crm-policies.test.ts with 38 tests (validates policy intent via pure TypeScript logic)
+- Migration applied via `supabase db push`
+- All 87 tests pass (49 existing + 38 new), typecheck clean, lint 0 errors (10 pre-existing warnings)
+- **Learnings for future iterations:**
+  - Contacts don't have division_id — RLS inherits via account_id subquery to accounts table
+  - Activities have 4 optional FK columns (opportunity, lead, account, contact) — RLS checks all with OR
+  - Notifications are strictly user-scoped; don't add admin bypass (privacy boundary)
+  - Task comments: SELECT inherits from project membership, UPDATE/DELETE restricted to author only
+  - Daily logs: UPDATE restricted to submitted_by (author), DELETE restricted to platform_admin
+---

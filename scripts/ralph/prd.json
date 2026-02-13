@@ -65,7 +65,7 @@
         "All existing tests still pass"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "Division isolation pattern: USING (division_id::text IN (SELECT jsonb_array_elements_text(public.krewpact_divisions()))). For project member access: USING (id IN (SELECT project_id FROM project_members WHERE user_id::text = public.krewpact_user_id()) OR public.is_platform_admin()). RLS test file should test the SQL helper functions return expected values given mock JWT claims."
     },
     {
