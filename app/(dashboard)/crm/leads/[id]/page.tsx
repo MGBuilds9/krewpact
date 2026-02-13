@@ -2,7 +2,6 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, ArrowRight, XCircle, Zap } from 'lucide-react';
@@ -55,7 +54,6 @@ export default function LeadDetailPage() {
   const nextStages = ALLOWED_TRANSITIONS[currentStage] || [];
   const nextRegularStage = nextStages.find((s) => s !== 'lost');
   const canMarkLost = nextStages.includes('lost');
-  const isTerminal = nextStages.length === 0;
 
   function handleNextStage() {
     if (!nextRegularStage) return;

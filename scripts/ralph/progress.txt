@@ -418,3 +418,43 @@ Branch: ralph/crm-estimating-phase1
   - LineItemEditor sorts lines by sort_order before rendering — always pass sort_order in test fixtures
   - Total test breakdown: 479 previous + 8 LineItemEditor + 5 TotalsPanel + 4 VersionHistory + 6 estimates list + 8 estimate builder = 510
 ---
+## 2026-02-13 — US-021: E2E CHECKPOINT: Full UI build + all component tests pass
+- **Quality checkpoint results:**
+  - Tests: 510/510 passed across 39 test files
+  - Typecheck: clean (zero errors)
+  - Lint: 0 errors (12 pre-existing warnings — all in non-CRM/Estimates files: admin, documents, notifications, projects, reports, settings, users, ui/chart, ui/responsive-table, hooks/use-toast)
+  - Build: success (all 59 routes registered, 20 static pages generated)
+- **Dead code cleanup (9 items fixed):**
+  - Removed unused `Badge` import from leads/[id]/page.tsx
+  - Removed unused `isTerminal` variable from leads/[id]/page.tsx
+  - Removed unused `estimateGET` import from estimating-flow.test.ts
+  - Removed unused `lineDELETE` import from estimating-flow.test.ts
+  - Removed unused `TEST_IDS` import from estimating-flow.test.ts
+  - Removed unused `VALID_ACCOUNT_ID` and `VALID_CONTACT_ID` constants from estimating-flow.test.ts
+  - Removed unused `requiredLine` variable from estimating-flow.test.ts
+  - Removed unused `allStages` + `LeadStage` import from StageProgressBar.test.tsx
+- **Route verification (all accessible via navigation):**
+  - CRM pages: /crm (redirect→leads), /crm/leads, /crm/leads/[id], /crm/accounts, /crm/accounts/[id], /crm/contacts, /crm/opportunities
+  - Estimate pages: /estimates, /estimates/[id]
+  - Navigation: Building2 (CRM) + Calculator (Estimates) in both desktop Navigation.tsx and MobileNavigationDrawer.tsx
+- **Component render verification (all 7 tested):**
+  - StageProgressBar (6 tests), ActivityTimeline (5 tests), PipelineView (5 tests), OpportunityCard (5 tests), LineItemEditor (8 tests), TotalsPanel (5 tests), VersionHistory (4 tests)
+- **Total test count: 510 tests across 39 files**
+  - Test breakdown by category:
+    - Helpers/infrastructure: 27 (helpers) + 13 (types) + 2 (supabase client) + 5 (api-client) + 8 (erp client) = 55
+    - RLS: 38
+    - Validators: 58 (CRM) + 35 (estimating) = 93
+    - Pure logic: 12 (lead stages) + 21 (calculations) + 18 (estimate status) = 51
+    - CRM API: 13 (accounts) + 11 (contacts) + 23 (leads) + 15 (opportunities) + 14 (activities) = 76
+    - Estimates API: 17 (estimates) + 18 (lines) + 10 (versions) = 45
+    - Integration: 20 (CRM flow) + 17 (estimating flow) = 37
+    - Hooks: 10 (CRM) + 7 (estimates) = 17
+    - UI routes: 15 (projects) + 5 (team) + 7 (expenses) = 27
+    - Components: 6 (StageProgressBar) + 5 (ActivityTimeline) + 5 (PipelineView) + 5 (OpportunityCard) + 8 (LineItemEditor) + 5 (TotalsPanel) + 4 (VersionHistory) = 38
+    - Pages: 6 (leads) + 5 (accounts) + 5 (contacts) + 3 (opportunities) + 6 (estimates list) + 8 (estimate builder) = 33
+- Files changed: 3 files (leads detail page, estimating-flow test, StageProgressBar test)
+- **Learnings for future iterations:**
+  - When creating mock data with factory functions, only create variables you actually use in assertions or API calls — Vitest/ESLint catches unused variables
+  - Integration test files accumulate dead imports as routes evolve — clean up after each major checkpoint
+  - Lint warnings reduced from 21 → 12 by cleaning CRM/Estimates scope; remaining 12 are all in pre-existing files outside current feature scope
+---

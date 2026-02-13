@@ -2,11 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { StageProgressBar } from '@/components/CRM/StageProgressBar';
-import type { LeadStage } from '@/lib/crm/lead-stages';
-
 describe('StageProgressBar', () => {
-  const allStages: LeadStage[] = ['new', 'qualified', 'estimating', 'proposal_sent', 'won', 'lost'];
-
   it('renders all lead stages', () => {
     render(<StageProgressBar currentStage="new" />);
     expect(screen.getByText('New')).toBeDefined();

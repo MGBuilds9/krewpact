@@ -16,7 +16,6 @@ import { createUserClient } from '@/lib/supabase/server';
 // Estimate routes
 import { GET as estimatesGET, POST as estimatesPOST } from '@/app/api/estimates/route';
 import {
-  GET as estimateGET,
   PATCH as estimatePATCH,
   DELETE as estimateDELETE,
 } from '@/app/api/estimates/[id]/route';
@@ -29,7 +28,6 @@ import {
 } from '@/app/api/estimates/[id]/lines/route';
 import {
   PATCH as linePATCH,
-  DELETE as lineDELETE,
 } from '@/app/api/estimates/[id]/lines/[lineId]/route';
 
 // Estimate version routes
@@ -47,7 +45,6 @@ import {
   makeEstimate,
   makeEstimateLine,
   resetFixtureCounter,
-  TEST_IDS,
 } from '@/__tests__/helpers';
 
 // Pure calculation functions
@@ -62,8 +59,6 @@ const mockCreateUserClient = vi.mocked(createUserClient);
 // Valid v4 UUIDs for Zod-validated fields
 const VALID_DIVISION_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 const VALID_OPPORTUNITY_ID = 'd3bbee22-2f3e-4fb1-bb9a-9ee2ea603d44';
-const VALID_ACCOUNT_ID = 'b1ffcd00-0d1c-4ef9-bb7e-7cc0ce491b22';
-const VALID_CONTACT_ID = 'e4ccff33-3a4f-4fc2-ccab-aff3fb714e55';
 const ESTIMATE_ID = 'f5ddaa44-4b5a-4fd3-ddbc-baa4ac825f66';
 const LINE_ID_1 = 'a1aabb11-1c1d-4ae1-aa11-1bb1cc1dd1e1';
 const LINE_ID_2 = 'a2aabb22-2c2d-4ae2-aa22-2bb2cc2dd2e2';
@@ -373,13 +368,6 @@ describe('Estimating Integration: Optional lines excluded from totals', () => {
   });
 
   it('optional line does not affect subtotal calculation', async () => {
-    const requiredLine = makeEstimateLine({
-      quantity: 10,
-      unit_cost: 100,
-      markup_pct: 0,
-      line_total: 1000,
-      is_optional: false,
-    });
     const optionalLine = makeEstimateLine({
       quantity: 5,
       unit_cost: 200,
