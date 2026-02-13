@@ -10,9 +10,14 @@ export class ErpClient {
   private apiSecret: string;
 
   constructor() {
-    this.baseUrl = process.env.ERPNEXT_BASE_URL!;
-    this.apiKey = process.env.ERPNEXT_API_KEY!;
-    this.apiSecret = process.env.ERPNEXT_API_SECRET!;
+    this.baseUrl = process.env.ERPNEXT_BASE_URL || '';
+    this.apiKey = process.env.ERPNEXT_API_KEY || '';
+    this.apiSecret = process.env.ERPNEXT_API_SECRET || '';
+  }
+
+  /** Check if running in mock mode (no real ERPNext instance) */
+  isMockMode(): boolean {
+    return !this.baseUrl || this.baseUrl === 'mock';
   }
 
   getAuthHeaders(): Record<string, string> {
@@ -66,5 +71,49 @@ export class ErpClient {
 
     const json = await response.json();
     return json.data as T[];
+  }
+
+  async create<T>(doctype: string, data: Record<string, unknown>): Promise<T> {
+    const url = this.getResourceUrl(doctype);
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ data }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`ERPNext API error: ${response.status} ${response.statusText}`);
+    }
+
+    const json = await response.json();
+    return json.data as T;
+  }
+
+  async update<T>(doctype: string, name: string, data: Record<string, unknown>): Promise<T> {
+    const url = this.getResourceUrl(doctype, name);
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ data }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`ERPNext API error: ${response.status} ${response.statusText}`);
+    }
+
+    const json = await response.json();
+    return json.data as T;
+  }
+
+  async delete(doctype: string, name: string): Promise<void> {
+    const url = this.getResourceUrl(doctype, name);
+    const response = await fetch(url, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error(`ERPNext API error: ${response.status} ${response.statusText}`);
+    }
   }
 }

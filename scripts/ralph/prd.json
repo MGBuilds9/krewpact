@@ -480,8 +480,8 @@
         "Build succeeds"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": "Mock mode detection: const isMock = !process.env.ERPNEXT_BASE_URL || process.env.ERPNEXT_BASE_URL === 'mock'. In mock mode, generate deterministic fake ERPNext docnames like 'CUST-MOCK-001'. Real mode will use the existing ErpClient.create() method."
+      "passes": true,
+      "notes": "Mock mode detection: const isMock = !process.env.ERPNEXT_BASE_URL || process.env.ERPNEXT_BASE_URL === 'mock'. In mock mode, generate deterministic fake ERPNext docnames like 'CUST-MOCK-001'. Real mode will use the existing ErpClient.create() method. COMPLETED: 19 new tests (11 sync-service + 8 API route). SyncService orchestrates full sync flow: job creation → entity fetch → mock/real ERPNext call → sync map upsert → event logging → job status update. ErpClient updated with create/update/delete + isMockMode(). Mock responses generate realistic Customer and Quotation shapes."
     },
     {
       "id": "US-023",
