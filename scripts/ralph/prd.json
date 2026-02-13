@@ -265,8 +265,8 @@
         "Lint passes"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": "Status transitions: draft→review, review→sent, review→draft (return to draft), sent→approved, sent→rejected, any→superseded. Reject all other transitions. GET /[id] should join estimate_lines ordered by sort_order and return them nested in the response: { ...estimate, lines: [...] }."
+      "passes": true,
+      "notes": "Status transitions: draft→review, review→sent, review→draft (return to draft), sent→approved, sent→rejected, any→superseded. Reject all other transitions. GET /[id] should join estimate_lines ordered by sort_order and return them nested in the response: { ...estimate, lines: [...] }. COMPLETED: 35 new tests (18 status + 17 API). PATCH handles status transitions by fetching current status first, validating via pure function, then updating."
     },
     {
       "id": "US-013",

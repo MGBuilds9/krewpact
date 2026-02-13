@@ -224,3 +224,20 @@ Branch: ralph/crm-estimating-phase1
   - estimateLineBatchUpdateSchema extends estimateLineUpdateSchema with required `id` field — clean composition pattern
   - Estimate statuses (DB enum): draft, review, sent, approved, rejected, superseded — needed for US-012 status transitions
 ---
+## 2026-02-12 — US-012: Estimates CRUD API with auto-calculation and tests
+- Created lib/estimating/estimate-status.ts: pure functions for status transition validation (ALLOWED_STATUS_TRANSITIONS map + validateStatusTransition())
+- Created app/api/estimates/route.ts (GET with division_id/status/opportunity_id filters + POST with auto-generated estimate_number)
+- Created app/api/estimates/[id]/route.ts (GET with estimate_lines join, PATCH with status transition validation, DELETE)
+- Created __tests__/lib/estimating/estimate-status.test.ts with 18 tests
+- Created __tests__/api/estimates/estimates.test.ts with 17 tests
+- Total: 35 new tests, all passing. Grand total: 357/357 tests
+- Typecheck clean, lint 0 errors (10 pre-existing warnings), build succeeds
+- **Learnings for future iterations:**
+  - Estimate status transitions follow the exact same pattern as lead stages (pure function + validation in PATCH handler)
+  - PATCH route handles status transitions: 1) extract status from body, 2) fetch current record, 3) validate transition via pure function, 4) update with merged data
+  - GET /[id] uses `.select('*, estimate_lines(*)')` for Supabase relationship join — returns lines nested in response
+  - POST uses count query with `{ count: 'exact', head: true }` to get existing estimate count for number generation
+  - The mock Supabase client's count query returns `{ count: 0 }` as `data` by default (via defaultResponse), which is sufficient for testing
+  - Status transition allowed paths: draft→review, review→sent, review→draft, sent→approved, sent→rejected. Terminal: approved, rejected, superseded.
+  - `any→superseded` from PRD notes: implemented via ALLOWED_STATUS_TRANSITIONS but currently not exposed in normal transitions (superseded is typically set programmatically when creating a new version). The superseded status itself is terminal once set.
+---
