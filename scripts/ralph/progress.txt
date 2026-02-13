@@ -9,7 +9,7 @@ Branch: ralph/crm-estimating-phase1
 - **Test framework:** Vitest with jsdom, setup in __tests__/setup.ts (imports @testing-library/jest-dom/vitest)
 - **Test config:** vitest.config.ts — tests in __tests__/**/*.test.{ts,tsx}, alias @ = project root
 - **Test commands:** npm run test (Vitest), npm run lint (ESLint), npm run typecheck (tsc --noEmit), npm run build (next build)
-- **Existing test count:** 529 tests across 41 files
+- **Existing test count:** 549 tests across 44 files
 - **Test pattern for API routes:** Mock Clerk auth via vi.mock('@clerk/nextjs/server'), mock Supabase via vi.mock('@/lib/supabase/server'), test route handler functions directly (import { GET, POST } from route path), use NextRequest constructor for making test requests
 - **Shared test helpers (US-001):** Import from `@/__tests__/helpers` — mockSupabaseClient(config?), mockClerkAuth(mockFn, userId?), mockClerkUnauth(mockFn), makeRequest(path, init?), makeJsonRequest(path, body, method?), factory functions (makeAccount, makeContact, makeLead, makeOpportunity, makeActivity, makeEstimate, makeEstimateLine), resetFixtureCounter(), TEST_IDS
 - **mockSupabaseClient per-table config:** `mockSupabaseClient({ tables: { accounts: { data: [...], error: null } } })` — each table gets its own response
@@ -482,4 +482,37 @@ Branch: ralph/crm-estimating-phase1
   - Mock mode detection: `!process.env.ERPNEXT_BASE_URL || process.env.ERPNEXT_BASE_URL === 'mock'` — checked at runtime in SyncService, not in ErpClient constructor
   - ErpClient constructor now uses `|| ''` instead of `!` for env vars — prevents crashes when running in mock mode without env vars
   - Total test breakdown: 510 previous + 11 sync-service + 8 API route = 529
+---
+## 2026-02-13 — US-023: Division isolation + edge case integration tests
+- Created __tests__/integration/division-isolation.test.ts with 7 tests:
+  - User sees own division leads (2 returned)
+  - User gets empty for other division leads
+  - User with multiple divisions sees all their data (3 divisions)
+  - Platform admin sees all divisions (3 accounts, bypass RLS)
+  - Creating account in unauthorized division fails (RLS blocks insert)
+  - Estimate in division A not visible to user in division B
+  - User sees only their own division estimates when filtering
+- Created __tests__/integration/calculation-edge-cases.test.ts with 9 tests:
+  - 100-line stress test calculates correctly ($100,000 subtotal)
+  - Tiny quantity (0.0001) * large unit_cost (99999.99) doesn't overflow
+  - 50-line batch update recalculates totals via API
+  - Deleting all lines sets totals to 0
+  - 100% markup exactly doubles line total
+  - Large number formatting ($1,234,567.89 CAD) with Intl.NumberFormat
+  - Repeating decimals (33.33 * 3) don't cause accumulation errors
+  - Very small markup (1% on $1.00 = $1.01)
+  - Mixed optional/required lines calculate correctly
+- Created __tests__/integration/data-integrity.test.ts with 4 tests:
+  - Deleting account cascades to contacts (DB ON DELETE CASCADE)
+  - Deleting estimate cascades to lines and versions
+  - Opportunity stage history is immutable (only readable via GET, no PATCH/DELETE)
+  - Estimate version snapshots are immutable (only GET + POST, no PATCH/DELETE)
+- **Quality checkpoint results:**
+  - Lint: 0 errors (14 pre-existing warnings, 0 new)
+  - Typecheck: clean
+  - Tests: 549/549 passed across 44 files (20 new)
+  - Build: success
+- Files changed: 3 new test files
+- **FINAL STATUS: ALL 23 STORIES PASS. Phase 1 CRM + Estimating complete.**
+- **Total test breakdown:** 529 previous + 7 division-isolation + 9 calculation-edge-cases + 4 data-integrity = 549
 ---

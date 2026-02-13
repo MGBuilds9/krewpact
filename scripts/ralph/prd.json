@@ -513,8 +513,8 @@
         "Build succeeds"
       ],
       "priority": 6,
-      "passes": false,
-      "notes": "Division isolation tests use different mock JWT claims to simulate different users. Platform admin test uses krewpact_roles=['platform_admin']. These tests validate the RLS policy design from US-003."
+      "passes": true,
+      "notes": "COMPLETED: 20 new tests (7 division-isolation + 9 calculation-edge-cases + 4 data-integrity). Division isolation tests simulate RLS filtering via mock Supabase responses (empty for unauthorized divisions, populated for authorized). Platform admin bypass simulated by returning all divisions. Calculation edge cases cover 100-line stress test, tiny quantity with large unit_cost, 50-line batch update, zero totals, 100% markup, large number formatting, repeating decimals, small markup, mixed optional/required. Data integrity validates cascade deletes (account→contacts, estimate→lines+versions) and immutability of stage history and version snapshots."
     }
   ]
 }
