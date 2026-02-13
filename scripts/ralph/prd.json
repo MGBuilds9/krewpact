@@ -436,8 +436,8 @@
         "All tests pass"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": "Line item editing: use controlled inputs. On blur or Enter, save changes via API. Calculate line_total client-side for immediate feedback: qty * unit_cost * (1 + markup/100). TotalsPanel recomputes from all lines in state. Format: new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' })."
+      "passes": true,
+      "notes": "COMPLETED: 31 new tests (8 LineItemEditor + 5 TotalsPanel + 4 VersionHistory + 6 estimates list + 8 estimate builder). LineItemEditor uses defaultValue inputs with onBlur for inline editing. TotalsPanel uses Intl.NumberFormat for CAD formatting. VersionHistory uses expandable sections with JSON.stringify for snapshot preview. Status transition buttons rendered from ALLOWED_STATUS_TRANSITIONS map. Estimates list page follows same Card-based pattern as leads page. Builder page has header + line items + totals + version history sections."
     },
     {
       "id": "US-021",

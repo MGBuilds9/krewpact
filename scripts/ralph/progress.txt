@@ -393,3 +393,28 @@ Branch: ralph/crm-estimating-phase1
   - Tabs component from shadcn/ui works well for entity detail pages with multiple sections (preferred over route-based tabs for in-page content).
   - Total test breakdown: 456 previous + 5 PipelineView + 5 OpportunityCard + 5 accounts + 5 contacts + 3 opportunities = 479
 ---
+## 2026-02-13 — US-020: Estimate builder + line editor UI with component tests
+- Created components/Estimates/LineItemEditor.tsx: inline-editable table with description, qty, unit_cost, markup_pct, line_total (read-only), delete button, Add Line button, optional badge, read-only mode
+- Created components/Estimates/TotalsPanel.tsx: subtotal, HST 13%, total with CAD Intl.NumberFormat
+- Created components/Estimates/VersionHistory.tsx: expandable version list with revision_no, reason, date, JSON snapshot preview
+- Created app/(dashboard)/estimates/page.tsx: estimates list with search, status filter, New Estimate button, Card-based list
+- Created app/(dashboard)/estimates/[id]/page.tsx: full estimate builder with header (number + status badge), status transition buttons from ALLOWED_STATUS_TRANSITIONS, line items editor, totals panel, version history, Save Version button
+- Created 5 test files:
+  - __tests__/components/Estimates/LineItemEditor.test.tsx (8 tests): renders columns, add line, delete, empty state, sort order, optional badge, read-only mode
+  - __tests__/components/Estimates/TotalsPanel.test.tsx (5 tests): CAD format, HST label, zero, large numbers, labels
+  - __tests__/components/Estimates/VersionHistory.test.tsx (4 tests): renders list, empty state, expandable snapshot, dates
+  - __tests__/pages/estimates/estimates-list.test.tsx (6 tests): renders list, empty state, search, new button, loading, status badges
+  - __tests__/pages/estimates/estimate-builder.test.tsx (8 tests): renders number+status, lines, totals, save version, status transition, loading, not found, version history
+- **Quality checkpoint results:**
+  - Lint: 0 errors (21 pre-existing warnings, 0 new)
+  - Typecheck: clean
+  - Tests: 510/510 passed (31 new)
+  - Build: success (estimates and estimates/[id] routes registered)
+- **Learnings for future iterations:**
+  - Input defaultValue renders are testable with getByDisplayValue(), not getByText(). Text content inside Input elements isn't visible to getByText.
+  - When page has CardTitle "Totals" AND TotalsPanel has "Total" label, use getAllByText(/^Total/) to avoid multiple element errors
+  - Status transition buttons rendered from ALLOWED_STATUS_TRANSITIONS map with label/icon lookup tables — keeps the component clean
+  - The estimate builder page header shows "Revision N" which conflicts with version history "Revision N" — use getAllByText for tests that target revision numbers
+  - LineItemEditor sorts lines by sort_order before rendering — always pass sort_order in test fixtures
+  - Total test breakdown: 479 previous + 8 LineItemEditor + 5 TotalsPanel + 4 VersionHistory + 6 estimates list + 8 estimate builder = 510
+---
