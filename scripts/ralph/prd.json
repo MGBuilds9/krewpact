@@ -130,8 +130,8 @@
         "Lint passes"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": "TDD pattern: 1) Write test file importing from route paths that don't exist yet. 2) Create the route files. 3) Implement until tests pass. Use mockSupabaseClient() from __tests__/helpers/. Follow the exact pattern from __tests__/api/projects.test.ts."
+      "passes": true,
+      "notes": "TDD pattern: 1) Write test file importing from route paths that don't exist yet. 2) Create the route files. 3) Implement until tests pass. Use mockSupabaseClient() from __tests__/helpers/. Follow the exact pattern from __tests__/api/projects.test.ts. GOTCHA: TEST_IDS UUIDs (00000000-...) fail Zod strict UUID validation — use proper v4 UUIDs like 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11' in query param tests."
     },
     {
       "id": "US-007",

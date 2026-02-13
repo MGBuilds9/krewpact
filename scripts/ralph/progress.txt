@@ -126,4 +126,19 @@ Branch: ralph/crm-estimating-phase1
   - Opportunity stages (DB enum): intake, site_visit, estimating, proposal, negotiation, contracted, closed_lost
   - Activity types: call, email, meeting, note, task
   - Existing project routes (app/api/projects/route.ts) already use z.string().uuid() for division_id — consistent with new validators.
+- **CRM API route pattern (US-006):** Clerk auth guard → Zod validation (import from lib/validators/crm.ts) → Supabase query → NextResponse.json(). Query params parsed via z.coerce for numbers. Search uses ilike for accounts, or() for contacts (first_name + last_name). Dynamic route context: `{ params: Promise<{ id: string }> }`. 404 detection: `error.code === 'PGRST116'`.
+- **TEST_IDS vs Zod UUID:** TEST_IDS UUIDs (00000000-...) fail strict Zod UUID validation in query params. Use proper v4 UUIDs like `a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11` when testing query param validation. TEST_IDS are fine for fixture data (not validated by Zod).
+---
+## 2026-02-12 — US-006: Accounts + Contacts CRUD API routes with tests
+- Created 4 API route files: accounts/route.ts, accounts/[id]/route.ts, contacts/route.ts, contacts/[id]/route.ts
+- Created 2 test files: __tests__/api/crm/accounts.test.ts (13 tests), __tests__/api/crm/contacts.test.ts (11 tests)
+- Total 24 new tests, all passing
+- Routes use Zod validators from lib/validators/crm.ts (accountCreateSchema, accountUpdateSchema, contactCreateSchema, contactUpdateSchema)
+- Accounts: GET (list with division_id, search, limit, offset), POST, GET [id], PATCH [id], DELETE [id]
+- Contacts: GET (list with account_id, search, limit, offset), POST, GET [id], PATCH [id], DELETE [id]
+- All 182 tests pass, typecheck clean, lint 0 errors (10 pre-existing warnings), build succeeds
+- **Learnings for future iterations:**
+  - TEST_IDS UUIDs (00000000-...) fail Zod strict UUID validation — always use proper v4 UUIDs in query param tests
+  - Contacts search: use or() filter for multi-column search (`first_name.ilike.%search%,last_name.ilike.%search%`)
+  - Route files follow exact pattern from projects/route.ts and projects/[id]/route.ts
 ---
