@@ -34,3 +34,6 @@ next-env.d.ts
 
 # old nested planning pack (docs now in docs/)
 /krewpact/
+
+# business data staging (seed imports, ERPNext migration data)
+/data/
