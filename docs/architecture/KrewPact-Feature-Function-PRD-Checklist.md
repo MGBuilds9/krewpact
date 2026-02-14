@@ -5,7 +5,7 @@ This document is the detailed product requirements checklist for the production 
 It expands the master plan into feature-level and function-level requirements, including acceptance criteria and role scope.
 
 ## Product Definition
-- Product: KrewPact (production replacement for JobTread with ERPNext-first financial system-of-record)
+- Product: KrewPact (unified construction operations platform with ERPNext-first financial system-of-record)
 - Company model: Single legal entity, multi-division operations
 - Target: Mixed GC (residential + light commercial)
 - Timeline: Aggressive 3-4 month phased rollout
@@ -518,7 +518,7 @@ Acceptance:
 ## Epic 16: Data Migration and Legacy Decommission
 ### Feature 16.1 Migration Framework
 Functions:
-- Source connectors (JobTread, CSV/XLSX, SMB, OneDrive)
+- Source connectors (Sage 50, Sage Construction Mgmt, CSV/XLSX, SMB, OneDrive)
 - Mapping templates and transform rules
 - Dry-run and validation reports
 Acceptance:

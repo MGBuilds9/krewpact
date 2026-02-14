@@ -25,7 +25,7 @@ Construction companies today face a critical operational challenge: the tools an
 
 - **Disconnected Tool Ecosystems:** Most contractors use separate systems for CRM, estimating, scheduling, field management, and accounting. Data entered once must be re-entered multiple times across different platforms. This creates redundancy, introduces errors, and wastes hundreds of hours annually on manual data synchronization.
 
-- **JobTread Limitations:** MDM Group's current platform (JobTread) served well initially but has become a bottleneck. The system cannot scale to meet the complexity of mixed residential and light commercial operations. Integration options are limited, customization is restrictive, and the vendor roadmap does not align with MDM Group's growth trajectory.
+- **Fragmented Legacy Workflows:** MDM Group currently relies on Sage 50 Accounting, Sage Construction Management, spreadsheets, and manual processes for project management. These fragmented tools cannot scale to meet the complexity of mixed residential and light commercial operations. Integration options are limited, customization is restrictive, and no single platform provides unified visibility across operations.
 
 - **Data Silos Between Functions:** The field, office, finance, and external stakeholders each live in their own information worlds. A project manager may see estimated costs, but the field supervisor sees a different scope. Finance sees invoiced amounts, but project teams see committed costs. This misalignment drives poor decisions and scope creep.
 
@@ -90,9 +90,9 @@ KrewPact is built for Canadian contractors and incorporates Canadian legal and r
 
 ## 2. STRATEGIC PILLARS
 
-### 2.1 Replace JobTread
+### 2.1 Replace Fragmented Manual Workflows
 
-KrewPact will provide full feature parity with JobTread while removing bottlenecks and adding capabilities that JobTread cannot provide. This includes:
+KrewPact will consolidate MDM Group's fragmented manual processes and Sage-based workflows into a unified platform, removing bottlenecks and adding capabilities that no current tool combination provides. This includes:
 
 - Project and customer management workflows that MDM Group users depend on daily
 - Estimation and bidding workflows that feed project execution
@@ -101,7 +101,7 @@ KrewPact will provide full feature parity with JobTread while removing bottlenec
 - Field crew scheduling and labor tracking
 - Integration with ERPNext for job costing and payroll
 
-Migration from JobTread to KrewPact will be performed systematically, ensuring that historical data is preserved, user training is comprehensive, and the cutover is managed as a controlled business event. No data will be lost. No workflows will be broken without a clear replacement in place.
+Migration from legacy systems (Sage 50, Sage Construction Management, spreadsheets) to KrewPact will be performed systematically, ensuring that historical data is preserved, user training is comprehensive, and the cutover is managed as a controlled business event. No data will be lost. No workflows will be broken without a clear replacement in place.
 
 ### 2.2 Unified Data Model
 
@@ -746,7 +746,7 @@ KrewPact spans the entire construction lifecycle and is organized into 16 epics,
 | 13 | Trade Partner Portal | Scope and schedule visibility, compliance document collection, time entry, submittal uploads | Medium | Project Execution, RFIs and Submittals, Time and Payroll, Notifications |
 | 14 | Reporting and Analytics | Project profitability, cash flow analysis, resource utilization, variance analysis, trend reporting | Medium | Financial Operations, Project Execution, Time and Payroll |
 | 15 | Notifications and Communication | Email notifications, in-app alerts, communication log, alert configuration | Medium | All epics (cross-cutting) |
-| 16 | Data Migration | JobTread data import, data validation, reconciliation, legacy data archival | High | All epics (one-time) |
+| 16 | Data Migration | Sage data import, legacy data validation, reconciliation, legacy data archival | High | All epics (one-time) |
 
 ### 5.2 Feature Priority Matrix
 
@@ -1161,7 +1161,7 @@ Within each epic, individual features are prioritized using the MoSCoW (Must Hav
 **Epic 16: Data Migration**
 
 - **Must Have:**
-  - JobTread data export and transformation
+  - Sage 50 and Sage Construction Management data exports and transformation
   - Data validation and quality checks before import
   - Full project and historical data import (projects, customers, estimates, contracts, change orders)
   - User account migration and role mapping
@@ -1171,7 +1171,7 @@ Within each epic, individual features are prioritized using the MoSCoW (Must Hav
   - Migration audit trail and validation report
 
 - **Should Have:**
-  - Incremental data sync during parallel running (JobTread and KrewPact running simultaneously)
+  - Incremental data sync during parallel running (legacy systems and KrewPact running simultaneously)
   - Cutover plan and execution support
   - User training materials generated from KrewPact
   - Post-cutover reconciliation and data quality checks
@@ -1179,10 +1179,10 @@ Within each epic, individual features are prioritized using the MoSCoW (Must Hav
 - **Could Have:**
   - Historical data cleanup and deduplication
   - Automated data quality improvement
-  - Data archival of obsolete JobTread data
+  - Data archival of obsolete legacy data
 
 - **Won't Have:**
-  - Reverse migration or rollback to JobTread after cutover
+  - Reverse migration or rollback to legacy systems after cutover
 
 ### 5.3 Cross-Cutting Concerns
 
@@ -1269,7 +1269,7 @@ The construction software market is competitive, with several established platfo
 
 **JobTread**
 
-JobTread is MDM Group's current system and the primary motivation for KrewPact. JobTread's strengths include ease of use for estimating and project creation, mobile field apps, and client portal capabilities. Limitations include:
+JobTread is a construction PM platform that MDM Group evaluated but did not adopt. It was assessed as a potential solution but its limitations were a key factor in the decision to build KrewPact instead. JobTread's strengths include ease of use for estimating and project creation, mobile field apps, and client portal capabilities. Limitations include:
 
 - Single-company model; multi-division support is limited
 - Limited integration options; limited ability to sync with ERPNext
@@ -1510,10 +1510,10 @@ Client satisfaction with project execution drives repeat business and referrals.
 
 ### Risk: User Adoption Resistance
 
-**Description:** Switching from JobTread to KrewPact requires significant user behavior change. Users accustomed to JobTread workflows may resist KrewPact if they perceive it as more complex or if training is inadequate.
+**Description:** Switching from legacy manual workflows to KrewPact requires significant user behavior change. Users accustomed to current processes may resist KrewPact if they perceive it as more complex or if training is inadequate.
 
 **Mitigation:**
-- Phased adoption with parallel running (JobTread and KrewPact operating simultaneously for a period)
+- Phased adoption with parallel running (legacy systems and KrewPact operating simultaneously for a period)
 - Comprehensive training program tailored to each role; training occurs shortly before user relies on KrewPact
 - Early adopter program; identify power users and train them deeply; they become peer mentors
 - Feedback loops; collect user feedback regularly and make rapid improvements
@@ -1550,7 +1550,7 @@ Client satisfaction with project execution drives repeat business and referrals.
 
 ## 9. FUTURE VISION
 
-KrewPact v1 delivers a unified operations hub that replaces JobTread and consolidates fragmented tools. The v1 vision focuses on solving the immediate operational problems and establishing a strong foundation for future expansion.
+KrewPact v1 delivers a unified operations hub that consolidates fragmented tools and manual processes. The v1 vision focuses on solving the immediate operational problems and establishing a strong foundation for future expansion.
 
 Beyond v1, KrewPact will evolve to support increasingly sophisticated construction operations:
 

@@ -1,7 +1,7 @@
 # KrewPact Complete Forms Registry (Internal + External)
 
 ## Purpose
-This document defines every operational form to be implemented in KrewPact for production replacement of JobTread.
+This document defines every operational form to be implemented in KrewPact for MDM Group's unified construction operations platform.
 It covers internal operations, client portal, trade portal, and governance/admin forms.
 
 ## Form Design Standards (Applies to All Forms)

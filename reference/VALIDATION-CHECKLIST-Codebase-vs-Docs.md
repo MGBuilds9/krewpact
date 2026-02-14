@@ -35,10 +35,10 @@ The 18 documents cover product strategy, architecture, security, compliance, inf
 | Gap | Impact | Priority |
 |-----|--------|----------|
 | **No formal MVP scope** | 16 epics with no explicit Phase 1 cutline — everything looks equally important | Critical |
-| **No JobTread migration playbook** | Data migration strategy mentioned but not specified (schema mapping, validation, rollback) | Critical |
+| **No Sage data migration playbook** | Data migration strategy mentioned but not specified (schema mapping, validation, rollback) | Critical |
 | **No offline sync conflict resolution algorithm** | "Offline-first" declared as mandatory but conflict resolution logic undefined | High |
 | **No performance SLOs** | No API response time targets, page load budgets, or sync latency requirements | High |
-| **No change management plan** | 300+ users transitioning from JobTread with no training strategy | High |
+| **No change management plan** | 300+ users transitioning to KrewPact with no training strategy | High |
 | **No disaster recovery plan** | Backup strategy exists but RTO/RPO targets undefined | Medium |
 | **No vendor contingency plans** | Heavy reliance on Clerk, Supabase, Vercel with no fallback if a vendor fails | Medium |
 | **No post-launch operations** | SLAs, on-call rotation, incident response, and runbooks not documented | Medium |
@@ -216,7 +216,7 @@ Frontend hooks call `supabase.from('table')` directly without an abstraction lay
 
 ### Phase 1: Core Operations MVP (Weeks 4-12)
 
-**Goal:** Ship the features that replace JobTread for daily use.
+**Goal:** Ship the features that replace fragmented manual workflows for daily use.
 
 Port from existing code (refactor to use BFF):
 - Project management (ProjectDetail, tasks, calendar)
@@ -245,7 +245,7 @@ Build new:
 
 - Performance testing and SLO enforcement
 - Security audit (pen test, PIPEDA review)
-- JobTread data migration execution
+- Sage data migration execution
 - User training and change management
 - Disaster recovery testing
 - Monitoring dashboards and alerting
@@ -263,7 +263,7 @@ These are blocking questions that need answers before any code is written:
 | 3 | **ERPNext integration depth** | Full bidirectional sync vs. read-only from ERPNext vs. defer entirely | Backend complexity |
 | 4 | **Offline requirement** | True offline-first (PWA + IndexedDB) vs. graceful degradation vs. defer | Architecture complexity |
 | 5 | **Team composition** | Solo + AI vs. small team vs. contractor(s) | Delivery velocity |
-| 6 | **JobTread sunset timeline** | Hard deadline vs. parallel run vs. gradual migration | Pressure on delivery |
+| 6 | **Legacy system sunset timeline** | Hard deadline vs. parallel run vs. gradual migration | Pressure on delivery |
 | 7 | **White-label priority** | Build for MDM only first vs. multi-tenant from day 1 | Architecture decisions |
 | 8 | **Clerk data residency** | Accept US hosting vs. find Canadian alternative vs. self-host auth | Compliance risk |
 
@@ -279,7 +279,7 @@ These are blocking questions that need answers before any code is written:
 | Clerk outage blocks all access | Medium | High | Implement graceful degradation; cache auth tokens locally |
 | GPL v3 licensing challenge from Frappe Foundation | Low | High | Get written clarification from Frappe; maintain strict API boundary |
 | Team burnout (solo + AI development) | High | Medium | Set realistic timelines; consider bringing on 1-2 contractors for Phase 1 |
-| JobTread data loss during migration | Medium | High | Build migration validation suite; run parallel for 30+ days |
+| Sage data loss during migration | Medium | High | Build migration validation suite; run parallel for 30+ days |
 | PIPEDA non-compliance discovered post-launch | Low | High | Commission external privacy audit before launch |
 
 ---
@@ -291,7 +291,7 @@ These are blocking questions that need answers before any code is written:
 | Master Plan | Product vision, 16 epics | 🟡 Partially aligned (6/16 epics built) |
 | Execution Board | Team, phases, sprints | 🔴 Not followed (no sprint structure visible in commits) |
 | Feature PRD Checklist | Requirements traceability | 🟡 Partially covered |
-| Blueprint Gap Matrix | Gap analysis vs. JobTread/ERPNext | 🔴 Gaps still open |
+| Blueprint Gap Matrix | Gap analysis vs. legacy systems/ERPNext | 🔴 Gaps still open |
 | ERPNext Doctype Mapping | Sync contract | 🔴 Zero implementation |
 | SQL Schema Draft | Database design | ✅ Well-aligned (63 migrations, RLS, audit trails) |
 | Forms Registry | UI form specifications | 🟡 Some forms built, most missing |

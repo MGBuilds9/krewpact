@@ -203,7 +203,7 @@ In your Next.js repo root, create `CLAUDE.md`:
 
 ## Project
 KrewPact is a construction operations platform (Next.js + Supabase + ERPNext).
-Replacing JobTread for MDM Group. See /docs/ for full specs.
+Built for MDM Group. See /docs/ for full specs.
 
 ## Tech Stack
 - Next.js 15 (App Router, TypeScript, Server Components)

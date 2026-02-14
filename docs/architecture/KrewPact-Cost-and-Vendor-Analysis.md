@@ -968,7 +968,7 @@ With AI-augmented development:
 
 ---
 
-**Option B: JobTread (Current SaaS Platform)**
+**Option B: JobTread (SaaS Alternative — Evaluated, Not Adopted)**
 
 **JobTread Pricing (as of 2026):**
 - Per-user pricing: $40-60 USD/month (~$55-85 CAD)
@@ -1040,7 +1040,7 @@ KrewPact becomes cost-competitive at user count where:
 | **Enterprise features required** | Procore | Comprehensive platform, but expensive |
 | **Strategic lock-in to MDM ecosystem** | KrewPact | Future white-label revenue potential |
 
-**Final Recommendation:** If MDM Group goal is internal-only cost reduction, JobTread is cheaper. If goal is commercial white-label platform, KrewPact investment justified despite higher Year 1-5 TCO.
+**Final Recommendation:** If MDM Group goal is internal-only cost reduction, a SaaS tool like JobTread would be cheaper. If goal is commercial white-label platform with full control, KrewPact investment justified despite higher Year 1-5 TCO.
 
 ---
 
@@ -1205,7 +1205,7 @@ To maintain 50 customers with 3% monthly churn:
 **Cost per user decreases over time for KrewPact** due to amortization of development investment, but JobTread remains cheaper for internal-only use.
 
 **Decision Point:** KrewPact is only cost-justified if:
-1. Internal use case requires customization beyond JobTread (95% of unique requirements)
+1. Internal use case requires customization beyond SaaS alternatives like JobTread (95% of unique requirements)
 2. White-label commercial revenue is planned
 3. Data residency / compliance mandates on-premises (critical for MDM)
 4. Strategic advantage of proprietary features (job costing, resource optimization, etc.)

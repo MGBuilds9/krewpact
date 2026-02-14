@@ -1,7 +1,7 @@
 # KrewPact Production Master Plan (A–Z)
 
 ## Summary
-This is a decision-complete plan to replace JobTread with a production-grade mixed-GC platform in an aggressive 3–4 month program, using a **Hybrid ERPNext-first architecture**: ERPNext is finance/procurement/inventory source-of-truth; KrewPact is UX shell, field operations, portals, orchestration, identity, and reporting.
+This is a decision-complete plan to build a production-grade mixed-GC platform for MDM Group in an aggressive 3–4 month program, using a **Hybrid ERPNext-first architecture**: ERPNext is finance/procurement/inventory source-of-truth; KrewPact is UX shell, field operations, portals, orchestration, identity, and reporting.
 The plan includes full feature scope, backend data model, integration logic, API contracts, infra/security, migration, testing, and cutover.
 
 ## Companion Documents (Detailed Expansion)
@@ -16,7 +16,7 @@ The plan includes full feature scope, backend data model, integration logic, API
 1. Existing blueprint references were checked against:
    `/Users/mkgbuilds/Sites/Local Development/KrewPact/docs/blueprints/krewpact-blueprint.html`
 2. This V2 plan expands blueprint coverage to production-critical areas that are often missing from MVP blueprints: procurement RFQ/bid workflows, trade compliance gating, customer selections/allowances, closeout/warranty service, privacy operations, business continuity, and product telemetry/adoption.
-3. Execution sequencing and acceptance gates in this package are intentionally stricter than the legacy blueprint to support production replacement of JobTread, not just feature parity demos.
+3. Execution sequencing and acceptance gates in this package are intentionally stricter than the legacy blueprint to support production-grade operations, not just feature parity demos.
 
 ## Locked Decisions (From Your Inputs)
 1. System model: Hybrid ERPNext-first.
@@ -31,7 +31,7 @@ The plan includes full feature scope, backend data model, integration logic, API
 10. Tax/currency: Canada-first, CAD + GST/HST/PST.
 11. Labor/payroll: Timesheets + ADP integration (nightly API + CSV fallback).
 12. Estimating: Production-grade assemblies/templates.
-13. Legacy sources: JobTread + spreadsheets + local SMB shares + OneDrive.
+13. Legacy sources: Sage 50 + Sage Construction Mgmt + spreadsheets + local SMB shares + OneDrive.
 14. E-sign: BoldSign.
 15. Payments: Invoice + external payment links.
 16. Org model: Single legal company + divisions.
@@ -40,7 +40,7 @@ The plan includes full feature scope, backend data model, integration logic, API
 19. File migration: Phased bulk import + delta sync.
 
 ## Program Outcomes (What “Done” Means)
-1. All core JobTread workflows run in KrewPact + ERPNext without daily reliance on JobTread.
+1. All core construction workflows run in KrewPact + ERPNext without reliance on fragmented legacy tools.
 2. Finance transactions post in ERPNext with reconciled project/job-cost reporting in KrewPact.
 3. Field teams can submit daily logs, safety forms, photos, time, and expenses offline.
 4. Client and trade partner portals are live with role-based access.
@@ -53,7 +53,7 @@ The plan includes full feature scope, backend data model, integration logic, API
 > Scope is now prioritized P0/P1/P2. See `KrewPact-Architecture-Resolution.md` for full rationale.
 
 ### P0 — MVP (12 weeks target)
-**Goal:** Replace JobTread's daily workflows. Nothing more.
+**Goal:** Replace fragmented manual workflows with a unified platform. Nothing more.
 
 | Phase | Weeks | Included |
 |---|---|---|
@@ -141,7 +141,7 @@ High-level domain summary:
 5. File service: upload, scan, metadata extraction, versioning, secure link generation, portal publishing gates.
 6. Offline sync service: client queue processing, optimistic writes, conflict strategy (`last_write_wins` for notes, merge policy for structured forms).
 7. Notification service: event-driven email/in-app/push routing with user preferences.
-8. Migration service: bulk importers (JobTread/CSV/SMB/OneDrive), dedupe, mapping, validation, reconciliation reports.
+8. Migration service: bulk importers (Sage/CSV/SMB/OneDrive), dedupe, mapping, validation, reconciliation reports.
 
 ## Public APIs / Interfaces / Types (Important Additions)
 
@@ -187,7 +187,7 @@ High-level domain summary:
 | DR | Nightly restore tests, quarterly failover simulation, RPO/RTO validation |
 
 ## Data Migration Plan (Full Historical)
-1. Discovery and mapping: canonical schema mapping for JobTread, spreadsheets, SMB, OneDrive.
+1. Discovery and mapping: canonical schema mapping for Sage 50, Sage Construction Mgmt, spreadsheets, SMB, OneDrive.
 2. Bulk historical import: oldest-to-newest batches with deterministic IDs and checksum dedupe.
 3. Delta sync window: keep legacy and new system aligned during pilot.
 4. Reconciliation: record counts, financial totals, doc hash parity, random sampling QA.

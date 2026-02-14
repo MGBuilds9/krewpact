@@ -1,7 +1,7 @@
 # KrewPact Production Execution Board
 
 ## Objective
-Deliver full production replacement of JobTread with ERPNext-first architecture in an aggressive 14-week program, including full historical migration and cutover.
+Deliver a production-grade unified construction operations platform with ERPNext-first architecture in an aggressive 14-week program, including full historical migration and cutover.
 
 ## Delivery Streams
 - Product and Process: PRD, UAT scope, training, cutover runbook
@@ -108,7 +108,7 @@ Deliver full production replacement of JobTread with ERPNext-first architecture 
 - [ ] Contract artifact storage and checksum tracking
 
 ### Data Migration
-- [ ] JobTread CRM and estimate historical import (batch 1)
+- [ ] Sage CRM and estimate historical import (batch 1)
 
 ### QA and Release
 - [ ] E2E flow: Lead -> Estimate -> Proposal -> E-sign

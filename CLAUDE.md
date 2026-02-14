@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-KrewPact is a construction operations platform replacing JobTread for MDM Group Inc. (Mississauga, Ontario). It follows a **Hybrid ERPNext-first architecture**: ERPNext is finance/procurement/inventory source-of-truth; KrewPact is UX shell, field operations, portals, orchestration, identity, and reporting.
+KrewPact is a construction operations platform for MDM Group Inc. (Mississauga, Ontario). It follows a **Hybrid ERPNext-first architecture**: ERPNext is finance/procurement/inventory source-of-truth; KrewPact is UX shell, field operations, portals, orchestration, identity, and reporting.
 
 **Domain:** krewpact.com
 **Architecture Resolution:** All contradictions resolved in `KrewPact-Architecture-Resolution.md` (Feb 2026).
@@ -192,7 +192,7 @@ Lint → Type Check → Unit Test → Build → Integration Test → Deploy
 
 ## MVP Scope (P0 — 12 weeks)
 
-**Goal: Replace JobTread's daily workflows. Nothing more.**
+**Goal: Replace fragmented manual workflows with a unified platform. Nothing more.**
 
 | Phase | Weeks | Features |
 |-------|-------|----------|

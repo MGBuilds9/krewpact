@@ -150,7 +150,7 @@ CREATE POLICY division_isolation ON projects
 #### H1: Timeline & MVP Scope
 **Decision:** Redefine scope into P0 (MVP), P1 (fast-follow), P2 (future).
 
-**MVP = Replace JobTread's daily workflows. Nothing more.**
+**MVP = Replace fragmented manual workflows with a unified platform. Nothing more.**
 
 **P0 — MVP (12 weeks, target)**
 
@@ -187,7 +187,7 @@ CREATE POLICY division_isolation ON projects
 | ADP Integration | Payroll export/sync |
 | Closeout & Warranty | Deficiency tracking, warranty items, service calls |
 | Advanced Estimating | Assemblies, cost catalog, markup engine, alternates |
-| Historical Migration | JobTread data import, reconciliation |
+| Historical Migration | Sage data import, reconciliation |
 | Full Monitoring | Prometheus/Loki/Grafana stack |
 | Microsoft 365 | Email, calendar, OneDrive integration |
 

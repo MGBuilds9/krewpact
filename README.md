@@ -7,7 +7,7 @@
 
 ## Planning Pack Overview
 
-This folder contains **15 core planning documents** + **1 reference document** forming the complete, production-ready planning set for KrewPact — replacing JobTread with a modern, ERP-integrated construction operations platform.
+This folder contains **15 core planning documents** + **1 reference document** forming the complete, production-ready planning set for KrewPact — a modern, ERP-integrated construction operations platform for MDM Group Inc.
 
 ### Document Organization
 

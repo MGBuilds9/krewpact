@@ -35,10 +35,10 @@ The 18 documents cover product strategy, architecture, security, compliance, inf
 | Gap | Impact | Priority |
 |-----|--------|----------|
 | **No formal MVP scope** | 16 epics with no explicit Phase 1 cutline — everything looks equally important | Critical |
-| **No JobTread migration playbook** | Data migration strategy mentioned but not specified (schema mapping, validation, rollback) | Critical |
+| **No Sage migration playbook** | Data migration strategy mentioned but not specified (schema mapping, validation, rollback) | Critical |
 | **No offline sync conflict resolution algorithm** | "Offline-first" declared as mandatory but conflict resolution logic undefined | High |
 | **No performance SLOs** | No API response time targets, page load budgets, or sync latency requirements | High |
-| **No change management plan** | 300+ users transitioning from JobTread with no training strategy | High |
+| **No change management plan** | 300+ users transitioning from manual/Sage workflows with no training strategy | High |
 | **No disaster recovery plan** | Backup strategy exists but RTO/RPO targets undefined | Medium |
 | **No vendor contingency plans** | Heavy reliance on Clerk, Supabase, Vercel with no fallback if a vendor fails | Medium |
 | **No post-launch operations** | SLAs, on-call rotation, incident response, and runbooks not documented | Medium |
@@ -245,7 +245,7 @@ Build new:
 
 - Performance testing and SLO enforcement
 - Security audit (pen test, PIPEDA review)
-- JobTread data migration execution
+- Sage data migration execution
 - User training and change management
 - Disaster recovery testing
 - Monitoring dashboards and alerting
@@ -279,7 +279,7 @@ These are blocking questions that need answers before any code is written:
 | Clerk outage blocks all access | Medium | High | Implement graceful degradation; cache auth tokens locally |
 | GPL v3 licensing challenge from Frappe Foundation | Low | High | Get written clarification from Frappe; maintain strict API boundary |
 | Team burnout (solo + AI development) | High | Medium | Set realistic timelines; consider bringing on 1-2 contractors for Phase 1 |
-| JobTread data loss during migration | Medium | High | Build migration validation suite; run parallel for 30+ days |
+| Sage data loss during migration | Medium | High | Build migration validation suite; run parallel for 30+ days |
 | PIPEDA non-compliance discovered post-launch | Low | High | Commission external privacy audit before launch |
 
 ---
