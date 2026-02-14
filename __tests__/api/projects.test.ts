@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { NextRequest } from 'next/server';
 
 // Mock Clerk auth
 vi.mock('@clerk/nextjs/server', () => ({
@@ -14,49 +13,19 @@ vi.mock('@/lib/supabase/server', () => ({
 import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { GET, POST } from '@/app/api/projects/route';
+import { GET as GET_BY_ID, PATCH, DELETE } from '@/app/api/projects/[id]/route';
+import {
+  mockSupabaseClient,
+  mockClerkAuth,
+  mockClerkUnauth,
+  makeRequest,
+  makeJsonRequest,
+  makeProject,
+  TEST_IDS,
+} from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClient = vi.mocked(createUserClient);
-
-function makeRequest(url: string, init?: RequestInit) {
-  return new NextRequest(new URL(url, 'http://localhost:3000'), init as never);
-}
-
-function mockSupabaseChain(data: unknown, error: unknown = null) {
-  const chain = {
-    from: vi.fn().mockReturnThis(),
-    select: vi.fn().mockReturnThis(),
-    insert: vi.fn().mockReturnThis(),
-    order: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    limit: vi.fn().mockReturnThis(),
-    single: vi.fn().mockResolvedValue({ data, error }),
-  };
-  // For queries without .single()
-  chain.order = vi.fn().mockReturnValue({
-    ...chain,
-    eq: vi.fn().mockReturnValue({
-      ...chain,
-      limit: vi.fn().mockResolvedValue({ data, error }),
-      then: undefined,
-    }),
-    limit: vi.fn().mockResolvedValue({ data, error }),
-    then: undefined,
-  });
-
-  // Override: if no limit/eq is called after order, resolve directly
-  const orderResult = {
-    eq: vi.fn().mockReturnValue({
-      limit: vi.fn().mockResolvedValue({ data, error }),
-      then: (resolve: (v: unknown) => void) => resolve({ data, error }),
-    }),
-    limit: vi.fn().mockResolvedValue({ data, error }),
-    then: (resolve: (v: unknown) => void) => resolve({ data, error }),
-  };
-  chain.order = vi.fn().mockReturnValue(orderResult);
-
-  return chain as unknown as ReturnType<typeof import('@supabase/supabase-js').createClient>;
-}
 
 describe('GET /api/projects', () => {
   beforeEach(() => {
@@ -64,7 +33,7 @@ describe('GET /api/projects', () => {
   });
 
   it('returns 401 when not authenticated', async () => {
-    mockAuth.mockResolvedValue({ userId: null } as Awaited<ReturnType<typeof auth>>);
+    mockClerkUnauth(mockAuth);
 
     const res = await GET(makeRequest('/api/projects'));
     expect(res.status).toBe(401);
@@ -74,7 +43,7 @@ describe('GET /api/projects', () => {
   });
 
   it('returns 400 for invalid query params', async () => {
-    mockAuth.mockResolvedValue({ userId: 'user_123' } as Awaited<ReturnType<typeof auth>>);
+    mockClerkAuth(mockAuth, 'user_123');
 
     const res = await GET(makeRequest('/api/projects?limit=-5'));
     expect(res.status).toBe(400);
@@ -82,12 +51,14 @@ describe('GET /api/projects', () => {
 
   it('returns projects when authenticated', async () => {
     const mockProjects = [
-      { id: '1', name: 'Project A', status: 'active' },
-      { id: '2', name: 'Project B', status: 'completed' },
+      makeProject({ project_name: 'Project A', status: 'active' }),
+      makeProject({ project_name: 'Project B', status: 'closed' }),
     ];
 
-    mockAuth.mockResolvedValue({ userId: 'user_123' } as Awaited<ReturnType<typeof auth>>);
-    mockCreateUserClient.mockResolvedValue(mockSupabaseChain(mockProjects));
+    mockClerkAuth(mockAuth, 'user_123');
+    mockCreateUserClient.mockResolvedValue(
+      mockSupabaseClient({ tables: { projects: { data: mockProjects, error: null } } }),
+    );
 
     const res = await GET(makeRequest('/api/projects'));
     expect(res.status).toBe(200);
@@ -96,10 +67,24 @@ describe('GET /api/projects', () => {
     expect(body).toEqual(mockProjects);
   });
 
+  it('filters by division_id', async () => {
+    const mockProjects = [makeProject({ division_id: TEST_IDS.DIVISION_ID })];
+
+    mockClerkAuth(mockAuth, 'user_123');
+    const client = mockSupabaseClient({ tables: { projects: { data: mockProjects, error: null } } });
+    mockCreateUserClient.mockResolvedValue(client);
+
+    const res = await GET(makeRequest(`/api/projects?division_id=${TEST_IDS.DIVISION_ID}`));
+    expect(res.status).toBe(200);
+    expect(client.from).toHaveBeenCalledWith('projects');
+  });
+
   it('returns 500 when Supabase errors', async () => {
-    mockAuth.mockResolvedValue({ userId: 'user_123' } as Awaited<ReturnType<typeof auth>>);
+    mockClerkAuth(mockAuth, 'user_123');
     mockCreateUserClient.mockResolvedValue(
-      mockSupabaseChain(null, { message: 'Database error', code: 'PGRST000' }),
+      mockSupabaseClient({
+        tables: { projects: { data: null, error: { message: 'Database error', code: 'PGRST000' } } },
+      }),
     );
 
     const res = await GET(makeRequest('/api/projects'));
@@ -107,6 +92,24 @@ describe('GET /api/projects', () => {
 
     const body = await res.json();
     expect(body.error).toBe('Database error');
+  });
+
+  it('filters by status', async () => {
+    mockClerkAuth(mockAuth, 'user_123');
+    const client = mockSupabaseClient({ tables: { projects: { data: [], error: null } } });
+    mockCreateUserClient.mockResolvedValue(client);
+
+    const res = await GET(makeRequest('/api/projects?status=active'));
+    expect(res.status).toBe(200);
+  });
+
+  it('supports search param', async () => {
+    mockClerkAuth(mockAuth, 'user_123');
+    const client = mockSupabaseClient({ tables: { projects: { data: [], error: null } } });
+    mockCreateUserClient.mockResolvedValue(client);
+
+    const res = await GET(makeRequest('/api/projects?search=renovation'));
+    expect(res.status).toBe(200);
   });
 });
 
@@ -116,51 +119,136 @@ describe('POST /api/projects', () => {
   });
 
   it('returns 401 when not authenticated', async () => {
-    mockAuth.mockResolvedValue({ userId: null } as Awaited<ReturnType<typeof auth>>);
+    mockClerkUnauth(mockAuth);
 
     const res = await POST(
-      makeRequest('/api/projects', {
-        method: 'POST',
-        body: JSON.stringify({ name: 'Test' }),
+      makeJsonRequest('/api/projects', {
+        project_name: 'Test',
+        project_number: 'PRJ-001',
+        division_id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
       }),
     );
     expect(res.status).toBe(401);
   });
 
-  it('returns 400 for invalid body', async () => {
-    mockAuth.mockResolvedValue({ userId: 'user_123' } as Awaited<ReturnType<typeof auth>>);
+  it('returns 400 for invalid body (missing project_name)', async () => {
+    mockClerkAuth(mockAuth, 'user_123');
 
     const res = await POST(
-      makeRequest('/api/projects', {
-        method: 'POST',
-        body: JSON.stringify({ name: '' }),
+      makeJsonRequest('/api/projects', {
+        project_number: 'PRJ-001',
+        division_id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+      }),
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 for missing division_id', async () => {
+    mockClerkAuth(mockAuth, 'user_123');
+
+    const res = await POST(
+      makeJsonRequest('/api/projects', {
+        project_name: 'New Project',
+        project_number: 'PRJ-001',
       }),
     );
     expect(res.status).toBe(400);
   });
 
   it('creates a project with valid data', async () => {
-    const created = { id: '3', name: 'New Project', status: null };
+    const created = makeProject({ project_name: 'New Project' });
 
-    mockAuth.mockResolvedValue({ userId: 'user_123' } as Awaited<ReturnType<typeof auth>>);
-
-    const chain = {
-      from: vi.fn().mockReturnThis(),
-      insert: vi.fn().mockReturnThis(),
-      select: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({ data: created, error: null }),
-    };
-    mockCreateUserClient.mockResolvedValue(chain as unknown as ReturnType<typeof import('@supabase/supabase-js').createClient>);
+    mockClerkAuth(mockAuth, 'user_123');
+    mockCreateUserClient.mockResolvedValue(
+      mockSupabaseClient({ tables: { projects: { data: created, error: null } } }),
+    );
 
     const res = await POST(
-      makeRequest('/api/projects', {
-        method: 'POST',
-        body: JSON.stringify({ name: 'New Project' }),
+      makeJsonRequest('/api/projects', {
+        project_name: 'New Project',
+        project_number: 'PRJ-001',
+        division_id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
       }),
     );
     expect(res.status).toBe(201);
 
     const body = await res.json();
-    expect(body.name).toBe('New Project');
+    expect(body.project_name).toBe('New Project');
+  });
+});
+
+describe('GET /api/projects/[id]', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns project by ID', async () => {
+    const project = makeProject();
+    mockClerkAuth(mockAuth, 'user_123');
+    mockCreateUserClient.mockResolvedValue(
+      mockSupabaseClient({ tables: { projects: { data: project, error: null } } }),
+    );
+
+    const res = await GET_BY_ID(
+      makeRequest('/api/projects/some-id'),
+      { params: Promise.resolve({ id: 'some-id' }) },
+    );
+    expect(res.status).toBe(200);
+  });
+
+  it('returns 404 for non-existent project', async () => {
+    mockClerkAuth(mockAuth, 'user_123');
+    mockCreateUserClient.mockResolvedValue(
+      mockSupabaseClient({
+        tables: { projects: { data: null, error: { message: 'Not found', code: 'PGRST116' } } },
+      }),
+    );
+
+    const res = await GET_BY_ID(
+      makeRequest('/api/projects/missing-id'),
+      { params: Promise.resolve({ id: 'missing-id' }) },
+    );
+    expect(res.status).toBe(404);
+  });
+});
+
+describe('PATCH /api/projects/[id]', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('updates project with valid data', async () => {
+    const updated = makeProject({ project_name: 'Updated' });
+    mockClerkAuth(mockAuth, 'user_123');
+    mockCreateUserClient.mockResolvedValue(
+      mockSupabaseClient({ tables: { projects: { data: updated, error: null } } }),
+    );
+
+    const res = await PATCH(
+      makeJsonRequest('/api/projects/some-id', { project_name: 'Updated' }, 'PATCH'),
+      { params: Promise.resolve({ id: 'some-id' }) },
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.project_name).toBe('Updated');
+  });
+});
+
+describe('DELETE /api/projects/[id]', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('deletes project', async () => {
+    mockClerkAuth(mockAuth, 'user_123');
+    mockCreateUserClient.mockResolvedValue(
+      mockSupabaseClient({ tables: { projects: { data: null, error: null } } }),
+    );
+
+    const res = await DELETE(
+      makeRequest('/api/projects/some-id'),
+      { params: Promise.resolve({ id: 'some-id' }) },
+    );
+    expect(res.status).toBe(200);
   });
 });

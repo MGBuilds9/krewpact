@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Bell, CheckCheck, Trash2, ExternalLink } from 'lucide-react';
+import { Bell, CheckCheck, Trash2 } from 'lucide-react';
 import {
   useNotifications,
   useMarkNotificationRead,
@@ -22,7 +22,7 @@ export default function NotificationsPage() {
   const markAllRead = useMarkAllNotificationsRead();
   const deleteNotification = useDeleteNotification();
 
-  const unreadCount = notifications?.filter((n) => !n.read).length ?? 0;
+  const unreadCount = notifications?.filter((n) => n.state !== 'read').length ?? 0;
 
   const handleMarkAllRead = async () => {
     try {
@@ -34,11 +34,8 @@ export default function NotificationsPage() {
   };
 
   const handleClick = async (notification: NonNullable<typeof notifications>[number]) => {
-    if (!notification.read) {
+    if (notification.state !== 'read') {
       await markRead.mutateAsync(notification.id);
-    }
-    if (notification.link) {
-      router.push(notification.link);
     }
   };
 
@@ -90,7 +87,7 @@ export default function NotificationsPage() {
               key={notification.id}
               className={cn(
                 'cursor-pointer hover:shadow-sm transition-shadow',
-                !notification.read && 'border-l-4 border-l-primary bg-primary/5',
+                notification.state !== 'read' && 'border-l-4 border-l-primary bg-primary/5',
               )}
               onClick={() => handleClick(notification)}
             >
@@ -101,12 +98,12 @@ export default function NotificationsPage() {
                       <h3
                         className={cn(
                           'text-sm truncate',
-                          !notification.read ? 'font-semibold' : 'font-medium',
+                          notification.state !== 'read' ? 'font-semibold' : 'font-medium',
                         )}
                       >
                         {notification.title}
                       </h3>
-                      {!notification.read && (
+                      {notification.state !== 'read' && (
                         <Badge className="h-2 w-2 p-0 rounded-full flex-shrink-0" />
                       )}
                     </div>
@@ -115,14 +112,14 @@ export default function NotificationsPage() {
                         {notification.message}
                       </p>
                     )}
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {new Date(notification.created_at).toLocaleString()}
-                    </p>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                      <span>{new Date(notification.created_at).toLocaleString()}</span>
+                      <Badge variant="outline" className="text-xs capitalize">
+                        {notification.channel}
+                      </Badge>
+                    </div>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
-                    {notification.link && (
-                      <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
-                    )}
                     <Button
                       variant="ghost"
                       size="icon"

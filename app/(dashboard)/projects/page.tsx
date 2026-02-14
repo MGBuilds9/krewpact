@@ -45,12 +45,15 @@ export default function ProjectsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
   const filteredProjects = (projects ?? []).filter((project) => {
+    const siteAddressStr = typeof project.site_address === 'object'
+      ? (project.site_address as Record<string, string>)?.street || ''
+      : '';
+
     const matchesSearch =
       !search ||
-      project.name.toLowerCase().includes(search.toLowerCase()) ||
-      project.code?.toLowerCase().includes(search.toLowerCase()) ||
-      project.client_name?.toLowerCase().includes(search.toLowerCase()) ||
-      project.address?.toLowerCase().includes(search.toLowerCase());
+      project.project_name.toLowerCase().includes(search.toLowerCase()) ||
+      project.project_number?.toLowerCase().includes(search.toLowerCase()) ||
+      siteAddressStr.toLowerCase().includes(search.toLowerCase());
 
     const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
 
@@ -150,29 +153,26 @@ export default function ProjectsPage() {
                     />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-lg truncate">{project.name}</h3>
-                        {project.code && (
+                        <h3 className="font-semibold text-lg truncate">{project.project_name}</h3>
+                        {project.project_number && (
                           <Badge variant="outline" className="text-xs flex-shrink-0">
-                            {project.code}
+                            {project.project_number}
                           </Badge>
                         )}
                       </div>
-                      {project.description && (
-                        <p className="text-sm text-muted-foreground line-clamp-1 mb-2">
-                          {project.description}
-                        </p>
-                      )}
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                        {project.address && (
+                        {project.site_address && (
                           <span className="flex items-center gap-1">
                             <MapPin className="h-3 w-3" />
-                            {project.address}
+                            {typeof project.site_address === 'object'
+                              ? (project.site_address as Record<string, string>)?.street || ''
+                              : ''}
                           </span>
                         )}
-                        {project.client_name && (
+                        {project.baseline_budget != null && (
                           <span className="flex items-center gap-1">
                             <Briefcase className="h-3 w-3" />
-                            {project.client_name}
+                            ${project.baseline_budget.toLocaleString()}
                           </span>
                         )}
                         {project.start_date && (
@@ -181,10 +181,10 @@ export default function ProjectsPage() {
                             {new Date(project.start_date).toLocaleDateString()}
                           </span>
                         )}
-                        {project.budget && (
+                        {project.baseline_budget && (
                           <span className="flex items-center gap-1">
                             <DollarSign className="h-3 w-3" />$
-                            {(project.budget / 1000).toFixed(0)}k
+                            {(project.baseline_budget / 1000).toFixed(0)}k
                           </span>
                         )}
                       </div>

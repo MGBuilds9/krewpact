@@ -53,7 +53,8 @@ export default function ExpensesPage() {
     category: '',
     expense_date: new Date().toISOString().split('T')[0],
     description: '',
-    currency: 'CAD',
+    currency_code: 'CAD',
+    user_id: '',
   });
 
   const filteredExpenses = (expenses ?? []).filter((e) => {
@@ -75,7 +76,7 @@ export default function ExpensesPage() {
     try {
       await createExpense.mutateAsync({ ...form, division_id: activeDivision?.id });
       setIsOpen(false);
-      setForm({ amount: 0, category: '', expense_date: new Date().toISOString().split('T')[0], description: '', currency: 'CAD' });
+      setForm({ amount: 0, category: '', expense_date: new Date().toISOString().split('T')[0], description: '', currency_code: 'CAD', user_id: '' });
       toast.success('Expense created');
     } catch {
       toast.error('Failed to create expense');
@@ -137,7 +138,7 @@ export default function ExpensesPage() {
                 <Label>Project</Label>
                 <Select value={form.project_id || ''} onValueChange={(v) => setForm({ ...form, project_id: v || undefined })}>
                   <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
-                  <SelectContent>{projects?.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
+                  <SelectContent>{projects?.map((p) => <SelectItem key={p.id} value={p.id}>{p.project_name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div><Label>Description</Label><Input placeholder="What was the expense for?" value={form.description || ''} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
@@ -192,7 +193,7 @@ export default function ExpensesPage() {
                     <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
                       <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{new Date(expense.expense_date).toLocaleDateString()}</span>
                       {expense.user && <span className="flex items-center gap-1"><User className="h-3 w-3" />{expense.user.first_name} {expense.user.last_name}</span>}
-                      {expense.project && <span className="text-primary">{expense.project.name}</span>}
+                      {expense.project && <span className="text-primary">{expense.project.project_name}</span>}
                     </div>
                   </div>
                   {expense.status === 'draft' && <Button size="sm" variant="outline" onClick={() => handleSubmit(expense.id)}>Submit</Button>}

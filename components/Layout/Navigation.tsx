@@ -9,6 +9,8 @@ import {
   Shield,
   DollarSign,
   ClipboardList,
+  Building2,
+  Calculator,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -22,6 +24,8 @@ interface NavigationProps {
 
 const navigationItems = [
   { icon: Home, label: 'Dashboard', href: '/dashboard', description: 'Service gateway & quick access' },
+  { icon: Building2, label: 'CRM', href: '/crm', description: 'Leads, accounts & pipeline' },
+  { icon: Calculator, label: 'Estimates', href: '/estimates', description: 'Cost estimation builder' },
   { icon: FolderOpen, label: 'Projects', href: '/projects', description: 'View construction projects' },
   { icon: FileText, label: 'Documents', href: '/documents', description: 'SharePoint files & documents' },
   { icon: Calendar, label: 'Schedule', href: '/schedule', description: 'Calendar & events' },
@@ -45,7 +49,7 @@ export function Navigation({ isMobile = false }: NavigationProps) {
     return (
       <nav className="flex flex-col gap-2">
         {filteredItems.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
           return (
             <Link
               key={item.label}
@@ -70,7 +74,7 @@ export function Navigation({ isMobile = false }: NavigationProps) {
     <TooltipProvider delayDuration={300}>
       <div className="flex items-center gap-1">
         {filteredItems.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
           return (
             <Tooltip key={item.label}>
               <TooltipTrigger asChild>

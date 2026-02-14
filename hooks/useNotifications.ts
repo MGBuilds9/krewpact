@@ -7,9 +7,10 @@ export interface Notification {
   id: string;
   title: string;
   message: string | null;
-  type: string | null;
-  read: boolean;
-  link: string | null;
+  channel: string;
+  state: 'queued' | 'sent' | 'delivered' | 'failed' | 'read';
+  payload: unknown;
+  read_at: string | null;
   created_at: string;
 }
 
@@ -28,7 +29,7 @@ export function useMarkNotificationRead() {
 
   return useMutation({
     mutationFn: (id: string) =>
-      apiFetch(`/api/notifications/${id}`, { method: 'PATCH', body: { read: true } }),
+      apiFetch(`/api/notifications/${id}`, { method: 'PATCH', body: { state: 'read' } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });

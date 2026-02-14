@@ -14,7 +14,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
   const supabase = await createUserClient();
 
   const { data, error } = await supabase
-    .from('expenses')
+    .from('expense_claims')
     .select('*, user:users(first_name, last_name)')
     .eq('project_id', id)
     .order('expense_date', { ascending: false });

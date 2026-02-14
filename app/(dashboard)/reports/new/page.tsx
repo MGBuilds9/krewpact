@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ArrowLeft, Loader2 } from 'lucide-react';
-import { useCreateReport, REPORT_TYPES } from '@/hooks/useReports';
+import { useCreateReport } from '@/hooks/useReports';
 import { useProjects } from '@/hooks/useProjects';
 import { useDivision } from '@/contexts/DivisionContext';
 import { toast } from 'sonner';
@@ -26,30 +26,33 @@ export default function NewReportPage() {
   const { data: projects } = useProjects({ divisionId: activeDivision?.id });
   const createReport = useCreateReport();
 
-  const [reportType, setReportType] = useState('');
-  const [reportDate, setReportDate] = useState(new Date().toISOString().split('T')[0]);
+  const [logDate, setLogDate] = useState(new Date().toISOString().split('T')[0]);
   const [projectId, setProjectId] = useState('');
-  const [notes, setNotes] = useState('');
+  const [workSummary, setWorkSummary] = useState('');
+  const [crewCount, setCrewCount] = useState('');
+  const [delays, setDelays] = useState('');
+  const [safetyNotes, setSafetyNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
-    if (!reportType) {
-      toast.error('Please select a report type');
+    if (!projectId) {
+      toast.error('Please select a project');
       return;
     }
     setIsSubmitting(true);
     try {
       await createReport.mutateAsync({
-        report_type: reportType,
-        report_date: reportDate,
-        project_id: projectId || undefined,
-        division_id: activeDivision?.id,
-        data: notes ? { notes } : undefined,
+        project_id: projectId,
+        log_date: logDate,
+        work_summary: workSummary || undefined,
+        crew_count: crewCount ? parseInt(crewCount, 10) : undefined,
+        delays: delays || undefined,
+        safety_notes: safetyNotes || undefined,
       });
-      toast.success('Report created');
+      toast.success('Daily log created');
       router.push('/reports');
     } catch {
-      toast.error('Failed to create report');
+      toast.error('Failed to create daily log');
     } finally {
       setIsSubmitting(false);
     }
@@ -61,49 +64,24 @@ export default function NewReportPage() {
         <Button variant="ghost" size="icon" onClick={() => router.push('/reports')}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h1 className="text-3xl font-bold tracking-tight">New Report</h1>
+        <h1 className="text-3xl font-bold tracking-tight">New Daily Log</h1>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Report Details</CardTitle>
+          <CardTitle>Daily Log Details</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label>Report Type *</Label>
-            <Select value={reportType} onValueChange={setReportType}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select report type" />
-              </SelectTrigger>
-              <SelectContent>
-                {REPORT_TYPES.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>
-                    {t.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label>Report Date</Label>
-            <Input
-              type="date"
-              value={reportDate}
-              onChange={(e) => setReportDate(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <Label>Project</Label>
+            <Label>Project *</Label>
             <Select value={projectId} onValueChange={setProjectId}>
               <SelectTrigger>
-                <SelectValue placeholder="Select project (optional)" />
+                <SelectValue placeholder="Select project" />
               </SelectTrigger>
               <SelectContent>
                 {projects?.map((p) => (
                   <SelectItem key={p.id} value={p.id}>
-                    {p.name}
+                    {p.project_name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -111,12 +89,49 @@ export default function NewReportPage() {
           </div>
 
           <div>
-            <Label>Notes</Label>
+            <Label>Log Date</Label>
+            <Input
+              type="date"
+              value={logDate}
+              onChange={(e) => setLogDate(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <Label>Work Summary</Label>
             <Textarea
-              placeholder="Enter report details..."
-              className="min-h-[150px]"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Describe the work performed today..."
+              className="min-h-[100px]"
+              value={workSummary}
+              onChange={(e) => setWorkSummary(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <Label>Crew Count</Label>
+            <Input
+              type="number"
+              placeholder="Number of workers on site"
+              value={crewCount}
+              onChange={(e) => setCrewCount(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <Label>Delays</Label>
+            <Textarea
+              placeholder="Any delays or issues encountered..."
+              value={delays}
+              onChange={(e) => setDelays(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <Label>Safety Notes</Label>
+            <Textarea
+              placeholder="Safety observations or incidents..."
+              value={safetyNotes}
+              onChange={(e) => setSafetyNotes(e.target.value)}
             />
           </div>
 
@@ -131,7 +146,7 @@ export default function NewReportPage() {
                   Creating...
                 </>
               ) : (
-                'Create Report'
+                'Create Daily Log'
               )}
             </Button>
           </div>

@@ -13,7 +13,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Plus, X, Loader2 } from 'lucide-react';
 import { useCreateProject } from '@/hooks/useProjects';
@@ -39,30 +38,27 @@ export function ProjectCreationForm({ onClose, onSuccess }: ProjectCreationFormP
   const { data: users } = useUsers();
   const createProject = useCreateProject();
 
-  // Form state
+  // Form state — canonical column names
   const [formData, setFormData] = useState({
-    name: '',
-    code: '',
+    project_name: '',
+    project_number: '',
     description: '',
-    address: '',
-    client_name: '',
+    site_street: '',
+    site_city: '',
+    site_province: '',
+    site_postal_code: '',
     start_date: '',
-    end_date: '',
-    budget: '',
+    target_completion_date: '',
+    baseline_budget: '',
     status: 'planning',
-    manager_id: '',
   });
-  const [showClientInfo, setShowClientInfo] = useState(false);
-  const [clientEmail, setClientEmail] = useState('');
-  const [clientPhone, setClientPhone] = useState('');
   const [projectMembers, setProjectMembers] = useState<ProjectMember[]>([]);
 
   const steps = [
     { id: 1, title: 'Basic Information' },
     { id: 2, title: 'Project Details' },
-    { id: 3, title: 'Client Information' },
-    { id: 4, title: 'Team Assignment' },
-    { id: 5, title: 'Review & Create' },
+    { id: 3, title: 'Team Assignment' },
+    { id: 4, title: 'Review & Create' },
   ];
 
   const updateField = (field: string, value: string) => {
@@ -83,36 +79,40 @@ export function ProjectCreationForm({ onClose, onSuccess }: ProjectCreationFormP
     setProjectMembers(updated);
   };
 
+  const formatSiteAddress = () => {
+    const parts = [formData.site_street, formData.site_city, formData.site_province, formData.site_postal_code].filter(Boolean);
+    return parts.join(', ');
+  };
+
   const onSubmit = async () => {
-    if (!formData.name.trim()) {
+    if (!formData.project_name.trim()) {
       toast.error('Project name is required');
       return;
     }
 
     setIsSubmitting(true);
     try {
+      const siteAddress: Record<string, string> = {};
+      if (formData.site_street) siteAddress.street = formData.site_street;
+      if (formData.site_city) siteAddress.city = formData.site_city;
+      if (formData.site_province) siteAddress.province = formData.site_province;
+      if (formData.site_postal_code) siteAddress.postal_code = formData.site_postal_code;
+
       const projectData: Record<string, unknown> = {
-        name: formData.name,
-        code: formData.code || undefined,
-        description: formData.description || undefined,
-        address: formData.address || undefined,
-        client_name: formData.client_name || undefined,
+        project_name: formData.project_name,
+        project_number: formData.project_number || undefined,
         status: formData.status || 'planning',
         start_date: formData.start_date || undefined,
-        end_date: formData.end_date || undefined,
-        budget: formData.budget ? parseFloat(formData.budget) : undefined,
+        target_completion_date: formData.target_completion_date || undefined,
+        baseline_budget: formData.baseline_budget ? parseFloat(formData.baseline_budget) : undefined,
+        current_budget: formData.baseline_budget ? parseFloat(formData.baseline_budget) : undefined,
         division_id: activeDivision?.id || undefined,
-        manager_id: formData.manager_id || undefined,
+        site_address: Object.keys(siteAddress).length > 0 ? siteAddress : undefined,
       };
-
-      if (showClientInfo) {
-        projectData.client_email = clientEmail || undefined;
-        projectData.client_phone = clientPhone || undefined;
-      }
 
       await createProject.mutateAsync(projectData);
 
-      toast.success(`"${formData.name}" has been created`);
+      toast.success(`"${formData.project_name}" has been created`);
       onSuccess?.();
     } catch {
       toast.error('Error creating project. Please try again.');
@@ -129,17 +129,17 @@ export function ProjectCreationForm({ onClose, onSuccess }: ProjectCreationFormP
             <div>
               <Label>Project Name *</Label>
               <Input
-                value={formData.name}
-                onChange={(e) => updateField('name', e.target.value)}
+                value={formData.project_name}
+                onChange={(e) => updateField('project_name', e.target.value)}
                 placeholder="Enter project name"
               />
             </div>
             <div>
-              <Label>Project Code</Label>
+              <Label>Project Number</Label>
               <Input
-                value={formData.code}
-                onChange={(e) => updateField('code', e.target.value)}
-                placeholder="e.g., PROJ-2024-001"
+                value={formData.project_number}
+                onChange={(e) => updateField('project_number', e.target.value)}
+                placeholder="e.g., PRJ-2026-001"
               />
             </div>
             <div>
@@ -159,19 +159,37 @@ export function ProjectCreationForm({ onClose, onSuccess }: ProjectCreationFormP
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label>Project Location</Label>
+                <Label>Street Address</Label>
                 <Input
-                  value={formData.address}
-                  onChange={(e) => updateField('address', e.target.value)}
-                  placeholder="e.g., 123 Main St, City"
+                  value={formData.site_street}
+                  onChange={(e) => updateField('site_street', e.target.value)}
+                  placeholder="123 Main St"
                 />
               </div>
               <div>
-                <Label>Client Name</Label>
+                <Label>City</Label>
                 <Input
-                  value={formData.client_name}
-                  onChange={(e) => updateField('client_name', e.target.value)}
-                  placeholder="Client or company name"
+                  value={formData.site_city}
+                  onChange={(e) => updateField('site_city', e.target.value)}
+                  placeholder="Mississauga"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label>Province</Label>
+                <Input
+                  value={formData.site_province}
+                  onChange={(e) => updateField('site_province', e.target.value)}
+                  placeholder="ON"
+                />
+              </div>
+              <div>
+                <Label>Postal Code</Label>
+                <Input
+                  value={formData.site_postal_code}
+                  onChange={(e) => updateField('site_postal_code', e.target.value)}
+                  placeholder="L5B 1M2"
                 />
               </div>
             </div>
@@ -185,22 +203,22 @@ export function ProjectCreationForm({ onClose, onSuccess }: ProjectCreationFormP
                 />
               </div>
               <div>
-                <Label>End Date</Label>
+                <Label>Target Completion Date</Label>
                 <Input
                   type="date"
-                  value={formData.end_date}
-                  onChange={(e) => updateField('end_date', e.target.value)}
+                  value={formData.target_completion_date}
+                  onChange={(e) => updateField('target_completion_date', e.target.value)}
                 />
               </div>
             </div>
             <div>
-              <Label>Project Budget</Label>
+              <Label>Baseline Budget</Label>
               <Input
                 type="number"
                 placeholder="0.00"
                 step="0.01"
-                value={formData.budget}
-                onChange={(e) => updateField('budget', e.target.value)}
+                value={formData.baseline_budget}
+                onChange={(e) => updateField('baseline_budget', e.target.value)}
               />
             </div>
           </div>
@@ -209,69 +227,6 @@ export function ProjectCreationForm({ onClose, onSuccess }: ProjectCreationFormP
       case 3:
         return (
           <div className="space-y-6">
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="show-client-info"
-                checked={showClientInfo}
-                onCheckedChange={setShowClientInfo}
-              />
-              <Label htmlFor="show-client-info">Include client contact information</Label>
-            </div>
-            {showClientInfo && (
-              <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-                <h4 className="font-medium">Client Contact Information</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label>Client Email</Label>
-                    <Input
-                      type="email"
-                      placeholder="client@example.com"
-                      value={clientEmail}
-                      onChange={(e) => setClientEmail(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <Label>Client Phone</Label>
-                    <Input
-                      type="tel"
-                      placeholder="(555) 123-4567"
-                      value={clientPhone}
-                      onChange={(e) => setClientPhone(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  This information will only be visible to project managers and division managers.
-                </p>
-              </div>
-            )}
-          </div>
-        );
-
-      case 4:
-        return (
-          <div className="space-y-6">
-            <div>
-              <Label>Project Manager</Label>
-              <Select
-                value={formData.manager_id}
-                onValueChange={(value) => updateField('manager_id', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a project manager" />
-                </SelectTrigger>
-                <SelectContent>
-                  {users
-                    ?.filter((user) => user.is_internal)
-                    .map((user) => (
-                      <SelectItem key={user.id} value={user.id}>
-                        {user.first_name} {user.last_name} ({user.email})
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
-
             <div>
               <div className="flex items-center justify-between mb-4">
                 <div>
@@ -300,7 +255,7 @@ export function ProjectCreationForm({ onClose, onSuccess }: ProjectCreationFormP
                             </SelectTrigger>
                             <SelectContent>
                               {users
-                                ?.filter((user) => user.is_internal)
+                                ?.filter((user) => user.status === 'active')
                                 .map((user) => (
                                   <SelectItem key={user.id} value={user.id}>
                                     {user.first_name} {user.last_name}
@@ -357,7 +312,7 @@ export function ProjectCreationForm({ onClose, onSuccess }: ProjectCreationFormP
           </div>
         );
 
-      case 5:
+      case 4:
         return (
           <div className="space-y-4">
             <div className="text-center mb-4">
@@ -374,12 +329,12 @@ export function ProjectCreationForm({ onClose, onSuccess }: ProjectCreationFormP
               <CardContent className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="font-medium">Name:</span>
-                  <span>{formData.name}</span>
+                  <span>{formData.project_name}</span>
                 </div>
-                {formData.code && (
+                {formData.project_number && (
                   <div className="flex justify-between">
-                    <span className="font-medium">Code:</span>
-                    <span>{formData.code}</span>
+                    <span className="font-medium">Number:</span>
+                    <span>{formData.project_number}</span>
                   </div>
                 )}
               </CardContent>
@@ -390,16 +345,10 @@ export function ProjectCreationForm({ onClose, onSuccess }: ProjectCreationFormP
                 <CardTitle className="text-base">Project Details</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
-                {formData.address && (
+                {formatSiteAddress() && (
                   <div className="flex justify-between">
                     <span className="font-medium">Location:</span>
-                    <span>{formData.address}</span>
-                  </div>
-                )}
-                {formData.client_name && (
-                  <div className="flex justify-between">
-                    <span className="font-medium">Client:</span>
-                    <span>{formData.client_name}</span>
+                    <span>{formatSiteAddress()}</span>
                   </div>
                 )}
                 {formData.start_date && (
@@ -408,54 +357,20 @@ export function ProjectCreationForm({ onClose, onSuccess }: ProjectCreationFormP
                     <span>{new Date(formData.start_date).toLocaleDateString()}</span>
                   </div>
                 )}
-                {formData.end_date && (
+                {formData.target_completion_date && (
                   <div className="flex justify-between">
-                    <span className="font-medium">End Date:</span>
-                    <span>{new Date(formData.end_date).toLocaleDateString()}</span>
+                    <span className="font-medium">Target Completion:</span>
+                    <span>{new Date(formData.target_completion_date).toLocaleDateString()}</span>
                   </div>
                 )}
-                {formData.budget && (
+                {formData.baseline_budget && (
                   <div className="flex justify-between">
                     <span className="font-medium">Budget:</span>
-                    <span>${parseFloat(formData.budget).toLocaleString()}</span>
+                    <span>${parseFloat(formData.baseline_budget).toLocaleString()}</span>
                   </div>
                 )}
               </CardContent>
             </Card>
-
-            {showClientInfo && (clientEmail || clientPhone) && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Client Contact</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm">
-                  {clientEmail && (
-                    <div className="flex justify-between">
-                      <span className="font-medium">Email:</span>
-                      <span>{clientEmail}</span>
-                    </div>
-                  )}
-                  {clientPhone && (
-                    <div className="flex justify-between">
-                      <span className="font-medium">Phone:</span>
-                      <span>{clientPhone}</span>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-
-            {formData.manager_id && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Project Manager</CardTitle>
-                </CardHeader>
-                <CardContent className="text-sm">
-                  {users?.find((u) => u.id === formData.manager_id)?.first_name}{' '}
-                  {users?.find((u) => u.id === formData.manager_id)?.last_name}
-                </CardContent>
-              </Card>
-            )}
 
             {projectMembers.length > 0 && (
               <Card>

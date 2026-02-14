@@ -7,19 +7,20 @@ import { useDivision } from '@/contexts/DivisionContext';
 interface AtAGlance {
   activeProjects: number;
   pendingExpenses: number;
-  pendingReports: number;
+  openLeads: number;
   unreadNotifications: number;
 }
 
 interface RecentProject {
   id: string;
-  name: string;
+  project_name: string;
+  project_number: string;
   status: string;
-  address: string | null;
+  site_address: Record<string, string> | null;
   start_date: string | null;
-  end_date: string | null;
-  budget: number | null;
-  spent: number | null;
+  target_completion_date: string | null;
+  baseline_budget: number;
+  current_budget: number;
 }
 
 interface DashboardData {

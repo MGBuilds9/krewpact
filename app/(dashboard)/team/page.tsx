@@ -87,8 +87,8 @@ export default function TeamPage() {
                       <span className="truncate">{member.email}</span>
                     </div>
                     <div className="mt-2">
-                      <Badge variant={member.is_active ? 'default' : 'secondary'}>
-                        {member.is_active ? 'Active' : 'Inactive'}
+                      <Badge variant={member.status === 'active' ? 'default' : 'secondary'}>
+                        {member.status === 'active' ? 'Active' : 'Inactive'}
                       </Badge>
                     </div>
                   </div>

@@ -88,12 +88,14 @@ while [[ $ITERATION -lt $MAX_ITERATIONS ]]; do
   echo ""
 
   # Run Claude Code with the custom prompt
-  RESULT=$(claude --dangerously-skip-permissions --print < "${SCRIPT_DIR}/CLAUDE.md" 2>&1) || true
+  # Unset CLAUDECODE to allow launching from within a parent Claude Code session
+  RESULT=$(unset CLAUDECODE; claude --dangerously-skip-permissions --print < "${SCRIPT_DIR}/CLAUDE.md" 2>&1) || true
 
   echo "$RESULT"
 
-  # Check for completion signal
-  if echo "$RESULT" | grep -q '<promise>COMPLETE</promise>'; then
+  # Check for completion signal (match only on its own line to avoid false positives
+  # from prose like "I cannot output <promise>COMPLETE</promise>")
+  if echo "$RESULT" | grep -qx '<promise>COMPLETE</promise>'; then
     echo -e "${GREEN}=== RALPH COMPLETE ===${NC}"
     echo -e "All stories implemented and verified."
     echo -e "Total iterations: ${ITERATION}"

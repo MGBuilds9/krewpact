@@ -4,11 +4,12 @@ import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 
 const updateSchema = z.object({
-  report_type: z.string().min(1).max(100).optional(),
-  report_date: z.string().optional(),
-  project_id: z.string().uuid().nullable().optional(),
-  data: z.record(z.string(), z.unknown()).optional(),
-  status: z.enum(['draft', 'submitted', 'reviewed']).optional(),
+  log_date: z.string().optional(),
+  work_summary: z.string().max(5000).optional(),
+  crew_count: z.number().int().nonnegative().nullable().optional(),
+  weather: z.record(z.string(), z.any()).nullable().optional(),
+  delays: z.string().max(2000).nullable().optional(),
+  safety_notes: z.string().max(2000).nullable().optional(),
 });
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -21,24 +22,19 @@ export async function GET(_req: NextRequest, context: RouteContext) {
 
   const { id } = await context.params;
 
-  try {
-    const supabase = await createUserClient();
-    const { data, error } = await supabase
-      .from('reports')
-      .select('*, user:users(first_name, last_name, avatar_url), project:projects(name)')
-      .eq('id', id)
-      .single();
+  const supabase = await createUserClient();
+  const { data, error } = await supabase
+    .from('project_daily_logs')
+    .select('*, submitted_user:users!project_daily_logs_submitted_by_fkey(first_name, last_name, avatar_url), project:projects(project_name)')
+    .eq('id', id)
+    .single();
 
-    if (error) {
-      const status = error.code === 'PGRST116' ? 404 : 500;
-      return NextResponse.json({ error: error.message }, { status });
-    }
-
-    return NextResponse.json(data);
-  } catch (error) {
-    console.error('Report GET error:', error);
-    return NextResponse.json({ error: 'Failed to fetch report' }, { status: 500 });
+  if (error) {
+    const status = error.code === 'PGRST116' ? 404 : 500;
+    return NextResponse.json({ error: error.message }, { status });
   }
+
+  return NextResponse.json(data);
 }
 
 export async function PATCH(req: NextRequest, context: RouteContext) {
@@ -61,25 +57,20 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  try {
-    const supabase = await createUserClient();
-    const { data, error } = await supabase
-      .from('reports')
-      .update(parsed.data)
-      .eq('id', id)
-      .select()
-      .single();
+  const supabase = await createUserClient();
+  const { data, error } = await supabase
+    .from('project_daily_logs')
+    .update(parsed.data)
+    .eq('id', id)
+    .select()
+    .single();
 
-    if (error) {
-      const status = error.code === 'PGRST116' ? 404 : 500;
-      return NextResponse.json({ error: error.message }, { status });
-    }
-
-    return NextResponse.json(data);
-  } catch (error) {
-    console.error('Report PATCH error:', error);
-    return NextResponse.json({ error: 'Failed to update report' }, { status: 500 });
+  if (error) {
+    const status = error.code === 'PGRST116' ? 404 : 500;
+    return NextResponse.json({ error: error.message }, { status });
   }
+
+  return NextResponse.json(data);
 }
 
 export async function DELETE(_req: NextRequest, context: RouteContext) {
@@ -90,17 +81,12 @@ export async function DELETE(_req: NextRequest, context: RouteContext) {
 
   const { id } = await context.params;
 
-  try {
-    const supabase = await createUserClient();
-    const { error } = await supabase.from('reports').delete().eq('id', id);
+  const supabase = await createUserClient();
+  const { error } = await supabase.from('project_daily_logs').delete().eq('id', id);
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Report DELETE error:', error);
-    return NextResponse.json({ error: 'Failed to delete report' }, { status: 500 });
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  return NextResponse.json({ success: true });
 }

@@ -77,17 +77,14 @@ export default function ProjectDetailPage() {
         </Button>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-3xl font-bold tracking-tight truncate">{project.name}</h1>
-            {project.code && (
+            <h1 className="text-3xl font-bold tracking-tight truncate">{project.project_name}</h1>
+            {project.project_number && (
               <Badge variant="outline" className="text-sm">
-                {project.code}
+                {project.project_number}
               </Badge>
             )}
             <Badge className="capitalize">{project.status?.replace('_', ' ') || 'planning'}</Badge>
           </div>
-          {project.client_name && (
-            <p className="text-muted-foreground mt-1">{project.client_name}</p>
-          )}
         </div>
       </div>
 

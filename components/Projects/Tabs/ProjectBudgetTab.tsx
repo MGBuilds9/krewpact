@@ -10,8 +10,8 @@ interface ProjectBudgetTabProps {
 }
 
 export function ProjectBudgetTab({ project }: ProjectBudgetTabProps) {
-  const budget = project.budget || 0;
-  const spent = project.spent || 0;
+  const budget = project.baseline_budget || 0;
+  const spent = project.current_budget || 0;
   const remaining = budget - spent;
   const percentageSpent = budget > 0 ? (spent / budget) * 100 : 0;
   const isOverBudget = spent > budget;

@@ -15,10 +15,10 @@ export default function SchedulePage() {
     const today = new Date().toISOString().split('T')[0];
     return {
       total: tasks.length,
-      completed: tasks.filter((t) => t.status === 'done' || t.status === 'completed').length,
+      completed: tasks.filter((t) => t.status === 'done').length,
       inProgress: tasks.filter((t) => t.status === 'in_progress').length,
       overdue: tasks.filter(
-        (t) => t.due_date && t.due_date < today && t.status !== 'done' && t.status !== 'completed',
+        (t) => t.due_at && t.due_at < today && t.status !== 'done',
       ).length,
     };
   }, [tasks]);
@@ -26,8 +26,8 @@ export default function SchedulePage() {
   const upcomingTasks = useMemo(() => {
     if (!tasks) return [];
     return tasks
-      .filter((t) => t.due_date && t.status !== 'done' && t.status !== 'completed')
-      .sort((a, b) => (a.due_date! > b.due_date! ? 1 : -1))
+      .filter((t) => t.due_at && t.status !== 'done')
+      .sort((a, b) => (a.due_at! > b.due_at! ? 1 : -1))
       .slice(0, 10);
   }, [tasks]);
 
@@ -104,7 +104,7 @@ export default function SchedulePage() {
           ) : (
             <div className="space-y-3">
               {upcomingTasks.map((task) => {
-                const isOverdue = task.due_date! < new Date().toISOString().split('T')[0];
+                const isOverdue = task.due_at! < new Date().toISOString().split('T')[0];
                 return (
                   <div
                     key={task.id}
@@ -122,7 +122,7 @@ export default function SchedulePage() {
                       </div>
                     </div>
                     <div className={`text-sm font-medium flex-shrink-0 ${isOverdue ? 'text-red-600' : 'text-muted-foreground'}`}>
-                      {new Date(task.due_date!).toLocaleDateString()}
+                      {new Date(task.due_at!).toLocaleDateString()}
                       {isOverdue && <span className="ml-1 text-xs">(overdue)</span>}
                     </div>
                   </div>
