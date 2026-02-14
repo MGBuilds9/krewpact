@@ -1,7 +1,24 @@
 pull_request_rules:
-  - name: Auto-merge labeled PRs
+  - name: Auto-label Dependabot PRs
+    conditions:
+      - author=dependabot[bot]
+    actions:
+      label:
+        add:
+          - auto-merge
+
+  - name: Auto-label Jules PRs
+    conditions:
+      - author=jules[bot]
+    actions:
+      label:
+        add:
+          - auto-merge
+
+  - name: Auto-merge when CI passes
     conditions:
       - label=auto-merge
+      - check-success=baseline
       - "#review-threads-unresolved=0"
     actions:
       merge:

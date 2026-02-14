@@ -1,0 +1,110 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    - cron: '0 9 * * 1'
+
+jobs:
+  dependency-audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Detect toolchain
+        id: detect
+        run: |
+          if [ -f package.json ]; then echo "node=true" >> "$GITHUB_OUTPUT"; else echo "node=false" >> "$GITHUB_OUTPUT"; fi
+
+      - name: Setup Node.js
+        if: steps.detect.outputs.node == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        if: steps.detect.outputs.node == 'true'
+        run: npm ci
+
+      - name: Run npm audit
+        if: steps.detect.outputs.node == 'true'
+        run: npm audit --audit-level=moderate
+        continue-on-error: true
+
+      - name: Check for outdated packages
+        if: steps.detect.outputs.node == 'true'
+        run: npm outdated || true
+
+      - name: Skip (no Node.js)
+        if: steps.detect.outputs.node != 'true'
+        run: echo "::notice::No package.json found — skipping dependency audit"
+
+  code-scanning:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        continue-on-error: true
+        with:
+          languages: javascript-typescript
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        continue-on-error: true
+
+  secret-scan:
+    name: Secret Scanning
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: TruffleHog OSS
+        uses: trufflesecurity/trufflehog@main
+        continue-on-error: true
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --debug --only-verified
+
+  security-headers:
+    name: Security Headers Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check security headers config
+        continue-on-error: true
+        run: |
+          for f in vercel.json next.config.js next.config.ts next.config.mjs; do
+            if [ -f "$f" ]; then
+              echo "Checking $f for security headers..."
+              grep -q "Strict-Transport-Security" "$f" && echo "  HSTS: found" || echo "  HSTS: missing"
+              grep -q "Content-Security-Policy" "$f" && echo "  CSP: found" || echo "  CSP: missing"
+              grep -q "X-Frame-Options" "$f" && echo "  X-Frame-Options: found" || echo "  X-Frame-Options: missing"
+              exit 0
+            fi
+          done
+          echo "::notice::No config file found for security headers check — skipping"
