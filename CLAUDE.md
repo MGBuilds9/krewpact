@@ -252,6 +252,11 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
+### Feb 15, 2026 — Tier 3: Zod Input Validation
+- **Changes:** Added Zod validation to estimate versions POST endpoint (the only route missing it). 31 of 32 mutating routes already had Zod. 9 GET-only routes don't need it.
+- **Tests:** 554/554 passing
+- **Pushed:** to main
+
 ### Feb 13, 2026 — CRM + Estimating Phase 1 (Ralph Loop — 23 stories, 549 tests)
 - **Changes:** Full CRM + Estimating module via Ralph autonomous loop (20 iterations, 6 batches). 141 files changed across 27 commits. Schema: 2 migrations (8 enums, 22 tables, 16 indexes, 17 triggers, RLS on all). API: 21 new endpoints (accounts, contacts, leads, opportunities, activities, estimates, lines, versions, ERP sync). UI: 9 new pages, 7 new components (StageProgressBar, ActivityTimeline, PipelineView, OpportunityCard, LineItemEditor, TotalsPanel, VersionHistory), 34 React Query hooks. Infra: test helpers, typed Supabase clients, Zod validators (16 schemas), ERP sync mock. Updated 13 existing routes to canonical schema.
 - **Decisions:** Zod 4 `z.record(z.unknown())` crashes — use `z.object({}).passthrough()` workaround. tsc 5.9.3 crashes with `createClient<Database>()` on 28+ tables — use ungeneric `createClient()`. Lead stage transitions as pure functions (testable without mocking). Estimate calculations as pure functions (calculateLineTotal, calculateEstimateTotals). HST 13% hardcoded for Ontario. Pipeline view as CSS grid (no drag-and-drop for MVP).
