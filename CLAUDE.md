@@ -252,6 +252,10 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
+### Feb 16, 2026 — Repo Hygiene #15
+- **Merged:** 11 Dependabot PRs (9 patches merged via GH, react+react-dom done manually due to conflicts). Closed 2 (eslint 10, tailwindcss 4). Cleaned stale ralph branch.
+- **Tests:** 554/554 passing.
+
 ### Feb 15, 2026 — Tier 3: Zod Input Validation
 - **Changes:** Added Zod validation to estimate versions POST endpoint (the only route missing it). 31 of 32 mutating routes already had Zod. 9 GET-only routes don't need it.
 - **Tests:** 554/554 passing
