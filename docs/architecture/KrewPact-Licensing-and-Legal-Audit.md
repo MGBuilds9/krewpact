@@ -827,12 +827,7 @@ Every vendor processing personal information must sign a DPA with these clauses:
 
 ---
 
-**Implementation Details:** See KrewPact-Security-and-Compliance-Framework.md §4 for:
-- Immutable audit trail design for PIPEDA compliance
-- Consent management system integration
-- Privacy request workflow (access, correction, deletion, export)
-- Data retention policies and automated purge rules
-- Breach notification process and record-keeping (24-month requirement)
+> **Implementation Details:** See [KrewPact-Security-and-Compliance-Framework.md](./KrewPact-Security-and-Compliance-Framework.md) §4 for immutable audit trail design, consent management, privacy request workflows, data retention policies, and breach notification processes.
 
 ---
 

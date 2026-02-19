@@ -32,11 +32,11 @@ Expected: `LeadForge-MDM-Group/  MDM-Hub-Project/  mdm-contracting-hub/`
 
 ---
 
-### Task 2: Fix JobTread references across all MDM docs
+### Task 2: Establish JobTread as feature floor benchmark across all MDM docs
 
-**Context:** MDM does NOT use JobTread. They use Sage 50 Accounting + Sage Construction Management. JobTread was evaluated but not adopted. 25 files reference it.
+**Context:** JobTread was evaluated as a construction PM platform and serves as KrewPact's long-term feature floor — the minimum feature set KrewPact must always match or exceed across all phases (P0+P1+P2). MDM currently uses Sage 50 Accounting + Sage Construction Management (being migrated to ERPNext). JobTread is a benchmark, not a rejected alternative.
 
-**Files to modify (active repos only — skip archived and the design doc which is already correct):**
+**Files to modify (active repos only — skip archived):**
 - Modify: `C:/Users/Michael/Code/MDM-Projects/CLAUDE.md`
 - Modify: `C:/Users/Michael/Code/MDM-Projects/TASKS.md`
 - Modify: `C:/Users/Michael/Code/MDM-Projects/memory/glossary.md`
@@ -55,14 +55,15 @@ Expected: `LeadForge-MDM-Group/  MDM-Hub-Project/  mdm-contracting-hub/`
 - Modify: `C:/Users/Michael/Code/MDM-Projects/MDM-Book-Internal/05-operations/projects/krewpact.md`
 - Modify: `C:/Users/Michael/Code/MDM-Projects/MDM-Book-Internal/01-company/glossary.md`
 
-**Step 1: For each file, replace JobTread references**
+**Step 1: For each file, reframe JobTread references**
 
-Pattern: Where docs say "replacing JobTread" or "JobTread migration" → replace with context-appropriate text:
-- "replacing JobTread" → "replacing manual processes and Sage-based workflows"
+Pattern: Reframe JobTread as the feature floor benchmark, not a rejected tool:
+- "replacing JobTread" → "matching or exceeding the JobTread feature floor"
 - "JobTread migration" → "Sage data migration"
 - "JobTread data exports" → "Sage 50 and Sage Construction Management data exports"
-- Glossary entry for JobTread → update to: "JobTread — Construction PM software that was evaluated but NOT adopted. MDM uses Sage 50 Accounting + Sage Construction Management (being migrated to ERPNext)."
-- Any "Legacy Data Exports" section referencing JobTread → remove JobTread line, keep Sage lines
+- Glossary entry for JobTread → update to: "JobTread — Construction PM platform evaluated as KrewPact's long-term feature floor. The minimum feature set KrewPact must match or exceed across all phases. MDM uses Sage 50 Accounting + Sage Construction Management (being migrated to ERPNext)."
+- Competitor sections referencing JobTread → keep comparison tables, reframe as "benchmark to beat"
+- "JobTread sunset" → "JobTread feature parity timeline"
 
 **Step 2: Commit in each repo that changed**
 
@@ -70,10 +71,11 @@ KrewPact repo:
 ```bash
 cd C:/Users/Michael/Code/MDM-Projects/krewpact
 git add -A
-git commit -m "docs: correct JobTread references — not in use, was only evaluated
+git commit -m "docs: reframe JobTread as feature floor benchmark
 
-MDM uses Sage 50 Accounting + Sage Construction Management.
-JobTread was evaluated but not adopted.
+JobTread serves as KrewPact's long-term feature floor — the minimum
+feature set to match or exceed across all phases.
+MDM currently uses Sage 50 + Sage Construction Management.
 
 Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 ```
@@ -82,7 +84,7 @@ MDM-Book-Internal repo:
 ```bash
 cd C:/Users/Michael/Code/MDM-Projects/MDM-Book-Internal
 git add -A
-git commit -m "docs: correct JobTread references — not in use
+git commit -m "docs: reframe JobTread as feature floor benchmark
 
 Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 ```
@@ -91,7 +93,7 @@ MDM-Projects root (CLAUDE.md, TASKS.md, memory/):
 ```bash
 cd C:/Users/Michael/Code/MDM-Projects
 git add CLAUDE.md TASKS.md memory/
-git commit -m "docs: correct JobTread references across memory and project docs
+git commit -m "docs: reframe JobTread as feature floor benchmark across memory and project docs
 
 Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 ```
@@ -731,7 +733,7 @@ Vercel auto-deploys from main.
 | Task | What | Repo | Est. Effort |
 |------|------|------|-------------|
 | 1 | Archive mdm-contracting-hub | filesystem | 2 min |
-| 2 | Fix 25 JobTread references | krewpact, MDM-Book, MDM-Projects | 30 min |
+| 2 | Reframe JobTread as feature floor benchmark | krewpact, MDM-Book, MDM-Projects | 30 min |
 | 3 | Add PostHog analytics | mdm-website-v2 | 20 min |
 | 4 | Cookie consent banner | mdm-website-v2 | 15 min |
 | 5 | Upgrade contact form fields | mdm-website-v2 | 20 min |

@@ -2,6 +2,8 @@
 
 ## 1. CI/CD PIPELINE ARCHITECTURE
 
+> **Decision Rationale:** See [KrewPact-Technology-Stack-ADRs.md](./KrewPact-Technology-Stack-ADRs.md) ADR-014 for CI/CD platform decision and alternatives analysis.
+
 ### GitHub Actions Workflow Design
 
 The continuous integration and continuous deployment pipeline is the backbone of KrewPact development velocity and reliability. GitHub Actions serves as the primary automation platform, leveraging native GitHub integration to eliminate external dependencies.
@@ -337,6 +339,8 @@ Deployment failures trigger immediate data rollback.
 - Root cause analysis required before re-deployment
 
 ## 3. TESTING STRATEGY
+
+> **Testing Strategy Rationale:** See [KrewPact-Technology-Stack-ADRs.md](./KrewPact-Technology-Stack-ADRs.md) ADR-025 for testing strategy decision and coverage targets.
 
 A comprehensive testing pyramid ensures quality at all levels, from unit tests to end-to-end integration tests.
 

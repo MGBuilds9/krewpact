@@ -246,12 +246,9 @@ The following table documents all KrewPact entity mappings to ERPNext doctypes:
 - Quarterly audit of mapping completeness and data accuracy
 - Version control: All mappings stored in Git with change history
 
-**Detailed Field Mapping:** See KrewPact-ERPNext-Doctype-Field-Mapping.md for:
-- 43 doctype crosswalk (Customer → Account, Quotation → Estimate, etc.)
-- 16 required custom fields per doctype
-- 8 custom doctypes needed in ERPNext
-- Field-level mapping details and direction (Hub → ERP vs. ERP → Hub)
-- Cutover checklist
+---
+
+> **Detailed Field Mapping:** See [KrewPact-ERPNext-Doctype-Field-Mapping.md](./KrewPact-ERPNext-Doctype-Field-Mapping.md) for the complete 43-doctype crosswalk, 16 required custom fields per doctype, 8 custom doctypes, field-level mapping details, and cutover checklist.
 
 ### 2.4 Required Custom Fields (ERPNext)
 

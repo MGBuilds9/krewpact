@@ -28,7 +28,7 @@
 
 ### Corrections Applied
 
-- **JobTread:** NOT in use. Was evaluated but not adopted. All references removed. MDM currently uses Sage 50 Accounting + Sage Construction Management.
+- **JobTread:** Evaluated as construction PM platform. Serves as KrewPact's long-term feature floor — the minimum feature set to match or exceed. MDM currently uses Sage 50 Accounting + Sage Construction Management.
 - **Sage:** Sage 50 Accounting (5 entities) + Sage Construction Management. Being migrated to ERPNext.
 
 ### Folder Structure
@@ -260,7 +260,7 @@ Portal lives IN the website. Clients never see internal tools.
 ### Phase 0: Clean House (NOW — 1 week)
 
 - Archive `mdm-contracting-hub`
-- Fix all JobTread references
+- Reframe JobTread as feature floor benchmark across all docs
 - Update glossary, company.md, CLAUDE.md
 - Consolidate planning pack (7 overlaps)
 - Complete OneDrive/SMB extractions
@@ -363,4 +363,4 @@ Portal lives IN the website. Clients never see internal tools.
 4. **Sage CSV bridge** — Manual import until ERPNext is live. No direct Sage API (not possible with Sage 50).
 5. **Client portal on website** — Branded experience at mdmcontracting.ca, not separate app.
 6. **Cookie-based personalization** — No PII in cookies, server-side mapping to CRM records.
-7. **JobTread removed** — Not in use. Sage 50 + Sage Construction Management are current systems.
+7. **JobTread benchmarked** — Serves as feature floor for KrewPact feature parity. Sage 50 + Sage Construction Management are current systems.

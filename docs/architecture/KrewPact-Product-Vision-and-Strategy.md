@@ -1269,7 +1269,7 @@ The construction software market is competitive, with several established platfo
 
 **JobTread**
 
-JobTread is a construction PM platform that MDM Group evaluated but did not adopt. It was assessed as a potential solution but its limitations were a key factor in the decision to build KrewPact instead. JobTread's strengths include ease of use for estimating and project creation, mobile field apps, and client portal capabilities. Limitations include:
+JobTread is a construction PM platform that MDM Group evaluated and uses as KrewPact's long-term feature floor — the minimum feature set KrewPact must always match or exceed across all phases (P0 through P2). JobTread's strengths define the baseline: ease of use for estimating and project creation, mobile field apps, and client portal capabilities. These are requirements, not differentiators. Areas where KrewPact must go further include:
 
 - Single-company model; multi-division support is limited
 - Limited integration options; limited ability to sync with ERPNext

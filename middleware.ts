@@ -5,7 +5,7 @@ const isPublicRoute = createRouteMatcher([
   '/api/webhooks(.*)',
 ]);
 
-const ALLOWED_DOMAINS = ['mdmconstruction.com'];
+const ALLOWED_DOMAINS = ['mdmgroupinc.ca', 'mdmcontracting.ca'];
 
 export default clerkMiddleware(async (auth, req) => {
   // Domain restriction — only allow @mdmconstruction.com users

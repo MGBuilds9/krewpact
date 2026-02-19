@@ -216,7 +216,7 @@ Frontend hooks call `supabase.from('table')` directly without an abstraction lay
 
 ### Phase 1: Core Operations MVP (Weeks 4-12)
 
-**Goal:** Ship the features that replace JobTread for daily use.
+**Goal:** Ship the features that match or exceed the JobTread feature floor for daily use.
 
 Port from existing code (refactor to use BFF):
 - Project management (ProjectDetail, tasks, calendar)
@@ -263,7 +263,7 @@ These are blocking questions that need answers before any code is written:
 | 3 | **ERPNext integration depth** | Full bidirectional sync vs. read-only from ERPNext vs. defer entirely | Backend complexity |
 | 4 | **Offline requirement** | True offline-first (PWA + IndexedDB) vs. graceful degradation vs. defer | Architecture complexity |
 | 5 | **Team composition** | Solo + AI vs. small team vs. contractor(s) | Delivery velocity |
-| 6 | **JobTread sunset timeline** | Hard deadline vs. parallel run vs. gradual migration | Pressure on delivery |
+| 6 | **JobTread feature parity timeline** | When must each phase reach full feature parity with the JobTread benchmark? | Pressure on delivery scope |
 | 7 | **White-label priority** | Build for MDM only first vs. multi-tenant from day 1 | Architecture decisions |
 | 8 | **Clerk data residency** | Accept US hosting vs. find Canadian alternative vs. self-host auth | Compliance risk |
 
@@ -291,7 +291,7 @@ These are blocking questions that need answers before any code is written:
 | Master Plan | Product vision, 16 epics | 🟡 Partially aligned (6/16 epics built) |
 | Execution Board | Team, phases, sprints | 🔴 Not followed (no sprint structure visible in commits) |
 | Feature PRD Checklist | Requirements traceability | 🟡 Partially covered |
-| Blueprint Gap Matrix | Gap analysis vs. JobTread/ERPNext | 🔴 Gaps still open |
+| Blueprint Gap Matrix | Gap analysis vs. JobTread feature floor / ERPNext | 🔴 Gaps still open |
 | ERPNext Doctype Mapping | Sync contract | 🔴 Zero implementation |
 | SQL Schema Draft | Database design | ✅ Well-aligned (63 migrations, RLS, audit trails) |
 | Forms Registry | UI form specifications | 🟡 Some forms built, most missing |

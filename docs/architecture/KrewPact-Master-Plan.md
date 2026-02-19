@@ -6,15 +6,14 @@ The plan includes full feature scope, backend data model, integration logic, API
 
 ## Companion Documents (Detailed Expansion)
 1. Full feature/function PRD checklist:
-   `/Users/mkgbuilds/Sites/Local Development/KrewPact/KrewPact/KrewPact-Feature-Function-PRD-Checklist.md`
+   `./KrewPact-Feature-Function-PRD-Checklist.md`
 2. Backend canonical SQL schema draft:
-   `/Users/mkgbuilds/Sites/Local Development/KrewPact/KrewPact/KrewPact-Backend-SQL-Schema-Draft.sql`
+   `./KrewPact-Backend-SQL-Schema-Draft.sql`
 3. Week-by-week execution board with dependencies and gates:
-   `/Users/mkgbuilds/Sites/Local Development/KrewPact/KrewPact/KrewPact-Execution-Board.md`
+   `./KrewPact-Execution-Board.md`
 
 ## Blueprint Alignment
-1. Existing blueprint references were checked against:
-   `/Users/mkgbuilds/Sites/Local Development/KrewPact/docs/blueprints/krewpact-blueprint.html`
+1. Existing blueprint references were checked against the original KrewPact blueprint (archived).
 2. This V2 plan expands blueprint coverage to production-critical areas that are often missing from MVP blueprints: procurement RFQ/bid workflows, trade compliance gating, customer selections/allowances, closeout/warranty service, privacy operations, business continuity, and product telemetry/adoption.
 3. Execution sequencing and acceptance gates in this package are intentionally stricter than the legacy blueprint to support production-grade operations, not just feature parity demos.
 

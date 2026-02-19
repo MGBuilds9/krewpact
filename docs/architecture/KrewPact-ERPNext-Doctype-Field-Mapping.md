@@ -6,12 +6,7 @@ It defines canonical doctype mapping, field mapping, sync direction, and customi
 
 ## Integration Rules
 
-**Sync Architecture:** See KrewPact-Integration-Contracts.md §1 for:
-- Queue-driven sync pattern (BullMQ)
-- Retry strategy and circuit breaker
-- Idempotency and deduplication
-- Error handling and deadletter processing
-- Webhook infrastructure
+> **Sync Architecture:** See [KrewPact-Integration-Contracts.md](./KrewPact-Integration-Contracts.md) for the queue-driven sync pattern (BullMQ), retry strategy, circuit breaker, idempotency, error handling, and webhook infrastructure.
 
 - System of record:
   - ERPNext authoritative: AR/AP/PO/Invoices/Payments/GL-facing values.

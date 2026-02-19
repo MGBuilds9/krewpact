@@ -752,7 +752,17 @@ RESTRICTED:
 
 ## 4. PIPEDA COMPLIANCE IMPLEMENTATION
 
-**Legal Requirements:** See KrewPact-Licensing-and-Legal-Audit.md §4 for the complete regulatory requirement summary and risk assessment.
+> **Legal Requirements:** See [KrewPact-Licensing-and-Legal-Audit.md](./KrewPact-Licensing-and-Legal-Audit.md) §4 for the complete regulatory requirement summary and risk assessment.
+
+### PIPEDA Requirements → Technical Implementation Mapping
+
+| PIPEDA Requirement | Legal Reference | Technical Implementation |
+|-------------------|-----------------|--------------------------|
+| Consent management | Licensing §4 | Consent Management System (Security §4.3) |
+| Breach notification (30 days) | Licensing §4 | Incident response workflow (Security §4.2) |
+| Privacy access requests (DSAR) | Licensing §4 | Privacy request lifecycle (Security §4.1) |
+| Data retention policies | Licensing §4 | Automated purge rules (Security §4.1) |
+| Audit trails (7 years financial) | Licensing §4 | Immutable audit design (Security §4) |
 
 ### 4.1 Privacy by Design
 
