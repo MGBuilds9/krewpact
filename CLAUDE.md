@@ -252,6 +252,12 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
+### Feb 24, 2026 — Cross-Subdomain SSO (Clerk Shared Auth)
+- **Changes:** Configured Clerk API for cross-subdomain session sharing across `*.mdmgroupinc.ca`. Added 6 allowed origins and 6 redirect URLs via Clerk Backend API (`api.clerk.com`). Added `NEXT_PUBLIC_CLERK_DOMAIN=mdmgroupinc.ca` to `.env.local`. Added `authorizedParties` to `middleware.ts` for subdomain cookie leaking protection. Added `allowedRedirectOrigins` to `ClerkProvider` in `app/layout.tsx`. Updated `.env.example` with `NEXT_PUBLIC_CLERK_DOMAIN`.
+- **Decisions:** Subdomains of same root domain share sessions automatically in Clerk — no satellite domain setup needed (also requires plan upgrade). `authorizedParties` allowlist protects against subdomain cookie attacks. `allowedRedirectOrigins` on ClerkProvider permits auth redirects from sibling subdomains.
+- **Tests:** 650/650 passing, 0 lint errors, typecheck clean.
+- **Next steps:** Verify cross-subdomain SSO works in browser (portal → dashboard → hub). Deploy KrewPact to Vercel with `hub.mdmgroupinc.ca` custom domain + Cloudflare CNAME.
+
 ### Feb 24, 2026 — Full Service Connection + Microsoft Graph Integration
 - **Phase 1 (DB):** Applied RLS helper functions (`krewpact_user_id()`, `krewpact_divisions()`, `krewpact_roles()`, `is_platform_admin()`) + foundation/CRM/Sales AGI RLS policies to live Supabase. Created `ensure_clerk_user` SECURITY DEFINER function. Adapted policies for Sales AGI schema (contacts use `lead_id` not `account_id`, tasks use `lead_id` not `project_id`).
 - **Phase 2 (Clerk Bootstrap):** Bootstrapped Michael + David user records in Supabase. Assigned roles/divisions. Set Clerk `public_metadata` (krewpact_user_id, division_ids, role_keys). Updated Clerk JWT template with KrewPact claims.
