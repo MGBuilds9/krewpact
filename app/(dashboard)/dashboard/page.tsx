@@ -9,19 +9,18 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   Bell,
   Settings,
-  Clock,
   DollarSign,
   ClipboardList,
   FolderOpen,
   Briefcase,
   TrendingUp,
-  FileText,
-  AlertCircle,
   MapPin,
 } from 'lucide-react';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useUserRBAC } from '@/hooks/useRBAC';
 import { cn } from '@/lib/utils';
+import InboxPreview from '@/components/Dashboard/InboxPreview';
+import CalendarWidget from '@/components/Dashboard/CalendarWidget';
 
 function getTimeGreeting(): string {
   const hour = new Date().getHours();
@@ -316,36 +315,10 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      {/* E. Calendar + Email Placeholder */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Clock className="h-5 w-5" />
-              Calendar
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-8 text-muted-foreground">
-              <AlertCircle className="h-8 w-8 mx-auto mb-2 opacity-40" />
-              <p className="text-sm">Microsoft 365 calendar integration coming soon</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <FileText className="h-5 w-5" />
-              Email
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-8 text-muted-foreground">
-              <AlertCircle className="h-8 w-8 mx-auto mb-2 opacity-40" />
-              <p className="text-sm">Microsoft 365 email integration coming soon</p>
-            </div>
-          </CardContent>
-        </Card>
+      {/* E. Calendar + Email */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <CalendarWidget />
+        <InboxPreview />
       </div>
 
       {/* Footer */}

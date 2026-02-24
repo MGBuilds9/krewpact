@@ -252,6 +252,14 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
+### Feb 24, 2026 — Full Service Connection + Microsoft Graph Integration
+- **Phase 1 (DB):** Applied RLS helper functions (`krewpact_user_id()`, `krewpact_divisions()`, `krewpact_roles()`, `is_platform_admin()`) + foundation/CRM/Sales AGI RLS policies to live Supabase. Created `ensure_clerk_user` SECURITY DEFINER function. Adapted policies for Sales AGI schema (contacts use `lead_id` not `account_id`, tasks use `lead_id` not `project_id`).
+- **Phase 2 (Clerk Bootstrap):** Bootstrapped Michael + David user records in Supabase. Assigned roles/divisions. Set Clerk `public_metadata` (krewpact_user_id, division_ids, role_keys). Updated Clerk JWT template with KrewPact claims.
+- **Phase 3 (Code):** Created Clerk webhook handler (`app/api/webhooks/clerk/route.ts`) with svix signature verification. Fixed `NEXT_PUBLIC_APP_URL`. Made `ALLOWED_DOMAINS` configurable. Added `authorizedParties` to middleware.
+- **Microsoft Graph Integration:** Full email + calendar via Clerk-brokered M365 OAuth tokens. Graph client library, 5 API routes (inbox, read, send + CRM auto-logging, calendar list/create/detail), shared mailbox support (`info@mdmcontracting.ca`), React Query hooks, dashboard widgets (InboxPreview + CalendarWidget). 53 new tests.
+- **Tests:** 650/650 passing, 0 lint errors, typecheck clean, build clean.
+- **Pending (manual):** Register Clerk webhook at `hub.mdmgroupinc.ca/api/webhooks/clerk`, add `CLERK_WEBHOOK_SECRET` to Vercel, fix `NEXT_PUBLIC_APP_URL` on Vercel.
+
 ### Feb 23, 2026 — LeadForge Pipeline (Phases A-F) + Clerk Auth Unification
 - **Changes:** Full LeadForge replacement pipeline. Phases A-E: outreach sequence engine (6 API routes), Apollo integration + enrichment waterfall, division auto-routing, Resend email automation, sequence processor cron, pipeline/reporting dashboards, scoring admin. Phase F: replaced SHA-256 password gate on MDM-Book-Internal dashboard + portal with Clerk JS SDK (`@clerk/clerk-js@5`). Deployed both to Cloudflare Pages.
 - **Decisions:** Clerk JS SDK for static sites (no backend needed). Domain restriction via `clerk.user.primaryEmailAddress` check. Safe DOM manipulation (createElement/textContent) to pass security hooks — no innerHTML. Division router uses keyword matching with contracting as default.

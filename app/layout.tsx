@@ -30,7 +30,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      allowedRedirectOrigins={[
+        'https://hub.mdmgroupinc.ca',
+        'https://dashboard.mdmgroupinc.ca',
+        'https://portal.mdmgroupinc.ca',
+        'https://mdm-dashboard.pages.dev',
+        'https://mdm-portal.pages.dev',
+      ]}
+    >
       <html lang="en" suppressHydrationWarning>
         <body className={`${inter.variable} ${outfit.variable} font-sans antialiased`}>
           <ThemeProvider

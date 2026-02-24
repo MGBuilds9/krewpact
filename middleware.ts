@@ -7,7 +7,7 @@ const isPublicRoute = createRouteMatcher([
   '/api/cron(.*)',
 ]);
 
-const ALLOWED_DOMAINS = ['mdmgroupinc.ca', 'mdmcontracting.ca'];
+const ALLOWED_DOMAINS = (process.env.ALLOWED_DOMAINS || 'mdmgroupinc.ca,mdmcontracting.ca').split(',');
 
 export default clerkMiddleware(async (auth, req) => {
   // Domain restriction — only allow @mdmconstruction.com users
@@ -27,7 +27,7 @@ export default clerkMiddleware(async (auth, req) => {
   if (!isPublicRoute(req)) {
     await auth.protect();
   }
-});
+}, { authorizedParties: ['https://hub.mdmgroupinc.ca', 'https://dashboard.mdmgroupinc.ca', 'https://portal.mdmgroupinc.ca', 'http://localhost:3000'] });
 
 export const config = {
   matcher: [
