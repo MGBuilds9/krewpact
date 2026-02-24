@@ -252,27 +252,19 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
+### Feb 23, 2026 — LeadForge Pipeline (Phases A-F) + Clerk Auth Unification
+- **Changes:** Full LeadForge replacement pipeline. Phases A-E: outreach sequence engine (6 API routes), Apollo integration + enrichment waterfall, division auto-routing, Resend email automation, sequence processor cron, pipeline/reporting dashboards, scoring admin. Phase F: replaced SHA-256 password gate on MDM-Book-Internal dashboard + portal with Clerk JS SDK (`@clerk/clerk-js@5`). Deployed both to Cloudflare Pages.
+- **Decisions:** Clerk JS SDK for static sites (no backend needed). Domain restriction via `clerk.user.primaryEmailAddress` check. Safe DOM manipulation (createElement/textContent) to pass security hooks — no innerHTML. Division router uses keyword matching with contracting as default.
+- **Tests:** 597/597 passing, 0 lint errors, typecheck clean, build clean.
+- **Pushed:** to main (KrewPact + MDM-Book-Internal)
+- **Next steps:** Add `dashboard.mdmgroupinc.ca` and `portal.mdmgroupinc.ca` as allowed redirect URIs in Clerk dashboard. Set up n8n workflows (LF-001 through LF-050). Wire mdm-website-v2 contact form to KrewPact lead intake.
+
 ### Feb 16, 2026 — Repo Hygiene #15
-- **Merged:** 11 Dependabot PRs (9 patches merged via GH, react+react-dom done manually due to conflicts). Closed 2 (eslint 10, tailwindcss 4). Cleaned stale ralph branch.
-- **Tests:** 554/554 passing.
+- **Merged:** 11 Dependabot PRs. Cleaned stale ralph branch. Tests: 554/554.
 
-### Feb 15, 2026 — Tier 3: Zod Input Validation
-- **Changes:** Added Zod validation to estimate versions POST endpoint (the only route missing it). 31 of 32 mutating routes already had Zod. 9 GET-only routes don't need it.
-- **Tests:** 554/554 passing
-- **Pushed:** to main
-
-### Feb 13, 2026 — CRM + Estimating Phase 1 (Ralph Loop — 23 stories, 549 tests)
-- **Changes:** Full CRM + Estimating module via Ralph autonomous loop (20 iterations, 6 batches). 141 files changed across 27 commits. Schema: 2 migrations (8 enums, 22 tables, 16 indexes, 17 triggers, RLS on all). API: 21 new endpoints (accounts, contacts, leads, opportunities, activities, estimates, lines, versions, ERP sync). UI: 9 new pages, 7 new components (StageProgressBar, ActivityTimeline, PipelineView, OpportunityCard, LineItemEditor, TotalsPanel, VersionHistory), 34 React Query hooks. Infra: test helpers, typed Supabase clients, Zod validators (16 schemas), ERP sync mock. Updated 13 existing routes to canonical schema.
-- **Decisions:** Zod 4 `z.record(z.unknown())` crashes — use `z.object({}).passthrough()` workaround. tsc 5.9.3 crashes with `createClient<Database>()` on 28+ tables — use ungeneric `createClient()`. Lead stage transitions as pure functions (testable without mocking). Estimate calculations as pure functions (calculateLineTotal, calculateEstimateTotals). HST 13% hardcoded for Ontario. Pipeline view as CSS grid (no drag-and-drop for MVP).
-- **Tests:** 549/549 passing across 44 test files. 0 lint errors, typecheck clean, build success (61 routes).
-- **PR:** https://github.com/MGBuilds9/krewpact/pull/1
-- **Next steps:** Merge PR. Phase 1 remaining: CI/CD pipeline, Clerk webhook receiver, Vercel deployment + env vars. Then Phase 2: Contracting + Projects (proposals, BoldSign e-sign, project execution).
-
-### Feb 12, 2026 — MDM Unified Growth Intelligence System (Phase 0)
-- **Changes:** Archived MDM-Hub. Added Sales AGI tables from LeadForge merge. Added pgvector + RAG tables. Added unified_events bus. Canonical division + role seeds.
-- **Decisions:** KrewPact = nucleus. Single Supabase. pgvector for RAG.
-
-- Feb 12: Repo Hygiene #2 — Verified 422 tests, fixed UUID fixtures.
-- Feb 12: Repo Hygiene #1 — Verified clean state. 22/22 tests.
+- Feb 15: Tier 3 Zod validation — all 32 mutating routes covered. 554 tests.
+- Feb 13: CRM + Estimating Phase 1 (Ralph Loop) — 23 stories, 549 tests, PR #1.
+- Feb 12: MDM Unified Growth Intelligence System (Phase 0) — Sales AGI + pgvector schema.
+- Feb 12: Repo Hygiene #1-2 — Verified clean state, fixed UUID fixtures.
 - Feb 10: Architecture resolution (23 issues) + /scope skill.
 
