@@ -2,6 +2,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { POST } from '@/app/api/web/leads/route';
 import { NextRequest } from 'next/server';
 
+// Mock division router
+vi.mock('@/lib/crm/division-router', () => ({
+    routeToDivision: vi.fn(() => 'contracting'),
+    resolveDivisionId: vi.fn(() => Promise.resolve('div-001')),
+}));
+
 // Mock Supabase
 const mockSupabase = {
     from: vi.fn(() => ({

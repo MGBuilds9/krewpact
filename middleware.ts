@@ -3,6 +3,8 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 const isPublicRoute = createRouteMatcher([
   '/auth(.*)',
   '/api/webhooks(.*)',
+  '/api/web/leads',
+  '/api/cron(.*)',
 ]);
 
 const ALLOWED_DOMAINS = ['mdmgroupinc.ca', 'mdmcontracting.ca'];

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
+import { routeToDivision, resolveDivisionId } from '@/lib/crm/division-router';
 
 // Schema for incoming lead data
 const leadSchema = z.object({
@@ -63,6 +64,14 @@ export async function POST(req: NextRequest) {
         // Default company name if missing (common for B2C/Sole props)
         const company = data.companyName || `${data.name}'s Company`;
 
+        // Auto-route to division based on lead content
+        const divisionCode = routeToDivision({
+            project_type: data.projectType,
+            project_description: data.message,
+            company_name: company,
+        });
+        const divisionId = await resolveDivisionId(supabase, divisionCode);
+
         // A. Insert Lead
         const { data: lead, error: leadError } = await supabase
             .from('leads')
@@ -72,10 +81,10 @@ export async function POST(req: NextRequest) {
                 status: 'new',
                 project_description: data.message,
                 project_type: data.projectType,
+                division_id: divisionId,
                 utm_source: data.utm_source,
                 utm_medium: data.utm_medium,
                 utm_campaign: data.utm_campaign,
-                // domain: extractDomain(data.email) // Optional enhancement
             })
             .select('id')
             .single();

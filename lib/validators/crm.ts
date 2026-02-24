@@ -178,6 +178,75 @@ export const activityUpdateSchema = z.object({
 });
 
 // ============================================================
+// Sequence schemas
+// ============================================================
+
+const outreachChannels = [
+  'email',
+  'call',
+  'linkedin',
+  'video',
+  'meeting',
+  'text',
+  'site_visit',
+] as const;
+
+export const sequenceCreateSchema = z.object({
+  name: z.string().min(1).max(200),
+  description: z.string().optional(),
+  trigger_type: z.string().min(1),
+  trigger_conditions: z.object({}).passthrough().optional(),
+  is_active: z.boolean().optional(),
+  division_id: z.string().uuid().optional(),
+});
+
+export const sequenceUpdateSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  description: z.string().optional().nullable(),
+  trigger_type: z.string().min(1).optional(),
+  trigger_conditions: z.object({}).passthrough().optional().nullable(),
+  is_active: z.boolean().optional(),
+  division_id: z.string().uuid().optional().nullable(),
+});
+
+export const sequenceStepCreateSchema = z.object({
+  step_number: z.number().int().min(1),
+  action_type: z.enum(['email', 'task', 'wait']),
+  action_config: z.object({}).passthrough(),
+  delay_days: z.number().int().min(0).optional(),
+  delay_hours: z.number().int().min(0).optional(),
+});
+
+export const sequenceStepUpdateSchema = z.object({
+  step_number: z.number().int().min(1).optional(),
+  action_type: z.enum(['email', 'task', 'wait']).optional(),
+  action_config: z.object({}).passthrough().optional(),
+  delay_days: z.number().int().min(0).optional(),
+  delay_hours: z.number().int().min(0).optional(),
+});
+
+export const sequenceEnrollSchema = z.object({
+  lead_id: z.string().uuid(),
+  contact_id: z.string().uuid().optional(),
+});
+
+export const outreachCreateSchema = z.object({
+  lead_id: z.string().uuid(),
+  contact_id: z.string().uuid().optional(),
+  channel: z.enum(outreachChannels),
+  direction: z.enum(['inbound', 'outbound']),
+  activity_type: z.string().optional(),
+  outcome: z.string().optional(),
+  outcome_detail: z.string().optional(),
+  subject: z.string().optional(),
+  message_preview: z.string().optional(),
+  notes: z.string().optional(),
+  sequence_id: z.string().uuid().optional(),
+  sequence_step: z.number().int().optional(),
+  is_automated: z.boolean().optional(),
+});
+
+// ============================================================
 // Inferred types
 // ============================================================
 
@@ -192,3 +261,9 @@ export type OpportunityCreate = z.infer<typeof opportunityCreateSchema>;
 export type OpportunityUpdate = z.infer<typeof opportunityUpdateSchema>;
 export type ActivityCreate = z.infer<typeof activityCreateSchema>;
 export type ActivityUpdate = z.infer<typeof activityUpdateSchema>;
+export type SequenceCreate = z.infer<typeof sequenceCreateSchema>;
+export type SequenceUpdate = z.infer<typeof sequenceUpdateSchema>;
+export type SequenceStepCreate = z.infer<typeof sequenceStepCreateSchema>;
+export type SequenceStepUpdate = z.infer<typeof sequenceStepUpdateSchema>;
+export type SequenceEnroll = z.infer<typeof sequenceEnrollSchema>;
+export type OutreachCreate = z.infer<typeof outreachCreateSchema>;

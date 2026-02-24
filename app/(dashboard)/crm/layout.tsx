@@ -9,6 +9,7 @@ const crmTabs = [
   { label: 'Accounts', href: '/crm/accounts' },
   { label: 'Contacts', href: '/crm/contacts' },
   { label: 'Opportunities', href: '/crm/opportunities' },
+  { label: 'Sequences', href: '/crm/sequences' },
 ];
 
 export default function CRMLayout({ children }: { children: React.ReactNode }) {

@@ -1,0 +1,68 @@
+import { auth } from '@clerk/nextjs/server';
+import { createUserClient } from '@/lib/supabase/server';
+import { z } from 'zod';
+import { NextRequest, NextResponse } from 'next/server';
+
+const scoringRuleSchema = z.object({
+  name: z.string().min(1).max(200),
+  category: z.enum(['fit', 'intent', 'engagement']),
+  field_name: z.string().min(1),
+  operator: z.string().min(1),
+  value: z.string().min(1),
+  score_impact: z.number().int(),
+  is_active: z.boolean().optional(),
+  priority: z.number().int().optional(),
+  division_id: z.string().uuid().optional(),
+});
+
+export async function GET(): Promise<NextResponse> {
+  const { userId } = await auth();
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const supabase = await createUserClient();
+  const { data, error } = await supabase
+    .from('scoring_rules')
+    .select('*')
+    .order('category')
+    .order('priority', { ascending: false });
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json(data);
+}
+
+export async function POST(req: NextRequest): Promise<NextResponse> {
+  const { userId } = await auth();
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+  }
+
+  const parsed = scoringRuleSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
+
+  const supabase = await createUserClient();
+  const { data, error } = await supabase
+    .from('scoring_rules')
+    .insert(parsed.data)
+    .select()
+    .single();
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json(data, { status: 201 });
+}
