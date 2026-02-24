@@ -127,10 +127,11 @@ export async function POST(req: NextRequest) {
             message: 'Lead captured successfully'
         });
 
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('API Error:', err);
+        const message = err instanceof Error ? err.message : 'Unknown error';
         return NextResponse.json(
-            { error: 'Internal Server Error', details: err.message },
+            { error: 'Internal Server Error', details: message },
             { status: 500 }
         );
     }

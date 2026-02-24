@@ -104,9 +104,8 @@ export function routeToDivision(lead: LeadFields): string {
   return DEFAULT_DIVISION;
 }
 
-interface SupabaseClient {
-  from: (table: string) => any;
-}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SupabaseClient = { from: (...args: any[]) => any };
 
 export async function resolveDivisionId(
   supabase: SupabaseClient,

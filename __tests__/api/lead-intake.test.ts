@@ -10,7 +10,7 @@ vi.mock('@/lib/crm/division-router', () => ({
 
 // Mock Supabase
 const mockSupabase = {
-    from: vi.fn(() => ({
+    from: vi.fn((_table: string): Record<string, unknown> => ({
         insert: vi.fn(),
         select: vi.fn(),
         single: vi.fn(),
@@ -31,7 +31,7 @@ describe('Lead Intake API (/api/web/leads)', () => {
         process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-key';
     });
 
-    function createRequest(body: any, secret: string | null = SECRET) {
+    function createRequest(body: Record<string, unknown>, secret: string | null = SECRET) {
         const headers = new Headers();
         headers.set('content-type', 'application/json');
         if (secret) headers.set('x-webhook-secret', secret);
