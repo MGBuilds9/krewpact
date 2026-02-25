@@ -86,3 +86,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 }
+
+// Vercel Cron Jobs sends GET requests
+export { POST as GET };

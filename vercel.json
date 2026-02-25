@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/apollo-pump",
+      "schedule": "0 6 * * 1"
+    },
+    {
+      "path": "/api/cron/enrichment",
+      "schedule": "0 7 * * 1,4"
+    }
+  ]
+}

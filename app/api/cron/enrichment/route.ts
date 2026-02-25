@@ -67,3 +67,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     timestamp: new Date().toISOString(),
   });
 }
+
+// Vercel Cron Jobs sends GET requests
+export { POST as GET };
