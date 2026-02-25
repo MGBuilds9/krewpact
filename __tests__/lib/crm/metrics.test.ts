@@ -23,8 +23,8 @@ function makeOpp(overrides: Partial<OpportunityData> = {}): OpportunityData {
 function makeLead(overrides: Partial<LeadData> = {}): LeadData {
   return {
     id: `lead-${Math.random().toString(36).slice(2, 8)}`,
-    stage: 'new',
-    source: 'Website',
+    status: 'new',
+    source_channel: 'Website',
     estimated_value: 25000,
     created_at: '2026-01-15T00:00:00Z',
     ...overrides,
@@ -95,10 +95,10 @@ describe('calculateConversionMetrics', () => {
 
   it('calculates conversion rates correctly', () => {
     const leads = [
-      makeLead({ stage: 'new' }),
-      makeLead({ stage: 'qualified' }),
-      makeLead({ stage: 'converted' }),
-      makeLead({ stage: 'lost' }),
+      makeLead({ status: 'new' }),
+      makeLead({ status: 'qualified' }),
+      makeLead({ status: 'converted' }),
+      makeLead({ status: 'lost' }),
     ];
     const result = calculateConversionMetrics(leads);
     expect(result.totalLeads).toBe(4);
@@ -168,9 +168,9 @@ describe('calculateSourceMetrics', () => {
 
   it('groups leads by source and calculates conversion rates', () => {
     const leads = [
-      makeLead({ source: 'Website', stage: 'new', estimated_value: 10000 }),
-      makeLead({ source: 'Website', stage: 'converted', estimated_value: 20000 }),
-      makeLead({ source: 'Referral', stage: 'qualified', estimated_value: 50000 }),
+      makeLead({ source_channel: 'Website', status: 'new', estimated_value: 10000 }),
+      makeLead({ source_channel: 'Website', status: 'converted', estimated_value: 20000 }),
+      makeLead({ source_channel: 'Referral', status: 'qualified', estimated_value: 50000 }),
     ];
     const result = calculateSourceMetrics(leads);
     expect(result.sources).toHaveLength(2);
@@ -187,8 +187,8 @@ describe('calculateSourceMetrics', () => {
 
   it('sorts sources by value descending', () => {
     const leads = [
-      makeLead({ source: 'Low', estimated_value: 1000 }),
-      makeLead({ source: 'High', estimated_value: 100000 }),
+      makeLead({ source_channel: 'Low', estimated_value: 1000 }),
+      makeLead({ source_channel: 'High', estimated_value: 100000 }),
     ];
     const result = calculateSourceMetrics(leads);
     expect(result.sources[0].source).toBe('High');
@@ -196,7 +196,7 @@ describe('calculateSourceMetrics', () => {
   });
 
   it('handles null source as Unknown', () => {
-    const leads = [makeLead({ source: null })];
+    const leads = [makeLead({ source_channel: null })];
     const result = calculateSourceMetrics(leads);
     expect(result.sources[0].source).toBe('Unknown');
   });

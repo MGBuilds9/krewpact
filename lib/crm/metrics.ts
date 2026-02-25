@@ -25,8 +25,8 @@ export interface StageHistoryData {
 
 export interface LeadData {
   id: string;
-  stage: string;
-  source: string | null;
+  status: string;
+  source_channel: string | null;
   estimated_value: number | null;
   created_at: string;
 }
@@ -172,15 +172,15 @@ export function calculateConversionMetrics(
 
   const qualified = leads.filter(
     (l) =>
-      qualifiedStages.includes(l.stage) ||
-      convertedStages.includes(l.stage),
+      qualifiedStages.includes(l.status) ||
+      convertedStages.includes(l.status),
   ).length;
 
   const converted = leads.filter((l) =>
-    convertedStages.includes(l.stage),
+    convertedStages.includes(l.status),
   ).length;
 
-  const lost = leads.filter((l) => lostStages.includes(l.stage)).length;
+  const lost = leads.filter((l) => lostStages.includes(l.status)).length;
 
   return {
     totalLeads: total,
@@ -268,9 +268,9 @@ export function calculateSourceMetrics(leads: LeadData[]): SourceMetrics {
   >();
 
   for (const lead of leads) {
-    const source = lead.source ?? 'Unknown';
+    const source = lead.source_channel ?? 'Unknown';
     const existing = sourceMap.get(source);
-    const isConverted = ['converted', 'won'].includes(lead.stage);
+    const isConverted = ['converted', 'won'].includes(lead.status);
 
     if (existing) {
       existing.count += 1;

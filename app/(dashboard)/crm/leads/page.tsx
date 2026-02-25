@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search, Plus, UserPlus, DollarSign } from 'lucide-react';
+import { Search, Plus, UserPlus, Users } from 'lucide-react';
 import { useLeads } from '@/hooks/useCRM';
 import { useDivision } from '@/contexts/DivisionContext';
 import { cn } from '@/lib/utils';
@@ -72,8 +72,34 @@ export default function LeadsPage() {
 
   const filteredLeads = leads ?? [];
 
+  const statusCounts = {
+    total: filteredLeads.length,
+    new: filteredLeads.filter((l) => l.status === 'new').length,
+    qualified: filteredLeads.filter((l) => l.status === 'qualified').length,
+    won: filteredLeads.filter((l) => l.status === 'won').length,
+  };
+
   return (
     <div className="space-y-4">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Users className="h-8 w-8 text-primary" />
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Leads</h1>
+            <p className="text-muted-foreground text-sm">
+              {statusCounts.total} lead{statusCounts.total !== 1 ? 's' : ''}
+              {statusCounts.new > 0 && <span className="mx-1.5">&middot;</span>}
+              {statusCounts.new > 0 && <span className="text-blue-600">{statusCounts.new} new</span>}
+              {statusCounts.qualified > 0 && <span className="mx-1.5">&middot;</span>}
+              {statusCounts.qualified > 0 && <span className="text-green-600">{statusCounts.qualified} qualified</span>}
+              {statusCounts.won > 0 && <span className="mx-1.5">&middot;</span>}
+              {statusCounts.won > 0 && <span className="text-emerald-600">{statusCounts.won} won</span>}
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
