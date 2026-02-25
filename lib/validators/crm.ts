@@ -259,6 +259,18 @@ export const outreachCreateSchema = z.object({
 });
 
 // ============================================================
+// Auto-log schema
+// ============================================================
+
+export const autoLogSchema = z.object({
+  email_address: z.string().email(),
+  subject: z.string().min(1),
+  direction: z.enum(['inbound', 'outbound']),
+  message_preview: z.string().max(500).optional(),
+});
+export type AutoLog = z.infer<typeof autoLogSchema>;
+
+// ============================================================
 // Inferred types
 // ============================================================
 

@@ -720,6 +720,28 @@ export function useRecalculateLeadScore() {
   });
 }
 
+export function useAutoLogActivity() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { email_address: string; subject: string; direction: 'inbound' | 'outbound'; message_preview?: string }) =>
+      apiFetch<{ matched: boolean; activities_created: number }>('/api/crm/activities/auto-log', { method: 'POST', body: data }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['activities'] });
+    },
+  });
+}
+
+export function useSendEmail() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { to: { name?: string; address: string }[]; subject: string; body: string; bodyType?: string; leadId?: string; contactId?: string; accountId?: string }) =>
+      apiFetch<{ success: boolean }>('/api/email/send', { method: 'POST', body: data }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['activities'] });
+    },
+  });
+}
+
 export function useCreateOutreach() {
   const queryClient = useQueryClient();
   return useMutation({
