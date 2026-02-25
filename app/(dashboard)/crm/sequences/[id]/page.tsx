@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
@@ -15,15 +14,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -32,35 +23,22 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { ArrowLeft, Plus, UserPlus } from 'lucide-react';
+import { ArrowLeft, UserPlus } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import {
+  DialogFooter,
+} from '@/components/ui/dialog';
 import {
   useSequence,
   useUpdateSequence,
-  useCreateSequenceStep,
   useSequenceEnrollments,
   useEnrollInSequence,
+  useDeleteSequenceStep,
+  useProcessSequences,
 } from '@/hooks/useCRM';
-
-const ACTION_TYPE_OPTIONS = [
-  { value: 'send_email', label: 'Send Email' },
-  { value: 'send_sms', label: 'Send SMS' },
-  { value: 'create_task', label: 'Create Task' },
-  { value: 'add_note', label: 'Add Note' },
-  { value: 'update_lead_stage', label: 'Update Lead Stage' },
-  { value: 'linkedin_message', label: 'LinkedIn Message' },
-];
-
-function formatActionType(actionType: string): string {
-  return ACTION_TYPE_OPTIONS.find((o) => o.value === actionType)?.label ?? actionType;
-}
-
-function formatDelay(days: number, hours: number): string {
-  if (days === 0 && hours === 0) return 'Immediately';
-  const parts: string[] = [];
-  if (days > 0) parts.push(`${days}d`);
-  if (hours > 0) parts.push(`${hours}h`);
-  return parts.join(' ');
-}
+import type { SequenceStep } from '@/hooks/useCRM';
+import { SequenceStepEditor } from '@/components/CRM/SequenceStepEditor';
+import { SequenceStepForm } from '@/components/CRM/SequenceStepForm';
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('en-CA', {
@@ -81,160 +59,6 @@ const ENROLLMENT_STATUS_COLORS: Record<string, string> = {
   cancelled: 'bg-gray-100 text-gray-600 border-gray-200',
 };
 
-// --- Add Step Dialog ---
-
-interface AddStepDialogProps {
-  open: boolean;
-  onClose: () => void;
-  sequenceId: string;
-  nextStepNumber: number;
-}
-
-function AddStepDialog({ open, onClose, sequenceId, nextStepNumber }: AddStepDialogProps) {
-  const createStep = useCreateSequenceStep();
-  const [actionType, setActionType] = useState('send_email');
-  const [delayDays, setDelayDays] = useState('0');
-  const [delayHours, setDelayHours] = useState('0');
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    createStep.mutate(
-      {
-        sequenceId,
-        step_number: nextStepNumber,
-        action_type: actionType,
-        delay_days: parseInt(delayDays, 10) || 0,
-        delay_hours: parseInt(delayHours, 10) || 0,
-        action_config: {},
-      },
-      {
-        onSuccess: () => {
-          onClose();
-          setActionType('send_email');
-          setDelayDays('0');
-          setDelayHours('0');
-        },
-      },
-    );
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Add Step {nextStepNumber}</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="action_type">Action</Label>
-            <Select value={actionType} onValueChange={setActionType}>
-              <SelectTrigger id="action_type">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {ACTION_TYPE_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="delay_days">Delay (days)</Label>
-              <Input
-                id="delay_days"
-                type="number"
-                min="0"
-                value={delayDays}
-                onChange={(e) => setDelayDays(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="delay_hours">Delay (hours)</Label>
-              <Input
-                id="delay_hours"
-                type="number"
-                min="0"
-                max="23"
-                value={delayHours}
-                onChange={(e) => setDelayHours(e.target.value)}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={createStep.isPending}>
-              Add Step
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// --- Enroll Lead Dialog ---
-
-interface EnrollLeadDialogProps {
-  open: boolean;
-  onClose: () => void;
-  sequenceId: string;
-}
-
-function EnrollLeadDialog({ open, onClose, sequenceId }: EnrollLeadDialogProps) {
-  const enrollInSequence = useEnrollInSequence();
-  const [leadId, setLeadId] = useState('');
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!leadId.trim()) return;
-    enrollInSequence.mutate(
-      { sequenceId, lead_id: leadId.trim() },
-      {
-        onSuccess: () => {
-          onClose();
-          setLeadId('');
-        },
-      },
-    );
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Enroll Lead</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="lead_id">Lead ID</Label>
-            <Input
-              id="lead_id"
-              placeholder="Enter lead ID to enroll"
-              value={leadId}
-              onChange={(e) => setLeadId(e.target.value)}
-            />
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={!leadId.trim() || enrollInSequence.isPending}>
-              Enroll
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// --- Main Page ---
-
 export default function SequenceDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -243,9 +67,14 @@ export default function SequenceDetailPage() {
   const { data: sequence, isLoading } = useSequence(sequenceId);
   const { data: enrollments } = useSequenceEnrollments(sequenceId);
   const updateSequence = useUpdateSequence();
+  const enrollInSequence = useEnrollInSequence();
+  const deleteStep = useDeleteSequenceStep();
+  const processSequences = useProcessSequences();
 
   const [addStepOpen, setAddStepOpen] = useState(false);
+  const [editingStep, setEditingStep] = useState<SequenceStep | null>(null);
   const [enrollLeadOpen, setEnrollLeadOpen] = useState(false);
+  const [enrollLeadId, setEnrollLeadId] = useState('');
 
   if (isLoading) {
     return (
@@ -278,6 +107,10 @@ export default function SequenceDetailPage() {
 
   function handleToggleActive(checked: boolean) {
     updateSequence.mutate({ id: sequence!.id, is_active: checked });
+  }
+
+  function handleDeleteStep(stepId: string) {
+    deleteStep.mutate({ sequenceId, stepId });
   }
 
   return (
@@ -321,6 +154,14 @@ export default function SequenceDetailPage() {
               disabled={updateSequence.isPending}
             />
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => processSequences.mutate()}
+            disabled={processSequences.isPending}
+          >
+            {processSequences.isPending ? 'Processing...' : 'Process Now'}
+          </Button>
           <Button variant="outline" onClick={() => setEnrollLeadOpen(true)}>
             <UserPlus className="h-4 w-4 mr-2" />
             Enroll Lead
@@ -337,52 +178,14 @@ export default function SequenceDetailPage() {
         </TabsList>
 
         {/* Steps Tab */}
-        <TabsContent value="steps" className="space-y-3 mt-4">
-          {steps.length === 0 ? (
-            <Card>
-              <CardContent className="py-10 text-center">
-                <p className="text-muted-foreground mb-4">
-                  No steps yet. Add your first step to define what this sequence does.
-                </p>
-                <Button onClick={() => setAddStepOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add First Step
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <>
-              <div className="space-y-2">
-                {steps
-                  .slice()
-                  .sort((a, b) => a.step_number - b.step_number)
-                  .map((step) => (
-                    <Card key={step.id}>
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-4">
-                          <div className="flex-shrink-0 h-8 w-8 rounded-full bg-muted flex items-center justify-center text-sm font-semibold text-muted-foreground">
-                            {step.step_number}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm">{formatActionType(step.action_type)}</p>
-                            <p className="text-xs text-muted-foreground">
-                              Delay: {formatDelay(step.delay_days, step.delay_hours)}
-                            </p>
-                          </div>
-                          <Badge variant="outline" className="text-xs flex-shrink-0">
-                            {step.action_type}
-                          </Badge>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-              </div>
-              <Button variant="outline" onClick={() => setAddStepOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Step
-              </Button>
-            </>
-          )}
+        <TabsContent value="steps" className="mt-4">
+          <SequenceStepEditor
+            sequenceId={sequenceId}
+            steps={steps}
+            onAddStep={() => setAddStepOpen(true)}
+            onEditStep={(step) => setEditingStep(step)}
+            onDeleteStep={handleDeleteStep}
+          />
         </TabsContent>
 
         {/* Enrollments Tab */}
@@ -495,18 +298,81 @@ export default function SequenceDetailPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Dialogs */}
-      <AddStepDialog
-        open={addStepOpen}
-        onClose={() => setAddStepOpen(false)}
-        sequenceId={sequenceId}
-        nextStepNumber={nextStepNumber}
-      />
-      <EnrollLeadDialog
-        open={enrollLeadOpen}
-        onClose={() => setEnrollLeadOpen(false)}
-        sequenceId={sequenceId}
-      />
+      {/* Add Step Dialog */}
+      <Dialog open={addStepOpen} onOpenChange={setAddStepOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Step {nextStepNumber}</DialogTitle>
+          </DialogHeader>
+          <SequenceStepForm
+            sequenceId={sequenceId}
+            nextStepNumber={nextStepNumber}
+            onSuccess={() => setAddStepOpen(false)}
+            onCancel={() => setAddStepOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Step Dialog */}
+      <Dialog open={!!editingStep} onOpenChange={(open) => { if (!open) setEditingStep(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Step {editingStep?.step_number}</DialogTitle>
+          </DialogHeader>
+          {editingStep && (
+            <SequenceStepForm
+              sequenceId={sequenceId}
+              initialData={editingStep}
+              nextStepNumber={editingStep.step_number}
+              onSuccess={() => setEditingStep(null)}
+              onCancel={() => setEditingStep(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Enroll Lead Dialog */}
+      <Dialog open={enrollLeadOpen} onOpenChange={(open) => { if (!open) { setEnrollLeadOpen(false); setEnrollLeadId(''); } else { setEnrollLeadOpen(true); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Enroll Lead</DialogTitle>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!enrollLeadId.trim()) return;
+              enrollInSequence.mutate(
+                { sequenceId, lead_id: enrollLeadId.trim() },
+                {
+                  onSuccess: () => {
+                    setEnrollLeadOpen(false);
+                    setEnrollLeadId('');
+                  },
+                },
+              );
+            }}
+            className="space-y-4"
+          >
+            <div className="space-y-2">
+              <Label htmlFor="enroll_lead_id">Lead ID</Label>
+              <Input
+                id="enroll_lead_id"
+                placeholder="Enter lead ID to enroll"
+                value={enrollLeadId}
+                onChange={(e) => setEnrollLeadId(e.target.value)}
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => { setEnrollLeadOpen(false); setEnrollLeadId(''); }}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={!enrollLeadId.trim() || enrollInSequence.isPending}>
+                Enroll
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -742,6 +742,29 @@ export function useSendEmail() {
   });
 }
 
+export function useDeleteSequenceStep() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ sequenceId, stepId }: { sequenceId: string; stepId: string }) =>
+      apiFetch(`/api/crm/sequences/${sequenceId}/steps/${stepId}`, { method: 'DELETE' }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['sequence-steps', variables.sequenceId] });
+      queryClient.invalidateQueries({ queryKey: ['sequence', variables.sequenceId] });
+    },
+  });
+}
+
+export function useProcessSequences() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      apiFetch<{ processed: number; completed: number; errors: string[] }>('/api/crm/sequences/process', { method: 'POST' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sequence-enrollments'] });
+    },
+  });
+}
+
 export function useCreateOutreach() {
   const queryClient = useQueryClient();
   return useMutation({
