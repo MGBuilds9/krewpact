@@ -41,7 +41,7 @@ function groupLeadsBySource(leads: Lead[]): SourceStats[] {
   const groups: Record<string, Lead[]> = {};
 
   for (const lead of leads) {
-    const source = lead.source ?? 'unknown';
+    const source = lead.source_channel ?? 'unknown';
     if (!groups[source]) {
       groups[source] = [];
     }
@@ -51,10 +51,10 @@ function groupLeadsBySource(leads: Lead[]): SourceStats[] {
   return Object.entries(groups)
     .map(([source, group]) => {
       const qualifiedCount = group.filter((l) =>
-        ['qualified', 'estimating', 'proposal_sent', 'won'].includes(l.stage)
+        ['qualified', 'estimating', 'proposal_sent', 'won'].includes(l.status)
       ).length;
-      const wonCount = group.filter((l) => l.stage === 'won').length;
-      const totalScore = group.reduce((sum, l) => sum + (l.probability_pct ?? 0), 0);
+      const wonCount = group.filter((l) => l.status === 'won').length;
+      const totalScore = group.reduce((sum, l) => sum + (l.lead_score ?? 0), 0);
 
       return {
         source,

@@ -19,13 +19,15 @@ import { useLeads } from '@/hooks/useCRM';
 import { useDivision } from '@/contexts/DivisionContext';
 import { cn } from '@/lib/utils';
 
-const STAGE_BADGE_COLORS: Record<string, string> = {
+const STATUS_BADGE_COLORS: Record<string, string> = {
   new: 'bg-gray-100 text-gray-700 border-gray-200',
-  qualified: 'bg-blue-100 text-blue-700 border-blue-200',
-  estimating: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-  proposal_sent: 'bg-purple-100 text-purple-700 border-purple-200',
-  won: 'bg-green-100 text-green-700 border-green-200',
+  contacted: 'bg-blue-100 text-blue-700 border-blue-200',
+  qualified: 'bg-green-100 text-green-700 border-green-200',
+  unqualified: 'bg-red-100 text-red-700 border-red-200',
+  nurturing: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+  won: 'bg-emerald-100 text-emerald-700 border-emerald-200',
   lost: 'bg-red-100 text-red-700 border-red-200',
+  disqualified: 'bg-red-100 text-red-700 border-red-200',
 };
 
 function formatStage(stage: string): string {
@@ -44,11 +46,11 @@ export default function LeadsPage() {
   const router = useRouter();
   const { activeDivision } = useDivision();
   const [search, setSearch] = useState('');
-  const [stageFilter, setStageFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
   const { data: leads, isLoading } = useLeads({
     divisionId: activeDivision?.id,
-    stage: stageFilter !== 'all' ? stageFilter : undefined,
+    status: statusFilter !== 'all' ? statusFilter : undefined,
     search: search || undefined,
   });
 
@@ -83,16 +85,16 @@ export default function LeadsPage() {
             className="pl-10"
           />
         </div>
-        <Select value={stageFilter} onValueChange={setStageFilter}>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-full sm:w-[180px]">
-            <SelectValue placeholder="Filter by stage" />
+            <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Stages</SelectItem>
+            <SelectItem value="all">All Statuses</SelectItem>
             <SelectItem value="new">New</SelectItem>
+            <SelectItem value="contacted">Contacted</SelectItem>
             <SelectItem value="qualified">Qualified</SelectItem>
-            <SelectItem value="estimating">Estimating</SelectItem>
-            <SelectItem value="proposal_sent">Proposal Sent</SelectItem>
+            <SelectItem value="nurturing">Nurturing</SelectItem>
             <SelectItem value="won">Won</SelectItem>
             <SelectItem value="lost">Lost</SelectItem>
           </SelectContent>
@@ -126,20 +128,28 @@ export default function LeadsPage() {
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold truncate">{lead.lead_name}</h3>
+                      <h3 className="font-semibold truncate">{lead.company_name || 'Unnamed Lead'}</h3>
                       <Badge
                         variant="outline"
-                        className={cn('text-xs flex-shrink-0 border', STAGE_BADGE_COLORS[lead.stage] || '')}
+                        className={cn('text-xs flex-shrink-0 border', STATUS_BADGE_COLORS[lead.status] || '')}
                       >
-                        {formatStage(lead.stage)}
+                        {formatStage(lead.status)}
                       </Badge>
+                      {lead.is_qualified && (
+                        <Badge className="text-xs bg-green-500 text-white flex-shrink-0">
+                          Qualified
+                        </Badge>
+                      )}
                     </div>
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                      {lead.company_name && <span>{lead.company_name}</span>}
-                      {lead.estimated_value != null && (
-                        <span className="flex items-center gap-1">
-                          <DollarSign className="h-3 w-3" />
-                          {formatCurrency(lead.estimated_value)}
+                      {lead.industry && <span>{lead.industry}</span>}
+                      {lead.city && <span>{lead.city}, {lead.province}</span>}
+                      {lead.lead_score != null && lead.lead_score > 0 && (
+                        <span className={cn(
+                          'font-medium',
+                          lead.lead_score >= 80 ? 'text-green-600' : lead.lead_score >= 50 ? 'text-yellow-600' : 'text-red-600'
+                        )}>
+                          Score: {lead.lead_score}
                         </span>
                       )}
                       <span>

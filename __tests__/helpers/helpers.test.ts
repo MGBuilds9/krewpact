@@ -203,9 +203,9 @@ describe('fixtures', () => {
 
   it('makeLead returns valid lead shape', () => {
     const lead = makeLead();
-    expect(lead.lead_name).toBe('Big Construction Project');
-    expect(lead.stage).toBe('new');
-    expect(lead.estimated_value).toBe(50000);
+    expect(lead.company_name).toBe('Big Construction Project');
+    expect(lead.status).toBe('new');
+    expect(lead.source_channel).toBe('website');
   });
 
   it('makeOpportunity returns valid opportunity shape', () => {

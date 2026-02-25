@@ -116,8 +116,8 @@ describe('CRM Integration: Full happy path', () => {
     // Step 3: Create a lead with division
     const lead = makeLead({
       division_id: TEST_IDS.DIVISION_ID,
-      lead_name: 'Office Renovation - 100 Bay St',
-      stage: 'new',
+      company_name: 'Office Renovation - 100 Bay St',
+      status: 'new',
     });
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({ tables: { leads: { data: lead, error: null } } }),
@@ -125,7 +125,7 @@ describe('CRM Integration: Full happy path', () => {
 
     const leadRes = await leadsPOST(
       makeJsonRequest('/api/crm/leads', {
-        lead_name: 'Office Renovation - 100 Bay St',
+        company_name: 'Office Renovation - 100 Bay St',
         division_id: VALID_DIVISION_ID,
       }),
     );
@@ -133,7 +133,7 @@ describe('CRM Integration: Full happy path', () => {
 
     // Step 4: Transition lead new → qualified
     // Mock returns lead at current stage 'new' (route fetches current then updates)
-    const newLead = makeLead({ stage: 'new' });
+    const newLead = makeLead({ status: 'new' });
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({ tables: { leads: { data: newLead, error: null } } }),
     );
@@ -146,7 +146,7 @@ describe('CRM Integration: Full happy path', () => {
 
     // Step 5: Transition lead qualified → estimating
     // Mock returns lead at current stage 'qualified'
-    const qualifiedLead = makeLead({ stage: 'qualified' });
+    const qualifiedLead = makeLead({ status: 'qualified' });
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({ tables: { leads: { data: qualifiedLead, error: null } } }),
     );
@@ -229,7 +229,7 @@ describe('CRM Integration: Division isolation', () => {
 
   it('user with division A only sees leads in division A', async () => {
     const divALeads = [
-      makeLead({ division_id: VALID_DIVISION_ID, lead_name: 'Div A Lead' }),
+      makeLead({ division_id: VALID_DIVISION_ID, company_name: 'Div A Lead' }),
     ];
     mockClerkAuth(mockAuth);
     mockCreateUserClient.mockResolvedValue(
@@ -242,7 +242,7 @@ describe('CRM Integration: Division isolation', () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body).toHaveLength(1);
-    expect(body[0].lead_name).toBe('Div A Lead');
+    expect(body[0].company_name).toBe('Div A Lead');
   });
 
   it('user with division A gets empty result for division B leads', async () => {
@@ -294,7 +294,7 @@ describe('CRM Integration: Validation chain', () => {
   });
 
   it('POST lead transition new→won (skip) returns 400', async () => {
-    const currentLead = makeLead({ stage: 'new' });
+    const currentLead = makeLead({ status: 'new' });
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({ tables: { leads: { data: currentLead, error: null } } }),
     );
@@ -561,7 +561,7 @@ describe('CRM Integration: Lead stage progression', () => {
       const currentStage = stages[i];
       const nextStage = stages[i + 1];
 
-      const currentLead = makeLead({ stage: currentStage });
+      const currentLead = makeLead({ status: currentStage });
       mockClerkAuth(mockAuth);
       // Mock returns the lead at current stage for fetch, then updated for update
       mockCreateUserClient.mockResolvedValue(
@@ -580,7 +580,7 @@ describe('CRM Integration: Lead stage progression', () => {
     const activeStages = ['new', 'qualified', 'estimating', 'proposal_sent'] as const;
 
     for (const stage of activeStages) {
-      const currentLead = makeLead({ stage });
+      const currentLead = makeLead({ status: stage });
       mockClerkAuth(mockAuth);
       mockCreateUserClient.mockResolvedValue(
         mockSupabaseClient({ tables: { leads: { data: currentLead, error: null } } }),
@@ -598,7 +598,7 @@ describe('CRM Integration: Lead stage progression', () => {
   });
 
   it('lost lead cannot transition to any other stage', async () => {
-    const lostLead = makeLead({ stage: 'lost', lost_reason: 'Budget constraints' });
+    const lostLead = makeLead({ status: 'lost', substatus: 'Budget constraints' });
     mockClerkAuth(mockAuth);
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({ tables: { leads: { data: lostLead, error: null } } }),
@@ -612,7 +612,7 @@ describe('CRM Integration: Lead stage progression', () => {
   });
 
   it('won lead cannot transition to any other stage', async () => {
-    const wonLead = makeLead({ stage: 'won' });
+    const wonLead = makeLead({ status: 'won' });
     mockClerkAuth(mockAuth);
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({ tables: { leads: { data: wonLead, error: null } } }),

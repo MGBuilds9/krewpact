@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 
 const querySchema = z.object({
-  division_id: z.string().uuid().optional(),
+  division_id: z.string().min(1).optional(),
   is_active: z.coerce.boolean().optional(),
   limit: z.coerce.number().int().positive().max(100).optional(),
   offset: z.coerce.number().int().min(0).optional(),

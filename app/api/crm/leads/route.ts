@@ -6,18 +6,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { scoreLead } from '@/lib/crm/scoring-engine';
 import type { ScoringRule } from '@/lib/crm/scoring-engine';
 
-const leadStages = [
+const leadStatuses = [
   'new',
+  'contacted',
   'qualified',
-  'estimating',
-  'proposal_sent',
+  'unqualified',
+  'nurturing',
   'won',
   'lost',
+  'disqualified',
 ] as const;
 
 const querySchema = z.object({
-  division_id: z.string().uuid().optional(),
-  stage: z.enum(leadStages).optional(),
+  division_id: z.string().min(1).optional(),
+  status: z.enum(leadStatuses).optional(),
   assigned_to: z.string().uuid().optional(),
   search: z.string().optional(),
   limit: z.coerce.number().int().positive().max(100).optional(),
@@ -36,29 +38,31 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { division_id, stage, assigned_to, search, limit, offset } =
+  const { division_id, status, assigned_to, search, limit, offset } =
     parsed.data;
   const supabase = await createUserClient();
 
   let query = supabase
     .from('leads')
     .select('*')
+    .is('deleted_at', null)
+    .order('lead_score', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false });
 
   if (division_id) {
     query = query.eq('division_id', division_id);
   }
 
-  if (stage) {
-    query = query.eq('stage', stage);
+  if (status) {
+    query = query.eq('status', status);
   }
 
   if (assigned_to) {
-    query = query.eq('assigned_to', assigned_to);
+    query = query.eq('owner_id', assigned_to);
   }
 
   if (search) {
-    query = query.ilike('lead_name', `%${search}%`);
+    query = query.ilike('company_name', `%${search}%`);
   }
 
   if (limit) {
@@ -99,7 +103,7 @@ export async function POST(req: NextRequest) {
   const supabase = await createUserClient();
   const { data, error } = await supabase
     .from('leads')
-    .insert({ ...parsed.data, stage: 'new' })
+    .insert({ ...parsed.data, status: 'new' })
     .select()
     .single();
 

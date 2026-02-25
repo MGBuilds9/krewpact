@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, ArrowRight, XCircle, Zap, Pencil } from 'lucide-react';
@@ -12,11 +13,7 @@ import { ActivityTimeline } from '@/components/CRM/ActivityTimeline';
 import { LeadForm } from '@/components/CRM/LeadForm';
 import { ALLOWED_TRANSITIONS } from '@/lib/crm/lead-stages';
 import type { LeadStage } from '@/lib/crm/lead-stages';
-
-function formatCurrency(value: number | null): string {
-  if (value == null) return '-';
-  return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(value);
-}
+import { cn } from '@/lib/utils';
 
 export default function LeadDetailPage() {
   const params = useParams();
@@ -53,7 +50,18 @@ export default function LeadDetailPage() {
     );
   }
 
-  const currentStage = lead.stage as LeadStage;
+  // Map status to stage for the progress bar (best effort)
+  const statusToStage: Record<string, LeadStage> = {
+    new: 'new',
+    contacted: 'new',
+    qualified: 'qualified',
+    unqualified: 'new',
+    nurturing: 'qualified',
+    won: 'won',
+    lost: 'lost',
+    disqualified: 'lost',
+  };
+  const currentStage = statusToStage[lead.status] || ('new' as LeadStage);
   const nextStages = ALLOWED_TRANSITIONS[currentStage] || [];
   const nextRegularStage = nextStages.find((s) => s !== 'lost');
   const canMarkLost = nextStages.includes('lost');
@@ -74,10 +82,9 @@ export default function LeadDetailPage() {
     if (!lead) return;
     createOpportunity.mutate(
       {
-        opportunity_name: lead.lead_name,
+        opportunity_name: lead.company_name,
         lead_id: lead.id,
         division_id: lead.division_id,
-        estimated_revenue: lead.estimated_value,
       },
       {
         onSuccess: (data) => {
@@ -102,10 +109,30 @@ export default function LeadDetailPage() {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight truncate">{lead.lead_name}</h1>
-          {lead.company_name && (
-            <p className="text-muted-foreground">{lead.company_name}</p>
-          )}
+          <h1 className="text-2xl font-bold tracking-tight truncate">{lead.company_name}</h1>
+          <div className="flex items-center gap-2 mt-1">
+            {lead.industry && (
+              <span className="text-muted-foreground text-sm">{lead.industry}</span>
+            )}
+            {lead.city && (
+              <span className="text-muted-foreground text-sm">
+                {lead.city}{lead.province ? `, ${lead.province}` : ''}
+              </span>
+            )}
+            {lead.lead_score != null && lead.lead_score > 0 && (
+              <Badge variant="outline" className={cn(
+                'text-xs',
+                lead.lead_score >= 80 ? 'border-green-500 text-green-600' :
+                lead.lead_score >= 50 ? 'border-yellow-500 text-yellow-600' :
+                'border-red-500 text-red-600'
+              )}>
+                Score: {lead.lead_score}
+              </Badge>
+            )}
+            {lead.is_qualified && (
+              <Badge className="text-xs bg-green-500 text-white">Qualified</Badge>
+            )}
+          </div>
         </div>
         {!isEditing && (
           <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
@@ -170,24 +197,41 @@ export default function LeadDetailPage() {
           ) : (
             <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
+                <dt className="text-sm font-medium text-muted-foreground">Status</dt>
+                <dd className="text-sm capitalize">{lead.status.replace(/_/g, ' ')}</dd>
+              </div>
+              <div>
+                <dt className="text-sm font-medium text-muted-foreground">Industry</dt>
+                <dd className="text-sm">{lead.industry || '-'}</dd>
+              </div>
+              <div>
                 <dt className="text-sm font-medium text-muted-foreground">Source</dt>
-                <dd className="text-sm">{lead.source || '-'}</dd>
+                <dd className="text-sm capitalize">{lead.source_channel?.replace(/_/g, ' ') || '-'}</dd>
               </div>
               <div>
-                <dt className="text-sm font-medium text-muted-foreground">Email</dt>
-                <dd className="text-sm">{lead.email || '-'}</dd>
+                <dt className="text-sm font-medium text-muted-foreground">Location</dt>
+                <dd className="text-sm">
+                  {lead.city ? `${lead.city}${lead.province ? `, ${lead.province}` : ''}` : '-'}
+                </dd>
               </div>
               <div>
-                <dt className="text-sm font-medium text-muted-foreground">Phone</dt>
-                <dd className="text-sm">{lead.phone || '-'}</dd>
-              </div>
-              <div>
-                <dt className="text-sm font-medium text-muted-foreground">Estimated Value</dt>
-                <dd className="text-sm">{formatCurrency(lead.estimated_value)}</dd>
-              </div>
-              <div>
-                <dt className="text-sm font-medium text-muted-foreground">Probability</dt>
-                <dd className="text-sm">{lead.probability_pct != null ? `${lead.probability_pct}%` : '-'}</dd>
+                <dt className="text-sm font-medium text-muted-foreground">Lead Score</dt>
+                <dd className="text-sm">
+                  {lead.lead_score != null && lead.lead_score > 0 ? (
+                    <span className={cn(
+                      'font-medium',
+                      lead.lead_score >= 80 ? 'text-green-600' :
+                      lead.lead_score >= 50 ? 'text-yellow-600' : 'text-red-600'
+                    )}>
+                      {lead.lead_score}
+                    </span>
+                  ) : '-'}
+                  {lead.fit_score != null && lead.fit_score > 0 && (
+                    <span className="text-muted-foreground text-xs ml-2">
+                      (Fit: {lead.fit_score} / Intent: {lead.intent_score} / Engage: {lead.engagement_score})
+                    </span>
+                  )}
+                </dd>
               </div>
               <div>
                 <dt className="text-sm font-medium text-muted-foreground">Created</dt>
@@ -199,10 +243,10 @@ export default function LeadDetailPage() {
                   })}
                 </dd>
               </div>
-              {lead.lost_reason && (
+              {lead.notes && (
                 <div className="sm:col-span-2">
-                  <dt className="text-sm font-medium text-destructive">Lost Reason</dt>
-                  <dd className="text-sm">{lead.lost_reason}</dd>
+                  <dt className="text-sm font-medium text-muted-foreground">Notes</dt>
+                  <dd className="text-sm whitespace-pre-wrap">{lead.notes}</dd>
                 </div>
               )}
             </dl>

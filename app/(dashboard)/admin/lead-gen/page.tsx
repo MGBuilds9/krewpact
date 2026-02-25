@@ -103,7 +103,7 @@ export default function LeadGenDashboardPage() {
   const allLeads = leads ?? [];
   const allSequences = sequences ?? [];
 
-  const newLeads = allLeads.filter((l) => l.stage === 'new');
+  const newLeads = allLeads.filter((l) => l.status === 'new');
   const activeSequenceCount = allSequences.length;
 
   return (
@@ -212,23 +212,23 @@ export default function LeadGenDashboardPage() {
                   {allLeads.slice(0, 10).map((lead) => (
                     <tr key={lead.id} className="border-b last:border-0">
                       <td className="py-2.5 pr-4">
-                        <div className="font-medium truncate max-w-[160px]">{lead.lead_name}</div>
-                        {lead.company_name && (
-                          <div className="text-xs text-muted-foreground truncate max-w-[160px]">{lead.company_name}</div>
+                        <div className="font-medium truncate max-w-[160px]">{lead.company_name}</div>
+                        {lead.industry && (
+                          <div className="text-xs text-muted-foreground truncate max-w-[160px]">{lead.industry}</div>
                         )}
                       </td>
                       <td className="py-2.5 pr-4 text-muted-foreground">
-                        {lead.source ?? '—'}
+                        {lead.source_channel ?? '—'}
                       </td>
                       <td className="py-2.5 pr-4 text-right tabular-nums">
-                        {lead.probability_pct != null ? lead.probability_pct : '—'}
+                        {lead.lead_score != null ? lead.lead_score : '—'}
                       </td>
                       <td className="py-2.5 pr-4">
                         <Badge
                           variant="outline"
-                          className={`text-xs border ${STAGE_BADGE_COLORS[lead.stage] ?? ''}`}
+                          className={`text-xs border ${STAGE_BADGE_COLORS[lead.status] ?? ''}`}
                         >
-                          {formatStage(lead.stage)}
+                          {formatStage(lead.status)}
                         </Badge>
                       </td>
                       <td className="py-2.5 text-right text-muted-foreground tabular-nums">

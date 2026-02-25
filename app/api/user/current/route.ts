@@ -26,5 +26,11 @@ export async function GET() {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(data);
+  // RPC returns array — extract single user record
+  const user = Array.isArray(data) ? data[0] : data;
+  if (!user) {
+    return NextResponse.json({ error: 'User record not created' }, { status: 500 });
+  }
+
+  return NextResponse.json(user);
 }

@@ -54,7 +54,7 @@ describe('GET /api/crm/leads', () => {
   });
 
   it('returns leads list', async () => {
-    const leads = [makeLead(), makeLead({ lead_name: 'Second Lead' })];
+    const leads = [makeLead(), makeLead({ company_name: 'Second Lead' })];
     mockClerkAuth(mockAuth);
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({ tables: { leads: { data: leads, error: null } } }),
@@ -83,15 +83,15 @@ describe('GET /api/crm/leads', () => {
     expect(client.from).toHaveBeenCalledWith('leads');
   });
 
-  it('filters by stage', async () => {
-    const leads = [makeLead({ stage: 'qualified' })];
+  it('filters by status', async () => {
+    const leads = [makeLead({ status: 'qualified' })];
     mockClerkAuth(mockAuth);
     const client = mockSupabaseClient({
       tables: { leads: { data: leads, error: null } },
     });
     mockCreateUserClient.mockResolvedValue(client);
 
-    const res = await GET(makeRequest('/api/crm/leads?stage=qualified'));
+    const res = await GET(makeRequest('/api/crm/leads?status=qualified'));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body).toEqual(leads);
@@ -115,7 +115,7 @@ describe('GET /api/crm/leads', () => {
   });
 
   it('filters by search', async () => {
-    const leads = [makeLead({ lead_name: 'Big Construction' })];
+    const leads = [makeLead({ company_name: 'Big Construction' })];
     mockClerkAuth(mockAuth);
     const client = mockSupabaseClient({
       tables: { leads: { data: leads, error: null } },
@@ -141,32 +141,31 @@ describe('POST /api/crm/leads', () => {
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
     const res = await POST(
-      makeJsonRequest('/api/crm/leads', { lead_name: 'Test Lead' }),
+      makeJsonRequest('/api/crm/leads', { company_name: 'Test Lead' }),
     );
     expect(res.status).toBe(401);
   });
 
-  it('creates lead with default stage new', async () => {
-    const created = makeLead({ stage: 'new' });
+  it('creates lead with default status new', async () => {
+    const created = makeLead({ status: 'new' });
     mockClerkAuth(mockAuth);
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({ tables: { leads: { data: created, error: null } } }),
     );
 
     const res = await POST(
-      makeJsonRequest('/api/crm/leads', { lead_name: 'Test Lead' }),
+      makeJsonRequest('/api/crm/leads', { company_name: 'Test Lead' }),
     );
     expect(res.status).toBe(201);
     const body = await res.json();
-    expect(body.stage).toBe('new');
+    expect(body.status).toBe('new');
   });
 
   it('creates lead with all optional fields', async () => {
     const created = makeLead({
-      lead_name: 'Full Lead',
       company_name: 'Corp',
-      email: 'test@example.com',
-      estimated_value: 100000,
+      source_channel: 'referral',
+      industry: 'Construction',
     });
     mockClerkAuth(mockAuth);
     mockCreateUserClient.mockResolvedValue(
@@ -175,24 +174,23 @@ describe('POST /api/crm/leads', () => {
 
     const res = await POST(
       makeJsonRequest('/api/crm/leads', {
-        lead_name: 'Full Lead',
-        division_id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-        source: 'referral',
         company_name: 'Corp',
-        email: 'test@example.com',
-        phone: '416-555-0100',
-        estimated_value: 100000,
-        probability_pct: 75,
-        assigned_to: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+        division_id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+        source_channel: 'referral',
+        industry: 'Construction',
+        city: 'Toronto',
+        province: 'ON',
+        notes: 'Key prospect',
+        owner_id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
       }),
     );
     expect(res.status).toBe(201);
   });
 
-  it('returns 400 for invalid data (missing lead_name)', async () => {
+  it('returns 400 for invalid data (missing company_name)', async () => {
     mockClerkAuth(mockAuth);
     const res = await POST(
-      makeJsonRequest('/api/crm/leads', { source: 'website' }),
+      makeJsonRequest('/api/crm/leads', { source_channel: 'website' }),
     );
     expect(res.status).toBe(400);
   });
@@ -220,7 +218,7 @@ describe('GET /api/crm/leads/[id]', () => {
     );
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.lead_name).toBe('Big Construction Project');
+    expect(body.company_name).toBe('Big Construction Project');
   });
 
   it('returns 404 for non-existent lead', async () => {
@@ -254,7 +252,7 @@ describe('PATCH /api/crm/leads/[id]', () => {
   });
 
   it('updates lead', async () => {
-    const updated = makeLead({ lead_name: 'Updated Lead' });
+    const updated = makeLead({ company_name: 'Updated Lead' });
     mockClerkAuth(mockAuth);
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({ tables: { leads: { data: updated, error: null } } }),
@@ -263,14 +261,14 @@ describe('PATCH /api/crm/leads/[id]', () => {
     const res = await PATCH(
       makeJsonRequest(
         '/api/crm/leads/123',
-        { lead_name: 'Updated Lead' },
+        { company_name: 'Updated Lead' },
         'PATCH',
       ),
       makeContext(updated.id),
     );
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.lead_name).toBe('Updated Lead');
+    expect(body.company_name).toBe('Updated Lead');
   });
 });
 
@@ -309,7 +307,7 @@ describe('POST /api/crm/leads/[id]/stage', () => {
   });
 
   it('transitions new → qualified', async () => {
-    const currentLead = makeLead({ stage: 'new' });
+    const currentLead = makeLead({ status: 'new' });
     mockClerkAuth(mockAuth);
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({
@@ -325,7 +323,7 @@ describe('POST /api/crm/leads/[id]/stage', () => {
   });
 
   it('transitions qualified → estimating', async () => {
-    const currentLead = makeLead({ stage: 'qualified' });
+    const currentLead = makeLead({ status: 'qualified' });
     mockClerkAuth(mockAuth);
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({
@@ -341,7 +339,7 @@ describe('POST /api/crm/leads/[id]/stage', () => {
   });
 
   it('transitions estimating → proposal_sent', async () => {
-    const currentLead = makeLead({ stage: 'estimating' });
+    const currentLead = makeLead({ status: 'estimating' });
     mockClerkAuth(mockAuth);
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({
@@ -359,7 +357,7 @@ describe('POST /api/crm/leads/[id]/stage', () => {
   });
 
   it('transitions proposal_sent → won', async () => {
-    const currentLead = makeLead({ stage: 'proposal_sent' });
+    const currentLead = makeLead({ status: 'proposal_sent' });
     mockClerkAuth(mockAuth);
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({
@@ -375,7 +373,7 @@ describe('POST /api/crm/leads/[id]/stage', () => {
   });
 
   it('transitions any → lost (with lost_reason)', async () => {
-    const currentLead = makeLead({ stage: 'new' });
+    const currentLead = makeLead({ status: 'new' });
     mockClerkAuth(mockAuth);
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({
@@ -394,7 +392,7 @@ describe('POST /api/crm/leads/[id]/stage', () => {
   });
 
   it('rejects new → won (skip stages)', async () => {
-    const currentLead = makeLead({ stage: 'new' });
+    const currentLead = makeLead({ status: 'new' });
     mockClerkAuth(mockAuth);
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({
@@ -412,7 +410,7 @@ describe('POST /api/crm/leads/[id]/stage', () => {
   });
 
   it('rejects lost → qualified (dead end)', async () => {
-    const currentLead = makeLead({ stage: 'lost' });
+    const currentLead = makeLead({ status: 'lost' });
     mockClerkAuth(mockAuth);
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({
@@ -430,7 +428,7 @@ describe('POST /api/crm/leads/[id]/stage', () => {
   });
 
   it('rejects lost without lost_reason', async () => {
-    const currentLead = makeLead({ stage: 'new' });
+    const currentLead = makeLead({ status: 'new' });
     mockClerkAuth(mockAuth);
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({

@@ -41,7 +41,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
   }
 
   // Validate the transition
-  const currentStage = currentLead.stage as LeadStage;
+  const currentStage = (currentLead.status ?? currentLead.stage) as LeadStage;
   const newStage = parsed.data.stage;
   const result = validateTransition(currentStage, newStage);
 
@@ -50,9 +50,9 @@ export async function POST(req: NextRequest, context: RouteContext) {
   }
 
   // Build update payload
-  const updateData: Record<string, unknown> = { stage: newStage };
+  const updateData: Record<string, unknown> = { status: newStage };
   if (parsed.data.lost_reason) {
-    updateData.lost_reason = parsed.data.lost_reason;
+    updateData.substatus = parsed.data.lost_reason;
   }
 
   // Update the lead

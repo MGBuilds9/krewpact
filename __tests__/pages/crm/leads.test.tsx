@@ -61,11 +61,13 @@ describe('Leads List Page', () => {
       data: [
         {
           id: 'lead-1',
-          lead_name: 'Acme Reno Project',
-          company_name: 'Acme Corp',
-          stage: 'new',
-          estimated_value: 50000,
-          assigned_to: null,
+          company_name: 'Acme Reno Project',
+          status: 'new',
+          lead_score: null,
+          is_qualified: false,
+          industry: null,
+          city: null,
+          province: null,
           created_at: '2026-02-12T10:00:00Z',
         },
       ],
@@ -112,16 +114,18 @@ describe('Leads List Page', () => {
     expect(skeletons.length).toBeGreaterThan(0);
   });
 
-  it('displays stage badges with appropriate styling', () => {
+  it('displays status badges with appropriate styling', () => {
     mockUseLeads.mockReturnValue({
       data: [
         {
           id: 'lead-1',
-          lead_name: 'Test Lead',
-          company_name: null,
-          stage: 'qualified',
-          estimated_value: null,
-          assigned_to: null,
+          company_name: 'Test Lead',
+          status: 'qualified',
+          lead_score: null,
+          is_qualified: false,
+          industry: null,
+          city: null,
+          province: null,
           created_at: '2026-02-12T10:00:00Z',
         },
       ],

@@ -13,7 +13,7 @@ const updateSchema = z.object({
   start_date: z.string().nullable().optional(),
   target_completion_date: z.string().nullable().optional(),
   actual_completion_date: z.string().nullable().optional(),
-  division_id: z.string().uuid().nullable().optional(),
+  division_id: z.string().min(1).nullable().optional(),
   account_id: z.string().uuid().nullable().optional(),
   contact_id: z.string().uuid().nullable().optional(),
   contract_id: z.string().uuid().nullable().optional(),

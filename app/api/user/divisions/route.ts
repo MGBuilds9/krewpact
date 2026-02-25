@@ -17,27 +17,32 @@ export async function GET(req: NextRequest) {
   const { data, error } = await supabase
     .from('user_divisions')
     .select(`
-      *,
+      id,
+      user_id,
+      division_id,
+      is_primary,
+      joined_at,
+      left_at,
       divisions (
         id,
         name,
-        code,
         description,
-        is_active,
-        manager_id,
-        settings,
+        active,
         created_at,
         updated_at
       )
     `)
     .eq('user_id', userIdParam)
     .is('left_at', null)
-    .order('is_primary', { ascending: false })
-    .order('joined_at', { ascending: false });
+    .order('is_primary', { ascending: false });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  // Get user's primary role for role display
+  const { data: roleData } = await supabase.rpc('get_user_role_names', { p_user_id: userIdParam });
+  const primaryRoleName = (roleData as { role_name: string; is_primary: boolean }[] | null)?.[0]?.role_name || 'worker';
 
   // Transform to DivisionWithRole format
   const divisions = data
@@ -46,8 +51,11 @@ export async function GET(req: NextRequest) {
       const div = ud.divisions as Record<string, unknown>;
       return {
         ...div,
-        code: div.code ?? null,
-        user_role: (ud.role as string) || 'worker',
+        code: div.id ?? null, // division_id IS the code (e.g., 'contracting')
+        is_active: (div.active as boolean) ?? true,
+        manager_id: null,
+        settings: null,
+        user_role: primaryRoleName,
         is_primary: (ud.is_primary as boolean) || false,
       };
     }) || [];

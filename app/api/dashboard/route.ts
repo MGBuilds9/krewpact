@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 
 const querySchema = z.object({
-  division_id: z.string().uuid().optional(),
+  division_id: z.string().min(1).optional(),
 });
 
 // GET /api/dashboard — returns at-a-glance counts and recent activity
@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
         let q = supabase
           .from('leads')
           .select('*', { count: 'exact', head: true })
-          .not('stage', 'in', '(won,lost)');
+          .not('status', 'in', '(won,lost,disqualified)');
         if (division_id) q = q.eq('division_id', division_id);
         return q;
       })(),

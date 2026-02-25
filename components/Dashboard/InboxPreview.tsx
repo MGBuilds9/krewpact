@@ -1,6 +1,6 @@
 'use client';
 
-import { Mail, Paperclip, AlertCircle } from 'lucide-react';
+import { Mail, Paperclip } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -61,8 +61,9 @@ export default function InboxPreview(): React.ReactElement {
 
         {error && (
           <div className="text-center py-8 text-muted-foreground">
-            <AlertCircle className="h-8 w-8 mx-auto mb-2 opacity-40" />
-            <p className="text-sm">Unable to load emails</p>
+            <Mail className="h-8 w-8 mx-auto mb-2 opacity-40" />
+            <p className="text-sm font-medium">Microsoft 365 not connected</p>
+            <p className="text-xs mt-1">Connect your M365 account to see your inbox</p>
           </div>
         )}
 

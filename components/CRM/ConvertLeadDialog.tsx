@@ -33,7 +33,7 @@ export function ConvertLeadDialog({ lead, open, onOpenChange }: ConvertLeadDialo
   const router = useRouter();
   const [accountId, setAccountId] = useState<string>('');
   const [contactId, setContactId] = useState<string>('');
-  const [opportunityName, setOpportunityName] = useState(lead.lead_name);
+  const [opportunityName, setOpportunityName] = useState(lead.company_name);
 
   const { data: accounts } = useAccounts();
   const { data: contacts } = useContacts();
@@ -54,7 +54,7 @@ export function ConvertLeadDialog({ lead, open, onOpenChange }: ConvertLeadDialo
     }
   };
 
-  const canConvert = lead.stage === 'won';
+  const canConvert = lead.status === 'won';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -62,13 +62,13 @@ export function ConvertLeadDialog({ lead, open, onOpenChange }: ConvertLeadDialo
         <DialogHeader>
           <DialogTitle>Convert Lead to Opportunity</DialogTitle>
           <DialogDescription>
-            Convert &quot;{lead.lead_name}&quot; into an opportunity. Optionally link to an account and contact.
+            Convert &quot;{lead.company_name}&quot; into an opportunity. Optionally link to an account and contact.
           </DialogDescription>
         </DialogHeader>
 
         {!canConvert && (
           <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-            Lead must be in &quot;won&quot; stage to convert. Current stage: &quot;{lead.stage}&quot;
+            Lead must be in &quot;won&quot; stage to convert. Current stage: &quot;{lead.status}&quot;
           </div>
         )}
 
@@ -79,7 +79,7 @@ export function ConvertLeadDialog({ lead, open, onOpenChange }: ConvertLeadDialo
               id="opportunity-name"
               value={opportunityName}
               onChange={(e) => setOpportunityName(e.target.value)}
-              placeholder={lead.lead_name}
+              placeholder={lead.company_name}
             />
           </div>
 

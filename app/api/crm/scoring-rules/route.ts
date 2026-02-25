@@ -12,7 +12,7 @@ const scoringRuleSchema = z.object({
   score_impact: z.number().int(),
   is_active: z.boolean().optional(),
   priority: z.number().int().optional(),
-  division_id: z.string().uuid().optional(),
+  division_id: z.string().min(1).optional(),
 });
 
 export async function GET(): Promise<NextResponse> {

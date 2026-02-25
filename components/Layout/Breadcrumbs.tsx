@@ -24,6 +24,14 @@ const routeLabels: Record<string, string> = {
   '/admin': 'Admin',
   '/expenses': 'Expenses',
   '/reports': 'Reports',
+  '/crm': 'CRM',
+  '/crm/leads': 'Leads',
+  '/crm/leads/new': 'New Lead',
+  '/crm/opportunities': 'Opportunities',
+  '/crm/accounts': 'Accounts',
+  '/crm/contacts': 'Contacts',
+  '/crm/sequences': 'Sequences',
+  '/crm/dashboard': 'CRM Dashboard',
 };
 
 export function Breadcrumbs() {
@@ -45,10 +53,25 @@ export function Breadcrumbs() {
       if (!label) {
         const paramValue = Object.values(params).find((v) => v === segment);
         if (paramValue) {
-          label = segment
-            .split('-')
-            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-            .join(' ');
+          // For UUID-like segments, show a contextual label based on parent route
+          const isUUID = /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i.test(segment);
+          if (isUUID) {
+            const parentSegment = paths[paths.indexOf(segment) - 1];
+            const contextLabels: Record<string, string> = {
+              leads: 'Lead Details',
+              opportunities: 'Opportunity Details',
+              projects: 'Project Details',
+              contacts: 'Contact Details',
+              accounts: 'Account Details',
+              estimates: 'Estimate Details',
+            };
+            label = contextLabels[parentSegment] || 'Details';
+          } else {
+            label = segment
+              .split('-')
+              .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(' ');
+          }
         } else {
           label = segment.charAt(0).toUpperCase() + segment.slice(1);
         }

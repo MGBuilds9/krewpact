@@ -33,19 +33,36 @@ export interface Contact {
 
 export interface Lead {
   id: string;
-  lead_name: string;
+  company_name: string;
+  domain: string | null;
+  industry: string | null;
+  company_size: string | null;
+  revenue_range: string | null;
+  address: string | null;
+  city: string | null;
+  province: string | null;
+  postal_code: string | null;
+  country: string | null;
   division_id: string | null;
-  source: string | null;
-  company_name: string | null;
-  email: string | null;
-  phone: string | null;
-  estimated_value: number | null;
-  probability_pct: number | null;
-  stage: string;
-  assigned_to: string | null;
-  lost_reason: string | null;
+  source_channel: string | null;
+  source_campaign: string | null;
+  status: string;
+  substatus: string | null;
+  lead_score: number | null;
+  fit_score: number | null;
+  intent_score: number | null;
+  engagement_score: number | null;
+  is_qualified: boolean;
+  in_sequence: boolean;
+  notes: string | null;
+  tags: string[] | null;
+  owner_id: string | null;
   created_at: string;
   updated_at: string;
+  last_activity_at: string | null;
+  last_contacted_at: string | null;
+  next_followup_at: string | null;
+  deleted_at: string | null;
 }
 
 export interface Opportunity {
@@ -115,7 +132,8 @@ interface ContactFilters {
 
 interface LeadFilters {
   divisionId?: string;
-  stage?: string;
+  status?: string;
+  stage?: string; // deprecated, use status
   assignedTo?: string;
   search?: string;
   limit?: number;
@@ -271,7 +289,7 @@ export function useLeads(filters?: LeadFilters) {
       apiFetch<Lead[]>('/api/crm/leads', {
         params: {
           division_id: filters?.divisionId,
-          stage: filters?.stage,
+          status: filters?.status || filters?.stage,
           assigned_to: filters?.assignedTo,
           search: filters?.search,
           limit: filters?.limit,

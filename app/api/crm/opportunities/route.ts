@@ -15,7 +15,7 @@ const opportunityStages = [
 ] as const;
 
 const querySchema = z.object({
-  division_id: z.string().uuid().optional(),
+  division_id: z.string().min(1).optional(),
   stage: z.enum(opportunityStages).optional(),
   owner_user_id: z.string().uuid().optional(),
   view: z.enum(['list', 'pipeline']).optional(),

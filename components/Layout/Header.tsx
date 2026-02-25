@@ -43,10 +43,11 @@ export function Header() {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = React.useState(false);
 
   const { isImpersonating, stopImpersonation } = useImpersonation();
-  const { isAdmin } = useUserRBAC();
-
+  const { isAdmin, primaryRole } = useUserRBAC();
   const userName = user ? `${user.firstName} ${user.lastName}` : 'Loading...';
-  const userRole = 'User';
+  const userRole = primaryRole
+    ? primaryRole.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
+    : 'Team Member';
   const showQuickAccessToolbar = pathname !== '/dashboard' && pathname !== '/';
 
   const handleSignOut = async () => {

@@ -126,24 +126,24 @@ describe('useCRM hooks', () => {
   });
 
   describe('useLeads', () => {
-    it('calls /api/crm/leads with stage filter', async () => {
+    it('calls /api/crm/leads with status filter', async () => {
       mockApiFetch.mockResolvedValue([]);
 
       const { result } = renderHook(
-        () => useLeads({ stage: 'qualified' }),
+        () => useLeads({ status: 'qualified' }),
         { wrapper: createWrapper() },
       );
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
       expect(mockApiFetch).toHaveBeenCalledWith('/api/crm/leads', {
-        params: { stage: 'qualified' },
+        params: expect.objectContaining({ status: 'qualified' }),
       });
     });
   });
 
   describe('useLeadStageTransition', () => {
     it('calls POST /api/crm/leads/:id/stage', async () => {
-      mockApiFetch.mockResolvedValue({ id: 'lead-1', stage: 'qualified' });
+      mockApiFetch.mockResolvedValue({ id: 'lead-1', status: 'qualified' });
 
       const { result } = renderHook(() => useLeadStageTransition(), { wrapper: createWrapper() });
 

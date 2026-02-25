@@ -165,99 +165,98 @@ describe('contactUpdateSchema', () => {
 describe('leadCreateSchema', () => {
   it('passes with valid required fields', () => {
     const result = leadCreateSchema.safeParse({
-      lead_name: 'New Office Building Project',
+      company_name: 'New Office Building Project',
     });
     expect(result.success).toBe(true);
   });
 
   it('passes with all optional fields', () => {
     const result = leadCreateSchema.safeParse({
-      lead_name: 'Big Renovation',
-      division_id: VALID_UUID,
-      source: 'website',
       company_name: 'ABC Builders',
-      email: 'lead@abc.com',
-      phone: '905-555-0200',
-      estimated_value: 50000,
-      probability_pct: 25,
-      assigned_to: VALID_UUID_2,
+      division_id: VALID_UUID,
+      source_channel: 'website',
+      industry: 'Construction',
+      city: 'Toronto',
+      province: 'ON',
+      notes: 'Key prospect',
+      owner_id: VALID_UUID_2,
     });
     expect(result.success).toBe(true);
   });
 
-  it('fails when lead_name is missing', () => {
+  it('fails when company_name is missing', () => {
     const result = leadCreateSchema.safeParse({});
     expect(result.success).toBe(false);
   });
 
-  it('fails when lead_name is empty string', () => {
+  it('fails when company_name is empty string', () => {
     const result = leadCreateSchema.safeParse({
-      lead_name: '',
+      company_name: '',
     });
     expect(result.success).toBe(false);
   });
 
-  it('fails when lead_name exceeds 200 chars', () => {
+  it('fails when company_name exceeds 200 chars', () => {
     const result = leadCreateSchema.safeParse({
-      lead_name: 'x'.repeat(201),
+      company_name: 'x'.repeat(201),
     });
     expect(result.success).toBe(false);
   });
 
-  it('fails when estimated_value is negative', () => {
+  it('fails when owner_id is not a valid UUID', () => {
     const result = leadCreateSchema.safeParse({
-      lead_name: 'Test Lead',
-      estimated_value: -100,
+      company_name: 'Test Lead',
+      owner_id: 'not-a-uuid',
     });
     expect(result.success).toBe(false);
   });
 
-  it('passes when estimated_value is zero', () => {
+  it('passes when owner_id is omitted', () => {
     const result = leadCreateSchema.safeParse({
-      lead_name: 'Test Lead',
-      estimated_value: 0,
+      company_name: 'Test Lead',
     });
     expect(result.success).toBe(true);
   });
 
-  it('fails when probability_pct exceeds 100', () => {
+  it('passes with source_channel provided', () => {
     const result = leadCreateSchema.safeParse({
-      lead_name: 'Test Lead',
-      probability_pct: 101,
+      company_name: 'Test Lead',
+      source_channel: 'referral',
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
-  it('fails when probability_pct is negative', () => {
+  it('passes with industry and city', () => {
     const result = leadCreateSchema.safeParse({
-      lead_name: 'Test Lead',
-      probability_pct: -1,
+      company_name: 'Test Lead',
+      industry: 'Construction',
+      city: 'Mississauga',
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
-  it('fails when email is invalid', () => {
+  it('passes with province field', () => {
     const result = leadCreateSchema.safeParse({
-      lead_name: 'Test Lead',
-      email: 'not-email',
+      company_name: 'Test Lead',
+      province: 'ON',
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
-  it('fails when assigned_to is not a valid UUID', () => {
+  it('passes with notes field', () => {
     const result = leadCreateSchema.safeParse({
-      lead_name: 'Test Lead',
-      assigned_to: 'not-a-uuid',
+      company_name: 'Test Lead',
+      notes: 'Follow up next week',
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 });
 
 describe('leadUpdateSchema', () => {
   it('passes with partial fields', () => {
     const result = leadUpdateSchema.safeParse({
-      lead_name: 'Updated Name',
-      estimated_value: 75000,
+      company_name: 'Updated Name',
+      notes: 'Updated notes',
     });
     expect(result.success).toBe(true);
   });

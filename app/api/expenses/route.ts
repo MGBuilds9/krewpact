@@ -14,7 +14,7 @@ const createSchema = z.object({
   category: z.string().min(1).max(100),
   description: z.string().max(1000).optional(),
   project_id: z.string().uuid().optional(),
-  division_id: z.string().uuid().optional(),
+  division_id: z.string().min(1).optional(),
   expense_date: z.string(),
   user_id: z.string().uuid(),
   tax_amount: z.number().nonnegative().optional(),

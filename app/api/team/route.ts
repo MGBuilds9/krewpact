@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 
 const querySchema = z.object({
-  division_id: z.string().uuid().optional(),
+  division_id: z.string().min(1).optional(),
   search: z.string().optional(),
 });
 

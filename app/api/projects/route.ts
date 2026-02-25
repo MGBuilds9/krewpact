@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 
 const querySchema = z.object({
-  division_id: z.string().uuid().optional(),
+  division_id: z.string().min(1).optional(),
   status: z.enum(['planning', 'active', 'on_hold', 'substantial_complete', 'closed', 'cancelled']).optional(),
   search: z.string().optional(),
   limit: z.coerce.number().int().positive().max(100).optional(),
@@ -14,7 +14,7 @@ const querySchema = z.object({
 const createSchema = z.object({
   project_name: z.string().min(1).max(200),
   project_number: z.string().min(1).max(50),
-  division_id: z.string().uuid(),
+  division_id: z.string().min(1),
   status: z.enum(['planning', 'active', 'on_hold', 'substantial_complete', 'closed', 'cancelled']).optional(),
   site_address: z.record(z.string(), z.any()).nullable().optional(),
   baseline_budget: z.number().nonnegative().optional(),

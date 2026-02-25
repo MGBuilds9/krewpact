@@ -10,7 +10,7 @@ import {
 } from '@/lib/crm/metrics';
 
 const querySchema = z.object({
-  division_id: z.string().uuid().optional(),
+  division_id: z.string().min(1).optional(),
   period: z.enum(['week', 'month', 'quarter', 'year']).optional(),
 });
 

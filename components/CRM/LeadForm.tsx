@@ -5,8 +5,17 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { leadCreateSchema, leadUpdateSchema, type LeadCreate, type LeadUpdate } from '@/lib/validators/crm';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useCreateLead, useUpdateLead, type Lead } from '@/hooks/useCRM';
+import { useDivision } from '@/contexts/DivisionContext';
 import { Loader2 } from 'lucide-react';
 
 interface LeadFormProps {
@@ -18,28 +27,54 @@ interface LeadFormProps {
   onCancel?: () => void;
 }
 
+const SOURCE_CHANNELS = [
+  'referral',
+  'website',
+  'cold_outreach',
+  'linkedin',
+  'trade_show',
+  'bid_board',
+  'repeat_client',
+  'other',
+];
+
+const INDUSTRIES = [
+  'Restaurant & Food Service',
+  'Retail',
+  'Healthcare & Medical',
+  'Residential',
+  'Commercial Office',
+  'Telecommunications',
+  'Industrial',
+  'Government & Institutional',
+  'Hospitality',
+  'Other',
+];
+
+const PROVINCES = ['ON', 'QC', 'BC', 'AB', 'SK', 'MB', 'NS', 'NB', 'NL', 'PE', 'NT', 'NU', 'YT'];
+
 export function LeadForm({ lead, onSuccess, onCancel }: LeadFormProps) {
   const isEdit = !!lead;
   const createLead = useCreateLead();
   const updateLead = useUpdateLead();
+  const { activeDivision } = useDivision();
 
   const form = useForm<LeadCreate | LeadUpdate>({
     resolver: zodResolver(isEdit ? leadUpdateSchema : leadCreateSchema),
     defaultValues: {
-      lead_name: lead?.lead_name ?? '',
-      source: lead?.source ?? undefined,
-      company_name: lead?.company_name ?? undefined,
-      email: lead?.email ?? undefined,
-      phone: lead?.phone ?? undefined,
-      estimated_value: lead?.estimated_value ?? undefined,
-      probability_pct: lead?.probability_pct ?? undefined,
+      company_name: lead?.company_name ?? '',
+      division_id: lead?.division_id ?? activeDivision?.id ?? undefined,
+      source_channel: lead?.source_channel ?? undefined,
+      industry: lead?.industry ?? undefined,
+      city: lead?.city ?? undefined,
+      province: lead?.province ?? 'ON',
+      notes: lead?.notes ?? undefined,
     },
   });
 
   const isPending = createLead.isPending || updateLead.isPending;
 
   function onSubmit(raw: LeadCreate | LeadUpdate) {
-    // Strip empty strings to undefined so optional Zod fields pass
     const values = Object.fromEntries(
       Object.entries(raw).map(([k, v]) => [k, v === '' ? undefined : v]),
     ) as LeadCreate | LeadUpdate;
@@ -66,12 +101,12 @@ export function LeadForm({ lead, onSuccess, onCancel }: LeadFormProps) {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
-          name="lead_name"
+          name="company_name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Lead Name *</FormLabel>
+              <FormLabel>Company Name *</FormLabel>
               <FormControl>
-                <Input placeholder="e.g. Renovation Project" {...field} value={field.value ?? ''} />
+                <Input placeholder="e.g. Tim Hortons, Rogers" {...field} value={field.value ?? ''} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -81,13 +116,22 @@ export function LeadForm({ lead, onSuccess, onCancel }: LeadFormProps) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField
             control={form.control}
-            name="company_name"
+            name="industry"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Company</FormLabel>
-                <FormControl>
-                  <Input placeholder="Company name" {...field} value={field.value ?? ''} />
-                </FormControl>
+                <FormLabel>Industry</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value ?? ''}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select industry" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {INDUSTRIES.map((ind) => (
+                      <SelectItem key={ind} value={ind}>{ind}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
@@ -95,13 +139,24 @@ export function LeadForm({ lead, onSuccess, onCancel }: LeadFormProps) {
 
           <FormField
             control={form.control}
-            name="source"
+            name="source_channel"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Source</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g. referral, website" {...field} value={field.value ?? ''} />
-                </FormControl>
+                <Select onValueChange={field.onChange} value={field.value ?? ''}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="How did they find us?" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {SOURCE_CHANNELS.map((src) => (
+                      <SelectItem key={src} value={src}>
+                        {src.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
@@ -111,12 +166,12 @@ export function LeadForm({ lead, onSuccess, onCancel }: LeadFormProps) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField
             control={form.control}
-            name="email"
+            name="city"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel>City</FormLabel>
                 <FormControl>
-                  <Input type="email" placeholder="email@example.com" {...field} value={field.value ?? ''} />
+                  <Input placeholder="e.g. Mississauga" {...field} value={field.value ?? ''} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -125,63 +180,46 @@ export function LeadForm({ lead, onSuccess, onCancel }: LeadFormProps) {
 
           <FormField
             control={form.control}
-            name="phone"
+            name="province"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Phone</FormLabel>
-                <FormControl>
-                  <Input placeholder="416-555-0100" {...field} value={field.value ?? ''} />
-                </FormControl>
+                <FormLabel>Province</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value ?? 'ON'}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Province" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {PROVINCES.map((prov) => (
+                      <SelectItem key={prov} value={prov}>{prov}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="estimated_value"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Estimated Value ($)</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    min={0}
-                    placeholder="0"
-                    {...field}
-                    value={field.value ?? ''}
-                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="probability_pct"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Probability (%)</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    min={0}
-                    max={100}
-                    placeholder="0"
-                    {...field}
-                    value={field.value ?? ''}
-                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+        <FormField
+          control={form.control}
+          name="notes"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Notes</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Initial notes about this lead..."
+                  rows={3}
+                  {...field}
+                  value={field.value ?? ''}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <div className="flex gap-2 justify-end pt-2">
           {onCancel && (

@@ -75,27 +75,26 @@ export const contactUpdateSchema = z.object({
 // ============================================================
 
 export const leadCreateSchema = z.object({
-  lead_name: z.string().min(1).max(200),
-  division_id: z.string().uuid().optional(),
-  source: z.string().optional(),
-  company_name: z.string().optional(),
-  email: z.string().email().optional(),
-  phone: z.string().optional(),
-  estimated_value: z.number().min(0).optional(),
-  probability_pct: z.number().min(0).max(100).optional(),
-  assigned_to: z.string().uuid().optional(),
+  company_name: z.string().min(1).max(200),
+  division_id: z.string().min(1).optional(),
+  source_channel: z.string().optional(),
+  industry: z.string().optional(),
+  city: z.string().optional(),
+  province: z.string().optional(),
+  notes: z.string().optional(),
+  owner_id: z.string().uuid().optional(),
 });
 
 export const leadUpdateSchema = z.object({
-  lead_name: z.string().min(1).max(200).optional(),
-  division_id: z.string().uuid().optional(),
-  source: z.string().optional().nullable(),
-  company_name: z.string().optional().nullable(),
-  email: z.string().email().optional().nullable(),
-  phone: z.string().optional().nullable(),
-  estimated_value: z.number().min(0).optional(),
-  probability_pct: z.number().min(0).max(100).optional(),
-  assigned_to: z.string().uuid().optional().nullable(),
+  company_name: z.string().min(1).max(200).optional(),
+  division_id: z.string().min(1).optional(),
+  source_channel: z.string().optional().nullable(),
+  industry: z.string().optional().nullable(),
+  city: z.string().optional().nullable(),
+  province: z.string().optional().nullable(),
+  notes: z.string().optional().nullable(),
+  owner_id: z.string().uuid().optional().nullable(),
+  status: z.string().optional(),
 });
 
 export const leadStageTransitionSchema = z

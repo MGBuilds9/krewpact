@@ -37,7 +37,7 @@ export function useDashboard() {
       apiFetch<DashboardData>('/api/dashboard', {
         params: activeDivision?.id ? { division_id: activeDivision.id } : undefined,
       }),
-    enabled: !!activeDivision,
+    enabled: true,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 }

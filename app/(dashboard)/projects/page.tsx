@@ -171,20 +171,14 @@ export default function ProjectsPage() {
                         )}
                         {project.baseline_budget != null && (
                           <span className="flex items-center gap-1">
-                            <Briefcase className="h-3 w-3" />
-                            ${project.baseline_budget.toLocaleString()}
+                            <DollarSign className="h-3 w-3" />
+                            {new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(project.baseline_budget)}
                           </span>
                         )}
                         {project.start_date && (
                           <span className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
-                            {new Date(project.start_date).toLocaleDateString()}
-                          </span>
-                        )}
-                        {project.baseline_budget && (
-                          <span className="flex items-center gap-1">
-                            <DollarSign className="h-3 w-3" />$
-                            {(project.baseline_budget / 1000).toFixed(0)}k
+                            {new Date(project.start_date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
                           </span>
                         )}
                       </div>
