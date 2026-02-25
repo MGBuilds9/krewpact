@@ -263,27 +263,35 @@ CREATE TABLE IF NOT EXISTS sequence_enrollments (
 );
 
 -- Add references back to leads for sequence
-ALTER TABLE leads ADD CONSTRAINT fk_leads_sequence FOREIGN KEY (current_sequence_id) REFERENCES sequences(id) ON DELETE SET NULL;
+DO $$ BEGIN
+  ALTER TABLE leads ADD CONSTRAINT fk_leads_sequence FOREIGN KEY (current_sequence_id) REFERENCES sequences(id) ON DELETE SET NULL;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 -- =========================
 -- TRIGGERS
 -- =========================
 
--- Updated At Trigger
+-- Updated At Triggers (idempotent)
+DROP TRIGGER IF EXISTS trg_leads_updated_at ON leads;
 CREATE TRIGGER trg_leads_updated_at BEFORE UPDATE ON leads FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+DROP TRIGGER IF EXISTS trg_contacts_updated_at ON contacts;
 CREATE TRIGGER trg_contacts_updated_at BEFORE UPDATE ON contacts FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+DROP TRIGGER IF EXISTS trg_sequences_updated_at ON sequences;
 CREATE TRIGGER trg_sequences_updated_at BEFORE UPDATE ON sequences FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- Scoring Trigger (Simplified)
 CREATE OR REPLACE FUNCTION calculate_lead_score() RETURNS TRIGGER AS $$
 BEGIN
-    NEW.lead_score = LEAST(100, GREATEST(0, 
+    NEW.lead_score = LEAST(100, GREATEST(0,
         (COALESCE(NEW.fit_score, 0) + COALESCE(NEW.intent_score, 0) + COALESCE(NEW.engagement_score, 0)) / 3
     ));
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS lead_score_trigger ON leads;
 CREATE TRIGGER lead_score_trigger BEFORE INSERT OR UPDATE OF fit_score, intent_score, engagement_score ON leads
     FOR EACH ROW EXECUTE FUNCTION calculate_lead_score();
 
@@ -297,11 +305,11 @@ ALTER TABLE outreach ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sequences ENABLE ROW LEVEL SECURITY;
 ALTER TABLE scoring_rules ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow all access to leads" ON leads FOR ALL USING (true);
-CREATE POLICY "Allow all access to contacts" ON contacts FOR ALL USING (true);
-CREATE POLICY "Allow all access to outreach" ON outreach FOR ALL USING (true);
-CREATE POLICY "Allow all access to sequences" ON sequences FOR ALL USING (true);
-CREATE POLICY "Allow all access to scoring_rules" ON scoring_rules FOR ALL USING (true);
-CREATE POLICY "Allow all access to email_templates" ON email_templates FOR ALL USING (true);
+DO $$ BEGIN CREATE POLICY "Allow all access to leads" ON leads FOR ALL USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "Allow all access to contacts" ON contacts FOR ALL USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "Allow all access to outreach" ON outreach FOR ALL USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "Allow all access to sequences" ON sequences FOR ALL USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "Allow all access to scoring_rules" ON scoring_rules FOR ALL USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "Allow all access to email_templates" ON email_templates FOR ALL USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 COMMIT;
