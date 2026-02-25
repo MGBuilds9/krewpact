@@ -41,7 +41,6 @@ describe('processSequences', () => {
     // The mock supabase client resolves per-table, so sequence_enrollments returns enrollments,
     // then sequence_steps returns no data (step not found).
 
-    let callCount = 0;
     const mockChain = () => {
       const chain: Record<string, unknown> = {};
       const methods = ['select', 'insert', 'update', 'delete', 'eq', 'lte', 'order', 'limit', 'range', 'single', 'maybeSingle'];
