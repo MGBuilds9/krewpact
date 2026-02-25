@@ -1,4 +1,4 @@
-const APOLLO_API_URL = 'https://api.apollo.io/v1';
+const APOLLO_API_URL = 'https://api.apollo.io/api/v1';
 
 export interface ApolloSearchParams {
   person_titles?: string[];
@@ -33,12 +33,12 @@ export async function searchPeople(params: ApolloSearchParams): Promise<ApolloPe
   const apiKey = process.env.APOLLO_API_KEY;
   if (!apiKey) throw new Error('APOLLO_API_KEY not configured');
 
-  const res = await fetch(`${APOLLO_API_URL}/mixed_people/search`, {
+  const res = await fetch(`${APOLLO_API_URL}/mixed_people/api_search`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Cache-Control': 'no-cache',
-      'X-Api-Key': apiKey,
+      'x-api-key': apiKey,
     },
     body: JSON.stringify({
       ...params,
@@ -53,7 +53,7 @@ export async function searchPeople(params: ApolloSearchParams): Promise<ApolloPe
   }
 
   const data = await res.json();
-  return data.people ?? [];
+  return data.matches ?? data.people ?? [];
 }
 
 // MDM-specific Apollo search config
