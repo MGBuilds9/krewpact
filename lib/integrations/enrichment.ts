@@ -1,3 +1,18 @@
+/**
+ * Lead enrichment waterfall pipeline.
+ * Order: Apollo People Match → Brave Web Search → Tavily AI Search → Google Maps
+ * Each source fills gaps the previous didn't. Partial success is fine.
+ */
+
+import {
+  enrichFromApolloMatch,
+  enrichFromBrave,
+  enrichFromTavily,
+  enrichFromGoogleMaps,
+  type ApolloMatchResult,
+  type GoogleMapsResult,
+} from './enrichment-sources';
+
 export interface EnrichmentResult {
   source: string;
   data: Record<string, unknown>;
@@ -5,50 +20,115 @@ export interface EnrichmentResult {
   error?: string;
 }
 
-export async function enrichLead(
-  leadId: string,
-  domain: string | null,
-): Promise<EnrichmentResult[]> {
-  const results: EnrichmentResult[] = [];
+export interface LeadForEnrichment {
+  id: string;
+  company_name: string;
+  domain: string | null;
+  city: string | null;
+  province: string | null;
+}
 
-  if (!domain) {
-    return results;
+export interface ContactForEnrichment {
+  first_name: string | null;
+  last_name: string | null;
+  linkedin_url: string | null;
+}
+
+export interface EnrichmentSideEffects {
+  domain?: string;
+  city?: string;
+  contactEmail?: string | null;
+  contactPhone?: string | null;
+  contactTitle?: string | null;
+  contactLinkedinUrl?: string | null;
+}
+
+export interface EnrichmentOutput {
+  results: EnrichmentResult[];
+  sideEffects: EnrichmentSideEffects;
+}
+
+export async function enrichLead(
+  lead: LeadForEnrichment,
+  contact: ContactForEnrichment | null,
+): Promise<EnrichmentOutput> {
+  const results: EnrichmentResult[] = [];
+  const sideEffects: EnrichmentSideEffects = {};
+
+  // Track city across sources — later sources benefit from earlier finds
+  let resolvedCity = lead.city;
+
+  // ── Step 1: Apollo People Match ────────────────────────────────────────
+  // Only if we have a contact name to match against
+  if (contact?.first_name && contact?.last_name) {
+    try {
+      const apolloResult: ApolloMatchResult = await enrichFromApolloMatch({
+        first_name: contact.first_name,
+        last_name: contact.last_name,
+        organization_name: lead.company_name,
+        linkedin_url: contact.linkedin_url,
+      });
+
+      results.push({ source: 'apollo_match', data: apolloResult as unknown as Record<string, unknown>, success: true });
+
+      // Side effects: update lead domain if Apollo found a website
+      if (apolloResult.website_url && !lead.domain) {
+        sideEffects.domain = apolloResult.website_url
+          .replace(/^https?:\/\//, '')
+          .replace(/\/$/, '');
+      }
+
+      // Side effects: contact data for upsert
+      sideEffects.contactEmail = apolloResult.email;
+      sideEffects.contactPhone = apolloResult.phone;
+      sideEffects.contactTitle = apolloResult.title;
+      sideEffects.contactLinkedinUrl = apolloResult.linkedin_url;
+    } catch (err) {
+      results.push({ source: 'apollo_match', data: {}, success: false, error: String(err) });
+    }
   }
 
+  // ── Step 2: Brave Web Search ───────────────────────────────────────────
   try {
-    const googleResult = await enrichFromGoogleMaps(domain);
-    results.push({ source: 'google_maps', data: googleResult, success: true });
+    const braveResult = await enrichFromBrave(lead.company_name, lead.province);
+    results.push({ source: 'brave', data: braveResult as unknown as Record<string, unknown>, success: true });
+
+    // If we still don't have a domain, try to extract from Brave's first result
+    if (!lead.domain && !sideEffects.domain && braveResult.website) {
+      try {
+        const hostname = new URL(braveResult.website).hostname;
+        sideEffects.domain = hostname;
+      } catch {
+        // URL parse failed, skip
+      }
+    }
+  } catch (err) {
+    results.push({ source: 'brave', data: {}, success: false, error: String(err) });
+  }
+
+  // ── Step 3: Tavily AI Search ───────────────────────────────────────────
+  try {
+    const tavilyResult = await enrichFromTavily(lead.company_name, resolvedCity);
+    results.push({ source: 'tavily', data: tavilyResult as unknown as Record<string, unknown>, success: true });
+  } catch (err) {
+    results.push({ source: 'tavily', data: {}, success: false, error: String(err) });
+  }
+
+  // ── Step 4: Google Maps Places ─────────────────────────────────────────
+  try {
+    const mapsResult: GoogleMapsResult = await enrichFromGoogleMaps(lead.company_name, resolvedCity);
+    results.push({ source: 'google_maps', data: mapsResult as unknown as Record<string, unknown>, success: true });
+
+    // Side effect: if Google Maps found a city and we didn't have one
+    if (mapsResult.city && !resolvedCity) {
+      resolvedCity = mapsResult.city;
+      sideEffects.city = mapsResult.city;
+    }
   } catch (err) {
     results.push({ source: 'google_maps', data: {}, success: false, error: String(err) });
   }
 
-  return results;
-}
-
-async function enrichFromGoogleMaps(domain: string): Promise<Record<string, unknown>> {
-  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
-  if (!apiKey) return {};
-
-  const url = new URL('https://maps.googleapis.com/maps/api/place/findplacefromtext/json');
-  url.searchParams.set('input', domain);
-  url.searchParams.set('inputtype', 'textquery');
-  url.searchParams.set('fields', 'formatted_address,name,rating,user_ratings_total,types,business_status');
-  url.searchParams.set('key', apiKey);
-
-  const res = await fetch(url.toString());
-  if (!res.ok) return {};
-
-  const data = await res.json();
-  const place = data.candidates?.[0];
-  if (!place) return {};
-
-  return {
-    address: place.formatted_address,
-    google_rating: place.rating,
-    google_reviews_count: place.user_ratings_total,
-    business_types: place.types,
-    business_status: place.business_status,
-  };
+  return { results, sideEffects };
 }
 
 export function mergeEnrichmentData(

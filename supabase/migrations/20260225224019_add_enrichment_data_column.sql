@@ -1,0 +1,1 @@
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS enrichment_data jsonb DEFAULT NULL;
