@@ -12,7 +12,9 @@
  */
 
 import { createUserClient } from '@/lib/supabase/server';
-import { mockCustomerResponse, mockQuotationResponse } from './mock-responses';
+import { mockCustomerResponse, mockQuotationResponse, mockOpportunityResponse, mockSalesOrderResponse } from './mock-responses';
+import { mapOpportunityToErp } from './opportunity-mapper';
+import { mapWonDealToSalesOrder } from './sales-order-mapper';
 
 /** Check if we're running in mock mode (no real ERPNext) */
 export function isMockMode(): boolean {
@@ -199,6 +201,154 @@ export class SyncService {
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       return this.failJob(supabase, job.id, 'estimate', estimateId, message);
+    }
+  }
+
+  /**
+   * Sync a KrewPact opportunity to ERPNext as an Opportunity.
+   */
+  async syncOpportunity(opportunityId: string, _userId: string): Promise<SyncResult> {
+    const supabase = await createUserClient();
+
+    // 1. Create sync job
+    const job = await this.createSyncJob(supabase, 'opportunity', opportunityId);
+
+    try {
+      // 2. Fetch opportunity
+      const { data: opportunity, error: oppError } = await supabase
+        .from('opportunities')
+        .select('*')
+        .eq('id', opportunityId)
+        .single();
+
+      if (oppError || !opportunity) {
+        return this.failJob(supabase, job.id, 'opportunity', opportunityId, `Opportunity not found: ${oppError?.message || 'null'}`);
+      }
+
+      // 3. Call ERPNext (or mock)
+      const oppData = opportunity as Record<string, unknown>;
+      let erpDocname: string;
+
+      if (isMockMode()) {
+        const mockResp = mockOpportunityResponse({
+          id: opportunityId,
+          opportunity_name: oppData.opportunity_name as string,
+        });
+        erpDocname = mockResp.name;
+      } else {
+        const { ErpClient } = await import('./client');
+        const client = new ErpClient();
+        const mapped = mapOpportunityToErp({
+          id: opportunityId,
+          opportunity_name: oppData.opportunity_name as string,
+          estimated_revenue: oppData.estimated_revenue as number | null,
+          probability_pct: oppData.probability_pct as number | null,
+          target_close_date: oppData.target_close_date as string | null,
+          division_id: oppData.division_id as string | null,
+          account_id: oppData.account_id as string | null,
+        });
+        const result = await client.create<{ name: string }>('Opportunity', mapped);
+        erpDocname = result.name;
+      }
+
+      // 4. Create sync map entry (upsert)
+      await this.upsertSyncMap(supabase, 'opportunity', opportunityId, 'Opportunity', erpDocname);
+
+      // 5. Log event
+      await this.logEvent(supabase, job.id, 'sync_completed', {
+        entity_type: 'opportunity',
+        entity_id: opportunityId,
+        erp_docname: erpDocname,
+      });
+
+      // 6. Update job status
+      await this.updateJobStatus(supabase, job.id, 'succeeded');
+
+      return {
+        id: job.id,
+        status: 'succeeded',
+        entity_type: 'opportunity',
+        entity_id: opportunityId,
+        erp_docname: erpDocname,
+        attempt_count: 1,
+      };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return this.failJob(supabase, job.id, 'opportunity', opportunityId, message);
+    }
+  }
+
+  /**
+   * Sync a won KrewPact opportunity to ERPNext as a Sales Order.
+   */
+  async syncWonDeal(opportunityId: string, _userId: string, wonDate: string): Promise<SyncResult> {
+    const supabase = await createUserClient();
+
+    // 1. Create sync job
+    const job = await this.createSyncJob(supabase, 'sales_order', opportunityId);
+
+    try {
+      // 2. Fetch opportunity
+      const { data: opportunity, error: oppError } = await supabase
+        .from('opportunities')
+        .select('*')
+        .eq('id', opportunityId)
+        .single();
+
+      if (oppError || !opportunity) {
+        return this.failJob(supabase, job.id, 'sales_order', opportunityId, `Opportunity not found: ${oppError?.message || 'null'}`);
+      }
+
+      const oppData = opportunity as Record<string, unknown>;
+
+      // 3. Call ERPNext (or mock)
+      let erpDocname: string;
+
+      if (isMockMode()) {
+        const mockResp = mockSalesOrderResponse({
+          id: opportunityId,
+          name: oppData.opportunity_name as string,
+          amount: (oppData.estimated_revenue as number) || 0,
+        });
+        erpDocname = mockResp.name;
+      } else {
+        const { ErpClient } = await import('./client');
+        const client = new ErpClient();
+        const mapped = mapWonDealToSalesOrder({
+          opportunityId,
+          opportunityName: oppData.opportunity_name as string,
+          accountId: oppData.account_id as string | null,
+          estimatedRevenue: oppData.estimated_revenue as number | null,
+          wonDate,
+        });
+        const result = await client.create<{ name: string }>('Sales Order', mapped);
+        erpDocname = result.name;
+      }
+
+      // 4. Create sync map entry (upsert)
+      await this.upsertSyncMap(supabase, 'sales_order', opportunityId, 'Sales Order', erpDocname);
+
+      // 5. Log event
+      await this.logEvent(supabase, job.id, 'sync_completed', {
+        entity_type: 'sales_order',
+        entity_id: opportunityId,
+        erp_docname: erpDocname,
+      });
+
+      // 6. Update job status
+      await this.updateJobStatus(supabase, job.id, 'succeeded');
+
+      return {
+        id: job.id,
+        status: 'succeeded',
+        entity_type: 'sales_order',
+        entity_id: opportunityId,
+        erp_docname: erpDocname,
+        attempt_count: 1,
+      };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return this.failJob(supabase, job.id, 'sales_order', opportunityId, message);
     }
   }
 

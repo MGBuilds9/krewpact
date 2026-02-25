@@ -777,3 +777,32 @@ export function useCreateOutreach() {
     },
   });
 }
+
+// --- Won/Lost ---
+
+export function useMarkOpportunityWon() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...data }: { id: string; won_date?: string; won_notes?: string; sync_to_erp?: boolean }) =>
+      apiFetch<Opportunity>(`/api/crm/opportunities/${id}/won`, { method: 'POST', body: data }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['opportunities'] });
+      queryClient.invalidateQueries({ queryKey: ['opportunity', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['pipeline'] });
+    },
+  });
+}
+
+export function useMarkOpportunityLost() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...data }: { id: string; lost_reason: string; lost_notes?: string; competitor?: string; reopen_as_lead?: boolean }) =>
+      apiFetch<Opportunity>(`/api/crm/opportunities/${id}/lost`, { method: 'POST', body: data }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['opportunities'] });
+      queryClient.invalidateQueries({ queryKey: ['opportunity', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['pipeline'] });
+      queryClient.invalidateQueries({ queryKey: ['leads'] });
+    },
+  });
+}

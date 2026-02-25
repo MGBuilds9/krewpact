@@ -75,6 +75,79 @@ export function mockCustomerResponse(account: AccountData): {
 /**
  * Generate a mock ERPNext Quotation response from a KrewPact estimate.
  */
+/**
+ * Generate a mock ERPNext Opportunity response from a KrewPact opportunity.
+ */
+export function mockOpportunityResponse(opp: {
+  id: string;
+  opportunity_name: string;
+}): {
+  doctype: string;
+  name: string;
+  data: Record<string, unknown>;
+} {
+  const docname = nextMockId('OPP');
+  return {
+    doctype: 'Opportunity',
+    name: docname,
+    data: {
+      name: docname,
+      doctype: 'Opportunity',
+      title: opp.opportunity_name,
+      opportunity_from: 'Customer',
+      opportunity_type: 'Sales',
+      status: 'Open',
+      krewpact_id: opp.id,
+      currency: 'CAD',
+      creation: new Date().toISOString(),
+      modified: new Date().toISOString(),
+      docstatus: 0,
+    },
+  };
+}
+
+/**
+ * Generate a mock ERPNext Sales Order response from a won deal.
+ */
+export function mockSalesOrderResponse(input: {
+  id: string;
+  name: string;
+  amount: number;
+}): {
+  doctype: string;
+  name: string;
+  data: Record<string, unknown>;
+} {
+  const docname = nextMockId('SO');
+  return {
+    doctype: 'Sales Order',
+    name: docname,
+    data: {
+      name: docname,
+      doctype: 'Sales Order',
+      title: input.name,
+      customer: '',
+      transaction_date: new Date().toISOString().split('T')[0],
+      delivery_date: new Date().toISOString().split('T')[0],
+      currency: 'CAD',
+      grand_total: input.amount,
+      krewpact_id: input.id,
+      items: [
+        {
+          idx: 1,
+          item_name: input.name,
+          qty: 1,
+          rate: input.amount,
+          amount: input.amount,
+        },
+      ],
+      creation: new Date().toISOString(),
+      modified: new Date().toISOString(),
+      docstatus: 0,
+    },
+  };
+}
+
 export function mockQuotationResponse(
   estimate: EstimateData,
   lines: EstimateLineData[],

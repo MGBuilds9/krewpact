@@ -271,6 +271,25 @@ export const autoLogSchema = z.object({
 export type AutoLog = z.infer<typeof autoLogSchema>;
 
 // ============================================================
+// Won/Lost deal schemas
+// ============================================================
+
+export const wonDealSchema = z.object({
+  won_date: z.string().optional(),
+  won_notes: z.string().optional(),
+  sync_to_erp: z.boolean().optional(),
+});
+export type WonDeal = z.infer<typeof wonDealSchema>;
+
+export const lostDealSchema = z.object({
+  lost_reason: z.string().min(1),
+  lost_notes: z.string().optional(),
+  competitor: z.string().optional(),
+  reopen_as_lead: z.boolean().optional(),
+});
+export type LostDeal = z.infer<typeof lostDealSchema>;
+
+// ============================================================
 // Inferred types
 // ============================================================
 
