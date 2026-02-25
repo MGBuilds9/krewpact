@@ -93,10 +93,12 @@ describe('PipelineView', () => {
     };
 
     render(<PipelineView data={data} />);
-    // Should show count
-    expect(screen.getByText('2')).toBeDefined();
-    // Should show total formatted as currency
-    expect(screen.getByText('$75,000.00')).toBeDefined();
+    // Should show count (appears in both column badge and pipeline header)
+    const countElements = screen.getAllByText('2');
+    expect(countElements.length).toBeGreaterThanOrEqual(1);
+    // Should show total formatted as currency (in column and pipeline header)
+    const totalElements = screen.getAllByText('$75,000.00');
+    expect(totalElements.length).toBeGreaterThanOrEqual(1);
   });
 
   it('handles empty stages', () => {

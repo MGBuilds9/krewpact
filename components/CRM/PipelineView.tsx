@@ -3,8 +3,9 @@
 import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { OpportunityCard } from '@/components/CRM/OpportunityCard';
+import { WeightedPipelineHeader } from '@/components/CRM/WeightedPipelineHeader';
 import { Briefcase } from 'lucide-react';
-import type { PipelineData } from '@/hooks/useCRM';
+import type { PipelineData, Opportunity } from '@/hooks/useCRM';
 
 const STAGE_ORDER = [
   'intake',
@@ -25,6 +26,14 @@ function formatStage(stage: string): string {
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(value);
+}
+
+function calculateWeightedValue(opportunities: Opportunity[]): number {
+  return opportunities.reduce((sum, opp) => {
+    const revenue = opp.estimated_revenue ?? 0;
+    const probability = opp.probability_pct ?? 0;
+    return sum + (revenue * probability) / 100;
+  }, 0);
 }
 
 interface PipelineViewProps {
@@ -50,7 +59,19 @@ export function PipelineView({ data }: PipelineViewProps) {
   const extraStages = stageKeys.filter((s) => !STAGE_ORDER.includes(s as typeof STAGE_ORDER[number]));
   const allStages = [...orderedStages, ...extraStages];
 
+  // Calculate pipeline metrics
+  const allOpportunities = Object.values(data.stages).flatMap((s) => s.opportunities);
+  const totalValue = Object.values(data.stages).reduce((sum, s) => sum + s.total_value, 0);
+  const weightedValue = calculateWeightedValue(allOpportunities);
+  const opportunityCount = allOpportunities.length;
+
   return (
+    <>
+    <WeightedPipelineHeader
+      totalValue={totalValue}
+      weightedValue={weightedValue}
+      opportunityCount={opportunityCount}
+    />
     <div className="flex gap-4 overflow-x-auto pb-4">
       {allStages.map((stage) => {
         const stageData = data.stages[stage];
@@ -69,8 +90,13 @@ export function PipelineView({ data }: PipelineViewProps) {
               </Badge>
             </div>
             {stageData.total_value > 0 && (
-              <p className="text-xs text-muted-foreground mb-3">
+              <p className="text-xs text-muted-foreground mb-1">
                 {formatCurrency(stageData.total_value)}
+              </p>
+            )}
+            {stageData.opportunities.length > 0 && (
+              <p className="text-xs text-muted-foreground mb-3">
+                weighted: {formatCurrency(calculateWeightedValue(stageData.opportunities))}
               </p>
             )}
 
@@ -88,5 +114,6 @@ export function PipelineView({ data }: PipelineViewProps) {
         );
       })}
     </div>
+    </>
   );
 }

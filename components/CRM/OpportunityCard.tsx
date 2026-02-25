@@ -46,6 +46,11 @@ export function OpportunityCard({ opportunity, onClick }: OpportunityCardProps) 
             </span>
           )}
         </div>
+        {opportunity.estimated_revenue != null && opportunity.probability_pct != null && (
+          <p className="text-xs text-muted-foreground mt-1.5">
+            weighted: {formatCurrency(opportunity.estimated_revenue * opportunity.probability_pct / 100)}
+          </p>
+        )}
       </CardContent>
     </Card>
   );

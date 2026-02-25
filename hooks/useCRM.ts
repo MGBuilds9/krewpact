@@ -334,6 +334,20 @@ export function useLeadStageTransition() {
   });
 }
 
+export function useConvertLead() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ leadId, ...data }: { leadId: string; account_id?: string; contact_id?: string; opportunity_name?: string }) =>
+      apiFetch<Opportunity>(`/api/crm/leads/${leadId}/convert`, { method: 'POST', body: data }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['leads'] });
+      queryClient.invalidateQueries({ queryKey: ['lead', variables.leadId] });
+      queryClient.invalidateQueries({ queryKey: ['opportunities'] });
+      queryClient.invalidateQueries({ queryKey: ['pipeline'] });
+    },
+  });
+}
+
 // --- Opportunities ---
 
 export function useOpportunities(filters?: OpportunityFilters) {
