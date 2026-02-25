@@ -5,8 +5,9 @@ import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, ArrowRight, XCircle, Pencil } from 'lucide-react';
-import { useOpportunity, useActivities, useOpportunityStageTransition } from '@/hooks/useCRM';
+import { ArrowLeft, ArrowRight, XCircle, Pencil, FileText } from 'lucide-react';
+import { useOpportunity, useActivities, useOpportunityStageTransition, useOpportunityEstimates, useCreateLinkedEstimate, useProposalData } from '@/hooks/useCRM';
+import { LinkedEstimateCard } from '@/components/CRM/LinkedEstimateCard';
 import { OpportunityStageProgressBar } from '@/components/CRM/OpportunityStageProgressBar';
 import { OpportunityForm } from '@/components/CRM/OpportunityForm';
 import { ActivityTimeline } from '@/components/CRM/ActivityTimeline';
@@ -24,6 +25,9 @@ export default function OpportunityDetailPage() {
   const opportunityId = params.id as string;
   const { data: opportunity, isLoading } = useOpportunity(opportunityId);
   const { data: activities } = useActivities({ opportunityId });
+  const { data: estimates } = useOpportunityEstimates(opportunityId);
+  const createLinkedEstimate = useCreateLinkedEstimate();
+  const proposalQuery = useProposalData(opportunityId);
   const stageTransition = useOpportunityStageTransition();
   const [isEditing, setIsEditing] = useState(false);
 
@@ -175,6 +179,42 @@ export default function OpportunityDetailPage() {
               </div>
             </dl>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Linked Estimates */}
+      <LinkedEstimateCard
+        opportunityId={opportunityId}
+        estimates={estimates ?? []}
+        onCreateEstimate={() => {
+          const number = `EST-${Date.now().toString(36).toUpperCase()}`;
+          createLinkedEstimate.mutate({
+            opportunityId,
+            estimate_number: number,
+            total_amount: 0,
+            status: 'draft',
+          });
+        }}
+      />
+
+      {/* Generate Proposal */}
+      <Card>
+        <CardContent className="pt-6 flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-semibold">Proposal</h3>
+            <p className="text-sm text-muted-foreground">
+              Generate proposal data from this opportunity and linked estimates.
+            </p>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => proposalQuery.refetch()}
+            disabled={proposalQuery.isFetching}
+          >
+            <FileText className="h-4 w-4 mr-1" />
+            {proposalQuery.isFetching ? 'Generating...' : 'Generate Proposal'}
+          </Button>
         </CardContent>
       </Card>
 

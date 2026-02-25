@@ -779,6 +779,35 @@ export function useCreateOutreach() {
   });
 }
 
+// --- Opportunity Estimates ---
+
+export function useOpportunityEstimates(opportunityId: string) {
+  return useQuery({
+    queryKey: ['opportunity-estimates', opportunityId],
+    queryFn: () => apiFetch<{ id: string; estimate_number: string; total_amount: number; status: string }[]>(`/api/crm/opportunities/${opportunityId}/estimate`),
+    enabled: !!opportunityId,
+  });
+}
+
+export function useCreateLinkedEstimate() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ opportunityId, ...data }: { opportunityId: string; [key: string]: unknown }) =>
+      apiFetch(`/api/crm/opportunities/${opportunityId}/estimate`, { method: 'POST', body: data }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['opportunity-estimates', variables.opportunityId] });
+    },
+  });
+}
+
+export function useProposalData(opportunityId: string) {
+  return useQuery({
+    queryKey: ['proposal-data', opportunityId],
+    queryFn: () => apiFetch<import('@/lib/crm/proposal-generator').ProposalData>(`/api/crm/opportunities/${opportunityId}/proposal`),
+    enabled: false, // only fetch on demand
+  });
+}
+
 // --- Dashboard Metrics ---
 
 export function useDashboardMetrics(divisionId?: string, period?: string) {

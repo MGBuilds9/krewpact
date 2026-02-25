@@ -290,6 +290,18 @@ export const lostDealSchema = z.object({
 export type LostDeal = z.infer<typeof lostDealSchema>;
 
 // ============================================================
+// Linked estimate schemas
+// ============================================================
+
+export const linkedEstimateCreateSchema = z.object({
+  estimate_number: z.string().min(1).max(50),
+  total_amount: z.number().min(0),
+  status: z.string().min(1).optional(),
+  description: z.string().optional(),
+});
+export type LinkedEstimateCreate = z.infer<typeof linkedEstimateCreateSchema>;
+
+// ============================================================
 // Inferred types
 // ============================================================
 
