@@ -3,6 +3,8 @@ import { createUserClient } from '@/lib/supabase/server';
 import { leadCreateSchema } from '@/lib/validators/crm';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
+import { scoreLead } from '@/lib/crm/scoring-engine';
+import type { ScoringRule } from '@/lib/crm/scoring-engine';
 
 const leadStages = [
   'new',
@@ -103,6 +105,39 @@ export async function POST(req: NextRequest) {
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  // Auto-score the new lead (non-blocking)
+  try {
+    let rulesQuery = supabase
+      .from('scoring_rules')
+      .select('*')
+      .eq('is_active', true);
+
+    if (data.division_id) {
+      rulesQuery = rulesQuery.or(`division_id.eq.${data.division_id},division_id.is.null`);
+    }
+
+    const { data: rules } = await rulesQuery;
+    if (rules && rules.length > 0) {
+      const result = scoreLead(data as Record<string, unknown>, rules as ScoringRule[]);
+      await supabase
+        .from('leads')
+        .update({ lead_score: result.total_score })
+        .eq('id', data.id);
+
+      await supabase.from('lead_score_history').insert({
+        lead_id: data.id,
+        score: result.total_score,
+        previous_score: 0,
+        rule_results: result.rule_results as unknown as Record<string, unknown>,
+      });
+
+      data.lead_score = result.total_score;
+    }
+  } catch (e) {
+    // Scoring failure should not block lead creation
+    console.error('Auto-score on create failed:', e);
   }
 
   return NextResponse.json(data, { status: 201 });

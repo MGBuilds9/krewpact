@@ -616,6 +616,96 @@ export function useOutreachHistory(leadId: string) {
   });
 }
 
+// --- Lead Scoring ---
+
+export interface ScoringRule {
+  id: string;
+  name: string;
+  field_name: string;
+  operator: string;
+  value: string;
+  score_impact: number;
+  category: string;
+  is_active: boolean;
+  division_id: string | null;
+  priority: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ScoreHistory {
+  id: string;
+  lead_id: string;
+  score: number;
+  previous_score: number | null;
+  scored_at: string;
+  rule_results: Record<string, unknown> | null;
+}
+
+export function useScoringRules(divisionId?: string) {
+  return useQuery({
+    queryKey: ['scoring-rules', divisionId],
+    queryFn: () =>
+      apiFetch<ScoringRule[]>('/api/crm/scoring-rules', {
+        params: { division_id: divisionId },
+      }),
+  });
+}
+
+export function useCreateScoringRule() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Partial<ScoringRule>) =>
+      apiFetch<ScoringRule>('/api/crm/scoring-rules', { method: 'POST', body: data }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scoring-rules'] });
+    },
+  });
+}
+
+export function useUpdateScoringRule() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...data }: Partial<ScoringRule> & { id: string }) =>
+      apiFetch<ScoringRule>(`/api/crm/scoring-rules/${id}`, { method: 'PUT', body: data }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scoring-rules'] });
+    },
+  });
+}
+
+export function useDeleteScoringRule() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      apiFetch(`/api/crm/scoring-rules/${id}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scoring-rules'] });
+    },
+  });
+}
+
+export function useLeadScore(leadId: string) {
+  return useQuery({
+    queryKey: ['lead-score', leadId],
+    queryFn: () =>
+      apiFetch<{ score: number; history: ScoreHistory[] }>(`/api/crm/leads/${leadId}/score`),
+    enabled: !!leadId,
+  });
+}
+
+export function useRecalculateLeadScore() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (leadId: string) =>
+      apiFetch<{ score: number }>(`/api/crm/leads/${leadId}/score`, { method: 'POST' }),
+    onSuccess: (_, leadId) => {
+      queryClient.invalidateQueries({ queryKey: ['lead-score', leadId] });
+      queryClient.invalidateQueries({ queryKey: ['lead', leadId] });
+    },
+  });
+}
+
 export function useCreateOutreach() {
   const queryClient = useQueryClient();
   return useMutation({
