@@ -252,22 +252,22 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
+### Feb 25, 2026 — Demo Mode + DB Schema Alignment + UI Polish
+- **Changes:** Built demo mode system (Clerk auth bypass via webpack aliases, Supabase anon RLS policies). Aligned Lead interface, validators, and all components with actual Supabase DB schema (company_name, status, source_channel, lead_score vs old lead_name, stage, source, probability_pct). Fixed /api/user/current returning array. Fixed dashboard query not firing. Fixed breadcrumbs showing raw UUIDs. Fixed header hardcoded "User" role. Updated calendar/email widgets to show "M365 not connected". 44 files changed, 836 insertions.
+- **Decisions:** Demo mode uses webpack/turbopack aliases to swap Clerk imports with mocks — no code changes to production components. Lead interface matches actual DB columns rather than original migration plan. Breadcrumbs detect UUIDs and show contextual labels ("Lead Details"). Header role from useUserRBAC().primaryRole.
+- **Tests:** 904/904 passing, 0 failed, 0 new tests (updated 9 test files for schema alignment).
+- **Pushed:** to main (950f15b).
+- **Next steps:** Get Clerk keys from Michael for production auth. Remove demo anon RLS policies after Clerk configured. Deploy to Vercel. Present demo to MDM admin team.
+
 ### Feb 24, 2026 — CRM End-to-End Lead Lifecycle (8 Phases)
-- **Changes:** Complete CRM sales pipeline: lead forms + opportunity detail (Phase 1), lead scoring engine with 12 operators (Phase 2), lead→opportunity conversion + weighted pipeline (Phase 3), activity tracking + email integration (Phase 4), sequence builder + processor (Phase 5), won/lost flow + ERPNext sync (Phase 6), CRM dashboard + reporting with metrics engine (Phase 7), proposal link + estimate integration (Phase 8). 89 files changed, ~10,000 lines added.
-- **Decisions:** Subagent-driven development for all 8 phases. Scoring engine uses configurable rules with 12 operators. Sequence processor is cron-callable with dual auth (secret header or Clerk). Won/lost flow extends ERPNext sync service with opportunity + sales order mappers. Dashboard uses pure CSS charts (no chart library). Worktree-based isolation for feature branch.
-- **Tests:** 904/904 passing (254 new), 0 lint errors, typecheck clean.
-- **Pushed:** to main.
-- **Next steps:** Deploy to Vercel. Manual E2E: lead create → list → detail → score → convert → pipeline → won/lost → dashboard. Wire mdm-website-v2 contact form to lead intake. Set up CRON_SECRET for sequence processor.
+- **Changes:** Complete CRM sales pipeline: 8 phases, 89 files, ~10,000 lines. Lead scoring, sequences, won/lost flow, ERPNext sync, dashboard metrics.
+- **Tests:** 904/904 passing (254 new).
 
-### Feb 24, 2026 — Cross-Subdomain SSO (Clerk Shared Auth)
-- **Changes:** Clerk cross-subdomain session sharing across `*.mdmgroupinc.ca`. `authorizedParties` + `allowedRedirectOrigins` for security.
-- **Tests:** 650/650 passing.
-
-- Feb 24: Full Service Connection + Microsoft Graph Integration — RLS policies, Clerk bootstrap, webhook handler, Graph email/calendar (5 routes), 53 new tests. 650 tests.
-- Feb 23: LeadForge Pipeline (Phases A-F) + Clerk Auth Unification — outreach sequences, Apollo enrichment, division routing, Resend email, Clerk on MDM-Book-Internal. 597 tests.
-- Feb 16: Repo Hygiene #15 — 11 Dependabot PRs merged. 554 tests.
-- Feb 15: Tier 3 Zod validation — all 32 mutating routes covered. 554 tests.
-- Feb 13: CRM + Estimating Phase 1 (Ralph Loop) — 23 stories, 549 tests, PR #1.
+- Feb 24: Cross-Subdomain SSO — Clerk shared auth across *.mdmgroupinc.ca. 650 tests.
+- Feb 24: Full Service Connection + Microsoft Graph — RLS, Clerk bootstrap, Graph email/calendar. 650 tests.
+- Feb 23: LeadForge Pipeline (Phases A-F) + Clerk Auth Unification. 597 tests.
+- Feb 15: Tier 3 Zod validation — all 32 mutating routes. 554 tests.
+- Feb 13: CRM + Estimating Phase 1 (Ralph Loop) — 23 stories, 549 tests.
 - Feb 12: MDM Unified Growth Intelligence System (Phase 0) — Sales AGI + pgvector schema.
 - Feb 10: Architecture resolution (23 issues) + /scope skill.
 
