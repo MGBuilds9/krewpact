@@ -1,7 +1,27 @@
 'use client';
 
+import { Bar, BarChart, XAxis, YAxis, Cell } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from '@/components/ui/chart';
 import type { ConversionMetrics } from '@/lib/crm/metrics';
+
+const chartConfig = {
+  count: {
+    label: 'Count',
+    color: 'hsl(210, 80%, 55%)',
+  },
+} satisfies ChartConfig;
+
+const FUNNEL_COLORS = [
+  'hsl(210, 80%, 55%)',
+  'hsl(40, 90%, 55%)',
+  'hsl(140, 70%, 45%)',
+];
 
 interface ConversionFunnelProps {
   metrics: ConversionMetrics | undefined;
@@ -30,23 +50,24 @@ export function ConversionFunnel({ metrics, isLoading }: ConversionFunnelProps) 
     );
   }
 
-  const levels = metrics
-    ? [
-        { label: 'Total Leads', count: metrics.totalLeads, pct: 1 },
-        {
-          label: 'Qualified',
-          count: metrics.qualifiedLeads,
-          pct: metrics.qualificationRate,
-        },
-        {
-          label: 'Converted',
-          count: metrics.convertedLeads,
-          pct: metrics.conversionRate,
-        },
-      ]
-    : [];
+  if (!metrics || metrics.totalLeads === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Conversion Funnel</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">No lead data available</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
-  const maxCount = metrics?.totalLeads ?? 1;
+  const chartData = [
+    { stage: 'Total Leads', count: metrics.totalLeads, pct: 1 },
+    { stage: 'Qualified', count: metrics.qualifiedLeads, pct: metrics.qualificationRate },
+    { stage: 'Converted', count: metrics.convertedLeads, pct: metrics.conversionRate },
+  ];
 
   return (
     <Card>
@@ -54,46 +75,46 @@ export function ConversionFunnel({ metrics, isLoading }: ConversionFunnelProps) 
         <CardTitle>Conversion Funnel</CardTitle>
       </CardHeader>
       <CardContent>
-        {!metrics || metrics.totalLeads === 0 ? (
-          <p className="text-sm text-muted-foreground">No lead data available</p>
-        ) : (
-          <div className="flex flex-col items-center gap-2">
-            {levels.map((level, i) => {
-              const widthPct = Math.max(
-                (level.count / maxCount) * 100,
-                20,
-              );
-              const colors = [
-                'bg-blue-500',
-                'bg-amber-500',
-                'bg-green-500',
-              ];
-
-              return (
-                <div
-                  key={level.label}
-                  className="w-full text-center"
-                  data-testid={`funnel-level-${i}`}
-                >
-                  <div
-                    className={`mx-auto flex items-center justify-center rounded-sm py-2 text-sm font-medium text-white ${colors[i] ?? 'bg-gray-500'}`}
-                    style={{ width: `${widthPct}%` }}
-                    role="presentation"
-                  >
-                    {level.label}
-                  </div>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {level.count} ({formatPct(level.pct)})
-                  </p>
-                </div>
-              );
-            })}
-            {metrics.lostLeads > 0 && (
-              <p className="text-xs text-muted-foreground">
-                Lost: {metrics.lostLeads} ({formatPct(metrics.lossRate)})
-              </p>
-            )}
-          </div>
+        <ChartContainer config={chartConfig} className="aspect-auto h-[220px] w-full">
+          <BarChart
+            data={chartData}
+            layout="vertical"
+            margin={{ left: 8, right: 16, top: 8, bottom: 8 }}
+          >
+            <YAxis
+              dataKey="stage"
+              type="category"
+              width={85}
+              tickLine={false}
+              axisLine={false}
+              tick={{ fontSize: 12 }}
+            />
+            <XAxis type="number" hide />
+            <ChartTooltip
+              content={
+                <ChartTooltipContent
+                  formatter={(value, _name, item) => {
+                    const pct = item?.payload?.pct;
+                    return (
+                      <span>
+                        {value} leads ({formatPct(pct ?? 0)})
+                      </span>
+                    );
+                  }}
+                />
+              }
+            />
+            <Bar dataKey="count" radius={[0, 6, 6, 0]} barSize={36}>
+              {chartData.map((_, index) => (
+                <Cell key={index} fill={FUNNEL_COLORS[index]} fillOpacity={0.85} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ChartContainer>
+        {metrics.lostLeads > 0 && (
+          <p className="text-xs text-muted-foreground text-center mt-2">
+            Lost: {metrics.lostLeads} ({formatPct(metrics.lossRate)})
+          </p>
         )}
       </CardContent>
     </Card>

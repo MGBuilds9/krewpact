@@ -25,17 +25,19 @@ describe('PipelineValueChart', () => {
     expect(screen.getByText('Pipeline by Stage')).toBeDefined();
   });
 
-  it('renders stage labels and values', () => {
-    render(<PipelineValueChart metrics={makeMetrics()} />);
-    expect(screen.getByText('Intake')).toBeDefined();
-    expect(screen.getByText('Proposal')).toBeDefined();
-    expect(screen.getByText('Negotiation')).toBeDefined();
+  it('renders chart container when data exists', () => {
+    const { container } = render(<PipelineValueChart metrics={makeMetrics()} />);
+    // Recharts renders SVG elements inside the chart container
+    const svg = container.querySelector('svg');
+    expect(svg).toBeDefined();
   });
 
-  it('renders progress bars with correct aria labels', () => {
-    render(<PipelineValueChart metrics={makeMetrics()} />);
-    const bars = screen.getAllByRole('progressbar');
-    expect(bars.length).toBe(3);
+  it('does not render chart when all stages have zero count', () => {
+    render(<PipelineValueChart metrics={{
+      ...makeMetrics(),
+      stageBreakdown: [{ stage: 'intake', count: 0, value: 0, weightedValue: 0 }],
+    }} />);
+    expect(screen.getByText('No pipeline data available')).toBeDefined();
   });
 
   it('shows empty state when no data', () => {

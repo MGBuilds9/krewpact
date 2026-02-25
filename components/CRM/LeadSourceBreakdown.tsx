@@ -1,7 +1,27 @@
 'use client';
 
+import { Pie, PieChart, Cell } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+  type ChartConfig,
+} from '@/components/ui/chart';
 import type { SourceMetrics } from '@/lib/crm/metrics';
+
+const SOURCE_COLORS = [
+  'hsl(210, 80%, 55%)',
+  'hsl(140, 70%, 45%)',
+  'hsl(40, 90%, 55%)',
+  'hsl(25, 90%, 55%)',
+  'hsl(270, 70%, 55%)',
+  'hsl(190, 80%, 50%)',
+  'hsl(340, 75%, 55%)',
+  'hsl(0, 0%, 55%)',
+];
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('en-CA', {
@@ -22,55 +42,94 @@ interface LeadSourceBreakdownProps {
 }
 
 export function LeadSourceBreakdown({ metrics, isLoading }: LeadSourceBreakdownProps) {
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Lead Sources</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-6 animate-pulse rounded bg-muted" />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!metrics || metrics.sources.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Lead Sources</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">No source data available</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const chartData = metrics.sources.map((s, i) => ({
+    name: s.source,
+    value: s.count,
+    totalValue: s.value,
+    conversionRate: s.conversionRate,
+    fill: SOURCE_COLORS[i % SOURCE_COLORS.length],
+  }));
+
+  const chartCfg: ChartConfig = {};
+  for (const item of chartData) {
+    chartCfg[item.name] = {
+      label: item.name,
+      color: item.fill,
+    };
+  }
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Lead Sources</CardTitle>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
-          <div className="space-y-3">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-6 animate-pulse rounded bg-muted" />
-            ))}
-          </div>
-        ) : !metrics || metrics.sources.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No source data available</p>
-        ) : (
-          <div className="space-y-3">
-            <div className="grid grid-cols-4 gap-2 text-xs font-medium text-muted-foreground border-b pb-2">
-              <span>Source</span>
-              <span className="text-right">Leads</span>
-              <span className="text-right">Value</span>
-              <span className="text-right">Conv.</span>
-            </div>
-            {metrics.sources.map((source) => (
-              <div key={source.source} className="grid grid-cols-4 gap-2 text-sm items-center">
-                <span className="font-medium truncate">{source.source}</span>
-                <span className="text-right text-muted-foreground">{source.count}</span>
-                <span className="text-right text-muted-foreground">
-                  {formatCurrency(source.value)}
-                </span>
-                <div className="flex items-center justify-end gap-1">
-                  <div className="h-2 w-12 rounded-full bg-muted">
-                    <div
-                      className="h-full rounded-full bg-green-500 transition-all"
-                      style={{ width: `${Math.min(source.conversionRate * 100, 100)}%` }}
-                      role="progressbar"
-                      aria-valuenow={source.conversionRate * 100}
-                      aria-valuemin={0}
-                      aria-valuemax={100}
-                      aria-label={`${source.source} conversion rate: ${formatPct(source.conversionRate)}`}
-                    />
-                  </div>
-                  <span className="text-xs text-muted-foreground w-8 text-right">
-                    {formatPct(source.conversionRate)}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        <ChartContainer config={chartCfg} className="aspect-square h-[280px] w-full">
+          <PieChart>
+            <ChartTooltip
+              content={
+                <ChartTooltipContent
+                  formatter={(value, _name, item) => {
+                    const data = item?.payload;
+                    return (
+                      <span>
+                        {value} leads &middot; {formatCurrency(data?.totalValue ?? 0)} &middot; Conv: {formatPct(data?.conversionRate ?? 0)}
+                      </span>
+                    );
+                  }}
+                  nameKey="name"
+                />
+              }
+            />
+            <Pie
+              data={chartData}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              innerRadius={50}
+              outerRadius={90}
+              strokeWidth={2}
+              stroke="hsl(var(--background))"
+            >
+              {chartData.map((entry, index) => (
+                <Cell key={index} fill={entry.fill} />
+              ))}
+            </Pie>
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            <ChartLegend content={<ChartLegendContent nameKey="name" payload={undefined as any} />} />
+          </PieChart>
+        </ChartContainer>
       </CardContent>
     </Card>
   );

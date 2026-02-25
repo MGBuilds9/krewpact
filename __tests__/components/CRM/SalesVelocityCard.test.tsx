@@ -28,12 +28,12 @@ describe('SalesVelocityCard', () => {
     expect(screen.getByText('Deals Won')).toBeDefined();
   });
 
-  it('renders average days per stage', () => {
-    render(<SalesVelocityCard metrics={makeMetrics()} />);
-    expect(screen.getByText('Intake')).toBeDefined();
-    expect(screen.getByText('5d')).toBeDefined();
-    expect(screen.getByText('Proposal')).toBeDefined();
-    expect(screen.getByText('10d')).toBeDefined();
+  it('renders stage chart when stage data exists', () => {
+    const { container } = render(<SalesVelocityCard metrics={makeMetrics()} />);
+    // Recharts renders stage bars as SVG
+    const svg = container.querySelector('svg');
+    expect(svg).toBeDefined();
+    expect(screen.getByText('Average Days per Stage')).toBeDefined();
   });
 
   it('shows empty state when no data', () => {

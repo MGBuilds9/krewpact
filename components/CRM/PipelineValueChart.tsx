@@ -1,16 +1,14 @@
 'use client';
 
+import { Bar, BarChart, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from '@/components/ui/chart';
 import type { PipelineMetrics } from '@/lib/crm/metrics';
-
-const STAGE_COLORS: Record<string, string> = {
-  intake: 'bg-blue-500',
-  site_visit: 'bg-cyan-500',
-  estimating: 'bg-amber-500',
-  proposal: 'bg-orange-500',
-  negotiation: 'bg-purple-500',
-  contracted: 'bg-green-500',
-};
 
 const STAGE_LABELS: Record<string, string> = {
   intake: 'Intake',
@@ -21,14 +19,16 @@ const STAGE_LABELS: Record<string, string> = {
   contracted: 'Contracted',
 };
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('en-CA', {
-    style: 'currency',
-    currency: 'CAD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
+const chartConfig = {
+  value: {
+    label: 'Pipeline Value',
+    color: 'hsl(210, 80%, 55%)',
+  },
+  weightedValue: {
+    label: 'Weighted Value',
+    color: 'hsl(140, 70%, 45%)',
+  },
+} satisfies ChartConfig;
 
 interface PipelineValueChartProps {
   metrics: PipelineMetrics | undefined;
@@ -36,9 +36,44 @@ interface PipelineValueChartProps {
 }
 
 export function PipelineValueChart({ metrics, isLoading }: PipelineValueChartProps) {
-  const maxValue = metrics
-    ? Math.max(...metrics.stageBreakdown.map((s) => s.value), 1)
-    : 1;
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Pipeline by Stage</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="h-8 animate-pulse rounded bg-muted" />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const chartData = (metrics?.stageBreakdown ?? [])
+    .filter((s) => s.count > 0)
+    .map((stage) => ({
+      stage: STAGE_LABELS[stage.stage] ?? stage.stage,
+      value: stage.value,
+      weightedValue: stage.weightedValue,
+      count: stage.count,
+    }));
+
+  if (chartData.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Pipeline by Stage</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">No pipeline data available</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -46,48 +81,59 @@ export function PipelineValueChart({ metrics, isLoading }: PipelineValueChartPro
         <CardTitle>Pipeline by Stage</CardTitle>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
-          <div className="space-y-3">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-8 animate-pulse rounded bg-muted" />
-            ))}
-          </div>
-        ) : !metrics || metrics.stageBreakdown.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No pipeline data available</p>
-        ) : (
-          <div className="space-y-3">
-            {metrics.stageBreakdown
-              .filter((s) => s.count > 0)
-              .map((stage) => {
-                const widthPct = Math.max((stage.value / maxValue) * 100, 2);
-                const color = STAGE_COLORS[stage.stage] ?? 'bg-gray-500';
-                const label = STAGE_LABELS[stage.stage] ?? stage.stage;
-
-                return (
-                  <div key={stage.stage} className="space-y-1">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="font-medium">{label}</span>
-                      <span className="text-muted-foreground">
-                        {stage.count} deal{stage.count !== 1 ? 's' : ''} &middot;{' '}
-                        {formatCurrency(stage.value)}
+        <ChartContainer config={chartConfig} className="aspect-auto h-[280px] w-full">
+          <BarChart
+            data={chartData}
+            layout="vertical"
+            margin={{ left: 16, right: 16, top: 8, bottom: 8 }}
+          >
+            <CartesianGrid horizontal={false} strokeDasharray="3 3" />
+            <YAxis
+              dataKey="stage"
+              type="category"
+              width={90}
+              tickLine={false}
+              axisLine={false}
+              tick={{ fontSize: 12 }}
+            />
+            <XAxis
+              type="number"
+              tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+              tickLine={false}
+              axisLine={false}
+            />
+            <ChartTooltip
+              content={
+                <ChartTooltipContent
+                  formatter={(value, name) => {
+                    const formatted = new Intl.NumberFormat('en-CA', {
+                      style: 'currency',
+                      currency: 'CAD',
+                      maximumFractionDigits: 0,
+                    }).format(value as number);
+                    return (
+                      <span>
+                        {name === 'value' ? 'Total' : 'Weighted'}: {formatted}
                       </span>
-                    </div>
-                    <div className="h-6 w-full rounded-sm bg-muted">
-                      <div
-                        className={`h-full rounded-sm ${color} transition-all`}
-                        style={{ width: `${widthPct}%` }}
-                        role="progressbar"
-                        aria-valuenow={stage.value}
-                        aria-valuemin={0}
-                        aria-valuemax={maxValue}
-                        aria-label={`${label}: ${formatCurrency(stage.value)}`}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-          </div>
-        )}
+                    );
+                  }}
+                />
+              }
+            />
+            <Bar
+              dataKey="value"
+              radius={[0, 4, 4, 0]}
+              fill="var(--color-value)"
+              fillOpacity={0.8}
+            />
+            <Bar
+              dataKey="weightedValue"
+              radius={[0, 4, 4, 0]}
+              fill="var(--color-weightedValue)"
+              fillOpacity={0.6}
+            />
+          </BarChart>
+        </ChartContainer>
       </CardContent>
     </Card>
   );

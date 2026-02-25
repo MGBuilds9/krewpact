@@ -1,6 +1,13 @@
 'use client';
 
+import { Bar, BarChart, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from '@/components/ui/chart';
 import type { VelocityMetrics } from '@/lib/crm/metrics';
 
 function formatCurrency(value: number): string {
@@ -20,59 +27,111 @@ const STAGE_LABELS: Record<string, string> = {
   negotiation: 'Negotiation',
 };
 
+const chartConfig = {
+  days: {
+    label: 'Days in Stage',
+    color: 'hsl(270, 70%, 55%)',
+  },
+} satisfies ChartConfig;
+
 interface SalesVelocityCardProps {
   metrics: VelocityMetrics | undefined;
   isLoading?: boolean;
 }
 
 export function SalesVelocityCard({ metrics, isLoading }: SalesVelocityCardProps) {
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Sales Velocity</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-6 animate-pulse rounded bg-muted" />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!metrics) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Sales Velocity</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">No velocity data available</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const stageData = Object.entries(metrics.averageDaysInStage).map(([stage, days]) => ({
+    stage: STAGE_LABELS[stage] ?? stage,
+    days,
+  }));
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Sales Velocity</CardTitle>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
-          <div className="space-y-3">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-6 animate-pulse rounded bg-muted" />
-            ))}
+        <div className="grid grid-cols-3 gap-4 text-center mb-6">
+          <div className="rounded-lg bg-muted/50 p-3">
+            <p className="text-2xl font-bold">{metrics.averageDaysToClose}</p>
+            <p className="text-xs text-muted-foreground">Avg Days to Close</p>
           </div>
-        ) : !metrics ? (
-          <p className="text-sm text-muted-foreground">No velocity data available</p>
-        ) : (
-          <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <p className="text-2xl font-bold">{metrics.averageDaysToClose}</p>
-                <p className="text-xs text-muted-foreground">Avg Days to Close</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{metrics.dealsClosed}</p>
-                <p className="text-xs text-muted-foreground">Deals Won</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{formatCurrency(metrics.dealsClosedValue)}</p>
-                <p className="text-xs text-muted-foreground">Value Won</p>
-              </div>
-            </div>
+          <div className="rounded-lg bg-muted/50 p-3">
+            <p className="text-2xl font-bold">{metrics.dealsClosed}</p>
+            <p className="text-xs text-muted-foreground">Deals Won</p>
+          </div>
+          <div className="rounded-lg bg-muted/50 p-3">
+            <p className="text-2xl font-bold text-green-600">{formatCurrency(metrics.dealsClosedValue)}</p>
+            <p className="text-xs text-muted-foreground">Value Won</p>
+          </div>
+        </div>
 
-            {Object.keys(metrics.averageDaysInStage).length > 0 && (
-              <div>
-                <p className="mb-2 text-sm font-medium">Average Days per Stage</p>
-                <div className="space-y-1">
-                  {Object.entries(metrics.averageDaysInStage).map(([stage, days]) => (
-                    <div key={stage} className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">
-                        {STAGE_LABELS[stage] ?? stage}
-                      </span>
-                      <span className="font-medium">{days}d</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+        {stageData.length > 0 && (
+          <>
+            <p className="mb-3 text-sm font-medium">Average Days per Stage</p>
+            <ChartContainer config={chartConfig} className="aspect-auto h-[160px] w-full">
+              <BarChart
+                data={stageData}
+                margin={{ left: 8, right: 16, top: 8, bottom: 8 }}
+              >
+                <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="stage"
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fontSize: 11 }}
+                />
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(v) => `${v}d`}
+                />
+                <ChartTooltip
+                  content={
+                    <ChartTooltipContent
+                      formatter={(value) => <span>{value} days</span>}
+                    />
+                  }
+                />
+                <Bar
+                  dataKey="days"
+                  fill="var(--color-days)"
+                  radius={[4, 4, 0, 0]}
+                  fillOpacity={0.8}
+                />
+              </BarChart>
+            </ChartContainer>
+          </>
         )}
       </CardContent>
     </Card>
