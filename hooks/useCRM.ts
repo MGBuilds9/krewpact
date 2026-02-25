@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api-client';
+import type { DashboardMetrics } from '@/lib/crm/metrics';
 
 // --- Types ---
 
@@ -775,6 +776,18 @@ export function useCreateOutreach() {
         queryClient.invalidateQueries({ queryKey: ['outreach', variables.lead_id] });
       }
     },
+  });
+}
+
+// --- Dashboard Metrics ---
+
+export function useDashboardMetrics(divisionId?: string, period?: string) {
+  return useQuery({
+    queryKey: ['dashboard-metrics', divisionId, period],
+    queryFn: () =>
+      apiFetch<DashboardMetrics>('/api/crm/dashboard/metrics', {
+        params: { division_id: divisionId, period },
+      }),
   });
 }
 
