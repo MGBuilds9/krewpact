@@ -141,6 +141,18 @@ export const opportunityUpdateSchema = z.object({
   notes: z.string().optional().nullable(),
 });
 
+export const opportunityStageTransitionSchema = z
+  .object({
+    stage: z.enum(opportunityStages),
+    lost_reason: z.string().optional(),
+  })
+  .refine(
+    (data) =>
+      data.stage !== 'closed_lost' ||
+      (data.lost_reason !== undefined && data.lost_reason.length > 0),
+    { message: 'lost_reason is required when stage is closed_lost' },
+  );
+
 // ============================================================
 // Activity schemas
 // ============================================================
@@ -259,6 +271,7 @@ export type LeadUpdate = z.infer<typeof leadUpdateSchema>;
 export type LeadStageTransition = z.infer<typeof leadStageTransitionSchema>;
 export type OpportunityCreate = z.infer<typeof opportunityCreateSchema>;
 export type OpportunityUpdate = z.infer<typeof opportunityUpdateSchema>;
+export type OpportunityStageTransition = z.infer<typeof opportunityStageTransitionSchema>;
 export type ActivityCreate = z.infer<typeof activityCreateSchema>;
 export type ActivityUpdate = z.infer<typeof activityUpdateSchema>;
 export type SequenceCreate = z.infer<typeof sequenceCreateSchema>;

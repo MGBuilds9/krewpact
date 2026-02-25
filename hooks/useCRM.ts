@@ -385,6 +385,19 @@ export function useUpdateOpportunity() {
   });
 }
 
+export function useOpportunityStageTransition() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...body }: { id: string; stage: string; lost_reason?: string }) =>
+      apiFetch<Opportunity>(`/api/crm/opportunities/${id}/stage`, { method: 'POST', body }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['opportunities'] });
+      queryClient.invalidateQueries({ queryKey: ['opportunity', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['pipeline'] });
+    },
+  });
+}
+
 export function usePipeline(filters?: PipelineFilters) {
   return useQuery({
     queryKey: ['pipeline', filters],
