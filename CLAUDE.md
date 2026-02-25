@@ -252,33 +252,22 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
+### Feb 24, 2026 — CRM End-to-End Lead Lifecycle (8 Phases)
+- **Changes:** Complete CRM sales pipeline: lead forms + opportunity detail (Phase 1), lead scoring engine with 12 operators (Phase 2), lead→opportunity conversion + weighted pipeline (Phase 3), activity tracking + email integration (Phase 4), sequence builder + processor (Phase 5), won/lost flow + ERPNext sync (Phase 6), CRM dashboard + reporting with metrics engine (Phase 7), proposal link + estimate integration (Phase 8). 89 files changed, ~10,000 lines added.
+- **Decisions:** Subagent-driven development for all 8 phases. Scoring engine uses configurable rules with 12 operators. Sequence processor is cron-callable with dual auth (secret header or Clerk). Won/lost flow extends ERPNext sync service with opportunity + sales order mappers. Dashboard uses pure CSS charts (no chart library). Worktree-based isolation for feature branch.
+- **Tests:** 904/904 passing (254 new), 0 lint errors, typecheck clean.
+- **Pushed:** to main.
+- **Next steps:** Deploy to Vercel. Manual E2E: lead create → list → detail → score → convert → pipeline → won/lost → dashboard. Wire mdm-website-v2 contact form to lead intake. Set up CRON_SECRET for sequence processor.
+
 ### Feb 24, 2026 — Cross-Subdomain SSO (Clerk Shared Auth)
-- **Changes:** Configured Clerk API for cross-subdomain session sharing across `*.mdmgroupinc.ca`. Added 6 allowed origins and 6 redirect URLs via Clerk Backend API (`api.clerk.com`). Added `NEXT_PUBLIC_CLERK_DOMAIN=mdmgroupinc.ca` to `.env.local`. Added `authorizedParties` to `middleware.ts` for subdomain cookie leaking protection. Added `allowedRedirectOrigins` to `ClerkProvider` in `app/layout.tsx`. Updated `.env.example` with `NEXT_PUBLIC_CLERK_DOMAIN`.
-- **Decisions:** Subdomains of same root domain share sessions automatically in Clerk — no satellite domain setup needed (also requires plan upgrade). `authorizedParties` allowlist protects against subdomain cookie attacks. `allowedRedirectOrigins` on ClerkProvider permits auth redirects from sibling subdomains.
-- **Tests:** 650/650 passing, 0 lint errors, typecheck clean.
-- **Next steps:** Verify cross-subdomain SSO works in browser (portal → dashboard → hub). Deploy KrewPact to Vercel with `hub.mdmgroupinc.ca` custom domain + Cloudflare CNAME.
+- **Changes:** Clerk cross-subdomain session sharing across `*.mdmgroupinc.ca`. `authorizedParties` + `allowedRedirectOrigins` for security.
+- **Tests:** 650/650 passing.
 
-### Feb 24, 2026 — Full Service Connection + Microsoft Graph Integration
-- **Phase 1 (DB):** Applied RLS helper functions (`krewpact_user_id()`, `krewpact_divisions()`, `krewpact_roles()`, `is_platform_admin()`) + foundation/CRM/Sales AGI RLS policies to live Supabase. Created `ensure_clerk_user` SECURITY DEFINER function. Adapted policies for Sales AGI schema (contacts use `lead_id` not `account_id`, tasks use `lead_id` not `project_id`).
-- **Phase 2 (Clerk Bootstrap):** Bootstrapped Michael + David user records in Supabase. Assigned roles/divisions. Set Clerk `public_metadata` (krewpact_user_id, division_ids, role_keys). Updated Clerk JWT template with KrewPact claims.
-- **Phase 3 (Code):** Created Clerk webhook handler (`app/api/webhooks/clerk/route.ts`) with svix signature verification. Fixed `NEXT_PUBLIC_APP_URL`. Made `ALLOWED_DOMAINS` configurable. Added `authorizedParties` to middleware.
-- **Microsoft Graph Integration:** Full email + calendar via Clerk-brokered M365 OAuth tokens. Graph client library, 5 API routes (inbox, read, send + CRM auto-logging, calendar list/create/detail), shared mailbox support (`info@mdmcontracting.ca`), React Query hooks, dashboard widgets (InboxPreview + CalendarWidget). 53 new tests.
-- **Tests:** 650/650 passing, 0 lint errors, typecheck clean, build clean.
-- **Pending (manual):** Register Clerk webhook at `hub.mdmgroupinc.ca/api/webhooks/clerk`, add `CLERK_WEBHOOK_SECRET` to Vercel, fix `NEXT_PUBLIC_APP_URL` on Vercel.
-
-### Feb 23, 2026 — LeadForge Pipeline (Phases A-F) + Clerk Auth Unification
-- **Changes:** Full LeadForge replacement pipeline. Phases A-E: outreach sequence engine (6 API routes), Apollo integration + enrichment waterfall, division auto-routing, Resend email automation, sequence processor cron, pipeline/reporting dashboards, scoring admin. Phase F: replaced SHA-256 password gate on MDM-Book-Internal dashboard + portal with Clerk JS SDK (`@clerk/clerk-js@5`). Deployed both to Cloudflare Pages.
-- **Decisions:** Clerk JS SDK for static sites (no backend needed). Domain restriction via `clerk.user.primaryEmailAddress` check. Safe DOM manipulation (createElement/textContent) to pass security hooks — no innerHTML. Division router uses keyword matching with contracting as default.
-- **Tests:** 597/597 passing, 0 lint errors, typecheck clean, build clean.
-- **Pushed:** to main (KrewPact + MDM-Book-Internal)
-- **Next steps:** Add `dashboard.mdmgroupinc.ca` and `portal.mdmgroupinc.ca` as allowed redirect URIs in Clerk dashboard. Set up n8n workflows (LF-001 through LF-050). Wire mdm-website-v2 contact form to KrewPact lead intake.
-
-### Feb 16, 2026 — Repo Hygiene #15
-- **Merged:** 11 Dependabot PRs. Cleaned stale ralph branch. Tests: 554/554.
-
+- Feb 24: Full Service Connection + Microsoft Graph Integration — RLS policies, Clerk bootstrap, webhook handler, Graph email/calendar (5 routes), 53 new tests. 650 tests.
+- Feb 23: LeadForge Pipeline (Phases A-F) + Clerk Auth Unification — outreach sequences, Apollo enrichment, division routing, Resend email, Clerk on MDM-Book-Internal. 597 tests.
+- Feb 16: Repo Hygiene #15 — 11 Dependabot PRs merged. 554 tests.
 - Feb 15: Tier 3 Zod validation — all 32 mutating routes covered. 554 tests.
 - Feb 13: CRM + Estimating Phase 1 (Ralph Loop) — 23 stories, 549 tests, PR #1.
 - Feb 12: MDM Unified Growth Intelligence System (Phase 0) — Sales AGI + pgvector schema.
-- Feb 12: Repo Hygiene #1-2 — Verified clean state, fixed UUID fixtures.
 - Feb 10: Architecture resolution (23 issues) + /scope skill.
 
