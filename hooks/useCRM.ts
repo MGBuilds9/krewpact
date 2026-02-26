@@ -4,6 +4,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api-client';
 import type { DashboardMetrics } from '@/lib/crm/metrics';
 
+// --- Paginated Response ---
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  hasMore: boolean;
+}
+
 // --- Types ---
 
 export interface Account {
@@ -23,6 +31,7 @@ export interface Contact {
   first_name: string;
   last_name: string;
   account_id: string | null;
+  lead_id: string | null;
   email: string | null;
   phone: string | null;
   role_title: string | null;
@@ -120,16 +129,22 @@ export interface PipelineData {
 
 interface AccountFilters {
   divisionId?: string;
+  accountType?: string;
   search?: string;
   limit?: number;
   offset?: number;
+  sortBy?: string;
+  sortDir?: 'asc' | 'desc';
 }
 
 interface ContactFilters {
   accountId?: string;
+  leadId?: string;
   search?: string;
   limit?: number;
   offset?: number;
+  sortBy?: string;
+  sortDir?: 'asc' | 'desc';
 }
 
 interface LeadFilters {
@@ -140,10 +155,13 @@ interface LeadFilters {
   search?: string;
   limit?: number;
   offset?: number;
+  sortBy?: string;
+  sortDir?: 'asc' | 'desc';
 }
 
 interface OpportunityFilters {
   divisionId?: string;
+  accountId?: string;
   stage?: string;
   ownerUserId?: string;
   limit?: number;
@@ -158,6 +176,8 @@ interface ActivityFilters {
   activityType?: string;
   limit?: number;
   offset?: number;
+  sortBy?: string;
+  sortDir?: 'asc' | 'desc';
 }
 
 interface PipelineFilters {
@@ -170,14 +190,19 @@ export function useAccounts(filters?: AccountFilters) {
   return useQuery({
     queryKey: ['accounts', filters],
     queryFn: () =>
-      apiFetch<Account[]>('/api/crm/accounts', {
+      apiFetch<PaginatedResponse<Account>>('/api/crm/accounts', {
         params: {
           division_id: filters?.divisionId,
+          account_type: filters?.accountType,
           search: filters?.search,
           limit: filters?.limit,
           offset: filters?.offset,
+          sort_by: filters?.sortBy,
+          sort_dir: filters?.sortDir,
         },
       }),
+    placeholderData: (prev) => prev,
+    staleTime: 30_000,
   });
 }
 
@@ -229,14 +254,19 @@ export function useContacts(filters?: ContactFilters) {
   return useQuery({
     queryKey: ['contacts', filters],
     queryFn: () =>
-      apiFetch<Contact[]>('/api/crm/contacts', {
+      apiFetch<PaginatedResponse<Contact>>('/api/crm/contacts', {
         params: {
           account_id: filters?.accountId,
+          lead_id: filters?.leadId,
           search: filters?.search,
           limit: filters?.limit,
           offset: filters?.offset,
+          sort_by: filters?.sortBy,
+          sort_dir: filters?.sortDir,
         },
       }),
+    placeholderData: (prev) => prev,
+    staleTime: 30_000,
   });
 }
 
@@ -288,7 +318,7 @@ export function useLeads(filters?: LeadFilters) {
   return useQuery({
     queryKey: ['leads', filters],
     queryFn: () =>
-      apiFetch<Lead[]>('/api/crm/leads', {
+      apiFetch<PaginatedResponse<Lead>>('/api/crm/leads', {
         params: {
           division_id: filters?.divisionId,
           status: filters?.status || filters?.stage,
@@ -296,8 +326,12 @@ export function useLeads(filters?: LeadFilters) {
           search: filters?.search,
           limit: filters?.limit,
           offset: filters?.offset,
+          sort_by: filters?.sortBy,
+          sort_dir: filters?.sortDir,
         },
       }),
+    placeholderData: (prev) => prev,
+    staleTime: 30_000,
   });
 }
 
@@ -378,6 +412,7 @@ export function useOpportunities(filters?: OpportunityFilters) {
       apiFetch<Opportunity[]>('/api/crm/opportunities', {
         params: {
           division_id: filters?.divisionId,
+          account_id: filters?.accountId,
           stage: filters?.stage,
           owner_user_id: filters?.ownerUserId,
           limit: filters?.limit,
@@ -452,7 +487,7 @@ export function useActivities(filters?: ActivityFilters) {
   return useQuery({
     queryKey: ['activities', filters],
     queryFn: () =>
-      apiFetch<Activity[]>('/api/crm/activities', {
+      apiFetch<PaginatedResponse<Activity>>('/api/crm/activities', {
         params: {
           opportunity_id: filters?.opportunityId,
           lead_id: filters?.leadId,
@@ -461,8 +496,12 @@ export function useActivities(filters?: ActivityFilters) {
           activity_type: filters?.activityType,
           limit: filters?.limit,
           offset: filters?.offset,
+          sort_by: filters?.sortBy,
+          sort_dir: filters?.sortDir,
         },
       }),
+    placeholderData: (prev) => prev,
+    staleTime: 30_000,
   });
 }
 

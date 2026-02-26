@@ -47,7 +47,9 @@ describe('GET /api/crm/contacts', () => {
     const res = await GET(makeRequest('/api/crm/contacts'));
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual(contacts);
+    expect(body.data).toEqual(contacts);
+    expect(typeof body.total).toBe('number');
+    expect(typeof body.hasMore).toBe('boolean');
   });
 
   it('filters by account_id', async () => {
@@ -71,7 +73,9 @@ describe('GET /api/crm/contacts', () => {
     const res = await GET(makeRequest('/api/crm/contacts?search=Jane'));
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual(contacts);
+    expect(body.data).toEqual(contacts);
+    expect(typeof body.total).toBe('number');
+    expect(typeof body.hasMore).toBe('boolean');
   });
 
   it('returns 401 without auth', async () => {

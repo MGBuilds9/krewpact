@@ -63,9 +63,9 @@ describe('Division Isolation: Leads', () => {
     );
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toHaveLength(2);
-    expect(body[0].division_id).toBe(DIVISION_A);
-    expect(body[1].division_id).toBe(DIVISION_A);
+    expect(body.data).toHaveLength(2);
+    expect(body.data[0].division_id).toBe(DIVISION_A);
+    expect(body.data[1].division_id).toBe(DIVISION_A);
   });
 
   it('user with division "contracting" gets empty result for "homes" division leads', async () => {
@@ -80,7 +80,7 @@ describe('Division Isolation: Leads', () => {
     );
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toHaveLength(0);
+    expect(body.data).toHaveLength(0);
   });
 
   it('user with multiple divisions sees data from all their divisions', async () => {
@@ -98,8 +98,8 @@ describe('Division Isolation: Leads', () => {
     const res = await leadsGET(makeRequest('/api/crm/leads'));
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toHaveLength(3);
-    const divIds = body.map((l: Record<string, unknown>) => l.division_id);
+    expect(body.data).toHaveLength(3);
+    const divIds = body.data.map((l: Record<string, unknown>) => l.division_id);
     expect(divIds).toContain(DIVISION_A);
     expect(divIds).toContain(DIVISION_B);
     expect(divIds).toContain(DIVISION_C);
@@ -128,9 +128,9 @@ describe('Division Isolation: Platform admin bypass', () => {
     const res = await accountsGET(makeRequest('/api/crm/accounts'));
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toHaveLength(3);
+    expect(body.data).toHaveLength(3);
     // Verify all three divisions are represented
-    const divIds = body.map((a: Record<string, unknown>) => a.division_id);
+    const divIds = body.data.map((a: Record<string, unknown>) => a.division_id);
     expect(new Set(divIds).size).toBe(3);
   });
 });
@@ -189,8 +189,8 @@ describe('Division Isolation: Estimates', () => {
     );
     expect(res.status).toBe(200);
     const body = await res.json();
-    // User in division B sees no estimates from division A
-    expect(body).toHaveLength(0);
+    // User in division B sees no estimates from division A (estimates returns raw array)
+    expect(Array.isArray(body) ? body : body.data ?? body).toHaveLength(0);
   });
 
   it('user sees only their own division estimates when filtering', async () => {
@@ -210,7 +210,8 @@ describe('Division Isolation: Estimates', () => {
     );
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toHaveLength(2);
-    expect(body.every((e: Record<string, unknown>) => e.division_id === DIVISION_A)).toBe(true);
+    const arr = Array.isArray(body) ? body : body.data ?? body;
+    expect(arr).toHaveLength(2);
+    expect(arr.every((e: Record<string, unknown>) => e.division_id === DIVISION_A)).toBe(true);
   });
 });

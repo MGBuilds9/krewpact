@@ -73,7 +73,7 @@ function pct(numerator: number, denominator: number): string {
 }
 
 export default function LeadSourcesPage() {
-  const { data: leads, isLoading } = useLeads();
+  const { data: leadsResponse, isLoading } = useLeads({ limit: 100 });
 
   if (isLoading) {
     return (
@@ -85,7 +85,7 @@ export default function LeadSourcesPage() {
     );
   }
 
-  const allLeads = leads ?? [];
+  const allLeads = leadsResponse?.data ?? [];
   const sourceStats = groupLeadsBySource(allLeads);
   const maxCount = Math.max(...sourceStats.map((s) => s.count), 1);
 

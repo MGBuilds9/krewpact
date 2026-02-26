@@ -1,6 +1,6 @@
 'use client';
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
@@ -44,10 +44,22 @@ vi.mock('@/hooks/use-mobile', () => ({
 import AccountsPage from '@/app/(dashboard)/crm/accounts/page';
 
 describe('Accounts List Page', () => {
+  beforeAll(() => {
+    Object.defineProperty(window, 'localStorage', {
+      value: {
+        getItem: vi.fn(() => null),
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+        clear: vi.fn(),
+      },
+      writable: true,
+    });
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseAccounts.mockReturnValue({
-      data: [],
+      data: { data: [], total: 0, hasMore: false },
       isLoading: false,
       isError: false,
     });
@@ -55,19 +67,23 @@ describe('Accounts List Page', () => {
 
   it('renders accounts list with data', () => {
     mockUseAccounts.mockReturnValue({
-      data: [
-        {
-          id: 'acc-1',
-          account_name: 'Acme Corp',
-          account_type: 'client',
-          division_id: 'div-1',
-          billing_address: null,
-          shipping_address: null,
-          notes: null,
-          created_at: '2026-02-12T10:00:00Z',
-          updated_at: '2026-02-12T10:00:00Z',
-        },
-      ],
+      data: {
+        data: [
+          {
+            id: 'acc-1',
+            account_name: 'Acme Corp',
+            account_type: 'client',
+            division_id: 'div-1',
+            billing_address: null,
+            shipping_address: null,
+            notes: null,
+            created_at: '2026-02-12T10:00:00Z',
+            updated_at: '2026-02-12T10:00:00Z',
+          },
+        ],
+        total: 1,
+        hasMore: false,
+      },
       isLoading: false,
       isError: false,
     });

@@ -65,7 +65,9 @@ describe('GET /api/crm/activities', () => {
     const res = await GET(makeRequest('/api/crm/activities'));
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual(activities);
+    expect(body.data).toEqual(activities);
+    expect(typeof body.total).toBe('number');
+    expect(typeof body.hasMore).toBe('boolean');
   });
 
   it('filters by opportunity_id', async () => {
@@ -132,7 +134,9 @@ describe('GET /api/crm/activities', () => {
     );
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual(activities);
+    expect(body.data).toEqual(activities);
+    expect(typeof body.total).toBe('number');
+    expect(typeof body.hasMore).toBe('boolean');
   });
 });
 

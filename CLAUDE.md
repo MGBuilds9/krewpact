@@ -252,6 +252,13 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
+### Feb 26, 2026 — Pre-Scoring Pipeline Audit + Cron Batch Fix
+- **Changes:** Aligned enrichment data shapes across all consumers: `formatted_address` → `address` (google_maps), `news`/`social_profiles` from object arrays → string arrays (brave). Updated EnrichmentIntelCard with hostname extraction for social URLs and news_snippets display. Added summarize cron (`app/api/cron/summarize/route.ts`) with batch optimization — fetches 200 leads, filters in JS for missing `ai_summary`, processes 15 per call.
+- **Decisions:** Fetch large batch + JS filter is more reliable than PostgREST JSONB arrow filtering for `ai_summary` presence check. `FETCH_LIMIT=200` covers all ~170 enriched leads; `BATCH_SIZE=15` respects Gemini rate limit.
+- **Tests:** 982/982 passing, 0 failed.
+- **Pushed:** to main (f5dee1e).
+- **Next steps:** Get Clerk keys for production auth. Deploy to Vercel. Present demo to MDM admin team.
+
 ### Feb 25, 2026 — Demo Mode + DB Schema Alignment + UI Polish
 - **Changes:** Built demo mode system (Clerk auth bypass via webpack aliases, Supabase anon RLS policies). Aligned Lead interface, validators, and all components with actual Supabase DB schema (company_name, status, source_channel, lead_score vs old lead_name, stage, source, probability_pct). Fixed /api/user/current returning array. Fixed dashboard query not firing. Fixed breadcrumbs showing raw UUIDs. Fixed header hardcoded "User" role. Updated calendar/email widgets to show "M365 not connected". 44 files changed, 836 insertions.
 - **Decisions:** Demo mode uses webpack/turbopack aliases to swap Clerk imports with mocks — no code changes to production components. Lead interface matches actual DB columns rather than original migration plan. Breadcrumbs detect UUIDs and show contextual labels ("Lead Details"). Header role from useUserRBAC().primaryRole.
@@ -259,10 +266,7 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 - **Pushed:** to main (950f15b).
 - **Next steps:** Get Clerk keys from Michael for production auth. Remove demo anon RLS policies after Clerk configured. Deploy to Vercel. Present demo to MDM admin team.
 
-### Feb 24, 2026 — CRM End-to-End Lead Lifecycle (8 Phases)
-- **Changes:** Complete CRM sales pipeline: 8 phases, 89 files, ~10,000 lines. Lead scoring, sequences, won/lost flow, ERPNext sync, dashboard metrics.
-- **Tests:** 904/904 passing (254 new).
-
+- Feb 24: CRM end-to-end lead lifecycle (8 phases), 89 files, 254 new tests (904 total). Pushed e05b433.
 - Feb 24: Cross-Subdomain SSO — Clerk shared auth across *.mdmgroupinc.ca. 650 tests.
 - Feb 24: Full Service Connection + Microsoft Graph — RLS, Clerk bootstrap, Graph email/calendar. 650 tests.
 - Feb 23: LeadForge Pipeline (Phases A-F) + Clerk Auth Unification. 597 tests.

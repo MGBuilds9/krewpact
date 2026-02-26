@@ -24,6 +24,8 @@ const querySchema = z.object({
   search: z.string().optional(),
   limit: z.coerce.number().int().positive().max(100).optional(),
   offset: z.coerce.number().int().min(0).optional(),
+  sort_by: z.string().optional(),
+  sort_dir: z.enum(['asc', 'desc']).optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -38,16 +40,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { division_id, status, assigned_to, search, limit, offset } =
+  const { division_id, status, assigned_to, search, limit, offset, sort_by, sort_dir } =
     parsed.data;
   const supabase = await createUserClient();
 
   let query = supabase
     .from('leads')
-    .select('*')
+    .select('*', { count: 'exact' })
     .is('deleted_at', null)
-    .order('lead_score', { ascending: false, nullsFirst: false })
-    .order('created_at', { ascending: false });
+    .order(sort_by ?? 'lead_score', { ascending: sort_dir === 'asc', nullsFirst: false });
 
   if (division_id) {
     query = query.eq('division_id', division_id);
@@ -65,21 +66,21 @@ export async function GET(req: NextRequest) {
     query = query.ilike('company_name', `%${search}%`);
   }
 
-  if (limit) {
-    query = query.limit(limit);
-  }
+  const effectiveLimit = limit ?? 25;
+  const effectiveOffset = offset ?? 0;
+  query = query.range(effectiveOffset, effectiveOffset + effectiveLimit - 1);
 
-  if (offset) {
-    query = query.range(offset, offset + (limit ?? 50) - 1);
-  }
-
-  const { data, error } = await query;
+  const { data, error, count } = await query;
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(data);
+  return NextResponse.json({
+    data: data ?? [],
+    total: count ?? 0,
+    hasMore: (effectiveOffset + (data?.length ?? 0)) < (count ?? 0),
+  });
 }
 
 export async function POST(req: NextRequest) {

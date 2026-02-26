@@ -1,13 +1,15 @@
 'use client';
 
+import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Mail, Phone, User } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, User, Pencil, Plus } from 'lucide-react';
 import { useAccount, useContacts, useActivities, useOpportunities } from '@/hooks/useCRM';
 import { ActivityTimeline } from '@/components/CRM/ActivityTimeline';
+import { AccountForm } from '@/components/CRM/AccountForm';
 
 function formatCurrency(value: number | null): string {
   if (value == null) return '-';
@@ -19,9 +21,14 @@ export default function AccountDetailPage() {
   const router = useRouter();
   const accountId = params.id as string;
   const { data: account, isLoading } = useAccount(accountId);
-  const { data: contacts } = useContacts({ accountId });
-  const { data: activities } = useActivities({ accountId });
-  const { data: opportunities } = useOpportunities({ divisionId: account?.division_id ?? undefined });
+  const { data: contactsResponse } = useContacts({ accountId });
+  const { data: activitiesResponse } = useActivities({ accountId });
+  const { data: opportunities } = useOpportunities({ accountId });
+  const [isEditing, setIsEditing] = useState(false);
+
+  const accountContacts = contactsResponse?.data ?? [];
+  const accountActivities = activitiesResponse?.data ?? [];
+  const accountOpportunities = opportunities ?? [];
 
   if (isLoading) {
     return (
@@ -48,12 +55,6 @@ export default function AccountDetailPage() {
     );
   }
 
-  const accountContacts = contacts ?? [];
-  const accountActivities = activities ?? [];
-  const accountOpportunities = (opportunities ?? []).filter(
-    (o) => o.account_id === accountId,
-  );
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -72,6 +73,12 @@ export default function AccountDetailPage() {
             <p className="text-muted-foreground capitalize">{account.account_type}</p>
           )}
         </div>
+        {!isEditing && (
+          <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+            <Pencil className="h-4 w-4 mr-1" />
+            Edit
+          </Button>
+        )}
       </div>
 
       {/* Tabs */}
@@ -86,38 +93,57 @@ export default function AccountDetailPage() {
         <TabsContent value="overview">
           <Card>
             <CardHeader>
-              <CardTitle>Account Information</CardTitle>
+              <CardTitle>{isEditing ? 'Edit Account' : 'Account Information'}</CardTitle>
             </CardHeader>
             <CardContent>
-              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <dt className="text-sm font-medium text-muted-foreground">Account Type</dt>
-                  <dd className="text-sm capitalize">{account.account_type || '-'}</dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-muted-foreground">Created</dt>
-                  <dd className="text-sm">
-                    {new Date(account.created_at).toLocaleDateString('en-CA', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })}
-                  </dd>
-                </div>
-                {account.notes && (
-                  <div className="sm:col-span-2">
-                    <dt className="text-sm font-medium text-muted-foreground">Notes</dt>
-                    <dd className="text-sm whitespace-pre-wrap">{account.notes}</dd>
+              {isEditing ? (
+                <AccountForm
+                  account={account}
+                  onSuccess={() => setIsEditing(false)}
+                  onCancel={() => setIsEditing(false)}
+                />
+              ) : (
+                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <dt className="text-sm font-medium text-muted-foreground">Account Type</dt>
+                    <dd className="text-sm capitalize">{account.account_type || '-'}</dd>
                   </div>
-                )}
-              </dl>
+                  <div>
+                    <dt className="text-sm font-medium text-muted-foreground">Created</dt>
+                    <dd className="text-sm">
+                      {new Date(account.created_at).toLocaleDateString('en-CA', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </dd>
+                  </div>
+                  {account.notes && (
+                    <div className="sm:col-span-2">
+                      <dt className="text-sm font-medium text-muted-foreground">Notes</dt>
+                      <dd className="text-sm whitespace-pre-wrap">{account.notes}</dd>
+                    </div>
+                  )}
+                </dl>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="contacts">
           <Card>
-            <CardContent className="pt-6">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Contacts</CardTitle>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => router.push(`/crm/contacts/new?account_id=${accountId}`)}
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Add Contact
+              </Button>
+            </CardHeader>
+            <CardContent>
               {accountContacts.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <User className="mx-auto h-8 w-8 mb-2 opacity-50" />

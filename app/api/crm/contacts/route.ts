@@ -6,9 +6,12 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const querySchema = z.object({
   account_id: z.string().uuid().optional(),
+  lead_id: z.string().uuid().optional(),
   search: z.string().optional(),
   limit: z.coerce.number().int().positive().max(100).optional(),
   offset: z.coerce.number().int().min(0).optional(),
+  sort_by: z.string().optional(),
+  sort_dir: z.enum(['asc', 'desc']).optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -23,37 +26,41 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { account_id, search, limit, offset } = parsed.data;
+  const { account_id, lead_id, search, limit, offset, sort_by, sort_dir } = parsed.data;
   const supabase = await createUserClient();
 
   let query = supabase
     .from('contacts')
-    .select('*')
-    .order('created_at', { ascending: false });
+    .select('*', { count: 'exact' })
+    .order(sort_by ?? 'created_at', { ascending: sort_dir === 'asc' });
 
   if (account_id) {
     query = query.eq('account_id', account_id);
+  }
+
+  if (lead_id) {
+    query = query.eq('lead_id', lead_id);
   }
 
   if (search) {
     query = query.or(`first_name.ilike.%${search}%,last_name.ilike.%${search}%`);
   }
 
-  if (limit) {
-    query = query.limit(limit);
-  }
+  const effectiveLimit = limit ?? 25;
+  const effectiveOffset = offset ?? 0;
+  query = query.range(effectiveOffset, effectiveOffset + effectiveLimit - 1);
 
-  if (offset) {
-    query = query.range(offset, offset + (limit ?? 50) - 1);
-  }
-
-  const { data, error } = await query;
+  const { data, error, count } = await query;
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(data);
+  return NextResponse.json({
+    data: data ?? [],
+    total: count ?? 0,
+    hasMore: (effectiveOffset + (data?.length ?? 0)) < (count ?? 0),
+  });
 }
 
 export async function POST(req: NextRequest) {

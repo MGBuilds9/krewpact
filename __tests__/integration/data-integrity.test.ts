@@ -81,7 +81,7 @@ describe('Data Integrity: Account cascade to contacts', () => {
     );
     expect(contactsRes.status).toBe(200);
     const contacts = await contactsRes.json();
-    expect(contacts).toHaveLength(0);
+    expect(contacts.data).toHaveLength(0);
   });
 });
 

@@ -24,7 +24,8 @@ export default function OpportunityDetailPage() {
   const router = useRouter();
   const opportunityId = params.id as string;
   const { data: opportunity, isLoading } = useOpportunity(opportunityId);
-  const { data: activities } = useActivities({ opportunityId });
+  const { data: activitiesResponse } = useActivities({ opportunityId });
+  const activities = activitiesResponse?.data ?? [];
   const { data: estimates } = useOpportunityEstimates(opportunityId);
   const createLinkedEstimate = useCreateLinkedEstimate();
   const proposalQuery = useProposalData(opportunityId);
@@ -224,7 +225,7 @@ export default function OpportunityDetailPage() {
           <CardTitle>Activity Timeline</CardTitle>
         </CardHeader>
         <CardContent>
-          <ActivityTimeline activities={activities ?? []} />
+          <ActivityTimeline activities={activities} />
         </CardContent>
       </Card>
     </div>

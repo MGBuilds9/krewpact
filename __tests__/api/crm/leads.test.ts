@@ -63,7 +63,9 @@ describe('GET /api/crm/leads', () => {
     const res = await GET(makeRequest('/api/crm/leads'));
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual(leads);
+    expect(body.data).toEqual(leads);
+    expect(typeof body.total).toBe('number');
+    expect(typeof body.hasMore).toBe('boolean');
   });
 
   it('filters by division_id', async () => {
@@ -94,7 +96,9 @@ describe('GET /api/crm/leads', () => {
     const res = await GET(makeRequest('/api/crm/leads?status=qualified'));
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual(leads);
+    expect(body.data).toEqual(leads);
+    expect(typeof body.total).toBe('number');
+    expect(typeof body.hasMore).toBe('boolean');
   });
 
   it('filters by assigned_to', async () => {
@@ -125,7 +129,9 @@ describe('GET /api/crm/leads', () => {
     const res = await GET(makeRequest('/api/crm/leads?search=Construction'));
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual(leads);
+    expect(body.data).toEqual(leads);
+    expect(typeof body.total).toBe('number');
+    expect(typeof body.hasMore).toBe('boolean');
   });
 });
 

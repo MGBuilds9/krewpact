@@ -55,7 +55,9 @@ describe('GET /api/crm/accounts', () => {
     const res = await GET(makeRequest('/api/crm/accounts'));
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual(accounts);
+    expect(body.data).toEqual(accounts);
+    expect(typeof body.total).toBe('number');
+    expect(typeof body.hasMore).toBe('boolean');
   });
 
   it('filters by division_id', async () => {
@@ -78,7 +80,9 @@ describe('GET /api/crm/accounts', () => {
     const res = await GET(makeRequest('/api/crm/accounts?search=MDM'));
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual(accounts);
+    expect(body.data).toEqual(accounts);
+    expect(typeof body.total).toBe('number');
+    expect(typeof body.hasMore).toBe('boolean');
   });
 
   it('returns 500 on database error', async () => {

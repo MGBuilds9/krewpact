@@ -1,6 +1,6 @@
 'use client';
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
@@ -47,10 +47,22 @@ vi.mock('@/hooks/use-mobile', () => ({
 import LeadsPage from '@/app/(dashboard)/crm/leads/page';
 
 describe('Leads List Page', () => {
+  beforeAll(() => {
+    Object.defineProperty(window, 'localStorage', {
+      value: {
+        getItem: vi.fn(() => null),
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+        clear: vi.fn(),
+      },
+      writable: true,
+    });
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseLeads.mockReturnValue({
-      data: [],
+      data: { data: [], total: 0, hasMore: false },
       isLoading: false,
       isError: false,
     });
@@ -58,19 +70,23 @@ describe('Leads List Page', () => {
 
   it('renders the leads list page', () => {
     mockUseLeads.mockReturnValue({
-      data: [
-        {
-          id: 'lead-1',
-          company_name: 'Acme Reno Project',
-          status: 'new',
-          lead_score: null,
-          is_qualified: false,
-          industry: null,
-          city: null,
-          province: null,
-          created_at: '2026-02-12T10:00:00Z',
-        },
-      ],
+      data: {
+        data: [
+          {
+            id: 'lead-1',
+            company_name: 'Acme Reno Project',
+            status: 'new',
+            lead_score: null,
+            is_qualified: false,
+            industry: null,
+            city: null,
+            province: null,
+            created_at: '2026-02-12T10:00:00Z',
+          },
+        ],
+        total: 1,
+        hasMore: false,
+      },
       isLoading: false,
       isError: false,
     });
@@ -81,7 +97,7 @@ describe('Leads List Page', () => {
 
   it('shows empty state when no leads', () => {
     mockUseLeads.mockReturnValue({
-      data: [],
+      data: { data: [], total: 0, hasMore: false },
       isLoading: false,
       isError: false,
     });
@@ -116,19 +132,23 @@ describe('Leads List Page', () => {
 
   it('displays status badges with appropriate styling', () => {
     mockUseLeads.mockReturnValue({
-      data: [
-        {
-          id: 'lead-1',
-          company_name: 'Test Lead',
-          status: 'qualified',
-          lead_score: null,
-          is_qualified: false,
-          industry: null,
-          city: null,
-          province: null,
-          created_at: '2026-02-12T10:00:00Z',
-        },
-      ],
+      data: {
+        data: [
+          {
+            id: 'lead-1',
+            company_name: 'Test Lead',
+            status: 'qualified',
+            lead_score: null,
+            is_qualified: false,
+            industry: null,
+            city: null,
+            province: null,
+            created_at: '2026-02-12T10:00:00Z',
+          },
+        ],
+        total: 1,
+        hasMore: false,
+      },
       isLoading: false,
       isError: false,
     });

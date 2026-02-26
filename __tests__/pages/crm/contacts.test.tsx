@@ -1,6 +1,6 @@
 'use client';
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
@@ -36,10 +36,22 @@ vi.mock('@/hooks/use-mobile', () => ({
 import ContactsPage from '@/app/(dashboard)/crm/contacts/page';
 
 describe('Contacts List Page', () => {
+  beforeAll(() => {
+    Object.defineProperty(window, 'localStorage', {
+      value: {
+        getItem: vi.fn(() => null),
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+        clear: vi.fn(),
+      },
+      writable: true,
+    });
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseContacts.mockReturnValue({
-      data: [],
+      data: { data: [], total: 0, hasMore: false },
       isLoading: false,
       isError: false,
     });
@@ -47,20 +59,24 @@ describe('Contacts List Page', () => {
 
   it('renders contacts list with data', () => {
     mockUseContacts.mockReturnValue({
-      data: [
-        {
-          id: 'ct-1',
-          first_name: 'John',
-          last_name: 'Doe',
-          account_id: null,
-          email: 'john@acme.com',
-          phone: '555-1234',
-          role_title: 'Project Manager',
-          is_primary: true,
-          created_at: '2026-02-12T10:00:00Z',
-          updated_at: '2026-02-12T10:00:00Z',
-        },
-      ],
+      data: {
+        data: [
+          {
+            id: 'ct-1',
+            first_name: 'John',
+            last_name: 'Doe',
+            account_id: null,
+            email: 'john@acme.com',
+            phone: '555-1234',
+            role_title: 'Project Manager',
+            is_primary: true,
+            created_at: '2026-02-12T10:00:00Z',
+            updated_at: '2026-02-12T10:00:00Z',
+          },
+        ],
+        total: 1,
+        hasMore: false,
+      },
       isLoading: false,
       isError: false,
     });
@@ -81,20 +97,24 @@ describe('Contacts List Page', () => {
 
   it('shows email when available', () => {
     mockUseContacts.mockReturnValue({
-      data: [
-        {
-          id: 'ct-1',
-          first_name: 'Jane',
-          last_name: 'Smith',
-          account_id: null,
-          email: 'jane@example.com',
-          phone: null,
-          role_title: null,
-          is_primary: false,
-          created_at: '2026-02-12T10:00:00Z',
-          updated_at: '2026-02-12T10:00:00Z',
-        },
-      ],
+      data: {
+        data: [
+          {
+            id: 'ct-1',
+            first_name: 'Jane',
+            last_name: 'Smith',
+            account_id: null,
+            email: 'jane@example.com',
+            phone: null,
+            role_title: null,
+            is_primary: false,
+            created_at: '2026-02-12T10:00:00Z',
+            updated_at: '2026-02-12T10:00:00Z',
+          },
+        ],
+        total: 1,
+        hasMore: false,
+      },
       isLoading: false,
       isError: false,
     });

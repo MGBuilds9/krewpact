@@ -10,7 +10,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "seed:demo": "tsx scripts/seed-demo.ts",
+    "seed:real": "tsx scripts/seed-real-data.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.31",
@@ -45,6 +47,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@supabase/supabase-js": "^2.97.0",
     "@tanstack/react-query": "^5.90.21",
+    "@tanstack/react-table": "^8.21.3",
     "ai": "^6.0.100",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -89,6 +92,7 @@
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.19",
     "typescript": "^5",
-    "vitest": "^4.0.18"
+    "vitest": "^4.0.18",
+    "xlsx": "^0.18.5"
   }
 }

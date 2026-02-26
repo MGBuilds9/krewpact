@@ -35,8 +35,10 @@ export function ConvertLeadDialog({ lead, open, onOpenChange }: ConvertLeadDialo
   const [contactId, setContactId] = useState<string>('');
   const [opportunityName, setOpportunityName] = useState(lead.company_name);
 
-  const { data: accounts } = useAccounts();
-  const { data: contacts } = useContacts();
+  const { data: accountsResponse } = useAccounts();
+  const { data: contactsResponse } = useContacts();
+  const accounts = accountsResponse?.data ?? [];
+  const contacts = contactsResponse?.data ?? [];
   const convertLead = useConvertLead();
 
   const handleSubmit = async () => {
@@ -90,7 +92,7 @@ export function ConvertLeadDialog({ lead, open, onOpenChange }: ConvertLeadDialo
                 <SelectValue placeholder="Select an account" />
               </SelectTrigger>
               <SelectContent>
-                {accounts?.map((account) => (
+                {accounts.map((account) => (
                   <SelectItem key={account.id} value={account.id}>
                     {account.account_name}
                   </SelectItem>
@@ -106,7 +108,7 @@ export function ConvertLeadDialog({ lead, open, onOpenChange }: ConvertLeadDialo
                 <SelectValue placeholder="Select a contact" />
               </SelectTrigger>
               <SelectContent>
-                {contacts?.map((contact) => (
+                {contacts.map((contact) => (
                   <SelectItem key={contact.id} value={contact.id}>
                     {contact.first_name} {contact.last_name}
                   </SelectItem>

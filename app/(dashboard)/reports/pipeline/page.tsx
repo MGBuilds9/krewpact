@@ -36,7 +36,7 @@ function formatCurrency(value: number): string {
 }
 
 export default function PipelineReportPage() {
-  const { data: leads, isLoading: leadsLoading } = useLeads();
+  const { data: leadsResponse, isLoading: leadsLoading } = useLeads({ limit: 100 });
   const { data: opportunities, isLoading: oppsLoading } = useOpportunities();
 
   const isLoading = leadsLoading || oppsLoading;
@@ -53,7 +53,7 @@ export default function PipelineReportPage() {
     );
   }
 
-  const allLeads = leads ?? [];
+  const allLeads = leadsResponse?.data ?? [];
   const allOpps = opportunities ?? [];
 
   const totalPipelineValue = allOpps.reduce((sum, opp) => sum + (opp.estimated_revenue ?? 0), 0);

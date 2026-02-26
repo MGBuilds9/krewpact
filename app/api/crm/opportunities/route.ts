@@ -18,6 +18,7 @@ const querySchema = z.object({
   division_id: z.string().min(1).optional(),
   stage: z.enum(opportunityStages).optional(),
   owner_user_id: z.string().uuid().optional(),
+  account_id: z.string().uuid().optional(),
   view: z.enum(['list', 'pipeline']).optional(),
   limit: z.coerce.number().int().positive().max(100).optional(),
   offset: z.coerce.number().int().min(0).optional(),
@@ -35,7 +36,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { division_id, stage, owner_user_id, view, limit, offset } =
+  const { division_id, stage, owner_user_id, account_id, view, limit, offset } =
     parsed.data;
   const supabase = await createUserClient();
 
@@ -54,6 +55,10 @@ export async function GET(req: NextRequest) {
 
   if (owner_user_id) {
     query = query.eq('owner_user_id', owner_user_id);
+  }
+
+  if (account_id) {
+    query = query.eq('account_id', account_id);
   }
 
   if (limit) {

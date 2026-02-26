@@ -82,7 +82,7 @@ function ActionButton({ label, endpoint, icon, variant = 'outline' }: ActionButt
 }
 
 export default function LeadGenDashboardPage() {
-  const { data: leads, isLoading: leadsLoading } = useLeads({ limit: 10 });
+  const { data: leadsResponse, isLoading: leadsLoading } = useLeads({ limit: 10 });
   const { data: sequences, isLoading: seqLoading } = useSequences({ isActive: true });
 
   const isLoading = leadsLoading || seqLoading;
@@ -100,7 +100,7 @@ export default function LeadGenDashboardPage() {
     );
   }
 
-  const allLeads = leads ?? [];
+  const allLeads = leadsResponse?.data ?? [];
   const allSequences = sequences ?? [];
 
   const newLeads = allLeads.filter((l) => l.status === 'new');

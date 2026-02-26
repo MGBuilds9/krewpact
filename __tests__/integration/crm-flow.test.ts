@@ -241,8 +241,8 @@ describe('CRM Integration: Division isolation', () => {
     );
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toHaveLength(1);
-    expect(body[0].company_name).toBe('Div A Lead');
+    expect(body.data).toHaveLength(1);
+    expect(body.data[0].company_name).toBe('Div A Lead');
   });
 
   it('user with division A gets empty result for division B leads', async () => {
@@ -258,7 +258,7 @@ describe('CRM Integration: Division isolation', () => {
     );
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toHaveLength(0);
+    expect(body.data).toHaveLength(0);
   });
 });
 
@@ -461,8 +461,8 @@ describe('CRM Integration: Search', () => {
     const res = await accountsGET(makeRequest('/api/crm/accounts?search=MDM'));
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toHaveLength(1);
-    expect(body[0].account_name).toBe('MDM Contracting');
+    expect(body.data).toHaveLength(1);
+    expect(body.data[0].account_name).toBe('MDM Contracting');
   });
 
   it('search with no matches returns empty array', async () => {
@@ -476,7 +476,7 @@ describe('CRM Integration: Search', () => {
     );
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toHaveLength(0);
+    expect(body.data).toHaveLength(0);
   });
 });
 
@@ -516,7 +516,7 @@ describe('CRM Integration: Cascading behavior', () => {
     );
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toHaveLength(0);
+    expect(body.data).toHaveLength(0);
   });
 });
 
