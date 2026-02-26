@@ -65,6 +65,8 @@ function makeLead(overrides: Partial<Lead> = {}): Lead {
     last_contacted_at: null,
     next_followup_at: null,
     deleted_at: null,
+    enrichment_data: null,
+    enrichment_status: null,
     ...overrides,
   };
 }

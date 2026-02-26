@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { enrichLead, mergeEnrichmentData } from '@/lib/integrations/enrichment';
+import { summarizeEnrichment } from '@/lib/integrations/enrichment-summarizer';
 
 const BATCH_SIZE = 20;
 
@@ -71,6 +72,22 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         lead.enrichment_data as Record<string, unknown> | null,
         results,
       );
+
+      // Generate AI summary from enrichment data (non-critical)
+      if (results.some((r) => r.success)) {
+        try {
+          const summary = await summarizeEnrichment(
+            lead.company_name ?? '',
+            enrichmentData as Record<string, unknown>,
+          );
+          if (summary) {
+            (enrichmentData as Record<string, unknown>).ai_summary = summary;
+          }
+        } catch (summaryErr) {
+          console.error(`AI summary error for ${lead.id}:`, summaryErr);
+          // Non-critical — enrichment still succeeds without summary
+        }
+      }
 
       // Build update payload
       const updatePayload: Record<string, unknown> = {

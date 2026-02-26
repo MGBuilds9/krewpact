@@ -11,6 +11,7 @@ import { useLead, useActivities, useLeadStageTransition, useCreateOpportunity } 
 import { StageProgressBar } from '@/components/CRM/StageProgressBar';
 import { ActivityTimeline } from '@/components/CRM/ActivityTimeline';
 import { LeadForm } from '@/components/CRM/LeadForm';
+import { EnrichmentIntelCard } from '@/components/CRM/EnrichmentIntelCard';
 import { ALLOWED_TRANSITIONS } from '@/lib/crm/lead-stages';
 import type { LeadStage } from '@/lib/crm/lead-stages';
 import { cn } from '@/lib/utils';
@@ -19,7 +20,7 @@ export default function LeadDetailPage() {
   const params = useParams();
   const router = useRouter();
   const leadId = params.id as string;
-  const { data: lead, isLoading } = useLead(leadId);
+  const { data: lead, isLoading, refetch: refetchLead } = useLead(leadId);
   const { data: activities } = useActivities({ leadId });
   const stageTransition = useLeadStageTransition();
   const createOpportunity = useCreateOpportunity();
@@ -253,6 +254,14 @@ export default function LeadDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Enrichment Intel */}
+      <EnrichmentIntelCard
+        enrichmentData={lead.enrichment_data as Record<string, unknown> | null}
+        enrichmentStatus={lead.enrichment_status as string | null}
+        leadId={leadId}
+        onResearchComplete={() => refetchLead()}
+      />
 
       {/* Activity Timeline */}
       <Card>

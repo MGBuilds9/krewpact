@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { evaluateOperator, scoreLead, type ScoringRule } from '@/lib/crm/scoring-engine';
+import { evaluateOperator, scoreLead, getNestedValue, type ScoringRule } from '@/lib/crm/scoring-engine';
 
 // ============================================================
 // evaluateOperator — individual operator tests
@@ -152,6 +152,36 @@ describe('evaluateOperator', () => {
 });
 
 // ============================================================
+// getNestedValue — dot-notation path resolution
+// ============================================================
+describe('getNestedValue', () => {
+  it('resolves top-level key', () => {
+    expect(getNestedValue({ name: 'test' }, 'name')).toBe('test');
+  });
+
+  it('resolves nested key', () => {
+    const obj = { enrichment_data: { google_maps: { google_rating: 4.5 } } };
+    expect(getNestedValue(obj, 'enrichment_data.google_maps.google_rating')).toBe(4.5);
+  });
+
+  it('returns undefined for missing path', () => {
+    expect(getNestedValue({ a: { b: 1 } }, 'a.c')).toBeUndefined();
+  });
+
+  it('returns undefined for null intermediate', () => {
+    expect(getNestedValue({ a: null } as Record<string, unknown>, 'a.b')).toBeUndefined();
+  });
+
+  it('resolves boolean values', () => {
+    expect(getNestedValue({ a: { active: true } }, 'a.active')).toBe(true);
+  });
+
+  it('resolves empty string', () => {
+    expect(getNestedValue({ a: { val: '' } }, 'a.val')).toBe('');
+  });
+});
+
+// ============================================================
 // scoreLead — integration of engine with rules
 // ============================================================
 describe('scoreLead', () => {
@@ -249,5 +279,62 @@ describe('scoreLead', () => {
     expect(rr.matched).toBe(true);
     expect(rr.score_impact).toBe(20);
     expect(rr.category).toBe('fit');
+  });
+
+  // --- Nested field (dot-notation) scoring ---
+  it('scores nested enrichment_data fields via dot-notation', () => {
+    const rules = [
+      makeRule({
+        id: 'r-rating',
+        field_name: 'enrichment_data.google_maps.google_rating',
+        operator: 'greater_than',
+        value: '4.0',
+        score_impact: 10,
+      }),
+    ];
+    const lead = {
+      source: 'website',
+      enrichment_data: {
+        google_maps: { google_rating: 4.5 },
+      },
+    };
+    const result = scoreLead(lead, rules);
+    expect(result.total_score).toBe(10);
+    expect(result.rule_results[0].matched).toBe(true);
+    expect(result.rule_results[0].actual_value).toBe(4.5);
+  });
+
+  it('handles missing nested path gracefully', () => {
+    const rules = [
+      makeRule({
+        field_name: 'enrichment_data.brave.website',
+        operator: 'exists',
+        value: '_',
+        score_impact: 10,
+      }),
+    ];
+    const lead = { source: 'website', enrichment_data: {} };
+    const result = scoreLead(lead, rules);
+    expect(result.total_score).toBe(0);
+    expect(result.rule_results[0].matched).toBe(false);
+  });
+
+  it('scores mixed flat + nested rules correctly', () => {
+    const rules = [
+      makeRule({ id: 'r1', field_name: 'industry', operator: 'contains', value: 'construction', score_impact: 15, category: 'fit' }),
+      makeRule({ id: 'r2', field_name: 'enrichment_data.google_maps.business_status', operator: 'equals', value: 'OPERATIONAL', score_impact: 5, category: 'fit' }),
+      makeRule({ id: 'r3', field_name: 'enrichment_data.apollo_match.email', operator: 'exists', value: '_', score_impact: 10, category: 'intent' }),
+    ];
+    const lead = {
+      industry: 'General Construction',
+      enrichment_data: {
+        google_maps: { business_status: 'OPERATIONAL' },
+        apollo_match: { email: 'john@acme.com' },
+      },
+    };
+    const result = scoreLead(lead, rules);
+    expect(result.fit_score).toBe(20);
+    expect(result.intent_score).toBe(10);
+    expect(result.total_score).toBe(30);
   });
 });

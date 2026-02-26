@@ -138,8 +138,21 @@ export function evaluateOperator(
 }
 
 /**
+ * Resolve a dot-notation path to a nested value.
+ * e.g. getNestedValue(obj, 'enrichment_data.google_maps.google_rating')
+ */
+export function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
+  return path.split('.').reduce<unknown>(
+    (curr, key) =>
+      curr && typeof curr === 'object' ? (curr as Record<string, unknown>)[key] : undefined,
+    obj,
+  );
+}
+
+/**
  * Score a lead against an array of scoring rules.
  * Only active rules are evaluated. Returns total and per-category scores.
+ * Supports dot-notation field names for nested enrichment_data access.
  */
 export function scoreLead(
   leadData: Record<string, unknown>,
@@ -153,7 +166,9 @@ export function scoreLead(
   for (const rule of rules) {
     if (!rule.is_active) continue;
 
-    const fieldValue = leadData[rule.field_name];
+    const fieldValue = rule.field_name.includes('.')
+      ? getNestedValue(leadData, rule.field_name)
+      : leadData[rule.field_name];
     const matched = evaluateOperator(fieldValue, rule.operator, rule.value);
 
     ruleResults.push({

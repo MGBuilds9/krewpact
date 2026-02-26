@@ -63,6 +63,8 @@ export interface Lead {
   last_contacted_at: string | null;
   next_followup_at: string | null;
   deleted_at: string | null;
+  enrichment_data: Record<string, unknown> | null;
+  enrichment_status: string | null;
 }
 
 export interface Opportunity {
