@@ -252,20 +252,18 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
+### Feb 26, 2026 — CRM Data Tables, Pagination, Contact/Account Completion (Sprint 1+2)
+- **Changes:** Sprint 1: Installed @tanstack/react-table. All CRM list APIs (leads, contacts, accounts, activities) return `{ data, total, hasMore }` envelope with `sort_by`/`sort_dir` params. Created generic DataTable component with server-side sorting/pagination, ViewToggle (table/card with localStorage), useDebouncedValue hook. Rebuilt leads, contacts, accounts list pages with table/card toggle and debounced search. Sprint 2: Contact detail page (Overview/Account/Activities tabs), ContactForm + AccountForm (React Hook Form + Zod), new contact/account creation pages with query param pre-fill, contacts section on lead detail, edit mode on account detail. Added lead_id filter to contacts API, account_id filter to opportunities API. Updated all consumers (5 pages + ConvertLeadDialog) for envelope change.
+- **Decisions:** 25 items/page default. Server-side sort via Supabase `.order()` + `count: 'exact'`. 300ms debounce. Lazy state init for SSR-safe localStorage reads (avoids useEffect setState lint error). ContactForm/AccountForm follow existing LeadForm pattern.
+- **Tests:** 1020/1020 passing (38 new tests: DataTable, ContactForm, AccountForm, useDebouncedValue, contact-detail).
+- **Pushed:** to main (786bdb7). 44 files, 2580 insertions.
+- **Next steps:** Sprint 3 (activity logging dialog, notes/comments, tag management). Sprint 4 (bulk actions, CSV export/import). Get Clerk keys for production auth. Deploy to Vercel.
+
 ### Feb 26, 2026 — Pre-Scoring Pipeline Audit + Cron Batch Fix
-- **Changes:** Aligned enrichment data shapes across all consumers: `formatted_address` → `address` (google_maps), `news`/`social_profiles` from object arrays → string arrays (brave). Updated EnrichmentIntelCard with hostname extraction for social URLs and news_snippets display. Added summarize cron (`app/api/cron/summarize/route.ts`) with batch optimization — fetches 200 leads, filters in JS for missing `ai_summary`, processes 15 per call.
-- **Decisions:** Fetch large batch + JS filter is more reliable than PostgREST JSONB arrow filtering for `ai_summary` presence check. `FETCH_LIMIT=200` covers all ~170 enriched leads; `BATCH_SIZE=15` respects Gemini rate limit.
-- **Tests:** 982/982 passing, 0 failed.
-- **Pushed:** to main (f5dee1e).
-- **Next steps:** Get Clerk keys for production auth. Deploy to Vercel. Present demo to MDM admin team.
+- **Changes:** Aligned enrichment data shapes across all consumers. Added summarize cron with batch optimization.
+- **Tests:** 982/982 passing. Pushed f5dee1e.
 
-### Feb 25, 2026 — Demo Mode + DB Schema Alignment + UI Polish
-- **Changes:** Built demo mode system (Clerk auth bypass via webpack aliases, Supabase anon RLS policies). Aligned Lead interface, validators, and all components with actual Supabase DB schema (company_name, status, source_channel, lead_score vs old lead_name, stage, source, probability_pct). Fixed /api/user/current returning array. Fixed dashboard query not firing. Fixed breadcrumbs showing raw UUIDs. Fixed header hardcoded "User" role. Updated calendar/email widgets to show "M365 not connected". 44 files changed, 836 insertions.
-- **Decisions:** Demo mode uses webpack/turbopack aliases to swap Clerk imports with mocks — no code changes to production components. Lead interface matches actual DB columns rather than original migration plan. Breadcrumbs detect UUIDs and show contextual labels ("Lead Details"). Header role from useUserRBAC().primaryRole.
-- **Tests:** 904/904 passing, 0 failed, 0 new tests (updated 9 test files for schema alignment).
-- **Pushed:** to main (950f15b).
-- **Next steps:** Get Clerk keys from Michael for production auth. Remove demo anon RLS policies after Clerk configured. Deploy to Vercel. Present demo to MDM admin team.
-
+- Feb 25: Demo mode (Clerk bypass), DB schema alignment, UI polish. 904 tests. Pushed 950f15b.
 - Feb 24: CRM end-to-end lead lifecycle (8 phases), 89 files, 254 new tests (904 total). Pushed e05b433.
 - Feb 24: Cross-Subdomain SSO — Clerk shared auth across *.mdmgroupinc.ca. 650 tests.
 - Feb 24: Full Service Connection + Microsoft Graph — RLS, Clerk bootstrap, Graph email/calendar. 650 tests.
