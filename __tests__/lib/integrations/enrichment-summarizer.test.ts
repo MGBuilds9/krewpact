@@ -32,7 +32,7 @@ describe('summarizeEnrichment', () => {
 
     const result = await summarizeEnrichment('Acme Corp', {
       google_maps: {
-        formatted_address: '123 Main St, Mississauga, ON',
+        address: '123 Main St, Mississauga, ON',
         google_rating: 4.5,
         google_reviews_count: 120,
         business_status: 'OPERATIONAL',
@@ -102,7 +102,7 @@ describe('summarizeEnrichment', () => {
     } as Awaited<ReturnType<typeof generateText>>);
 
     await summarizeEnrichment('Full Co', {
-      google_maps: { google_rating: 4.8, formatted_address: '456 Oak Ave' },
+      google_maps: { google_rating: 4.8, address: '456 Oak Ave' },
       brave: { website: 'fullco.ca', description: 'Full service builder' },
       apollo_match: { title: 'VP Operations' },
       tavily: { answer: 'Award-winning firm' },

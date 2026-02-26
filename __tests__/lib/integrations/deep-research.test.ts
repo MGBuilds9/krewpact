@@ -72,7 +72,7 @@ describe('deepResearchLead', () => {
     } as Awaited<ReturnType<typeof generateText>>);
 
     await deepResearchLead('Test', 'acme.com', {
-      google_maps: { formatted_address: '123 Main St' },
+      google_maps: { address: '123 Main St' },
     });
 
     const fetchBody = JSON.parse(mockFetch.mock.calls[0][1].body as string);
@@ -100,7 +100,7 @@ describe('deepResearchLead', () => {
 
     await deepResearchLead('Maps Co', null, {
       google_maps: {
-        formatted_address: '789 Elm St, Toronto',
+        address: '789 Elm St, Toronto',
         google_rating: 4.2,
         google_reviews_count: 50,
         business_status: 'OPERATIONAL',

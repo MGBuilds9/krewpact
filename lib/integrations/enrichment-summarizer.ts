@@ -20,7 +20,7 @@ export async function summarizeEnrichment(
   if (googleMaps) {
     const rating = googleMaps.google_rating;
     const reviews = googleMaps.google_reviews_count;
-    const address = googleMaps.formatted_address;
+    const address = googleMaps.address;
     const status = googleMaps.business_status;
     if (address) parts.push(`Address: ${address}`);
     if (rating) parts.push(`Google Rating: ${rating}/5 (${reviews ?? 0} reviews)`);

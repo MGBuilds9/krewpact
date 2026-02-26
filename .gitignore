@@ -41,3 +41,4 @@ next-env.d.ts
 # business data staging (seed imports, ERPNext migration data)
 /data/
 .env*.local
+.worktrees/

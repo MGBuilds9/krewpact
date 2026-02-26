@@ -8,7 +8,7 @@ import { ExternalLink, MapPin, Globe, User, Newspaper, Brain, Search, Loader2 } 
 
 interface EnrichmentData {
   google_maps?: {
-    formatted_address?: string;
+    address?: string;
     google_rating?: number;
     google_reviews_count?: number;
     business_status?: string;
@@ -18,8 +18,8 @@ interface EnrichmentData {
   brave?: {
     website?: string;
     description?: string;
-    news?: Array<{ title?: string; url?: string }>;
-    social_profiles?: Array<{ network?: string; url?: string }>;
+    news_snippets?: string[];
+    social_profiles?: string[];
   };
   apollo_match?: {
     email?: string;
@@ -180,8 +180,8 @@ export function EnrichmentIntelCard({ enrichmentData, enrichmentStatus, leadId, 
               <h4 className="text-sm font-semibold">Google Maps</h4>
             </div>
             <div className="space-y-1 text-sm">
-              {google_maps.formatted_address && (
-                <p className="text-muted-foreground">{google_maps.formatted_address}</p>
+              {google_maps.address && (
+                <p className="text-muted-foreground">{google_maps.address}</p>
               )}
               <div className="flex items-center gap-3 flex-wrap">
                 {google_maps.google_rating != null && (
@@ -231,17 +231,31 @@ export function EnrichmentIntelCard({ enrichmentData, enrichmentStatus, leadId, 
               )}
               {brave.social_profiles && brave.social_profiles.length > 0 && (
                 <div className="flex gap-2 mt-1">
-                  {brave.social_profiles.map((profile, i) => (
-                    <a
-                      key={i}
-                      href={profile.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-blue-500 hover:underline capitalize"
-                    >
-                      {profile.network}
-                    </a>
-                  ))}
+                  {brave.social_profiles.map((url, i) => {
+                    let network = 'Link';
+                    try { network = new URL(url.startsWith('http') ? url : `https://${url}`).hostname.replace('www.', '').split('.')[0]; } catch { /* use default */ }
+                    return (
+                      <a
+                        key={i}
+                        href={url.startsWith('http') ? url : `https://${url}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-blue-500 hover:underline capitalize"
+                      >
+                        {network}
+                      </a>
+                    );
+                  })}
+                </div>
+              )}
+              {brave.news_snippets && brave.news_snippets.length > 0 && (
+                <div className="mt-2">
+                  <h5 className="text-xs font-medium text-muted-foreground mb-1">Recent News</h5>
+                  <ul className="space-y-0.5">
+                    {brave.news_snippets.slice(0, 3).map((snippet, i) => (
+                      <li key={i} className="text-xs text-muted-foreground">• {snippet}</li>
+                    ))}
+                  </ul>
                 </div>
               )}
             </div>
