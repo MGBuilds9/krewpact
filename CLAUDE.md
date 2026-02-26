@@ -252,17 +252,18 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
+### Feb 26, 2026 — Seed Real MDM Customer & Lead Data from Excel
+- **Changes:** Created `scripts/seed-real-data.ts` importing real MDM data from two Excel files (Customer List.xlsx, Leads for contracting.xlsx). 382 leads (14 existing clients, 217 Apollo clinics, 116 networking, 12 groups/associations, 10 plaza targeting, 13 city contacts), 14 accounts (pharmacy clients), 231 contacts (14 customer + 217 Apollo). Added `xlsx` dev dep, `seed:real` / `seed:demo` npm scripts. Added CRM UI screenshots.
+- **Decisions:** `leads` table has no email/phone/metadata columns — contact info stored in `contacts` (via `lead_id`) and `enrichment_data` JSONB. Created a lead per pharmacy client to enable contact linking. All real data tagged with `[real-data]` in notes and distinct `source_channel` values for easy `--clean` re-seeding. Restaurant Owners sheet confirmed exact duplicate of Clinics — skipped.
+- **Tests:** 1020/1020 passing, 0 new tests (seed script is runtime-only).
+- **Pushed:** to main (ee1996b).
+- **Next steps:** Sprint 3 (activity logging dialog, notes/comments, tag management). Get Clerk keys for production auth. Deploy to Vercel.
+
 ### Feb 26, 2026 — CRM Data Tables, Pagination, Contact/Account Completion (Sprint 1+2)
-- **Changes:** Sprint 1: Installed @tanstack/react-table. All CRM list APIs (leads, contacts, accounts, activities) return `{ data, total, hasMore }` envelope with `sort_by`/`sort_dir` params. Created generic DataTable component with server-side sorting/pagination, ViewToggle (table/card with localStorage), useDebouncedValue hook. Rebuilt leads, contacts, accounts list pages with table/card toggle and debounced search. Sprint 2: Contact detail page (Overview/Account/Activities tabs), ContactForm + AccountForm (React Hook Form + Zod), new contact/account creation pages with query param pre-fill, contacts section on lead detail, edit mode on account detail. Added lead_id filter to contacts API, account_id filter to opportunities API. Updated all consumers (5 pages + ConvertLeadDialog) for envelope change.
-- **Decisions:** 25 items/page default. Server-side sort via Supabase `.order()` + `count: 'exact'`. 300ms debounce. Lazy state init for SSR-safe localStorage reads (avoids useEffect setState lint error). ContactForm/AccountForm follow existing LeadForm pattern.
-- **Tests:** 1020/1020 passing (38 new tests: DataTable, ContactForm, AccountForm, useDebouncedValue, contact-detail).
-- **Pushed:** to main (786bdb7). 44 files, 2580 insertions.
-- **Next steps:** Sprint 3 (activity logging dialog, notes/comments, tag management). Sprint 4 (bulk actions, CSV export/import). Get Clerk keys for production auth. Deploy to Vercel.
+- **Changes:** @tanstack/react-table, DataTable component, ViewToggle, useDebouncedValue. All CRM list APIs return paginated envelope. Contact detail page, ContactForm + AccountForm, creation pages. 44 files, 2580 insertions.
+- **Tests:** 1020/1020 passing (38 new). Pushed 786bdb7.
 
-### Feb 26, 2026 — Pre-Scoring Pipeline Audit + Cron Batch Fix
-- **Changes:** Aligned enrichment data shapes across all consumers. Added summarize cron with batch optimization.
-- **Tests:** 982/982 passing. Pushed f5dee1e.
-
+- Feb 26: Pre-scoring pipeline audit — enrichment data shape alignment + cron batch fix. 982 tests. Pushed f5dee1e.
 - Feb 25: Demo mode (Clerk bypass), DB schema alignment, UI polish. 904 tests. Pushed 950f15b.
 - Feb 24: CRM end-to-end lead lifecycle (8 phases), 89 files, 254 new tests (904 total). Pushed e05b433.
 - Feb 24: Cross-Subdomain SSO — Clerk shared auth across *.mdmgroupinc.ca. 650 tests.
