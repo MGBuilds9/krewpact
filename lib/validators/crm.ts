@@ -222,20 +222,34 @@ export const sequenceUpdateSchema = z.object({
   division_id: z.string().uuid().optional().nullable(),
 });
 
+const conditionTypes = ['if_score', 'if_email_opened', 'if_replied', 'if_tag', 'if_stage'] as const;
+
 export const sequenceStepCreateSchema = z.object({
   step_number: z.number().int().min(1),
-  action_type: z.enum(['email', 'task', 'wait']),
+  action_type: z.enum(['email', 'task', 'wait', 'condition']),
   action_config: z.object({}).passthrough(),
   delay_days: z.number().int().min(0).optional(),
   delay_hours: z.number().int().min(0).optional(),
+  condition_type: z.enum(conditionTypes).optional(),
+  condition_config: z.object({}).passthrough().optional(),
+  true_next_step_id: z.string().uuid().optional(),
+  false_next_step_id: z.string().uuid().optional(),
+  position_x: z.number().optional(),
+  position_y: z.number().optional(),
 });
 
 export const sequenceStepUpdateSchema = z.object({
   step_number: z.number().int().min(1).optional(),
-  action_type: z.enum(['email', 'task', 'wait']).optional(),
+  action_type: z.enum(['email', 'task', 'wait', 'condition']).optional(),
   action_config: z.object({}).passthrough().optional(),
   delay_days: z.number().int().min(0).optional(),
   delay_hours: z.number().int().min(0).optional(),
+  condition_type: z.enum(conditionTypes).optional().nullable(),
+  condition_config: z.object({}).passthrough().optional().nullable(),
+  true_next_step_id: z.string().uuid().optional().nullable(),
+  false_next_step_id: z.string().uuid().optional().nullable(),
+  position_x: z.number().optional(),
+  position_y: z.number().optional(),
 });
 
 export const sequenceEnrollSchema = z.object({
@@ -289,6 +303,50 @@ export const lostDealSchema = z.object({
   reopen_as_lead: z.boolean().optional(),
 });
 export type LostDeal = z.infer<typeof lostDealSchema>;
+
+// ============================================================
+// Tag schemas
+// ============================================================
+
+const entityTypes = ['lead', 'contact', 'account', 'opportunity'] as const;
+
+export const tagCreateSchema = z.object({
+  name: z.string().min(1).max(50).trim(),
+  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+  division_id: z.string().uuid().optional(),
+});
+export type TagCreate = z.infer<typeof tagCreateSchema>;
+
+export const tagUpdateSchema = z.object({
+  name: z.string().min(1).max(50).trim().optional(),
+  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+});
+export type TagUpdate = z.infer<typeof tagUpdateSchema>;
+
+export const entityTagSchema = z.object({
+  entity_type: z.enum(entityTypes),
+  entity_id: z.string().uuid(),
+  tag_id: z.string().uuid(),
+});
+export type EntityTag = z.infer<typeof entityTagSchema>;
+
+// ============================================================
+// Note schemas
+// ============================================================
+
+export const noteCreateSchema = z.object({
+  entity_type: z.enum(entityTypes),
+  entity_id: z.string().uuid(),
+  content: z.string().min(1).max(10000),
+  is_pinned: z.boolean().optional(),
+});
+export type NoteCreate = z.infer<typeof noteCreateSchema>;
+
+export const noteUpdateSchema = z.object({
+  content: z.string().min(1).max(10000).optional(),
+  is_pinned: z.boolean().optional(),
+});
+export type NoteUpdate = z.infer<typeof noteUpdateSchema>;
 
 // ============================================================
 // Linked estimate schemas

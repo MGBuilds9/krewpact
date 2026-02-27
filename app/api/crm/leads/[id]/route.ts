@@ -4,26 +4,20 @@ import { leadUpdateSchema } from '@/lib/validators/crm';
 import { NextRequest, NextResponse } from 'next/server';
 import { scoreLead } from '@/lib/crm/scoring-engine';
 import type { ScoringRule } from '@/lib/crm/scoring-engine';
+import { UNAUTHORIZED, INVALID_JSON, validationError, notFound, dbError, errorResponse } from '@/lib/api/errors';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
 export async function GET(req: NextRequest, context: RouteContext) {
   const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!userId) return errorResponse(UNAUTHORIZED);
 
   const { id } = await context.params;
   const supabase = await createUserClient();
-  const { data, error } = await supabase
-    .from('leads')
-    .select('*')
-    .eq('id', id)
-    .single();
+  const { data, error } = await supabase.from('leads').select('*').eq('id', id).single();
 
   if (error) {
-    const status = error.code === 'PGRST116' ? 404 : 500;
-    return NextResponse.json({ error: error.message }, { status });
+    return errorResponse(error.code === 'PGRST116' ? notFound('Lead') : dbError(error.message));
   }
 
   return NextResponse.json(data);
@@ -31,9 +25,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
 export async function PATCH(req: NextRequest, context: RouteContext) {
   const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!userId) return errorResponse(UNAUTHORIZED);
 
   const { id } = await context.params;
 
@@ -41,13 +33,11 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+    return errorResponse(INVALID_JSON);
   }
 
   const parsed = leadUpdateSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
+  if (!parsed.success) return errorResponse(validationError(parsed.error.flatten()));
 
   const supabase = await createUserClient();
   const { data, error } = await supabase
@@ -58,8 +48,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     .single();
 
   if (error) {
-    const status = error.code === 'PGRST116' ? 404 : 500;
-    return NextResponse.json({ error: error.message }, { status });
+    return errorResponse(error.code === 'PGRST116' ? notFound('Lead') : dbError(error.message));
   }
 
   // Auto-score on update (non-blocking)
@@ -101,17 +90,13 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 
 export async function DELETE(req: NextRequest, context: RouteContext) {
   const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!userId) return errorResponse(UNAUTHORIZED);
 
   const { id } = await context.params;
   const supabase = await createUserClient();
   const { error } = await supabase.from('leads').delete().eq('id', id);
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  if (error) return errorResponse(dbError(error.message));
 
   return NextResponse.json({ success: true });
 }

@@ -94,10 +94,9 @@ describe('Supabase Database Types', () => {
   it('tasks table has canonical columns', () => {
     const check: Tables['tasks']['Row'] extends {
       title: string;
-      project_id: string;
-      status: Enums['task_status'];
-      assigned_user_id: string | null;
-      due_at: string | null;
+      status: string | null;
+      assigned_to: string | null;
+      due_date: string | null;
     } ? true : never = true;
     expect(check).toBe(true);
   });

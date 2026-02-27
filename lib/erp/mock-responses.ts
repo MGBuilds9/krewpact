@@ -148,6 +148,244 @@ export function mockSalesOrderResponse(input: {
   };
 }
 
+/**
+ * Generate a mock ERPNext Contact response from a KrewPact contact.
+ */
+export function mockContactResponse(contact: {
+  id: string;
+  first_name: string;
+  last_name: string;
+}): {
+  doctype: string;
+  name: string;
+  data: Record<string, unknown>;
+} {
+  const docname = nextMockId('CONT');
+  return {
+    doctype: 'Contact',
+    name: docname,
+    data: {
+      name: docname,
+      doctype: 'Contact',
+      first_name: contact.first_name,
+      last_name: contact.last_name,
+      full_name: `${contact.first_name} ${contact.last_name}`.trim(),
+      krewpact_id: contact.id,
+      creation: new Date().toISOString(),
+      modified: new Date().toISOString(),
+      docstatus: 0,
+    },
+  };
+}
+
+/**
+ * Generate a mock ERPNext Project response from a KrewPact project.
+ */
+export function mockProjectResponse(project: {
+  id: string;
+  project_number: string;
+  project_name: string;
+}): {
+  doctype: string;
+  name: string;
+  data: Record<string, unknown>;
+} {
+  const docname = nextMockId('PRJ');
+  return {
+    doctype: 'Project',
+    name: docname,
+    data: {
+      name: docname,
+      doctype: 'Project',
+      project_name: `${project.project_number} — ${project.project_name}`,
+      status: 'Open',
+      krewpact_id: project.id,
+      currency: 'CAD',
+      creation: new Date().toISOString(),
+      modified: new Date().toISOString(),
+      docstatus: 0,
+    },
+  };
+}
+
+/**
+ * Generate a mock ERPNext Task response from a KrewPact task.
+ */
+export function mockTaskResponse(task: {
+  id: string;
+  title: string;
+  project_id: string;
+}): {
+  doctype: string;
+  name: string;
+  data: Record<string, unknown>;
+} {
+  const docname = nextMockId('TASK');
+  return {
+    doctype: 'Task',
+    name: docname,
+    data: {
+      name: docname,
+      doctype: 'Task',
+      subject: task.title,
+      project: task.project_id,
+      status: 'Open',
+      krewpact_id: task.id,
+      creation: new Date().toISOString(),
+      modified: new Date().toISOString(),
+      docstatus: 0,
+    },
+  };
+}
+
+/**
+ * Generate a mock ERPNext Supplier response from a KrewPact trade partner.
+ */
+export function mockSupplierResponse(supplier: {
+  id: string;
+  company_name: string;
+}): {
+  doctype: string;
+  name: string;
+  data: Record<string, unknown>;
+} {
+  const docname = nextMockId('SUP');
+  return {
+    doctype: 'Supplier',
+    name: docname,
+    data: {
+      name: docname,
+      doctype: 'Supplier',
+      supplier_name: supplier.company_name,
+      supplier_type: 'Company',
+      supplier_group: 'All Supplier Groups',
+      country: 'Canada',
+      default_currency: 'CAD',
+      krewpact_id: supplier.id,
+      creation: new Date().toISOString(),
+      modified: new Date().toISOString(),
+      docstatus: 0,
+    },
+  };
+}
+
+/**
+ * Generate a mock ERPNext Expense Claim response from a KrewPact expense claim.
+ */
+export function mockExpenseClaimResponse(expense: {
+  id: string;
+  amount: number;
+  expense_date: string;
+}): {
+  doctype: string;
+  name: string;
+  data: Record<string, unknown>;
+} {
+  const docname = nextMockId('EXP');
+  return {
+    doctype: 'Expense Claim',
+    name: docname,
+    data: {
+      name: docname,
+      doctype: 'Expense Claim',
+      posting_date: expense.expense_date,
+      total_claimed_amount: expense.amount,
+      total_sanctioned_amount: expense.amount,
+      currency: 'CAD',
+      krewpact_id: expense.id,
+      creation: new Date().toISOString(),
+      modified: new Date().toISOString(),
+      docstatus: 0,
+    },
+  };
+}
+
+/**
+ * Generate a mock ERPNext Timesheet response from a KrewPact timesheet batch.
+ */
+export function mockTimesheetResponse(timesheet: {
+  id: string;
+  total_hours: number;
+  period_start: string;
+  period_end: string;
+}): {
+  doctype: string;
+  name: string;
+  data: Record<string, unknown>;
+} {
+  const docname = nextMockId('TS');
+  return {
+    doctype: 'Timesheet',
+    name: docname,
+    data: {
+      name: docname,
+      doctype: 'Timesheet',
+      start_date: timesheet.period_start,
+      end_date: timesheet.period_end,
+      total_hours: timesheet.total_hours,
+      currency: 'CAD',
+      krewpact_id: timesheet.id,
+      creation: new Date().toISOString(),
+      modified: new Date().toISOString(),
+      docstatus: 0,
+    },
+  };
+}
+
+/**
+ * Generate a mock ERPNext Sales Invoice response (inbound read).
+ */
+export function mockSalesInvoiceResponse(docname: string): {
+  doctype: string;
+  name: string;
+  data: Record<string, unknown>;
+} {
+  return {
+    doctype: 'Sales Invoice',
+    name: docname,
+    data: {
+      name: docname,
+      doctype: 'Sales Invoice',
+      customer: 'MOCK-CUSTOMER',
+      posting_date: new Date().toISOString().split('T')[0],
+      grand_total: 10000,
+      outstanding_amount: 10000,
+      status: 'Unpaid',
+      currency: 'CAD',
+      creation: new Date().toISOString(),
+      modified: new Date().toISOString(),
+      docstatus: 1,
+    },
+  };
+}
+
+/**
+ * Generate a mock ERPNext Purchase Invoice response (inbound read).
+ */
+export function mockPurchaseInvoiceResponse(docname: string): {
+  doctype: string;
+  name: string;
+  data: Record<string, unknown>;
+} {
+  return {
+    doctype: 'Purchase Invoice',
+    name: docname,
+    data: {
+      name: docname,
+      doctype: 'Purchase Invoice',
+      supplier: 'MOCK-SUPPLIER',
+      posting_date: new Date().toISOString().split('T')[0],
+      grand_total: 5000,
+      outstanding_amount: 5000,
+      status: 'Unpaid',
+      currency: 'CAD',
+      creation: new Date().toISOString(),
+      modified: new Date().toISOString(),
+      docstatus: 1,
+    },
+  };
+}
+
 export function mockQuotationResponse(
   estimate: EstimateData,
   lines: EstimateLineData[],

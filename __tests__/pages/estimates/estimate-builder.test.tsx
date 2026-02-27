@@ -47,6 +47,15 @@ vi.mock('@/hooks/use-mobile', () => ({
   useIsMobile: () => false,
 }));
 
+vi.mock('@/hooks/useEstimating', () => ({
+  useEstimateAllowances: () => ({ data: [], isLoading: false }),
+  useEstimateAlternates: () => ({ data: [], isLoading: false }),
+}));
+
+vi.mock('@/hooks/useContracting', () => ({
+  useCreateProposal: () => ({ mutate: vi.fn(), isPending: false }),
+}));
+
 import EstimateBuilderPage from '@/app/(dashboard)/estimates/[id]/page';
 
 const mockEstimate = {

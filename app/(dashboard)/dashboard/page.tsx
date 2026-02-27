@@ -126,7 +126,7 @@ export default function DashboardPage() {
       {/* B. At-a-Glance Summary */}
       <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
         <Card
-          className="cursor-pointer hover:shadow-md transition-shadow"
+          className="cursor-pointer hover:shadow-md hover:border-primary/50 transition-all duration-200"
           onClick={() => router.push('/projects')}
         >
           <CardContent className="p-4">
@@ -143,7 +143,7 @@ export default function DashboardPage() {
         </Card>
 
         <Card
-          className="cursor-pointer hover:shadow-md transition-shadow"
+          className="cursor-pointer hover:shadow-md hover:border-primary/50 transition-all duration-200"
           onClick={() => router.push('/expenses')}
         >
           <CardContent className="p-4">
@@ -160,7 +160,7 @@ export default function DashboardPage() {
         </Card>
 
         <Card
-          className="cursor-pointer hover:shadow-md transition-shadow"
+          className="cursor-pointer hover:shadow-md hover:border-primary/50 transition-all duration-200"
           onClick={() => router.push('/crm/leads')}
         >
           <CardContent className="p-4">
@@ -177,7 +177,7 @@ export default function DashboardPage() {
         </Card>
 
         <Card
-          className="cursor-pointer hover:shadow-md transition-shadow"
+          className="cursor-pointer hover:shadow-md hover:border-primary/50 transition-all duration-200"
           onClick={() => router.push('/notifications')}
         >
           <CardContent className="p-4">
@@ -197,7 +197,7 @@ export default function DashboardPage() {
       {/* C. Quick Actions */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card
-          className="cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all border-l-4 border-l-green-500"
+          className="cursor-pointer hover:shadow-md hover:scale-[1.02] hover:border-primary/50 transition-all duration-200 border-l-4 border-l-green-500"
           onClick={() => router.push('/expenses')}
         >
           <CardContent className="p-4 flex items-center gap-3">
@@ -211,7 +211,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
         <Card
-          className="cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all border-l-4 border-l-blue-500"
+          className="cursor-pointer hover:shadow-md hover:scale-[1.02] hover:border-primary/50 transition-all duration-200 border-l-4 border-l-blue-500"
           onClick={() => router.push('/reports/new')}
         >
           <CardContent className="p-4 flex items-center gap-3">
@@ -225,7 +225,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
         <Card
-          className="cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all border-l-4 border-l-purple-500"
+          className="cursor-pointer hover:shadow-md hover:scale-[1.02] hover:border-primary/50 transition-all duration-200 border-l-4 border-l-purple-500"
           onClick={() => router.push('/documents')}
         >
           <CardContent className="p-4 flex items-center gap-3">
@@ -239,7 +239,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
         <Card
-          className="cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all border-l-4 border-l-orange-500"
+          className="cursor-pointer hover:shadow-md hover:scale-[1.02] hover:border-primary/50 transition-all duration-200 border-l-4 border-l-orange-500"
           onClick={() => router.push('/projects')}
         >
           <CardContent className="p-4 flex items-center gap-3">
@@ -279,7 +279,7 @@ export default function DashboardPage() {
               {recentProjects.map((project) => (
                 <div
                   key={project.id}
-                  className="flex items-center justify-between py-3 px-4 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors border"
+                  className="flex items-center justify-between py-3 px-4 rounded-lg hover:bg-muted/50 hover:border-primary/50 cursor-pointer transition-all duration-200 border"
                   onClick={() => router.push(`/projects/${project.id}`)}
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">

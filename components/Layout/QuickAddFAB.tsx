@@ -43,7 +43,7 @@ export function QuickAddFAB() {
               <DropdownMenuTrigger asChild>
                 <Button
                   size="icon"
-                  className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl bg-orange-600 hover:bg-orange-700 text-white transition-all duration-300 hover:scale-105"
+                  className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl bg-orange-600 hover:bg-orange-700 text-white transition-all duration-300 hover:scale-105 active:scale-95"
                 >
                   <Plus className="h-8 w-8" />
                 </Button>

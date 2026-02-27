@@ -86,7 +86,7 @@ export function MobileNavigationDrawer({ isOpen, onClose }: MobileNavigationDraw
               variant="ghost"
               size="icon"
               onClick={onClose}
-              className="touch-target"
+              className="touch-target transition-colors duration-200 rounded-full hover:bg-muted"
               aria-label="Close menu"
             >
               <X className="h-5 w-5" />
@@ -136,7 +136,7 @@ export function MobileNavigationDrawer({ isOpen, onClose }: MobileNavigationDraw
               <Button
                 key={item.label}
                 variant={isActive ? 'default' : 'ghost'}
-                className={`w-full justify-start touch-target h-12 ${
+                className={`w-full justify-start touch-target h-12 transition-colors duration-200 ${
                   isActive
                     ? 'bg-primary text-primary-foreground shadow-md'
                     : 'text-foreground hover:bg-accent hover:text-accent-foreground'
@@ -155,7 +155,7 @@ export function MobileNavigationDrawer({ isOpen, onClose }: MobileNavigationDraw
             <div className="text-sm font-medium text-muted-foreground mb-2">Quick Actions</div>
             <Button
               variant="outline"
-              className="w-full justify-start touch-target h-12"
+              className="w-full justify-start touch-target h-12 transition-colors duration-200 hover:bg-accent"
               onClick={() => handleNavigation('/notifications')}
             >
               <Bell className="h-5 w-5 mr-3" />
@@ -166,7 +166,7 @@ export function MobileNavigationDrawer({ isOpen, onClose }: MobileNavigationDraw
             </Button>
             <Button
               variant="outline"
-              className="w-full justify-start touch-target h-12"
+              className="w-full justify-start touch-target h-12 transition-colors duration-200 hover:bg-accent"
               onClick={() => handleNavigation('/settings')}
             >
               <Settings className="h-5 w-5 mr-3" />
@@ -180,7 +180,7 @@ export function MobileNavigationDrawer({ isOpen, onClose }: MobileNavigationDraw
           <div className="space-y-2">
             <Button
               variant="outline"
-              className="w-full justify-start touch-target h-12 hover:bg-accent"
+              className="w-full justify-start touch-target h-12 transition-colors duration-200 hover:bg-accent"
               onClick={() => handleNavigation('/settings')}
             >
               <User className="h-5 w-5 mr-3" />
@@ -188,7 +188,7 @@ export function MobileNavigationDrawer({ isOpen, onClose }: MobileNavigationDraw
             </Button>
             <Button
               variant="outline"
-              className="w-full justify-start touch-target h-12 text-destructive hover:text-destructive"
+              className="w-full justify-start touch-target h-12 transition-colors duration-200 text-destructive hover:bg-destructive/10 hover:text-destructive"
               onClick={handleSignOut}
             >
               <LogOut className="h-5 w-5 mr-3" />

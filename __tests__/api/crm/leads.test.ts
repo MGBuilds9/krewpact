@@ -50,7 +50,8 @@ describe('GET /api/crm/leads', () => {
     const res = await GET(makeRequest('/api/crm/leads'));
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.code).toBe('UNAUTHORIZED');
+    expect(body.error.message).toBe('Authentication required');
   });
 
   it('returns leads list', async () => {

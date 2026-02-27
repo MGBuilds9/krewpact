@@ -178,6 +178,7 @@ export function makeEstimateLine(overrides: Record<string, unknown> = {}) {
 }
 
 const TEST_PROJECT_ID = '00000000-0000-4000-a000-000000000060';
+const TEST_TASK_ID = '00000000-0000-4000-a000-000000000070';
 
 export function makeProject(overrides: Record<string, unknown> = {}) {
   return {
@@ -298,4 +299,5 @@ export const TEST_IDS = {
   OPPORTUNITY_ID: TEST_OPPORTUNITY_ID,
   ESTIMATE_ID: TEST_ESTIMATE_ID,
   PROJECT_ID: TEST_PROJECT_ID,
+  TASK_ID: TEST_TASK_ID,
 } as const;

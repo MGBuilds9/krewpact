@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { scoreLead } from '@/lib/crm/scoring-engine';
 import type { ScoringRule } from '@/lib/crm/scoring-engine';
+import { UNAUTHORIZED, INVALID_JSON, validationError, dbError, errorResponse } from '@/lib/api/errors';
 
 const leadStatuses = [
   'new',
@@ -30,15 +31,11 @@ const querySchema = z.object({
 
 export async function GET(req: NextRequest) {
   const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!userId) return errorResponse(UNAUTHORIZED);
 
   const params = Object.fromEntries(req.nextUrl.searchParams);
   const parsed = querySchema.safeParse(params);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
+  if (!parsed.success) return errorResponse(validationError(parsed.error.flatten()));
 
   const { division_id, status, assigned_to, search, limit, offset, sort_by, sort_dir } =
     parsed.data;
@@ -72,9 +69,7 @@ export async function GET(req: NextRequest) {
 
   const { data, error, count } = await query;
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  if (error) return errorResponse(dbError(error.message));
 
   return NextResponse.json({
     data: data ?? [],
@@ -85,21 +80,17 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!userId) return errorResponse(UNAUTHORIZED);
 
   let body: unknown;
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+    return errorResponse(INVALID_JSON);
   }
 
   const parsed = leadCreateSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
+  if (!parsed.success) return errorResponse(validationError(parsed.error.flatten()));
 
   const supabase = await createUserClient();
   const { data, error } = await supabase
@@ -108,9 +99,7 @@ export async function POST(req: NextRequest) {
     .select()
     .single();
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  if (error) return errorResponse(dbError(error.message));
 
   // Auto-score the new lead (non-blocking)
   try {

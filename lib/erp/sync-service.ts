@@ -12,9 +12,28 @@
  */
 
 import { createUserClient } from '@/lib/supabase/server';
-import { mockCustomerResponse, mockQuotationResponse, mockOpportunityResponse, mockSalesOrderResponse } from './mock-responses';
+import {
+  mockCustomerResponse,
+  mockQuotationResponse,
+  mockOpportunityResponse,
+  mockSalesOrderResponse,
+  mockContactResponse,
+  mockProjectResponse,
+  mockTaskResponse,
+  mockSupplierResponse,
+  mockExpenseClaimResponse,
+  mockTimesheetResponse,
+  mockSalesInvoiceResponse,
+  mockPurchaseInvoiceResponse,
+} from './mock-responses';
 import { mapOpportunityToErp } from './opportunity-mapper';
 import { mapWonDealToSalesOrder } from './sales-order-mapper';
+import { mapContactToErp } from './contact-mapper';
+import { mapProjectToErp } from './project-mapper';
+import { mapTaskToErp } from './task-mapper';
+import { mapSupplierToErp } from './supplier-mapper';
+import { mapExpenseToErp } from './expense-mapper';
+import { mapTimesheetToErp } from './timesheet-mapper';
 
 /** Check if we're running in mock mode (no real ERPNext) */
 export function isMockMode(): boolean {
@@ -349,6 +368,426 @@ export class SyncService {
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       return this.failJob(supabase, job.id, 'sales_order', opportunityId, message);
+    }
+  }
+
+  /**
+   * Sync a KrewPact contact to ERPNext as a Contact.
+   */
+  async syncContact(contactId: string, _userId: string): Promise<SyncResult> {
+    const supabase = await createUserClient();
+    const job = await this.createSyncJob(supabase, 'contact', contactId);
+
+    try {
+      const { data: contact, error: contactError } = await supabase
+        .from('contacts')
+        .select('*')
+        .eq('id', contactId)
+        .single();
+
+      if (contactError || !contact) {
+        return this.failJob(supabase, job.id, 'contact', contactId, `Contact not found: ${contactError?.message || 'null'}`);
+      }
+
+      const c = contact as Record<string, unknown>;
+      let erpDocname: string;
+
+      if (isMockMode()) {
+        const mockResp = mockContactResponse({
+          id: contactId,
+          first_name: c.first_name as string,
+          last_name: c.last_name as string,
+        });
+        erpDocname = mockResp.name;
+      } else {
+        const { ErpClient } = await import('./client');
+        const client = new ErpClient();
+        const mapped = mapContactToErp({
+          id: contactId,
+          first_name: c.first_name as string,
+          last_name: c.last_name as string,
+          email: c.email as string | null,
+          phone: c.phone as string | null,
+          role_title: c.role_title as string | null,
+          account_id: c.account_id as string | null,
+        });
+        const result = await client.create<{ name: string }>('Contact', mapped);
+        erpDocname = result.name;
+      }
+
+      await this.upsertSyncMap(supabase, 'contact', contactId, 'Contact', erpDocname);
+      await this.logEvent(supabase, job.id, 'sync_completed', { entity_type: 'contact', entity_id: contactId, erp_docname: erpDocname });
+      await this.updateJobStatus(supabase, job.id, 'succeeded');
+
+      return { id: job.id, status: 'succeeded', entity_type: 'contact', entity_id: contactId, erp_docname: erpDocname, attempt_count: 1 };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return this.failJob(supabase, job.id, 'contact', contactId, message);
+    }
+  }
+
+  /**
+   * Sync a KrewPact project to ERPNext as a Project.
+   */
+  async syncProject(projectId: string, _userId: string): Promise<SyncResult> {
+    const supabase = await createUserClient();
+    const job = await this.createSyncJob(supabase, 'project', projectId);
+
+    try {
+      const { data: project, error: projectError } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('id', projectId)
+        .single();
+
+      if (projectError || !project) {
+        return this.failJob(supabase, job.id, 'project', projectId, `Project not found: ${projectError?.message || 'null'}`);
+      }
+
+      const p = project as Record<string, unknown>;
+      let erpDocname: string;
+
+      if (isMockMode()) {
+        const mockResp = mockProjectResponse({
+          id: projectId,
+          project_number: p.project_number as string,
+          project_name: p.project_name as string,
+        });
+        erpDocname = mockResp.name;
+      } else {
+        const { ErpClient } = await import('./client');
+        const client = new ErpClient();
+        const mapped = mapProjectToErp({
+          id: projectId,
+          project_number: p.project_number as string,
+          project_name: p.project_name as string,
+          status: p.status as string,
+          start_date: p.start_date as string | null,
+          target_completion_date: p.target_completion_date as string | null,
+          baseline_budget: p.baseline_budget as number | null,
+          account_id: p.account_id as string | null,
+          division_id: p.division_id as string | null,
+        });
+        const result = await client.create<{ name: string }>('Project', mapped);
+        erpDocname = result.name;
+      }
+
+      await this.upsertSyncMap(supabase, 'project', projectId, 'Project', erpDocname);
+      await this.logEvent(supabase, job.id, 'sync_completed', { entity_type: 'project', entity_id: projectId, erp_docname: erpDocname });
+      await this.updateJobStatus(supabase, job.id, 'succeeded');
+
+      return { id: job.id, status: 'succeeded', entity_type: 'project', entity_id: projectId, erp_docname: erpDocname, attempt_count: 1 };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return this.failJob(supabase, job.id, 'project', projectId, message);
+    }
+  }
+
+  /**
+   * Sync a KrewPact task to ERPNext as a Task.
+   */
+  async syncTask(taskId: string, _userId: string): Promise<SyncResult> {
+    const supabase = await createUserClient();
+    const job = await this.createSyncJob(supabase, 'task', taskId);
+
+    try {
+      const { data: task, error: taskError } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('id', taskId)
+        .single();
+
+      if (taskError || !task) {
+        return this.failJob(supabase, job.id, 'task', taskId, `Task not found: ${taskError?.message || 'null'}`);
+      }
+
+      const t = task as Record<string, unknown>;
+      let erpDocname: string;
+
+      if (isMockMode()) {
+        const mockResp = mockTaskResponse({
+          id: taskId,
+          title: t.title as string,
+          project_id: t.project_id as string,
+        });
+        erpDocname = mockResp.name;
+      } else {
+        const { ErpClient } = await import('./client');
+        const client = new ErpClient();
+        const mapped = mapTaskToErp({
+          id: taskId,
+          project_id: t.project_id as string,
+          title: t.title as string,
+          description: t.description as string | null,
+          status: t.status as string,
+          priority: t.priority as string | null,
+          assigned_user_id: t.assigned_user_id as string | null,
+          due_at: t.due_at as string | null,
+          start_at: t.start_at as string | null,
+          completed_at: t.completed_at as string | null,
+        });
+        const result = await client.create<{ name: string }>('Task', mapped);
+        erpDocname = result.name;
+      }
+
+      await this.upsertSyncMap(supabase, 'task', taskId, 'Task', erpDocname);
+      await this.logEvent(supabase, job.id, 'sync_completed', { entity_type: 'task', entity_id: taskId, erp_docname: erpDocname });
+      await this.updateJobStatus(supabase, job.id, 'succeeded');
+
+      return { id: job.id, status: 'succeeded', entity_type: 'task', entity_id: taskId, erp_docname: erpDocname, attempt_count: 1 };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return this.failJob(supabase, job.id, 'task', taskId, message);
+    }
+  }
+
+  /**
+   * Sync a KrewPact trade partner / portal account to ERPNext as a Supplier.
+   */
+  async syncSupplier(portalAccountId: string, _userId: string): Promise<SyncResult> {
+    const supabase = await createUserClient();
+    const job = await this.createSyncJob(supabase, 'supplier', portalAccountId);
+
+    try {
+      const { data: portalAccount, error: paError } = await supabase
+        .from('portal_accounts')
+        .select('*')
+        .eq('id', portalAccountId)
+        .single();
+
+      if (paError || !portalAccount) {
+        return this.failJob(supabase, job.id, 'supplier', portalAccountId, `Portal account not found: ${paError?.message || 'null'}`);
+      }
+
+      const pa = portalAccount as Record<string, unknown>;
+      let erpDocname: string;
+
+      if (isMockMode()) {
+        const mockResp = mockSupplierResponse({
+          id: portalAccountId,
+          company_name: pa.company_name as string,
+        });
+        erpDocname = mockResp.name;
+      } else {
+        const { ErpClient } = await import('./client');
+        const client = new ErpClient();
+        const mapped = mapSupplierToErp({
+          id: portalAccountId,
+          company_name: pa.company_name as string,
+          account_type: pa.account_type as string | null,
+          billing_address: pa.billing_address as Record<string, unknown> | null,
+          division_id: pa.division_id as string | null,
+        });
+        const result = await client.create<{ name: string }>('Supplier', mapped);
+        erpDocname = result.name;
+      }
+
+      await this.upsertSyncMap(supabase, 'supplier', portalAccountId, 'Supplier', erpDocname);
+      await this.logEvent(supabase, job.id, 'sync_completed', { entity_type: 'supplier', entity_id: portalAccountId, erp_docname: erpDocname });
+      await this.updateJobStatus(supabase, job.id, 'succeeded');
+
+      return { id: job.id, status: 'succeeded', entity_type: 'supplier', entity_id: portalAccountId, erp_docname: erpDocname, attempt_count: 1 };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return this.failJob(supabase, job.id, 'supplier', portalAccountId, message);
+    }
+  }
+
+  /**
+   * Sync a KrewPact expense claim to ERPNext as an Expense Claim.
+   */
+  async syncExpenseClaim(expenseClaimId: string, _userId: string): Promise<SyncResult> {
+    const supabase = await createUserClient();
+    const job = await this.createSyncJob(supabase, 'expense_claim', expenseClaimId);
+
+    try {
+      const { data: expense, error: expenseError } = await supabase
+        .from('expense_claims')
+        .select('*')
+        .eq('id', expenseClaimId)
+        .single();
+
+      if (expenseError || !expense) {
+        return this.failJob(supabase, job.id, 'expense_claim', expenseClaimId, `Expense claim not found: ${expenseError?.message || 'null'}`);
+      }
+
+      const e = expense as Record<string, unknown>;
+      let erpDocname: string;
+
+      if (isMockMode()) {
+        const mockResp = mockExpenseClaimResponse({
+          id: expenseClaimId,
+          amount: e.amount as number,
+          expense_date: e.expense_date as string,
+        });
+        erpDocname = mockResp.name;
+      } else {
+        const { ErpClient } = await import('./client');
+        const client = new ErpClient();
+        const mapped = mapExpenseToErp({
+          id: expenseClaimId,
+          user_id: e.user_id as string,
+          project_id: e.project_id as string | null,
+          amount: e.amount as number,
+          tax_amount: e.tax_amount as number | null,
+          category: e.category as string | null,
+          description: e.description as string | null,
+          expense_date: e.expense_date as string,
+          currency_code: e.currency_code as string | null,
+        });
+        const result = await client.create<{ name: string }>('Expense Claim', mapped);
+        erpDocname = result.name;
+      }
+
+      await this.upsertSyncMap(supabase, 'expense_claim', expenseClaimId, 'Expense Claim', erpDocname);
+      await this.logEvent(supabase, job.id, 'sync_completed', { entity_type: 'expense_claim', entity_id: expenseClaimId, erp_docname: erpDocname });
+      await this.updateJobStatus(supabase, job.id, 'succeeded');
+
+      return { id: job.id, status: 'succeeded', entity_type: 'expense_claim', entity_id: expenseClaimId, erp_docname: erpDocname, attempt_count: 1 };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return this.failJob(supabase, job.id, 'expense_claim', expenseClaimId, message);
+    }
+  }
+
+  /**
+   * Sync a KrewPact timesheet batch to ERPNext as a Timesheet.
+   */
+  async syncTimesheet(timesheetBatchId: string, _userId: string): Promise<SyncResult> {
+    const supabase = await createUserClient();
+    const job = await this.createSyncJob(supabase, 'timesheet', timesheetBatchId);
+
+    try {
+      const { data: batch, error: batchError } = await supabase
+        .from('timesheet_batches')
+        .select('*, time_entries(*)')
+        .eq('id', timesheetBatchId)
+        .single();
+
+      if (batchError || !batch) {
+        return this.failJob(supabase, job.id, 'timesheet', timesheetBatchId, `Timesheet batch not found: ${batchError?.message || 'null'}`);
+      }
+
+      const b = batch as Record<string, unknown>;
+      const rawEntries = b.time_entries;
+      const entries = Array.isArray(rawEntries) ? rawEntries : rawEntries ? [rawEntries] : [];
+      let erpDocname: string;
+
+      if (isMockMode()) {
+        const mockResp = mockTimesheetResponse({
+          id: timesheetBatchId,
+          total_hours: b.total_hours as number,
+          period_start: b.period_start as string,
+          period_end: b.period_end as string,
+        });
+        erpDocname = mockResp.name;
+      } else {
+        const { ErpClient } = await import('./client');
+        const client = new ErpClient();
+        const mapped = mapTimesheetToErp({
+          id: timesheetBatchId,
+          user_id: b.user_id as string,
+          period_start: b.period_start as string,
+          period_end: b.period_end as string,
+          total_hours: b.total_hours as number,
+          currency_code: b.currency_code as string | null,
+          entries: entries.map((entry: Record<string, unknown>) => ({
+            id: entry.id as string,
+            project_id: entry.project_id as string | null,
+            task_id: entry.task_id as string | null,
+            description: entry.description as string | null,
+            hours: entry.hours as number,
+            entry_date: entry.entry_date as string,
+          })),
+        });
+        const result = await client.create<{ name: string }>('Timesheet', mapped);
+        erpDocname = result.name;
+      }
+
+      await this.upsertSyncMap(supabase, 'timesheet', timesheetBatchId, 'Timesheet', erpDocname);
+      await this.logEvent(supabase, job.id, 'sync_completed', { entity_type: 'timesheet', entity_id: timesheetBatchId, erp_docname: erpDocname, entry_count: entries.length });
+      await this.updateJobStatus(supabase, job.id, 'succeeded');
+
+      return { id: job.id, status: 'succeeded', entity_type: 'timesheet', entity_id: timesheetBatchId, erp_docname: erpDocname, attempt_count: 1 };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return this.failJob(supabase, job.id, 'timesheet', timesheetBatchId, message);
+    }
+  }
+
+  /**
+   * Read a Sales Invoice from ERPNext and store snapshot in invoice_snapshots.
+   * Inbound read-only — no data written to ERPNext.
+   */
+  async readSalesInvoice(erpDocname: string): Promise<SyncResult> {
+    const supabase = await createUserClient();
+    const job = await this.createSyncJob(supabase, 'sales_invoice', erpDocname);
+
+    try {
+      let invoiceData: Record<string, unknown>;
+
+      if (isMockMode()) {
+        const mockResp = mockSalesInvoiceResponse(erpDocname);
+        invoiceData = mockResp.data;
+      } else {
+        const { ErpClient } = await import('./client');
+        const client = new ErpClient();
+        invoiceData = await client.get<Record<string, unknown>>('Sales Invoice', erpDocname);
+      }
+
+      // Store snapshot in invoice_snapshots
+      await supabase.from('invoice_snapshots').upsert({
+        erp_docname: erpDocname,
+        doctype: 'Sales Invoice',
+        snapshot: invoiceData,
+        synced_at: new Date().toISOString(),
+      });
+
+      await this.logEvent(supabase, job.id, 'sync_completed', { entity_type: 'sales_invoice', erp_docname: erpDocname });
+      await this.updateJobStatus(supabase, job.id, 'succeeded');
+
+      return { id: job.id, status: 'succeeded', entity_type: 'sales_invoice', entity_id: erpDocname, erp_docname: erpDocname, attempt_count: 1 };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return this.failJob(supabase, job.id, 'sales_invoice', erpDocname, message);
+    }
+  }
+
+  /**
+   * Read a Purchase Invoice from ERPNext and store snapshot in po_snapshots.
+   * Inbound read-only — no data written to ERPNext.
+   */
+  async readPurchaseInvoice(erpDocname: string): Promise<SyncResult> {
+    const supabase = await createUserClient();
+    const job = await this.createSyncJob(supabase, 'purchase_invoice', erpDocname);
+
+    try {
+      let invoiceData: Record<string, unknown>;
+
+      if (isMockMode()) {
+        const mockResp = mockPurchaseInvoiceResponse(erpDocname);
+        invoiceData = mockResp.data;
+      } else {
+        const { ErpClient } = await import('./client');
+        const client = new ErpClient();
+        invoiceData = await client.get<Record<string, unknown>>('Purchase Invoice', erpDocname);
+      }
+
+      // Store snapshot in po_snapshots
+      await supabase.from('po_snapshots').upsert({
+        erp_docname: erpDocname,
+        doctype: 'Purchase Invoice',
+        snapshot: invoiceData,
+        synced_at: new Date().toISOString(),
+      });
+
+      await this.logEvent(supabase, job.id, 'sync_completed', { entity_type: 'purchase_invoice', erp_docname: erpDocname });
+      await this.updateJobStatus(supabase, job.id, 'succeeded');
+
+      return { id: job.id, status: 'succeeded', entity_type: 'purchase_invoice', entity_id: erpDocname, erp_docname: erpDocname, attempt_count: 1 };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return this.failJob(supabase, job.id, 'purchase_invoice', erpDocname, message);
     }
   }
 

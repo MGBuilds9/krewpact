@@ -1,0 +1,45 @@
+import { auth } from '@clerk/nextjs/server';
+import { createUserClient } from '@/lib/supabase/server';
+import { dailyLogUpdateSchema } from '@/lib/validators/projects';
+import { NextRequest, NextResponse } from 'next/server';
+
+type RouteContext = { params: Promise<{ id: string; logId: string }> };
+
+export async function PATCH(req: NextRequest, context: RouteContext) {
+  const { userId } = await auth();
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { id, logId } = await context.params;
+
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+  }
+
+  const parsed = dailyLogUpdateSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
+
+  const supabase = await createUserClient();
+  const { data, error } = await supabase
+    .from('project_daily_logs')
+    .update(parsed.data)
+    .eq('id', logId)
+    .eq('project_id', id)
+    .select()
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') {
+      return NextResponse.json({ error: 'Log not found' }, { status: 404 });
+    }
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json(data);
+}

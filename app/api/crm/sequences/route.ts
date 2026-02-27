@@ -27,7 +27,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const supabase = await createUserClient();
 
   let query = supabase
-    .from('outreach_sequences')
+    .from('sequences')
     .select('*')
     .order('created_at', { ascending: false });
 
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const supabase = await createUserClient();
   const { data, error } = await supabase
-    .from('outreach_sequences')
+    .from('sequences')
     .insert(parsed.data)
     .select()
     .single();

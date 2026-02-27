@@ -1,11 +1,18 @@
 'use client';
 
+import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Send, Save, CheckCircle, XCircle } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { ArrowLeft, Send, Save, CheckCircle, XCircle, Plus, FileText } from 'lucide-react';
 import {
   useEstimate,
   useEstimateLines,
@@ -15,9 +22,13 @@ import {
   useDeleteEstimateLine,
   useCreateEstimateVersion,
 } from '@/hooks/useEstimates';
+import { useEstimateAllowances, useEstimateAlternates } from '@/hooks/useEstimating';
 import { LineItemEditor } from '@/components/Estimates/LineItemEditor';
 import { TotalsPanel } from '@/components/Estimates/TotalsPanel';
 import { VersionHistory } from '@/components/Estimates/VersionHistory';
+import { AllowanceForm } from '@/components/Estimates/AllowanceForm';
+import { AlternateForm } from '@/components/Estimates/AlternateForm';
+import { ProposalGenerationForm } from '@/components/Estimates/ProposalGenerationForm';
 import { ALLOWED_STATUS_TRANSITIONS } from '@/lib/estimating/estimate-status';
 import type { EstimateStatus } from '@/lib/estimating/estimate-status';
 import { cn } from '@/lib/utils';
@@ -56,9 +67,15 @@ export default function EstimateBuilderPage() {
   const router = useRouter();
   const estimateId = params.id as string;
 
+  const [allowanceDialogOpen, setAllowanceDialogOpen] = useState(false);
+  const [alternateDialogOpen, setAlternateDialogOpen] = useState(false);
+  const [proposalDialogOpen, setProposalDialogOpen] = useState(false);
+
   const { data: estimate, isLoading } = useEstimate(estimateId);
   const { data: lines } = useEstimateLines(estimateId);
   const { data: versions } = useEstimateVersions(estimateId);
+  const { data: allowancesData } = useEstimateAllowances(estimateId);
+  const { data: alternatesData } = useEstimateAlternates(estimateId);
   const updateEstimate = useUpdateEstimate();
   const addLine = useAddEstimateLine();
   const deleteLine = useDeleteEstimateLine();
@@ -176,6 +193,14 @@ export default function EstimateBuilderPage() {
             <Save className="h-4 w-4 mr-1" />
             Save Version
           </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setProposalDialogOpen(true)}
+          >
+            <FileText className="h-4 w-4 mr-1" />
+            Generate Proposal
+          </Button>
         </div>
       </div>
 
@@ -218,6 +243,112 @@ export default function EstimateBuilderPage() {
           <VersionHistory versions={versions ?? []} />
         </CardContent>
       </Card>
+
+      {/* Allowances */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Allowances</CardTitle>
+          {isEditable && (
+            <Button size="sm" variant="outline" onClick={() => setAllowanceDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-1" />
+              Add Allowance
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent>
+          {(allowancesData ?? []).length === 0 ? (
+            <p className="text-sm text-muted-foreground">No allowances added.</p>
+          ) : (
+            <div className="space-y-2">
+              {(allowancesData ?? []).map((a) => (
+                <div key={a.id} className="flex items-center justify-between text-sm border rounded-lg p-3">
+                  <span className="font-medium">{a.allowance_name}</span>
+                  <span className="text-muted-foreground">
+                    {new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(a.allowance_amount)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Alternates */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Alternates</CardTitle>
+          {isEditable && (
+            <Button size="sm" variant="outline" onClick={() => setAlternateDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-1" />
+              Add Alternate
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent>
+          {(alternatesData ?? []).length === 0 ? (
+            <p className="text-sm text-muted-foreground">No alternates added.</p>
+          ) : (
+            <div className="space-y-2">
+              {(alternatesData ?? []).map((a) => (
+                <div key={a.id} className="flex items-center justify-between text-sm border rounded-lg p-3">
+                  <span className="font-medium">{a.title}</span>
+                  <div className="flex items-center gap-3">
+                    <Badge variant={a.selected ? 'default' : 'outline'}>
+                      {a.selected ? 'Selected' : 'Not selected'}
+                    </Badge>
+                    <span className="text-muted-foreground">
+                      {new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(a.amount)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Allowance Dialog */}
+      <Dialog open={allowanceDialogOpen} onOpenChange={setAllowanceDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Allowance</DialogTitle>
+          </DialogHeader>
+          <AllowanceForm
+            estimateId={estimateId}
+            onSuccess={() => setAllowanceDialogOpen(false)}
+            onCancel={() => setAllowanceDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Alternate Dialog */}
+      <Dialog open={alternateDialogOpen} onOpenChange={setAlternateDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Alternate</DialogTitle>
+          </DialogHeader>
+          <AlternateForm
+            estimateId={estimateId}
+            onSuccess={() => setAlternateDialogOpen(false)}
+            onCancel={() => setAlternateDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Generate Proposal Dialog */}
+      <Dialog open={proposalDialogOpen} onOpenChange={setProposalDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Generate Proposal</DialogTitle>
+          </DialogHeader>
+          <ProposalGenerationForm
+            estimateId={estimateId}
+            estimateNumber={estimate?.estimate_number}
+            onSuccess={() => setProposalDialogOpen(false)}
+            onCancel={() => setProposalDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

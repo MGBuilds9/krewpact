@@ -67,5 +67,18 @@ export async function POST(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: updateError.message }, { status: 500 });
   }
 
+  // Record stage transition in history (non-blocking)
+  try {
+    await supabase.from('lead_stage_history').insert({
+      lead_id: id,
+      from_stage: currentStage,
+      to_stage: newStage,
+      notes: parsed.data.lost_reason ?? null,
+    });
+  } catch {
+    // History write failure should not block the stage transition
+    console.error('Failed to record lead stage history');
+  }
+
   return NextResponse.json(updated);
 }

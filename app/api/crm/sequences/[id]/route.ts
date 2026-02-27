@@ -14,7 +14,7 @@ export async function GET(req: NextRequest, context: RouteContext): Promise<Next
   const { id } = await context.params;
   const supabase = await createUserClient();
   const { data, error } = await supabase
-    .from('outreach_sequences')
+    .from('sequences')
     .select('*, sequence_steps(*)')
     .eq('id', id)
     .single();
@@ -49,7 +49,7 @@ export async function PUT(req: NextRequest, context: RouteContext): Promise<Next
 
   const supabase = await createUserClient();
   const { data, error } = await supabase
-    .from('outreach_sequences')
+    .from('sequences')
     .update(parsed.data)
     .eq('id', id)
     .select()
@@ -71,7 +71,7 @@ export async function DELETE(req: NextRequest, context: RouteContext): Promise<N
 
   const { id } = await context.params;
   const supabase = await createUserClient();
-  const { error } = await supabase.from('outreach_sequences').delete().eq('id', id);
+  const { error } = await supabase.from('sequences').delete().eq('id', id);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

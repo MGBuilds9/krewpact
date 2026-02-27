@@ -20,7 +20,7 @@ export function BottomNav() {
           <Link
             href="/dashboard"
             className={cn(
-              'flex flex-col items-center justify-center w-16 h-full space-y-1 text-xs font-medium transition-colors',
+              'flex flex-col items-center justify-center w-16 h-full space-y-1 text-xs font-medium transition-colors duration-200',
               pathname === '/dashboard'
                 ? 'text-primary'
                 : 'text-muted-foreground hover:text-foreground',
@@ -33,7 +33,7 @@ export function BottomNav() {
           <Link
             href="/projects"
             className={cn(
-              'flex flex-col items-center justify-center w-16 h-full space-y-1 text-xs font-medium transition-colors',
+              'flex flex-col items-center justify-center w-16 h-full space-y-1 text-xs font-medium transition-colors duration-200',
               pathname === '/projects' || pathname.startsWith('/projects/')
                 ? 'text-primary'
                 : 'text-muted-foreground hover:text-foreground',
@@ -48,7 +48,7 @@ export function BottomNav() {
             <div className="absolute rounded-full bg-background p-1.5">
               <Button
                 size="icon"
-                className="h-12 w-12 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90"
+                className="h-12 w-12 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-transform duration-200 active:scale-95"
                 onClick={() => router.push('/projects?new=true')}
                 aria-label="Create new project"
               >
@@ -60,7 +60,7 @@ export function BottomNav() {
           <Link
             href="/documents"
             className={cn(
-              'flex flex-col items-center justify-center w-16 h-full space-y-1 text-xs font-medium transition-colors',
+              'flex flex-col items-center justify-center w-16 h-full space-y-1 text-xs font-medium transition-colors duration-200',
               pathname === '/documents' || pathname.startsWith('/documents/')
                 ? 'text-primary'
                 : 'text-muted-foreground hover:text-foreground',
@@ -72,7 +72,7 @@ export function BottomNav() {
 
           <button
             onClick={() => setIsMobileMenuOpen(true)}
-            className="flex flex-col items-center justify-center w-16 h-full space-y-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+            className="flex flex-col items-center justify-center w-16 h-full space-y-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors duration-200"
           >
             <Menu className="h-5 w-5" />
             <span>Menu</span>
