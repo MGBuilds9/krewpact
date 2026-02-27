@@ -44,7 +44,9 @@ export default function SchedulePage() {
   }
 
   return (
-    <div className="space-y-6">
+    <>
+      <title>Schedule — KrewPact</title>
+      <div className="space-y-6">
       <div className="flex items-center gap-3">
         <Calendar className="h-8 w-8 text-primary" />
         <div>
@@ -149,5 +151,6 @@ export default function SchedulePage() {
         </CardContent>
       </Card>
     </div>
+    </>
   );
 }

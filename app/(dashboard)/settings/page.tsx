@@ -15,7 +15,9 @@ export default function SettingsPage() {
   const { roles } = useUserRBAC();
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto">
+    <>
+      <title>Settings — KrewPact</title>
+      <div className="space-y-6 max-w-3xl mx-auto">
       <div className="flex items-center gap-3">
         <Settings className="h-8 w-8 text-primary" />
         <div>
@@ -120,5 +122,6 @@ export default function SettingsPage() {
         </TabsContent>
       </Tabs>
     </div>
+    </>
   );
 }

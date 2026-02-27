@@ -21,7 +21,9 @@ export default function FinancePage() {
   ];
 
   return (
-    <div className="space-y-6 p-6">
+    <>
+      <title>Finance — KrewPact</title>
+      <div className="space-y-6 p-6">
       <div>
         <h1 className="text-2xl font-semibold">Finance Snapshots</h1>
         <p className="text-muted-foreground text-sm mt-1">
@@ -43,5 +45,6 @@ export default function FinancePage() {
         ))}
       </div>
     </div>
+    </>
   );
 }

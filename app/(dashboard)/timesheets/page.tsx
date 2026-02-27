@@ -49,7 +49,9 @@ export default function TimesheetsPage() {
   const batches = res?.data ?? [];
 
   return (
-    <div className="space-y-6">
+    <>
+      <title>Timesheets — KrewPact</title>
+      <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Timesheets</h1>
@@ -162,5 +164,6 @@ export default function TimesheetsPage() {
         </div>
       )}
     </div>
+    </>
   );
 }

@@ -36,7 +36,9 @@ export default function TeamPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <>
+      <title>Team — KrewPact</title>
+      <div className="space-y-6">
       <div className="flex items-center gap-3">
         <Users className="h-8 w-8 text-primary" />
         <div>
@@ -99,5 +101,6 @@ export default function TeamPage() {
         </div>
       )}
     </div>
+    </>
   );
 }

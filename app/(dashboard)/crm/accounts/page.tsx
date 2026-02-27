@@ -91,7 +91,9 @@ export default function AccountsPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <>
+      <title>Accounts — KrewPact</title>
+      <div className="space-y-4">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -218,5 +220,6 @@ export default function AccountsPage() {
         </>
       )}
     </div>
+    </>
   );
 }

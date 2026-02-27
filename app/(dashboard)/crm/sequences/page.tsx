@@ -55,7 +55,9 @@ export default function SequencesPage() {
   const sequenceList = sequences ?? [];
 
   return (
-    <div className="space-y-4">
+    <>
+      <title>Sequences — KrewPact</title>
+      <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold tracking-tight">Outreach Sequences</h2>
         <Button onClick={() => router.push('/crm/sequences/new')}>
@@ -138,5 +140,6 @@ export default function SequencesPage() {
         </Card>
       )}
     </div>
+    </>
   );
 }

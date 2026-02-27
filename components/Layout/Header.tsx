@@ -201,6 +201,7 @@ export function Header() {
                   <Button
                     variant="ghost"
                     className="relative h-10 w-10 rounded-lg hover:bg-muted transition-colors duration-200"
+                    aria-label="User menu"
                   >
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={user?.imageUrl || ""} alt={userName} />

@@ -6,7 +6,9 @@ import { FileText, Upload, FolderOpen, Search } from 'lucide-react';
 
 export default function DocumentsPage() {
   return (
-    <div className="space-y-6">
+    <>
+      <title>Documents — KrewPact</title>
+      <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="flex items-center gap-3">
           <FileText className="h-8 w-8 text-primary" />
@@ -31,5 +33,6 @@ export default function DocumentsPage() {
         </CardContent>
       </Card>
     </div>
+    </>
   );
 }

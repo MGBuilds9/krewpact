@@ -20,8 +20,24 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: 'KrewPact | Construction Operations Platform',
+  metadataBase: new URL('https://app.krewpact.com'),
+  title: {
+    default: 'KrewPact | Construction Operations Platform',
+    template: '%s — KrewPact',
+  },
   description: 'Construction operations platform for MDM Group Inc.',
+  openGraph: {
+    title: 'KrewPact | Construction Operations Platform',
+    description: 'Construction operations platform for MDM Group Inc.',
+    siteName: 'KrewPact',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'KrewPact | Construction Operations Platform',
+    description: 'Construction operations platform for MDM Group Inc.',
+  },
+  robots: { index: false, follow: false },
 };
 
 export default function RootLayout({

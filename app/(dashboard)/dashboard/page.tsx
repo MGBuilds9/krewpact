@@ -76,7 +76,9 @@ export default function DashboardPage() {
   const recentProjects = dashboard?.recentProjects ?? [];
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <>
+      <title>Dashboard — KrewPact</title>
+      <div className="space-y-6 max-w-7xl mx-auto">
       {/* A. Greeting + Status Bar */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
@@ -326,5 +328,6 @@ export default function DashboardPage() {
         Built by MKG Builds
       </p>
     </div>
+    </>
   );
 }

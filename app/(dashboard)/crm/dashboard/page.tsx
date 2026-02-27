@@ -32,7 +32,9 @@ export default function CRMDashboardPage() {
   const { data, isLoading } = useDashboardMetrics(undefined, period);
 
   return (
-    <div className="space-y-6">
+    <>
+      <title>CRM Dashboard — KrewPact</title>
+      <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">CRM Dashboard</h1>
         <div className="flex gap-1 rounded-lg border p-1">
@@ -101,5 +103,6 @@ export default function CRMDashboardPage() {
         <LeadSourceBreakdown metrics={data?.sources} isLoading={isLoading} />
       </div>
     </div>
+    </>
   );
 }

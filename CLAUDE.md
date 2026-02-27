@@ -266,18 +266,13 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 - **Pushed:** to main (ee1996b).
 - **Next steps:** Sprint 3 (activity logging dialog, notes/comments, tag management). Get Clerk keys for production auth. Deploy to Vercel.
 
-### Feb 26, 2026 — CRM Data Tables, Pagination, Contact/Account Completion (Sprint 1+2)
-- **Changes:** @tanstack/react-table, DataTable component, ViewToggle, useDebouncedValue. All CRM list APIs return paginated envelope. Contact detail page, ContactForm + AccountForm, creation pages. 44 files, 2580 insertions.
-- **Tests:** 1020/1020 passing (38 new). Pushed 786bdb7.
-
-- Feb 26: Pre-scoring pipeline audit — enrichment data shape alignment + cron batch fix. 982 tests. Pushed f5dee1e.
-- Feb 25: Demo mode (Clerk bypass), DB schema alignment, UI polish. 904 tests. Pushed 950f15b.
-- Feb 24: CRM end-to-end lead lifecycle (8 phases), 89 files, 254 new tests (904 total). Pushed e05b433.
-- Feb 24: Cross-Subdomain SSO — Clerk shared auth across *.mdmgroupinc.ca. 650 tests.
-- Feb 24: Full Service Connection + Microsoft Graph — RLS, Clerk bootstrap, Graph email/calendar. 650 tests.
+- Feb 26: CRM Sprint 1+2 — DataTable, pagination, ContactForm, AccountForm. 1020 tests. Pushed 786bdb7.
+- Feb 26: Pre-scoring pipeline audit — enrichment data shape alignment + cron batch fix. 982 tests.
+- Feb 25: Demo mode, DB schema alignment, UI polish. 904 tests.
+- Feb 24: CRM lead lifecycle (8 phases) + Cross-Subdomain SSO. 904 tests.
+- Feb 24: Full Service Connection + Microsoft Graph. 650 tests.
 - Feb 23: LeadForge Pipeline (Phases A-F) + Clerk Auth Unification. 597 tests.
 - Feb 15: Tier 3 Zod validation — all 32 mutating routes. 554 tests.
-- Feb 13: CRM + Estimating Phase 1 (Ralph Loop) — 23 stories, 549 tests.
+- Feb 13: CRM + Estimating Phase 1 (Ralph Loop). 549 tests.
 - Feb 12: MDM Unified Growth Intelligence System (Phase 0) — Sales AGI + pgvector schema.
-- Feb 10: Architecture resolution (23 issues) + /scope skill.
 

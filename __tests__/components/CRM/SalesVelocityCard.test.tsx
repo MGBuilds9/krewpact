@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { SalesVelocityCard } from '@/components/CRM/SalesVelocityCard';
+import { SalesVelocityChartInner } from '@/components/CRM/SalesVelocityChartInner';
 import type { VelocityMetrics } from '@/lib/crm/metrics';
 
 function makeMetrics(overrides: Partial<VelocityMetrics> = {}): VelocityMetrics {
@@ -20,24 +21,25 @@ describe('SalesVelocityCard', () => {
     expect(screen.getByText('Sales Velocity')).toBeDefined();
   });
 
+  it('shows empty state when no data', () => {
+    render(<SalesVelocityCard metrics={undefined} />);
+    expect(screen.getByText('No velocity data available')).toBeDefined();
+  });
+});
+
+describe('SalesVelocityChartInner', () => {
   it('renders key metrics', () => {
-    render(<SalesVelocityCard metrics={makeMetrics()} />);
-    expect(screen.getByText('30')).toBeDefined(); // avg days
-    expect(screen.getByText('8')).toBeDefined(); // deals closed
+    render(<SalesVelocityChartInner metrics={makeMetrics()} />);
+    expect(screen.getByText('30')).toBeDefined();
+    expect(screen.getByText('8')).toBeDefined();
     expect(screen.getByText('Avg Days to Close')).toBeDefined();
     expect(screen.getByText('Deals Won')).toBeDefined();
   });
 
   it('renders stage chart when stage data exists', () => {
-    const { container } = render(<SalesVelocityCard metrics={makeMetrics()} />);
-    // Recharts renders stage bars as SVG
+    const { container } = render(<SalesVelocityChartInner metrics={makeMetrics()} />);
     const svg = container.querySelector('svg');
     expect(svg).toBeDefined();
     expect(screen.getByText('Average Days per Stage')).toBeDefined();
-  });
-
-  it('shows empty state when no data', () => {
-    render(<SalesVelocityCard metrics={undefined} />);
-    expect(screen.getByText('No velocity data available')).toBeDefined();
   });
 });

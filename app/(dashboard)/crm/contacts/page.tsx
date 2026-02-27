@@ -95,7 +95,9 @@ export default function ContactsPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <>
+      <title>Contacts — KrewPact</title>
+      <div className="space-y-4">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -213,5 +215,6 @@ export default function ContactsPage() {
         </>
       )}
     </div>
+    </>
   );
 }
