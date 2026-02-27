@@ -148,6 +148,9 @@
     <li><strong>Architecture Maps</strong> (<code>krewpact.html</code>) &mdash; Visual system diagrams, data flows, module grid, and tech stack overview. <span class="here">&larr; You are here</span></li>
   </ol>
 </div>
+<p style="color: var(--text-muted); font-size: 0.9rem; text-align: center; margin: 8px 0;">
+  <strong>Purpose:</strong> Visual reference showing how KrewPact&rsquo;s components connect. Use this to understand the system at a glance &mdash; not required reading for the feedback exercise.
+</p>
 <p style="text-align:center; color: var(--text-muted); font-size: 0.85rem; margin-top: 0.5rem;">
   <em>Diagrams are best viewed on desktop or landscape tablet. On mobile, scroll horizontally to see full diagrams.</em>
 </p>
@@ -203,7 +206,7 @@ graph TB
     end
 
     subgraph BFF["BFF Layer (API Routes)"]
-        API["Next.js API Routes\naggregate + transform + authorize\n~60+ endpoints"]
+        API["API Layer\naggregate + transform + authorize"]
     end
 
     subgraph DATA["Data Layer"]
@@ -246,7 +249,7 @@ graph TB
     CRON --> REDIS
     BFF --> ENGINE
     ENGINE --> INAPP & EMAIL & PUSH
-    VEC -.->|"RAG (planned)"| BFF
+    VEC -.->|"AI Chat (Scale)"| BFF
     SUPA2 --> SCORE
     SCORE --> SEQ
     SEQ --> ENRICH
