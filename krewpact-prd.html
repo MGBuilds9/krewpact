@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="Michael Guirguis">
+  <title>KrewPact — Product Requirements Document</title>
+  <style>
+    /* Reset & Base */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Calibri, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif;
+      color: #1a1a2e;
+      line-height: 1.7;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 2rem 2.5rem;
+      background: #ffffff;
+    }
+
+    /* Typography */
+    h1 { font-size: 2rem; color: #1a1a2e; margin-bottom: 0.25rem; border-bottom: 3px solid #2563eb; padding-bottom: 0.5rem; }
+    h2 { font-size: 1.5rem; color: #1e40af; margin: 2.5rem 0 0.75rem; padding-top: 1.5rem; border-top: 2px solid #e5e7eb; }
+    h3 { font-size: 1.2rem; color: #1a1a2e; margin: 1.5rem 0 0.5rem; }
+    h4 { font-size: 1rem; color: #374151; margin: 1rem 0 0.4rem; }
+    p { margin: 0.5rem 0; color: #374151; }
+    ul, ol { margin: 0.5rem 0 0.5rem 1.5rem; color: #374151; }
+    li { margin: 0.2rem 0; }
+
+    /* Cover */
+    .cover { text-align: center; margin: 3rem 0 4rem; page-break-after: always; }
+    .cover h1 { font-size: 2.5rem; border: none; padding: 0; margin-bottom: 0.5rem; }
+    .cover .tagline { font-size: 1.1rem; color: #6b7280; margin-bottom: 2rem; }
+    .cover .meta { font-size: 0.9rem; color: #9ca3af; }
+    .cover .meta p { margin: 0.2rem 0; }
+    .cover .logo-placeholder { display: inline-block; width: 80px; height: 80px; border-radius: 12px; background: #2563eb; color: white; font-size: 1.5rem; font-weight: 700; line-height: 80px; margin-bottom: 1.5rem; }
+    .confidential { display: inline-block; border: 2px solid #dc2626; color: #dc2626; padding: 4px 16px; border-radius: 4px; font-size: 0.85rem; font-weight: 600; margin-top: 1.5rem; }
+
+    /* Status badges */
+    .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; vertical-align: middle; }
+    .badge-core { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+    .badge-growth { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+    .badge-scale { background: #f3f4f6; color: #6b7280; border: 1px solid #d1d5db; }
+
+    /* Tables */
+    table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+    th, td { padding: 8px 12px; border: 1px solid #d1d5db; text-align: left; vertical-align: top; }
+    th { background: #f8fafc; color: #1e40af; font-weight: 600; }
+    td { color: #374151; }
+    tr:nth-child(even) { background: #f9fafb; }
+
+    /* Division Notes table (fillable) */
+    .division-notes { margin: 1.5rem 0; }
+    .division-notes th { background: #eff6ff; }
+    .division-notes td:first-child { font-weight: 600; white-space: nowrap; }
+    .division-notes td:nth-child(2),
+    .division-notes td:nth-child(4) { min-width: 200px; }
+    .division-notes caption { text-align: left; font-weight: 600; color: #1e40af; margin-bottom: 0.5rem; font-size: 0.95rem; }
+
+    /* Info boxes */
+    .info-box { background: #eff6ff; border-left: 4px solid #2563eb; padding: 1rem 1.25rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
+    .info-box p { color: #1e40af; margin: 0.25rem 0; }
+    .warn-box { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 1rem 1.25rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
+    .warn-box p { color: #92400e; margin: 0.25rem 0; }
+
+    /* Feature cards */
+    .feature { background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem 1.25rem; margin: 0.75rem 0; }
+    .feature h4 { margin-top: 0; }
+    .feature .meta-row { font-size: 0.85rem; color: #6b7280; margin: 0.25rem 0; }
+
+    /* Epic header */
+    .epic-header { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+    .epic-header h3 { margin: 0; }
+
+    /* TOC */
+    .toc { background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1.5rem 2rem; margin: 1.5rem 0; }
+    .toc h3 { margin-top: 0; color: #1e40af; }
+    .toc ul { list-style: none; padding-left: 0; }
+    .toc li { padding: 3px 0; }
+    .toc a { color: #2563eb; text-decoration: none; }
+    .toc a:hover { text-decoration: underline; }
+    .toc .indent { padding-left: 1.5rem; }
+
+    /* Print */
+    @media print {
+      body { padding: 0; max-width: 100%; }
+      .cover { page-break-after: always; }
+      h2 { page-break-before: always; }
+      .feature, table { page-break-inside: avoid; }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      table { font-size: 0.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ==================== COVER PAGE ==================== -->
+<div class="cover">
+  <div class="logo-placeholder">KP</div>
+  <h1>KrewPact</h1>
+  <p class="tagline">Product Requirements Document — Full 21-Epic Specification</p>
+  <div class="meta">
+    <p><strong>Prepared for:</strong> MDM Group Division Managers</p>
+    <p><strong>Prepared by:</strong> Michael Guirguis</p>
+    <p><strong>Version:</strong> 1.1</p>
+    <p><strong>Date:</strong> February 27, 2026</p>
+    <p><strong>Stack:</strong> Next.js 16.1.6 &middot; React 19.2.4 &middot; Supabase &middot; ERPNext</p>
+  </div>
+  <div class="confidential">CONFIDENTIAL — MDM GROUP INTERNAL</div>
+</div>
+
+<!-- ==================== DOCUMENT SUITE ==================== -->
+<div class="info-box" style="background: #f0fdf4; border-left-color: #16a34a; margin: 1.5rem 0;">
+  <p style="color: #166534; margin-bottom: 0.5rem;"><strong>KrewPact Document Suite</strong></p>
+  <p style="color: #374151;">This document is part of a three-document review package:</p>
+  <ol style="color: #374151; margin: 0.5rem 0 0.25rem 1.5rem;">
+    <li><strong>Feature Review &amp; Feedback</strong> (<code>krewpact-feature-review.html</code>) &mdash; Fill in feedback tables, assign team roles, rank priorities. <em>Start here.</em></li>
+    <li><strong>Full PRD</strong> (<code>krewpact-prd.html</code>) &mdash; Complete 21-epic specification with technical details and division notes. <strong>&larr; You are here</strong></li>
+    <li><strong>Architecture Maps</strong> (<code>krewpact.html</code>) &mdash; Visual system diagrams, data flows, module grid, and tech stack overview.</li>
+  </ol>
+</div>
+
+<!-- ==================== HOW TO USE ==================== -->
+<h2 id="how-to-use">How to Use This Document</h2>
+
+<div class="info-box">
+  <p><strong>Purpose:</strong> This document describes every feature of KrewPact — what it does, who uses it, and when it will be available. It is written for all team members, not just technical staff.</p>
+</div>
+
+<h3>Instructions for Division Managers</h3>
+<ol>
+  <li><strong>Read each module section</strong> relevant to your division's operations.</li>
+  <li><strong>Fill in the Division Notes table</strong> at the end of each module. Each division has a row — note your specific workflows, custom needs, and priorities.</li>
+  <li><strong>Flag must-haves vs nice-to-haves</strong> — use the Priority column (High / Medium / Low).</li>
+  <li><strong>Add comments</strong> — in OneDrive, use tracked changes or comments to ask questions or suggest changes.</li>
+  <li><strong>Be specific</strong> — "We need X field on the estimate form" is better than "estimating needs work."</li>
+</ol>
+
+<div class="info-box" style="margin-top: 1rem;">
+  <p><strong>Companion documents:</strong> To provide structured feedback with fillable tables, use the <strong>Feature Review &amp; Feedback Document</strong> (<code>krewpact-feature-review.html</code>). For visual system architecture diagrams and data flow maps, see <strong>Architecture Maps</strong> (<code>krewpact.html</code>).</p>
+</div>
+
+<div class="warn-box">
+  <p><strong>What we need from you:</strong> Division-specific workflows, custom field requirements, approval chains, integration needs, and priorities. The more specific, the better the platform will serve your team.</p>
+</div>
+
+<h3>Status Legend</h3>
+<table>
+  <tr><th>Badge</th><th>Meaning</th></tr>
+  <tr><td><span class="badge badge-core">CORE</span></td><td>Foundation features included in the initial launch</td></tr>
+  <tr><td><span class="badge badge-growth">GROWTH</span></td><td>Expansion features in the next phase</td></tr>
+  <tr><td><span class="badge badge-scale">SCALE</span></td><td>Advanced capabilities for the future</td></tr>
+</table>
+
+<!-- ==================== TABLE OF CONTENTS ==================== -->
+<div class="toc">
+  <h3>Table of Contents</h3>
+  <ul>
+    <li><a href="#how-to-use">How to Use This Document</a></li>
+    <li><a href="#exec-summary">Executive Summary</a></li>
+    <li><a href="#roles">User Roles &amp; Permissions</a></li>
+    <li><strong>Phase 1 — Core</strong>
+      <ul class="indent">
+        <li><a href="#epic-1">Epic 1: Identity, Access &amp; Organization</a></li>
+        <li><a href="#epic-2">Epic 2: CRM &amp; Sales Pipeline</a></li>
+        <li><a href="#epic-3">Epic 3: Estimating Engine</a></li>
+        <li><a href="#epic-5">Epic 5: Project Setup</a></li>
+        <li><a href="#epic-6">Epic 6: Project Execution</a></li>
+        <li><a href="#epic-7">Epic 7: ERPNext Integration (Core)</a></li>
+        <li><a href="#epic-8">Epic 8: Notifications &amp; Email</a></li>
+        <li><a href="#epic-9">Epic 9: Dashboard &amp; Reports</a></li>
+      </ul>
+    </li>
+    <li><strong>Phase 2 — Growth</strong>
+      <ul class="indent">
+        <li><a href="#epic-4">Epic 4: Contracts &amp; E-Sign</a></li>
+        <li><a href="#epic-10">Epic 10: RFIs, Submittals &amp; Document Control</a></li>
+        <li><a href="#epic-11">Epic 11: Change Order Management</a></li>
+        <li><a href="#epic-12">Epic 12: Time, Payroll &amp; Expense</a></li>
+        <li><a href="#epic-13">Epic 13: Client Portal</a></li>
+        <li><a href="#epic-14">Epic 14: Extended ERPNext Sync</a></li>
+      </ul>
+    </li>
+    <li><strong>Phase 3 — Scale</strong>
+      <ul class="indent">
+        <li><a href="#epic-15">Epic 15: Trade Partner Portal</a></li>
+        <li><a href="#epic-16">Epic 16: Procurement, RFQ &amp; Bid Management</a></li>
+        <li><a href="#epic-17">Epic 17: Trade Compliance &amp; Eligibility</a></li>
+        <li><a href="#epic-18">Epic 18: Customer Selections &amp; Allowances</a></li>
+        <li><a href="#epic-19">Epic 19: Field Operations &amp; Offline</a></li>
+        <li><a href="#epic-20">Epic 20: Project Closeout &amp; Warranty</a></li>
+        <li><a href="#epic-21">Epic 21: Data Migration &amp; Legacy Decommission</a></li>
+      </ul>
+    </li>
+    <li><strong>Appendices</strong>
+      <ul class="indent">
+        <li><a href="#appendix-a">Appendix A: Division x Module Matrix</a></li>
+        <li><a href="#appendix-b">Appendix B: Full Role Permission Matrix</a></li>
+        <li><a href="#appendix-c">Appendix C: ERPNext Sync Entity Reference</a></li>
+        <li><a href="#appendix-d">Appendix D: Glossary of Terms</a></li>
+        <li><a href="#appendix-e">Appendix E: Status Legend &amp; Timeline</a></li>
+      </ul>
+    </li>
+  </ul>
+</div>
+
+<!-- ==================== EXECUTIVE SUMMARY ==================== -->
+<h2 id="exec-summary">Executive Summary</h2>
+
+<h3>What is KrewPact?</h3>
+<p>KrewPact is a unified platform that replaces the collection of spreadsheets, disconnected tools, and manual processes currently used across MDM Group's five divisions. It combines customer relationship management (CRM), project management, estimating, field operations, and financial tracking into a single system — all connected to ERPNext for accounting and invoicing.</p>
+
+<h3>Why Are We Building It?</h3>
+<ul>
+  <li><strong>Fragmented tools</strong> — sales info in one place, project data in another, estimates in spreadsheets. KrewPact unifies everything.</li>
+  <li><strong>No visibility</strong> — managers can't see pipeline, project status, or financials without asking multiple people. KrewPact provides real-time dashboards.</li>
+  <li><strong>Manual handoffs</strong> — when a deal closes, someone manually creates the project and re-enters data. KrewPact automates lead → estimate → contract → project flow.</li>
+  <li><strong>Division isolation</strong> — each division needs their own data space while executives see across all divisions. KrewPact's role system handles this.</li>
+</ul>
+
+<h3>MDM Group Division Structure</h3>
+<table>
+  <tr><th>Division</th><th>Focus</th></tr>
+  <tr><td><strong>MDM Contracting</strong></td><td>General contracting — commercial and institutional construction projects</td></tr>
+  <tr><td><strong>MDM Homes</strong></td><td>Residential home building and renovation</td></tr>
+  <tr><td><strong>MDM Wood</strong></td><td>Specialty woodwork — custom cabinetry, millwork, architectural wood</td></tr>
+  <tr><td><strong>MDM Electrical</strong></td><td>Electrical contracting and systems installation</td></tr>
+  <tr><td><strong>MDM Telecom</strong></td><td>Telecommunications infrastructure installation and maintenance</td></tr>
+</table>
+
+<h3>Timeline</h3>
+<table>
+  <tr><th>Phase</th><th>What's Included</th></tr>
+  <tr><td><strong>Phase 1 — Core</strong></td><td>CRM, estimating, projects, ERPNext sync, reports, notifications, Sales AI</td></tr>
+  <tr><td><strong>Phase 2 — Growth</strong></td><td>Contracts &amp; e-sign, RFIs, change orders, time/payroll, client portal, extended ERP sync</td></tr>
+  <tr><td><strong>Phase 3 — Scale</strong></td><td>Trade partner portal, procurement, offline field ops, AI chat, closeout</td></tr>
+</table>
+
+
+<!-- ==================== USER ROLES ==================== -->
+<h2 id="roles">User Roles &amp; Permissions</h2>
+
+<p>KrewPact uses 13 roles organized into internal (MDM staff) and external (clients and trade partners) categories. Every user is assigned exactly one role, and access is further scoped by division.</p>
+
+<h3>Internal Roles (9)</h3>
+<table>
+  <tr><th>Role</th><th>Plain-Language Description</th><th>Primary Access</th></tr>
+  <tr><td><strong>platform_admin</strong></td><td>System administrator with full access to everything — manages users, divisions, settings, and can see all data across all divisions.</td><td>Full system</td></tr>
+  <tr><td><strong>executive</strong></td><td>Senior leadership — can view dashboards, reports, and financials across all divisions. Approves high-value items but doesn't manage day-to-day operations.</td><td>Read-all + approvals</td></tr>
+  <tr><td><strong>operations_manager</strong></td><td>Manages operations within their division — oversees all projects, assigns resources, reviews pipeline, and ensures execution quality.</td><td>Division-wide</td></tr>
+  <tr><td><strong>project_manager</strong></td><td>Owns specific projects from estimate through completion — manages teams, schedules, milestones, budgets, and client communication.</td><td>Assigned projects + CRM</td></tr>
+  <tr><td><strong>project_coordinator</strong></td><td>Assists project managers with scheduling, documentation, coordination, and administrative tasks on assigned projects.</td><td>Assigned projects</td></tr>
+  <tr><td><strong>estimator</strong></td><td>Creates and manages estimates and proposals — works with the CRM pipeline to price opportunities and generate quotes.</td><td>Estimates + CRM pipeline</td></tr>
+  <tr><td><strong>field_supervisor</strong></td><td>On-site lead — files daily logs, updates task progress, documents site conditions, and manages field crew activities.</td><td>Assigned projects (field ops)</td></tr>
+  <tr><td><strong>accounting</strong></td><td>Manages financial aspects — reviews expenses, processes claims, monitors invoicing, and works with ERPNext finance data.</td><td>Finance + expenses</td></tr>
+  <tr><td><strong>payroll_admin</strong></td><td>Handles time entries and payroll processing — reviews timesheets, manages pay runs, integrates with ADP (future).</td><td>Payroll + time entries</td></tr>
+</table>
+
+<h3>External Roles (4)</h3>
+<table>
+  <tr><th>Role</th><th>Plain-Language Description</th><th>Primary Access</th></tr>
+  <tr><td><strong>client_owner</strong></td><td>The client — can view their projects, approve change orders, review progress, and communicate with the project team.</td><td>Own projects</td></tr>
+  <tr><td><strong>client_delegate</strong></td><td>Someone the client authorizes (e.g., their architect or consultant) — limited access to specific project aspects as delegated by the client owner.</td><td>Delegated access</td></tr>
+  <tr><td><strong>trade_partner_admin</strong></td><td>Admin for a trade partner company (subcontractor) — manages their organization's profile, views assigned scope, submits bids.</td><td>Partner organization</td></tr>
+  <tr><td><strong>trade_partner_user</strong></td><td>Individual at a trade partner company — can view and update only the tasks and documents specifically assigned to them.</td><td>Assigned scope only</td></tr>
+</table>
+
+<!-- Role Division Notes -->
+<table class="division-notes">
+  <caption>Division Notes — Roles &amp; Permissions</caption>
+  <tr><th>Division</th><th>Specific Needs / Custom Workflows</th><th>Priority</th><th>Notes</th></tr>
+  <tr><td>MDM Contracting</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Homes</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Wood</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Electrical</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Telecom</td><td></td><td></td><td></td></tr>
+</table>
+
+<!-- ==================== PHASE 0 ==================== -->
+<h2>Phase 1 — Core</h2>
+<p>The foundation of KrewPact — identity, CRM, estimating, project management, ERPNext sync, notifications, and reporting.</p>
+
+<!-- EPIC 1 -->
+<h3 id="epic-1" class="epic-header">Epic 1: Identity, Access &amp; Organization <span class="badge badge-core">CORE</span></h3>
+<p>The foundation layer — handles who can log in, what they can see, and which division they belong to.</p>
+
+<div class="feature">
+  <h4>1.1 Authentication (Clerk SSO)</h4>
+  <p>Users sign in with their email or Microsoft 365 account via Clerk. Most MDM staff already have Microsoft accounts in one of four M365 groups: <strong>MDM Group</strong>, <strong>MDM Contracting</strong>, <strong>MDM Wood</strong>, or <strong>MDM Telecom</strong>. If you have an M365 account, you can sign into KrewPact with one click. For team members without Microsoft accounts (primarily some Telecom field crews), KrewPact supports email + password login as an alternative.</p>
+  <p class="meta-row"><strong>Roles:</strong> All users &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>1.2 Role-Based Access Control (RBAC)</h4>
+  <p>Each user is assigned one of 13 roles (see Roles section above). The system automatically shows/hides features and data based on your role. For example, a field_supervisor sees daily logs and tasks but not financial reports; an executive sees dashboards across all divisions.</p>
+  <p class="meta-row"><strong>Roles:</strong> platform_admin manages assignments &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>1.3 Division Management</h4>
+  <p>MDM Group has 5 divisions, each operating as a semi-independent business unit. KrewPact keeps division data separate — a project manager in MDM Homes only sees Homes data, while an executive or platform_admin can view across all divisions.</p>
+  <p class="meta-row"><strong>Roles:</strong> platform_admin, executive (cross-division) &nbsp;|&nbsp; <strong>Divisions:</strong> All 5</p>
+</div>
+
+<table class="division-notes">
+  <caption>Division Notes — Identity, Access &amp; Organization</caption>
+  <tr><th>Division</th><th>Specific Needs / Custom Workflows</th><th>Priority</th><th>Notes</th></tr>
+  <tr><td>MDM Contracting</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Homes</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Wood</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Electrical</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Telecom</td><td></td><td></td><td></td></tr>
+</table>
+
+<!-- EPIC 2 -->
+<h3 id="epic-2" class="epic-header">Epic 2: CRM &amp; Sales Pipeline <span class="badge badge-core">CORE</span></h3>
+<p>The complete sales engine — from first contact to closed deal. Includes AI-powered lead scoring, automated outreach, and data enrichment.</p>
+
+<div class="feature">
+  <h4>2.1 Lead Management</h4>
+  <p>Capture new business opportunities as "leads." Each lead tracks the company name, contact info, source (website, referral, cold outreach), and progresses through 6 stages: <strong>new &rarr; qualified &rarr; estimating &rarr; proposal_sent &rarr; won &rarr; lost</strong>. Stage history is tracked so you can see exactly when each transition happened.</p>
+  <p class="meta-row"><strong>Roles:</strong> project_manager, estimator, operations_manager, executive, platform_admin &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>2.2 Accounts &amp; Contacts</h4>
+  <p>Maintain a database of companies (accounts) and the people at those companies (contacts). Accounts can be clients, prospects, or trade partners. Each account can have multiple contacts with different roles. Links to leads, opportunities, and projects.</p>
+  <p class="meta-row"><strong>Roles:</strong> project_manager, estimator, operations_manager, executive, platform_admin &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>2.3 Opportunity Pipeline (7 Stages)</h4>
+  <p>When a lead is "won," it converts to an opportunity — a more detailed sales record. Opportunities progress through 7 stages: <strong>intake &rarr; site_visit &rarr; estimating &rarr; proposal &rarr; negotiation &rarr; contracted &rarr; closed_lost</strong>. Each stage change is logged with timestamps and notes.</p>
+  <p class="meta-row"><strong>Roles:</strong> project_manager, estimator, operations_manager, executive &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>2.4 Activity Logging</h4>
+  <p>Record every interaction with a lead or client — phone calls, emails, meetings, site visits, notes. Activities are linked to the lead/opportunity and visible to the whole sales team so nothing falls through the cracks.</p>
+  <p class="meta-row"><strong>Roles:</strong> All internal roles with CRM access &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>2.5 Lead Scoring (AI-Powered)</h4>
+  <p>Every lead gets an automatic score based on three factors:</p>
+  <ul>
+    <li><strong>Fit Score</strong> — Does this company match our ideal customer profile? (company size, industry, location)</li>
+    <li><strong>Intent Score</strong> — Are they showing buying signals? (engagement, website visits, content downloads)</li>
+    <li><strong>Engagement Score</strong> — Are they responding to our outreach? (email opens, replies, meetings booked)</li>
+  </ul>
+  <p>A composite score helps the sales team prioritize which leads to focus on. Higher scores get faster attention.</p>
+  <p class="meta-row"><strong>Roles:</strong> Automatic (visible to sales team) &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>2.6 Outreach Sequences</h4>
+  <p>Automated multi-step outreach campaigns. Set up a sequence like: "Send intro email &rarr; wait 3 days &rarr; send follow-up &rarr; wait 5 days &rarr; LinkedIn connection." The system executes each step automatically. Sequences can be paused, edited, or stopped at any time.</p>
+  <p class="meta-row"><strong>Roles:</strong> project_manager, estimator, operations_manager &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>2.7 Enrichment Pipeline</h4>
+  <p>Automatically fills in missing lead data using a "waterfall" of data providers: tries Apollo first, then Clearbit, then LinkedIn, then Google. Finds company size, industry, contact emails, phone numbers, and social profiles without manual research.</p>
+  <p class="meta-row"><strong>Roles:</strong> Automatic (background process) &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>2.8 Dashboard &amp; Reports</h4>
+  <p>Visual dashboards showing: pipeline value by stage, lead sources breakdown, conversion rates, team activity metrics. Filterable by division, date range, and assigned user.</p>
+  <p class="meta-row"><strong>Roles:</strong> operations_manager, executive, platform_admin &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<table class="division-notes">
+  <caption>Division Notes — CRM &amp; Sales Pipeline</caption>
+  <tr><th>Division</th><th>Specific Needs / Custom Workflows</th><th>Priority</th><th>Notes</th></tr>
+  <tr><td>MDM Contracting</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Homes</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Wood</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Electrical</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Telecom</td><td></td><td></td><td></td></tr>
+</table>
+
+<!-- EPIC 3 -->
+<h3 id="epic-3" class="epic-header">Epic 3: Estimating Engine <span class="badge badge-core">CORE</span></h3>
+<p>Build detailed cost estimates for opportunities. Estimates sync to ERPNext as Quotations for accounting.</p>
+
+<div class="feature">
+  <h4>3.1 Estimate Builder</h4>
+  <p>Create estimates from scratch or from templates. Each estimate is linked to an opportunity and includes a description, total, margin calculations, and terms. Estimates can be duplicated for similar projects.</p>
+  <p class="meta-row"><strong>Roles:</strong> estimator, project_manager, operations_manager &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>3.2 Line Items &amp; Sections</h4>
+  <p>Break estimates into sections (e.g., "Demolition," "Framing," "Electrical") with individual line items in each section. Each line item has quantity, unit cost, markup, and extended price. Sections subtotal automatically.</p>
+  <p class="meta-row"><strong>Roles:</strong> estimator, project_manager &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>3.3 Version History &amp; Comparison</h4>
+  <p>Every time an estimate is revised, the previous version is preserved. You can compare any two versions side-by-side to see what changed — useful for client negotiations and audit trails.</p>
+  <p class="meta-row"><strong>Roles:</strong> estimator, project_manager, executive &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<table class="division-notes">
+  <caption>Division Notes — Estimating Engine</caption>
+  <tr><th>Division</th><th>Specific Needs / Custom Workflows</th><th>Priority</th><th>Notes</th></tr>
+  <tr><td>MDM Contracting</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Homes</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Wood</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Electrical</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Telecom</td><td></td><td></td><td></td></tr>
+</table>
+
+<!-- EPIC 4 -->
+<h3 id="epic-4" class="epic-header">Epic 4: Contracts &amp; E-Sign <span class="badge badge-growth">GROWTH</span></h3>
+<p>Assemble contracts from approved estimates and get them signed electronically.</p>
+
+<div class="feature">
+  <h4>4.1 Contract Assembly</h4>
+  <p>Once an estimate is approved, auto-generate a contract document pulling in the estimate details, terms and conditions, scope of work, and insurance requirements. Uses templates specific to each division.</p>
+  <p class="meta-row"><strong>Roles:</strong> project_manager, estimator, operations_manager &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>4.2 BoldSign E-Signature</h4>
+  <p>Send contracts for electronic signature via BoldSign. Track signature status in real-time — see who has signed and who hasn't. Signed contracts are stored permanently and linked to the project.</p>
+  <p class="meta-row"><strong>Roles:</strong> project_manager, client_owner &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>4.3 Contract Change Lifecycle</h4>
+  <p>When a project scope changes, create a contract amendment that references the original. Track change order value against original contract value. Requires re-signature for material changes.</p>
+  <p class="meta-row"><strong>Roles:</strong> project_manager, executive (approval) &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<table class="division-notes">
+  <caption>Division Notes — Contracts &amp; E-Sign</caption>
+  <tr><th>Division</th><th>Specific Needs / Custom Workflows</th><th>Priority</th><th>Notes</th></tr>
+  <tr><td>MDM Contracting</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Homes</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Wood</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Electrical</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Telecom</td><td></td><td></td><td></td></tr>
+</table>
+
+<!-- EPIC 5 -->
+<h3 id="epic-5" class="epic-header">Epic 5: Project Setup <span class="badge badge-core">CORE</span></h3>
+<p>Once a contract is signed, create and configure the project. Assign the team, set milestones, and establish baselines.</p>
+
+<div class="feature">
+  <h4>5.1 Project Creation</h4>
+  <p>Create projects linked to the contracted opportunity. Project details include: name, client, division, address, start/end dates, budget (pulled from estimate), and project type. Projects sync to ERPNext automatically.</p>
+  <p class="meta-row"><strong>Roles:</strong> project_manager, operations_manager &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>5.2 Team Assignment</h4>
+  <p>Assign team members to the project with specific roles. The project manager selects from available staff within their division. Team members get notified of their assignment and can see the project in their dashboard.</p>
+  <p class="meta-row"><strong>Roles:</strong> project_manager, operations_manager &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>5.3 Milestones &amp; Baselines</h4>
+  <p>Define major project milestones (e.g., "Foundation Complete," "Framing Inspection," "Substantial Completion"). Set baseline dates that are locked — actual dates are tracked against baselines to show schedule variance.</p>
+  <p class="meta-row"><strong>Roles:</strong> project_manager, project_coordinator &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<table class="division-notes">
+  <caption>Division Notes — Project Setup</caption>
+  <tr><th>Division</th><th>Specific Needs / Custom Workflows</th><th>Priority</th><th>Notes</th></tr>
+  <tr><td>MDM Contracting</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Homes</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Wood</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Electrical</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Telecom</td><td></td><td></td><td></td></tr>
+</table>
+
+<!-- EPIC 6 -->
+<h3 id="epic-6" class="epic-header">Epic 6: Project Execution <span class="badge badge-core">CORE</span></h3>
+<p>Day-to-day project management — tasks, scheduling, field logs, and expense tracking.</p>
+
+<div class="feature">
+  <h4>6.1 Task Management</h4>
+  <p>Break projects into tasks with assignees, due dates, priorities, and status tracking. Tasks can be organized under milestones. Field supervisors update task progress from the field; project managers monitor completion from the dashboard.</p>
+  <p class="meta-row"><strong>Roles:</strong> project_manager, project_coordinator, field_supervisor &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>6.2 Calendar &amp; Scheduling</h4>
+  <p>Visual calendar showing project events, milestones, deadlines, and scheduled activities. Create events linked to projects. View by day, week, or month. Filterable by project or team member.</p>
+  <p class="meta-row"><strong>Roles:</strong> All project-related roles &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>6.3 Daily Logs / Site Diary</h4>
+  <p>Field supervisors file daily logs documenting: weather conditions, crew count, work performed, materials used, equipment on site, safety incidents, and visitor log. Creates an auditable record of what happened on site each day.</p>
+  <p class="meta-row"><strong>Roles:</strong> field_supervisor, project_coordinator, project_manager &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>6.4 Expenses</h4>
+  <p>Submit and track project expenses with receipt photos, categories, and amounts. Expenses go through an approval workflow: submitted &rarr; reviewed &rarr; approved/rejected. Approved expenses can be grouped into expense claims for reimbursement. Links to ERPNext for accounting.</p>
+  <p class="meta-row"><strong>Roles:</strong> All internal roles (submit); accounting, project_manager (approve) &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<table class="division-notes">
+  <caption>Division Notes — Project Execution</caption>
+  <tr><th>Division</th><th>Specific Needs / Custom Workflows</th><th>Priority</th><th>Notes</th></tr>
+  <tr><td>MDM Contracting</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Homes</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Wood</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Electrical</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Telecom</td><td></td><td></td><td></td></tr>
+</table>
+
+<!-- EPIC 7 -->
+<h3 id="epic-7" class="epic-header">Epic 7: ERPNext Integration (Core) <span class="badge badge-core">CORE</span></h3>
+<p>Bidirectional sync between KrewPact and ERPNext — the accounting/ERP system. This means data entered in KrewPact automatically appears in ERPNext (and vice versa for some entities), eliminating double data entry.</p>
+
+<div class="info-box">
+  <p><strong>How it works:</strong> When you create or update an account, opportunity, estimate, or project in KrewPact, the change is queued and sent to ERPNext via a background worker (BullMQ). ERPNext handles accounting, invoicing, and financial reporting. KrewPact reads invoices back from ERPNext for display.</p>
+</div>
+
+<div class="feature">
+  <h4>What Syncs</h4>
+  <table>
+    <tr><th>KrewPact Entity</th><th>ERPNext DocType</th><th>Direction</th><th>When</th></tr>
+    <tr><td>Account</td><td>Customer</td><td>KP &rarr; ERPNext</td><td>On account create/update</td></tr>
+    <tr><td>Contact</td><td>Contact</td><td>KP &rarr; ERPNext</td><td>On contact create/update</td></tr>
+    <tr><td>Address</td><td>Address</td><td>KP &rarr; ERPNext</td><td>On address create/update</td></tr>
+    <tr><td>Opportunity</td><td>Opportunity</td><td>KP &rarr; ERPNext</td><td>On opportunity create/update</td></tr>
+    <tr><td>Estimate</td><td>Quotation</td><td>KP &rarr; ERPNext</td><td>On estimate finalize</td></tr>
+    <tr><td>Estimate Line Items</td><td>Quotation Items</td><td>KP &rarr; ERPNext</td><td>With estimate</td></tr>
+    <tr><td>Contracted Opportunity</td><td>Sales Order</td><td>KP &rarr; ERPNext</td><td>On contract execution</td></tr>
+    <tr><td>Sales Order Lines</td><td>Sales Order Items</td><td>KP &rarr; ERPNext</td><td>With sales order</td></tr>
+    <tr><td>Project</td><td>Project</td><td>Bidirectional</td><td>On create/update from either side</td></tr>
+    <tr><td>Task</td><td>Task</td><td>Bidirectional</td><td>On create/update from either side</td></tr>
+    <tr><td>Invoice (read-only)</td><td>Sales Invoice</td><td>ERPNext &rarr; KP</td><td>Periodic sync</td></tr>
+    <tr><td>Team Member</td><td>Employee</td><td>KP &rarr; ERPNext</td><td>On team assignment</td></tr>
+  </table>
+</div>
+
+<table class="division-notes">
+  <caption>Division Notes — ERPNext Integration</caption>
+  <tr><th>Division</th><th>Specific Needs / Custom Workflows</th><th>Priority</th><th>Notes</th></tr>
+  <tr><td>MDM Contracting</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Homes</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Wood</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Electrical</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Telecom</td><td></td><td></td><td></td></tr>
+</table>
+
+<!-- EPIC 8 -->
+<h3 id="epic-8" class="epic-header">Epic 8: Notifications &amp; Email <span class="badge badge-core">CORE</span></h3>
+<p>Keep everyone informed with automatic notifications and email capabilities.</p>
+
+<div class="feature">
+  <h4>8.1 Notification Engine</h4>
+  <p>A central engine that routes notifications through the right channel based on the event type and user preferences. Supports in-app notifications (bell icon with real-time updates), email via Resend, push notifications, and SMS.</p>
+  <p><strong>Triggers include:</strong> lead assigned, opportunity stage change, task assigned, expense submitted, daily log filed, estimate ready for review, and more.</p>
+  <p class="meta-row"><strong>Roles:</strong> All users receive relevant notifications &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>8.2 Email (Resend)</h4>
+  <p>Send emails directly from KrewPact — both automated (from sequences and notifications) and manual (compose and send). Includes email templates for common messages. Powered by Resend API for reliable delivery.</p>
+  <p class="meta-row"><strong>Roles:</strong> project_manager, estimator, operations_manager &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<table class="division-notes">
+  <caption>Division Notes — Notifications &amp; Email</caption>
+  <tr><th>Division</th><th>Specific Needs / Custom Workflows</th><th>Priority</th><th>Notes</th></tr>
+  <tr><td>MDM Contracting</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Homes</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Wood</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Electrical</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Telecom</td><td></td><td></td><td></td></tr>
+</table>
+
+<!-- EPIC 9 -->
+<h3 id="epic-9" class="epic-header">Epic 9: Dashboard &amp; Reports <span class="badge badge-core">CORE</span></h3>
+<p>At-a-glance visibility into what matters most. Dashboards for quick metrics; reports for deeper analysis.</p>
+
+<div class="feature">
+  <h4>9.1 Main Dashboard</h4>
+  <p>Personalized landing page with KPIs relevant to your role: pipeline value, active projects, upcoming deadlines, pending approvals, team activity. Quick-action buttons for common tasks.</p>
+  <p class="meta-row"><strong>Roles:</strong> All internal roles (customized per role) &nbsp;|&nbsp; <strong>Divisions:</strong> Filtered by user's division</p>
+</div>
+
+<div class="feature">
+  <h4>9.2 Reports</h4>
+  <p>Pre-built reports including: lead sources analysis (where are leads coming from?), pipeline views (value by stage), conversion funnels, and activity summaries. Filterable by date range, division, and user.</p>
+  <p class="meta-row"><strong>Roles:</strong> operations_manager, executive, platform_admin &nbsp;|&nbsp; <strong>Divisions:</strong> All (with division filter)</p>
+</div>
+
+<table class="division-notes">
+  <caption>Division Notes — Dashboard &amp; Reports</caption>
+  <tr><th>Division</th><th>Specific Needs / Custom Workflows</th><th>Priority</th><th>Notes</th></tr>
+  <tr><td>MDM Contracting</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Homes</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Wood</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Electrical</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Telecom</td><td></td><td></td><td></td></tr>
+</table>
+
+<!-- ==================== PHASE 1 ==================== -->
+<h2>Phase 2 — Growth</h2>
+<p>Expansion features that extend the platform with contracts, document control, change management, time tracking, and external access.</p>
+
+<!-- EPIC 10 -->
+<h3 id="epic-10" class="epic-header">Epic 10: RFIs, Submittals &amp; Document Control <span class="badge badge-growth">GROWTH</span></h3>
+<p>Formal document management for construction projects — track requests for information (RFIs), shop drawing submittals, and maintain organized project document libraries.</p>
+
+<div class="feature">
+  <h4>10.1 Request for Information (RFI)</h4>
+  <p>When something in the plans is unclear, create an RFI to formally ask the architect/engineer for clarification. Track who asked, who answered, the response, and link it to the relevant drawing or spec section. Automatic numbering and logging.</p>
+  <p class="meta-row"><strong>Roles:</strong> project_manager, project_coordinator, field_supervisor &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>10.2 Submittals</h4>
+  <p>Submit product data, shop drawings, samples, and material certifications for architect/engineer review. Track submission dates, review status (approved, approved with comments, revise and resubmit, rejected), and maintain a submittal log.</p>
+  <p class="meta-row"><strong>Roles:</strong> project_manager, project_coordinator &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>10.3 Document Library</h4>
+  <p>Organized file storage per project with folders for drawings, specs, submittals, photos, and correspondence. Basic version tracking (upload a new version, previous versions are preserved). Search across all project documents.</p>
+  <p class="meta-row"><strong>Roles:</strong> All project team members &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<table class="division-notes">
+  <caption>Division Notes — RFIs, Submittals &amp; Document Control</caption>
+  <tr><th>Division</th><th>Specific Needs / Custom Workflows</th><th>Priority</th><th>Notes</th></tr>
+  <tr><td>MDM Contracting</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Homes</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Wood</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Electrical</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Telecom</td><td></td><td></td><td></td></tr>
+</table>
+
+<!-- EPIC 11 -->
+<h3 id="epic-11" class="epic-header">Epic 11: Change Order Management <span class="badge badge-growth">GROWTH</span></h3>
+<p>Handle scope changes formally — when the client requests something different from the original contract, create a change order to document the change, get approval, and adjust the budget.</p>
+
+<div class="feature">
+  <h4>11.1 Change Order Creation</h4>
+  <p>Create a change order linked to the project with: description of change, reason, cost impact (add/deduct), schedule impact, and supporting documents. Auto-calculates revised contract value.</p>
+  <p class="meta-row"><strong>Roles:</strong> project_manager, estimator &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>11.2 Approval Workflow</h4>
+  <p>Change orders go through a structured approval: PM creates &rarr; operations_manager reviews &rarr; client approves &rarr; executive signs off (for high-value changes). Status tracking at each step with automatic notifications.</p>
+  <p class="meta-row"><strong>Roles:</strong> project_manager, operations_manager, executive, client_owner &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>11.3 Change Order Log</h4>
+  <p>Running log of all change orders on a project with cumulative cost/schedule impact. Shows original contract value, total change orders, and revised contract value at a glance.</p>
+  <p class="meta-row"><strong>Roles:</strong> project_manager, accounting, executive &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<table class="division-notes">
+  <caption>Division Notes — Change Order Management</caption>
+  <tr><th>Division</th><th>Specific Needs / Custom Workflows</th><th>Priority</th><th>Notes</th></tr>
+  <tr><td>MDM Contracting</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Homes</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Wood</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Electrical</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Telecom</td><td></td><td></td><td></td></tr>
+</table>
+
+<!-- EPIC 12 -->
+<h3 id="epic-12" class="epic-header">Epic 12: Time, Payroll &amp; Expense <span class="badge badge-growth">GROWTH</span></h3>
+<p>Track employee hours, integrate with ADP payroll, and extend the expense system with more advanced workflows.</p>
+
+<div class="feature">
+  <h4>12.1 Time Entry</h4>
+  <p>Employees log daily hours by project and task. Field workers can log time from mobile. Supervisors review and approve time entries weekly. Tracks regular hours, overtime, and different pay classifications.</p>
+  <p class="meta-row"><strong>Roles:</strong> All internal roles (log); field_supervisor, project_manager (approve) &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>12.2 ADP Payroll Integration</h4>
+  <p>Approved time entries are exported to ADP for payroll processing. Mapping between KrewPact projects/tasks and ADP cost codes. Eliminates manual timesheet data entry into payroll.</p>
+  <p class="meta-row"><strong>Roles:</strong> payroll_admin &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>12.3 Advanced Expense Workflows</h4>
+  <p>Extend existing expense system with: per diem rules, mileage tracking, receipt OCR (automatic data extraction from photos), and multi-level approval chains for high-value expenses.</p>
+  <p class="meta-row"><strong>Roles:</strong> All internal roles (submit); accounting (process) &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<table class="division-notes">
+  <caption>Division Notes — Time, Payroll &amp; Expense</caption>
+  <tr><th>Division</th><th>Specific Needs / Custom Workflows</th><th>Priority</th><th>Notes</th></tr>
+  <tr><td>MDM Contracting</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Homes</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Wood</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Electrical</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Telecom</td><td></td><td></td><td></td></tr>
+</table>
+
+<!-- EPIC 13 -->
+<h3 id="epic-13" class="epic-header">Epic 13: Client Portal <span class="badge badge-growth">GROWTH</span></h3>
+<p>Give clients secure access to their project information — progress, documents, approvals — without needing to call or email your team.</p>
+
+<div class="feature">
+  <h4>13.1 Client Dashboard</h4>
+  <p>Clients log in and see their active projects with progress summaries, upcoming milestones, recent photos, and any items pending their action (change order approvals, selection choices).</p>
+  <p class="meta-row"><strong>Roles:</strong> client_owner, client_delegate &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>13.2 Document Sharing</h4>
+  <p>Share specific documents with clients — drawings, contracts, progress photos, inspection reports. Clients can download but not modify. Track what the client has viewed.</p>
+  <p class="meta-row"><strong>Roles:</strong> client_owner, client_delegate (view); project_manager (share) &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>13.3 Client Communication</h4>
+  <p>In-app messaging between clients and project team. Creates a searchable record of all client communication tied to the project. Reduces reliance on scattered emails and phone calls.</p>
+  <p class="meta-row"><strong>Roles:</strong> client_owner, client_delegate, project_manager &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<table class="division-notes">
+  <caption>Division Notes — Client Portal</caption>
+  <tr><th>Division</th><th>Specific Needs / Custom Workflows</th><th>Priority</th><th>Notes</th></tr>
+  <tr><td>MDM Contracting</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Homes</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Wood</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Electrical</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Telecom</td><td></td><td></td><td></td></tr>
+</table>
+
+<!-- EPIC 14 -->
+<h3 id="epic-14" class="epic-header">Epic 14: Extended ERPNext Sync <span class="badge badge-growth">GROWTH</span></h3>
+<p>Expand the ERPNext integration beyond the core 12 mappings to cover more business processes.</p>
+
+<div class="feature">
+  <h4>14.1 Purchase Orders &amp; Receipts</h4>
+  <p>Sync purchase orders from KrewPact to ERPNext for procurement tracking. When materials are received on site, log the receipt and sync back to ERPNext for accounts payable.</p>
+  <p class="meta-row"><strong>Roles:</strong> project_manager, accounting &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>14.2 Progress Billing</h4>
+  <p>Automate progress billing milestones — when a milestone is marked complete in KrewPact, trigger the creation of a Sales Invoice in ERPNext for the milestone amount. Track billed vs unbilled amounts.</p>
+  <p class="meta-row"><strong>Roles:</strong> project_manager, accounting &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>14.3 Financial Dashboards</h4>
+  <p>Pull real-time financial data from ERPNext into KrewPact dashboards — project profitability, AR aging, payment status, cost vs budget analysis. Executives see cross-division financial health.</p>
+  <p class="meta-row"><strong>Roles:</strong> accounting, executive, operations_manager &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<table class="division-notes">
+  <caption>Division Notes — Extended ERPNext Sync</caption>
+  <tr><th>Division</th><th>Specific Needs / Custom Workflows</th><th>Priority</th><th>Notes</th></tr>
+  <tr><td>MDM Contracting</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Homes</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Wood</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Electrical</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Telecom</td><td></td><td></td><td></td></tr>
+</table>
+
+<!-- ==================== PHASE 2 ==================== -->
+<h2>Phase 3 — Scale</h2>
+<p>Advanced features for large-scale operations — trade partner portals, procurement, offline field work, and legacy system migration.</p>
+
+<!-- EPIC 15 -->
+<h3 id="epic-15" class="epic-header">Epic 15: Trade Partner Portal <span class="badge badge-scale">SCALE</span></h3>
+<p>Give subcontractors and trade partners secure access to manage their scope, submit bids, and coordinate with project teams.</p>
+
+<div class="feature">
+  <h4>15.1 Partner Registration &amp; Profile</h4>
+  <p>Trade partners self-register and maintain their company profile: trades/specialties, insurance certificates, bonding capacity, safety records, and contact information. Profiles are reviewed and approved by MDM before access is granted.</p>
+  <p class="meta-row"><strong>Roles:</strong> trade_partner_admin (manage); operations_manager (approve) &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>15.2 Scope Assignment &amp; Coordination</h4>
+  <p>Assign specific project scope to trade partners. They see their assigned tasks, relevant drawings, and schedule. Can update progress and flag issues directly in the system.</p>
+  <p class="meta-row"><strong>Roles:</strong> trade_partner_admin, trade_partner_user, project_manager &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>15.3 Partner Communication</h4>
+  <p>In-app communication between trade partners and project teams. Formal notices (delay notices, backcharge notifications) are logged and timestamped.</p>
+  <p class="meta-row"><strong>Roles:</strong> trade_partner_admin, trade_partner_user, project_manager &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<table class="division-notes">
+  <caption>Division Notes — Trade Partner Portal</caption>
+  <tr><th>Division</th><th>Specific Needs / Custom Workflows</th><th>Priority</th><th>Notes</th></tr>
+  <tr><td>MDM Contracting</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Homes</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Wood</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Electrical</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Telecom</td><td></td><td></td><td></td></tr>
+</table>
+
+<!-- EPIC 16 -->
+<h3 id="epic-16" class="epic-header">Epic 16: Procurement, RFQ &amp; Bid Management <span class="badge badge-scale">SCALE</span></h3>
+<p>Manage the process of getting quotes from subcontractors and suppliers — from request to award.</p>
+
+<div class="feature">
+  <h4>16.1 Request for Quotation (RFQ)</h4>
+  <p>Create RFQs for specific scope packages and send to multiple trade partners. Include scope descriptions, drawings, deadlines, and qualification requirements. Track who has received, viewed, and responded.</p>
+  <p class="meta-row"><strong>Roles:</strong> estimator, project_manager &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>16.2 Bid Comparison</h4>
+  <p>Compare bids from multiple trade partners side-by-side: price, scope inclusions/exclusions, schedule, qualifications. Generate a bid comparison report for decision-making.</p>
+  <p class="meta-row"><strong>Roles:</strong> estimator, project_manager, operations_manager &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>16.3 Award &amp; Subcontract</h4>
+  <p>Award the bid to the selected trade partner, generating a subcontract linked to the project budget. Track subcontract value, progress billing, and holdback.</p>
+  <p class="meta-row"><strong>Roles:</strong> project_manager, operations_manager &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>16.4 Barcode &amp; Inventory Scanning</h4>
+  <p>Scan barcodes on materials and equipment using mobile device cameras or handheld scanners. Track inventory receiving, material consumption per project, and warehouse stock levels. Scanned items link to ERPNext inventory records for real-time stock visibility. Supports standard barcodes (UPC, EAN, Code 128) and QR codes for custom asset tagging.</p>
+  <p class="meta-row"><strong>Roles:</strong> field_supervisor, project_coordinator, project_manager, operations_manager &nbsp;|&nbsp; <strong>Divisions:</strong> All (especially Wood &amp; Contracting)</p>
+</div>
+
+<table class="division-notes">
+  <caption>Division Notes — Procurement, RFQ &amp; Bid Management</caption>
+  <tr><th>Division</th><th>Specific Needs / Custom Workflows</th><th>Priority</th><th>Notes</th></tr>
+  <tr><td>MDM Contracting</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Homes</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Wood</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Electrical</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Telecom</td><td></td><td></td><td></td></tr>
+</table>
+
+<!-- EPIC 17 -->
+<h3 id="epic-17" class="epic-header">Epic 17: Trade Compliance &amp; Eligibility <span class="badge badge-scale">SCALE</span></h3>
+<p>Ensure trade partners meet all regulatory and project-specific requirements before they start work.</p>
+
+<div class="feature">
+  <h4>17.1 Insurance &amp; Certificate Tracking</h4>
+  <p>Track trade partner insurance certificates (CGL, workers comp, auto, professional liability) with expiry dates. Automatic alerts when certificates are expiring. Block work assignment if insurance is lapsed.</p>
+  <p class="meta-row"><strong>Roles:</strong> operations_manager, project_manager &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>17.2 Safety Qualification</h4>
+  <p>Track safety records, WSIB clearance, COR certification, and site-specific safety orientation completion. Generate compliance reports for project safety requirements.</p>
+  <p class="meta-row"><strong>Roles:</strong> operations_manager, field_supervisor &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<table class="division-notes">
+  <caption>Division Notes — Trade Compliance &amp; Eligibility</caption>
+  <tr><th>Division</th><th>Specific Needs / Custom Workflows</th><th>Priority</th><th>Notes</th></tr>
+  <tr><td>MDM Contracting</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Homes</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Wood</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Electrical</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Telecom</td><td></td><td></td><td></td></tr>
+</table>
+
+<!-- EPIC 18 -->
+<h3 id="epic-18" class="epic-header">Epic 18: Customer Selections &amp; Allowances <span class="badge badge-scale">SCALE</span></h3>
+<p>For residential projects (primarily MDM Homes) — manage the process where homeowners select finishes, fixtures, and options.</p>
+
+<div class="feature">
+  <h4>18.1 Selection Sheets</h4>
+  <p>Create selection categories (flooring, countertops, lighting, fixtures, paint colors) with options and pricing. Clients browse options and make selections through the client portal. Track deadlines for each selection to avoid construction delays.</p>
+  <p class="meta-row"><strong>Roles:</strong> project_manager, client_owner &nbsp;|&nbsp; <strong>Divisions:</strong> Primarily MDM Homes</p>
+</div>
+
+<div class="feature">
+  <h4>18.2 Allowance Management</h4>
+  <p>Track allowances in the contract (e.g., "$5,000 flooring allowance") against actual selections. Show overages/underages automatically. Client sees the financial impact of their choices in real-time.</p>
+  <p class="meta-row"><strong>Roles:</strong> project_manager, client_owner, accounting &nbsp;|&nbsp; <strong>Divisions:</strong> Primarily MDM Homes</p>
+</div>
+
+<table class="division-notes">
+  <caption>Division Notes — Customer Selections &amp; Allowances</caption>
+  <tr><th>Division</th><th>Specific Needs / Custom Workflows</th><th>Priority</th><th>Notes</th></tr>
+  <tr><td>MDM Contracting</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Homes</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Wood</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Electrical</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Telecom</td><td></td><td></td><td></td></tr>
+</table>
+
+<!-- EPIC 19 -->
+<h3 id="epic-19" class="epic-header">Epic 19: Field Operations &amp; Offline <span class="badge badge-scale">SCALE</span></h3>
+<p>Make KrewPact work in the field — on construction sites with spotty internet, on mobile devices, in harsh conditions.</p>
+
+<div class="feature">
+  <h4>19.1 Progressive Web App (PWA)</h4>
+  <p>Mobile-optimized interface that works offline. Field crews can log time, file daily reports, take photos, and update task progress without internet. Data syncs automatically when connectivity returns.</p>
+  <p class="meta-row"><strong>Roles:</strong> field_supervisor, project_coordinator &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>19.2 Offline-First Sync</h4>
+  <p>Conflict resolution for when multiple people edit the same data offline. Uses "last writer wins" for simple fields and manual merge for complex conflicts. Queue visualizer shows pending sync items.</p>
+  <p class="meta-row"><strong>Roles:</strong> All field users &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>19.3 Photo &amp; Document Capture</h4>
+  <p>Camera integration for site photos with automatic GPS tagging and timestamp. Annotate photos with markup (arrows, text, highlights). Attach to daily logs, tasks, or RFIs directly from the field.</p>
+  <p class="meta-row"><strong>Roles:</strong> field_supervisor, project_coordinator &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<table class="division-notes">
+  <caption>Division Notes — Field Operations &amp; Offline</caption>
+  <tr><th>Division</th><th>Specific Needs / Custom Workflows</th><th>Priority</th><th>Notes</th></tr>
+  <tr><td>MDM Contracting</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Homes</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Wood</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Electrical</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Telecom</td><td></td><td></td><td></td></tr>
+</table>
+
+<!-- EPIC 20 -->
+<h3 id="epic-20" class="epic-header">Epic 20: Project Closeout &amp; Warranty <span class="badge badge-scale">SCALE</span></h3>
+<p>Structured process for closing out completed projects and managing warranty obligations.</p>
+
+<div class="feature">
+  <h4>20.1 Punch Lists</h4>
+  <p>Create deficiency lists during final inspections. Each punch item tracks: location, description, responsible party, photo evidence, and completion status. Generate punch list reports for client sign-off.</p>
+  <p class="meta-row"><strong>Roles:</strong> field_supervisor, project_manager, client_owner &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>20.2 Substantial Completion</h4>
+  <p>Formal milestone marking when the project is ready for use. Triggers: final inspection scheduling, occupancy permit tracking, lien period start, and holdback release scheduling.</p>
+  <p class="meta-row"><strong>Roles:</strong> project_manager, operations_manager &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>20.3 Warranty Tracking</h4>
+  <p>Track warranty obligations by project: what's covered, duration (1-year general, 2-year mechanical, etc.), and warranty claims. Automatic reminders before warranty expiry for proactive follow-up.</p>
+  <p class="meta-row"><strong>Roles:</strong> project_manager, operations_manager &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>20.4 Final Documentation</h4>
+  <p>Closeout document package: as-built drawings, O&amp;M manuals, warranty certificates, lien releases, final inspection reports. Checklist ensures nothing is missed before closing the project file.</p>
+  <p class="meta-row"><strong>Roles:</strong> project_manager, project_coordinator &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<table class="division-notes">
+  <caption>Division Notes — Project Closeout &amp; Warranty</caption>
+  <tr><th>Division</th><th>Specific Needs / Custom Workflows</th><th>Priority</th><th>Notes</th></tr>
+  <tr><td>MDM Contracting</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Homes</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Wood</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Electrical</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Telecom</td><td></td><td></td><td></td></tr>
+</table>
+
+<!-- EPIC 21 -->
+<h3 id="epic-21" class="epic-header">Epic 21: Data Migration &amp; Legacy Decommission <span class="badge badge-scale">SCALE</span></h3>
+<p>Migrate data from existing tools and spreadsheets into KrewPact, then phase out the old systems.</p>
+
+<div class="feature">
+  <h4>21.1 Data Import Tools</h4>
+  <p>Import existing client, project, and contact data from spreadsheets (CSV/Excel), existing CRM systems, or other tools. Validation checks ensure data quality before import. Duplicate detection prevents double entries.</p>
+  <p class="meta-row"><strong>Roles:</strong> platform_admin &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>21.2 Historical Data Archive</h4>
+  <p>Import historical project data (completed projects, old estimates) as read-only records. Preserves institutional knowledge without cluttering active views. Searchable for reference on similar future projects.</p>
+  <p class="meta-row"><strong>Roles:</strong> platform_admin &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<div class="feature">
+  <h4>21.3 Legacy System Decommission Plan</h4>
+  <p>Phased plan to retire old tools: identify all current tools per division, map data migration path, set cutover dates, run parallel systems during transition, and validate completeness before shutting down legacy systems.</p>
+  <p class="meta-row"><strong>Roles:</strong> platform_admin, executive &nbsp;|&nbsp; <strong>Divisions:</strong> All</p>
+</div>
+
+<table class="division-notes">
+  <caption>Division Notes — Data Migration &amp; Legacy Decommission</caption>
+  <tr><th>Division</th><th>Specific Needs / Custom Workflows</th><th>Priority</th><th>Notes</th></tr>
+  <tr><td>MDM Contracting</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Homes</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Wood</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Electrical</td><td></td><td></td><td></td></tr>
+  <tr><td>MDM Telecom</td><td></td><td></td><td></td></tr>
+</table>
+
+<!-- ==================== APPENDICES ==================== -->
+<h2 id="appendix-a">Appendix A: Division x Module Matrix</h2>
+<p>Which modules are used by which divisions. <strong>&#10003;</strong> = Primary use, <strong>(&#10003;)</strong> = Secondary/occasional use, blank = not applicable.</p>
+
+<table>
+  <tr>
+    <th>Module</th>
+    <th>Contracting</th>
+    <th>Homes</th>
+    <th>Wood</th>
+    <th>Electrical</th>
+    <th>Telecom</th>
+  </tr>
+  <tr><td>CRM &amp; Sales Pipeline</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+  <tr><td>Lead Scoring &amp; AI</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+  <tr><td>Estimating</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+  <tr><td>Contracts &amp; E-Sign</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+  <tr><td>Project Management</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+  <tr><td>Daily Logs</td><td>&#10003;</td><td>&#10003;</td><td>(&#10003;)</td><td>&#10003;</td><td>&#10003;</td></tr>
+  <tr><td>Expenses</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+  <tr><td>Calendar</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+  <tr><td>ERPNext Sync</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+  <tr><td>Notifications</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+  <tr><td>Reports</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+  <tr><td>RFIs &amp; Submittals</td><td>&#10003;</td><td>&#10003;</td><td>(&#10003;)</td><td>&#10003;</td><td>&#10003;</td></tr>
+  <tr><td>Change Orders</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+  <tr><td>Time &amp; Payroll</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+  <tr><td>Client Portal</td><td>&#10003;</td><td>&#10003;</td><td>(&#10003;)</td><td>(&#10003;)</td><td>(&#10003;)</td></tr>
+  <tr><td>Trade Partner Portal</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+  <tr><td>Procurement/RFQ</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+  <tr><td>Customer Selections</td><td></td><td>&#10003;</td><td>(&#10003;)</td><td></td><td></td></tr>
+  <tr><td>Offline Field Ops</td><td>&#10003;</td><td>&#10003;</td><td>(&#10003;)</td><td>&#10003;</td><td>&#10003;</td></tr>
+  <tr><td>Project Closeout</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+</table>
+
+<!-- APPENDIX B -->
+<h2 id="appendix-b">Appendix B: Full Role Permission Matrix</h2>
+<p>What each role can do across major modules. <strong>C</strong>=Create, <strong>R</strong>=Read, <strong>U</strong>=Update, <strong>D</strong>=Delete, <strong>A</strong>=Approve</p>
+
+<table>
+  <tr>
+    <th>Module</th>
+    <th>platform_admin</th>
+    <th>executive</th>
+    <th>ops_manager</th>
+    <th>project_mgr</th>
+    <th>proj_coord</th>
+    <th>estimator</th>
+    <th>field_super</th>
+    <th>accounting</th>
+    <th>payroll</th>
+  </tr>
+  <tr><td>Users &amp; Roles</td><td>CRUD</td><td>R</td><td>R</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+  <tr><td>Divisions</td><td>CRUD</td><td>R</td><td>R</td><td>R</td><td>R</td><td>R</td><td>R</td><td>R</td><td>R</td></tr>
+  <tr><td>Leads</td><td>CRUD</td><td>R</td><td>CRUD</td><td>CRUD</td><td>R</td><td>CRU</td><td>—</td><td>—</td><td>—</td></tr>
+  <tr><td>Opportunities</td><td>CRUD</td><td>RA</td><td>CRUD</td><td>CRUD</td><td>R</td><td>CRU</td><td>—</td><td>—</td><td>—</td></tr>
+  <tr><td>Estimates</td><td>CRUD</td><td>RA</td><td>CRUA</td><td>CRU</td><td>R</td><td>CRUD</td><td>—</td><td>R</td><td>—</td></tr>
+  <tr><td>Projects</td><td>CRUD</td><td>R</td><td>CRUD</td><td>CRUD</td><td>RU</td><td>R</td><td>R</td><td>R</td><td>—</td></tr>
+  <tr><td>Tasks</td><td>CRUD</td><td>R</td><td>CRUD</td><td>CRUD</td><td>CRU</td><td>—</td><td>RU</td><td>—</td><td>—</td></tr>
+  <tr><td>Daily Logs</td><td>CRUD</td><td>R</td><td>R</td><td>R</td><td>CRU</td><td>—</td><td>CRUD</td><td>—</td><td>—</td></tr>
+  <tr><td>Expenses</td><td>CRUD</td><td>RA</td><td>RA</td><td>CRA</td><td>CR</td><td>CR</td><td>CR</td><td>CRUA</td><td>—</td></tr>
+  <tr><td>Reports</td><td>R</td><td>R</td><td>R</td><td>R</td><td>—</td><td>R</td><td>—</td><td>R</td><td>R</td></tr>
+  <tr><td>Notifications</td><td>CRUD</td><td>R</td><td>R</td><td>R</td><td>R</td><td>R</td><td>R</td><td>R</td><td>R</td></tr>
+  <tr><td>Settings</td><td>CRUD</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+</table>
+
+<!-- APPENDIX C -->
+<h2 id="appendix-c">Appendix C: ERPNext Sync Entity Reference</h2>
+<table>
+  <tr><th>#</th><th>KrewPact Entity</th><th>ERPNext DocType</th><th>Direction</th><th>Trigger</th></tr>
+  <tr><td>1</td><td>Account</td><td>Customer</td><td>KP &rarr; ERP</td><td>On account create/update</td></tr>
+  <tr><td>2</td><td>Contact</td><td>Contact</td><td>KP &rarr; ERP</td><td>On contact create/update</td></tr>
+  <tr><td>3</td><td>Address</td><td>Address</td><td>KP &rarr; ERP</td><td>On address create/update</td></tr>
+  <tr><td>4</td><td>Opportunity</td><td>Opportunity</td><td>KP &rarr; ERP</td><td>On opportunity create/stage change</td></tr>
+  <tr><td>5</td><td>Estimate</td><td>Quotation</td><td>KP &rarr; ERP</td><td>On estimate finalize</td></tr>
+  <tr><td>6</td><td>Estimate Line Item</td><td>Quotation Item</td><td>KP &rarr; ERP</td><td>With parent estimate</td></tr>
+  <tr><td>7</td><td>Contracted Opp.</td><td>Sales Order</td><td>KP &rarr; ERP</td><td>On contract execution</td></tr>
+  <tr><td>8</td><td>SO Line Item</td><td>Sales Order Item</td><td>KP &rarr; ERP</td><td>With parent sales order</td></tr>
+  <tr><td>9</td><td>Project</td><td>Project</td><td>Bidirectional</td><td>On create/update either side</td></tr>
+  <tr><td>10</td><td>Task</td><td>Task</td><td>Bidirectional</td><td>On create/update either side</td></tr>
+  <tr><td>11</td><td>Invoice (read)</td><td>Sales Invoice</td><td>ERP &rarr; KP</td><td>Periodic sync job</td></tr>
+  <tr><td>12</td><td>Team Member</td><td>Employee</td><td>KP &rarr; ERP</td><td>On team assignment</td></tr>
+</table>
+
+<!-- APPENDIX D -->
+<h2 id="appendix-d">Appendix D: Glossary of Terms</h2>
+<table>
+  <tr><th>Term</th><th>Definition</th></tr>
+  <tr><td><strong>Lead</strong></td><td>A potential business opportunity — a company or person who might become a client. Enters the pipeline as "new" and progresses through stages.</td></tr>
+  <tr><td><strong>Opportunity</strong></td><td>A qualified lead that has been converted into an active sales pursuit. More detailed than a lead, with budget, timeline, and probability.</td></tr>
+  <tr><td><strong>Account</strong></td><td>A company in the system — can be a client, prospect, or trade partner.</td></tr>
+  <tr><td><strong>Contact</strong></td><td>A person associated with an account.</td></tr>
+  <tr><td><strong>Estimate</strong></td><td>A detailed cost proposal for a project. Becomes a Quotation in ERPNext.</td></tr>
+  <tr><td><strong>Pipeline</strong></td><td>The sequence of stages that leads/opportunities move through from first contact to close.</td></tr>
+  <tr><td><strong>Stage</strong></td><td>A specific step in the pipeline (e.g., "qualified," "proposal_sent," "contracted").</td></tr>
+  <tr><td><strong>Division</strong></td><td>One of MDM Group's 5 business units (Contracting, Homes, Wood, Electrical, Telecom).</td></tr>
+  <tr><td><strong>RBAC</strong></td><td>Role-Based Access Control — the system that determines what each user can see and do based on their role.</td></tr>
+  <tr><td><strong>ERPNext</strong></td><td>Open-source Enterprise Resource Planning system used for accounting, invoicing, and financial management.</td></tr>
+  <tr><td><strong>BullMQ</strong></td><td>Background job queue that processes async tasks like ERPNext sync, email sending, and enrichment.</td></tr>
+  <tr><td><strong>Enrichment</strong></td><td>Automatically filling in missing company/contact data using external data providers (Apollo, Clearbit, LinkedIn).</td></tr>
+  <tr><td><strong>Lead Scoring</strong></td><td>Automatic rating of leads based on fit (company match), intent (buying signals), and engagement (interaction with outreach).</td></tr>
+  <tr><td><strong>Outreach Sequence</strong></td><td>A multi-step automated communication campaign (emails, follow-ups) sent to leads over configured time intervals.</td></tr>
+  <tr><td><strong>RFI</strong></td><td>Request for Information — formal question to architect/engineer about project plans or specifications.</td></tr>
+  <tr><td><strong>Submittal</strong></td><td>Product data, shop drawings, or samples submitted to architect/engineer for approval before installation.</td></tr>
+  <tr><td><strong>Change Order</strong></td><td>A formal modification to the original contract scope, with associated cost and schedule impacts.</td></tr>
+  <tr><td><strong>Punch List</strong></td><td>List of deficiencies or incomplete items to be resolved before a project is considered complete.</td></tr>
+  <tr><td><strong>Substantial Completion</strong></td><td>Milestone when a project is sufficiently complete for its intended use, even if minor items remain.</td></tr>
+  <tr><td><strong>Trade Partner</strong></td><td>A subcontractor or supplier who performs work or provides materials on MDM projects.</td></tr>
+  <tr><td><strong>RFQ</strong></td><td>Request for Quotation — invitation sent to trade partners to bid on a specific scope of work.</td></tr>
+  <tr><td><strong>Clerk</strong></td><td>Authentication service that handles user sign-in, SSO, and session management.</td></tr>
+  <tr><td><strong>Supabase</strong></td><td>Database platform (PostgreSQL) with built-in row-level security, storage, and real-time features.</td></tr>
+</table>
+
+<!-- APPENDIX E -->
+<h2 id="appendix-e">Appendix E: Status Legend &amp; Timeline</h2>
+
+<h3>Status Legend</h3>
+<table>
+  <tr><th>Status</th><th>Badge</th><th>Meaning</th></tr>
+  <tr><td>Core</td><td><span class="badge badge-core">CORE</span></td><td>Foundation features included in the initial launch.</td></tr>
+  <tr><td>Growth</td><td><span class="badge badge-growth">GROWTH</span></td><td>Expansion features in the next phase after Core launch.</td></tr>
+  <tr><td>Scale</td><td><span class="badge badge-scale">SCALE</span></td><td>Advanced capabilities for the future. May be reprioritized based on earlier phase learnings.</td></tr>
+</table>
+
+<h3>Timeline Overview</h3>
+<table>
+  <tr><th>Phase</th><th>Epics</th><th>Key Deliverables</th></tr>
+  <tr><td><strong>Phase 1 — Core</strong></td><td>Epics 1-3, 5-9</td><td>Core platform: auth, CRM, estimating, projects, ERPNext sync, notifications, reports, Sales AI</td></tr>
+  <tr><td><strong>Phase 2 — Growth</strong></td><td>Epics 4, 10-14</td><td>Contracts &amp; e-sign, RFIs, change orders, time/payroll, client portal, extended ERP sync</td></tr>
+  <tr><td><strong>Phase 3 — Scale</strong></td><td>Epics 15-21</td><td>Trade partner portal, procurement, offline, closeout, migration</td></tr>
+</table>
+
+<hr style="margin: 3rem 0 1rem; border: none; border-top: 1px solid #e5e7eb;">
+<p style="text-align: center; color: #9ca3af; font-size: 0.85rem;">
+  KrewPact PRD v1.1 &mdash; February 27, 2026 &mdash; Prepared by Michael Guirguis for MDM Group<br>
+  CONFIDENTIAL &mdash; For internal use only
+</p>
+
+</body>
+</html>

@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="Michael Guirguis">
+  <title>KrewPact — Architecture Maps</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <style>
+    /* Theme Variables */
+    :root {
+      --bg: #0d1117;
+      --bg-card: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --accent: #58a6ff;
+      --accent2: #3fb950;
+    }
+
+    /* Reset & Base */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem 2.5rem;
+    }
+
+    /* Typography */
+    h1 { font-size: 2rem; color: var(--text); margin-bottom: 0.25rem; }
+    h3 { font-size: 1.2rem; color: var(--text); margin: 0 0 0.75rem; }
+    h4 { font-size: 1rem; color: var(--text); margin: 0.5rem 0 0.25rem; }
+    p { margin: 0.4rem 0; color: var(--text-muted); }
+
+    /* Cover */
+    .cover { text-align: center; margin: 2rem 0 3rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border); }
+    .cover .logo-placeholder { display: inline-block; width: 80px; height: 80px; border-radius: 12px; background: #2563eb; color: white; font-size: 1.5rem; font-weight: 700; line-height: 80px; margin-bottom: 1.5rem; }
+    .cover h1 { font-size: 2.5rem; border: none; padding: 0; margin-bottom: 0.5rem; }
+    .cover .tagline { font-size: 1.1rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+    .cover .meta { font-size: 0.9rem; color: var(--text-muted); }
+    .cover .meta p { margin: 0.2rem 0; color: var(--text-muted); }
+    .confidential { display: inline-block; border: 2px solid #f85149; color: #f85149; padding: 4px 16px; border-radius: 4px; font-size: 0.85rem; font-weight: 600; margin-top: 1.5rem; letter-spacing: 2px; }
+
+    /* Cards */
+    .project-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+      margin: 1rem 0;
+    }
+
+    /* Status badges */
+    .status { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; vertical-align: middle; }
+    .status-active { background: #1c2333; color: #58a6ff; border: 1px solid #1f6feb; }
+    .status-built { background: #0d3321; color: #3fb950; border: 1px solid #238636; }
+    .status-planned { background: #1c2333; color: #58a6ff; border: 1px solid #1f6feb; }
+    .status-planned-p2 { background: #21262d; color: #8b949e; border: 1px solid #30363d; }
+    .status-core { background: #0d3321; color: #3fb950; border: 1px solid #238636; }
+    .status-growth { background: #1c2333; color: #58a6ff; border: 1px solid #1f6feb; }
+    .status-scale { background: #21262d; color: #8b949e; border: 1px solid #30363d; }
+
+    /* Tech stack pills */
+    .stack-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0; }
+    .stack-badge { background: #1c2333; border: 1px solid #30363d; border-radius: 4px; padding: 2px 10px; font-size: 0.8rem; color: #58a6ff; }
+
+    /* Subtitle */
+    .subtitle { font-size: 1rem; color: var(--text-muted); margin-bottom: 1rem; }
+
+    /* Module grid */
+    .module-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem; margin: 1rem 0; }
+    .module-item { background: #1c2128; border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem 1rem; }
+    .module-item h4 { font-size: 0.9rem; color: var(--text); margin-bottom: 0.25rem; }
+    .module-item p { font-size: 0.8rem; color: var(--text-muted); margin: 0; }
+
+    /* Division badges */
+    .division-list { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.5rem 0; }
+    .division-badge { background: #2d1f3d; border: 1px solid #d2a8ff; border-radius: 4px; padding: 2px 10px; font-size: 0.75rem; color: #d2a8ff; }
+
+    /* Tables */
+    table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+    th, td { padding: 8px 12px; border: 1px solid var(--border); text-align: left; vertical-align: top; }
+    th { background: #21262d; color: var(--accent); font-weight: 600; }
+    td { color: var(--text-muted); }
+    tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+    .cron-table td:first-child { font-family: monospace; color: var(--accent); }
+
+    /* Document Suite box */
+    .doc-suite { background: #0d2818; border: 1px solid #238636; border-left: 4px solid #3fb950; border-radius: 0 6px 6px 0; padding: 1rem 1.25rem; margin: 1.5rem 0; }
+    .doc-suite p { color: var(--text); margin: 0.25rem 0; }
+    .doc-suite strong.title { color: #3fb950; }
+    .doc-suite ol { margin: 0.5rem 0 0.25rem 1.5rem; color: var(--text); }
+    .doc-suite li { margin: 0.2rem 0; }
+    .doc-suite code { background: #21262d; padding: 1px 5px; border-radius: 3px; font-size: 0.85rem; color: var(--accent); }
+    .doc-suite .here { color: #3fb950; font-weight: 600; }
+
+    /* Print */
+    @media print {
+      body { background: white; color: #1a1a2e; padding: 0; max-width: 100%; }
+      .project-card { border-color: #d1d5db; background: #f8fafc; }
+      th { background: #f8fafc; color: #1e40af; }
+      td { color: #374151; }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      table { font-size: 0.8rem; }
+      .module-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ==================== COVER ==================== -->
+<div class="cover">
+  <div class="logo-placeholder">KP</div>
+  <h1>KrewPact</h1>
+  <p class="tagline">Architecture Maps &mdash; System Diagrams, Data Flows &amp; Module Grid</p>
+  <div class="meta">
+    <p><strong>Prepared for:</strong> MDM Group Division Managers</p>
+    <p><strong>Prepared by:</strong> Michael Guirguis</p>
+    <p><strong>Date:</strong> February 27, 2026</p>
+    <p><strong>Stack:</strong> Next.js 16.1.6 &middot; React 19.2.4 &middot; Supabase &middot; ERPNext</p>
+  </div>
+  <div class="confidential">CONFIDENTIAL &mdash; MDM GROUP INTERNAL</div>
+</div>
+
+<!-- ==================== DOCUMENT SUITE ==================== -->
+<div class="doc-suite">
+  <p><strong class="title">KrewPact Document Suite</strong></p>
+  <p>This document is part of a three-document review package:</p>
+  <ol>
+    <li><strong>Feature Review &amp; Feedback</strong> (<code>krewpact-feature-review.html</code>) &mdash; Fill in feedback tables, assign team roles, rank priorities. <em>Start here.</em></li>
+    <li><strong>Full PRD</strong> (<code>krewpact-prd.html</code>) &mdash; Complete 21-epic specification with technical details and division notes.</li>
+    <li><strong>Architecture Maps</strong> (<code>krewpact.html</code>) &mdash; Visual system diagrams, data flows, module grid, and tech stack overview. <span class="here">&larr; You are here</span></li>
+  </ol>
+</div>
+
+<h1>KrewPact <span class="status status-active">ACTIVE</span></h1>
+<p class="subtitle">Construction crew &amp; project management with CRM, ERPNext sync, and Sales AI &mdash; built for MDM Group</p>
+
+<div class="stack-row">
+  <span class="stack-badge">Next.js 16.1.6</span>
+  <span class="stack-badge">React 19.2.4</span>
+  <span class="stack-badge">TypeScript</span>
+  <span class="stack-badge">Clerk</span>
+  <span class="stack-badge">Supabase Pro</span>
+  <span class="stack-badge">ERPNext</span>
+  <span class="stack-badge">BullMQ</span>
+  <span class="stack-badge">Upstash Redis</span>
+  <span class="stack-badge">pgvector</span>
+  <span class="stack-badge">Resend</span>
+</div>
+
+<!-- Test Status -->
+<div class="project-card" style="border-color: #238636;">
+  <h3>Platform Scope</h3>
+  <p style="font-size: 0.95rem;"><span class="status status-core">21 EPICS</span> &nbsp; <span class="status status-core">6 DIVISIONS</span> &nbsp; <span class="status status-core">13 ROLES</span> &nbsp; <span class="status status-core">12 ERPNEXT MAPPINGS</span></p>
+</div>
+
+<!-- Division Structure -->
+<div class="project-card">
+  <h3>MDM Group Divisions</h3>
+  <div class="division-list">
+    <span class="division-badge">MDM Contracting</span>
+    <span class="division-badge">MDM Homes</span>
+    <span class="division-badge">MDM Wood</span>
+    <span class="division-badge">MDM Electrical</span>
+    <span class="division-badge">MDM Telecom</span>
+  </div>
+  <p style="font-size: 0.85rem; margin-top: 0.5rem;">MDM Group Inc. operates 5 divisions, each with independent data access. Division-level RBAC controls data isolation.</p>
+</div>
+
+<!-- System Architecture -->
+<div class="project-card">
+  <h3>System Architecture</h3>
+  <pre class="mermaid">
+graph TB
+    subgraph FRONTEND["Frontend (Vercel)"]
+        NEXT["Next.js 16 App Router\nReact 19 Server + Client Components"]
+        ROUTES["Feature Routes:\n/crm, /projects, /estimates,\n/calendar, /reports, /expenses,\n/settings, /admin, /team"]
+    end
+
+    subgraph AUTH_LAYER["Auth Layer"]
+        CLRK["Clerk SSO\n(email + M365)"]
+        JWT["Custom JWT\n{user_id, divisions, roles}"]
+    end
+
+    subgraph BFF["BFF Layer (API Routes)"]
+        API["Next.js API Routes\naggregate + transform + authorize\n~60+ endpoints"]
+    end
+
+    subgraph DATA["Data Layer"]
+        SUPA2["Supabase Postgres Pro\nRLS (deny-by-default)\n28 enums, 19+ table groups"]
+        STORE2["Supabase Storage\n(documents, photos)"]
+        VEC["pgvector\n(knowledge embeddings\nada-002, 1536 dims)"]
+    end
+
+    subgraph ERP["ERP Layer"]
+        ERPT["ERPNext\n(Linux host via\nCloudflare Tunnel)"]
+    end
+
+    subgraph ASYNC["Async Layer"]
+        REDIS["Upstash Redis"]
+        BULL["BullMQ Workers\n(on ERPNext host)"]
+        CRON["Cron Jobs:\napollo-pump\nenrichment\nsequence-processor"]
+    end
+
+    subgraph NOTIF["Notification Layer"]
+        ENGINE["Notification Engine"]
+        INAPP["In-App\nNotifications"]
+        EMAIL["Resend Email\n(compose + templates)"]
+        PUSH["Push + SMS"]
+    end
+
+    subgraph INTEL["Sales AGI Layer"]
+        SCORE["Lead Scoring\nFit + Intent + Engagement"]
+        SEQ["Outreach Sequences\nMulti-step automation"]
+        ENRICH["Enrichment Pipeline\nApollo → Clearbit → LinkedIn → Google"]
+        TMPL["Email Templates\n+ Compose"]
+    end
+
+    FRONTEND --> AUTH_LAYER
+    AUTH_LAYER -->|JWT claims| BFF
+    BFF --> SUPA2 & STORE2 & VEC
+    BFF -->|Cloudflare Tunnel| ERP
+    BFF -->|enqueue| REDIS
+    REDIS --> BULL
+    BULL --> ERPT & SUPA2
+    CRON --> REDIS
+    BFF --> ENGINE
+    ENGINE --> INAPP & EMAIL & PUSH
+    VEC -.->|"RAG (planned)"| BFF
+    SUPA2 --> SCORE
+    SCORE --> SEQ
+    SEQ --> ENRICH
+    ENRICH --> TMPL
+    TMPL --> EMAIL
+
+    style FRONTEND fill:#2d1f3d,stroke:#d2a8ff,color:#e6edf3
+    style DATA fill:#1a3a2a,stroke:#3fb950,color:#e6edf3
+    style ERP fill:#341a00,stroke:#f0883e,color:#e6edf3
+    style INTEL fill:#1a2744,stroke:#58a6ff,color:#e6edf3
+    style NOTIF fill:#2a1a2e,stroke:#f778ba,color:#e6edf3
+    style ASYNC fill:#341a00,stroke:#f0883e,color:#e6edf3
+  </pre>
+</div>
+
+<!-- RBAC Model -->
+<div class="project-card">
+  <h3>RBAC Model (13 Canonical Roles)</h3>
+  <pre class="mermaid">
+graph TB
+    subgraph INTERNAL["Internal Roles (9)"]
+        PA["platform_admin"]
+        EXEC["executive"]
+        OPS["operations_manager"]
+        PM["project_manager"]
+        PC["project_coordinator"]
+        EST["estimator"]
+        FS["field_supervisor"]
+        ACCT["accounting"]
+        PAY["payroll_admin"]
+    end
+
+    subgraph EXTERNAL["External Roles (4)"]
+        CO["client_owner"]
+        CD["client_delegate"]
+        TPA["trade_partner_admin"]
+        TPU["trade_partner_user"]
+    end
+
+    PA --> EXEC
+    PA --> OPS
+    EXEC --> PM & EST & ACCT & PAY
+    OPS --> PM & FS
+    PM --> PC
+    PC --> FS
+
+    style INTERNAL fill:#1a3a2a,stroke:#3fb950,color:#e6edf3
+    style EXTERNAL fill:#1a2744,stroke:#58a6ff,color:#e6edf3
+  </pre>
+  <p style="font-size: 0.85rem; margin: 0.75rem 0 0.5rem;">
+    <strong>Auth note:</strong> Most MDM staff sign in via M365 SSO (groups: MDM Group, MDM Contracting, MDM Wood, MDM Telecom). Team members without Microsoft accounts (some Telecom field crews) use email + password login.
+  </p>
+  <table>
+    <tr><th>Role</th><th>Access Level</th><th>Description</th></tr>
+    <tr><td>platform_admin</td><td>Full</td><td>System-wide configuration, all divisions, user management</td></tr>
+    <tr><td>executive</td><td>Read-all + Approve</td><td>Cross-division dashboards, financial approvals</td></tr>
+    <tr><td>operations_manager</td><td>Division-wide</td><td>Manages operations across projects within division</td></tr>
+    <tr><td>project_manager</td><td>Project-scoped</td><td>Owns projects, estimates, team assignments</td></tr>
+    <tr><td>project_coordinator</td><td>Project-scoped</td><td>Assists PM with scheduling, logs, coordination</td></tr>
+    <tr><td>estimator</td><td>Estimates + CRM</td><td>Creates/manages estimates, views pipeline</td></tr>
+    <tr><td>field_supervisor</td><td>Field ops</td><td>Daily logs, task updates, site photos</td></tr>
+    <tr><td>accounting</td><td>Finance</td><td>Expenses, invoicing, ERPNext finance sync</td></tr>
+    <tr><td>payroll_admin</td><td>Payroll</td><td>Time entries, payroll processing (planned)</td></tr>
+    <tr><td>client_owner</td><td>Own projects</td><td>External: views their projects, approves items</td></tr>
+    <tr><td>client_delegate</td><td>Delegated</td><td>External: limited access delegated by client owner</td></tr>
+    <tr><td>trade_partner_admin</td><td>Partner org</td><td>External: manages their trade partner org</td></tr>
+    <tr><td>trade_partner_user</td><td>Assigned tasks</td><td>External: views assigned scope only</td></tr>
+  </table>
+</div>
+
+<!-- Lead & Opportunity Pipeline -->
+<div class="project-card">
+  <h3>Sales Pipeline: Lead &amp; Opportunity Stages</h3>
+  <pre class="mermaid">
+flowchart LR
+    subgraph LEAD["Lead Pipeline (6 stages)"]
+        L1["new"] --> L2["qualified"]
+        L2 --> L3["estimating"]
+        L3 --> L4["proposal_sent"]
+        L4 --> L5["won"]
+        L4 --> L6["lost"]
+    end
+
+    subgraph OPP["Opportunity Pipeline (7 stages)"]
+        O1["intake"] --> O2["site_visit"]
+        O2 --> O3["estimating"]
+        O3 --> O4["proposal"]
+        O4 --> O5["negotiation"]
+        O5 --> O6["contracted"]
+        O5 --> O7["closed_lost"]
+    end
+
+    L5 -.->|"converts to"| O1
+
+    style LEAD fill:#1a3a2a,stroke:#3fb950,color:#e6edf3
+    style OPP fill:#1a2744,stroke:#58a6ff,color:#e6edf3
+  </pre>
+</div>
+
+<!-- Data Flow: Lead to Project -->
+<div class="project-card">
+  <h3>Data Flow: Lead to Project Lifecycle</h3>
+  <pre class="mermaid">
+flowchart LR
+    A["New Lead\n(manual, website,\nor enrichment)"] --> B["Lead Scoring\nfit + intent + engagement"]
+    B --> C["Lead Pipeline\n6 stages"]
+    C --> D{"Won?"}
+    D -->|Yes| E["Opportunity Created\n7 stages"]
+    D -->|No| F["Lost / Archive"]
+    E --> G["Estimate Built\n→ ERPNext Quotation"]
+    G --> H["Contracted\n→ ERPNext Sales Order"]
+    H --> I["Project Created\n→ ERPNext Project"]
+    I --> J["Execution:\nTasks, Milestones,\nDaily Logs, Expenses"]
+    J --> K["Invoicing\n(ERPNext Sales Invoice)"]
+
+    C -.->|"Sales AGI"| L["Outreach Sequences\n(multi-step)"]
+    L -.->|"enrichment"| M["Apollo → Clearbit\n→ LinkedIn → Google"]
+    M -.->|"scored"| B
+  </pre>
+</div>
+
+<!-- Sales AGI Layer -->
+<div class="project-card">
+  <h3>Sales AGI Layer</h3>
+  <pre class="mermaid">
+flowchart TB
+    subgraph SCORING["Lead Scoring Engine"]
+        FIT["Fit Score\n(company size, industry,\nlocation match)"]
+        INTENT["Intent Score\n(engagement signals,\nwebsite visits)"]
+        ENGAGE["Engagement Score\n(email opens, replies,\nmeeting booked)"]
+        COMPOSITE["Composite Score\n(weighted average)"]
+        FIT --> COMPOSITE
+        INTENT --> COMPOSITE
+        ENGAGE --> COMPOSITE
+    end
+
+    subgraph SEQUENCES["Outreach Sequences"]
+        TRIGGER["Trigger:\nlead created / score change"]
+        STEP1["Step 1: Email intro"]
+        STEP2["Step 2: Follow-up (3d)"]
+        STEP3["Step 3: LinkedIn (5d)"]
+        STEPN["Step N: configurable"]
+        TRIGGER --> STEP1 --> STEP2 --> STEP3 --> STEPN
+    end
+
+    subgraph ENRICHMENT["Enrichment Pipeline (Waterfall)"]
+        APOLLO["Apollo\n(primary)"]
+        CLEARBIT["Clearbit\n(fallback 1)"]
+        LINKEDIN["LinkedIn\n(fallback 2)"]
+        GOOGLE["Google\n(fallback 3)"]
+        APOLLO -->|"miss"| CLEARBIT
+        CLEARBIT -->|"miss"| LINKEDIN
+        LINKEDIN -->|"miss"| GOOGLE
+    end
+
+    subgraph TEMPLATES["Email System"]
+        TMPL2["Email Templates"]
+        COMPOSE["Compose &amp; Send\n(via Resend)"]
+        TMPL2 --> COMPOSE
+    end
+
+    COMPOSITE -->|"high score"| TRIGGER
+    STEPN -->|"sends via"| COMPOSE
+    ENRICHMENT -->|"enriches"| SCORING
+
+    style SCORING fill:#1a3a2a,stroke:#3fb950,color:#e6edf3
+    style SEQUENCES fill:#1a2744,stroke:#58a6ff,color:#e6edf3
+    style ENRICHMENT fill:#341a00,stroke:#f0883e,color:#e6edf3
+    style TEMPLATES fill:#2a1a2e,stroke:#f778ba,color:#e6edf3
+  </pre>
+</div>
+
+<!-- ERPNext Sync -->
+<div class="project-card">
+  <h3>ERPNext Sync (12 Entity Mappings)</h3>
+  <pre class="mermaid">
+flowchart TB
+    subgraph KREWPACT["KrewPact (Vercel)"]
+        KP_API["API Routes"]
+    end
+
+    subgraph QUEUE["Async Queue"]
+        UP_REDIS["Upstash Redis"]
+        WORKERS["BullMQ Workers\n(ERPNext host)"]
+    end
+
+    subgraph ERPNEXT["ERPNext (Cloudflare Tunnel)"]
+        CUST["Customer"]
+        CONT["Contact"]
+        ADDR["Address"]
+        OPP["Opportunity"]
+        QUOT["Quotation"]
+        QI["Quotation Item"]
+        SO["Sales Order"]
+        SOI["Sales Order Item"]
+        PROJ["Project"]
+        TASK["Task"]
+        SI["Sales Invoice"]
+        EMP["Employee"]
+    end
+
+    KP_API -->|"read (direct via tunnel)"| ERPNEXT
+    KP_API -->|"write (enqueue)"| UP_REDIS
+    UP_REDIS --> WORKERS
+    WORKERS -->|"localhost (co-located)"| ERPNEXT
+    WORKERS -->|"confirm sync"| KP_API
+
+    style QUEUE fill:#341a00,stroke:#f0883e,color:#e6edf3
+    style ERPNEXT fill:#1a3a2a,stroke:#3fb950,color:#e6edf3
+  </pre>
+  <table>
+    <tr><th>KrewPact Entity</th><th>ERPNext DocType</th><th>Sync Direction</th></tr>
+    <tr><td>Account</td><td>Customer</td><td>KP &rarr; ERPNext</td></tr>
+    <tr><td>Contact</td><td>Contact</td><td>KP &rarr; ERPNext</td></tr>
+    <tr><td>Account Address</td><td>Address</td><td>KP &rarr; ERPNext</td></tr>
+    <tr><td>Opportunity</td><td>Opportunity</td><td>KP &rarr; ERPNext</td></tr>
+    <tr><td>Estimate</td><td>Quotation</td><td>KP &rarr; ERPNext</td></tr>
+    <tr><td>Estimate Line Item</td><td>Quotation Item</td><td>KP &rarr; ERPNext</td></tr>
+    <tr><td>Contracted Opportunity</td><td>Sales Order</td><td>KP &rarr; ERPNext</td></tr>
+    <tr><td>Sales Order Line</td><td>Sales Order Item</td><td>KP &rarr; ERPNext</td></tr>
+    <tr><td>Project</td><td>Project</td><td>Bidirectional</td></tr>
+    <tr><td>Task</td><td>Task</td><td>Bidirectional</td></tr>
+    <tr><td>Invoice (read-only)</td><td>Sales Invoice</td><td>ERPNext &rarr; KP</td></tr>
+    <tr><td>Team Member</td><td>Employee</td><td>KP &rarr; ERPNext</td></tr>
+  </table>
+</div>
+
+<!-- Notification & Email Flow -->
+<div class="project-card">
+  <h3>Notification &amp; Email Flow</h3>
+  <pre class="mermaid">
+flowchart LR
+    subgraph TRIGGERS["Event Triggers"]
+        T1["Lead assigned"]
+        T2["Opportunity stage change"]
+        T3["Task assigned"]
+        T4["Expense submitted"]
+        T5["Daily log filed"]
+        T6["Estimate ready"]
+    end
+
+    ENGINE["Notification Engine\n(channel router)"]
+
+    subgraph CHANNELS["Delivery Channels"]
+        CH1["In-App\n(real-time bell icon)"]
+        CH2["Email via Resend\n(templates + compose)"]
+        CH3["Push"]
+        CH4["SMS"]
+    end
+
+    TRIGGERS --> ENGINE
+    ENGINE --> CHANNELS
+
+    style TRIGGERS fill:#1a3a2a,stroke:#3fb950,color:#e6edf3
+    style CHANNELS fill:#1a2744,stroke:#58a6ff,color:#e6edf3
+  </pre>
+</div>
+
+<!-- Cron Jobs -->
+<div class="project-card">
+  <h3>Scheduled Cron Jobs</h3>
+  <table class="cron-table">
+    <tr><th>Job</th><th>Schedule</th><th>Description</th></tr>
+    <tr><td>apollo-pump</td><td>Daily</td><td>Pulls new prospect data from Apollo.io into lead pipeline</td></tr>
+    <tr><td>enrichment</td><td>Periodic</td><td>Runs waterfall enrichment on leads missing data (Apollo &rarr; Clearbit &rarr; LinkedIn &rarr; Google)</td></tr>
+    <tr><td>sequence-processor</td><td>Periodic</td><td>Executes pending outreach sequence steps (emails, follow-ups)</td></tr>
+  </table>
+</div>
+
+<!-- Built Feature Modules -->
+<div class="project-card">
+  <h3>Feature Modules</h3>
+
+  <h4 style="color: var(--accent2); margin: 1rem 0 0.5rem;">Phase 1 &mdash; Core <span class="status status-core">CORE</span></h4>
+  <div class="module-grid">
+    <div class="module-item">
+      <h4>Auth &amp; Identity</h4>
+      <p>Clerk SSO (M365 groups: MDM Group, Contracting, Wood, Telecom) + email/password fallback</p>
+    </div>
+    <div class="module-item">
+      <h4>RBAC</h4>
+      <p>13 canonical roles, division-level access control</p>
+    </div>
+    <div class="module-item">
+      <h4>Division Management</h4>
+      <p>5 MDM divisions with isolated data access</p>
+    </div>
+    <div class="module-item">
+      <h4>CRM: Leads</h4>
+      <p>Lead CRUD, 6-stage pipeline, stage history</p>
+    </div>
+    <div class="module-item">
+      <h4>CRM: Opportunities</h4>
+      <p>Opportunity CRUD, 7-stage pipeline, conversion from leads</p>
+    </div>
+    <div class="module-item">
+      <h4>CRM: Accounts &amp; Contacts</h4>
+      <p>Company and contact management with relationships</p>
+    </div>
+    <div class="module-item">
+      <h4>CRM: Activities</h4>
+      <p>Activity logging (calls, emails, meetings, notes)</p>
+    </div>
+    <div class="module-item">
+      <h4>Lead Scoring</h4>
+      <p>AI-powered fit + intent + engagement scoring engine</p>
+    </div>
+    <div class="module-item">
+      <h4>Outreach Sequences</h4>
+      <p>Multi-step automated outreach with configurable delays</p>
+    </div>
+    <div class="module-item">
+      <h4>Enrichment Pipeline</h4>
+      <p>Waterfall: Apollo &rarr; Clearbit &rarr; LinkedIn &rarr; Google</p>
+    </div>
+    <div class="module-item">
+      <h4>Estimating</h4>
+      <p>Estimate builder, line items, sections, version history</p>
+    </div>
+    <div class="module-item">
+      <h4>Projects</h4>
+      <p>Project CRUD, team members, milestones, tasks</p>
+    </div>
+    <div class="module-item">
+      <h4>Daily Logs</h4>
+      <p>Site diary entries with weather, crew, work performed</p>
+    </div>
+    <div class="module-item">
+      <h4>Expenses</h4>
+      <p>Expense CRUD with approval workflow and claims</p>
+    </div>
+    <div class="module-item">
+      <h4>Calendar &amp; Scheduling</h4>
+      <p>Calendar events API + schedule page</p>
+    </div>
+    <div class="module-item">
+      <h4>Notifications</h4>
+      <p>Engine with in-app, email, push, and SMS channels</p>
+    </div>
+    <div class="module-item">
+      <h4>Email (Resend)</h4>
+      <p>Compose, send, templates via Resend API</p>
+    </div>
+    <div class="module-item">
+      <h4>Reports</h4>
+      <p>Lead sources, pipeline views, dashboard metrics</p>
+    </div>
+    <div class="module-item">
+      <h4>ERPNext Sync</h4>
+      <p>12 entity mappings, BullMQ async sync via Cloudflare Tunnel</p>
+    </div>
+    <div class="module-item">
+      <h4>Team Management</h4>
+      <p>Team page + API for member management</p>
+    </div>
+    <div class="module-item">
+      <h4>Dashboard</h4>
+      <p>Metrics dashboard with KPIs and quick actions</p>
+    </div>
+    <div class="module-item">
+      <h4>Admin: Lead Gen</h4>
+      <p>Admin lead generation page for bulk operations</p>
+    </div>
+  </div>
+
+  <h4 style="color: var(--accent); margin: 1.5rem 0 0.5rem;">Phase 2 &mdash; Growth <span class="status status-growth">GROWTH</span></h4>
+  <div class="module-grid">
+    <div class="module-item">
+      <h4>Contracts &amp; E-Sign</h4>
+      <p>Contract assembly + BoldSign e-signature</p>
+    </div>
+    <div class="module-item">
+      <h4>Change Orders</h4>
+      <p>Change order management with approval workflow</p>
+    </div>
+    <div class="module-item">
+      <h4>RFIs &amp; Submittals</h4>
+      <p>Document control with review workflows</p>
+    </div>
+    <div class="module-item">
+      <h4>Time Entry &amp; Payroll</h4>
+      <p>Time tracking + ADP payroll integration</p>
+    </div>
+    <div class="module-item">
+      <h4>Client Portal</h4>
+      <p>External client access to their projects</p>
+    </div>
+    <div class="module-item">
+      <h4>Extended ERPNext Sync</h4>
+      <p>Additional entity mappings and bidirectional sync</p>
+    </div>
+  </div>
+
+  <h4 style="color: var(--text-muted); margin: 1.5rem 0 0.5rem;">Phase 3 &mdash; Scale <span class="status status-scale">SCALE</span></h4>
+  <div class="module-grid">
+    <div class="module-item">
+      <h4>Trade Partner Portal</h4>
+      <p>External trade partner access and bid management</p>
+    </div>
+    <div class="module-item">
+      <h4>Procurement &amp; RFQ</h4>
+      <p>Request for quotes and bid comparison</p>
+    </div>
+    <div class="module-item">
+      <h4>Barcode &amp; Inventory Scanning</h4>
+      <p>Mobile barcode/QR scanning for materials, equipment tracking, ERPNext inventory sync</p>
+    </div>
+    <div class="module-item">
+      <h4>Offline Field Workflows</h4>
+      <p>PWA with offline-first sync for field crews</p>
+    </div>
+    <div class="module-item">
+      <h4>RAG AI Chat</h4>
+      <p>AI chat over SOPs and project knowledge (schema exists)</p>
+    </div>
+    <div class="module-item">
+      <h4>Microsoft Graph</h4>
+      <p>M365 calendar/email integration (deferred post-MVP)</p>
+    </div>
+    <div class="module-item">
+      <h4>Document Versioning</h4>
+      <p>Full version control for project documents</p>
+    </div>
+    <div class="module-item">
+      <h4>Project Closeout</h4>
+      <p>Punch lists, warranty tracking, final documentation</p>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== FOOTER ==================== -->
+<hr style="margin: 3rem 0 1rem; border: none; border-top: 1px solid var(--border);">
+<p style="text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+  KrewPact Architecture Maps &mdash; February 27, 2026 &mdash; Prepared by Michael Guirguis for MDM Group<br>
+  CONFIDENTIAL &mdash; For internal use only
+</p>
+
+<script>
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+</body>
+</html>
