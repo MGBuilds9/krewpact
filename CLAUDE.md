@@ -252,22 +252,20 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
+### Feb 27, 2026 — Production Readiness: Queue Wiring, Finance Dialogs, E2E, ERPNext Verified
+- **Changes:** Wired 8 queue processor stubs to real SyncService methods. Added row-click detail dialogs to 3 finance pages (invoices, POs, job-costs). Fixed 2 E2E test selectors. Fixed 3 type errors in portal/supabase-types tests. Verified ERPNext connectivity at erp.mdmgroupinc.ca (HTTP 200, 330ms via Cloudflare Tunnel).
+- **Decisions:** Finance forms are read-only review dialogs (ERPNext-authoritative), no mutation wiring needed. ERPNext is a fresh instance (0 customers, 0 invoices) — ready for data migration.
+- **Tests:** 2046/2046 passing (165 files). 16/16 E2E specs passing. All gates: typecheck clean, build clean.
+- **Next steps:** Clerk production keys. Real data migration to ERPNext. Client/trade portal E2E coverage.
+
 ### Feb 27, 2026 — CRM A-to-Z Completion (Sprints 5-8)
-- **Changes:** Completed Sprints 5-8 of the CRM A-to-Z plan across two sessions. Sprint 5: Visual sequence flow builder, auto-enrollment engine, conditional branching processor. Sprint 6: 8 branded HTML email templates, template CRUD API/pages, merge field rendering, email analytics. Sprint 7: Global CRM search (Cmd+K), bulk actions (tag/stage/assign/delete/enroll), CSV import/export, BulkActionBar + GlobalSearch components. Sprint 8: Structured error handling (`lib/api/errors.ts`), sequence processor DLQ (3-retry dead-letter), SLA config + overdue detection, contact-account multi-relationship links, keyboard shortcuts hook, CRM lifecycle integration tests.
-- **Key Fixes:** Zod v4 breaks on `z.record(z.unknown())` — requires `z.record(z.string(), z.unknown())`. Zod v4 validates RFC 4122 UUID version bits — zeroed UUIDs (`00000000-...`) fail validation. React strict mode lint: replaced `useEffect` + `setState` patterns with render-time initialization and child component `key` remounting.
-- **Tests:** 1990/1990 passing (970 new tests since Sprint 2). 160 test files. All gates pass: lint (1 pre-existing error), typecheck clean, build clean.
-- **New Files:** `lib/api/errors.ts`, `lib/crm/sequence-dlq.ts`, `lib/crm/sla-config.ts`, `lib/crm/duplicate-detector.ts`, `lib/crm/enrollment-engine.ts`, `lib/email/branded-templates.ts`, `hooks/useKeyboardShortcuts.ts`, `components/CRM/{FlowBuilder/,GlobalSearch,BulkActionBar,SLABadge,EmailAnalyticsCard,TagSelector,TagBadge,TagFilterBar,NotesPanel,DuplicateWarningDialog}.tsx`, API routes for search/bulk/import/export/tags/notes/templates/SLA/contact-accounts.
-- **Next steps:** Deploy to Vercel. Get Clerk production keys. E2E Playwright tests. Performance profiling on real data.
+- **Changes:** Sprints 5-8 complete. Flow builder, email templates, bulk ops, search, DLQ, SLA, structured errors, keyboard shortcuts.
+- **Tests:** 1990/1990 passing. 160 test files.
+- **Next steps:** Deploy to Vercel. E2E tests. Performance profiling.
 
-### Feb 26, 2026 — Seed Real MDM Customer & Lead Data from Excel
-- **Changes:** Created `scripts/seed-real-data.ts` importing real MDM data from two Excel files (Customer List.xlsx, Leads for contracting.xlsx). 382 leads (14 existing clients, 217 Apollo clinics, 116 networking, 12 groups/associations, 10 plaza targeting, 13 city contacts), 14 accounts (pharmacy clients), 231 contacts (14 customer + 217 Apollo). Added `xlsx` dev dep, `seed:real` / `seed:demo` npm scripts. Added CRM UI screenshots.
-- **Decisions:** `leads` table has no email/phone/metadata columns — contact info stored in `contacts` (via `lead_id`) and `enrichment_data` JSONB. Created a lead per pharmacy client to enable contact linking. All real data tagged with `[real-data]` in notes and distinct `source_channel` values for easy `--clean` re-seeding. Restaurant Owners sheet confirmed exact duplicate of Clinics — skipped.
-- **Tests:** 1020/1020 passing, 0 new tests (seed script is runtime-only).
-- **Pushed:** to main (ee1996b).
-- **Next steps:** Sprint 3 (activity logging dialog, notes/comments, tag management). Get Clerk keys for production auth. Deploy to Vercel.
-
-- Feb 26: CRM Sprint 1+2 — DataTable, pagination, ContactForm, AccountForm. 1020 tests. Pushed 786bdb7.
-- Feb 26: Pre-scoring pipeline audit — enrichment data shape alignment + cron batch fix. 982 tests.
+- Feb 26: Seed real MDM data from Excel — 382 leads, 14 accounts, 231 contacts. 1020 tests.
+- Feb 26: CRM Sprint 1+2 — DataTable, pagination, ContactForm, AccountForm. 1020 tests.
+- Feb 26: Pre-scoring pipeline audit — enrichment data shape alignment. 982 tests.
 - Feb 25: Demo mode, DB schema alignment, UI polish. 904 tests.
 - Feb 24: CRM lead lifecycle (8 phases) + Cross-Subdomain SSO. 904 tests.
 - Feb 24: Full Service Connection + Microsoft Graph. 650 tests.
