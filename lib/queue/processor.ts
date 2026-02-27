@@ -25,36 +25,36 @@ export async function processJob(job: Job): Promise<void> {
       break;
 
     case JobType.ERPSyncContact:
-      // SyncService.syncContact not yet implemented — placeholder
-      throw new Error(`syncContact not yet implemented (entity: ${entityId})`);
+      await syncService.syncContact(entityId, userId);
+      break;
 
     case JobType.ERPSyncProject:
-      // SyncService.syncProject not yet implemented — placeholder
-      throw new Error(`syncProject not yet implemented (entity: ${entityId})`);
+      await syncService.syncProject(entityId, userId);
+      break;
 
     case JobType.ERPSyncTask:
-      // SyncService.syncTask not yet implemented — placeholder
-      throw new Error(`syncTask not yet implemented (entity: ${entityId})`);
+      await syncService.syncTask(entityId, userId);
+      break;
 
     case JobType.ERPSyncSupplier:
-      // SyncService.syncSupplier not yet implemented — placeholder
-      throw new Error(`syncSupplier not yet implemented (entity: ${entityId})`);
+      await syncService.syncSupplier(entityId, userId);
+      break;
 
     case JobType.ERPSyncExpense:
-      // SyncService.syncExpense not yet implemented — placeholder
-      throw new Error(`syncExpense not yet implemented (entity: ${entityId})`);
+      await syncService.syncExpenseClaim(entityId, userId);
+      break;
 
     case JobType.ERPSyncTimesheet:
-      // SyncService.syncTimesheet not yet implemented — placeholder
-      throw new Error(`syncTimesheet not yet implemented (entity: ${entityId})`);
+      await syncService.syncTimesheet(entityId, userId);
+      break;
 
     case JobType.ERPReadInvoice:
-      // Read-only fetch — SyncService.readInvoice not yet implemented
-      throw new Error(`readInvoice not yet implemented (entity: ${entityId})`);
+      await syncService.readSalesInvoice(entityId);
+      break;
 
     case JobType.ERPReadPO:
-      // Read-only fetch — SyncService.readPO not yet implemented
-      throw new Error(`readPO not yet implemented (entity: ${entityId})`);
+      await syncService.readPurchaseInvoice(entityId);
+      break;
 
     default: {
       const _exhaustive: never = job.type;

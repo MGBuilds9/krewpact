@@ -28,8 +28,8 @@ test.describe('Lead Lifecycle', () => {
     const submitButton = page.locator('button[type="submit"]').first();
     if (await submitButton.isVisible()) {
       await submitButton.click();
-      // Should show validation error messages
-      await expect(page.locator('body')).toContainText(/required|invalid|error/i);
+      // Should show validation error messages (Zod shows "Too small" for min-length violations)
+      await expect(page.locator('body')).toContainText(/required|invalid|error|too small/i);
     }
   });
 });

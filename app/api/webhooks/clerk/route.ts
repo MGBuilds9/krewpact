@@ -70,6 +70,23 @@ export async function POST(req: Request) {
       console.error(`Clerk webhook ${type} failed:`, error.message);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+
+    // If the user was created via a portal invite, link their Clerk ID to the portal_accounts row
+    if (type === 'user.created') {
+      const portalAccountId = data.public_metadata?.krewpact_user_id as string | undefined;
+      if (portalAccountId) {
+        const { error: portalError } = await supabase
+          .from('portal_accounts')
+          .update({ clerk_user_id: data.id })
+          .eq('id', portalAccountId)
+          .is('clerk_user_id', null); // Only update if not already linked
+
+        if (portalError) {
+          // Non-fatal — log and continue. The account can be linked manually later.
+          console.error('Failed to link clerk_user_id to portal_account:', portalError.message);
+        }
+      }
+    }
   }
 
   if (type === 'user.deleted') {

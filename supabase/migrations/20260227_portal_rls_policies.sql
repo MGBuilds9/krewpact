@@ -68,7 +68,7 @@ CREATE POLICY portal_messages_scoped ON portal_messages
     )
     -- Internal sender
     OR sender_user_id IN (
-      SELECT id FROM users WHERE clerk_id = (auth.jwt() ->> 'sub')
+      SELECT id FROM users WHERE clerk_user_id = (auth.jwt() ->> 'sub')
     )
     -- Broadcast messages (portal_account_id IS NULL = announcement to all)
     OR portal_account_id IS NULL

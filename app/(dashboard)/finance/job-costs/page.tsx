@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useJobCostSnapshots } from '@/hooks/useFinance';
 import {
   Table,
@@ -9,6 +10,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { JobCostSnapshotForm } from '@/components/Finance/JobCostSnapshotForm';
 
 function formatCAD(amount: number | null) {
   if (amount == null) return '—';
@@ -22,6 +30,7 @@ function formatPct(pct: number | null) {
 
 export default function JobCostsPage() {
   const { data, isLoading, error } = useJobCostSnapshots();
+  const [selectedSnapshot, setSelectedSnapshot] = useState<Record<string, unknown> | null>(null);
 
   if (isLoading) return <div className="p-6 text-muted-foreground">Loading job cost snapshots...</div>;
   if (error) return <div className="p-6 text-destructive">Failed to load job cost snapshots.</div>;
@@ -58,7 +67,11 @@ export default function JobCostsPage() {
               </TableRow>
             ) : (
               snapshots.map((s) => (
-                <TableRow key={s.id}>
+                <TableRow
+                  key={s.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => setSelectedSnapshot(s as unknown as Record<string, unknown>)}
+                >
                   <TableCell>{s.snapshot_date}</TableCell>
                   <TableCell className="text-right">{formatCAD(s.baseline_budget)}</TableCell>
                   <TableCell className="text-right">{formatCAD(s.revised_budget)}</TableCell>
@@ -72,6 +85,28 @@ export default function JobCostsPage() {
           </TableBody>
         </Table>
       </div>
+
+      <Dialog open={!!selectedSnapshot} onOpenChange={(open) => !open && setSelectedSnapshot(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Job Cost Snapshot Detail</DialogTitle>
+          </DialogHeader>
+          {selectedSnapshot && (
+            <JobCostSnapshotForm
+              defaultValues={{
+                snapshot_date: (selectedSnapshot.snapshot_date as string) ?? '',
+                baseline_budget: selectedSnapshot.baseline_budget != null ? String(selectedSnapshot.baseline_budget) : '',
+                revised_budget: selectedSnapshot.revised_budget != null ? String(selectedSnapshot.revised_budget) : '',
+                committed_cost: selectedSnapshot.committed_cost != null ? String(selectedSnapshot.committed_cost) : '',
+                actual_cost: selectedSnapshot.actual_cost != null ? String(selectedSnapshot.actual_cost) : '',
+                forecast_cost: selectedSnapshot.forecast_cost != null ? String(selectedSnapshot.forecast_cost) : '',
+                forecast_margin_pct: selectedSnapshot.forecast_margin_pct != null ? String(selectedSnapshot.forecast_margin_pct) : '',
+              }}
+              onSubmit={() => setSelectedSnapshot(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
