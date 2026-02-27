@@ -133,7 +133,7 @@ describe('GET /api/portal/projects', () => {
   it('returns 403 when no portal account exists for the user', async () => {
     mockClerkAuth(mockAuth, 'clerk_user_no_portal');
     const mock = buildPortalMock({ portalAccount: null });
-    mockCreateUserClient.mockResolvedValue({ from: mock.from } as unknown as ReturnType<typeof createUserClient>);
+    mockCreateUserClient.mockResolvedValue({ from: mock.from } as unknown as Awaited<ReturnType<typeof createUserClient>>);
     const res = await getProjects(makeRequest('/api/portal/projects'));
     expect(res.status).toBe(403);
   });
@@ -154,7 +154,7 @@ describe('GET /api/portal/projects/[id]', () => {
   it('returns 403 when portal_account is inactive', async () => {
     mockClerkAuth(mockAuth, 'clerk_user_inactive');
     const mock = buildPortalMock({ portalAccount: { ...ACTIVE_PORTAL_ACCOUNT, status: 'invited' } });
-    mockCreateUserClient.mockResolvedValue({ from: mock.from } as unknown as ReturnType<typeof createUserClient>);
+    mockCreateUserClient.mockResolvedValue({ from: mock.from } as unknown as Awaited<ReturnType<typeof createUserClient>>);
     const res = await getProject(makeRequest(`/api/portal/projects/${PROJECT_ID}`), { params: Promise.resolve({ id: PROJECT_ID }) });
     expect(res.status).toBe(403);
   });
@@ -175,7 +175,7 @@ describe('GET /api/portal/projects/[id]/invoices', () => {
   it('returns 403 when view_financials is false', async () => {
     mockClerkAuth(mockAuth, 'clerk_without_financials');
     const mock = buildPortalMock({ permSet: { view_documents: true, view_financials: false } });
-    mockCreateUserClient.mockResolvedValue({ from: mock.from } as unknown as ReturnType<typeof createUserClient>);
+    mockCreateUserClient.mockResolvedValue({ from: mock.from } as unknown as Awaited<ReturnType<typeof createUserClient>>);
     const res = await getInvoices(makeRequest(`/api/portal/projects/${PROJECT_ID}/invoices`), { params: Promise.resolve({ id: PROJECT_ID }) });
     expect(res.status).toBe(403);
   });
@@ -199,7 +199,7 @@ describe('POST CO approve /api/portal/projects/[id]/change-orders/[coId]/approve
   it('returns 403 when approve_change_orders is false', async () => {
     mockClerkAuth(mockAuth, 'clerk_no_approve');
     const mock = buildPortalMock({ permSet: { view_documents: true, approve_change_orders: false } });
-    mockCreateUserClient.mockResolvedValue({ from: mock.from } as unknown as ReturnType<typeof createUserClient>);
+    mockCreateUserClient.mockResolvedValue({ from: mock.from } as unknown as Awaited<ReturnType<typeof createUserClient>>);
     const res = await approveCO(
       makeJsonRequest(`/api/portal/projects/${PROJECT_ID}/change-orders/${CO_ID}/approve`, {}, 'POST'),
       { params: Promise.resolve({ id: PROJECT_ID, coId: CO_ID }) }

@@ -36,7 +36,7 @@ function makeTradeSupabaseMock(portalAccount = ACTIVE_TRADE_PA) {
     order: vi.fn().mockResolvedValue({ data: [], error: null }),
   });
   const insert = vi.fn().mockReturnThis();
-  const fromInsert = vi.fn().mockReturnThis();
+  const fromInsert = vi.fn().mockReturnThis() as ReturnType<typeof vi.fn> & { select: ReturnType<typeof vi.fn>; single: ReturnType<typeof vi.fn> };
   fromInsert.select = vi.fn().mockReturnThis();
   fromInsert.single = vi.fn().mockResolvedValue({ data: { id: 'proposal-001' }, error: null });
 

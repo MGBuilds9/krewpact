@@ -95,8 +95,8 @@ describe('Supabase Database Types', () => {
     const check: Tables['tasks']['Row'] extends {
       title: string;
       status: string | null;
-      assigned_to: string | null;
-      due_date: string | null;
+      assigned_user_id: string | null;
+      due_at: string | null;
     } ? true : never = true;
     expect(check).toBe(true);
   });
