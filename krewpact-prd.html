@@ -43,14 +43,15 @@
     .badge-scale { background: #f3f4f6; color: #6b7280; border: 1px solid #d1d5db; }
 
     /* Tables */
-    table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+    .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { width: 100%; min-width: 500px; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
     th, td { padding: 8px 12px; border: 1px solid #d1d5db; text-align: left; vertical-align: top; }
     th { background: #f8fafc; color: #1e40af; font-weight: 600; }
     td { color: #374151; }
     tr:nth-child(even) { background: #f9fafb; }
 
     /* Division Notes table (fillable) */
-    .division-notes { margin: 1.5rem 0; }
+    .division-notes { margin: 1.5rem 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
     .division-notes th { background: #eff6ff; }
     .division-notes td:first-child { font-weight: 600; white-space: nowrap; }
     .division-notes td:nth-child(2),
@@ -92,7 +93,10 @@
     /* Responsive */
     @media (max-width: 768px) {
       body { padding: 1rem; }
-      table { font-size: 0.8rem; }
+      table { font-size: 0.8rem; min-width: 500px; }
+      .table-scroll, .division-notes { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .toc, .info-box, .warn-box, .feature { overflow-x: auto; }
+      .badge { font-size: 0.72rem; }
     }
   </style>
 </head>
@@ -123,6 +127,9 @@
     <li><strong>Architecture Maps</strong> (<code>krewpact.html</code>) &mdash; Visual system diagrams, data flows, module grid, and tech stack overview.</li>
   </ol>
 </div>
+<p style="text-align:center; color: #6b7280; font-size: 0.85rem; margin-top: 0.5rem;">
+  <em>On mobile, scroll tables horizontally to see all columns.</em>
+</p>
 
 <!-- ==================== HOW TO USE ==================== -->
 <h2 id="how-to-use">How to Use This Document</h2>

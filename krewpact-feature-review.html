@@ -12,10 +12,11 @@ h4{color:#374151;font-size:11pt;margin-top:14px;margin-bottom:6px;font-weight:bo
 p{margin:6px 0 10px 0;}
 ul,ol{margin:6px 0;padding-left:22px;}
 li{margin:3px 0;}
-table{border-collapse:collapse;width:100%;margin:12px 0 20px 0;font-size:10pt;}
+table{border-collapse:collapse;width:100%;min-width:500px;margin:12px 0 20px 0;font-size:10pt;}
 th{background-color:#f8fafc;border:1px solid #d1d5db;padding:8px 10px;text-align:left;color:#1e40af;font-weight:bold;}
 td{border:1px solid #d1d5db;padding:8px 10px;vertical-align:top;}
 tr:nth-child(even) td{background-color:#f9fafb;}
+.table-wrapper{overflow-x:auto;-webkit-overflow-scrolling:touch;}
 .cover-page{text-align:center;padding:60px 40px;page-break-after:always;}
 .logo{background-color:#2563eb;color:white;width:80px;height:80px;display:inline-block;font-size:28pt;font-weight:bold;line-height:80px;text-align:center;margin-bottom:24px;}
 .cover-title{font-size:26pt;color:#1e40af;font-weight:bold;margin:16px 0 8px 0;}
@@ -40,6 +41,7 @@ tr:nth-child(even) td{background-color:#f9fafb;}
 .empty-row td{height:28px;}
 hr.section{border:none;border-top:2px solid #e5e7eb;margin:20px 0;}
 @media print{h2{page-break-before:always;}h2.no-break{page-break-before:avoid;}.cover-page{page-break-after:always;}}
+@media (max-width:768px){body{padding:12px;}.table-wrapper{overflow-x:auto;-webkit-overflow-scrolling:touch;}table{min-width:540px;}}
 </style>
 </head>
 <body>
@@ -68,6 +70,8 @@ hr.section{border:none;border-top:2px solid #e5e7eb;margin:20px 0;}
     <li><strong>Architecture Maps</strong> (<code>krewpact.html</code>) &mdash; Visual system diagrams, data flows, module grid, and tech stack overview.</li>
   </ol>
 </div>
+
+<p style="text-align:center;color:#6b7280;font-size:0.85rem;margin-top:0.5rem;"><em>On mobile, scroll tables horizontally to see all columns. For best editing experience, use a desktop browser.</em></p>
 
 <h2 class="no-break">How to Use This Document</h2>
 <h3>Purpose</h3>
@@ -188,9 +192,13 @@ hr.section{border:none;border-top:2px solid #e5e7eb;margin:20px 0;}
     <tr class="empty-row"><td></td><td></td><td></td><td></td><td></td></tr>
   </tbody>
 </table><h4>David's Team &mdash; Role Assignments</h4>
+<p style="color:#6b7280;font-size:0.9rem;"><em>David's team is the largest &mdash; add rows as needed beyond what's listed.</em></p>
 <table>
   <thead><tr><th>Team Member Name</th><th>Current Job Title</th><th>Proposed KrewPact Role</th><th>Cross-Division Access Needed?</th><th>Notes</th></tr></thead>
   <tbody>
+    <tr class="empty-row"><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr class="empty-row"><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr class="empty-row"><td></td><td></td><td></td><td></td><td></td></tr>
     <tr class="empty-row"><td></td><td></td><td></td><td></td><td></td></tr>
     <tr class="empty-row"><td></td><td></td><td></td><td></td><td></td></tr>
     <tr class="empty-row"><td></td><td></td><td></td><td></td><td></td></tr>
@@ -1025,6 +1033,16 @@ hr.section{border:none;border-top:2px solid #e5e7eb;margin:20px 0;}
   Prepared by Michael Guirguis for MDM Group Leadership &mdash; CONFIDENTIAL<br>
   Questions: Contact Michael Guirguis, IT Director, MDM Group Inc.
 </p>
+
+<script>
+  document.querySelectorAll('table').forEach(function(table) {
+    if (table.parentNode.classList && table.parentNode.classList.contains('table-wrapper')) return;
+    var wrapper = document.createElement('div');
+    wrapper.className = 'table-wrapper';
+    table.parentNode.insertBefore(wrapper, table);
+    wrapper.appendChild(table);
+  });
+</script>
 
 </body>
 </html>
