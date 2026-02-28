@@ -125,6 +125,6 @@ describe('processSequences (branching)', () => {
     };
 
     const result = await processSequences(mock as unknown as SupabaseClient);
-    expect(result).toEqual({ processed: 0, completed: 0, errors: [] });
+    expect(result).toEqual({ processed: 0, completed: 0, errors: [], deadLettered: 0 });
   });
 });

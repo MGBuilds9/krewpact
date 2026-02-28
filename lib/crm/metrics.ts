@@ -72,11 +72,26 @@ export interface SourceMetrics {
   }[];
 }
 
+export interface ForecastBucket {
+  month: string; // YYYY-MM format
+  label: string; // e.g., "Mar 2026"
+  dealCount: number;
+  totalRevenue: number;
+  weightedRevenue: number;
+}
+
+export interface ForecastMetrics {
+  buckets: ForecastBucket[];
+  totalForecastedRevenue: number;
+  totalWeightedRevenue: number;
+}
+
 export interface DashboardMetrics {
   pipeline: PipelineMetrics;
   conversion: ConversionMetrics;
   velocity: VelocityMetrics;
   sources: SourceMetrics;
+  forecast: ForecastMetrics;
 }
 
 // --- Stage definitions ---
@@ -295,4 +310,68 @@ export function calculateSourceMetrics(leads: LeadData[]): SourceMetrics {
     .sort((a, b) => b.value - a.value);
 
   return { sources };
+}
+
+export interface ForecastOpportunityData {
+  id: string;
+  stage: string;
+  estimated_revenue: number | null;
+  probability_pct: number | null;
+  target_close_date: string | null;
+}
+
+const MONTH_LABELS = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+];
+
+/**
+ * Groups open opportunities by target_close_date month,
+ * weighted by probability. Returns 6 months of forecast from now.
+ */
+export function calculateForecastMetrics(
+  opportunities: ForecastOpportunityData[],
+  now: Date = new Date(),
+  monthsAhead: number = 6,
+): ForecastMetrics {
+  // Only include active (non-terminal) opportunities with a close date
+  const active = opportunities.filter(
+    (o) => !TERMINAL_STAGES.includes(o.stage) && o.target_close_date,
+  );
+
+  // Build month buckets
+  const bucketMap = new Map<string, ForecastBucket>();
+  for (let i = 0; i < monthsAhead; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const label = `${MONTH_LABELS[d.getMonth()]} ${d.getFullYear()}`;
+    bucketMap.set(key, { month: key, label, dealCount: 0, totalRevenue: 0, weightedRevenue: 0 });
+  }
+
+  let totalForecastedRevenue = 0;
+  let totalWeightedRevenue = 0;
+
+  for (const opp of active) {
+    const closeDate = new Date(opp.target_close_date!);
+    const key = `${closeDate.getFullYear()}-${String(closeDate.getMonth() + 1).padStart(2, '0')}`;
+    const revenue = opp.estimated_revenue ?? 0;
+    const probability = (opp.probability_pct ?? 0) / 100;
+    const weighted = revenue * probability;
+
+    const bucket = bucketMap.get(key);
+    if (bucket) {
+      bucket.dealCount++;
+      bucket.totalRevenue += revenue;
+      bucket.weightedRevenue += weighted;
+    }
+
+    totalForecastedRevenue += revenue;
+    totalWeightedRevenue += weighted;
+  }
+
+  return {
+    buckets: Array.from(bucketMap.values()),
+    totalForecastedRevenue,
+    totalWeightedRevenue,
+  };
 }

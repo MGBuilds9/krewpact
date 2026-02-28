@@ -5,6 +5,7 @@
 
 export type LeadStage =
   | 'new'
+  | 'contacted'
   | 'qualified'
   | 'estimating'
   | 'proposal_sent'
@@ -17,7 +18,8 @@ export type LeadStage =
  * "won" is a terminal state (no transitions out).
  */
 export const ALLOWED_TRANSITIONS: Record<LeadStage, LeadStage[]> = {
-  new: ['qualified', 'lost'],
+  new: ['contacted', 'qualified', 'lost'],
+  contacted: ['qualified', 'lost'],
   qualified: ['estimating', 'lost'],
   estimating: ['proposal_sent', 'lost'],
   proposal_sent: ['won', 'lost'],

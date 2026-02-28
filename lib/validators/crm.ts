@@ -3,6 +3,7 @@ import { z } from 'zod';
 // --- Lead stages (from DB enum lead_stage) ---
 const leadStages = [
   'new',
+  'contacted',
   'qualified',
   'estimating',
   'proposal_sent',
@@ -126,6 +127,7 @@ export const opportunityCreateSchema = z.object({
   estimated_revenue: z.number().min(0).optional(),
   probability_pct: z.number().min(0).max(100).optional(),
   owner_user_id: z.string().uuid().optional(),
+  source_channel: z.string().optional(),
 });
 
 export const opportunityUpdateSchema = z.object({
@@ -169,6 +171,7 @@ export const activityCreateSchema = z
     details: z.string().optional(),
     due_at: z.string().optional(),
     owner_user_id: z.string().uuid().optional(),
+    outcome: z.enum(['connected', 'no_answer', 'voicemail', 'callback_requested', 'left_message', 'other']).optional(),
   })
   .refine(
     (data) =>
@@ -226,7 +229,7 @@ const conditionTypes = ['if_score', 'if_email_opened', 'if_replied', 'if_tag', '
 
 export const sequenceStepCreateSchema = z.object({
   step_number: z.number().int().min(1),
-  action_type: z.enum(['email', 'task', 'wait', 'condition']),
+  action_type: z.enum(['email', 'task', 'wait', 'condition', 'call', 'linkedin', 'meeting', 'site_visit']),
   action_config: z.object({}).passthrough(),
   delay_days: z.number().int().min(0).optional(),
   delay_hours: z.number().int().min(0).optional(),
@@ -240,7 +243,7 @@ export const sequenceStepCreateSchema = z.object({
 
 export const sequenceStepUpdateSchema = z.object({
   step_number: z.number().int().min(1).optional(),
-  action_type: z.enum(['email', 'task', 'wait', 'condition']).optional(),
+  action_type: z.enum(['email', 'task', 'wait', 'condition', 'call', 'linkedin', 'meeting', 'site_visit']).optional(),
   action_config: z.object({}).passthrough().optional(),
   delay_days: z.number().int().min(0).optional(),
   delay_hours: z.number().int().min(0).optional(),

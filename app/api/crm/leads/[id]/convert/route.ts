@@ -65,6 +65,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
       company_name: lead.company_name as string | null,
       email: lead.email as string | null,
       phone: lead.phone as string | null,
+      source_channel: (lead.source_channel as string | null) ?? null,
     },
     existingOpportunityForLead,
     accountId: parsed.data.account_id,

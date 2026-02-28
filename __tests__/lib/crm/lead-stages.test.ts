@@ -6,9 +6,10 @@ import {
 } from '@/lib/crm/lead-stages';
 
 describe('ALLOWED_TRANSITIONS', () => {
-  it('defines transitions for all 6 stages', () => {
+  it('defines transitions for all 7 stages', () => {
     const stages: LeadStage[] = [
       'new',
+      'contacted',
       'qualified',
       'estimating',
       'proposal_sent',
@@ -18,7 +19,15 @@ describe('ALLOWED_TRANSITIONS', () => {
     expect(Object.keys(ALLOWED_TRANSITIONS)).toEqual(
       expect.arrayContaining(stages),
     );
-    expect(Object.keys(ALLOWED_TRANSITIONS)).toHaveLength(6);
+    expect(Object.keys(ALLOWED_TRANSITIONS)).toHaveLength(7);
+  });
+
+  it('new transitions include contacted', () => {
+    expect(ALLOWED_TRANSITIONS.new).toContain('contacted');
+  });
+
+  it('contacted transitions to qualified and lost', () => {
+    expect(ALLOWED_TRANSITIONS.contacted).toEqual(['qualified', 'lost']);
   });
 
   it('won and lost are terminal (no transitions out)', () => {

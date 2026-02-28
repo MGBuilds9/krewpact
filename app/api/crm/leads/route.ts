@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { scoreLead } from '@/lib/crm/scoring-engine';
 import type { ScoringRule } from '@/lib/crm/scoring-engine';
+import { assignLead } from '@/lib/crm/lead-assignment';
 import { UNAUTHORIZED, INVALID_JSON, validationError, dbError, errorResponse } from '@/lib/api/errors';
 
 const leadStatuses = [
@@ -93,9 +94,27 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) return errorResponse(validationError(parsed.error.flatten()));
 
   const supabase = await createUserClient();
+
+  // Auto-assign owner if not explicitly set
+  let ownerId: string | undefined = parsed.data.owner_id;
+  if (!ownerId) {
+    try {
+      const assignment = await assignLead(supabase, {
+        division_id: parsed.data.division_id ?? null,
+        source_channel: parsed.data.source_channel ?? null,
+      });
+      if (assignment.assigned && assignment.owner_id) {
+        ownerId = assignment.owner_id;
+      }
+    } catch (e) {
+      // Assignment failure should not block lead creation
+      console.error('Auto-assign on create failed:', e);
+    }
+  }
+
   const { data, error } = await supabase
     .from('leads')
-    .insert({ ...parsed.data, status: 'new' })
+    .insert({ ...parsed.data, status: 'new', owner_id: ownerId })
     .select()
     .single();
 

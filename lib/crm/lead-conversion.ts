@@ -17,6 +17,7 @@ export interface ConversionInput {
     company_name: string | null;
     email: string | null;
     phone: string | null;
+    source_channel: string | null;
   };
   existingOpportunityForLead: boolean;
   accountId?: string;
@@ -33,6 +34,7 @@ export type ConversionResult =
         contact_id: string | null;
         division_id: string | null;
         estimated_revenue: number | null;
+        source_channel: string | null;
         stage: 'intake';
       };
     }
@@ -71,6 +73,7 @@ export function validateConversion(input: ConversionInput): ConversionResult {
       contact_id: contactId ?? null,
       division_id: lead.division_id,
       estimated_revenue: lead.estimated_value,
+      source_channel: lead.source_channel,
       stage: 'intake',
     },
   };

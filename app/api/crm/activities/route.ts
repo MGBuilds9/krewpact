@@ -114,5 +114,41 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  // Auto-create follow-up task for certain outcomes
+  const followUpOutcomes = ['no_answer', 'voicemail', 'callback_requested'] as const;
+  const outcome = parsed.data.outcome;
+  if (outcome && (followUpOutcomes as readonly string[]).includes(outcome)) {
+    try {
+      const followUpDelayDays: Record<string, number> = {
+        no_answer: 1,
+        voicemail: 2,
+        callback_requested: 1,
+      };
+      const delayDays = followUpDelayDays[outcome] ?? 1;
+      const dueAt = new Date();
+      dueAt.setDate(dueAt.getDate() + delayDays);
+
+      const followUpTitle =
+        outcome === 'callback_requested'
+          ? `Follow up: Callback requested — ${parsed.data.title}`
+          : `Follow up: ${outcome.replace('_', ' ')} — ${parsed.data.title}`;
+
+      await supabase.from('activities').insert({
+        activity_type: 'task',
+        title: followUpTitle,
+        details: `Auto-created follow-up from activity outcome: ${outcome}`,
+        lead_id: parsed.data.lead_id,
+        opportunity_id: parsed.data.opportunity_id,
+        account_id: parsed.data.account_id,
+        contact_id: parsed.data.contact_id,
+        owner_user_id: parsed.data.owner_user_id,
+        due_at: dueAt.toISOString(),
+      });
+    } catch (e) {
+      // Follow-up creation failure should not block activity creation
+      console.error('Auto follow-up creation failed:', e);
+    }
+  }
+
   return NextResponse.json(data, { status: 201 });
 }

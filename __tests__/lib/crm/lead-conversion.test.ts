@@ -13,6 +13,7 @@ function makeInput(overrides: Partial<ConversionInput> = {}): ConversionInput {
       company_name: 'ABC Corp',
       email: 'test@example.com',
       phone: '416-555-0100',
+      source_channel: 'website',
     },
     existingOpportunityForLead: false,
     ...overrides,

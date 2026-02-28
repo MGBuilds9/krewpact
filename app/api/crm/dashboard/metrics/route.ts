@@ -7,6 +7,7 @@ import {
   calculateConversionMetrics,
   calculateVelocityMetrics,
   calculateSourceMetrics,
+  calculateForecastMetrics,
 } from '@/lib/crm/metrics';
 
 const querySchema = z.object({
@@ -93,6 +94,30 @@ export async function GET(req: NextRequest) {
   const conversion = calculateConversionMetrics(leads ?? []);
   const velocity = calculateVelocityMetrics(opportunities ?? []);
   const sources = calculateSourceMetrics(leads ?? []);
+  const forecast = calculateForecastMetrics(opportunities ?? []);
 
-  return NextResponse.json({ pipeline, conversion, velocity, sources });
+  // Compute "My Leads" vs "My Accounts" summary for dashboard split
+  const allLeads = leads ?? [];
+  const openLeads = allLeads.filter(
+    (l) => !['won', 'lost', 'disqualified'].includes(l.status),
+  );
+  const convertedLeads = allLeads.filter(
+    (l) => ['won', 'converted'].includes(l.status),
+  );
+  const recentlyConverted = convertedLeads
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, 5);
+
+  const ownership = {
+    openLeadCount: openLeads.length,
+    convertedLeadCount: convertedLeads.length,
+    recentlyConverted: recentlyConverted.map((l) => ({
+      id: l.id,
+      company_name: l.company_name,
+      source_channel: l.source_channel,
+      created_at: l.created_at,
+    })),
+  };
+
+  return NextResponse.json({ pipeline, conversion, velocity, sources, forecast, ownership });
 }

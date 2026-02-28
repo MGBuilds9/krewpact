@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { routeToDivision, resolveDivisionId } from '@/lib/crm/division-router';
+import { assignLead } from '@/lib/crm/lead-assignment';
 
 // Schema for incoming lead data
 const leadSchema = z.object({
@@ -72,6 +73,20 @@ export async function POST(req: NextRequest) {
         });
         const divisionId = await resolveDivisionId(supabase, divisionCode);
 
+        // Auto-assign owner via round-robin
+        let ownerId: string | null = null;
+        try {
+            const assignment = await assignLead(supabase, {
+                division_id: divisionId,
+                source_channel: data.source,
+            });
+            if (assignment.assigned) {
+                ownerId = assignment.owner_id;
+            }
+        } catch (e) {
+            console.error('Auto-assign on web lead failed:', e);
+        }
+
         // A. Insert Lead
         const { data: lead, error: leadError } = await supabase
             .from('leads')
@@ -82,6 +97,7 @@ export async function POST(req: NextRequest) {
                 project_description: data.message,
                 project_type: data.projectType,
                 division_id: divisionId,
+                owner_id: ownerId,
                 utm_source: data.utm_source,
                 utm_medium: data.utm_medium,
                 utm_campaign: data.utm_campaign,

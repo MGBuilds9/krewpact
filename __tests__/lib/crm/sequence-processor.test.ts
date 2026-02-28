@@ -21,7 +21,7 @@ describe('processSequences', () => {
     });
 
     const result = await processSequences(client);
-    expect(result).toEqual({ processed: 0, completed: 0, errors: [] });
+    expect(result).toEqual({ processed: 0, completed: 0, errors: [], deadLettered: 0 });
   });
 
   it('returns error when enrollment fetch fails', async () => {

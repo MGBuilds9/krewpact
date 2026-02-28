@@ -47,12 +47,12 @@ describe('POST /api/crm/sequences/process', () => {
     mockClerkAuth(mockAuth);
     const mockClient = {} as never;
     mockCreateUserClient.mockResolvedValue(mockClient);
-    mockProcessSequences.mockResolvedValue({ processed: 3, completed: 1, errors: [] });
+    mockProcessSequences.mockResolvedValue({ processed: 3, completed: 1, errors: [], deadLettered: 0 });
 
     const res = await POST(makeRequest('/api/crm/sequences/process', { method: 'POST' }));
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual({ processed: 3, completed: 1, errors: [] });
+    expect(body).toEqual({ processed: 3, completed: 1, errors: [], deadLettered: 0 });
     expect(mockProcessSequences).toHaveBeenCalledWith(mockClient);
   });
 
@@ -60,7 +60,7 @@ describe('POST /api/crm/sequences/process', () => {
     process.env.CRON_SECRET = 'test-cron-secret';
     const mockClient = {} as never;
     mockCreateServiceClient.mockReturnValue(mockClient);
-    mockProcessSequences.mockResolvedValue({ processed: 5, completed: 2, errors: [] });
+    mockProcessSequences.mockResolvedValue({ processed: 5, completed: 2, errors: [], deadLettered: 0 });
 
     const res = await POST(
       makeRequest('/api/crm/sequences/process', {
@@ -70,7 +70,7 @@ describe('POST /api/crm/sequences/process', () => {
     );
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual({ processed: 5, completed: 2, errors: [] });
+    expect(body).toEqual({ processed: 5, completed: 2, errors: [], deadLettered: 0 });
     expect(mockCreateServiceClient).toHaveBeenCalled();
   });
 
@@ -95,6 +95,7 @@ describe('POST /api/crm/sequences/process', () => {
       processed: 2,
       completed: 0,
       errors: ['Enrollment enroll-1: Insert failed'],
+      deadLettered: 0,
     });
 
     const res = await POST(makeRequest('/api/crm/sequences/process', { method: 'POST' }));
