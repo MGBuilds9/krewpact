@@ -42,3 +42,6 @@ next-env.d.ts
 /data/
 .env*.local
 .worktrees/
+
+# API keys
+frappe_api_keys.csv

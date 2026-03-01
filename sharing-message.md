@@ -4,23 +4,25 @@
 
 Hey team,
 
-I'm sharing 3 documents that lay out what KrewPact will do for each of your divisions. KrewPact is our new unified operations platform — CRM, estimating, projects, field ops, and finance all in one system.
+I'm sharing KrewPact — our new unified platform replacing the spreadsheets, disconnected tools, and manual handoffs across all divisions. CRM, estimating, projects, field ops, and finance in one system.
 
-**The 3 files:**
-1. **Feature Review & Feedback** (`krewpact-feature-review.html`) — Start here. Has feedback tables for each of you to fill in, priority rankings, and role assignments.
-2. **Full PRD** (`krewpact-prd.html`) — The complete 21-epic spec with detailed feature descriptions and division notes tables.
-3. **Architecture Maps** (`krewpact.html`) — Visual diagrams showing how everything connects. Good reference but not required reading.
+**In the folder you'll find 4 files:**
+
+| File | What it is |
+|------|-----------|
+| **Feature Review (.docx)** | **Start here.** Open in Word, fill in your sections. |
+| **Feature Review (.html)** | Same content, easier to read in a browser. Use as your reading copy. |
+| **Full PRD (.html)** | Deep-dive detail on any feature. Reference only. |
+| **Architecture Maps (.html)** | Visual diagrams of how everything connects. Reference only. |
 
 **What I need from you:**
-- Open the Feature Review doc first
-- Fill in the feedback tables for the epics relevant to your division (the coloured callout boxes show which sections are for you)
-- Rate priorities (H/M/L) and rank your Top 5 / Bottom 3 epics
-- Fill in the Role Assignments table with your team members
+1. Open the **.html** version first — read through the features. Coloured boxes highlight what's relevant to you.
+2. Open the **.docx** in Word — fill in your feedback rows in each epic's table (Add / Remove / Change / Priority).
+3. Do the **Priority Ranking** near the end — rank your Top 5 and Bottom 3 epics.
+4. **Mina** — fill in the crew names table so I can create their accounts.
 
-Should take about 45 min for most of you, closer to 90 min for David since he touches the most modules.
+Everyone signs in with their existing Microsoft login. No new accounts needed (except Mina's field crews).
 
-Open the HTML files in Chrome or Edge — they work best in a browser. If you want to edit inline, save as Word first (File → Save As → .docx).
-
-Questions, just reach out.
+Should take ~45 min, closer to 90 for David. Open the .html files in Chrome or Edge.
 
 — Michael
