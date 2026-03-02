@@ -152,3 +152,23 @@ All documents are markdown (+ 1 SQL schema) for easy version control, AI consump
 - **Quarterly** → Run `reference/VALIDATION-CHECKLIST-Codebase-vs-Docs.md` against latest codebase
 
 **Total planning pack: ~845 KB across 17 core documents + 4 reference documents.**
+
+
+## Multi-tenant + White-label
+
+- **Org model**: Each deployment is one organization. MDM is seeded via JSON (no hardcoded MDM in migrations).
+- **JWT claim**: include `krewpact_org_id` in Clerk JWT for org scoping.
+
+### Seed an Organization
+
+```bash
+npx tsx scripts/seed-org.ts --file supabase/seed/seed-org-mdm.json
+```
+
+### Required env (.env.local)
+
+```
+NEXT_PUBLIC_SUPABASE_URL=...
+SUPABASE_SERVICE_ROLE_KEY=...
+```
+
