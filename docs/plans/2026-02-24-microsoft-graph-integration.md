@@ -13,6 +13,7 @@
 ### Task 1: Graph Client Library
 
 **Files:**
+
 - Create: `lib/microsoft/graph.ts`
 - Create: `lib/microsoft/types.ts`
 - Test: `__tests__/lib/microsoft/graph.test.ts`
@@ -35,7 +36,7 @@ describe('buildGraphUrl', () => {
 
   it('builds shared mailbox URL', () => {
     expect(buildGraphUrl('/messages', 'info@mdmcontracting.ca')).toBe(
-      'https://graph.microsoft.com/v1.0/users/info@mdmcontracting.ca/messages'
+      'https://graph.microsoft.com/v1.0/users/info@mdmcontracting.ca/messages',
     );
   });
 
@@ -45,7 +46,7 @@ describe('buildGraphUrl', () => {
 
   it('builds shared calendar URL', () => {
     expect(buildGraphUrl('/events', 'info@mdmcontracting.ca')).toBe(
-      'https://graph.microsoft.com/v1.0/users/info@mdmcontracting.ca/events'
+      'https://graph.microsoft.com/v1.0/users/info@mdmcontracting.ca/events',
     );
   });
 });
@@ -69,7 +70,7 @@ describe('getMicrosoftToken', () => {
         headers: expect.objectContaining({
           Authorization: expect.stringContaining('Bearer'),
         }),
-      })
+      }),
     );
   });
 
@@ -112,7 +113,7 @@ describe('graphFetch', () => {
         headers: expect.objectContaining({
           Authorization: 'Bearer test-token',
         }),
-      })
+      }),
     );
   });
 
@@ -124,7 +125,7 @@ describe('graphFetch', () => {
     });
 
     await expect(
-      graphFetch('bad-token', 'https://graph.microsoft.com/v1.0/me/messages')
+      graphFetch('bad-token', 'https://graph.microsoft.com/v1.0/me/messages'),
     ).rejects.toThrow('Access denied');
   });
 });
@@ -228,7 +229,7 @@ export async function getMicrosoftToken(clerkUserId: string): Promise<string> {
       headers: {
         Authorization: `Bearer ${clerkSecretKey}`,
       },
-    }
+    },
   );
 
   if (!res.ok) {
@@ -246,7 +247,7 @@ export async function getMicrosoftToken(clerkUserId: string): Promise<string> {
 export async function graphFetch<T = unknown>(
   token: string,
   url: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
 ): Promise<T> {
   const res = await fetch(url, {
     ...options,
@@ -283,6 +284,7 @@ git commit -m "feat: add Microsoft Graph client library and types"
 ### Task 2: Email API Routes
 
 **Files:**
+
 - Create: `app/api/email/messages/route.ts`
 - Create: `app/api/email/messages/[id]/route.ts`
 - Create: `app/api/email/send/route.ts`
@@ -305,14 +307,22 @@ export const emailQuerySchema = z.object({
 });
 
 export const sendEmailSchema = z.object({
-  to: z.array(z.object({
-    name: z.string().optional(),
-    address: z.string().email(),
-  })).min(1),
-  cc: z.array(z.object({
-    name: z.string().optional(),
-    address: z.string().email(),
-  })).optional(),
+  to: z
+    .array(
+      z.object({
+        name: z.string().optional(),
+        address: z.string().email(),
+      }),
+    )
+    .min(1),
+  cc: z
+    .array(
+      z.object({
+        name: z.string().optional(),
+        address: z.string().email(),
+      }),
+    )
+    .optional(),
   subject: z.string().min(1).max(500),
   body: z.string().min(1),
   bodyType: z.enum(['Text', 'HTML']).optional().default('HTML'),
@@ -360,7 +370,9 @@ describe('GET /api/email/messages', () => {
   it('fetches inbox messages from personal mailbox', async () => {
     vi.mocked(auth).mockResolvedValue({ userId: 'user_abc' } as any);
     vi.mocked(getMicrosoftToken).mockResolvedValue('test-token');
-    vi.mocked(buildGraphUrl).mockReturnValue('https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages');
+    vi.mocked(buildGraphUrl).mockReturnValue(
+      'https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages',
+    );
     vi.mocked(graphFetch).mockResolvedValue({
       value: [{ id: '1', subject: 'Hello', isRead: false }],
     });
@@ -379,7 +391,9 @@ describe('GET /api/email/messages', () => {
   it('supports shared mailbox via query param', async () => {
     vi.mocked(auth).mockResolvedValue({ userId: 'user_abc' } as any);
     vi.mocked(getMicrosoftToken).mockResolvedValue('test-token');
-    vi.mocked(buildGraphUrl).mockReturnValue('https://graph.microsoft.com/v1.0/users/info@mdmcontracting.ca/mailFolders/inbox/messages');
+    vi.mocked(buildGraphUrl).mockReturnValue(
+      'https://graph.microsoft.com/v1.0/users/info@mdmcontracting.ca/mailFolders/inbox/messages',
+    );
     vi.mocked(graphFetch).mockResolvedValue({ value: [] });
 
     const { GET } = await import('@/app/api/email/messages/route');
@@ -389,7 +403,7 @@ describe('GET /api/email/messages', () => {
     expect(res.status).toBe(200);
     expect(buildGraphUrl).toHaveBeenCalledWith(
       expect.stringContaining('/mailFolders/'),
-      'info@mdmcontracting.ca'
+      'info@mdmcontracting.ca',
     );
   });
 });
@@ -523,17 +537,15 @@ export async function GET(req: NextRequest) {
       $top: String(top),
       $skip: String(skip),
       $orderby: 'receivedDateTime desc',
-      $select: 'id,subject,bodyPreview,from,toRecipients,receivedDateTime,isRead,hasAttachments,importance,webLink,conversationId',
+      $select:
+        'id,subject,bodyPreview,from,toRecipients,receivedDateTime,isRead,hasAttachments,importance,webLink,conversationId',
     });
 
     if (search) {
       queryParams.set('$search', `"${search}"`);
     }
 
-    const data = await graphFetch<GraphListResponse<GraphMessage>>(
-      token,
-      `${url}?${queryParams}`
-    );
+    const data = await graphFetch<GraphListResponse<GraphMessage>>(token, `${url}?${queryParams}`);
 
     return NextResponse.json(data);
   } catch (error) {
@@ -552,10 +564,7 @@ import { getMicrosoftToken, graphFetch, buildGraphUrl } from '@/lib/microsoft/gr
 import { NextRequest, NextResponse } from 'next/server';
 import type { GraphMessage } from '@/lib/microsoft/types';
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -605,7 +614,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { to, cc, subject, body: emailBody, bodyType, leadId, contactId, accountId, mailbox } = parsed.data;
+  const {
+    to,
+    cc,
+    subject,
+    body: emailBody,
+    bodyType,
+    leadId,
+    contactId,
+    accountId,
+    mailbox,
+  } = parsed.data;
 
   try {
     const token = await getMicrosoftToken(userId);
@@ -614,8 +633,10 @@ export async function POST(req: NextRequest) {
       message: {
         subject,
         body: { contentType: bodyType, content: emailBody },
-        toRecipients: to.map(r => ({ emailAddress: { name: r.name, address: r.address } })),
-        ...(cc && { ccRecipients: cc.map(r => ({ emailAddress: { name: r.name, address: r.address } })) }),
+        toRecipients: to.map((r) => ({ emailAddress: { name: r.name, address: r.address } })),
+        ...(cc && {
+          ccRecipients: cc.map((r) => ({ emailAddress: { name: r.name, address: r.address } })),
+        }),
       },
       saveToSentItems: true,
     };
@@ -632,7 +653,7 @@ export async function POST(req: NextRequest) {
       await supabase.from('activities').insert({
         activity_type: 'email',
         title: `Email: ${subject}`,
-        details: `Sent to: ${to.map(r => r.address).join(', ')}`,
+        details: `Sent to: ${to.map((r) => r.address).join(', ')}`,
         ...(leadId && { lead_id: leadId }),
         ...(contactId && { contact_id: contactId }),
         ...(accountId && { account_id: accountId }),
@@ -666,6 +687,7 @@ git commit -m "feat: add email API routes (inbox, read, send with CRM logging)"
 ### Task 3: Calendar API Routes
 
 **Files:**
+
 - Create: `app/api/calendar/events/route.ts`
 - Create: `app/api/calendar/events/[id]/route.ts`
 - Create: `lib/validators/calendar.ts`
@@ -803,17 +825,18 @@ export async function GET(req: NextRequest) {
     const queryParams = new URLSearchParams({
       $top: String(top),
       $orderby: 'start/dateTime',
-      $select: 'id,subject,bodyPreview,start,end,location,organizer,attendees,isAllDay,webLink,onlineMeetingUrl',
+      $select:
+        'id,subject,bodyPreview,start,end,location,organizer,attendees,isAllDay,webLink,onlineMeetingUrl',
     });
 
     if (startDateTime) {
-      queryParams.set('$filter', `start/dateTime ge '${startDateTime}'${endDateTime ? ` and end/dateTime le '${endDateTime}'` : ''}`);
+      queryParams.set(
+        '$filter',
+        `start/dateTime ge '${startDateTime}'${endDateTime ? ` and end/dateTime le '${endDateTime}'` : ''}`,
+      );
     }
 
-    const data = await graphFetch<GraphListResponse<GraphEvent>>(
-      token,
-      `${url}?${queryParams}`
-    );
+    const data = await graphFetch<GraphListResponse<GraphEvent>>(token, `${url}?${queryParams}`);
 
     return NextResponse.json(data);
   } catch (error) {
@@ -840,7 +863,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { subject, body: eventBody, bodyType, startDateTime, endDateTime, timeZone, location, mailbox } = parsed.data;
+  const {
+    subject,
+    body: eventBody,
+    bodyType,
+    startDateTime,
+    endDateTime,
+    timeZone,
+    location,
+    mailbox,
+  } = parsed.data;
 
   try {
     const token = await getMicrosoftToken(userId);
@@ -874,10 +906,7 @@ import { getMicrosoftToken, graphFetch, buildGraphUrl } from '@/lib/microsoft/gr
 import { NextRequest, NextResponse } from 'next/server';
 import type { GraphEvent } from '@/lib/microsoft/types';
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -915,6 +944,7 @@ git commit -m "feat: add calendar API routes (list, detail, create events)"
 ### Task 4: React Query Hooks
 
 **Files:**
+
 - Create: `hooks/useEmail.ts`
 - Create: `hooks/useCalendar.ts`
 - Test: `__tests__/hooks/useEmail.test.ts`
@@ -1112,6 +1142,7 @@ git commit -m "feat: add React Query hooks for email and calendar"
 ### Task 5: Dashboard Widgets (Inbox Preview + Today's Calendar)
 
 **Files:**
+
 - Create: `components/Dashboard/InboxPreview.tsx`
 - Create: `components/Dashboard/CalendarWidget.tsx`
 - Modify: `app/(dashboard)/dashboard/page.tsx`

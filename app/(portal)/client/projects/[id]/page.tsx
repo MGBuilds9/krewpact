@@ -109,7 +109,9 @@ export default async function PortalProjectDetailPage({ params, searchParams }: 
             <div>
               <p className="text-xs text-gray-400 uppercase tracking-wide">Started</p>
               <p className="text-gray-900 font-medium mt-1">
-                {project.start_date ? new Date(project.start_date).toLocaleDateString('en-CA') : '—'}
+                {project.start_date
+                  ? new Date(project.start_date).toLocaleDateString('en-CA')
+                  : '—'}
               </p>
             </div>
             <div>

@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 async function resolvePortalPermission(
   supabase: Awaited<ReturnType<typeof createUserClient>>,
   userId: string,
-  projectId: string
+  projectId: string,
 ) {
   const { data: pa } = await supabase
     .from('portal_accounts')
@@ -24,7 +24,10 @@ async function resolvePortalPermission(
 
   if (!perm) return null;
 
-  return { portalAccountId: pa.id, permSet: (perm.permission_set as Record<string, boolean>) ?? {} };
+  return {
+    portalAccountId: pa.id,
+    permSet: (perm.permission_set as Record<string, boolean>) ?? {},
+  };
 }
 
 /**
@@ -32,10 +35,7 @@ async function resolvePortalPermission(
  * Returns documents that are published to the portal for this project.
  * Permission guard: `view_documents` must be true in permission_set.
  */
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -48,7 +48,10 @@ export async function GET(
   // Check if document viewing is in permission_set (default to allow if not explicitly set)
   const canViewDocs = access.permSet.view_documents !== false;
   if (!canViewDocs) {
-    return NextResponse.json({ error: 'Document access not granted for this project' }, { status: 403 });
+    return NextResponse.json(
+      { error: 'Document access not granted for this project' },
+      { status: 403 },
+    );
   }
 
   // Fetch only portal-published documents

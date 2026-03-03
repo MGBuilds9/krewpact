@@ -21,9 +21,7 @@ beforeEach(() => {
 describe('TagFilterBar', () => {
   it('renders nothing when no tags loaded (before fetch completes)', () => {
     mockFetch.mockImplementation(() => new Promise(() => {}));
-    const { container } = render(
-      <TagFilterBar selectedTagIds={[]} onTagFilterChange={vi.fn()} />
-    );
+    const { container } = render(<TagFilterBar selectedTagIds={[]} onTagFilterChange={vi.fn()} />);
     expect(container.firstChild).toBeNull();
   });
 

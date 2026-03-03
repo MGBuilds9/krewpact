@@ -18,7 +18,12 @@ interface ServiceEventFormProps {
   onCancel?: () => void;
 }
 
-export function ServiceEventForm({ projectId, callId, onSuccess, onCancel }: ServiceEventFormProps) {
+export function ServiceEventForm({
+  projectId,
+  callId,
+  onSuccess,
+  onCancel,
+}: ServiceEventFormProps) {
   const addEvent = useAddServiceCallEvent(projectId, callId);
   const form = useForm<FormState>({ defaultValues: { event_type: '' } });
 
@@ -44,7 +49,11 @@ export function ServiceEventForm({ projectId, callId, onSuccess, onCancel }: Ser
         {addEvent.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         Log
       </Button>
-      {onCancel && <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>}
+      {onCancel && (
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+      )}
     </form>
   );
 }

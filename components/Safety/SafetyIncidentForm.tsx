@@ -72,7 +72,9 @@ export function SafetyIncidentForm({ onSubmit, isLoading }: SafetyIncidentFormPr
                 </FormControl>
                 <SelectContent>
                   {(['low', 'medium', 'high', 'critical'] as const).map((s) => (
-                    <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>
+                    <SelectItem key={s} value={s} className="capitalize">
+                      {s}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -105,7 +107,9 @@ export function SafetyIncidentForm({ onSubmit, isLoading }: SafetyIncidentFormPr
                 <Textarea
                   placeholder="Describe what happened, root cause, conditions..."
                   rows={4}
-                  value={typeof field.value?.description === 'string' ? field.value.description : ''}
+                  value={
+                    typeof field.value?.description === 'string' ? field.value.description : ''
+                  }
                   onChange={(e) => field.onChange({ description: e.target.value })}
                 />
               </FormControl>

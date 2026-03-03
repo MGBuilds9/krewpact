@@ -67,11 +67,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   const supabase = await createUserClient();
-  const { data, error } = await supabase
-    .from('outreach')
-    .insert(parsed.data)
-    .select()
-    .single();
+  const { data, error } = await supabase.from('outreach').insert(parsed.data).select().single();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

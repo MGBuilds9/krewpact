@@ -3,7 +3,14 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -60,13 +67,25 @@ export function AlternateForm({ estimateId, alternate, onSuccess, onCancel }: Al
     };
 
     if (isEditing) {
-      updateAlternate.mutate({ estimateId, alternateId: alternate.id, ...payload }, {
-        onSuccess: () => { form.reset(); onSuccess?.(); },
-      });
+      updateAlternate.mutate(
+        { estimateId, alternateId: alternate.id, ...payload },
+        {
+          onSuccess: () => {
+            form.reset();
+            onSuccess?.();
+          },
+        },
+      );
     } else {
-      createAlternate.mutate({ estimateId, ...payload }, {
-        onSuccess: () => { form.reset(); onSuccess?.(); },
-      });
+      createAlternate.mutate(
+        { estimateId, ...payload },
+        {
+          onSuccess: () => {
+            form.reset();
+            onSuccess?.();
+          },
+        },
+      );
     }
   }
 

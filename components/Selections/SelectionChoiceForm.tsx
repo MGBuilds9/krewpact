@@ -21,9 +21,16 @@ interface SelectionChoiceFormProps {
   onCancel?: () => void;
 }
 
-export function SelectionChoiceForm({ projectId, sheetId, onSuccess, onCancel }: SelectionChoiceFormProps) {
+export function SelectionChoiceForm({
+  projectId,
+  sheetId,
+  onSuccess,
+  onCancel,
+}: SelectionChoiceFormProps) {
   const submit = useSubmitSelectionChoice(projectId, sheetId);
-  const form = useForm<FormState>({ defaultValues: { selection_option_id: '', quantity: '', notes: '' } });
+  const form = useForm<FormState>({
+    defaultValues: { selection_option_id: '', quantity: '', notes: '' },
+  });
 
   async function onSubmit(values: FormState) {
     try {
@@ -43,7 +50,10 @@ export function SelectionChoiceForm({ projectId, sheetId, onSuccess, onCancel }:
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
       <div>
         <label className="text-sm font-medium">Option ID</label>
-        <Input placeholder="Selection option UUID" {...form.register('selection_option_id', { required: true })} />
+        <Input
+          placeholder="Selection option UUID"
+          {...form.register('selection_option_id', { required: true })}
+        />
       </div>
       <div>
         <label className="text-sm font-medium">Quantity</label>
@@ -58,7 +68,11 @@ export function SelectionChoiceForm({ projectId, sheetId, onSuccess, onCancel }:
           {submit.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Submit Choice
         </Button>
-        {onCancel && <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>}
+        {onCancel && (
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+        )}
       </div>
     </form>
   );

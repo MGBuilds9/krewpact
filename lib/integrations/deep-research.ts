@@ -65,7 +65,10 @@ export async function deepResearchLead(
   if (googleMaps) {
     const parts = [];
     if (googleMaps.address) parts.push(`Address: ${googleMaps.address}`);
-    if (googleMaps.google_rating) parts.push(`Rating: ${googleMaps.google_rating}/5 (${googleMaps.google_reviews_count ?? 0} reviews)`);
+    if (googleMaps.google_rating)
+      parts.push(
+        `Rating: ${googleMaps.google_rating}/5 (${googleMaps.google_reviews_count ?? 0} reviews)`,
+      );
     if (googleMaps.business_status) parts.push(`Status: ${googleMaps.business_status}`);
     if (parts.length) contextParts.push(`Google Maps:\n${parts.join('\n')}`);
   }

@@ -64,7 +64,9 @@ export const serviceCallCreateSchema = z.object({
 export const serviceCallUpdateSchema = z.object({
   title: z.string().min(1).max(200).optional(),
   description: z.string().optional().nullable(),
-  status: z.enum(['open', 'scheduled', 'in_progress', 'resolved', 'closed', 'cancelled']).optional(),
+  status: z
+    .enum(['open', 'scheduled', 'in_progress', 'resolved', 'closed', 'cancelled'])
+    .optional(),
   priority: z.enum(['low', 'medium', 'high', 'urgent']).optional(),
   assigned_to: z.string().uuid().optional().nullable(),
   resolved_at: z.string().optional().nullable(),

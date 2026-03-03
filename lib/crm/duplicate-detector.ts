@@ -70,7 +70,10 @@ export function normalizeEmail(email: string): string {
 export function extractDomain(url: string | null | undefined): string {
   if (!url) return '';
   try {
-    const domain = url.replace(/^https?:\/\//, '').replace(/\/.*$/, '').toLowerCase();
+    const domain = url
+      .replace(/^https?:\/\//, '')
+      .replace(/\/.*$/, '')
+      .toLowerCase();
     return domain;
   } catch {
     return '';
@@ -109,7 +112,7 @@ export interface LeadCandidate {
 export function findLeadDuplicates(
   candidate: LeadCandidate,
   existingLeads: Array<Record<string, unknown>>,
-  threshold = 0.6
+  threshold = 0.6,
 ): DuplicateCheckResult {
   const matches: DuplicateMatch[] = [];
 
@@ -135,10 +138,7 @@ export function findLeadDuplicates(
 
     // 2. Fuzzy company_name match
     if (candidate.company_name && lead.company_name) {
-      const similarity = trigramSimilarity(
-        candidate.company_name,
-        lead.company_name as string
-      );
+      const similarity = trigramSimilarity(candidate.company_name, lead.company_name as string);
       if (similarity >= threshold) {
         matches.push({
           id: leadId,
@@ -175,7 +175,7 @@ export interface ContactCandidate {
 export function findContactDuplicates(
   candidate: ContactCandidate,
   existingContacts: Array<Record<string, unknown>>,
-  threshold = 0.6
+  threshold = 0.6,
 ): DuplicateCheckResult {
   const matches: DuplicateMatch[] = [];
 
@@ -184,10 +184,7 @@ export function findContactDuplicates(
 
     // 1. Exact email match
     if (candidate.email && contact.email) {
-      if (
-        normalizeEmail(candidate.email) ===
-        normalizeEmail(contact.email as string)
-      ) {
+      if (normalizeEmail(candidate.email) === normalizeEmail(contact.email as string)) {
         matches.push({
           id: contactId,
           matchType: 'exact_email',
@@ -202,10 +199,7 @@ export function findContactDuplicates(
 
     // 2. Exact phone match (normalized)
     if (candidate.phone && contact.phone) {
-      if (
-        normalizePhone(candidate.phone) ===
-        normalizePhone(contact.phone as string)
-      ) {
+      if (normalizePhone(candidate.phone) === normalizePhone(contact.phone as string)) {
         matches.push({
           id: contactId,
           matchType: 'exact_phone',
@@ -255,16 +249,13 @@ export interface AccountCandidate {
 export function findAccountDuplicates(
   candidate: AccountCandidate,
   existingAccounts: Array<Record<string, unknown>>,
-  threshold = 0.6
+  threshold = 0.6,
 ): DuplicateCheckResult {
   const matches: DuplicateMatch[] = [];
 
   for (const account of existingAccounts) {
     if (account.account_name) {
-      const similarity = trigramSimilarity(
-        candidate.account_name,
-        account.account_name as string
-      );
+      const similarity = trigramSimilarity(candidate.account_name, account.account_name as string);
       if (similarity >= threshold) {
         matches.push({
           id: account.id as string,
@@ -303,7 +294,7 @@ export interface MergeResult {
  */
 export function computeLeadMerge(
   primary: Record<string, unknown>,
-  secondary: Record<string, unknown>
+  secondary: Record<string, unknown>,
 ): { updates: Record<string, unknown>; mergedFields: string[] } {
   const fillableFields = [
     'domain',

@@ -21,18 +21,22 @@ vi.mock('@/hooks/useCRM', () => ({
 
 // Mock Select since Radix portals don't work in jsdom
 vi.mock('@/components/ui/select', () => ({
-  Select: ({ children, onValueChange, value }: { children: React.ReactNode; onValueChange: (v: string) => void; value?: string }) => (
-    <div data-testid="select-root">{children}</div>
-  ),
+  Select: ({
+    children,
+    onValueChange,
+    value,
+  }: {
+    children: React.ReactNode;
+    onValueChange: (v: string) => void;
+    value?: string;
+  }) => <div data-testid="select-root">{children}</div>,
   SelectTrigger: ({ children, id }: { children: React.ReactNode; id?: string }) => (
-    <button data-testid="select-trigger" id={id}>{children}</button>
+    <button data-testid="select-trigger" id={id}>
+      {children}
+    </button>
   ),
-  SelectValue: ({ placeholder }: { placeholder?: string }) => (
-    <span>{placeholder}</span>
-  ),
-  SelectContent: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
+  SelectValue: ({ placeholder }: { placeholder?: string }) => <span>{placeholder}</span>,
+  SelectContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   SelectItem: ({ children, value }: { children: React.ReactNode; value: string }) => (
     <option value={value}>{children}</option>
   ),
@@ -46,51 +50,27 @@ describe('EnrollLeadDialog', () => {
   });
 
   it('renders dialog with title and description', () => {
-    render(
-      <EnrollLeadDialog
-        open={true}
-        onOpenChange={vi.fn()}
-        leadId="lead-1"
-      />,
-    );
+    render(<EnrollLeadDialog open={true} onOpenChange={vi.fn()} leadId="lead-1" />);
 
     expect(screen.getByText('Enroll in Sequence')).toBeInTheDocument();
     expect(screen.getByText(/Select an active sequence/)).toBeInTheDocument();
   });
 
   it('renders sequence options', () => {
-    render(
-      <EnrollLeadDialog
-        open={true}
-        onOpenChange={vi.fn()}
-        leadId="lead-1"
-      />,
-    );
+    render(<EnrollLeadDialog open={true} onOpenChange={vi.fn()} leadId="lead-1" />);
 
     expect(screen.getByText(/Welcome Sequence/)).toBeInTheDocument();
     expect(screen.getByText(/Follow-up Sequence/)).toBeInTheDocument();
   });
 
   it('shows cancel button', () => {
-    render(
-      <EnrollLeadDialog
-        open={true}
-        onOpenChange={vi.fn()}
-        leadId="lead-1"
-      />,
-    );
+    render(<EnrollLeadDialog open={true} onOpenChange={vi.fn()} leadId="lead-1" />);
 
     expect(screen.getByRole('button', { name: /Cancel/ })).toBeInTheDocument();
   });
 
   it('shows enroll button (disabled when no sequence selected)', () => {
-    render(
-      <EnrollLeadDialog
-        open={true}
-        onOpenChange={vi.fn()}
-        leadId="lead-1"
-      />,
-    );
+    render(<EnrollLeadDialog open={true} onOpenChange={vi.fn()} leadId="lead-1" />);
 
     const enrollBtn = screen.getByRole('button', { name: /Enroll/ });
     expect(enrollBtn).toBeInTheDocument();

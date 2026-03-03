@@ -81,12 +81,7 @@ interface LeadFields {
 }
 
 export function routeToDivision(lead: LeadFields): string {
-  const searchText = [
-    lead.project_type,
-    lead.project_description,
-    lead.industry,
-    lead.company_name,
-  ]
+  const searchText = [lead.project_type, lead.project_description, lead.industry, lead.company_name]
     .filter(Boolean)
     .join(' ')
     .toLowerCase();

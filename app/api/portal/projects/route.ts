@@ -28,14 +28,15 @@ export async function GET(req: NextRequest) {
   if (portalAccount.status !== 'active') {
     return NextResponse.json(
       { error: 'Portal account is not active. Please complete onboarding.' },
-      { status: 403 }
+      { status: 403 },
     );
   }
 
   // 2. Fetch projects via portal_permissions join
   const { data: permissions, error: permError } = await supabase
     .from('portal_permissions')
-    .select(`
+    .select(
+      `
       project_id,
       permission_set,
       projects (
@@ -48,7 +49,8 @@ export async function GET(req: NextRequest) {
         actual_completion_date,
         site_address
       )
-    `)
+    `,
+    )
     .eq('portal_account_id', portalAccount.id);
 
   if (permError) {
@@ -57,7 +59,8 @@ export async function GET(req: NextRequest) {
 
   // 3. Shape the response — redact financial info unless permission_set allows it
   const projects = (permissions ?? []).map((p) => {
-    const project = (p as any).projects;
+    // Supabase join returns a single related row object, but generated types may differ
+    const project = p.projects as unknown as Record<string, unknown> | null;
     const permSet: Record<string, boolean> = (p.permission_set as Record<string, boolean>) ?? {};
     return {
       ...project,

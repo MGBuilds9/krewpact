@@ -25,7 +25,9 @@ export async function GET(_req: NextRequest, context: RouteContext) {
   const supabase = await createUserClient();
   const { data, error } = await supabase
     .from('project_daily_logs')
-    .select('*, submitted_user:users!project_daily_logs_submitted_by_fkey(first_name, last_name, avatar_url), project:projects(project_name)')
+    .select(
+      '*, submitted_user:users!project_daily_logs_submitted_by_fkey(first_name, last_name, avatar_url), project:projects(project_name)',
+    )
     .eq('id', id)
     .single();
 

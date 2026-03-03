@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     data: data ?? [],
     total: count ?? 0,
-    hasMore: (effectiveOffset + (data?.length ?? 0)) < (count ?? 0),
+    hasMore: effectiveOffset + (data?.length ?? 0) < (count ?? 0),
   });
 }
 
@@ -72,11 +72,7 @@ export async function POST(req: NextRequest) {
   }
 
   const supabase = await createUserClient();
-  const { data, error } = await supabase
-    .from('assemblies')
-    .insert(parsed.data)
-    .select()
-    .single();
+  const { data, error } = await supabase.from('assemblies').insert(parsed.data).select().single();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -6,7 +6,13 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 import { createUserClient } from '@/lib/supabase/server';
-import { mockSupabaseClient, makeAccount, makeEstimate, makeEstimateLine, resetFixtureCounter } from '@/__tests__/helpers';
+import {
+  mockSupabaseClient,
+  makeAccount,
+  makeEstimate,
+  makeEstimateLine,
+  resetFixtureCounter,
+} from '@/__tests__/helpers';
 
 // Import AFTER mocks are set up — these will be created in implementation
 import { SyncService } from '@/lib/erp/sync-service';
@@ -95,8 +101,20 @@ describe('SyncService', () => {
         total_amount: 5650,
       });
       const lines = [
-        makeEstimateLine({ estimate_id: VALID_ESTIMATE_ID, description: 'Labour', quantity: 10, unit_cost: 50, line_total: 500 }),
-        makeEstimateLine({ estimate_id: VALID_ESTIMATE_ID, description: 'Materials', quantity: 20, unit_cost: 100, line_total: 2000 }),
+        makeEstimateLine({
+          estimate_id: VALID_ESTIMATE_ID,
+          description: 'Labour',
+          quantity: 10,
+          unit_cost: 50,
+          line_total: 500,
+        }),
+        makeEstimateLine({
+          estimate_id: VALID_ESTIMATE_ID,
+          description: 'Materials',
+          quantity: 20,
+          unit_cost: 100,
+          line_total: 2000,
+        }),
       ];
 
       const syncJob = {

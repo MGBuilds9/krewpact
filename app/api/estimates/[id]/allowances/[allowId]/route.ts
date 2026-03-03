@@ -3,7 +3,10 @@ import { createUserClient } from '@/lib/supabase/server';
 import { estimateAllowanceUpdateSchema } from '@/lib/validators/estimating';
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string; allowId: string }> }) {
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string; allowId: string }> },
+) {
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -33,13 +36,19 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: error.code === 'PGRST116' ? 404 : 500 });
+    return NextResponse.json(
+      { error: error.message },
+      { status: error.code === 'PGRST116' ? 404 : 500 },
+    );
   }
 
   return NextResponse.json(data);
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string; allowId: string }> }) {
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string; allowId: string }> },
+) {
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

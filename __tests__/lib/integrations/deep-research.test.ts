@@ -35,9 +35,10 @@ describe('deepResearchLead', () => {
   it('calls Tavily Extract with website URL', async () => {
     mockFetch.mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({
-        results: [{ raw_content: 'Company website content here' }],
-      }),
+      json: () =>
+        Promise.resolve({
+          results: [{ raw_content: 'Company website content here' }],
+        }),
     });
 
     mockGenerateText.mockResolvedValue({

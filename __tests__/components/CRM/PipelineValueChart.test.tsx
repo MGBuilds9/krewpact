@@ -33,10 +33,14 @@ describe('PipelineValueChart', () => {
   });
 
   it('does not render chart when all stages have zero count', () => {
-    render(<PipelineValueChart metrics={{
-      ...makeMetrics(),
-      stageBreakdown: [{ stage: 'intake', count: 0, value: 0, weightedValue: 0 }],
-    }} />);
+    render(
+      <PipelineValueChart
+        metrics={{
+          ...makeMetrics(),
+          stageBreakdown: [{ stage: 'intake', count: 0, value: 0, weightedValue: 0 }],
+        }}
+      />,
+    );
     expect(screen.getByText('No pipeline data available')).toBeDefined();
   });
 

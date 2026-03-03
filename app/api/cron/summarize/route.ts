@@ -43,7 +43,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   });
 
   if (needsSummary.length === 0) {
-    return NextResponse.json({ success: true, processed: 0, message: 'All fetched leads already have summaries' });
+    return NextResponse.json({
+      success: true,
+      processed: 0,
+      message: 'All fetched leads already have summaries',
+    });
   }
 
   const batch = needsSummary.slice(0, BATCH_SIZE);
@@ -53,10 +57,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   for (const lead of batch) {
     try {
       const enrichmentData = lead.enrichment_data as Record<string, unknown>;
-      const summary = await summarizeEnrichment(
-        lead.company_name ?? '',
-        enrichmentData,
-      );
+      const summary = await summarizeEnrichment(lead.company_name ?? '', enrichmentData);
 
       if (!summary) {
         continue; // No data to summarize

@@ -8,7 +8,9 @@ const actorTypes = ['client', 'trade_partner'] as const;
 
 export const portalAccountInviteSchema = z.object({
   actor_type: z.enum(actorTypes),
-  role: z.enum(['client_owner', 'client_delegate', 'trade_partner_admin', 'trade_partner_user']).optional(),
+  role: z
+    .enum(['client_owner', 'client_delegate', 'trade_partner_admin', 'trade_partner_user'])
+    .optional(),
   projects: z.array(z.string().uuid()).optional(),
   company_name: z.string().optional(),
   contact_name: z.string().optional(),
@@ -55,11 +57,13 @@ export const clientChangeApprovalSchema = z.object({
 
 export const clientSelectionSubmissionSchema = z.object({
   selection_sheet_id: z.string().uuid(),
-  choices: z.array(z.object({
-    selection_option_id: z.string().uuid(),
-    quantity: z.number().min(0).optional(),
-    notes: z.string().optional(),
-  })),
+  choices: z.array(
+    z.object({
+      selection_option_id: z.string().uuid(),
+      quantity: z.number().min(0).optional(),
+      notes: z.string().optional(),
+    }),
+  ),
 });
 
 export const clientMessageReplySchema = z.object({

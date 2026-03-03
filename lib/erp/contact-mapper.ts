@@ -23,14 +23,8 @@ export function mapContactToErp(contact: ContactMapInput): Record<string, unknow
     full_name: `${contact.first_name} ${contact.last_name}`.trim(),
     designation: contact.role_title || '',
     krewpact_id: contact.id,
-    links: contact.account_id
-      ? [{ link_doctype: 'Customer', link_name: contact.account_id }]
-      : [],
-    email_ids: contact.email
-      ? [{ email_id: contact.email, is_primary: 1 }]
-      : [],
-    phone_nos: contact.phone
-      ? [{ phone: contact.phone, is_primary_phone: 1 }]
-      : [],
+    links: contact.account_id ? [{ link_doctype: 'Customer', link_name: contact.account_id }] : [],
+    email_ids: contact.email ? [{ email_id: contact.email, is_primary: 1 }] : [],
+    phone_nos: contact.phone ? [{ phone: contact.phone, is_primary_phone: 1 }] : [],
   };
 }

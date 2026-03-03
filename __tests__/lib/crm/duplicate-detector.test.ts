@@ -118,16 +118,31 @@ describe('extractDomain', () => {
 
 describe('findLeadDuplicates', () => {
   const existingLeads = [
-    { id: 'lead-1', company_name: 'MDM Contracting', domain: 'mdmcontracting.ca', city: 'Mississauga' },
-    { id: 'lead-2', company_name: 'Shoppers Drug Mart', domain: 'shoppersdrugmart.ca', city: 'Toronto' },
+    {
+      id: 'lead-1',
+      company_name: 'MDM Contracting',
+      domain: 'mdmcontracting.ca',
+      city: 'Mississauga',
+    },
+    {
+      id: 'lead-2',
+      company_name: 'Shoppers Drug Mart',
+      domain: 'shoppersdrugmart.ca',
+      city: 'Toronto',
+    },
     { id: 'lead-3', company_name: 'MDM Homes', domain: null, city: 'Mississauga' },
-    { id: 'lead-4', company_name: 'Totally Different Corp', domain: 'different.com', city: 'Ottawa' },
+    {
+      id: 'lead-4',
+      company_name: 'Totally Different Corp',
+      domain: 'different.com',
+      city: 'Ottawa',
+    },
   ];
 
   it('detects exact domain match', () => {
     const result = findLeadDuplicates(
       { company_name: 'New MDM', domain: 'mdmcontracting.ca' },
-      existingLeads
+      existingLeads,
     );
     expect(result.hasDuplicates).toBe(true);
     expect(result.matches[0].matchType).toBe('exact_domain');
@@ -135,10 +150,7 @@ describe('findLeadDuplicates', () => {
   });
 
   it('detects fuzzy company name match', () => {
-    const result = findLeadDuplicates(
-      { company_name: 'MDM Contracting Inc' },
-      existingLeads
-    );
+    const result = findLeadDuplicates({ company_name: 'MDM Contracting Inc' }, existingLeads);
     expect(result.hasDuplicates).toBe(true);
     expect(result.matches.some((m) => m.id === 'lead-1')).toBe(true);
   });
@@ -146,7 +158,7 @@ describe('findLeadDuplicates', () => {
   it('returns no duplicates for unique leads', () => {
     const result = findLeadDuplicates(
       { company_name: 'Completely Unique Company XYZ' },
-      existingLeads
+      existingLeads,
     );
     expect(result.hasDuplicates).toBe(false);
     expect(result.matches).toHaveLength(0);
@@ -156,7 +168,7 @@ describe('findLeadDuplicates', () => {
     const result = findLeadDuplicates(
       { company_name: 'MDM Contracting Inc' },
       existingLeads,
-      0.9 // very strict threshold
+      0.9, // very strict threshold
     );
     // With a very high threshold, fuzzy matches should be filtered out
     const fuzzyMatches = result.matches.filter((m) => m.matchType === 'fuzzy_name');
@@ -168,20 +180,15 @@ describe('findLeadDuplicates', () => {
     const result = findLeadDuplicates(
       { company_name: 'MDM' },
       existingLeads,
-      0.1 // low threshold to get multiple matches
+      0.1, // low threshold to get multiple matches
     );
     for (let i = 1; i < result.matches.length; i++) {
-      expect(result.matches[i].similarity).toBeLessThanOrEqual(
-        result.matches[i - 1].similarity
-      );
+      expect(result.matches[i].similarity).toBeLessThanOrEqual(result.matches[i - 1].similarity);
     }
   });
 
   it('handles empty existing leads', () => {
-    const result = findLeadDuplicates(
-      { company_name: 'Test' },
-      []
-    );
+    const result = findLeadDuplicates({ company_name: 'Test' }, []);
     expect(result.hasDuplicates).toBe(false);
   });
 });
@@ -192,15 +199,27 @@ describe('findLeadDuplicates', () => {
 
 describe('findContactDuplicates', () => {
   const existingContacts = [
-    { id: 'c-1', first_name: 'John', last_name: 'Smith', email: 'john@mdm.com', phone: '416-555-1234' },
-    { id: 'c-2', first_name: 'Jane', last_name: 'Doe', email: 'jane@example.com', phone: '905-555-5678' },
+    {
+      id: 'c-1',
+      first_name: 'John',
+      last_name: 'Smith',
+      email: 'john@mdm.com',
+      phone: '416-555-1234',
+    },
+    {
+      id: 'c-2',
+      first_name: 'Jane',
+      last_name: 'Doe',
+      email: 'jane@example.com',
+      phone: '905-555-5678',
+    },
     { id: 'c-3', first_name: 'Jon', last_name: 'Smith', email: 'jon@other.com', phone: null },
   ];
 
   it('detects exact email match', () => {
     const result = findContactDuplicates(
       { first_name: 'Different', last_name: 'Person', email: 'john@mdm.com' },
-      existingContacts
+      existingContacts,
     );
     expect(result.hasDuplicates).toBe(true);
     expect(result.matches[0].matchType).toBe('exact_email');
@@ -210,7 +229,7 @@ describe('findContactDuplicates', () => {
   it('detects exact phone match (normalized)', () => {
     const result = findContactDuplicates(
       { first_name: 'Unknown', last_name: 'Person', phone: '(416) 555-1234' },
-      existingContacts
+      existingContacts,
     );
     expect(result.hasDuplicates).toBe(true);
     expect(result.matches[0].matchType).toBe('exact_phone');
@@ -220,7 +239,7 @@ describe('findContactDuplicates', () => {
   it('detects fuzzy name match', () => {
     const result = findContactDuplicates(
       { first_name: 'John', last_name: 'Smith' }, // exact match on name
-      existingContacts
+      existingContacts,
     );
     expect(result.hasDuplicates).toBe(true);
     // Should match via email (c-1 has same name + email) or fuzzy name
@@ -230,7 +249,7 @@ describe('findContactDuplicates', () => {
   it('returns no duplicates for unique contacts', () => {
     const result = findContactDuplicates(
       { first_name: 'Unique', last_name: 'PersonXYZ' },
-      existingContacts
+      existingContacts,
     );
     expect(result.hasDuplicates).toBe(false);
   });
@@ -238,7 +257,7 @@ describe('findContactDuplicates', () => {
   it('handles contacts with null fields', () => {
     const result = findContactDuplicates(
       { first_name: 'Test', last_name: 'User', phone: null },
-      existingContacts
+      existingContacts,
     );
     // Should not crash, just skip phone comparison
     expect(result).toBeDefined();
@@ -257,10 +276,7 @@ describe('findAccountDuplicates', () => {
   ];
 
   it('detects fuzzy account name match', () => {
-    const result = findAccountDuplicates(
-      { account_name: 'MDM Group' },
-      existingAccounts
-    );
+    const result = findAccountDuplicates({ account_name: 'MDM Group' }, existingAccounts);
     expect(result.hasDuplicates).toBe(true);
     expect(result.matches[0].id).toBe('a-1');
   });
@@ -268,16 +284,13 @@ describe('findAccountDuplicates', () => {
   it('returns no duplicates for unique accounts', () => {
     const result = findAccountDuplicates(
       { account_name: 'Completely Unique Account' },
-      existingAccounts
+      existingAccounts,
     );
     expect(result.hasDuplicates).toBe(false);
   });
 
   it('handles empty existing accounts', () => {
-    const result = findAccountDuplicates(
-      { account_name: 'Test' },
-      []
-    );
+    const result = findAccountDuplicates({ account_name: 'Test' }, []);
     expect(result.hasDuplicates).toBe(false);
   });
 });
@@ -288,8 +301,22 @@ describe('findAccountDuplicates', () => {
 
 describe('computeLeadMerge', () => {
   it('fills gaps from secondary into primary', () => {
-    const primary = { id: 'p1', company_name: 'MDM', domain: null, city: 'Mississauga', notes: null, lead_score: 50 };
-    const secondary = { id: 's1', company_name: 'MDM Corp', domain: 'mdm.com', city: 'Toronto', notes: 'Has budget', lead_score: 30 };
+    const primary = {
+      id: 'p1',
+      company_name: 'MDM',
+      domain: null,
+      city: 'Mississauga',
+      notes: null,
+      lead_score: 50,
+    };
+    const secondary = {
+      id: 's1',
+      company_name: 'MDM Corp',
+      domain: 'mdm.com',
+      city: 'Toronto',
+      notes: 'Has budget',
+      lead_score: 30,
+    };
 
     const { updates, mergedFields } = computeLeadMerge(primary, secondary);
 

@@ -59,9 +59,13 @@ export function NotificationPreferenceForm() {
             <FormItem className="flex items-center justify-between rounded-lg border p-4">
               <div>
                 <FormLabel>In-App Notifications</FormLabel>
-                <p className="text-sm text-muted-foreground">Receive notifications within KrewPact</p>
+                <p className="text-sm text-muted-foreground">
+                  Receive notifications within KrewPact
+                </p>
               </div>
-              <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+              <FormControl>
+                <Switch checked={field.value} onCheckedChange={field.onChange} />
+              </FormControl>
             </FormItem>
           )}
         />
@@ -75,7 +79,9 @@ export function NotificationPreferenceForm() {
                 <FormLabel>Email Notifications</FormLabel>
                 <p className="text-sm text-muted-foreground">Receive notifications by email</p>
               </div>
-              <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+              <FormControl>
+                <Switch checked={field.value} onCheckedChange={field.onChange} />
+              </FormControl>
             </FormItem>
           )}
         />
@@ -87,9 +93,13 @@ export function NotificationPreferenceForm() {
             <FormItem className="flex items-center justify-between rounded-lg border p-4">
               <div>
                 <FormLabel>Push Notifications</FormLabel>
-                <p className="text-sm text-muted-foreground">Receive push notifications on mobile</p>
+                <p className="text-sm text-muted-foreground">
+                  Receive push notifications on mobile
+                </p>
               </div>
-              <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+              <FormControl>
+                <Switch checked={field.value} onCheckedChange={field.onChange} />
+              </FormControl>
             </FormItem>
           )}
         />

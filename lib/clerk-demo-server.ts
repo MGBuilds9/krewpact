@@ -36,15 +36,16 @@ export async function currentUser() {
       emailAddress: DEMO_USER.emailAddress,
     },
     imageUrl: DEMO_USER.imageUrl,
-    emailAddresses: [
-      { emailAddress: DEMO_USER.emailAddress },
-    ],
+    emailAddresses: [{ emailAddress: DEMO_USER.emailAddress }],
   };
 }
 
 // Mock clerkMiddleware — pass-through, no auth checks
 export function clerkMiddleware(
-  handler?: (auth: ReturnType<typeof createDemoAuth>, req: NextRequest) => Response | void | Promise<Response | void>,
+  handler?: (
+    auth: ReturnType<typeof createDemoAuth>,
+    req: NextRequest,
+  ) => Response | void | Promise<Response | void>,
   _options?: Record<string, unknown>,
 ) {
   return async (req: NextRequest) => {

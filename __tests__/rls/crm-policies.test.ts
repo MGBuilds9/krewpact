@@ -41,19 +41,13 @@ function is_platform_admin(claims: JWTClaims): boolean {
 // =====================================================
 
 /** Division-scoped SELECT: user can see rows in their divisions, admin sees all */
-function canSelectDivisionScoped(
-  claims: JWTClaims,
-  rowDivisionId: string
-): boolean {
+function canSelectDivisionScoped(claims: JWTClaims, rowDivisionId: string): boolean {
   if (is_platform_admin(claims)) return true;
   return krewpact_divisions(claims).includes(rowDivisionId);
 }
 
 /** Division-scoped INSERT/UPDATE/DELETE: user can modify rows in their divisions, admin can modify all */
-function canModifyDivisionScoped(
-  claims: JWTClaims,
-  rowDivisionId: string
-): boolean {
+function canModifyDivisionScoped(claims: JWTClaims, rowDivisionId: string): boolean {
   if (is_platform_admin(claims)) return true;
   return krewpact_divisions(claims).includes(rowDivisionId);
 }
@@ -64,20 +58,14 @@ function canAccessOwn(claims: JWTClaims, rowUserId: string): boolean {
 }
 
 /** User-owned + admin: user sees own, platform_admin sees all (e.g., expense_claims SELECT) */
-function canSelectOwnOrAdmin(
-  claims: JWTClaims,
-  rowUserId: string
-): boolean {
+function canSelectOwnOrAdmin(claims: JWTClaims, rowUserId: string): boolean {
   if (is_platform_admin(claims)) return true;
   if (krewpact_roles(claims).includes('accounting')) return true;
   return krewpact_user_id(claims) === rowUserId;
 }
 
 /** Project member check: user is a member of the project */
-function isProjectMember(
-  claims: JWTClaims,
-  projectMemberUserIds: string[]
-): boolean {
+function isProjectMember(claims: JWTClaims, projectMemberUserIds: string[]): boolean {
   if (is_platform_admin(claims)) return true;
   return projectMemberUserIds.includes(krewpact_user_id(claims));
 }

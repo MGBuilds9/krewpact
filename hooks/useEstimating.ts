@@ -174,8 +174,7 @@ export function useUpdateCostCatalogItem() {
 export function useDeleteCostCatalogItem() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) =>
-      apiFetch(`/api/cost-catalog/${id}`, { method: 'DELETE' }),
+    mutationFn: (id: string) => apiFetch(`/api/cost-catalog/${id}`, { method: 'DELETE' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cost-catalog-items'] });
     },
@@ -236,8 +235,7 @@ export function useUpdateAssembly() {
 export function useDeleteAssembly() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) =>
-      apiFetch(`/api/assemblies/${id}`, { method: 'DELETE' }),
+    mutationFn: (id: string) => apiFetch(`/api/assemblies/${id}`, { method: 'DELETE' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['assemblies'] });
     },
@@ -269,8 +267,15 @@ export function useCreateAssemblyItem() {
 export function useUpdateAssemblyItem() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ assemblyId, itemId, ...data }: Partial<AssemblyItem> & { assemblyId: string; itemId: string }) =>
-      apiFetch<AssemblyItem>(`/api/assemblies/${assemblyId}/items/${itemId}`, { method: 'PATCH', body: data }),
+    mutationFn: ({
+      assemblyId,
+      itemId,
+      ...data
+    }: Partial<AssemblyItem> & { assemblyId: string; itemId: string }) =>
+      apiFetch<AssemblyItem>(`/api/assemblies/${assemblyId}/items/${itemId}`, {
+        method: 'PATCH',
+        body: data,
+      }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['assembly-items', variables.assemblyId] });
       queryClient.invalidateQueries({ queryKey: ['assembly', variables.assemblyId] });
@@ -343,8 +348,7 @@ export function useUpdateEstimateTemplate() {
 export function useDeleteEstimateTemplate() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) =>
-      apiFetch(`/api/estimate-templates/${id}`, { method: 'DELETE' }),
+    mutationFn: (id: string) => apiFetch(`/api/estimate-templates/${id}`, { method: 'DELETE' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['estimate-templates'] });
     },
@@ -365,7 +369,10 @@ export function useCreateEstimateAlternate() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ estimateId, ...data }: Partial<EstimateAlternate> & { estimateId: string }) =>
-      apiFetch<EstimateAlternate>(`/api/estimates/${estimateId}/alternates`, { method: 'POST', body: data }),
+      apiFetch<EstimateAlternate>(`/api/estimates/${estimateId}/alternates`, {
+        method: 'POST',
+        body: data,
+      }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['estimate-alternates', variables.estimateId] });
     },
@@ -375,8 +382,15 @@ export function useCreateEstimateAlternate() {
 export function useUpdateEstimateAlternate() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ estimateId, alternateId, ...data }: Partial<EstimateAlternate> & { estimateId: string; alternateId: string }) =>
-      apiFetch<EstimateAlternate>(`/api/estimates/${estimateId}/alternates/${alternateId}`, { method: 'PATCH', body: data }),
+    mutationFn: ({
+      estimateId,
+      alternateId,
+      ...data
+    }: Partial<EstimateAlternate> & { estimateId: string; alternateId: string }) =>
+      apiFetch<EstimateAlternate>(`/api/estimates/${estimateId}/alternates/${alternateId}`, {
+        method: 'PATCH',
+        body: data,
+      }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['estimate-alternates', variables.estimateId] });
     },
@@ -408,7 +422,10 @@ export function useCreateEstimateAllowance() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ estimateId, ...data }: Partial<EstimateAllowance> & { estimateId: string }) =>
-      apiFetch<EstimateAllowance>(`/api/estimates/${estimateId}/allowances`, { method: 'POST', body: data }),
+      apiFetch<EstimateAllowance>(`/api/estimates/${estimateId}/allowances`, {
+        method: 'POST',
+        body: data,
+      }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['estimate-allowances', variables.estimateId] });
     },
@@ -418,8 +435,15 @@ export function useCreateEstimateAllowance() {
 export function useUpdateEstimateAllowance() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ estimateId, allowanceId, ...data }: Partial<EstimateAllowance> & { estimateId: string; allowanceId: string }) =>
-      apiFetch<EstimateAllowance>(`/api/estimates/${estimateId}/allowances/${allowanceId}`, { method: 'PATCH', body: data }),
+    mutationFn: ({
+      estimateId,
+      allowanceId,
+      ...data
+    }: Partial<EstimateAllowance> & { estimateId: string; allowanceId: string }) =>
+      apiFetch<EstimateAllowance>(`/api/estimates/${estimateId}/allowances/${allowanceId}`, {
+        method: 'PATCH',
+        body: data,
+      }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['estimate-allowances', variables.estimateId] });
     },

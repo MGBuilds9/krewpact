@@ -7,10 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
  * Marks a message as read for the calling portal user.
  * Idempotent — safe to call multiple times.
  */
-export async function POST(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 

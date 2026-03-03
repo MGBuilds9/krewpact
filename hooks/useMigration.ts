@@ -35,10 +35,16 @@ export interface PaginatedResponse<T> {
   hasMore: boolean;
 }
 
-export function useMigrationBatches(params?: { status?: string; source_system?: string; limit?: number; offset?: number }) {
+export function useMigrationBatches(params?: {
+  status?: string;
+  source_system?: string;
+  limit?: number;
+  offset?: number;
+}) {
   return useQuery({
     queryKey: ['migration-batches', params],
-    queryFn: () => apiFetch<PaginatedResponse<MigrationBatch>>('/api/migration/batches', { params }),
+    queryFn: () =>
+      apiFetch<PaginatedResponse<MigrationBatch>>('/api/migration/batches', { params }),
     staleTime: 30_000,
   });
 }
@@ -75,10 +81,17 @@ export function useUpdateMigrationBatch() {
   });
 }
 
-export function useMigrationConflicts(batchId: string, params?: { resolution_status?: string; limit?: number; offset?: number }) {
+export function useMigrationConflicts(
+  batchId: string,
+  params?: { resolution_status?: string; limit?: number; offset?: number },
+) {
   return useQuery({
     queryKey: ['migration-conflicts', batchId, params],
-    queryFn: () => apiFetch<PaginatedResponse<MigrationConflict>>(`/api/migration/batches/${batchId}/conflicts`, { params }),
+    queryFn: () =>
+      apiFetch<PaginatedResponse<MigrationConflict>>(
+        `/api/migration/batches/${batchId}/conflicts`,
+        { params },
+      ),
     enabled: !!batchId,
     staleTime: 30_000,
   });
@@ -88,7 +101,10 @@ export function useResolveMigrationConflict(batchId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ conflictId, ...data }: { conflictId: string } & Record<string, unknown>) =>
-      apiFetch<MigrationConflict>(`/api/migration/batches/${batchId}/conflicts/${conflictId}`, { method: 'PATCH', body: data }),
+      apiFetch<MigrationConflict>(`/api/migration/batches/${batchId}/conflicts/${conflictId}`, {
+        method: 'PATCH',
+        body: data,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['migration-conflicts', batchId] });
     },

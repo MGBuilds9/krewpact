@@ -11,10 +11,21 @@ vi.mock('@/lib/supabase/server', () => ({
 import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 
-import { GET as getDeps, POST as postDep, DELETE as deleteDep } from '@/app/api/tasks/[id]/dependencies/route';
+import {
+  GET as getDeps,
+  POST as postDep,
+  DELETE as deleteDep,
+} from '@/app/api/tasks/[id]/dependencies/route';
 import { GET as getDiary, POST as postDiary } from '@/app/api/projects/[id]/diary/route';
-import { GET as getDiaryEntry, PATCH as patchDiaryEntry, DELETE as deleteDiaryEntry } from '@/app/api/projects/[id]/diary/[entryId]/route';
-import { GET as getDailyLogs, POST as postDailyLog } from '@/app/api/projects/[id]/daily-logs/route';
+import {
+  GET as getDiaryEntry,
+  PATCH as patchDiaryEntry,
+  DELETE as deleteDiaryEntry,
+} from '@/app/api/projects/[id]/diary/[entryId]/route';
+import {
+  GET as getDailyLogs,
+  POST as postDailyLog,
+} from '@/app/api/projects/[id]/daily-logs/route';
 import { PATCH as patchDailyLog } from '@/app/api/projects/[id]/daily-logs/[logId]/route';
 import { GET as getComments, POST as postComment } from '@/app/api/tasks/[id]/comments/route';
 import { GET as getMeetings, POST as postMeeting } from '@/app/api/projects/[id]/meetings/route';
@@ -72,7 +83,15 @@ describe('GET /api/tasks/[id]/dependencies', () => {
   });
 
   it('returns list of dependencies', async () => {
-    const deps = [{ id: DEP_UUID_1, task_id: TASK_ID, depends_on_task_id: DEP_UUID_2, dependency_type: 'finish_to_start', created_at: '2026-01-01' }];
+    const deps = [
+      {
+        id: DEP_UUID_1,
+        task_id: TASK_ID,
+        depends_on_task_id: DEP_UUID_2,
+        dependency_type: 'finish_to_start',
+        created_at: '2026-01-01',
+      },
+    ];
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({ tables: { task_dependencies: { data: deps, error: null } } }),
     );
@@ -84,7 +103,9 @@ describe('GET /api/tasks/[id]/dependencies', () => {
 
   it('returns 500 on DB error', async () => {
     mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { task_dependencies: { data: null, error: { message: 'DB error', code: '500' } } } }),
+      mockSupabaseClient({
+        tables: { task_dependencies: { data: null, error: { message: 'DB error', code: '500' } } },
+      }),
     );
     const res = await getDeps(makeRequest('/api/tasks/x/dependencies'), taskCtx());
     expect(res.status).toBe(500);
@@ -94,17 +115,29 @@ describe('GET /api/tasks/[id]/dependencies', () => {
 describe('POST /api/tasks/[id]/dependencies', () => {
   it('returns 401 when unauthenticated', async () => {
     mockClerkUnauth(mockAuth);
-    const res = await postDep(makeJsonRequest('/api/tasks/x/dependencies', { depends_on_task_id: DEP_UUID_2 }), taskCtx());
+    const res = await postDep(
+      makeJsonRequest('/api/tasks/x/dependencies', { depends_on_task_id: DEP_UUID_2 }),
+      taskCtx(),
+    );
     expect(res.status).toBe(401);
   });
 
   it('returns 400 for invalid body', async () => {
-    const res = await postDep(makeJsonRequest('/api/tasks/x/dependencies', {}), taskCtx(DEP_UUID_1));
+    const res = await postDep(
+      makeJsonRequest('/api/tasks/x/dependencies', {}),
+      taskCtx(DEP_UUID_1),
+    );
     expect(res.status).toBe(400);
   });
 
   it('creates dependency and returns 201', async () => {
-    const created = { id: 'new-dep', task_id: DEP_UUID_1, depends_on_task_id: DEP_UUID_2, dependency_type: 'finish_to_start', created_at: '2026-01-01' };
+    const created = {
+      id: 'new-dep',
+      task_id: DEP_UUID_1,
+      depends_on_task_id: DEP_UUID_2,
+      dependency_type: 'finish_to_start',
+      created_at: '2026-01-01',
+    };
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({ tables: { task_dependencies: { data: created, error: null } } }),
     );
@@ -146,7 +179,18 @@ describe('GET /api/projects/[id]/diary', () => {
   });
 
   it('returns paginated diary entries', async () => {
-    const entries = [{ id: ENTRY_ID, project_id: PROJECT_ID, entry_at: '2026-02-26', entry_type: 'observation', entry_text: 'All good', created_by: 'user_1', created_at: '2026-02-26', updated_at: '2026-02-26' }];
+    const entries = [
+      {
+        id: ENTRY_ID,
+        project_id: PROJECT_ID,
+        entry_at: '2026-02-26',
+        entry_type: 'observation',
+        entry_text: 'All good',
+        created_by: 'user_1',
+        created_at: '2026-02-26',
+        updated_at: '2026-02-26',
+      },
+    ];
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({ tables: { site_diary_entries: { data: entries, error: null } } }),
     );
@@ -169,12 +213,25 @@ describe('POST /api/projects/[id]/diary', () => {
   });
 
   it('creates diary entry and returns 201', async () => {
-    const created = { id: ENTRY_ID, project_id: PROJECT_ID, entry_at: '2026-02-26', entry_type: 'observation', entry_text: 'Noted.', created_by: 'user_1', created_at: '2026-02-26', updated_at: '2026-02-26' };
+    const created = {
+      id: ENTRY_ID,
+      project_id: PROJECT_ID,
+      entry_at: '2026-02-26',
+      entry_type: 'observation',
+      entry_text: 'Noted.',
+      created_by: 'user_1',
+      created_at: '2026-02-26',
+      updated_at: '2026-02-26',
+    };
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({ tables: { site_diary_entries: { data: created, error: null } } }),
     );
     const res = await postDiary(
-      makeJsonRequest('/api/projects/x/diary', { entry_at: '2026-02-26', entry_type: 'observation', entry_text: 'Noted.' }),
+      makeJsonRequest('/api/projects/x/diary', {
+        entry_at: '2026-02-26',
+        entry_type: 'observation',
+        entry_text: 'Noted.',
+      }),
       projectCtx(),
     );
     expect(res.status).toBe(201);
@@ -191,7 +248,16 @@ describe('PATCH /api/projects/[id]/diary/[entryId]', () => {
   });
 
   it('updates diary entry', async () => {
-    const updated = { id: ENTRY_ID, entry_text: 'Updated', entry_type: 'observation', entry_at: '2026-02-26', project_id: PROJECT_ID, created_by: 'u', created_at: '2026-02-26', updated_at: '2026-02-26' };
+    const updated = {
+      id: ENTRY_ID,
+      entry_text: 'Updated',
+      entry_type: 'observation',
+      entry_at: '2026-02-26',
+      project_id: PROJECT_ID,
+      created_by: 'u',
+      created_at: '2026-02-26',
+      updated_at: '2026-02-26',
+    };
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({ tables: { site_diary_entries: { data: updated, error: null } } }),
     );
@@ -225,7 +291,22 @@ describe('GET /api/projects/[id]/daily-logs', () => {
   });
 
   it('returns paginated daily logs', async () => {
-    const logs = [{ id: LOG_ID, project_id: PROJECT_ID, log_date: '2026-02-26', crew_count: 5, work_summary: 'Framing', weather: null, delays: null, safety_notes: null, is_offline_origin: false, author_user_id: 'u', created_at: '2026-02-26', updated_at: '2026-02-26' }];
+    const logs = [
+      {
+        id: LOG_ID,
+        project_id: PROJECT_ID,
+        log_date: '2026-02-26',
+        crew_count: 5,
+        work_summary: 'Framing',
+        weather: null,
+        delays: null,
+        safety_notes: null,
+        is_offline_origin: false,
+        author_user_id: 'u',
+        created_at: '2026-02-26',
+        updated_at: '2026-02-26',
+      },
+    ];
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({ tables: { project_daily_logs: { data: logs, error: null } } }),
     );
@@ -243,7 +324,20 @@ describe('POST /api/projects/[id]/daily-logs', () => {
   });
 
   it('creates daily log and returns 201', async () => {
-    const created = { id: LOG_ID, project_id: PROJECT_ID, log_date: '2026-02-26', crew_count: 8, work_summary: 'Done', weather: null, delays: null, safety_notes: null, is_offline_origin: false, author_user_id: 'u', created_at: '2026-02-26', updated_at: '2026-02-26' };
+    const created = {
+      id: LOG_ID,
+      project_id: PROJECT_ID,
+      log_date: '2026-02-26',
+      crew_count: 8,
+      work_summary: 'Done',
+      weather: null,
+      delays: null,
+      safety_notes: null,
+      is_offline_origin: false,
+      author_user_id: 'u',
+      created_at: '2026-02-26',
+      updated_at: '2026-02-26',
+    };
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({ tables: { project_daily_logs: { data: created, error: null } } }),
     );
@@ -265,7 +359,20 @@ describe('PATCH /api/projects/[id]/daily-logs/[logId]', () => {
   });
 
   it('updates daily log', async () => {
-    const updated = { id: LOG_ID, project_id: PROJECT_ID, log_date: '2026-02-26', crew_count: 10, work_summary: null, weather: null, delays: null, safety_notes: null, is_offline_origin: false, author_user_id: 'u', created_at: '2026-02-26', updated_at: '2026-02-26' };
+    const updated = {
+      id: LOG_ID,
+      project_id: PROJECT_ID,
+      log_date: '2026-02-26',
+      crew_count: 10,
+      work_summary: null,
+      weather: null,
+      delays: null,
+      safety_notes: null,
+      is_offline_origin: false,
+      author_user_id: 'u',
+      created_at: '2026-02-26',
+      updated_at: '2026-02-26',
+    };
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({ tables: { project_daily_logs: { data: updated, error: null } } }),
     );
@@ -289,7 +396,16 @@ describe('GET /api/tasks/[id]/comments', () => {
   });
 
   it('returns paginated comments', async () => {
-    const comments = [{ id: 'c-1', task_id: TASK_ID, author_user_id: 'u', comment_text: 'Done', created_at: '2026-01-01', updated_at: '2026-01-01' }];
+    const comments = [
+      {
+        id: 'c-1',
+        task_id: TASK_ID,
+        author_user_id: 'u',
+        comment_text: 'Done',
+        created_at: '2026-01-01',
+        updated_at: '2026-01-01',
+      },
+    ];
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({ tables: { task_comments: { data: comments, error: null } } }),
     );
@@ -302,12 +418,22 @@ describe('GET /api/tasks/[id]/comments', () => {
 
 describe('POST /api/tasks/[id]/comments', () => {
   it('returns 400 for empty comment_text', async () => {
-    const res = await postComment(makeJsonRequest('/api/tasks/x/comments', { comment_text: '' }), taskCtx());
+    const res = await postComment(
+      makeJsonRequest('/api/tasks/x/comments', { comment_text: '' }),
+      taskCtx(),
+    );
     expect(res.status).toBe(400);
   });
 
   it('creates comment and returns 201', async () => {
-    const created = { id: 'c-2', task_id: TASK_ID, author_user_id: 'u', comment_text: 'LGTM', created_at: '2026-01-01', updated_at: '2026-01-01' };
+    const created = {
+      id: 'c-2',
+      task_id: TASK_ID,
+      author_user_id: 'u',
+      comment_text: 'LGTM',
+      created_at: '2026-01-01',
+      updated_at: '2026-01-01',
+    };
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({ tables: { task_comments: { data: created, error: null } } }),
     );
@@ -331,7 +457,18 @@ describe('GET /api/projects/[id]/meetings', () => {
   });
 
   it('returns paginated meetings', async () => {
-    const meetings = [{ id: ENTRY_ID, project_id: PROJECT_ID, entry_at: '2026-02-26', entry_type: 'meeting', entry_text: '{"title":"Kickoff","attendees":["Michael"],"notes":"All good."}', created_by: 'u', created_at: '2026-02-26', updated_at: '2026-02-26' }];
+    const meetings = [
+      {
+        id: ENTRY_ID,
+        project_id: PROJECT_ID,
+        entry_at: '2026-02-26',
+        entry_type: 'meeting',
+        entry_text: '{"title":"Kickoff","attendees":["Michael"],"notes":"All good."}',
+        created_by: 'u',
+        created_at: '2026-02-26',
+        updated_at: '2026-02-26',
+      },
+    ];
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({ tables: { site_diary_entries: { data: meetings, error: null } } }),
     );
@@ -344,7 +481,10 @@ describe('GET /api/projects/[id]/meetings', () => {
 
 describe('POST /api/projects/[id]/meetings', () => {
   it('returns 400 for missing required fields', async () => {
-    const res = await postMeeting(makeJsonRequest('/api/projects/x/meetings', { title: 'Meeting' }), projectCtx());
+    const res = await postMeeting(
+      makeJsonRequest('/api/projects/x/meetings', { title: 'Meeting' }),
+      projectCtx(),
+    );
     expect(res.status).toBe(400);
   });
 
@@ -362,7 +502,16 @@ describe('POST /api/projects/[id]/meetings', () => {
   });
 
   it('creates meeting and returns 201', async () => {
-    const created = { id: ENTRY_ID, project_id: PROJECT_ID, entry_at: '2026-02-26', entry_type: 'meeting', entry_text: '{}', created_by: 'u', created_at: '2026-02-26', updated_at: '2026-02-26' };
+    const created = {
+      id: ENTRY_ID,
+      project_id: PROJECT_ID,
+      entry_at: '2026-02-26',
+      entry_type: 'meeting',
+      entry_text: '{}',
+      created_by: 'u',
+      created_at: '2026-02-26',
+      updated_at: '2026-02-26',
+    };
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({ tables: { site_diary_entries: { data: created, error: null } } }),
     );

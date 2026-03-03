@@ -56,7 +56,10 @@ export interface ExpenseApproval {
 export function useTimeEntries(projectId: string) {
   return useQuery({
     queryKey: ['time-entries', projectId],
-    queryFn: () => apiFetch<{ data: TimeEntry[]; total: number; hasMore: boolean }>(`/api/projects/${projectId}/time-entries`),
+    queryFn: () =>
+      apiFetch<{ data: TimeEntry[]; total: number; hasMore: boolean }>(
+        `/api/projects/${projectId}/time-entries`,
+      ),
     staleTime: 30_000,
   });
 }
@@ -74,7 +77,10 @@ export function useUpdateTimeEntry(projectId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, ...body }: { id: string } & Record<string, unknown>) =>
-      apiFetch<TimeEntry>(`/api/projects/${projectId}/time-entries/${id}`, { method: 'PATCH', body }),
+      apiFetch<TimeEntry>(`/api/projects/${projectId}/time-entries/${id}`, {
+        method: 'PATCH',
+        body,
+      }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['time-entries', projectId] }),
   });
 }
@@ -94,9 +100,12 @@ export function useTimesheetBatches(params?: { status?: string; divisionId?: str
   return useQuery({
     queryKey: ['timesheet-batches', params?.status, params?.divisionId],
     queryFn: () =>
-      apiFetch<{ data: TimesheetBatch[]; total: number; hasMore: boolean }>('/api/timesheet-batches', {
-        params: { status: params?.status, division_id: params?.divisionId },
-      }),
+      apiFetch<{ data: TimesheetBatch[]; total: number; hasMore: boolean }>(
+        '/api/timesheet-batches',
+        {
+          params: { status: params?.status, division_id: params?.divisionId },
+        },
+      ),
     staleTime: 30_000,
   });
 }
@@ -132,7 +141,10 @@ export function useApproveTimesheetBatch() {
 export function useExpenseReceipts(expenseId: string) {
   return useQuery({
     queryKey: ['expense-receipts', expenseId],
-    queryFn: () => apiFetch<{ data: ExpenseReceipt[]; total: number; hasMore: boolean }>(`/api/expenses/${expenseId}/receipts`),
+    queryFn: () =>
+      apiFetch<{ data: ExpenseReceipt[]; total: number; hasMore: boolean }>(
+        `/api/expenses/${expenseId}/receipts`,
+      ),
     staleTime: 30_000,
   });
 }

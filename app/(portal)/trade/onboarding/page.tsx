@@ -27,9 +27,20 @@ const STEPS = [
 ];
 
 const TRADE_OPTIONS = [
-  'Electrical', 'Plumbing', 'HVAC', 'Framing', 'Drywall',
-  'Flooring', 'Roofing', 'Concrete', 'Masonry', 'Painting',
-  'Landscaping', 'Glass & Glazing', 'Steel / Structural', 'Other',
+  'Electrical',
+  'Plumbing',
+  'HVAC',
+  'Framing',
+  'Drywall',
+  'Flooring',
+  'Roofing',
+  'Concrete',
+  'Masonry',
+  'Painting',
+  'Landscaping',
+  'Glass & Glazing',
+  'Steel / Structural',
+  'Other',
 ];
 
 interface FormData {
@@ -109,7 +120,9 @@ export default function TradeOnboardingWizard() {
       <div>
         <div className="flex justify-between items-center mb-2">
           <span className="text-sm font-medium text-gray-700">{currentStep.label}</span>
-          <span className="text-xs text-gray-400">Step {step + 1} of {totalSteps}</span>
+          <span className="text-xs text-gray-400">
+            Step {step + 1} of {totalSteps}
+          </span>
         </div>
         <div className="h-2 rounded-full bg-gray-200">
           <div
@@ -125,15 +138,33 @@ export default function TradeOnboardingWizard() {
           <>
             <label className="block">
               <span className="text-sm font-medium text-gray-700">Company Name *</span>
-              <input id="company_name" value={form.company_name} onChange={(e) => update('company_name', e.target.value)} className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 focus:border-transparent outline-none" placeholder="Acme Trades Inc." />
+              <input
+                id="company_name"
+                value={form.company_name}
+                onChange={(e) => update('company_name', e.target.value)}
+                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 focus:border-transparent outline-none"
+                placeholder="Acme Trades Inc."
+              />
             </label>
             <label className="block">
               <span className="text-sm font-medium text-gray-700">Primary Contact Name *</span>
-              <input id="contact_name" value={form.contact_name} onChange={(e) => update('contact_name', e.target.value)} className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 focus:border-transparent outline-none" placeholder="John Smith" />
+              <input
+                id="contact_name"
+                value={form.contact_name}
+                onChange={(e) => update('contact_name', e.target.value)}
+                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 focus:border-transparent outline-none"
+                placeholder="John Smith"
+              />
             </label>
             <label className="block">
               <span className="text-sm font-medium text-gray-700">Phone</span>
-              <input id="phone" value={form.phone} onChange={(e) => update('phone', e.target.value)} className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 focus:border-transparent outline-none" placeholder="+1-416-555-0100" />
+              <input
+                id="phone"
+                value={form.phone}
+                onChange={(e) => update('phone', e.target.value)}
+                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 focus:border-transparent outline-none"
+                placeholder="+1-416-555-0100"
+              />
             </label>
           </>
         )}
@@ -142,15 +173,33 @@ export default function TradeOnboardingWizard() {
           <>
             <label className="block">
               <span className="text-sm font-medium text-gray-700">Insurance Expiry Date</span>
-              <input id="insurance_expiry" type="date" value={form.insurance_expiry} onChange={(e) => update('insurance_expiry', e.target.value)} className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 focus:border-transparent outline-none" />
+              <input
+                id="insurance_expiry"
+                type="date"
+                value={form.insurance_expiry}
+                onChange={(e) => update('insurance_expiry', e.target.value)}
+                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 focus:border-transparent outline-none"
+              />
             </label>
             <label className="block">
               <span className="text-sm font-medium text-gray-700">WSIB Account Number</span>
-              <input id="wsib_number" value={form.wsib_number} onChange={(e) => update('wsib_number', e.target.value)} className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 focus:border-transparent outline-none" placeholder="1234567890" />
+              <input
+                id="wsib_number"
+                value={form.wsib_number}
+                onChange={(e) => update('wsib_number', e.target.value)}
+                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 focus:border-transparent outline-none"
+                placeholder="1234567890"
+              />
             </label>
             <label className="block">
               <span className="text-sm font-medium text-gray-700">WSIB Clearance Expiry</span>
-              <input id="wsib_expiry" type="date" value={form.wsib_expiry} onChange={(e) => update('wsib_expiry', e.target.value)} className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 focus:border-transparent outline-none" />
+              <input
+                id="wsib_expiry"
+                type="date"
+                value={form.wsib_expiry}
+                onChange={(e) => update('wsib_expiry', e.target.value)}
+                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 focus:border-transparent outline-none"
+              />
             </label>
           </>
         )}
@@ -175,8 +224,17 @@ export default function TradeOnboardingWizard() {
               ))}
             </div>
             <label className="block mt-4">
-              <span className="text-sm font-medium text-gray-700">Certifications (e.g., Red Seal, CWB)</span>
-              <textarea id="certifications" value={form.certifications} onChange={(e) => update('certifications', e.target.value)} rows={3} className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 focus:border-transparent outline-none resize-none" placeholder="List any relevant certifications..." />
+              <span className="text-sm font-medium text-gray-700">
+                Certifications (e.g., Red Seal, CWB)
+              </span>
+              <textarea
+                id="certifications"
+                value={form.certifications}
+                onChange={(e) => update('certifications', e.target.value)}
+                rows={3}
+                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 focus:border-transparent outline-none resize-none"
+                placeholder="List any relevant certifications..."
+              />
             </label>
           </>
         )}
@@ -204,11 +262,26 @@ export default function TradeOnboardingWizard() {
 
       {/* Navigation */}
       <div className="flex justify-between">
-        <button disabled={step === 0} onClick={handleBack} className="px-4 py-2 text-sm font-medium text-gray-600 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-40">Back</button>
+        <button
+          disabled={step === 0}
+          onClick={handleBack}
+          className="px-4 py-2 text-sm font-medium text-gray-600 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-40"
+        >
+          Back
+        </button>
         {step < totalSteps - 1 ? (
-          <button onClick={handleNext} className="px-5 py-2 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg">Next →</button>
+          <button
+            onClick={handleNext}
+            className="px-5 py-2 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg"
+          >
+            Next →
+          </button>
         ) : (
-          <button onClick={handleSubmit} disabled={submitting} className="px-5 py-2 text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 disabled:opacity-60 rounded-lg">
+          <button
+            onClick={handleSubmit}
+            disabled={submitting}
+            className="px-5 py-2 text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 disabled:opacity-60 rounded-lg"
+          >
             {submitting ? 'Submitting…' : 'Complete Onboarding'}
           </button>
         )}

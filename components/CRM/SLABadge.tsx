@@ -11,9 +11,10 @@ export function SLABadge({ sla }: SLABadgeProps) {
 
   if (sla.isOverdue) {
     const overdueHours = Math.max(0, sla.hoursElapsed - sla.maxHours);
-    const label = overdueHours >= 24
-      ? `${Math.floor(overdueHours / 24)}d overdue`
-      : `${Math.floor(overdueHours)}h overdue`;
+    const label =
+      overdueHours >= 24
+        ? `${Math.floor(overdueHours / 24)}d overdue`
+        : `${Math.floor(overdueHours)}h overdue`;
 
     return (
       <span
@@ -27,9 +28,7 @@ export function SLABadge({ sla }: SLABadgeProps) {
 
   if (sla.percentUsed >= 75) {
     const hoursLeft = Math.floor(sla.hoursRemaining);
-    const label = hoursLeft >= 24
-      ? `${Math.floor(hoursLeft / 24)}d left`
-      : `${hoursLeft}h left`;
+    const label = hoursLeft >= 24 ? `${Math.floor(hoursLeft / 24)}d left` : `${hoursLeft}h left`;
 
     return (
       <span

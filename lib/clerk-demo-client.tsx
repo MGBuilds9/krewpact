@@ -10,12 +10,7 @@ import React from 'react';
 import { DEMO_USER } from './demo-mode';
 
 // Mock ClerkProvider — just renders children
-export function ClerkProvider({
-  children,
-}: {
-  children: React.ReactNode;
-  [key: string]: unknown;
-}) {
+export function ClerkProvider({ children }: { children: React.ReactNode; [key: string]: unknown }) {
   return <>{children}</>;
 }
 
@@ -33,9 +28,7 @@ export function useUser() {
         emailAddress: DEMO_USER.emailAddress,
       },
       imageUrl: DEMO_USER.imageUrl,
-      emailAddresses: [
-        { emailAddress: DEMO_USER.emailAddress },
-      ],
+      emailAddresses: [{ emailAddress: DEMO_USER.emailAddress }],
     },
   };
 }
@@ -80,9 +73,7 @@ export function SignIn() {
   return (
     <div className="flex flex-col items-center justify-center p-8 rounded-lg border bg-card">
       <h2 className="text-2xl font-bold mb-2">KrewPact Demo Mode</h2>
-      <p className="text-muted-foreground mb-4">
-        Signed in as {DEMO_USER.fullName}
-      </p>
+      <p className="text-muted-foreground mb-4">Signed in as {DEMO_USER.fullName}</p>
       <a
         href="/dashboard"
         className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"

@@ -41,10 +41,7 @@ function extractPolicies(sql: string): Record<string, string[]> {
  */
 function extractPolicyBlock(sql: string, policyName: string): string {
   const escapedName = policyName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const regex = new RegExp(
-    `CREATE\\s+POLICY\\s+${escapedName}\\s+ON\\s+\\w+[^;]+;`,
-    'is',
-  );
+  const regex = new RegExp(`CREATE\\s+POLICY\\s+${escapedName}\\s+ON\\s+\\w+[^;]+;`, 'is');
   const match = regex.exec(sql);
   return match ? match[0] : '';
 }

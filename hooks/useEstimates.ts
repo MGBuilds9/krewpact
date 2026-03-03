@@ -113,8 +113,7 @@ export function useUpdateEstimate() {
 export function useDeleteEstimate() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) =>
-      apiFetch(`/api/estimates/${id}`, { method: 'DELETE' }),
+    mutationFn: (id: string) => apiFetch(`/api/estimates/${id}`, { method: 'DELETE' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['estimates'] });
     },

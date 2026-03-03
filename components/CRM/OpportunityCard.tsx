@@ -16,14 +16,9 @@ interface OpportunityCardProps {
 
 export function OpportunityCard({ opportunity, onClick }: OpportunityCardProps) {
   return (
-    <Card
-      className="cursor-pointer hover:shadow-md transition-shadow"
-      onClick={onClick}
-    >
+    <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
       <CardContent className="p-3">
-        <h4 className="font-medium text-sm truncate mb-1.5">
-          {opportunity.opportunity_name}
-        </h4>
+        <h4 className="font-medium text-sm truncate mb-1.5">{opportunity.opportunity_name}</h4>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <DollarSign className="h-3 w-3" />
@@ -48,7 +43,8 @@ export function OpportunityCard({ opportunity, onClick }: OpportunityCardProps) 
         </div>
         {opportunity.estimated_revenue != null && opportunity.probability_pct != null && (
           <p className="text-xs text-muted-foreground mt-1.5">
-            weighted: {formatCurrency(opportunity.estimated_revenue * opportunity.probability_pct / 100)}
+            weighted:{' '}
+            {formatCurrency((opportunity.estimated_revenue * opportunity.probability_pct) / 100)}
           </p>
         )}
       </CardContent>

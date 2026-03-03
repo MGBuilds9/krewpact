@@ -1,10 +1,12 @@
 # KrewPact Production Master Plan (A–Z)
 
 ## Summary
+
 This is a decision-complete plan to build a production-grade mixed-GC platform for MDM Group in an aggressive 3–4 month program, using a **Hybrid ERPNext-first architecture**: ERPNext is finance/procurement/inventory source-of-truth; KrewPact is UX shell, field operations, portals, orchestration, identity, and reporting.
 The plan includes full feature scope, backend data model, integration logic, API contracts, infra/security, migration, testing, and cutover.
 
 ## Companion Documents (Detailed Expansion)
+
 1. Full feature/function PRD checklist:
    `./KrewPact-Feature-Function-PRD-Checklist.md`
 2. Backend canonical SQL schema draft:
@@ -13,11 +15,13 @@ The plan includes full feature scope, backend data model, integration logic, API
    `./KrewPact-Execution-Board.md`
 
 ## Blueprint Alignment
+
 1. Existing blueprint references were checked against the original KrewPact blueprint (archived).
 2. This V2 plan expands blueprint coverage to production-critical areas that are often missing from MVP blueprints: procurement RFQ/bid workflows, trade compliance gating, customer selections/allowances, closeout/warranty service, privacy operations, business continuity, and product telemetry/adoption.
 3. Execution sequencing and acceptance gates in this package are intentionally stricter than the legacy blueprint to support production-grade operations, not just feature parity demos.
 
 ## Locked Decisions (From Your Inputs)
+
 1. System model: Hybrid ERPNext-first.
 2. Timeline: 3–4 month aggressive rollout.
 3. Hosting: Managed stack + private ERPNext bench.
@@ -39,6 +43,7 @@ The plan includes full feature scope, backend data model, integration logic, API
 19. File migration: Phased bulk import + delta sync.
 
 ## Program Outcomes (What “Done” Means)
+
 1. All core construction workflows run in KrewPact + ERPNext without reliance on fragmented legacy tools.
 2. Finance transactions post in ERPNext with reconciled project/job-cost reporting in KrewPact.
 3. Field teams can submit daily logs, safety forms, photos, time, and expenses offline.
@@ -52,21 +57,24 @@ The plan includes full feature scope, backend data model, integration logic, API
 > Scope is now prioritized P0/P1/P2. See `KrewPact-Architecture-Resolution.md` for full rationale.
 
 ### P0 — MVP (12 weeks target)
+
 **Goal:** Replace fragmented manual workflows with a unified platform. Nothing more.
 
-| Phase | Weeks | Included |
-|---|---|---|
-| Foundation | 1-2 | Identity/RBAC, Clerk auth, Supabase schema, ERPNext client, Cloudflare Tunnel, app shell, CI/CD |
-| CRM + Estimating | 3-6 | Leads, opportunities, accounts, contacts, estimate builder, templates, ERPNext sync (Customer, Quotation) |
-| Contracting + Projects | 7-9 | Proposals, BoldSign e-sign, contract tracking, project creation, members, milestones, ERPNext sync (Sales Order, Project) |
-| Execution + Go-Live | 10-12 | Tasks, daily logs, document upload, invoice snapshots (read), dashboard, UAT, production deploy |
+| Phase                  | Weeks | Included                                                                                                                  |
+| ---------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------- |
+| Foundation             | 1-2   | Identity/RBAC, Clerk auth, Supabase schema, ERPNext client, Cloudflare Tunnel, app shell, CI/CD                           |
+| CRM + Estimating       | 3-6   | Leads, opportunities, accounts, contacts, estimate builder, templates, ERPNext sync (Customer, Quotation)                 |
+| Contracting + Projects | 7-9   | Proposals, BoldSign e-sign, contract tracking, project creation, members, milestones, ERPNext sync (Sales Order, Project) |
+| Execution + Go-Live    | 10-12 | Tasks, daily logs, document upload, invoice snapshots (read), dashboard, UAT, production deploy                           |
 
 **~25 features, ~40 endpoints, ~30 forms, ~12 ERPNext mappings**
 
 ### P1 — Fast Follow (Weeks 13-20)
+
 Change orders, RFIs, submittals, document versioning, time/expense, client portal, extended ERPNext sync (POs, AP/AR invoices)
 
 ### P2 — Future
+
 Trade portal, procurement RFQ, selections/allowances, offline-first, ADP integration, closeout/warranty, advanced estimating (assemblies, cost catalog), historical migration, full monitoring stack, Microsoft 365 integration
 
 ## Complete Feature List
@@ -74,6 +82,7 @@ Trade portal, procurement RFQ, selections/allowances, offline-first, ADP integra
 See **KrewPact-Feature-Function-PRD-Checklist.md** for detailed enumeration of 70+ features across 16 epics, including acceptance criteria and role model.
 
 High-level domain summary:
+
 - Identity & Security (4 features)
 - CRM & Pipeline (6 features)
 - Estimating (8 features)
@@ -99,40 +108,41 @@ High-level domain summary:
 
 ## Target Architecture
 
-| Layer | Technology | Responsibility |
-|---|---|---|
-| Web App | React + TypeScript | Internal UI + portals + offline-capable PWA |
-| API/BFF | Node/Edge service tier | Domain APIs, orchestration, validation, rate limits, policy enforcement |
-| Operational DB | Supabase Postgres | Portal/ops data, workflow states, sync logs, denormalized reporting views |
-| ERP Core | ERPNext private bench | Accounting, inventory, procurement, invoicing, payments integration points |
-| Object Storage | Supabase Storage + CDN | Documents/photos/artifacts |
-| Queue/Jobs | Redis-backed workers or managed queues | Sync pipelines, migration jobs, retries, webhooks |
-| Identity | Clerk | Auth, SSO, session claims |
-| Monitoring | OTEL collector + metrics/log backend | Traces, logs, SLO reporting |
+| Layer          | Technology                             | Responsibility                                                             |
+| -------------- | -------------------------------------- | -------------------------------------------------------------------------- |
+| Web App        | React + TypeScript                     | Internal UI + portals + offline-capable PWA                                |
+| API/BFF        | Node/Edge service tier                 | Domain APIs, orchestration, validation, rate limits, policy enforcement    |
+| Operational DB | Supabase Postgres                      | Portal/ops data, workflow states, sync logs, denormalized reporting views  |
+| ERP Core       | ERPNext private bench                  | Accounting, inventory, procurement, invoicing, payments integration points |
+| Object Storage | Supabase Storage + CDN                 | Documents/photos/artifacts                                                 |
+| Queue/Jobs     | Redis-backed workers or managed queues | Sync pipelines, migration jobs, retries, webhooks                          |
+| Identity       | Clerk                                  | Auth, SSO, session claims                                                  |
+| Monitoring     | OTEL collector + metrics/log backend   | Traces, logs, SLO reporting                                                |
 
 ## Backend Tables (Canonical Model)
 
-| Group | Tables | Core Purpose |
-|---|---|---|
-| Identity/RBAC | `users`, `roles`, `permissions`, `role_permissions`, `user_roles`, `divisions`, `user_divisions`, `policy_overrides` | Access control and org structure |
-| CRM | `accounts`, `contacts`, `leads`, `opportunities`, `opportunity_stage_history`, `activities` | Sales lifecycle |
-| Estimating | `estimate_templates`, `assemblies`, `assembly_items`, `cost_catalog_items`, `estimates`, `estimate_lines`, `estimate_versions`, `estimate_alternates`, `estimate_allowances` | Estimation engine |
-| Contracting | `proposals`, `proposal_events`, `esign_envelopes`, `esign_documents`, `contract_terms` | Proposal-to-contract |
-| Projects | `projects`, `project_members`, `milestones`, `tasks`, `task_dependencies`, `task_comments`, `project_daily_logs`, `site_diary_entries` | Execution core |
-| Change/RFI/Submittal | `change_requests`, `change_orders`, `rfi_items`, `rfi_threads`, `submittals`, `submittal_reviews` | Controlled approvals |
-| Files/Media | `file_metadata`, `file_versions`, `file_folders`, `file_shares`, `project_files`, `photo_assets`, `photo_annotations` | Documents/photos lifecycle |
-| Procurement & Compliance | `rfq_packages`, `rfq_invites`, `rfq_bids`, `bid_leveling_sessions`, `bid_leveling_entries`, `trade_partner_compliance_docs` | Procurement competition and compliance control |
-| Selections & Cost Codes | `cost_code_dictionary`, `cost_code_mappings`, `selection_sheets`, `selection_options`, `selection_choices`, `allowance_reconciliations` | Financial classification and client selection governance |
-| Field/Safety | `safety_forms`, `safety_incidents`, `toolbox_talks`, `inspections` | Compliance and safety |
-| Time/Expense | `time_entries`, `timesheet_batches`, `expense_claims`, `expense_receipts`, `expense_approvals` | Labor and reimbursement |
-| Financial Bridge | `erp_sync_map`, `erp_sync_jobs`, `erp_sync_events`, `erp_sync_errors`, `invoice_snapshots`, `po_snapshots`, `job_cost_snapshots` | ERP integration state and traceability |
-| Closeout & Warranty | `closeout_packages`, `deficiency_items`, `warranty_items`, `service_calls`, `service_call_events` | Post-substantial completion lifecycle |
-| Portal | `portal_accounts`, `portal_permissions`, `portal_messages`, `portal_view_logs` | External collaboration |
-| Notifications/Audit | `notifications`, `notification_preferences`, `audit_logs`, `webhook_events`, `idempotency_keys` | Operational safety and traceability |
-| Governance & Analytics | `privacy_requests`, `privacy_request_events`, `bcp_incidents`, `bcp_recovery_events`, `feature_usage_events`, `adoption_kpis` | Privacy, continuity, and product telemetry |
-| Migration | `migration_batches`, `migration_records`, `migration_conflicts`, `migration_attachments` | Historical data migration and reconciliation |
+| Group                    | Tables                                                                                                                                                                       | Core Purpose                                             |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| Identity/RBAC            | `users`, `roles`, `permissions`, `role_permissions`, `user_roles`, `divisions`, `user_divisions`, `policy_overrides`                                                         | Access control and org structure                         |
+| CRM                      | `accounts`, `contacts`, `leads`, `opportunities`, `opportunity_stage_history`, `activities`                                                                                  | Sales lifecycle                                          |
+| Estimating               | `estimate_templates`, `assemblies`, `assembly_items`, `cost_catalog_items`, `estimates`, `estimate_lines`, `estimate_versions`, `estimate_alternates`, `estimate_allowances` | Estimation engine                                        |
+| Contracting              | `proposals`, `proposal_events`, `esign_envelopes`, `esign_documents`, `contract_terms`                                                                                       | Proposal-to-contract                                     |
+| Projects                 | `projects`, `project_members`, `milestones`, `tasks`, `task_dependencies`, `task_comments`, `project_daily_logs`, `site_diary_entries`                                       | Execution core                                           |
+| Change/RFI/Submittal     | `change_requests`, `change_orders`, `rfi_items`, `rfi_threads`, `submittals`, `submittal_reviews`                                                                            | Controlled approvals                                     |
+| Files/Media              | `file_metadata`, `file_versions`, `file_folders`, `file_shares`, `project_files`, `photo_assets`, `photo_annotations`                                                        | Documents/photos lifecycle                               |
+| Procurement & Compliance | `rfq_packages`, `rfq_invites`, `rfq_bids`, `bid_leveling_sessions`, `bid_leveling_entries`, `trade_partner_compliance_docs`                                                  | Procurement competition and compliance control           |
+| Selections & Cost Codes  | `cost_code_dictionary`, `cost_code_mappings`, `selection_sheets`, `selection_options`, `selection_choices`, `allowance_reconciliations`                                      | Financial classification and client selection governance |
+| Field/Safety             | `safety_forms`, `safety_incidents`, `toolbox_talks`, `inspections`                                                                                                           | Compliance and safety                                    |
+| Time/Expense             | `time_entries`, `timesheet_batches`, `expense_claims`, `expense_receipts`, `expense_approvals`                                                                               | Labor and reimbursement                                  |
+| Financial Bridge         | `erp_sync_map`, `erp_sync_jobs`, `erp_sync_events`, `erp_sync_errors`, `invoice_snapshots`, `po_snapshots`, `job_cost_snapshots`                                             | ERP integration state and traceability                   |
+| Closeout & Warranty      | `closeout_packages`, `deficiency_items`, `warranty_items`, `service_calls`, `service_call_events`                                                                            | Post-substantial completion lifecycle                    |
+| Portal                   | `portal_accounts`, `portal_permissions`, `portal_messages`, `portal_view_logs`                                                                                               | External collaboration                                   |
+| Notifications/Audit      | `notifications`, `notification_preferences`, `audit_logs`, `webhook_events`, `idempotency_keys`                                                                              | Operational safety and traceability                      |
+| Governance & Analytics   | `privacy_requests`, `privacy_request_events`, `bcp_incidents`, `bcp_recovery_events`, `feature_usage_events`, `adoption_kpis`                                                | Privacy, continuity, and product telemetry               |
+| Migration                | `migration_batches`, `migration_records`, `migration_conflicts`, `migration_attachments`                                                                                     | Historical data migration and reconciliation             |
 
 ## Backend Logic (Mandatory Services)
+
 1. Auth/RBAC service: claim hydration, permission checks, division scoping, policy override evaluation.
 2. Estimating service: pricing, markup engine, version diffing, alternate/allowance resolution, conversion to project baseline.
 3. Workflow service: generic approval engine for CO/RFI/submittal/expense/timesheet with SLA timers.
@@ -144,26 +154,27 @@ High-level domain summary:
 
 ## Public APIs / Interfaces / Types (Important Additions)
 
-| Interface Area | Required Contract |
-|---|---|
+| Interface Area   | Required Contract                                                                                                                                             |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | REST/GraphQL BFF | `/api/v1/leads`, `/opportunities`, `/estimates`, `/projects`, `/change-orders`, `/rfis`, `/submittals`, `/timesheets`, `/expenses`, `/portal/*`, `/reports/*` |
-| Sync APIs | `/api/v1/integrations/erpnext/push`, `/pull`, `/reconcile`, `/sync-jobs/:id` |
-| Webhooks | `boldsign.envelope.*`, `erpnext.doc.*`, `payment.*`, `adp.sync.*` |
-| Type System | Shared TS package with `RBACClaim`, `EstimateDTO`, `ProjectDTO`, `WorkflowState`, `SyncEvent`, `PortalPermission`, `OfflineMutation`, `MigrationRecordStatus` |
-| Event Schemas | Versioned JSON schemas for `EstimateApproved`, `ChangeOrderSigned`, `InvoiceIssued`, `TimesheetApproved`, `MigrationConflictDetected` |
+| Sync APIs        | `/api/v1/integrations/erpnext/push`, `/pull`, `/reconcile`, `/sync-jobs/:id`                                                                                  |
+| Webhooks         | `boldsign.envelope.*`, `erpnext.doc.*`, `payment.*`, `adp.sync.*`                                                                                             |
+| Type System      | Shared TS package with `RBACClaim`, `EstimateDTO`, `ProjectDTO`, `WorkflowState`, `SyncEvent`, `PortalPermission`, `OfflineMutation`, `MigrationRecordStatus` |
+| Event Schemas    | Versioned JSON schemas for `EstimateApproved`, `ChangeOrderSigned`, `InvoiceIssued`, `TimesheetApproved`, `MigrationConflictDetected`                         |
 
 ## Integration Blueprint
 
-| Integration | Pattern | Notes |
-|---|---|---|
-| ERPNext | API + queue-driven sync | ERP authoritative for AP/AR/PO/invoices/payments/accounting |
-| BoldSign | API + webhook callbacks | Provider abstraction to swap vendors later |
-| ADP | Nightly API sync + CSV fallback | Payroll continuity and auditable exports |
-| Microsoft 365/OneDrive | Graph API ingestion + delta | Source migration and optional ongoing document sync |
-| SMB Shares | Connector worker + checksum map | Batch import + delta watch until cutover |
-| Payment Links | ERPNext invoice link embedding | External collection with ERP reconciliation |
+| Integration            | Pattern                         | Notes                                                       |
+| ---------------------- | ------------------------------- | ----------------------------------------------------------- |
+| ERPNext                | API + queue-driven sync         | ERP authoritative for AP/AR/PO/invoices/payments/accounting |
+| BoldSign               | API + webhook callbacks         | Provider abstraction to swap vendors later                  |
+| ADP                    | Nightly API sync + CSV fallback | Payroll continuity and auditable exports                    |
+| Microsoft 365/OneDrive | Graph API ingestion + delta     | Source migration and optional ongoing document sync         |
+| SMB Shares             | Connector worker + checksum map | Batch import + delta watch until cutover                    |
+| Payment Links          | ERPNext invoice link embedding  | External collection with ERP reconciliation                 |
 
 ## Security, Compliance, and Governance
+
 1. Enforce JWT verification on all edge/server endpoints.
 2. Remove static permissive CORS and use environment-specific allowlists.
 3. Centralize secret management and rotation (30/90-day policies).
@@ -175,17 +186,18 @@ High-level domain summary:
 
 ## Infrastructure and Scalability Plan
 
-| Area | Production Design |
-|---|---|
-| Environments | `dev`, `staging`, `prod` isolated with separate secrets and data |
-| CI/CD | Protected mainline, migration gates, automated smoke/regression checks |
-| Compute | Managed web tier + autoscaled workers for queues/migration |
-| Database | Supabase Postgres with PITR, read replicas for heavy reporting if needed |
-| Storage | Versioned buckets, lifecycle policies, CDN edge caching |
-| Resilience | Multi-AZ where available, graceful degradation paths |
-| DR | Nightly restore tests, quarterly failover simulation, RPO/RTO validation |
+| Area         | Production Design                                                        |
+| ------------ | ------------------------------------------------------------------------ |
+| Environments | `dev`, `staging`, `prod` isolated with separate secrets and data         |
+| CI/CD        | Protected mainline, migration gates, automated smoke/regression checks   |
+| Compute      | Managed web tier + autoscaled workers for queues/migration               |
+| Database     | Supabase Postgres with PITR, read replicas for heavy reporting if needed |
+| Storage      | Versioned buckets, lifecycle policies, CDN edge caching                  |
+| Resilience   | Multi-AZ where available, graceful degradation paths                     |
+| DR           | Nightly restore tests, quarterly failover simulation, RPO/RTO validation |
 
 ## Data Migration Plan (Full Historical)
+
 1. Discovery and mapping: canonical schema mapping for Sage 50, Sage Construction Mgmt, spreadsheets, SMB, OneDrive.
 2. Bulk historical import: oldest-to-newest batches with deterministic IDs and checksum dedupe.
 3. Delta sync window: keep legacy and new system aligned during pilot.
@@ -196,20 +208,21 @@ High-level domain summary:
 
 ## Testing Plan (Required Scenarios)
 
-| Test Layer | Scenarios |
-|---|---|
-| Unit | Pricing math, tax calculations (GST/HST/PST), workflow transitions, permission guards |
-| Integration | Estimate→Project conversion, CO approval→ERP update, timesheet→ADP export |
-| Contract | Webhook schema compatibility, API versioning, idempotency behavior |
-| Security | RLS policy tests, privilege escalation attempts, webhook spoof tests |
-| Data | Migration mapping validation, checksum parity, reconciliation tolerances |
-| E2E Internal | Lead→Estimate→Sign→Project→Daily Logs→CO→Invoice flow |
-| E2E Portal | Client approvals, document visibility boundaries, trade submission lifecycle |
-| Offline | No-network capture, conflict resolution, sync recovery after reconnect |
-| Performance | 300-user concurrency baseline, heavy document upload, queue backlog behavior |
-| DR/Ops | Backup restore drills, worker crash recovery, alert routing validation |
+| Test Layer   | Scenarios                                                                             |
+| ------------ | ------------------------------------------------------------------------------------- |
+| Unit         | Pricing math, tax calculations (GST/HST/PST), workflow transitions, permission guards |
+| Integration  | Estimate→Project conversion, CO approval→ERP update, timesheet→ADP export             |
+| Contract     | Webhook schema compatibility, API versioning, idempotency behavior                    |
+| Security     | RLS policy tests, privilege escalation attempts, webhook spoof tests                  |
+| Data         | Migration mapping validation, checksum parity, reconciliation tolerances              |
+| E2E Internal | Lead→Estimate→Sign→Project→Daily Logs→CO→Invoice flow                                 |
+| E2E Portal   | Client approvals, document visibility boundaries, trade submission lifecycle          |
+| Offline      | No-network capture, conflict resolution, sync recovery after reconnect                |
+| Performance  | 300-user concurrency baseline, heavy document upload, queue backlog behavior          |
+| DR/Ops       | Backup restore drills, worker crash recovery, alert routing validation                |
 
 ## Cutover and Rollout Plan
+
 1. Week 1–2: Foundation hardening, schema finalization, integration scaffolds, migration dry runs.
 2. Week 3–4: CRM + estimating + proposals + BoldSign go-live for pilot division.
 3. Week 5–6: Execution modules (tasks, logs, docs, RFI/submittal, CO) + offline beta.
@@ -219,6 +232,7 @@ High-level domain summary:
 7. Week 13–14: Hypercare, defect burndown, performance tuning, decommission plan.
 
 ## Go-Live Acceptance Criteria
+
 1. 100% of day-1 critical workflows pass UAT and E2E checks.
 2. Financial sync reconciliation variance under agreed threshold (target 0 critical mismatches).
 3. Migration parity signed off by business owners.
@@ -227,6 +241,7 @@ High-level domain summary:
 6. Support runbooks and on-call ownership active before cutover.
 
 ## Team and Delivery Model
+
 1. Product stream: PM + solution architect + business analyst.
 2. Engineering stream: frontend squad, backend/integration squad, data migration squad.
 3. ERP stream: ERPNext functional consultant + customization engineer.
@@ -235,6 +250,7 @@ High-level domain summary:
 6. Cadence: weekly steering, daily squad sync, biweekly release trains, formal go/no-go gates.
 
 ## Explicit Assumptions and Defaults
+
 1. Single-company, division-based model is sufficient for initial launch.
 2. No native payroll engine is built; ADP remains payroll system.
 3. Digital takeoff is not in initial release unless separately approved.

@@ -22,15 +22,16 @@ describe('enrichFromApolloMatch', () => {
   it('returns person data on successful match', async () => {
     mockFetch.mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({
-        person: {
-          email: 'john@acme.com',
-          phone_numbers: [{ raw_number: '555-1234' }],
-          organization: { website_url: 'https://acme.com' },
-          linkedin_url: 'https://linkedin.com/in/john',
-          title: 'CEO',
-        },
-      }),
+      json: () =>
+        Promise.resolve({
+          person: {
+            email: 'john@acme.com',
+            phone_numbers: [{ raw_number: '555-1234' }],
+            organization: { website_url: 'https://acme.com' },
+            linkedin_url: 'https://linkedin.com/in/john',
+            title: 'CEO',
+          },
+        }),
     });
 
     const result = await enrichFromApolloMatch({
@@ -69,21 +70,25 @@ describe('enrichFromApolloMatch', () => {
       text: () => Promise.resolve('Rate limited'),
     });
 
-    await expect(enrichFromApolloMatch({
-      first_name: 'John',
-      last_name: 'Doe',
-      organization_name: 'Acme',
-    })).rejects.toThrow('Apollo Match API error 429');
+    await expect(
+      enrichFromApolloMatch({
+        first_name: 'John',
+        last_name: 'Doe',
+        organization_name: 'Acme',
+      }),
+    ).rejects.toThrow('Apollo Match API error 429');
   });
 
   it('throws when API key missing', async () => {
     vi.stubEnv('APOLLO_API_KEY', '');
 
-    await expect(enrichFromApolloMatch({
-      first_name: 'John',
-      last_name: 'Doe',
-      organization_name: 'Acme',
-    })).rejects.toThrow('APOLLO_API_KEY not configured');
+    await expect(
+      enrichFromApolloMatch({
+        first_name: 'John',
+        last_name: 'Doe',
+        organization_name: 'Acme',
+      }),
+    ).rejects.toThrow('APOLLO_API_KEY not configured');
   });
 
   it('includes linkedin_url in request when provided', async () => {
@@ -112,17 +117,18 @@ describe('enrichFromBrave', () => {
   it('returns website and description from search results', async () => {
     mockFetch.mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({
-        web: {
-          results: [
-            { url: 'https://acme.com', description: 'Acme Construction builds stuff' },
-            { url: 'https://linkedin.com/company/acme', description: 'LinkedIn' },
-          ],
-        },
-        news: {
-          results: [{ title: 'Acme wins award' }],
-        },
-      }),
+      json: () =>
+        Promise.resolve({
+          web: {
+            results: [
+              { url: 'https://acme.com', description: 'Acme Construction builds stuff' },
+              { url: 'https://linkedin.com/company/acme', description: 'LinkedIn' },
+            ],
+          },
+          news: {
+            results: [{ title: 'Acme wins award' }],
+          },
+        }),
     });
 
     const result = await enrichFromBrave('Acme Construction', 'Ontario');
@@ -159,12 +165,13 @@ describe('enrichFromTavily', () => {
   it('returns answer and results from API', async () => {
     mockFetch.mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({
-        answer: 'Acme is a leading construction company.',
-        results: [
-          { title: 'About Acme', url: 'https://acme.com/about', content: 'Founded in 1990...' },
-        ],
-      }),
+      json: () =>
+        Promise.resolve({
+          answer: 'Acme is a leading construction company.',
+          results: [
+            { title: 'About Acme', url: 'https://acme.com/about', content: 'Founded in 1990...' },
+          ],
+        }),
     });
 
     const result = await enrichFromTavily('Acme Construction', 'Toronto');
@@ -200,16 +207,19 @@ describe('enrichFromGoogleMaps', () => {
   it('returns place data with extracted city', async () => {
     mockFetch.mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({
-        candidates: [{
-          formatted_address: '123 Main St, Mississauga, ON L5B 1M2, Canada',
-          name: 'Acme Construction',
-          rating: 4.5,
-          user_ratings_total: 120,
-          types: ['general_contractor'],
-          business_status: 'OPERATIONAL',
-        }],
-      }),
+      json: () =>
+        Promise.resolve({
+          candidates: [
+            {
+              formatted_address: '123 Main St, Mississauga, ON L5B 1M2, Canada',
+              name: 'Acme Construction',
+              rating: 4.5,
+              user_ratings_total: 120,
+              types: ['general_contractor'],
+              business_status: 'OPERATIONAL',
+            },
+          ],
+        }),
     });
 
     const result = await enrichFromGoogleMaps('Acme Construction', 'Mississauga');
@@ -248,6 +258,8 @@ describe('enrichFromGoogleMaps', () => {
 
   it('throws when API key missing', async () => {
     vi.stubEnv('GOOGLE_MAPS_API_KEY', '');
-    await expect(enrichFromGoogleMaps('Acme', null)).rejects.toThrow('GOOGLE_MAPS_API_KEY not configured');
+    await expect(enrichFromGoogleMaps('Acme', null)).rejects.toThrow(
+      'GOOGLE_MAPS_API_KEY not configured',
+    );
   });
 });

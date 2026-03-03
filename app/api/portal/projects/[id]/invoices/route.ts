@@ -7,10 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
  * Returns invoice / job-cost snapshot data for a project.
  * Guard: permission_set.view_financials must be true.
  */
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -38,13 +35,18 @@ export async function GET(
 
   const permSet: Record<string, boolean> = (perm?.permission_set as Record<string, boolean>) ?? {};
   if (!permSet.view_financials) {
-    return NextResponse.json({ error: 'Financial access not granted for this project' }, { status: 403 });
+    return NextResponse.json(
+      { error: 'Financial access not granted for this project' },
+      { status: 403 },
+    );
   }
 
   // 3. Fetch job cost snapshots (invoice-level summaries)
   const { data: snapshots, error } = await supabase
     .from('job_cost_snapshots')
-    .select('id, snapshot_date, period_label, labour_cost, material_cost, subcontract_cost, overhead_cost, total_cost, budget_total, variance, margin_pct, created_at')
+    .select(
+      'id, snapshot_date, period_label, labour_cost, material_cost, subcontract_cost, overhead_cost, total_cost, budget_total, variance, margin_pct, created_at',
+    )
     .eq('project_id', projectId)
     .order('snapshot_date', { ascending: false })
     .limit(24); // Last 24 months of snapshots

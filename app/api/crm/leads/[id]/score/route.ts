@@ -79,15 +79,10 @@ export async function POST(_req: NextRequest, context: RouteContext) {
   }
 
   // Fetch active scoring rules (filtered by division if applicable)
-  let rulesQuery = supabase
-    .from('scoring_rules')
-    .select('*')
-    .eq('is_active', true);
+  let rulesQuery = supabase.from('scoring_rules').select('*').eq('is_active', true);
 
   if (lead.division_id) {
-    rulesQuery = rulesQuery.or(
-      `division_id.eq.${lead.division_id},division_id.is.null`,
-    );
+    rulesQuery = rulesQuery.or(`division_id.eq.${lead.division_id},division_id.is.null`);
   }
 
   const { data: rules, error: rulesError } = await rulesQuery;
@@ -97,10 +92,7 @@ export async function POST(_req: NextRequest, context: RouteContext) {
   }
 
   // Run scoring engine
-  const result = scoreLead(
-    lead as Record<string, unknown>,
-    (rules ?? []) as ScoringRule[],
-  );
+  const result = scoreLead(lead as Record<string, unknown>, (rules ?? []) as ScoringRule[]);
 
   const previousScore = lead.lead_score ?? 0;
 

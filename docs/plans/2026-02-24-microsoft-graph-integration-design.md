@@ -27,14 +27,14 @@ Clerk handles token refresh automatically. No client-side token handling needed.
 
 ## API Routes
 
-| Route | Method | Purpose |
-|-------|--------|---------|
-| `/api/email/messages` | GET | List inbox (personal or shared mailbox) |
-| `/api/email/messages/[id]` | GET | Single message with body |
-| `/api/email/send` | POST | Send email (with optional CRM activity link) |
-| `/api/calendar/events` | GET | List events (date range, personal or shared) |
-| `/api/calendar/events` | POST | Create event |
-| `/api/calendar/events/[id]` | GET | Single event detail |
+| Route                       | Method | Purpose                                      |
+| --------------------------- | ------ | -------------------------------------------- |
+| `/api/email/messages`       | GET    | List inbox (personal or shared mailbox)      |
+| `/api/email/messages/[id]`  | GET    | Single message with body                     |
+| `/api/email/send`           | POST   | Send email (with optional CRM activity link) |
+| `/api/calendar/events`      | GET    | List events (date range, personal or shared) |
+| `/api/calendar/events`      | POST   | Create event                                 |
+| `/api/calendar/events/[id]` | GET    | Single event detail                          |
 
 ### Shared Mailbox Support
 
@@ -45,11 +45,13 @@ Clerk handles token refresh automatically. No client-side token handling needed.
 ## Shared Library
 
 ### `lib/microsoft/graph.ts`
+
 - `getMicrosoftToken(clerkUserId)` — fetches token from Clerk API
 - `graphFetch(token, path, options?)` — authenticated fetch wrapper for graph.microsoft.com
 - Handles error responses, token expiry (Clerk auto-refreshes)
 
 ### `lib/microsoft/types.ts`
+
 - TypeScript types for Graph API responses (Message, Event, etc.)
 
 ## CRM Integration

@@ -64,13 +64,15 @@ export function ConvertLeadDialog({ lead, open, onOpenChange }: ConvertLeadDialo
         <DialogHeader>
           <DialogTitle>Convert Lead to Opportunity</DialogTitle>
           <DialogDescription>
-            Convert &quot;{lead.company_name}&quot; into an opportunity. Optionally link to an account and contact.
+            Convert &quot;{lead.company_name}&quot; into an opportunity. Optionally link to an
+            account and contact.
           </DialogDescription>
         </DialogHeader>
 
         {!canConvert && (
           <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-            Lead must be in &quot;won&quot; stage to convert. Current stage: &quot;{lead.status}&quot;
+            Lead must be in &quot;won&quot; stage to convert. Current stage: &quot;{lead.status}
+            &quot;
           </div>
         )}
 
@@ -122,10 +124,7 @@ export function ConvertLeadDialog({ lead, open, onOpenChange }: ConvertLeadDialo
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={!canConvert || convertLead.isPending}
-          >
+          <Button onClick={handleSubmit} disabled={!canConvert || convertLead.isPending}>
             {convertLead.isPending ? 'Converting...' : 'Convert to Opportunity'}
           </Button>
         </DialogFooter>

@@ -32,7 +32,14 @@ export const rfiThreadCreateSchema = z.object({
 // Submittal schemas
 // ============================================================
 
-const submittalStatuses = ['draft', 'submitted', 'revise_and_resubmit', 'approved', 'approved_as_noted', 'rejected'] as const;
+const submittalStatuses = [
+  'draft',
+  'submitted',
+  'revise_and_resubmit',
+  'approved',
+  'approved_as_noted',
+  'rejected',
+] as const;
 
 export const submittalCreateSchema = z.object({
   submittal_number: z.string().min(1),

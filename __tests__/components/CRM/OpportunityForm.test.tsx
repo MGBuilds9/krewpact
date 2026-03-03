@@ -34,10 +34,7 @@ function createWrapper() {
 }
 
 function renderForm(props: Parameters<typeof OpportunityForm>[0] = {}) {
-  return render(
-    React.createElement(OpportunityForm, props),
-    { wrapper: createWrapper() },
-  );
+  return render(React.createElement(OpportunityForm, props), { wrapper: createWrapper() });
 }
 
 describe('OpportunityForm', () => {

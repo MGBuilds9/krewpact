@@ -3,10 +3,7 @@ import { createUserClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { approveEnrollment } from '@/lib/crm/enrollment-engine';
 
-export async function POST(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function POST(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -36,7 +33,10 @@ export async function POST(
 
   if (fetchError || !enrollment) {
     return NextResponse.json(
-      { error: 'Enrollment approved but failed to fetch updated record', detail: fetchError?.message },
+      {
+        error: 'Enrollment approved but failed to fetch updated record',
+        detail: fetchError?.message,
+      },
       { status: 500 },
     );
   }

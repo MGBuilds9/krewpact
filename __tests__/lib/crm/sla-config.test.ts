@@ -48,7 +48,12 @@ describe('calculateSLAStatus', () => {
   it('calculates opportunity SLA correctly', () => {
     // intake has 24h SLA, entered 12h ago
     const enteredAt = new Date('2026-02-27T00:00:00Z');
-    const status = calculateSLAStatus('intake', enteredAt.toISOString(), OPPORTUNITY_SLA_CONFIG, now);
+    const status = calculateSLAStatus(
+      'intake',
+      enteredAt.toISOString(),
+      OPPORTUNITY_SLA_CONFIG,
+      now,
+    );
     expect(status).not.toBeNull();
     expect(status!.isOverdue).toBe(false);
     expect(status!.hoursRemaining).toBeCloseTo(12, 0);

@@ -64,11 +64,15 @@ export function MigrationBatchForm({ onSuccess, onCancel }: MigrationBatchFormPr
               <FormLabel>Source System</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
-                  <SelectTrigger><SelectValue placeholder="Select source" /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select source" />
+                  </SelectTrigger>
                 </FormControl>
                 <SelectContent>
                   {SOURCE_SYSTEMS.map((s) => (
-                    <SelectItem key={s} value={s}>{s.replace(/_/g, ' ').toUpperCase()}</SelectItem>
+                    <SelectItem key={s} value={s}>
+                      {s.replace(/_/g, ' ').toUpperCase()}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -82,7 +86,9 @@ export function MigrationBatchForm({ onSuccess, onCancel }: MigrationBatchFormPr
           render={({ field }) => (
             <FormItem>
               <FormLabel>Batch Name</FormLabel>
-              <FormControl><Input placeholder="e.g. Sage 50 Customers — Feb 2026" {...field} /></FormControl>
+              <FormControl>
+                <Input placeholder="e.g. Sage 50 Customers — Feb 2026" {...field} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -92,7 +98,11 @@ export function MigrationBatchForm({ onSuccess, onCancel }: MigrationBatchFormPr
             {create.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Create Batch
           </Button>
-          {onCancel && <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>}
+          {onCancel && (
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
+          )}
         </div>
       </form>
     </Form>

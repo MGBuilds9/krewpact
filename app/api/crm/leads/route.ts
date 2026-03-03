@@ -6,7 +6,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { scoreLead } from '@/lib/crm/scoring-engine';
 import type { ScoringRule } from '@/lib/crm/scoring-engine';
 import { assignLead } from '@/lib/crm/lead-assignment';
-import { UNAUTHORIZED, INVALID_JSON, validationError, dbError, errorResponse } from '@/lib/api/errors';
+import {
+  UNAUTHORIZED,
+  INVALID_JSON,
+  validationError,
+  dbError,
+  errorResponse,
+} from '@/lib/api/errors';
+import { getOrgIdFromAuth } from '@/lib/api/org';
 
 const leadStatuses = [
   'new',
@@ -75,7 +82,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     data: data ?? [],
     total: count ?? 0,
-    hasMore: (effectiveOffset + (data?.length ?? 0)) < (count ?? 0),
+    hasMore: effectiveOffset + (data?.length ?? 0) < (count ?? 0),
   });
 }
 
@@ -112,9 +119,11 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  const orgId = await getOrgIdFromAuth();
+
   const { data, error } = await supabase
     .from('leads')
-    .insert({ ...parsed.data, status: 'new', owner_id: ownerId })
+    .insert({ ...parsed.data, status: 'new', owner_id: ownerId, org_id: orgId })
     .select()
     .single();
 
@@ -122,10 +131,7 @@ export async function POST(req: NextRequest) {
 
   // Auto-score the new lead (non-blocking)
   try {
-    let rulesQuery = supabase
-      .from('scoring_rules')
-      .select('*')
-      .eq('is_active', true);
+    let rulesQuery = supabase.from('scoring_rules').select('*').eq('is_active', true);
 
     if (data.division_id) {
       rulesQuery = rulesQuery.or(`division_id.eq.${data.division_id},division_id.is.null`);
@@ -134,10 +140,7 @@ export async function POST(req: NextRequest) {
     const { data: rules } = await rulesQuery;
     if (rules && rules.length > 0) {
       const result = scoreLead(data as Record<string, unknown>, rules as ScoringRule[]);
-      await supabase
-        .from('leads')
-        .update({ lead_score: result.total_score })
-        .eq('id', data.id);
+      await supabase.from('leads').update({ lead_score: result.total_score }).eq('id', data.id);
 
       await supabase.from('lead_score_history').insert({
         lead_id: data.id,

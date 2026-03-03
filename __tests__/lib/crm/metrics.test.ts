@@ -77,9 +77,7 @@ describe('calculatePipelineMetrics', () => {
   });
 
   it('handles null revenue and probability', () => {
-    const opps = [
-      makeOpp({ estimated_revenue: null, probability_pct: null }),
-    ];
+    const opps = [makeOpp({ estimated_revenue: null, probability_pct: null })];
     const result = calculatePipelineMetrics(opps);
     expect(result.totalPipelineValue).toBe(0);
     expect(result.weightedPipelineValue).toBe(0);
@@ -151,9 +149,7 @@ describe('calculateVelocityMetrics', () => {
   });
 
   it('ignores non-contracted opportunities', () => {
-    const opps = [
-      makeOpp({ stage: 'proposal', estimated_revenue: 999999 }),
-    ];
+    const opps = [makeOpp({ stage: 'proposal', estimated_revenue: 999999 })];
     const result = calculateVelocityMetrics(opps);
     expect(result.dealsClosed).toBe(0);
     expect(result.dealsClosedValue).toBe(0);

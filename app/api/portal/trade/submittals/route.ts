@@ -11,7 +11,10 @@ const submittalSchema = z.object({
   file_ids: z.array(z.string().uuid()).optional(),
 });
 
-async function resolveActiveTradePartner(userId: string, supabase: Awaited<ReturnType<typeof createUserClient>>) {
+async function resolveActiveTradePartner(
+  userId: string,
+  supabase: Awaited<ReturnType<typeof createUserClient>>,
+) {
   const { data: pa } = await supabase
     .from('portal_accounts')
     .select('id, status, actor_type')
@@ -37,11 +40,13 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from('submittals')
-    .select('id, project_id, submittal_type, title, description, status, revision_no, submitted_at, reviewed_at, reviewer_id, metadata, created_at')
+    .select(
+      'id, project_id, submittal_type, title, description, status, revision_no, submitted_at, reviewed_at, reviewer_id, metadata, created_at',
+    )
     .contains('metadata', { trade_portal_id: pa.id })
     .order('submitted_at', { ascending: false });
 
-  if (projectId) query = (query as any).eq('project_id', projectId);
+  if (projectId) query = query.eq('project_id', projectId);
 
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -58,7 +63,11 @@ export async function POST(req: NextRequest) {
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   let body: unknown;
-  try { body = await req.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+  }
 
   const parsed = submittalSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });

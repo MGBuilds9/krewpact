@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
+import { useOrgRouter } from '@/hooks/useOrgRouter';
 import {
   Home,
   FolderOpen,
@@ -34,21 +35,21 @@ interface MobileNavigationDrawerProps {
 }
 
 const navigationItems = [
-  { icon: Home, label: 'Dashboard', href: '/dashboard' },
-  { icon: Building2, label: 'CRM', href: '/crm' },
-  { icon: Calculator, label: 'Estimates', href: '/estimates' },
-  { icon: FolderOpen, label: 'Projects', href: '/projects' },
-  { icon: FileText, label: 'Documents', href: '/documents' },
-  { icon: Calendar, label: 'Schedule', href: '/schedule' },
-  { icon: Users, label: 'Team', href: '/team' },
-  { icon: DollarSign, label: 'Expenses', href: '/expenses' },
-  { icon: ClipboardList, label: 'Reports', href: '/reports' },
-  { icon: Shield, label: 'Admin', href: '/admin', adminOnly: true },
+  { icon: Home, label: 'Dashboard', path: '/dashboard' },
+  { icon: Building2, label: 'CRM', path: '/crm' },
+  { icon: Calculator, label: 'Estimates', path: '/estimates' },
+  { icon: FolderOpen, label: 'Projects', path: '/projects' },
+  { icon: FileText, label: 'Documents', path: '/documents' },
+  { icon: Calendar, label: 'Schedule', path: '/schedule' },
+  { icon: Users, label: 'Team', path: '/team' },
+  { icon: DollarSign, label: 'Expenses', path: '/expenses' },
+  { icon: ClipboardList, label: 'Reports', path: '/reports' },
+  { icon: Shield, label: 'Admin', path: '/admin', adminOnly: true },
 ];
 
 export function MobileNavigationDrawer({ isOpen, onClose }: MobileNavigationDrawerProps) {
   const pathname = usePathname();
-  const router = useRouter();
+  const { push: orgPush, orgPath } = useOrgRouter();
   const { data: currentUser } = useCurrentUser();
   const { user } = useUser();
   const { signOut } = useClerk();
@@ -65,8 +66,8 @@ export function MobileNavigationDrawer({ isOpen, onClose }: MobileNavigationDraw
     }
   };
 
-  const handleNavigation = (href: string) => {
-    router.push(href);
+  const handleNavigation = (path: string) => {
+    orgPush(path);
     onClose();
   };
 
@@ -131,21 +132,21 @@ export function MobileNavigationDrawer({ isOpen, onClose }: MobileNavigationDraw
           {/* Navigation Items */}
           <nav className="space-y-2 mb-6">
             {filteredItems.map((item) => {
-              const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+              const isActive = pathname.includes(item.path);
               return (
-              <Button
-                key={item.label}
-                variant={isActive ? 'default' : 'ghost'}
-                className={`w-full justify-start touch-target h-12 transition-colors duration-200 ${
-                  isActive
-                    ? 'bg-primary text-primary-foreground shadow-md'
-                    : 'text-foreground hover:bg-accent hover:text-accent-foreground'
-                }`}
-                onClick={() => handleNavigation(item.href)}
-              >
-                <item.icon className="h-5 w-5 mr-3" />
-                {item.label}
-              </Button>
+                <Button
+                  key={item.label}
+                  variant={isActive ? 'default' : 'ghost'}
+                  className={`w-full justify-start touch-target h-12 transition-colors duration-200 ${
+                    isActive
+                      ? 'bg-primary text-primary-foreground shadow-md'
+                      : 'text-foreground hover:bg-accent hover:text-accent-foreground'
+                  }`}
+                  onClick={() => handleNavigation(item.path)}
+                >
+                  <item.icon className="h-5 w-5 mr-3" />
+                  {item.label}
+                </Button>
               );
             })}
           </nav>

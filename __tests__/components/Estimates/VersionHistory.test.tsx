@@ -27,8 +27,18 @@ function makeVersion(overrides: Partial<EstimateVersion> = {}): EstimateVersion 
 describe('VersionHistory', () => {
   it('renders version list', () => {
     const versions = [
-      makeVersion({ id: 'ver-2', revision_no: 2, reason: 'Updated pricing', created_at: '2026-02-13T14:00:00Z' }),
-      makeVersion({ id: 'ver-1', revision_no: 1, reason: 'Initial version', created_at: '2026-02-13T10:00:00Z' }),
+      makeVersion({
+        id: 'ver-2',
+        revision_no: 2,
+        reason: 'Updated pricing',
+        created_at: '2026-02-13T14:00:00Z',
+      }),
+      makeVersion({
+        id: 'ver-1',
+        revision_no: 1,
+        reason: 'Initial version',
+        created_at: '2026-02-13T10:00:00Z',
+      }),
     ];
     render(<VersionHistory versions={versions} />);
     expect(screen.getByText(/Revision 2/)).toBeDefined();

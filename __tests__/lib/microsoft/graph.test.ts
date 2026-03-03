@@ -1,9 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-  buildGraphUrl,
-  getMicrosoftToken,
-  graphFetch,
-} from '@/lib/microsoft/graph';
+import { buildGraphUrl, getMicrosoftToken, graphFetch } from '@/lib/microsoft/graph';
 
 const mockFetch = vi.fn();
 
@@ -26,9 +22,7 @@ describe('buildGraphUrl', () => {
 
   it('builds /users/{mailbox} path for shared mailbox', () => {
     const url = buildGraphUrl('/messages', 'shared@mdmgroupinc.ca');
-    expect(url).toBe(
-      'https://graph.microsoft.com/v1.0/users/shared@mdmgroupinc.ca/messages'
-    );
+    expect(url).toBe('https://graph.microsoft.com/v1.0/users/shared@mdmgroupinc.ca/messages');
   });
 
   it('builds calendar events path without shared mailbox', () => {
@@ -38,16 +32,12 @@ describe('buildGraphUrl', () => {
 
   it('builds calendar events path with shared mailbox', () => {
     const url = buildGraphUrl('/events', 'calendar@mdmgroupinc.ca');
-    expect(url).toBe(
-      'https://graph.microsoft.com/v1.0/users/calendar@mdmgroupinc.ca/events'
-    );
+    expect(url).toBe('https://graph.microsoft.com/v1.0/users/calendar@mdmgroupinc.ca/events');
   });
 
   it('handles paths with query parameters', () => {
     const url = buildGraphUrl('/messages?$top=10&$select=subject');
-    expect(url).toBe(
-      'https://graph.microsoft.com/v1.0/me/messages?$top=10&$select=subject'
-    );
+    expect(url).toBe('https://graph.microsoft.com/v1.0/me/messages?$top=10&$select=subject');
   });
 });
 
@@ -66,7 +56,7 @@ describe('getMicrosoftToken', () => {
         headers: {
           Authorization: 'Bearer sk_test_abc123',
         },
-      }
+      },
     );
   });
 
@@ -76,7 +66,7 @@ describe('getMicrosoftToken', () => {
 
     try {
       await expect(getMicrosoftToken('user_abc')).rejects.toThrow(
-        'CLERK_SECRET_KEY not configured'
+        'CLERK_SECRET_KEY not configured',
       );
     } finally {
       process.env.CLERK_SECRET_KEY = original;
@@ -91,7 +81,7 @@ describe('getMicrosoftToken', () => {
     });
 
     await expect(getMicrosoftToken('user_abc')).rejects.toThrow(
-      'Clerk OAuth token fetch failed: 401 Unauthorized'
+      'Clerk OAuth token fetch failed: 401 Unauthorized',
     );
   });
 
@@ -102,7 +92,7 @@ describe('getMicrosoftToken', () => {
     });
 
     await expect(getMicrosoftToken('user_abc')).rejects.toThrow(
-      'No Microsoft OAuth token available for this user'
+      'No Microsoft OAuth token available for this user',
     );
   });
 
@@ -113,7 +103,7 @@ describe('getMicrosoftToken', () => {
     });
 
     await expect(getMicrosoftToken('user_abc')).rejects.toThrow(
-      'No Microsoft OAuth token available for this user'
+      'No Microsoft OAuth token available for this user',
     );
   });
 
@@ -124,7 +114,7 @@ describe('getMicrosoftToken', () => {
     });
 
     await expect(getMicrosoftToken('user_abc')).rejects.toThrow(
-      'No Microsoft OAuth token available for this user'
+      'No Microsoft OAuth token available for this user',
     );
   });
 });
@@ -183,9 +173,7 @@ describe('graphFetch', () => {
       }),
     });
 
-    await expect(graphFetch(testToken, testUrl)).rejects.toThrow(
-      'Access is denied.'
-    );
+    await expect(graphFetch(testToken, testUrl)).rejects.toThrow('Access is denied.');
   });
 
   it('falls back to status code message when error JSON parse fails', async () => {
@@ -198,9 +186,7 @@ describe('graphFetch', () => {
       },
     });
 
-    await expect(graphFetch(testToken, testUrl)).rejects.toThrow(
-      'Internal Server Error'
-    );
+    await expect(graphFetch(testToken, testUrl)).rejects.toThrow('Internal Server Error');
   });
 
   it('falls back to generic message when error has no message', async () => {
@@ -211,8 +197,6 @@ describe('graphFetch', () => {
       json: async () => ({}),
     });
 
-    await expect(graphFetch(testToken, testUrl)).rejects.toThrow(
-      'Graph API error: 502'
-    );
+    await expect(graphFetch(testToken, testUrl)).rejects.toThrow('Graph API error: 502');
   });
 });

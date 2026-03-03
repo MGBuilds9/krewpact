@@ -82,6 +82,7 @@ Every mutation to every piece of data—every approval, every status change, eve
 **6. Canadian-First Compliance (PIPEDA, Construction Act, AODA)**
 
 KrewPact is built for Canadian contractors and incorporates Canadian legal and regulatory requirements from inception, not as afterthoughts:
+
 - **PIPEDA Compliance:** Personal information is handled according to Canadian privacy standards with appropriate consent, retention, and access controls.
 - **Construction Act Alignment:** Features support mechanics lien rights, lien hold periods, and holdback calculations per provincial construction acts.
 - **AODA Compliance:** Accessibility is built into the design, ensuring users with disabilities can operate the platform with WCAG 2.0 AA standard compliance.
@@ -139,6 +140,7 @@ This architecture provides the best of both systems: ERPNext's financial rigor a
 KrewPact invests heavily in two portal surfaces that serve critical external stakeholder needs:
 
 **Client Portal:** Project owners (clients) gain real-time visibility into:
+
 - Project status and milestones
 - Budget status and change order approvals needed
 - Photos and progress documentation
@@ -148,6 +150,7 @@ KrewPact invests heavily in two portal surfaces that serve critical external sta
 The Client Portal reduces information friction between builders and owners, accelerates approvals, and significantly improves client satisfaction by providing transparency that previously required manual reporting.
 
 **Trade Partner Portal:** Subcontractors and material suppliers access:
+
 - Their assigned scopes and contract terms
 - Schedule and milestone dates
 - Compliance documentation requirements (licenses, insurance, safety certificates)
@@ -182,6 +185,7 @@ The white-label architecture adds engineering rigor and reduces the cost of futu
 The Platform Administrator holds responsibility for the technical operation, configuration, and support of KrewPact across MDM Group. This role manages user accounts, system settings, integrations, data quality, and system health.
 
 Responsibilities:
+
 - User and access management (account creation, role assignment, termination)
 - System configuration and customization (workflows, approval chains, notification rules)
 - Data quality and integrity (reconciliation, duplicate detection, data migration validation)
@@ -197,6 +201,7 @@ Primary Epics: Identity and Access Management, Data Migration, Notifications, Re
 Executives (President, Chief Financial Officer, Chief Operating Officer) use KrewPact to monitor the health of the business and make strategic decisions. They need dashboards that show company-wide performance, project profitability, cash flow impact, and portfolio trends at a glance.
 
 Responsibilities:
+
 - Portfolio management (which projects we have, overall health)
 - Financial oversight (profitability, cash position, revenue recognition)
 - Resource allocation (crew and equipment across projects)
@@ -205,6 +210,7 @@ Responsibilities:
 Primary Epics: Reporting, Financial Operations, Project Execution
 
 Key Workflows:
+
 - View executive dashboard with key metrics (revenue, margin, cash, project count)
 - Filter and analyze project performance by division, geography, or client type
 - Monitor project profitability trends and identify problem projects early
@@ -216,6 +222,7 @@ Key Workflows:
 The Operations Manager oversees day-to-day execution across multiple projects, ensuring resources are allocated efficiently, crews are coordinated, and projects stay on track. This role sits between project managers and executives.
 
 Responsibilities:
+
 - Multi-project coordination (ensuring no conflicts, optimizing transitions)
 - Resource scheduling (crew, equipment, material delivery sequencing)
 - Performance monitoring (tracking progress against schedule and budget)
@@ -226,6 +233,7 @@ Responsibilities:
 Primary Epics: Project Execution, Field Operations, Time and Payroll, Scheduling
 
 Key Workflows:
+
 - View portfolio dashboard showing all active projects and their status
 - Identify schedule conflicts or crew overallocation
 - Reassign crews between projects to resolve bottlenecks
@@ -238,6 +246,7 @@ Key Workflows:
 The Project Manager owns a specific project from contract through final closeout. This role manages scope, budget, schedule, and relationships with the client and trade partners. The project manager is the single point of authority for project decisions.
 
 Responsibilities:
+
 - Scope management (understanding and defending the original scope, managing changes)
 - Budget management (tracking costs, identifying variances, controlling overruns)
 - Schedule management (coordinating phases, managing critical path, keeping project on track)
@@ -250,6 +259,7 @@ Responsibilities:
 Primary Epics: Project Execution, Estimating, Contracting, RFIs and Submittals, Change Orders, Client Portal
 
 Key Workflows:
+
 - Create and track project scope document
 - Manage budget and monitor cost variance against baseline
 - Create and track change orders from proposal through approval and accounting entry
@@ -263,6 +273,7 @@ Key Workflows:
 The Project Coordinator supports project managers with administrative and coordination tasks. This role handles documentation, scheduling, communications, and workflow facilitation.
 
 Responsibilities:
+
 - Document management (contracts, submittals, compliance records, RFIs)
 - Schedule coordination (confirming appointments, tracking milestones)
 - Communication facilitation (ensuring stakeholders receive notices and updates)
@@ -273,6 +284,7 @@ Responsibilities:
 Primary Epics: Project Execution, RFIs and Submittals, Document Control, Notifications
 
 Key Workflows:
+
 - Manage RFI log and ensure responses are received on time
 - Track compliance requirements (insurance certificates, licenses, inspections)
 - Coordinate scheduling across project phases and trade partners
@@ -285,6 +297,7 @@ Key Workflows:
 The Estimator prepares bids and cost estimates for new projects. This role requires deep construction knowledge, understanding of material costs, labor productivity, and market conditions.
 
 Responsibilities:
+
 - Scope takeoff (quantifying work from blueprints and specifications)
 - Cost estimation (labor rates, material pricing, equipment costs, overhead)
 - Productivity assessment (how long will tasks actually take on similar projects)
@@ -296,6 +309,7 @@ Responsibilities:
 Primary Epics: Estimating, Contracting, Project Execution
 
 Key Workflows:
+
 - Create estimate from project scope and specifications
 - Apply labor rates and productivity factors from historical data
 - Generate proposal document for client review
@@ -308,6 +322,7 @@ Key Workflows:
 The Field Supervisor leads crews in the field, manages daily execution, ensures quality and safety, and reports progress back to the office. This role is deeply operational and works in environments where internet connectivity may be limited.
 
 Responsibilities:
+
 - Crew leadership and task assignment
 - Safety management (daily safety briefings, hazard identification, incident reporting)
 - Quality assurance (inspections, rework identification, standards compliance)
@@ -320,6 +335,7 @@ Responsibilities:
 Primary Epics: Field Operations, Scheduling, Time and Payroll, Quality and Compliance
 
 Key Workflows:
+
 - Receive daily assignments and scope details (often offline)
 - Log daily progress and completed tasks
 - Record labor time per task and employee
@@ -334,6 +350,7 @@ Key Workflows:
 The Accounting role (controller, accountant) manages accounts payable, accounts receivable, job costing verification, and financial reporting. This role bridges KrewPact and ERPNext.
 
 Responsibilities:
+
 - Accounts payable (processing invoices, managing payment approvals)
 - Accounts receivable (invoicing clients, tracking payments, collections)
 - Job costing (verifying costs are recorded against correct projects, identifying variances)
@@ -345,6 +362,7 @@ Responsibilities:
 Primary Epics: Financial Operations, Time and Payroll, Project Execution, Reporting
 
 Key Workflows:
+
 - Review pending invoices from subcontractors and verify against contract terms
 - Match time entries to payroll and verify labor costs
 - Reconcile project budget actuals from ERPNext with project records in KrewPact
@@ -357,6 +375,7 @@ Key Workflows:
 The Payroll Administrator manages payroll processing, ensuring employees and contractors are paid correctly and on time. This role integrates with time tracking data in KrewPact and payroll systems in ERPNext.
 
 Responsibilities:
+
 - Payroll processing (weekly or biweekly cycle)
 - Time validation (ensuring time entries are complete and accurate)
 - Deduction management (tax, benefits, garnishments)
@@ -367,6 +386,7 @@ Responsibilities:
 Primary Epics: Time and Payroll, Project Execution, Financial Operations
 
 Key Workflows:
+
 - Review time entries submitted by field supervisors
 - Validate time entries against hours worked and project assignments
 - Process payroll with validated time data
@@ -381,6 +401,7 @@ Key Workflows:
 The Client Owner is the principal or owner of the project being constructed. This may be a residential homeowner, a commercial real estate developer, or an institutional client. The client owner makes final decisions regarding scope, approvals, and change orders.
 
 Responsibilities:
+
 - Scope approval and change authorization
 - Budget oversight and cost control
 - Schedule review and acceptance
@@ -390,6 +411,7 @@ Responsibilities:
 Constraints: External user with limited KrewPact access via Client Portal; cannot access internal project management data or financial details beyond their own project.
 
 Primary Portal Features:
+
 - Project status and progress photos
 - Pending approvals requiring client decision
 - Change order review and approval
@@ -410,6 +432,7 @@ Constraints: Limited to Client Portal with same access restrictions as client_ow
 The Trade Partner Administrator manages the subcontracting organization's participation in MDM Group projects. This role maintains company compliance documentation, manages crew assignments, and oversees invoicing and payment.
 
 Responsibilities:
+
 - Crew assignment and scheduling coordination
 - Compliance documentation (licenses, insurance, safety certifications)
 - Submittals and shop drawings (ensuring delivery on time)
@@ -420,6 +443,7 @@ Responsibilities:
 Constraints: External user with access to Trade Partner Portal; sees only projects and assignments relevant to their organization.
 
 Primary Portal Features:
+
 - Assigned scopes and project schedules
 - Compliance requirements and document upload
 - Schedule and critical path information
@@ -433,6 +457,7 @@ Primary Portal Features:
 The Trade Partner User is a crew member, foreman, or field coordinator employed by a subcontracting organization. They use KrewPact to record time, report progress, and access relevant project information.
 
 Responsibilities:
+
 - Daily time entry and task completion reporting
 - Progress and safety reporting
 - Compliance document management
@@ -441,6 +466,7 @@ Responsibilities:
 Constraints: Limited access to Trade Partner Portal focused on their assigned projects and tasks.
 
 Primary Portal Features:
+
 - Daily work assignments and scope details
 - Time entry recording
 - Progress and safety reporting
@@ -460,6 +486,7 @@ KrewPact is architected as a modern, cloud-native application with clear separat
 The frontend layer comprises all user-facing interfaces: web applications for internal users, client portal, trade partner portal, and mobile-optimized experiences. Built on React and Next.js, the frontend provides responsive, interactive interfaces that work across devices and network conditions.
 
 Responsibilities:
+
 - User interface rendering and interaction
 - Local state management for user experience fluidity
 - Offline capability (caching, local data persistence)
@@ -468,6 +495,7 @@ Responsibilities:
 - Performance optimization (lazy loading, code splitting, caching)
 
 Constraints:
+
 - No business logic lives in the frontend; all logic decisions are made in the API layer
 - The frontend is a presentation layer and must remain stateless regarding critical data
 - Offline capabilities must synchronize gracefully with the API when connectivity returns
@@ -477,6 +505,7 @@ Constraints:
 The API layer is the command center of the system. All mutations (changes to data), all authorization decisions, and all business logic flow through this layer. The API layer serves as a Backend-for-Frontend (BFF) that shapes data specifically for frontend needs, minimizing round-trips and complexity.
 
 Responsibilities:
+
 - Request routing and endpoint definition
 - Authentication and authorization (enforcing RBAC rules)
 - Business logic and validation
@@ -487,6 +516,7 @@ Responsibilities:
 - Integration coordination (initiating ERPNext syncs, queue jobs)
 
 Constraints:
+
 - All mutations must flow through API validation and authorization
 - The API layer maintains the system of record for operational decisions
 - No sensitive data (passwords, tokens, payment info) ever leaves this layer
@@ -497,6 +527,7 @@ Constraints:
 Supabase provides a managed PostgreSQL database that stores all operational data: projects, customers, budgets, change orders, RFIs, time entries, and all other business entities. The schema is the physical embodiment of the unified data model.
 
 Responsibilities:
+
 - Persistent storage of operational data
 - Data integrity (referential integrity, constraints, triggers)
 - Query performance (indexes, optimization)
@@ -505,6 +536,7 @@ Responsibilities:
 - Full-text search indexes for document and field searching
 
 Constraints:
+
 - The operational database is the source of truth for all non-financial data
 - Financial data is not duplicated here; only references to financial transactions in ERPNext
 - All access to this database flows through the API layer (no direct application connections)
@@ -515,6 +547,7 @@ Constraints:
 ERPNext, running in a separate infrastructure managed by ERPNext services, maintains the financial backbone. ERPNext is not integrated into KrewPact code; rather, KrewPact communicates with ERPNext through documented REST APIs.
 
 Responsibilities:
+
 - Chart of accounts and general ledger
 - Accounts receivable (customer invoices and payments)
 - Accounts payable (vendor invoices and payments)
@@ -525,6 +558,7 @@ Responsibilities:
 - Compliance and audit trail
 
 Constraints:
+
 - ERPNext is the single source of truth for all financial transactions
 - KrewPact does not modify ERPNext's core tables; it communicates through APIs and custom apps
 - Sync is asynchronous; financial results may lag operational data by seconds to minutes
@@ -535,6 +569,7 @@ Constraints:
 Project documents, photos, submittals, compliance certificates, and media files are stored in scalable object storage (AWS S3 or Cloudflare R2). Object storage provides a durable, scalable, and cost-effective way to manage large files without burdening the operational database.
 
 Responsibilities:
+
 - File storage and retrieval
 - File versioning and audit trail
 - Access control (ensuring only authorized users can access files)
@@ -543,6 +578,7 @@ Responsibilities:
 - Backup and redundancy
 
 Constraints:
+
 - Files are referenced from the operational database via URL or object ID, not embedded
 - File access is authenticated through the API layer
 - Large files must not be served directly from the API but instead via signed URLs
@@ -552,6 +588,7 @@ Constraints:
 Many operations in KrewPact require asynchronous processing: syncing data to ERPNext, sending notifications, generating reports, processing offline data conflicts, and image transformations. A job queue system handles these background operations reliably.
 
 Responsibilities:
+
 - Job scheduling and queuing
 - Retry logic and failure handling
 - Long-running operation management
@@ -561,6 +598,7 @@ Responsibilities:
 - Error logging and alerting
 
 Constraints:
+
 - Jobs are reliable and idempotent (can be retried without side effects)
 - Job status is visible in the API layer so users know when async operations complete
 - Failed jobs create alerts that trigger manual investigation
@@ -571,6 +609,7 @@ Constraints:
 User identity management, authentication, and session management are handled by Clerk, a purpose-built identity platform. Clerk provides secure, scalable authentication without maintaining passwords or authentication logic in custom code.
 
 Responsibilities:
+
 - User account creation and management
 - Password management and multi-factor authentication
 - OAuth and SSO integrations
@@ -579,6 +618,7 @@ Responsibilities:
 - Audit logging of authentication events
 
 Constraints:
+
 - All authentication decisions delegate to Clerk; KrewPact does not store passwords
 - Authorization decisions (what a user can access) are made in the API layer based on Clerk identity
 - Clerk tokens are validated in the API layer before granting access
@@ -588,6 +628,7 @@ Constraints:
 System health, performance, and errors are continuously monitored. Observability tools (logging, metrics, tracing) provide visibility into system behavior. Alerts notify on-call engineers of problems requiring immediate attention.
 
 Responsibilities:
+
 - Application logging (structured logs with context)
 - Performance metrics (response times, throughput, error rates)
 - Distributed tracing (understanding request flows across layers)
@@ -596,6 +637,7 @@ Responsibilities:
 - Capacity planning information
 
 Constraints:
+
 - Logging must not expose sensitive data (passwords, tokens, payment information)
 - Monitoring infrastructure is separate from production data; no raw data flows to monitoring systems
 - Alerts must be actionable and routed to appropriate teams
@@ -604,25 +646,25 @@ Constraints:
 
 A critical design principle of KrewPact is clarity about which system maintains the authoritative version of each piece of information. When KrewPact and ERPNext both contain related data (e.g., project budget and cost), the system-of-record designation prevents conflicts and defines how sync discrepancies are resolved.
 
-| Domain | Entity | System of Record | Sync Direction | Conflict Resolution |
-|--------|--------|------------------|-----------------|----------------------|
-| Projects | Project master data (name, scope, address, dates) | KrewPact | KrewPact → ERPNext (async) | Rebuild cost center in ERPNext from KrewPact |
-| Projects | Project budget (labor, material, equipment costs) | KrewPact | KrewPact → ERPNext (async) | Rebuild budget lines in ERPNext cost center |
-| Projects | Change order approval status | KrewPact | KrewPact → ERPNext (async) | Require re-approval if ERPNext state differs |
-| Financials | General ledger and journal entries | ERPNext | ERPNext only (read-only in KrewPact) | KrewPact never writes GL entries |
-| Financials | Customer invoices and payments | ERPNext | ERPNext only (KrewPact initiates, ERPNext executes) | ERPNext is source of truth for paid/unpaid status |
-| Financials | Vendor invoices and payments | ERPNext | ERPNext only (KrewPact initiates, ERPNext executes) | ERPNext is source of truth for paid/unpaid status |
-| Financials | Job costs and cost accruals | ERPNext | ERPNext reads KrewPact data; KrewPact displays ERPNext results | If discrepancy, rebuild from ERPNext and alert |
-| Estimates | Estimate and bid data | KrewPact | KrewPact only (one-way to client) | KrewPact is authoritative for all estimating work |
-| Change Orders | Approved change order content | KrewPact | KrewPact → ERPNext (async) | Rebuild from KrewPact on conflict |
-| RFIs | RFI questions, responses, and resolution | KrewPact | KrewPact only | KrewPact owns RFI lifecycle |
-| Submittals | Submittal documents and approvals | KrewPact | KrewPact only | KrewPact owns submittal lifecycle |
-| Scheduling | Project schedule, milestones, task assignments | KrewPact | KrewPact only | KrewPact owns schedule; external tools read via API |
-| Time and Labor | Time entries and labor allocation | KrewPact | KrewPact → ERPNext (async for payroll) | If discrepancy, audit KrewPact time entries against ERPNext payroll |
-| Trade Partners | Subcontractor scope and assignments | KrewPact | KrewPact only | KrewPact owns trade partner relationships |
-| Compliance | Compliance requirements and document collection | KrewPact | KrewPact only | KrewPact owns compliance tracking |
-| Documents | Project documents, submittals, photos, compliance files | KrewPact (file store) | KrewPact only | KrewPact owns all project documentation |
-| Customers | Customer master data and contact information | KrewPact | KrewPact ↔ ERPNext (bidirectional sync) | Merge conflicts on data entry; prefer KrewPact if recent |
+| Domain         | Entity                                                  | System of Record      | Sync Direction                                                 | Conflict Resolution                                                 |
+| -------------- | ------------------------------------------------------- | --------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Projects       | Project master data (name, scope, address, dates)       | KrewPact              | KrewPact → ERPNext (async)                                     | Rebuild cost center in ERPNext from KrewPact                        |
+| Projects       | Project budget (labor, material, equipment costs)       | KrewPact              | KrewPact → ERPNext (async)                                     | Rebuild budget lines in ERPNext cost center                         |
+| Projects       | Change order approval status                            | KrewPact              | KrewPact → ERPNext (async)                                     | Require re-approval if ERPNext state differs                        |
+| Financials     | General ledger and journal entries                      | ERPNext               | ERPNext only (read-only in KrewPact)                           | KrewPact never writes GL entries                                    |
+| Financials     | Customer invoices and payments                          | ERPNext               | ERPNext only (KrewPact initiates, ERPNext executes)            | ERPNext is source of truth for paid/unpaid status                   |
+| Financials     | Vendor invoices and payments                            | ERPNext               | ERPNext only (KrewPact initiates, ERPNext executes)            | ERPNext is source of truth for paid/unpaid status                   |
+| Financials     | Job costs and cost accruals                             | ERPNext               | ERPNext reads KrewPact data; KrewPact displays ERPNext results | If discrepancy, rebuild from ERPNext and alert                      |
+| Estimates      | Estimate and bid data                                   | KrewPact              | KrewPact only (one-way to client)                              | KrewPact is authoritative for all estimating work                   |
+| Change Orders  | Approved change order content                           | KrewPact              | KrewPact → ERPNext (async)                                     | Rebuild from KrewPact on conflict                                   |
+| RFIs           | RFI questions, responses, and resolution                | KrewPact              | KrewPact only                                                  | KrewPact owns RFI lifecycle                                         |
+| Submittals     | Submittal documents and approvals                       | KrewPact              | KrewPact only                                                  | KrewPact owns submittal lifecycle                                   |
+| Scheduling     | Project schedule, milestones, task assignments          | KrewPact              | KrewPact only                                                  | KrewPact owns schedule; external tools read via API                 |
+| Time and Labor | Time entries and labor allocation                       | KrewPact              | KrewPact → ERPNext (async for payroll)                         | If discrepancy, audit KrewPact time entries against ERPNext payroll |
+| Trade Partners | Subcontractor scope and assignments                     | KrewPact              | KrewPact only                                                  | KrewPact owns trade partner relationships                           |
+| Compliance     | Compliance requirements and document collection         | KrewPact              | KrewPact only                                                  | KrewPact owns compliance tracking                                   |
+| Documents      | Project documents, submittals, photos, compliance files | KrewPact (file store) | KrewPact only                                                  | KrewPact owns all project documentation                             |
+| Customers      | Customer master data and contact information            | KrewPact              | KrewPact ↔ ERPNext (bidirectional sync)                        | Merge conflicts on data entry; prefer KrewPact if recent            |
 
 This system-of-record table is referenced during design and implementation of any sync or integration feature. It ensures consistency and prevents conflicts.
 
@@ -633,6 +675,7 @@ Data flows through KrewPact according to well-defined patterns that ensure consi
 **All Mutations Flow Through the API/BFF Layer**
 
 Any change to any piece of data—creating a project, approving a change order, logging time, uploading a document—is initiated by a frontend request to the API. The API validates the request, applies business rules, checks authorization, records the change in the audit trail, and persists the change to the operational database. This pattern ensures that:
+
 - Every change is authorized (RBAC is enforced)
 - Every change is logged (audit trail is complete)
 - Business rules are consistently applied (no bypassing logic)
@@ -643,6 +686,7 @@ Any change to any piece of data—creating a project, approving a change order, 
 When KrewPact decides that a financial transaction needs to occur (e.g., approving a change order that adds cost, or finalizing time entries for payroll), the API does not immediately call ERPNext. Instead, the API creates a job in the asynchronous queue. The job is picked up by a background worker that calls ERPNext's API, handles retries if the call fails, and records success or failure in the audit trail.
 
 This asynchronous pattern ensures that:
+
 - KrewPact remains responsive even if ERPNext is temporarily unavailable
 - Retries are automatic and reliable (with exponential backoff)
 - Failed sync attempts trigger alerts so manual investigation can occur
@@ -653,6 +697,7 @@ This asynchronous pattern ensures that:
 When a user makes a change in the frontend (approving a change order, logging time), the frontend immediately reflects the change in the UI to provide a responsive feel. Simultaneously, the frontend sends the change to the API for validation and persistence. If the API rejects the change (invalid data, authorization failure, business rule violation), the UI reverts the change and displays an error message.
 
 This pattern ensures that:
+
 - The UI feels responsive and fast
 - Invalid changes are caught and rejected
 - The database remains the source of truth (UI changes are tentative)
@@ -663,6 +708,7 @@ This pattern ensures that:
 All operations in KrewPact are designed to be idempotent: performing the same operation twice produces the same result as performing it once. For example, approving a change order twice (if the network request is retried) does not create two approvals; it confirms the same approval twice.
 
 Idempotency ensures that:
+
 - Network retries do not cause data corruption
 - ERPNext sync can be safely retried without duplicate transactions
 - Background jobs can be safely restarted after failures
@@ -671,6 +717,7 @@ Idempotency ensures that:
 **Audit Trail on Every Mutation**
 
 Every change to every piece of data is recorded in an immutable audit trail. The audit trail captures:
+
 - What was changed (entity, field, old value, new value)
 - Who changed it (user account)
 - When it was changed (timestamp)
@@ -678,6 +725,7 @@ Every change to every piece of data is recorded in an immutable audit trail. The
 - Why it was changed (if captured through UI context)
 
 The audit trail enables:
+
 - Compliance verification (answering "who approved this?")
 - Dispute resolution (showing the history of changes)
 - Learning and improvement (analyzing patterns in decisions)
@@ -686,6 +734,7 @@ The audit trail enables:
 ### 4.4 Separation of Concerns (Licensing Strategy)
 
 KrewPact is composed of multiple logical components with different licensing and intellectual property considerations. A clear separation of concerns ensures that:
+
 1. Open source dependencies do not contaminate proprietary code
 2. ERPNext customizations are properly licensed
 3. The codebase remains manageable and evolvable
@@ -717,6 +766,7 @@ Rationale: ERPNext itself is GPL v3 licensed, and any code that extends or modif
 **ERPNext Core: Untouched**
 
 KrewPact does not modify the core ERPNext codebase. Instead, all ERPNext customizations are implemented through custom apps, hooks, and APIs that ERPNext is explicitly designed to support. This ensures that:
+
 - ERPNext upgrades do not break KrewPact
 - The ERPNext community can continue supporting ERPNext without KrewPact-specific logic
 - KrewPact maintains independence from ERPNext's roadmap and release cycle
@@ -729,24 +779,24 @@ KrewPact does not modify the core ERPNext codebase. Instead, all ERPNext customi
 
 KrewPact spans the entire construction lifecycle and is organized into 16 epics, each representing a distinct domain with specific features, complexity, and dependencies. The epics are the primary organizing principle for development, testing, and product management.
 
-| Epic # | Domain | Key Features | Complexity | Dependencies |
-|--------|--------|--------------|------------|--------------|
-| 1 | Identity and Access Management | User provisioning, role assignment, RBAC enforcement, session management | High | Clerk, custom authorization layer |
-| 2 | Customer Relationship Management | Customer master data, contact management, communication history, customer categorization | Medium | Project Execution, Contracting |
-| 3 | Estimating | Estimate creation, bid pricing, labor and material rates, historical productivity, proposal generation | High | Contracting, Project Execution, Financial Operations |
-| 4 | Contracting | Contract terms, scope definition, contract templates, contract storage and retrieval | Medium | Estimating, Customer Relationship Management, Document Control |
-| 5 | Project Execution | Project master data, scope management, milestone tracking, status reporting | High | All other epics (central hub) |
-| 6 | RFIs and Submittals | RFI creation and tracking, submittal management, approval workflows, document versioning | High | Project Execution, Document Control |
-| 7 | Change Orders | Change order creation, pricing, approval workflows, budget impact tracking | High | Project Execution, Estimating, Financial Operations |
-| 8 | Field Operations | Crew assignment, daily work logs, site conditions reporting, material management, quality tracking | High | Project Execution, Scheduling, Time and Payroll |
-| 9 | Scheduling | Project schedule creation, task sequencing, resource leveling, critical path analysis, milestone tracking | High | Project Execution, Field Operations, Time and Payroll |
-| 10 | Time and Payroll | Time entry, labor tracking, payroll integration, attendance management | High | Project Execution, Financial Operations, Field Operations |
-| 11 | Financial Operations | Job costing, budget tracking, cost accrual, financial reporting, ERPNext integration | High | Project Execution, Time and Payroll, Estimating, Change Orders |
-| 12 | Client Portal | Project visibility, approval workflows, budget tracking, communication, progress photos | Medium | Project Execution, Change Orders, Financial Operations, Notifications |
-| 13 | Trade Partner Portal | Scope and schedule visibility, compliance document collection, time entry, submittal uploads | Medium | Project Execution, RFIs and Submittals, Time and Payroll, Notifications |
-| 14 | Reporting and Analytics | Project profitability, cash flow analysis, resource utilization, variance analysis, trend reporting | Medium | Financial Operations, Project Execution, Time and Payroll |
-| 15 | Notifications and Communication | Email notifications, in-app alerts, communication log, alert configuration | Medium | All epics (cross-cutting) |
-| 16 | Data Migration | Sage data import, legacy data validation, reconciliation, legacy data archival | High | All epics (one-time) |
+| Epic # | Domain                           | Key Features                                                                                              | Complexity | Dependencies                                                            |
+| ------ | -------------------------------- | --------------------------------------------------------------------------------------------------------- | ---------- | ----------------------------------------------------------------------- |
+| 1      | Identity and Access Management   | User provisioning, role assignment, RBAC enforcement, session management                                  | High       | Clerk, custom authorization layer                                       |
+| 2      | Customer Relationship Management | Customer master data, contact management, communication history, customer categorization                  | Medium     | Project Execution, Contracting                                          |
+| 3      | Estimating                       | Estimate creation, bid pricing, labor and material rates, historical productivity, proposal generation    | High       | Contracting, Project Execution, Financial Operations                    |
+| 4      | Contracting                      | Contract terms, scope definition, contract templates, contract storage and retrieval                      | Medium     | Estimating, Customer Relationship Management, Document Control          |
+| 5      | Project Execution                | Project master data, scope management, milestone tracking, status reporting                               | High       | All other epics (central hub)                                           |
+| 6      | RFIs and Submittals              | RFI creation and tracking, submittal management, approval workflows, document versioning                  | High       | Project Execution, Document Control                                     |
+| 7      | Change Orders                    | Change order creation, pricing, approval workflows, budget impact tracking                                | High       | Project Execution, Estimating, Financial Operations                     |
+| 8      | Field Operations                 | Crew assignment, daily work logs, site conditions reporting, material management, quality tracking        | High       | Project Execution, Scheduling, Time and Payroll                         |
+| 9      | Scheduling                       | Project schedule creation, task sequencing, resource leveling, critical path analysis, milestone tracking | High       | Project Execution, Field Operations, Time and Payroll                   |
+| 10     | Time and Payroll                 | Time entry, labor tracking, payroll integration, attendance management                                    | High       | Project Execution, Financial Operations, Field Operations               |
+| 11     | Financial Operations             | Job costing, budget tracking, cost accrual, financial reporting, ERPNext integration                      | High       | Project Execution, Time and Payroll, Estimating, Change Orders          |
+| 12     | Client Portal                    | Project visibility, approval workflows, budget tracking, communication, progress photos                   | Medium     | Project Execution, Change Orders, Financial Operations, Notifications   |
+| 13     | Trade Partner Portal             | Scope and schedule visibility, compliance document collection, time entry, submittal uploads              | Medium     | Project Execution, RFIs and Submittals, Time and Payroll, Notifications |
+| 14     | Reporting and Analytics          | Project profitability, cash flow analysis, resource utilization, variance analysis, trend reporting       | Medium     | Financial Operations, Project Execution, Time and Payroll               |
+| 15     | Notifications and Communication  | Email notifications, in-app alerts, communication log, alert configuration                                | Medium     | All epics (cross-cutting)                                               |
+| 16     | Data Migration                   | Sage data import, legacy data validation, reconciliation, legacy data archival                            | High       | All epics (one-time)                                                    |
 
 ### 5.2 Feature Priority Matrix
 
@@ -1323,6 +1373,7 @@ KrewPact is differentiated from competitors in several important ways:
 **Integrated with ERP (Not Standalone)**
 
 Unlike most competitors that operate as standalone project management systems, KrewPact is architected to sit on top of ERPNext as the financial backbone. This means:
+
 - No duplicate entry of financial data; KrewPact initiates transactions that ERPNext executes
 - Financial truth is always in ERPNext; KrewPact reflects financial results
 - Job costing is integrated; actual costs flow from KrewPact to ERPNext to financial statements
@@ -1331,6 +1382,7 @@ Unlike most competitors that operate as standalone project management systems, K
 **Built for Mixed Residential and Light Commercial**
 
 Most construction software specializes in either residential (home builders) or commercial (large contractors). KrewPact is explicitly designed for contractors who build both residential developments (condos, townhomes) and light commercial projects (retail, office, small institutional) simultaneously. The unified data model supports:
+
 - Different contract models (fixed price, cost-plus, design-build)
 - Different project types with appropriate workflows
 - Shared resources across mixed project portfolios
@@ -1339,6 +1391,7 @@ Most construction software specializes in either residential (home builders) or 
 **Canadian Compliance Built-In**
 
 Rather than bolting on compliance afterward, KrewPact incorporates Canadian legal requirements from inception:
+
 - PIPEDA compliance for personal information
 - Construction Act mechanics lien management
 - AODA accessibility standards
@@ -1351,6 +1404,7 @@ The architecture supports deployment as a white-label solution for other contrac
 **Offline-First Field Operations**
 
 Field operations often occur without reliable internet. KrewPact is architected for offline capability:
+
 - Field crews sync relevant data locally, work offline, and re-sync when connectivity returns
 - Conflict resolution handles simultaneous edits
 - No loss of data even if network is unavailable for hours
@@ -1358,28 +1412,29 @@ Field operations often occur without reliable internet. KrewPact is architected 
 **Portal Economy**
 
 Rather than treating portals as afterthoughts, KrewPact is architected with portals as primary surfaces:
+
 - Client Portal provides visibility and approval workflows that reduce friction
 - Trade Partner Portal shifts administrative burden to subcontractors
 - Portals drive engagement and decision-making speed
 
-| Feature Comparison | KrewPact | JobTread | Buildertrend | Procore |
-|-------------------|-----------|----------|-------------|---------|
-| Mixed Residential + Commercial | Yes | Limited | No | Limited |
-| ERP Integration | Native (ERPNext) | Limited | Limited | Limited |
-| Offline Field Operations | Yes | Limited | No | No |
-| Canadian Compliance | Yes | Partial | No | No |
-| White-Label Ready | Yes | No | No | No |
-| Multi-Division Support | Yes | Limited | No | Yes |
-| Job Costing | Integrated (ERPNext) | Basic | Basic | Yes |
-| Client Portal | Yes | Yes | Yes | Yes |
-| Trade Partner Portal | Yes | No | No | Yes |
-| Estimating Tools | Full | Full | Limited | Yes |
-| RFI and Submittal Management | Yes | Yes | Limited | Yes |
-| Change Order Management | Yes | Yes | Yes | Yes |
-| Cost Reporting | Rich | Basic | Basic | Rich |
-| Mobile Field Apps | Yes | Yes | Limited | Yes |
-| Customization | Framework (white-label ready) | Limited | Limited | Limited |
-| Pricing Model | TBD | Per-project | Per-user | Per-project + usage |
+| Feature Comparison             | KrewPact                      | JobTread    | Buildertrend | Procore             |
+| ------------------------------ | ----------------------------- | ----------- | ------------ | ------------------- |
+| Mixed Residential + Commercial | Yes                           | Limited     | No           | Limited             |
+| ERP Integration                | Native (ERPNext)              | Limited     | Limited      | Limited             |
+| Offline Field Operations       | Yes                           | Limited     | No           | No                  |
+| Canadian Compliance            | Yes                           | Partial     | No           | No                  |
+| White-Label Ready              | Yes                           | No          | No           | No                  |
+| Multi-Division Support         | Yes                           | Limited     | No           | Yes                 |
+| Job Costing                    | Integrated (ERPNext)          | Basic       | Basic        | Yes                 |
+| Client Portal                  | Yes                           | Yes         | Yes          | Yes                 |
+| Trade Partner Portal           | Yes                           | No          | No           | Yes                 |
+| Estimating Tools               | Full                          | Full        | Limited      | Yes                 |
+| RFI and Submittal Management   | Yes                           | Yes         | Limited      | Yes                 |
+| Change Order Management        | Yes                           | Yes         | Yes          | Yes                 |
+| Cost Reporting                 | Rich                          | Basic       | Basic        | Rich                |
+| Mobile Field Apps              | Yes                           | Yes         | Limited      | Yes                 |
+| Customization                  | Framework (white-label ready) | Limited     | Limited      | Limited             |
+| Pricing Model                  | TBD                           | Per-project | Per-user     | Per-project + usage |
 
 ---
 
@@ -1490,6 +1545,7 @@ Client satisfaction with project execution drives repeat business and referrals.
 **Description:** With 16 epics spanning the entire construction lifecycle, the temptation to build comprehensive features across all domains simultaneously is high. This leads to spreading engineering resources thin, missing deadlines, and quality problems.
 
 **Mitigation:**
+
 - Clear prioritization using MoSCoW for each epic's features
 - Ruthless feature triage; "won't have" features are explicitly scoped out
 - Regular scope freeze points; no feature additions once development phase begins
@@ -1501,6 +1557,7 @@ Client satisfaction with project execution drives repeat business and referrals.
 **Description:** ERPNext is actively maintained with regular version upgrades. Breaking changes in ERPNext APIs or data models could disrupt sync between KrewPact and ERPNext, causing financial data corruption or reconciliation burden.
 
 **Mitigation:**
+
 - Isolation of ERPNext integration in a dedicated module with stable APIs
 - Comprehensive sync testing and validation; all sync operations verified on each ERPNext version
 - Version compatibility matrix; document which KrewPact versions support which ERPNext versions
@@ -1513,6 +1570,7 @@ Client satisfaction with project execution drives repeat business and referrals.
 **Description:** Switching from legacy manual workflows to KrewPact requires significant user behavior change. Users accustomed to current processes may resist KrewPact if they perceive it as more complex or if training is inadequate.
 
 **Mitigation:**
+
 - Phased adoption with parallel running (legacy systems and KrewPact operating simultaneously for a period)
 - Comprehensive training program tailored to each role; training occurs shortly before user relies on KrewPact
 - Early adopter program; identify power users and train them deeply; they become peer mentors
@@ -1525,6 +1583,7 @@ Client satisfaction with project execution drives repeat business and referrals.
 **Description:** Field operations work offline, then re-sync when connectivity returns. If the same data is edited offline and in the cloud simultaneously, a conflict arises. Resolving conflicts manually is time-consuming and error-prone.
 
 **Mitigation:**
+
 - Optimistic locking; only one user can edit a given record simultaneously; offline edits are rejected if the record was changed in the cloud
 - Conflict notification; users are immediately notified of conflicts and prompted to resolve
 - Last-write-wins with audit trail; conflict resolution defaults to last write, but audit trail captures what was overwritten
@@ -1537,6 +1596,7 @@ Client satisfaction with project execution drives repeat business and referrals.
 **Description:** Clients and trade partners access KrewPact through portals. Inadequate security could allow unauthorized access to sensitive project information or financial data.
 
 **Mitigation:**
+
 - Row-level security enforced at database level; users cannot access data outside their permitted scope
 - Strong authentication; multi-factor authentication available for portal users
 - Encrypted communication; all traffic over HTTPS; sensitive data encrypted at rest
@@ -1559,6 +1619,7 @@ Beyond v1, KrewPact will evolve to support increasingly sophisticated constructi
 Estimating is currently manual and relies on estimator expertise. Machine learning can learn from historical projects to recommend labor and material costs, automate quantity takeoffs from digital files, and flag unusual estimates for review.
 
 Future capabilities:
+
 - Automatic labor rate and productivity recommendations based on project characteristics
 - Automated quantity takeoff from BIM models and PDFs
 - Anomaly detection (estimate that deviates significantly from similar historical projects)
@@ -1569,6 +1630,7 @@ Future capabilities:
 Quantity takeoff from blueprints is currently manual. Integration with digital takeoff tools (e.g., PlanSwift, BlueBeam) can automate this process, reducing takeoff time and improving accuracy.
 
 Future capabilities:
+
 - Import quantities directly from takeoff tool into estimate
 - Automated unit conversion and assembly calculation
 - Takeoff visualization overlaid on blueprints
@@ -1578,6 +1640,7 @@ Future capabilities:
 Historical schedule data can inform predictions of how long tasks will take, which critical path is most likely to be delayed, and what milestones are at risk.
 
 Future capabilities:
+
 - Schedule recommendations based on historical duration of similar tasks
 - Probability of on-time completion with current schedule
 - Early warning of tasks at risk of delay based on actual progress to date
@@ -1588,6 +1651,7 @@ Future capabilities:
 Current reporting is transactional (project detail reports). A data warehouse enables sophisticated analysis of trends, patterns, and business insights.
 
 Future capabilities:
+
 - Historical trend analysis (how has our profitability evolved over years?)
 - Comparative analysis (which project types are most profitable? which clients?)
 - Predictive analytics (what is our projected cash position in 6 months?)
@@ -1599,6 +1663,7 @@ Future capabilities:
 Web applications optimized for mobile are adequate for occasional access. Native mobile apps optimized for field use would improve adoption and usability.
 
 Future capabilities:
+
 - iOS and Android apps for field operations
 - Offline-first architecture optimized for mobile
 - Camera integration for progress photos
@@ -1610,6 +1675,7 @@ Future capabilities:
 KrewPact will expose APIs enabling third-party developers to build integrations and extensions. A marketplace makes these integrations discoverable and installable.
 
 Future capabilities:
+
 - Material supplier integrations for automated pricing
 - Digital drawing and BIM integrations
 - Accounting system integrations beyond ERPNext
@@ -1622,6 +1688,7 @@ Future capabilities:
 Canada is bilingual. Support for French alongside English will expand addressable market and improve user experience for French-speaking contractors and crews.
 
 Future capabilities:
+
 - Full UI localization to French
 - Help and training materials in French
 - Customer support in French

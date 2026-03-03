@@ -13,10 +13,7 @@ vi.mock('@/lib/supabase/server', () => ({
 import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { GET as GET_PROPOSALS, POST as POST_PROPOSALS } from '@/app/api/proposals/route';
-import {
-  GET as GET_PROPOSAL_ID,
-  PATCH as PATCH_PROPOSAL_ID,
-} from '@/app/api/proposals/[id]/route';
+import { GET as GET_PROPOSAL_ID, PATCH as PATCH_PROPOSAL_ID } from '@/app/api/proposals/[id]/route';
 import { GET as GET_CONTRACTS, POST as POST_CONTRACTS } from '@/app/api/contracts/route';
 import { GET as GET_ESIGN, POST as POST_ESIGN } from '@/app/api/esign/route';
 import {
@@ -120,9 +117,7 @@ describe('GET /api/proposals', () => {
     });
     mockCreateUserClient.mockResolvedValue(client);
 
-    const res = await GET_PROPOSALS(
-      makeRequest(`/api/proposals?estimate_id=${VALID_UUID}`),
-    );
+    const res = await GET_PROPOSALS(makeRequest(`/api/proposals?estimate_id=${VALID_UUID}`));
     expect(res.status).toBe(200);
     expect(client.from).toHaveBeenCalledWith('proposals');
   });
@@ -329,9 +324,7 @@ describe('GET /api/contracts', () => {
     });
     mockCreateUserClient.mockResolvedValue(client);
 
-    const res = await GET_CONTRACTS(
-      makeRequest(`/api/contracts?proposal_id=${VALID_UUID}`),
-    );
+    const res = await GET_CONTRACTS(makeRequest(`/api/contracts?proposal_id=${VALID_UUID}`));
     expect(res.status).toBe(200);
     expect(client.from).toHaveBeenCalledWith('contract_terms');
   });
@@ -492,9 +485,7 @@ describe('POST /api/esign', () => {
 
   it('returns 400 for missing contract_id', async () => {
     mockClerkAuth(mockAuth);
-    const res = await POST_ESIGN(
-      makeJsonRequest('/api/esign', { signer_count: 2 }),
-    );
+    const res = await POST_ESIGN(makeJsonRequest('/api/esign', { signer_count: 2 }));
     expect(res.status).toBe(400);
   });
 

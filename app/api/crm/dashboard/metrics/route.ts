@@ -60,9 +60,7 @@ export async function GET(req: NextRequest) {
   const supabase = await createUserClient();
 
   // Fetch opportunities (all for pipeline, filtered by period for velocity)
-  let oppQuery = supabase
-    .from('opportunities')
-    .select('*, opportunity_stage_history(*)');
+  let oppQuery = supabase.from('opportunities').select('*, opportunity_stage_history(*)');
 
   if (division_id) {
     oppQuery = oppQuery.eq('division_id', division_id);
@@ -75,10 +73,7 @@ export async function GET(req: NextRequest) {
   }
 
   // Fetch leads filtered by period
-  let leadQuery = supabase
-    .from('leads')
-    .select('*')
-    .gte('created_at', periodStart);
+  let leadQuery = supabase.from('leads').select('*').gte('created_at', periodStart);
 
   if (division_id) {
     leadQuery = leadQuery.eq('division_id', division_id);
@@ -98,12 +93,8 @@ export async function GET(req: NextRequest) {
 
   // Compute "My Leads" vs "My Accounts" summary for dashboard split
   const allLeads = leads ?? [];
-  const openLeads = allLeads.filter(
-    (l) => !['won', 'lost', 'disqualified'].includes(l.status),
-  );
-  const convertedLeads = allLeads.filter(
-    (l) => ['won', 'converted'].includes(l.status),
-  );
+  const openLeads = allLeads.filter((l) => !['won', 'lost', 'disqualified'].includes(l.status));
+  const convertedLeads = allLeads.filter((l) => ['won', 'converted'].includes(l.status));
   const recentlyConverted = convertedLeads
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .slice(0, 5);

@@ -2,8 +2,20 @@
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { contactCreateSchema, contactUpdateSchema, type ContactCreate, type ContactUpdate } from '@/lib/validators/crm';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import {
+  contactCreateSchema,
+  contactUpdateSchema,
+  type ContactCreate,
+  type ContactUpdate,
+} from '@/lib/validators/crm';
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -18,7 +30,13 @@ interface ContactFormProps {
   onCancel?: () => void;
 }
 
-export function ContactForm({ contact, defaultAccountId, defaultLeadId, onSuccess, onCancel }: ContactFormProps) {
+export function ContactForm({
+  contact,
+  defaultAccountId,
+  defaultLeadId,
+  onSuccess,
+  onCancel,
+}: ContactFormProps) {
   const isEdit = !!contact;
   const createContact = useCreateContact();
   const updateContact = useUpdateContact();
@@ -103,7 +121,12 @@ export function ContactForm({ contact, defaultAccountId, defaultLeadId, onSucces
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input type="email" placeholder="john@example.com" {...field} value={field.value ?? ''} />
+                  <Input
+                    type="email"
+                    placeholder="john@example.com"
+                    {...field}
+                    value={field.value ?? ''}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -145,10 +168,7 @@ export function ContactForm({ contact, defaultAccountId, defaultLeadId, onSucces
           render={({ field }) => (
             <FormItem className="flex items-center gap-3">
               <FormControl>
-                <Switch
-                  checked={field.value as boolean}
-                  onCheckedChange={field.onChange}
-                />
+                <Switch checked={field.value as boolean} onCheckedChange={field.onChange} />
               </FormControl>
               <FormLabel className="!mt-0">Primary Contact</FormLabel>
               <FormMessage />

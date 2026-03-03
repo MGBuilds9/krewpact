@@ -19,9 +19,15 @@ interface ReferenceDataValueFormProps {
   onCancel?: () => void;
 }
 
-export function ReferenceDataValueForm({ setId, onSuccess, onCancel }: ReferenceDataValueFormProps) {
+export function ReferenceDataValueForm({
+  setId,
+  onSuccess,
+  onCancel,
+}: ReferenceDataValueFormProps) {
   const add = useAddReferenceDataValue(setId);
-  const form = useForm<FormState>({ defaultValues: { value_key: '', value_name: '', sort_order: '' } });
+  const form = useForm<FormState>({
+    defaultValues: { value_key: '', value_name: '', sort_order: '' },
+  });
 
   async function onSubmit(values: FormState) {
     try {
@@ -56,7 +62,11 @@ export function ReferenceDataValueForm({ setId, onSuccess, onCancel }: Reference
         {add.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         Add
       </Button>
-      {onCancel && <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>}
+      {onCancel && (
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+      )}
     </form>
   );
 }

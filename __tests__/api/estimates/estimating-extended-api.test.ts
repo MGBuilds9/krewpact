@@ -19,10 +19,7 @@ import {
   DELETE as DELETE_CATALOG_ID,
 } from '@/app/api/cost-catalog/[id]/route';
 import { GET as GET_ASSEMBLIES, POST as POST_ASSEMBLIES } from '@/app/api/assemblies/route';
-import {
-  GET as GET_TEMPLATES,
-  POST as POST_TEMPLATES,
-} from '@/app/api/estimate-templates/route';
+import { GET as GET_TEMPLATES, POST as POST_TEMPLATES } from '@/app/api/estimate-templates/route';
 import {
   GET as GET_ALTERNATES,
   POST as POST_ALTERNATES,
@@ -165,9 +162,7 @@ describe('GET /api/cost-catalog', () => {
     });
     mockCreateUserClient.mockResolvedValue(client);
 
-    const res = await GET_CATALOG(
-      makeRequest(`/api/cost-catalog?division_id=${VALID_UUID}`),
-    );
+    const res = await GET_CATALOG(makeRequest(`/api/cost-catalog?division_id=${VALID_UUID}`));
     expect(res.status).toBe(200);
     expect(client.from).toHaveBeenCalledWith('cost_catalog_items');
   });
@@ -361,10 +356,7 @@ describe('DELETE /api/cost-catalog/[id]', () => {
 
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
-    const res = await DELETE_CATALOG_ID(
-      makeRequest('/api/cost-catalog/123'),
-      makeContext('123'),
-    );
+    const res = await DELETE_CATALOG_ID(makeRequest('/api/cost-catalog/123'), makeContext('123'));
     expect(res.status).toBe(401);
   });
 
@@ -435,9 +427,7 @@ describe('GET /api/assemblies', () => {
     });
     mockCreateUserClient.mockResolvedValue(client);
 
-    const res = await GET_ASSEMBLIES(
-      makeRequest(`/api/assemblies?division_id=${VALID_UUID}`),
-    );
+    const res = await GET_ASSEMBLIES(makeRequest(`/api/assemblies?division_id=${VALID_UUID}`));
     expect(res.status).toBe(200);
     expect(client.from).toHaveBeenCalledWith('assemblies');
   });
@@ -527,7 +517,9 @@ describe('GET /api/estimate-templates', () => {
     });
     mockCreateUserClient.mockResolvedValue(client);
 
-    const res = await GET_TEMPLATES(makeRequest('/api/estimate-templates?project_type=residential'));
+    const res = await GET_TEMPLATES(
+      makeRequest('/api/estimate-templates?project_type=residential'),
+    );
     expect(res.status).toBe(200);
     expect(client.from).toHaveBeenCalledWith('estimate_templates');
   });
@@ -583,9 +575,7 @@ describe('POST /api/estimate-templates', () => {
 
   it('returns 400 for missing template_name', async () => {
     mockClerkAuth(mockAuth);
-    const res = await POST_TEMPLATES(
-      makeJsonRequest('/api/estimate-templates', { payload: {} }),
-    );
+    const res = await POST_TEMPLATES(makeJsonRequest('/api/estimate-templates', { payload: {} }));
     expect(res.status).toBe(400);
   });
 });

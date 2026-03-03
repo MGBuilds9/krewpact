@@ -18,6 +18,7 @@
 Manage labor, material, and equipment unit rates. Foundation for assemblies and line item calculations.
 
 **Schema (new table):**
+
 ```sql
 CREATE TABLE cost_catalog_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -40,6 +41,7 @@ CREATE TABLE cost_catalog_items (
 Component for grouping items into reusable assemblies.
 
 **Example:** "Drywall Partition" assembly =
+
 - Drywall (material, 1.1 sheets/sqft)
 - Metal studs (material, 0.375/lf)
 - Taping compound (material, 0.05/sqft)
@@ -47,6 +49,7 @@ Component for grouping items into reusable assemblies.
 - Fasteners (material, $0.50/sqft)
 
 **Schema (new table):**
+
 ```sql
 CREATE TABLE assemblies (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -70,6 +73,7 @@ CREATE TABLE assembly_items (
 ### 3. Estimate Builder with Line Items + Calculations
 
 Enhanced estimate editor with:
+
 - Add line items from cost catalog or freeform
 - Add assemblies (auto-expand into line items)
 - Quantity x unit cost with markup %
@@ -87,6 +91,7 @@ Enhanced estimate editor with:
 Generate branded PDF from estimate data.
 
 **Options:**
+
 - `@react-pdf/renderer` (React-native PDF generation)
 - Puppeteer/Playwright (HTML → PDF, more flexible styling)
 
@@ -100,14 +105,14 @@ Generate branded PDF from estimate data.
 
 ## Implementation Sequence
 
-| Phase | Feature | Depends On |
-|-------|---------|------------|
-| 1 | Cost catalog API + page | Nothing |
-| 2 | Assembly builder | Cost catalog |
-| 3 | Estimate builder (line items + calculations) | Cost catalog, assemblies |
-| 4 | Versioning + comparison UI | Estimate builder |
-| 5 | PDF export | Estimate builder |
-| 6 | CRM integration | PDF export, opportunities |
+| Phase | Feature                                      | Depends On                |
+| ----- | -------------------------------------------- | ------------------------- |
+| 1     | Cost catalog API + page                      | Nothing                   |
+| 2     | Assembly builder                             | Cost catalog              |
+| 3     | Estimate builder (line items + calculations) | Cost catalog, assemblies  |
+| 4     | Versioning + comparison UI                   | Estimate builder          |
+| 5     | PDF export                                   | Estimate builder          |
+| 6     | CRM integration                              | PDF export, opportunities |
 
 ## Estimated Effort
 

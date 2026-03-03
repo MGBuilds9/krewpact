@@ -43,7 +43,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const parsed = taskDependencyCreateSchema.safeParse({ ...body as object, task_id: id });
+  const parsed = taskDependencyCreateSchema.safeParse({ ...(body as object), task_id: id });
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }

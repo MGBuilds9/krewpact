@@ -86,10 +86,7 @@ describe('POST /api/crm/sequences/pending-enrollments/[id]/approve', () => {
     });
     mockCreateUserClient.mockResolvedValue(client);
 
-    const req = makeJsonRequest(
-      '/api/crm/sequences/pending-enrollments/enrollment-1/approve',
-      {},
-    );
+    const req = makeJsonRequest('/api/crm/sequences/pending-enrollments/enrollment-1/approve', {});
     const res = await approveHandler(req, {
       params: Promise.resolve({ id: 'enrollment-1' }),
     });
@@ -120,10 +117,7 @@ describe('POST /api/crm/sequences/pending-enrollments/[id]/reject', () => {
     });
     mockCreateUserClient.mockResolvedValue(client);
 
-    const req = makeJsonRequest(
-      '/api/crm/sequences/pending-enrollments/enrollment-1/reject',
-      {},
-    );
+    const req = makeJsonRequest('/api/crm/sequences/pending-enrollments/enrollment-1/reject', {});
     const res = await rejectHandler(req, {
       params: Promise.resolve({ id: 'enrollment-1' }),
     });

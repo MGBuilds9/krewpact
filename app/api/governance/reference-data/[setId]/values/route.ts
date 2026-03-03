@@ -44,9 +44,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ set
 
   const { setId } = await params;
   let body: unknown;
-  try { body = await req.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+  }
 
-  const parsed = referenceDataValueSchema.safeParse({ ...body as Record<string, unknown>, data_set_id: setId });
+  const parsed = referenceDataValueSchema.safeParse({
+    ...(body as Record<string, unknown>),
+    data_set_id: setId,
+  });
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
   const supabase = await createUserClient();

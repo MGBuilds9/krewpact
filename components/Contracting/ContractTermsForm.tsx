@@ -3,7 +3,14 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -25,7 +32,12 @@ export interface ContractTermsFormProps {
   onCancel?: () => void;
 }
 
-export function ContractTermsForm({ contractTerms, proposalId, onSuccess, onCancel }: ContractTermsFormProps) {
+export function ContractTermsForm({
+  contractTerms,
+  proposalId,
+  onSuccess,
+  onCancel,
+}: ContractTermsFormProps) {
   const createTerms = useCreateContractTerms();
   const updateTerms = useUpdateContractTerms();
   const isEditing = !!contractTerms;
@@ -58,12 +70,21 @@ export function ContractTermsForm({ contractTerms, proposalId, onSuccess, onCanc
     };
 
     if (isEditing) {
-      updateTerms.mutate({ id: contractTerms.id, ...payload }, {
-        onSuccess: () => { form.reset(); onSuccess?.(); },
-      });
+      updateTerms.mutate(
+        { id: contractTerms.id, ...payload },
+        {
+          onSuccess: () => {
+            form.reset();
+            onSuccess?.();
+          },
+        },
+      );
     } else {
       createTerms.mutate(payload, {
-        onSuccess: () => { form.reset(); onSuccess?.(); },
+        onSuccess: () => {
+          form.reset();
+          onSuccess?.();
+        },
       });
     }
   }

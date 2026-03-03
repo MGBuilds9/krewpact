@@ -73,14 +73,23 @@ export function ProjectCreationForm({ onClose, onSuccess }: ProjectCreationFormP
     setProjectMembers(projectMembers.filter((_, i) => i !== index));
   };
 
-  const updateProjectMember = (index: number, field: keyof ProjectMember, value: string | number | null) => {
+  const updateProjectMember = (
+    index: number,
+    field: keyof ProjectMember,
+    value: string | number | null,
+  ) => {
     const updated = [...projectMembers];
     updated[index] = { ...updated[index], [field]: value };
     setProjectMembers(updated);
   };
 
   const formatSiteAddress = () => {
-    const parts = [formData.site_street, formData.site_city, formData.site_province, formData.site_postal_code].filter(Boolean);
+    const parts = [
+      formData.site_street,
+      formData.site_city,
+      formData.site_province,
+      formData.site_postal_code,
+    ].filter(Boolean);
     return parts.join(', ');
   };
 
@@ -104,7 +113,9 @@ export function ProjectCreationForm({ onClose, onSuccess }: ProjectCreationFormP
         status: formData.status || 'planning',
         start_date: formData.start_date || undefined,
         target_completion_date: formData.target_completion_date || undefined,
-        baseline_budget: formData.baseline_budget ? parseFloat(formData.baseline_budget) : undefined,
+        baseline_budget: formData.baseline_budget
+          ? parseFloat(formData.baseline_budget)
+          : undefined,
         current_budget: formData.baseline_budget ? parseFloat(formData.baseline_budget) : undefined,
         division_id: activeDivision?.id || undefined,
         site_address: Object.keys(siteAddress).length > 0 ? siteAddress : undefined,
@@ -419,9 +430,7 @@ export function ProjectCreationForm({ onClose, onSuccess }: ProjectCreationFormP
             </div>
             {index < steps.length - 1 && (
               <div
-                className={`w-12 h-1 mx-2 ${
-                  currentStep > step.id ? 'bg-primary' : 'bg-muted'
-                }`}
+                className={`w-12 h-1 mx-2 ${currentStep > step.id ? 'bg-primary' : 'bg-muted'}`}
               />
             )}
           </div>

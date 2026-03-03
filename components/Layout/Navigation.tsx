@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -22,23 +23,63 @@ interface NavigationProps {
   isMobile?: boolean;
 }
 
-const navigationItems = [
-  { icon: Home, label: 'Dashboard', href: '/dashboard', description: 'Service gateway & quick access' },
-  { icon: Building2, label: 'CRM', href: '/crm', description: 'Leads, accounts & pipeline' },
-  { icon: Calculator, label: 'Estimates', href: '/estimates', description: 'Cost estimation builder' },
-  { icon: FolderOpen, label: 'Projects', href: '/projects', description: 'View construction projects' },
-  { icon: FileText, label: 'Documents', href: '/documents', description: 'SharePoint files & documents' },
-  { icon: Calendar, label: 'Schedule', href: '/schedule', description: 'Calendar & events' },
-  { icon: Users, label: 'Team', href: '/team', description: 'Employee directory' },
-  { icon: DollarSign, label: 'Expenses', href: '/expenses', description: 'Log & manage expenses' },
-  { icon: ClipboardList, label: 'Reports', href: '/reports', description: 'Field & safety reports' },
-  { icon: Shield, label: 'Admin', href: '/admin', description: 'User & role management', adminOnly: true },
+interface NavItem {
+  icon: typeof Home;
+  label: string;
+  path: string;
+  description: string;
+  adminOnly?: boolean;
+}
+
+const navigationItems: NavItem[] = [
+  {
+    icon: Home,
+    label: 'Dashboard',
+    path: '/dashboard',
+    description: 'Service gateway & quick access',
+  },
+  { icon: Building2, label: 'CRM', path: '/crm', description: 'Leads, accounts & pipeline' },
+  {
+    icon: Calculator,
+    label: 'Estimates',
+    path: '/estimates',
+    description: 'Cost estimation builder',
+  },
+  {
+    icon: FolderOpen,
+    label: 'Projects',
+    path: '/projects',
+    description: 'View construction projects',
+  },
+  {
+    icon: FileText,
+    label: 'Documents',
+    path: '/documents',
+    description: 'SharePoint files & documents',
+  },
+  { icon: Calendar, label: 'Schedule', path: '/schedule', description: 'Calendar & events' },
+  { icon: Users, label: 'Team', path: '/team', description: 'Employee directory' },
+  { icon: DollarSign, label: 'Expenses', path: '/expenses', description: 'Log & manage expenses' },
+  {
+    icon: ClipboardList,
+    label: 'Reports',
+    path: '/reports',
+    description: 'Field & safety reports',
+  },
+  {
+    icon: Shield,
+    label: 'Admin',
+    path: '/admin',
+    description: 'User & role management',
+    adminOnly: true,
+  },
 ];
 
 export { navigationItems };
 
 export function Navigation({ isMobile = false }: NavigationProps) {
   const pathname = usePathname();
+  const { orgPath } = useOrgRouter();
   const { data: currentUser } = useCurrentUser();
 
   const filteredItems = navigationItems.filter(
@@ -49,11 +90,12 @@ export function Navigation({ isMobile = false }: NavigationProps) {
     return (
       <nav className="flex flex-col gap-2">
         {filteredItems.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+          const href = orgPath(item.path);
+          const isActive = pathname.includes(item.path);
           return (
             <Link
               key={item.label}
-              href={item.href}
+              href={href}
               className={cn(
                 'flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 touch-target',
                 isActive
@@ -74,12 +116,13 @@ export function Navigation({ isMobile = false }: NavigationProps) {
     <TooltipProvider delayDuration={300}>
       <div className="flex items-center gap-1">
         {filteredItems.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+          const href = orgPath(item.path);
+          const isActive = pathname.includes(item.path);
           return (
             <Tooltip key={item.label}>
               <TooltipTrigger asChild>
                 <Link
-                  href={item.href}
+                  href={href}
                   className={cn(
                     'flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
                     'hover:scale-105 active:scale-95',

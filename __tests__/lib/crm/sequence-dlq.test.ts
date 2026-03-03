@@ -16,9 +16,27 @@ type MockResponse = { data: unknown; error: unknown };
 function buildChain(resolveWith: MockResponse) {
   const chain: Record<string, unknown> = {};
   const methods = [
-    'select', 'insert', 'update', 'delete', 'upsert',
-    'eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'in', 'ilike', 'is', 'or',
-    'not', 'filter', 'match', 'order', 'limit', 'range',
+    'select',
+    'insert',
+    'update',
+    'delete',
+    'upsert',
+    'eq',
+    'neq',
+    'gt',
+    'gte',
+    'lt',
+    'lte',
+    'in',
+    'ilike',
+    'is',
+    'or',
+    'not',
+    'filter',
+    'match',
+    'order',
+    'limit',
+    'range',
   ];
   for (const m of methods) {
     chain[m] = vi.fn().mockImplementation(() => chain);
@@ -43,9 +61,26 @@ function buildStatefulClient(config: CallConfig) {
     from: vi.fn().mockImplementation((_table: string) => {
       const chain: Record<string, unknown> = {};
       const methods = [
-        'select', 'insert', 'upsert', 'delete',
-        'eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'in', 'ilike', 'is', 'or',
-        'not', 'filter', 'match', 'order', 'limit', 'range',
+        'select',
+        'insert',
+        'upsert',
+        'delete',
+        'eq',
+        'neq',
+        'gt',
+        'gte',
+        'lt',
+        'lte',
+        'in',
+        'ilike',
+        'is',
+        'or',
+        'not',
+        'filter',
+        'match',
+        'order',
+        'limit',
+        'range',
       ];
       for (const m of methods) {
         chain[m] = vi.fn().mockImplementation(() => chain);
@@ -130,9 +165,7 @@ describe('checkAndMoveToDLQ', () => {
 
     const result = await checkAndMoveToDLQ(client, 'enroll-4', 'step-4', 'max retries hit');
     expect(result).toBe(true);
-    expect(updateMock).toHaveBeenCalledWith(
-      expect.objectContaining({ status: 'dead_letter' }),
-    );
+    expect(updateMock).toHaveBeenCalledWith(expect.objectContaining({ status: 'dead_letter' }));
   });
 
   it('returns true when retry_count exceeds MAX_RETRIES (5 retries)', async () => {
@@ -165,9 +198,7 @@ describe('checkAndMoveToDLQ', () => {
 
     const result = await checkAndMoveToDLQ(client, 'enroll-6', 'step-6', 'fetch failed');
     expect(result).toBe(true);
-    expect(updateMock).toHaveBeenCalledWith(
-      expect.objectContaining({ status: 'dead_letter' }),
-    );
+    expect(updateMock).toHaveBeenCalledWith(expect.objectContaining({ status: 'dead_letter' }));
   });
 
   it('throws when DLQ update itself fails', async () => {
@@ -233,9 +264,9 @@ describe('getDLQEntries', () => {
 
   it('throws when query fails', async () => {
     const client = {
-      from: vi.fn().mockImplementation(() =>
-        buildChain({ data: null, error: { message: 'query failed' } }),
-      ),
+      from: vi
+        .fn()
+        .mockImplementation(() => buildChain({ data: null, error: { message: 'query failed' } })),
     } as unknown as ReturnType<typeof import('@supabase/supabase-js').createClient>;
 
     await expect(getDLQEntries(client)).rejects.toThrow('Failed to fetch DLQ entries');

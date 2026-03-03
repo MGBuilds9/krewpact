@@ -69,10 +69,7 @@ describe('POST /api/crm/import', () => {
 
     const req = makeJsonRequest('/api/crm/import', {
       entity_type: 'lead',
-      rows: [
-        { company_name: 'Valid' },
-        { city: 'No Name' },
-      ],
+      rows: [{ company_name: 'Valid' }, { city: 'No Name' }],
     });
     const res = await POST(req);
     expect(res.status).toBe(200);
@@ -90,8 +87,8 @@ describe('POST /api/crm/import', () => {
 
     const req = makeJsonRequest('/api/crm/import', {
       entity_type: 'lead',
-      rows: [{ 'Company': 'Mapped Corp', 'Location': 'Ottawa' }],
-      column_mapping: { 'Company': 'company_name', 'Location': 'city' },
+      rows: [{ Company: 'Mapped Corp', Location: 'Ottawa' }],
+      column_mapping: { Company: 'company_name', Location: 'city' },
     });
     const res = await POST(req);
     expect(res.status).toBe(200);

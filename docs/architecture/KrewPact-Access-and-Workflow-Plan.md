@@ -80,88 +80,88 @@ WEBHOOK_SIGNING_SECRET=<shared-secret-for-inbound-webhooks>
 
 ### 2.1 ERPNext — `erp.mdmgroupinc.ca` ✅ VM Running
 
-| Task | Status | How |
-|------|--------|-----|
-| Fresh install accessible at `erp.mdmgroupinc.ca` | ✅ Done | Nginx reverse proxy |
-| Create dedicated API user (e.g., `krewpact-service`) | ⬜ | ERPNext Admin → User → create with API access |
-| Assign proper Role Profile to API user | ⬜ | Needs: System Manager or custom role with all doctype perms |
-| Generate API Key + Secret for that user | ⬜ | User → API Access → Generate Keys (rotate the ones you pasted) |
-| Set up Company + Chart of Accounts | ⬜ | Setup Wizard or manual — MDM Group divisions |
-| Create 8 custom doctypes | ⬜ | ChangeOrder, CustomContract, SafetyAcknowledgment, InsuranceCertificate, SubcontractorAgreement, WBS, ComplianceRequirement, SiteLocation, SafetyIncident, License |
-| Add 40+ custom fields to standard doctypes | ⬜ | All `krewpact_*` prefixed fields per Integration Contracts §2.4 |
-| Configure webhooks (document events → KrewPact) | ⬜ | ERPNext Webhook DocType → point to KrewPact webhook endpoint |
-| Enable CORS for KrewPact domain | ⬜ | `site_config.json` → `allow_cors: ["https://app.krewpact.com"]` |
-| TLS via Nginx (Let's Encrypt) | ⬜ Verify | Certbot on Nginx Proxy Manager |
+| Task                                                 | Status    | How                                                                                                                                                                |
+| ---------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Fresh install accessible at `erp.mdmgroupinc.ca`     | ✅ Done   | Nginx reverse proxy                                                                                                                                                |
+| Create dedicated API user (e.g., `krewpact-service`) | ⬜        | ERPNext Admin → User → create with API access                                                                                                                      |
+| Assign proper Role Profile to API user               | ⬜        | Needs: System Manager or custom role with all doctype perms                                                                                                        |
+| Generate API Key + Secret for that user              | ⬜        | User → API Access → Generate Keys (rotate the ones you pasted)                                                                                                     |
+| Set up Company + Chart of Accounts                   | ⬜        | Setup Wizard or manual — MDM Group divisions                                                                                                                       |
+| Create 8 custom doctypes                             | ⬜        | ChangeOrder, CustomContract, SafetyAcknowledgment, InsuranceCertificate, SubcontractorAgreement, WBS, ComplianceRequirement, SiteLocation, SafetyIncident, License |
+| Add 40+ custom fields to standard doctypes           | ⬜        | All `krewpact_*` prefixed fields per Integration Contracts §2.4                                                                                                    |
+| Configure webhooks (document events → KrewPact)      | ⬜        | ERPNext Webhook DocType → point to KrewPact webhook endpoint                                                                                                       |
+| Enable CORS for KrewPact domain                      | ⬜        | `site_config.json` → `allow_cors: ["https://app.krewpact.com"]`                                                                                                    |
+| TLS via Nginx (Let's Encrypt)                        | ⬜ Verify | Certbot on Nginx Proxy Manager                                                                                                                                     |
 
 **ERPNext API user permission scope**: The service account needs read/write on all mapped doctypes. Create a custom Role Profile called `KrewPact Integration` with granular doctype-level perms.
 
 ### 2.2 Supabase — PostgreSQL + RLS + Realtime
 
-| Task | Status | How |
-|------|--------|-----|
-| Create Supabase project (Canadian region if available) | ⬜ | dashboard.supabase.com → New Project |
-| Run schema migration (28 enums, 19+ table groups) | ⬜ | From `KrewPact-Backend-SQL-Schema-Draft.sql` |
-| Configure RLS policies per table | ⬜ | Per Security Framework doc |
-| Set up Realtime channels (projects, notifications) | ⬜ | Supabase Realtime config |
-| Create Edge Functions (webhook receivers, cron jobs) | ⬜ | For BullMQ bridge if not using Node.js BFF |
-| Set up Storage buckets (documents, photos) | ⬜ | Project files, signed contracts, photos |
-| Get project URL + keys | ⬜ | Settings → API → copy URL, anon key, service role key |
+| Task                                                   | Status | How                                                   |
+| ------------------------------------------------------ | ------ | ----------------------------------------------------- |
+| Create Supabase project (Canadian region if available) | ⬜     | dashboard.supabase.com → New Project                  |
+| Run schema migration (28 enums, 19+ table groups)      | ⬜     | From `KrewPact-Backend-SQL-Schema-Draft.sql`          |
+| Configure RLS policies per table                       | ⬜     | Per Security Framework doc                            |
+| Set up Realtime channels (projects, notifications)     | ⬜     | Supabase Realtime config                              |
+| Create Edge Functions (webhook receivers, cron jobs)   | ⬜     | For BullMQ bridge if not using Node.js BFF            |
+| Set up Storage buckets (documents, photos)             | ⬜     | Project files, signed contracts, photos               |
+| Get project URL + keys                                 | ⬜     | Settings → API → copy URL, anon key, service role key |
 
 ### 2.3 Microsoft 365 — Azure AD App Registration
 
-| Task | Status | How |
-|------|--------|-----|
-| Register app in Azure AD | ⬜ | portal.azure.com → App Registrations → New |
-| Set app name: `KrewPact` | ⬜ | |
-| Configure redirect URI | ⬜ | `https://app.krewpact.com/api/auth/azure/callback` |
-| Add API permissions (delegated + application) | ⬜ | See table below |
-| Grant admin consent for MDM Group tenant | ⬜ | Requires Global Admin or Privileged Role Admin |
-| Generate client secret | ⬜ | Certificates & Secrets → New client secret (24-month max) |
-| Copy Tenant ID, Client ID, Client Secret | ⬜ | Overview page + Secrets page |
+| Task                                          | Status | How                                                       |
+| --------------------------------------------- | ------ | --------------------------------------------------------- |
+| Register app in Azure AD                      | ⬜     | portal.azure.com → App Registrations → New                |
+| Set app name: `KrewPact`                      | ⬜     |                                                           |
+| Configure redirect URI                        | ⬜     | `https://app.krewpact.com/api/auth/azure/callback`        |
+| Add API permissions (delegated + application) | ⬜     | See table below                                           |
+| Grant admin consent for MDM Group tenant      | ⬜     | Requires Global Admin or Privileged Role Admin            |
+| Generate client secret                        | ⬜     | Certificates & Secrets → New client secret (24-month max) |
+| Copy Tenant ID, Client ID, Client Secret      | ⬜     | Overview page + Secrets page                              |
 
 **Required Azure AD Permissions:**
 
-| Permission | Type | What It Does |
-|------------|------|-------------|
-| `Mail.Send` | Delegated | Send emails as logged-in user (contract invites, notifications) |
-| `Mail.Read` | Delegated | Read inbox (for reply tracking, thread context) |
-| `Calendars.ReadWrite` | Delegated | Create/update meetings (kickoffs, reviews, safety meetings) |
-| `Files.ReadWrite` | Delegated | Read/write user's OneDrive (project docs, contracts) |
-| `Sites.ReadWrite.All` | Application | Read/write SharePoint sites (shared project docs) |
-| `User.ReadWrite.All` | Application | Read/write user profiles (employee directory sync) |
+| Permission            | Type        | What It Does                                                    |
+| --------------------- | ----------- | --------------------------------------------------------------- |
+| `Mail.Send`           | Delegated   | Send emails as logged-in user (contract invites, notifications) |
+| `Mail.Read`           | Delegated   | Read inbox (for reply tracking, thread context)                 |
+| `Calendars.ReadWrite` | Delegated   | Create/update meetings (kickoffs, reviews, safety meetings)     |
+| `Files.ReadWrite`     | Delegated   | Read/write user's OneDrive (project docs, contracts)            |
+| `Sites.ReadWrite.All` | Application | Read/write SharePoint sites (shared project docs)               |
+| `User.ReadWrite.All`  | Application | Read/write user profiles (employee directory sync)              |
 
 **Admin consent**: You (as MDM M365 admin) grant consent once. After that, delegated permissions use OAuth code flow per user.
 
 ### 2.4 Clerk — Authentication
 
-| Task | Status | How |
-|------|--------|-----|
-| Create Clerk application | ⬜ | dashboard.clerk.com → New Application |
-| Configure sign-in methods (email, M365 SSO) | ⬜ | Enable Microsoft OAuth for MDM employees |
-| Set up webhook endpoint | ⬜ | Webhooks → `https://app.krewpact.com/api/webhooks/clerk` |
-| Copy publishable key + secret key | ⬜ | API Keys page |
-| Configure custom claims (division, role) | ⬜ | JWT Templates → add `division_id`, `krewpact_role` |
+| Task                                        | Status | How                                                      |
+| ------------------------------------------- | ------ | -------------------------------------------------------- |
+| Create Clerk application                    | ⬜     | dashboard.clerk.com → New Application                    |
+| Configure sign-in methods (email, M365 SSO) | ⬜     | Enable Microsoft OAuth for MDM employees                 |
+| Set up webhook endpoint                     | ⬜     | Webhooks → `https://app.krewpact.com/api/webhooks/clerk` |
+| Copy publishable key + secret key           | ⬜     | API Keys page                                            |
+| Configure custom claims (division, role)    | ⬜     | JWT Templates → add `division_id`, `krewpact_role`       |
 
 ### 2.5 Redis — Job Queue
 
-| Task | Status | How |
-|------|--------|-----|
-| Deploy Redis on Proxmox (LXC or VM) | ⬜ | `apt install redis-server` or Docker |
-| Configure AOF persistence | ⬜ | `redis.conf` → `appendonly yes` |
-| Set password | ⬜ | `requirepass <strong-password>` |
-| Expose via Tailscale only (no public) | ⬜ | Bind to Tailscale IP only |
-| Test connectivity from Vercel (Edge needs Redis over TLS) | ⬜ | May need Upstash Redis if Vercel can't reach Proxmox Redis |
+| Task                                                      | Status | How                                                        |
+| --------------------------------------------------------- | ------ | ---------------------------------------------------------- |
+| Deploy Redis on Proxmox (LXC or VM)                       | ⬜     | `apt install redis-server` or Docker                       |
+| Configure AOF persistence                                 | ⬜     | `redis.conf` → `appendonly yes`                            |
+| Set password                                              | ⬜     | `requirepass <strong-password>`                            |
+| Expose via Tailscale only (no public)                     | ⬜     | Bind to Tailscale IP only                                  |
+| Test connectivity from Vercel (Edge needs Redis over TLS) | ⬜     | May need Upstash Redis if Vercel can't reach Proxmox Redis |
 
 **✅ RESOLVED (Feb 2026):** Upstash Redis for BullMQ queue. Self-hosted Redis removed from required infrastructure. See `KrewPact-Architecture-Resolution.md` for full rationale.
 
 ### 2.6 BoldSign — E-Signing (Phase 2+)
 
-| Task | Status | How |
-|------|--------|-----|
-| Create BoldSign account | ⬜ | boldsign.com → Sign up |
-| Get API key | ⬜ | API Settings |
-| Configure webhook endpoint | ⬜ | `https://app.krewpact.com/api/webhooks/boldsign` |
-| Create signature templates (contracts, COs, safety) | ⬜ | Template builder |
+| Task                                                | Status | How                                              |
+| --------------------------------------------------- | ------ | ------------------------------------------------ |
+| Create BoldSign account                             | ⬜     | boldsign.com → Sign up                           |
+| Get API key                                         | ⬜     | API Settings                                     |
+| Configure webhook endpoint                          | ⬜     | `https://app.krewpact.com/api/webhooks/boldsign` |
+| Create signature templates (contracts, COs, safety) | ⬜     | Template builder                                 |
 
 ---
 
@@ -202,10 +202,12 @@ In your Next.js repo root, create `CLAUDE.md`:
 # KrewPact — Claude Code Context
 
 ## Project
+
 KrewPact is a construction operations platform (Next.js + Supabase + ERPNext).
 Built for MDM Group. See /docs/ for full specs.
 
 ## Tech Stack
+
 - Next.js 15 (App Router, TypeScript, Server Components)
 - Supabase (PostgreSQL, RLS, Realtime, Storage)
 - ERPNext (self-hosted at erp.mdmgroupinc.ca, Frappe REST API)
@@ -215,6 +217,7 @@ Built for MDM Group. See /docs/ for full specs.
 - Tailwind CSS + shadcn/ui
 
 ## Conventions
+
 - All server-side ERPNext calls go through `lib/erp/client.ts`
 - All Supabase calls go through generated types from `supabase gen types`
 - API routes in `app/api/` — BFF pattern (aggregate, transform, authorize)
@@ -224,12 +227,14 @@ Built for MDM Group. See /docs/ for full specs.
 - Testing: Vitest for unit, Playwright for E2E
 
 ## ERPNext API Pattern
+
 - Auth: `Authorization: token {key}:{secret}` from env vars
 - Base: `${ERPNEXT_BASE_URL}/api/resource/{DocType}`
 - Always use `encodeURIComponent()` for document names
 - Rate limit: 300 req/min (self-hosted, configurable)
 
 ## Key Files
+
 - `lib/erp/client.ts` — ERPNext API client
 - `lib/erp/sync.ts` — Bidirectional sync engine
 - `lib/supabase/client.ts` — Supabase browser client
@@ -238,6 +243,7 @@ Built for MDM Group. See /docs/ for full specs.
 - `lib/queue/` — BullMQ job definitions
 
 ## Data Authority Rules
+
 - ERPNext is authoritative for: GL, invoices, payments, inventory
 - Supabase is authoritative for: workflows, field ops, portals, audit trails
 - KrewPact ID (`krewpact_id`) links records across both systems
@@ -257,6 +263,7 @@ krewpact-repo/
 ```
 
 Register in `.claude/mcp_servers.json`:
+
 ```json
 {
   "erpnext": {
@@ -272,6 +279,7 @@ Register in `.claude/mcp_servers.json`:
 ```
 
 This gives Claude Code the ability to:
+
 - `erp_get_meta("Sales Order")` — inspect any doctype schema
 - `erp_list_docs("Customer", filters)` — see what data exists
 - `erp_create_doc("Custom DocType", {...})` — create custom doctypes
@@ -352,6 +360,7 @@ Phase 3: Finance + Field Ops (Weeks 9-12)
 > **✅ RESOLVED (Feb 2026):** Hybrid with Cloudflare Tunnel. See `KrewPact-Architecture-Resolution.md`.
 
 **Locked architecture:**
+
 - **Vercel** handles all user-facing API routes (Next.js API routes = BFF)
 - **Cloudflare Tunnel** exposes ERPNext to Vercel without public IP (`erp-api.krewpact.com` → ERPNext localhost)
 - **ERPNext host** runs BullMQ workers co-located with ERPNext (direct access, no tunnel needed for workers)
@@ -359,6 +368,7 @@ Phase 3: Finance + Field Ops (Weeks 9-12)
 - **Supabase managed cloud** (accessible from everywhere)
 
 **Connectivity diagram:**
+
 ```
 User → Vercel (app + API routes) → Cloudflare Tunnel → ERPNext
                                   → Supabase Cloud (direct HTTPS)

@@ -97,8 +97,7 @@ export function useDeleteTask() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) =>
-      apiFetch(`/api/tasks/${id}`, { method: 'DELETE' }),
+    mutationFn: (id: string) => apiFetch(`/api/tasks/${id}`, { method: 'DELETE' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },

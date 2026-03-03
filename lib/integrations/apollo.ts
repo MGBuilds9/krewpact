@@ -78,9 +78,7 @@ export function mapApolloToLead(person: ApolloPerson) {
   return {
     company_name: person.organization?.name ?? `${person.first_name} ${person.last_name}`,
     domain:
-      person.organization?.website_url
-        ?.replace(/^https?:\/\//, '')
-        .replace(/\/$/, '') ?? null,
+      person.organization?.website_url?.replace(/^https?:\/\//, '').replace(/\/$/, '') ?? null,
     industry: person.organization?.industry ?? null,
     source_channel: 'apollo',
     source_detail: person.id,

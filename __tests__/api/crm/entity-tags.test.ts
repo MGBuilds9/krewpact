@@ -73,9 +73,7 @@ describe('GET /api/crm/entity-tags', () => {
 
   it('returns 400 if missing entity_type', async () => {
     mockClerkAuth(mockAuth);
-    const res = await GET(
-      makeRequest(`/api/crm/entity-tags?entity_id=${ENTITY_ID}`),
-    );
+    const res = await GET(makeRequest(`/api/crm/entity-tags?entity_id=${ENTITY_ID}`));
     expect(res.status).toBe(400);
   });
 });
@@ -98,10 +96,11 @@ describe('POST /api/crm/entity-tags', () => {
     );
 
     const res = await POST(
-      makeJsonRequest(
-        'http://localhost/api/crm/entity-tags',
-        { entity_type: 'lead', entity_id: ENTITY_ID, tag_id: TAG_ID },
-      ),
+      makeJsonRequest('http://localhost/api/crm/entity-tags', {
+        entity_type: 'lead',
+        entity_id: ENTITY_ID,
+        tag_id: TAG_ID,
+      }),
     );
     expect(res.status).toBe(201);
     const body = await res.json();
@@ -111,10 +110,11 @@ describe('POST /api/crm/entity-tags', () => {
   it('returns 400 for invalid body', async () => {
     mockClerkAuth(mockAuth);
     const res = await POST(
-      makeJsonRequest(
-        'http://localhost/api/crm/entity-tags',
-        { entity_type: 'invalid_type', entity_id: ENTITY_ID, tag_id: TAG_ID },
-      ),
+      makeJsonRequest('http://localhost/api/crm/entity-tags', {
+        entity_type: 'invalid_type',
+        entity_id: ENTITY_ID,
+        tag_id: TAG_ID,
+      }),
     );
     expect(res.status).toBe(400);
   });

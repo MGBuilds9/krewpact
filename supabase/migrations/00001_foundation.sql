@@ -36,7 +36,7 @@ $$;
 -- FOUNDATION TABLES
 -- =========================
 
--- Divisions (MDM Group structure)
+-- Divisions (organization structure)
 CREATE TABLE divisions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   code TEXT UNIQUE NOT NULL,
@@ -48,14 +48,7 @@ CREATE TABLE divisions (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Canonical MDM Group divisions (seed data)
-INSERT INTO divisions (code, name, description) VALUES
-  ('contracting', 'MDM Contracting', 'General contracting division'),
-  ('homes', 'MDM Homes', 'Residential construction division'),
-  ('wood', 'MDM Wood', 'Wood/lumber division'),
-  ('telecom', 'MDM Telecom', 'Telecommunications division'),
-  ('group-inc', 'MDM Group Inc.', 'Parent company / corporate'),
-  ('management', 'MDM Management', 'Property management division');
+-- NOTE: seed divisions via seed script (see supabase/seed)
 
 -- Users (linked to Clerk)
 CREATE TABLE users (
@@ -84,21 +77,7 @@ CREATE TABLE roles (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Canonical roles (PRD is source of truth — 9 internal + 4 external)
-INSERT INTO roles (role_key, role_name, scope) VALUES
-  ('platform_admin', 'Platform Admin', 'company'),
-  ('executive', 'Executive', 'company'),
-  ('operations_manager', 'Operations Manager', 'division'),
-  ('project_manager', 'Project Manager', 'project'),
-  ('project_coordinator', 'Project Coordinator', 'project'),
-  ('estimator', 'Estimator', 'division'),
-  ('field_supervisor', 'Field Supervisor', 'project'),
-  ('accounting', 'Accounting', 'company'),
-  ('payroll_admin', 'Payroll Admin', 'company'),
-  ('client_owner', 'Client Owner', 'project'),
-  ('client_delegate', 'Client Delegate', 'project'),
-  ('trade_partner_admin', 'Trade Partner Admin', 'project'),
-  ('trade_partner_user', 'Trade Partner User', 'project');
+-- NOTE: seed roles via seed script (see supabase/seed)
 
 -- User role assignments
 CREATE TABLE user_roles (

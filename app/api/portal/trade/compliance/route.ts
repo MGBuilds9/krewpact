@@ -19,9 +19,12 @@ export async function GET(_req: NextRequest) {
     .eq('clerk_user_id', userId)
     .single();
 
-  if (paError || !pa) return NextResponse.json({ error: 'Portal account not found' }, { status: 403 });
-  if (pa.actor_type !== 'trade_partner') return NextResponse.json({ error: 'Trade partner access only' }, { status: 403 });
-  if (pa.status !== 'active') return NextResponse.json({ error: 'Portal account inactive' }, { status: 403 });
+  if (paError || !pa)
+    return NextResponse.json({ error: 'Portal account not found' }, { status: 403 });
+  if (pa.actor_type !== 'trade_partner')
+    return NextResponse.json({ error: 'Trade partner access only' }, { status: 403 });
+  if (pa.status !== 'active')
+    return NextResponse.json({ error: 'Portal account inactive' }, { status: 403 });
 
   // Fetch compliance docs from portal_view_logs / file_metadata tagged as compliance
   const { data: complianceDocs, error: docError } = await supabase
@@ -37,12 +40,21 @@ export async function GET(_req: NextRequest) {
   const docs = (complianceDocs ?? []).map((d) => {
     const meta = (d.meta as Record<string, unknown>) ?? {};
     const expiryDate = meta.expiry_date ? new Date(meta.expiry_date as string) : null;
-    const daysUntilExpiry = expiryDate ? Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : null;
+    const daysUntilExpiry = expiryDate
+      ? Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+      : null;
     return {
       ...d,
       expiry_date: expiryDate?.toISOString() ?? null,
       days_until_expiry: daysUntilExpiry,
-      status: daysUntilExpiry === null ? 'unknown' : daysUntilExpiry < 0 ? 'expired' : daysUntilExpiry < 14 ? 'expiring_soon' : 'valid',
+      status:
+        daysUntilExpiry === null
+          ? 'unknown'
+          : daysUntilExpiry < 0
+            ? 'expired'
+            : daysUntilExpiry < 14
+              ? 'expiring_soon'
+              : 'valid',
     };
   });
 

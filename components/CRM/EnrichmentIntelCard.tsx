@@ -54,7 +54,16 @@ function StarRating({ rating }: { rating: number }) {
   return (
     <span className="inline-flex items-center gap-0.5">
       {Array.from({ length: 5 }, (_, i) => (
-        <span key={i} className={i < fullStars ? 'text-yellow-500' : i === fullStars && hasHalf ? 'text-yellow-400' : 'text-gray-300'}>
+        <span
+          key={i}
+          className={
+            i < fullStars
+              ? 'text-yellow-500'
+              : i === fullStars && hasHalf
+                ? 'text-yellow-400'
+                : 'text-gray-300'
+          }
+        >
           {i < fullStars ? '\u2605' : i === fullStars && hasHalf ? '\u2605' : '\u2606'}
         </span>
       ))}
@@ -63,7 +72,12 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
-export function EnrichmentIntelCard({ enrichmentData, enrichmentStatus, leadId, onResearchComplete }: EnrichmentIntelCardProps) {
+export function EnrichmentIntelCard({
+  enrichmentData,
+  enrichmentStatus,
+  leadId,
+  onResearchComplete,
+}: EnrichmentIntelCardProps) {
   const [isResearching, setIsResearching] = useState(false);
 
   async function handleDeepResearch() {
@@ -106,7 +120,9 @@ export function EnrichmentIntelCard({ enrichmentData, enrichmentStatus, leadId, 
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">Enrichment Intel</CardTitle>
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-xs">4-Source</Badge>
+            <Badge variant="outline" className="text-xs">
+              4-Source
+            </Badge>
             {!deep_research && (
               <Button
                 size="sm"
@@ -196,7 +212,9 @@ export function EnrichmentIntelCard({ enrichmentData, enrichmentStatus, leadId, 
                 )}
                 {google_maps.business_status && (
                   <Badge
-                    variant={google_maps.business_status === 'OPERATIONAL' ? 'default' : 'secondary'}
+                    variant={
+                      google_maps.business_status === 'OPERATIONAL' ? 'default' : 'secondary'
+                    }
                     className="text-xs"
                   >
                     {google_maps.business_status}
@@ -217,12 +235,18 @@ export function EnrichmentIntelCard({ enrichmentData, enrichmentStatus, leadId, 
             <div className="space-y-1 text-sm">
               {brave.website && (
                 <a
-                  href={brave.website.startsWith('http') ? brave.website : `https://${brave.website}`}
+                  href={
+                    brave.website.startsWith('http') ? brave.website : `https://${brave.website}`
+                  }
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-500 hover:underline inline-flex items-center gap-1"
                 >
-                  {new URL(brave.website.startsWith('http') ? brave.website : `https://${brave.website}`).hostname}
+                  {
+                    new URL(
+                      brave.website.startsWith('http') ? brave.website : `https://${brave.website}`,
+                    ).hostname
+                  }
                   <ExternalLink className="h-3 w-3" />
                 </a>
               )}
@@ -233,7 +257,13 @@ export function EnrichmentIntelCard({ enrichmentData, enrichmentStatus, leadId, 
                 <div className="flex gap-2 mt-1">
                   {brave.social_profiles.map((url, i) => {
                     let network = 'Link';
-                    try { network = new URL(url.startsWith('http') ? url : `https://${url}`).hostname.replace('www.', '').split('.')[0]; } catch { /* use default */ }
+                    try {
+                      network = new URL(url.startsWith('http') ? url : `https://${url}`).hostname
+                        .replace('www.', '')
+                        .split('.')[0];
+                    } catch {
+                      /* use default */
+                    }
                     return (
                       <a
                         key={i}
@@ -253,7 +283,9 @@ export function EnrichmentIntelCard({ enrichmentData, enrichmentStatus, leadId, 
                   <h5 className="text-xs font-medium text-muted-foreground mb-1">Recent News</h5>
                   <ul className="space-y-0.5">
                     {brave.news_snippets.slice(0, 3).map((snippet, i) => (
-                      <li key={i} className="text-xs text-muted-foreground">• {snippet}</li>
+                      <li key={i} className="text-xs text-muted-foreground">
+                        • {snippet}
+                      </li>
                     ))}
                   </ul>
                 </div>

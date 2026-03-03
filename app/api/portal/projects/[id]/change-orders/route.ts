@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 async function resolvePortalPermission(
   supabase: Awaited<ReturnType<typeof createUserClient>>,
   userId: string,
-  projectId: string
+  projectId: string,
 ) {
   const { data: pa } = await supabase
     .from('portal_accounts')
@@ -35,10 +35,7 @@ async function resolvePortalPermission(
  * Returns change orders for a project visible to the portal user.
  * Statuses visible: pending_client_approval, approved, rejected
  */
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -51,7 +48,9 @@ export async function GET(
   // Fetch change orders visible to portal users
   const { data: changeOrders, error } = await supabase
     .from('change_orders')
-    .select('id, co_number, title, description, status, total_amount, submitted_at, approved_at, rejected_at')
+    .select(
+      'id, co_number, title, description, status, total_amount, submitted_at, approved_at, rejected_at',
+    )
     .eq('project_id', projectId)
     .in('status', ['pending_client_approval', 'approved', 'rejected'])
     .order('submitted_at', { ascending: false });

@@ -92,16 +92,17 @@ export function ScoringRulesTable({
             <TableCell className="font-medium">{rule.name}</TableCell>
             <TableCell>{rule.field_name}</TableCell>
             <TableCell>{OPERATOR_LABELS[rule.operator] ?? rule.operator}</TableCell>
-            <TableCell>{rule.operator === 'exists' || rule.operator === 'not_exists' ? '-' : rule.value}</TableCell>
+            <TableCell>
+              {rule.operator === 'exists' || rule.operator === 'not_exists' ? '-' : rule.value}
+            </TableCell>
             <TableCell className="text-right">
               <span className={rule.score_impact >= 0 ? 'text-green-600' : 'text-red-600'}>
-                {rule.score_impact > 0 ? '+' : ''}{rule.score_impact}
+                {rule.score_impact > 0 ? '+' : ''}
+                {rule.score_impact}
               </span>
             </TableCell>
             <TableCell>
-              <Badge variant={getCategoryBadgeVariant(rule.category)}>
-                {rule.category}
-              </Badge>
+              <Badge variant={getCategoryBadgeVariant(rule.category)}>{rule.category}</Badge>
             </TableCell>
             <TableCell>
               <Switch
@@ -114,11 +115,7 @@ export function ScoringRulesTable({
               <TableCell>
                 <div className="flex gap-2">
                   {onEdit && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onEdit(rule)}
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => onEdit(rule)}>
                       Edit
                     </Button>
                   )}

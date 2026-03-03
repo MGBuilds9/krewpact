@@ -37,10 +37,7 @@ const migrationsDir = join(process.cwd(), 'supabase/migrations');
 describe('Audit Trail Immutability', () => {
   describe('opportunity_stage_history', () => {
     it('has SELECT and INSERT policies only', () => {
-      const sql = readFileSync(
-        join(migrationsDir, '00004_crm_rls_policies.sql'),
-        'utf-8'
-      );
+      const sql = readFileSync(join(migrationsDir, '00004_crm_rls_policies.sql'), 'utf-8');
       const policies = extractPolicies(sql);
       const ops = policies['opportunity_stage_history'] ?? [];
       expect(ops).toContain('SELECT');
@@ -52,10 +49,7 @@ describe('Audit Trail Immutability', () => {
 
   describe('lead_stage_history', () => {
     it('has SELECT and INSERT policies only', () => {
-      const sql = readFileSync(
-        join(migrationsDir, '20260227_003_lead_stage_history.sql'),
-        'utf-8'
-      );
+      const sql = readFileSync(join(migrationsDir, '20260227_003_lead_stage_history.sql'), 'utf-8');
       const policies = extractPolicies(sql);
       const ops = policies['lead_stage_history'] ?? [];
       expect(ops).toContain('SELECT');
@@ -67,10 +61,7 @@ describe('Audit Trail Immutability', () => {
 
   describe('lead_score_history', () => {
     it('has SELECT and INSERT policies only', () => {
-      const sql = readFileSync(
-        join(migrationsDir, '20260227_001_rls_lockdown.sql'),
-        'utf-8'
-      );
+      const sql = readFileSync(join(migrationsDir, '20260227_001_rls_lockdown.sql'), 'utf-8');
       const policies = extractPolicies(sql);
       const ops = policies['lead_score_history'] ?? [];
       expect(ops).toContain('SELECT');
@@ -82,10 +73,7 @@ describe('Audit Trail Immutability', () => {
 
   describe('ERP sync events (immutable log)', () => {
     it('erp_sync_events has SELECT and INSERT only', () => {
-      const sql = readFileSync(
-        join(migrationsDir, '00004_crm_rls_policies.sql'),
-        'utf-8'
-      );
+      const sql = readFileSync(join(migrationsDir, '00004_crm_rls_policies.sql'), 'utf-8');
       const policies = extractPolicies(sql);
       const ops = policies['erp_sync_events'] ?? [];
       expect(ops).toContain('SELECT');
@@ -95,10 +83,7 @@ describe('Audit Trail Immutability', () => {
     });
 
     it('erp_sync_errors has SELECT and INSERT only', () => {
-      const sql = readFileSync(
-        join(migrationsDir, '00004_crm_rls_policies.sql'),
-        'utf-8'
-      );
+      const sql = readFileSync(join(migrationsDir, '00004_crm_rls_policies.sql'), 'utf-8');
       const policies = extractPolicies(sql);
       const ops = policies['erp_sync_errors'] ?? [];
       expect(ops).toContain('SELECT');
@@ -110,10 +95,7 @@ describe('Audit Trail Immutability', () => {
 
   describe('estimate_versions (immutable snapshots)', () => {
     it('has SELECT and INSERT policies only', () => {
-      const sql = readFileSync(
-        join(migrationsDir, '00004_crm_rls_policies.sql'),
-        'utf-8'
-      );
+      const sql = readFileSync(join(migrationsDir, '00004_crm_rls_policies.sql'), 'utf-8');
       const policies = extractPolicies(sql);
       const ops = policies['estimate_versions'] ?? [];
       expect(ops).toContain('SELECT');

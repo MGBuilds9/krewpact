@@ -12,10 +12,7 @@ vi.mock('@/lib/supabase/server', () => ({
 
 import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
-import {
-  GET as GET_VERSIONS,
-  POST as POST_VERSION,
-} from '@/app/api/estimates/[id]/versions/route';
+import { GET as GET_VERSIONS, POST as POST_VERSION } from '@/app/api/estimates/[id]/versions/route';
 import {
   mockSupabaseClient,
   mockClerkAuth,

@@ -61,18 +61,14 @@ async function tryRuleBasedAssignment(
 
   // Match on source_channel if present
   if (lead.source_channel) {
-    query = query.or(
-      `source_channel.eq.${lead.source_channel},source_channel.is.null`,
-    );
+    query = query.or(`source_channel.eq.${lead.source_channel},source_channel.is.null`);
   } else {
     query = query.is('source_channel', null);
   }
 
   // Match on division_id if present
   if (lead.division_id) {
-    query = query.or(
-      `division_id.eq.${lead.division_id},division_id.is.null`,
-    );
+    query = query.or(`division_id.eq.${lead.division_id},division_id.is.null`);
   } else {
     query = query.is('division_id', null);
   }
@@ -95,10 +91,7 @@ async function roundRobinAssignment(
   divisionId: string | null,
 ): Promise<string | null> {
   // Get active users in division (or all if no division)
-  let userQuery = supabase
-    .from('users')
-    .select('id')
-    .eq('is_active', true);
+  let userQuery = supabase.from('users').select('id').eq('is_active', true);
 
   if (divisionId) {
     // Users linked to this division via user_divisions

@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { mergeEnrichmentData, enrichLead, type EnrichmentResult } from '@/lib/integrations/enrichment';
+import {
+  mergeEnrichmentData,
+  enrichLead,
+  type EnrichmentResult,
+} from '@/lib/integrations/enrichment';
 
 // Mock the enrichment sources module
 vi.mock('@/lib/integrations/enrichment-sources', () => ({
@@ -105,10 +109,28 @@ describe('enrichLead', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Default: all sources return empty/minimal data
-    mockApollo.mockResolvedValue({ email: null, phone: null, website_url: null, linkedin_url: null, title: null });
-    mockBrave.mockResolvedValue({ website: null, description: null, news_snippets: [], social_profiles: [] });
+    mockApollo.mockResolvedValue({
+      email: null,
+      phone: null,
+      website_url: null,
+      linkedin_url: null,
+      title: null,
+    });
+    mockBrave.mockResolvedValue({
+      website: null,
+      description: null,
+      news_snippets: [],
+      social_profiles: [],
+    });
     mockTavily.mockResolvedValue({ answer: null, results: [] });
-    mockGoogleMaps.mockResolvedValue({ address: null, city: null, google_rating: null, google_reviews_count: null, business_types: null, business_status: null });
+    mockGoogleMaps.mockResolvedValue({
+      address: null,
+      city: null,
+      google_rating: null,
+      google_reviews_count: null,
+      business_types: null,
+      business_status: null,
+    });
   });
 
   it('calls all 4 sources when contact is provided', async () => {
@@ -132,7 +154,11 @@ describe('enrichLead', () => {
   });
 
   it('skips Apollo Match when contact lacks first/last name', async () => {
-    const { results } = await enrichLead(baseLead, { first_name: null, last_name: null, linkedin_url: null });
+    const { results } = await enrichLead(baseLead, {
+      first_name: null,
+      last_name: null,
+      linkedin_url: null,
+    });
 
     expect(mockApollo).not.toHaveBeenCalled();
     expect(results).toHaveLength(3);
@@ -156,9 +182,11 @@ describe('enrichLead', () => {
 
   it('does not overwrite existing domain with Apollo result', async () => {
     mockApollo.mockResolvedValue({
-      email: null, phone: null,
+      email: null,
+      phone: null,
       website_url: 'https://newdomain.com',
-      linkedin_url: null, title: null,
+      linkedin_url: null,
+      title: null,
     });
 
     const leadWithDomain = { ...baseLead, domain: 'existing.com' };

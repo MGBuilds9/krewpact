@@ -1,8 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  referenceDataSetSchema,
-  referenceDataValueSchema,
-} from '@/lib/validators/governance';
+import { referenceDataSetSchema, referenceDataValueSchema } from '@/lib/validators/governance';
 
 const VALID_UUID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 
@@ -31,11 +28,13 @@ describe('referenceDataSetSchema', () => {
   it('accepts valid status enum values', () => {
     const statuses = ['draft', 'active', 'deprecated', 'archived'] as const;
     for (const status of statuses) {
-      expect(referenceDataSetSchema.safeParse({
-        set_key: 'project_types',
-        set_name: 'Project Types',
-        status,
-      }).success).toBe(true);
+      expect(
+        referenceDataSetSchema.safeParse({
+          set_key: 'project_types',
+          set_name: 'Project Types',
+          status,
+        }).success,
+      ).toBe(true);
     }
   });
 

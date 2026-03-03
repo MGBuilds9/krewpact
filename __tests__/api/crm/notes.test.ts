@@ -54,16 +54,17 @@ describe('GET /api/crm/notes', () => {
 
   it('returns 401 if unauthenticated', async () => {
     mockClerkUnauth(mockAuth);
-    const res = await GET(
-      makeRequest(`/api/crm/notes?entity_type=lead&entity_id=${ENTITY_ID}`),
-    );
+    const res = await GET(makeRequest(`/api/crm/notes?entity_type=lead&entity_id=${ENTITY_ID}`));
     expect(res.status).toBe(401);
     const body = await res.json();
     expect(body.error).toBe('Unauthorized');
   });
 
   it('returns notes for entity with total and hasMore', async () => {
-    const notes = [makeNote(), makeNote({ id: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33', content: 'Second note' })];
+    const notes = [
+      makeNote(),
+      makeNote({ id: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33', content: 'Second note' }),
+    ];
     mockClerkAuth(mockAuth);
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({
@@ -71,9 +72,7 @@ describe('GET /api/crm/notes', () => {
       }),
     );
 
-    const res = await GET(
-      makeRequest(`/api/crm/notes?entity_type=lead&entity_id=${ENTITY_ID}`),
-    );
+    const res = await GET(makeRequest(`/api/crm/notes?entity_type=lead&entity_id=${ENTITY_ID}`));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.data).toEqual(notes);
@@ -83,9 +82,7 @@ describe('GET /api/crm/notes', () => {
 
   it('returns 400 if missing entity_type', async () => {
     mockClerkAuth(mockAuth);
-    const res = await GET(
-      makeRequest(`/api/crm/notes?entity_id=${ENTITY_ID}`),
-    );
+    const res = await GET(makeRequest(`/api/crm/notes?entity_id=${ENTITY_ID}`));
     expect(res.status).toBe(400);
   });
 });
@@ -108,14 +105,11 @@ describe('POST /api/crm/notes', () => {
     );
 
     const res = await POST(
-      makeJsonRequest(
-        'http://localhost/api/crm/notes',
-        {
-          entity_type: 'lead',
-          entity_id: ENTITY_ID,
-          content: 'Spoke with contact about Q2 project timeline.',
-        },
-      ),
+      makeJsonRequest('http://localhost/api/crm/notes', {
+        entity_type: 'lead',
+        entity_id: ENTITY_ID,
+        content: 'Spoke with contact about Q2 project timeline.',
+      }),
     );
     expect(res.status).toBe(201);
     const body = await res.json();
@@ -156,11 +150,7 @@ describe('PATCH /api/crm/notes/[id]', () => {
   it('returns 400 for invalid body (empty content)', async () => {
     mockClerkAuth(mockAuth);
     const res = await PATCH(
-      makeJsonRequest(
-        'http://localhost/api/crm/notes/uuid-1',
-        { content: '' },
-        'PATCH',
-      ),
+      makeJsonRequest('http://localhost/api/crm/notes/uuid-1', { content: '' }, 'PATCH'),
       makeContext(NOTE_ID),
     );
     expect(res.status).toBe(400);

@@ -17,7 +17,9 @@ export async function GET(req: NextRequest, context: RouteContext) {
   // Fetch opportunity
   const { data: opportunity, error: oppError } = await supabase
     .from('opportunities')
-    .select('id, opportunity_name, estimated_revenue, target_close_date, stage, account_id, contact_id')
+    .select(
+      'id, opportunity_name, estimated_revenue, target_close_date, stage, account_id, contact_id',
+    )
     .eq('id', id)
     .single();
 
@@ -36,7 +38,11 @@ export async function GET(req: NextRequest, context: RouteContext) {
       .select('id, account_name, billing_address')
       .eq('id', oppData.account_id as string)
       .single();
-    account = data as { id: string; account_name: string; billing_address: Record<string, string> | null } | null;
+    account = data as {
+      id: string;
+      account_name: string;
+      billing_address: Record<string, string> | null;
+    } | null;
   }
 
   // Fetch linked contact
@@ -47,7 +53,14 @@ export async function GET(req: NextRequest, context: RouteContext) {
       .select('id, first_name, last_name, email, phone, role_title')
       .eq('id', oppData.contact_id as string)
       .single();
-    contact = data as { id: string; first_name: string; last_name: string; email: string | null; phone: string | null; role_title: string | null } | null;
+    contact = data as {
+      id: string;
+      first_name: string;
+      last_name: string;
+      email: string | null;
+      phone: string | null;
+      role_title: string | null;
+    } | null;
   }
 
   // Fetch linked estimates
@@ -60,7 +73,8 @@ export async function GET(req: NextRequest, context: RouteContext) {
   // Company info from env vars with defaults
   const companyInfo = {
     name: process.env.COMPANY_NAME ?? 'MDM Group Inc.',
-    address: process.env.COMPANY_ADDRESS ?? '2233 Argentia Road, Suite 302, Mississauga, ON L5N 2X7',
+    address:
+      process.env.COMPANY_ADDRESS ?? '2233 Argentia Road, Suite 302, Mississauga, ON L5N 2X7',
     phone: process.env.COMPANY_PHONE ?? '(905) 542-2950',
     email: process.env.COMPANY_EMAIL ?? 'info@mdmgroupinc.ca',
   };
@@ -75,7 +89,12 @@ export async function GET(req: NextRequest, context: RouteContext) {
     },
     account,
     contact,
-    estimates: (estimates ?? []) as { id: string; estimate_number: string; total_amount: number; status: string }[],
+    estimates: (estimates ?? []) as {
+      id: string;
+      estimate_number: string;
+      total_amount: number;
+      status: string;
+    }[],
     companyInfo,
   });
 

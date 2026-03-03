@@ -10,16 +10,16 @@ KrewPact employs a hybrid cloud-and-edge architecture optimizing for performance
 > Supabase is **managed cloud** (not self-hosted). n8n is **removed**. Redis queue uses **Upstash**.
 > ERPNext connectivity via **Cloudflare Tunnel** (not Tailscale-only). Monitoring simplified for MVP.
 
-| Component | Location | Platform | Rationale |
-|-----------|----------|----------|-----------|
-| Next.js Frontend + API Routes | Vercel | CDN / Edge / Serverless | Global distribution, auto-scaling, BFF via API routes |
-| Supabase PostgreSQL | Supabase Cloud | Managed (Pro tier) | RLS, Realtime, Storage. Migration to self-hosted if Canadian residency required. |
-| ERPNext | On-prem Linux host | Docker / Frappe Bench | Finance source-of-truth. Exposed via Cloudflare Tunnel. |
-| BullMQ Workers | ERPNext host | Node.js process | Sync workers co-located with ERPNext for direct access |
-| Redis (Queue) | Upstash | Managed cloud | REST API reachable from Vercel serverless |
-| Monitoring (MVP) | Vercel + Supabase + BetterStack | Managed services | Deferred: Prometheus/Loki/Grafana for post-launch |
-| Backup Server | On-prem (optional) | ZFS snapshots | ERPNext + local data. Supabase handles its own backups. |
-| Dev/Staging | Local + Vercel Preview | Docker + Vercel | Feature testing via preview deployments |
+| Component                     | Location                        | Platform                | Rationale                                                                        |
+| ----------------------------- | ------------------------------- | ----------------------- | -------------------------------------------------------------------------------- |
+| Next.js Frontend + API Routes | Vercel                          | CDN / Edge / Serverless | Global distribution, auto-scaling, BFF via API routes                            |
+| Supabase PostgreSQL           | Supabase Cloud                  | Managed (Pro tier)      | RLS, Realtime, Storage. Migration to self-hosted if Canadian residency required. |
+| ERPNext                       | On-prem Linux host              | Docker / Frappe Bench   | Finance source-of-truth. Exposed via Cloudflare Tunnel.                          |
+| BullMQ Workers                | ERPNext host                    | Node.js process         | Sync workers co-located with ERPNext for direct access                           |
+| Redis (Queue)                 | Upstash                         | Managed cloud           | REST API reachable from Vercel serverless                                        |
+| Monitoring (MVP)              | Vercel + Supabase + BetterStack | Managed services        | Deferred: Prometheus/Loki/Grafana for post-launch                                |
+| Backup Server                 | On-prem (optional)              | ZFS snapshots           | ERPNext + local data. Supabase handles its own backups.                          |
+| Dev/Staging                   | Local + Vercel Preview          | Docker + Vercel         | Feature testing via preview deployments                                          |
 
 ### Architecture Diagram (Conceptual)
 
@@ -85,6 +85,7 @@ KrewPact employs a hybrid cloud-and-edge architecture optimizing for performance
 ### Proxmox Host Configuration
 
 **Hardware Baseline (Single-Node)**
+
 - CPU: 16+ cores (Intel Xeon / AMD EPYC recommended for reliability)
 - RAM: 128 GB minimum (256 GB recommended for 500+ concurrent users)
 - Storage: 2x NVMe for ZFS RAID-1 (boot), 4x HDD for ZFS RAID-6 (data)
@@ -93,6 +94,7 @@ KrewPact employs a hybrid cloud-and-edge architecture optimizing for performance
 - PSU: 1000W+ (85% efficiency rating)
 
 **Proxmox Configuration**
+
 - OS: Proxmox VE 8.x (based on Debian 12)
 - Kernel: Standard + ZFS modules compiled
 - Memory Management: Enable KSM (kernel same-page merging) for CT density
@@ -135,17 +137,17 @@ ZFS Settings:
 
 ### VM/CT Allocation Matrix
 
-| Resource | vCPU | RAM | Storage | Network | Isolation | Purpose |
-|----------|------|-----|---------|---------|-----------|---------|
-| **Supabase PostgreSQL (VM)** | 8 | 32 GB | 500 GB SSD (tank/vm/supabase) | VLAN 30 (Database) | High | Production database, realtime subscriptions, multi-tenancy |
-| **ERPNext (VM)** | 8 | 32 GB | 300 GB SSD (tank/vm/erpnext) | VLAN 20 (Production) | High | Accounting, inventory, HR workflows |
-| **Node.js API (CT)** | 4 | 8 GB | 100 GB (tank/ct/node-api) | VLAN 20 (Production) | Medium | REST/GraphQL APIs, business logic |
-| **Redis Cache (CT)** | 2 | 16 GB | 50 GB (tank/ct/redis) | VLAN 20 (Production) | Medium | Session storage, cache invalidation |
-| **Nginx Proxy Manager (CT)** | 2 | 4 GB | 30 GB (tank/ct/nginx) | VLAN 10 (DMZ), VLAN 20 | Low | TLS termination, load balancing, proxy |
-| **Monitoring (CT)** | 4 | 8 GB | 200 GB (tank/ct/monitoring) | VLAN 20 (Production) | Medium | Prometheus scraping, Grafana dashboards |
-| **Backup Server (VM)** | 4 | 16 GB | 2 TB (data/backups) | VLAN 40 (Backup) | High | Backup aggregation, encryption, retention |
-| **n8n Automation (CT)** | 4 | 8 GB | 100 GB (tank/ct/n8n) | VLAN 20 (Production) | Medium | Workflow orchestration, ERP sync, webhooks |
-| **Dev/Staging (CT)** | 6 | 12 GB | 150 GB (tank/ct/staging) | VLAN 50 (Development) | Low | Feature testing, QA deployments, integration tests |
+| Resource                     | vCPU | RAM   | Storage                       | Network                | Isolation | Purpose                                                    |
+| ---------------------------- | ---- | ----- | ----------------------------- | ---------------------- | --------- | ---------------------------------------------------------- |
+| **Supabase PostgreSQL (VM)** | 8    | 32 GB | 500 GB SSD (tank/vm/supabase) | VLAN 30 (Database)     | High      | Production database, realtime subscriptions, multi-tenancy |
+| **ERPNext (VM)**             | 8    | 32 GB | 300 GB SSD (tank/vm/erpnext)  | VLAN 20 (Production)   | High      | Accounting, inventory, HR workflows                        |
+| **Node.js API (CT)**         | 4    | 8 GB  | 100 GB (tank/ct/node-api)     | VLAN 20 (Production)   | Medium    | REST/GraphQL APIs, business logic                          |
+| **Redis Cache (CT)**         | 2    | 16 GB | 50 GB (tank/ct/redis)         | VLAN 20 (Production)   | Medium    | Session storage, cache invalidation                        |
+| **Nginx Proxy Manager (CT)** | 2    | 4 GB  | 30 GB (tank/ct/nginx)         | VLAN 10 (DMZ), VLAN 20 | Low       | TLS termination, load balancing, proxy                     |
+| **Monitoring (CT)**          | 4    | 8 GB  | 200 GB (tank/ct/monitoring)   | VLAN 20 (Production)   | Medium    | Prometheus scraping, Grafana dashboards                    |
+| **Backup Server (VM)**       | 4    | 16 GB | 2 TB (data/backups)           | VLAN 40 (Backup)       | High      | Backup aggregation, encryption, retention                  |
+| **n8n Automation (CT)**      | 4    | 8 GB  | 100 GB (tank/ct/n8n)          | VLAN 20 (Production)   | Medium    | Workflow orchestration, ERP sync, webhooks                 |
+| **Dev/Staging (CT)**         | 6    | 12 GB | 150 GB (tank/ct/staging)      | VLAN 50 (Development)  | Low       | Feature testing, QA deployments, integration tests         |
 
 ### VM Boot Order & Startup Services
 
@@ -209,25 +211,25 @@ Backup Server → Cloud Archive (quarterly):
 
 ### VLAN Design & Isolation
 
-| VLAN ID | Name | Subnet | Purpose | Access Rules | Broadcast Isolation |
-|---------|------|--------|---------|--------------|---------------------|
-| 1 | Management | 10.0.1.0/24 | Proxmox Web UI, SSH, IPMI | SSH key only, no password | Yes |
-| 10 | DMZ | 10.0.10.0/24 | Nginx Proxy Manager, public ingress | TCP 80, 443 from WAN; internal only | Yes |
-| 20 | Production | 10.0.20.0/24 | Node APIs, Redis, ERPNext, n8n | VLAN 20 ↔ VLAN 30 (DB), VLAN 10 (proxy) | Yes |
-| 30 | Database | 10.0.30.0/24 | Supabase PostgreSQL primary | Inbound from VLAN 20 only (port 5432) | Yes |
-| 40 | Backup | 10.0.40.0/24 | Backup server, offsite staging | VLAN 20 → 40 (push backups), VLAN 30 (snapshots) | Yes |
-| 50 | Development | 10.0.50.0/24 | Dev/Staging containers, CI/CD | No access to VLAN 30 (production DB) | Yes |
-| 100 | IoT/Infrastructure | 10.0.100.0/24 | TP-Link Omada controllers, switches | SSH/SNMP from VLAN 1 only | Yes |
+| VLAN ID | Name               | Subnet        | Purpose                             | Access Rules                                     | Broadcast Isolation |
+| ------- | ------------------ | ------------- | ----------------------------------- | ------------------------------------------------ | ------------------- |
+| 1       | Management         | 10.0.1.0/24   | Proxmox Web UI, SSH, IPMI           | SSH key only, no password                        | Yes                 |
+| 10      | DMZ                | 10.0.10.0/24  | Nginx Proxy Manager, public ingress | TCP 80, 443 from WAN; internal only              | Yes                 |
+| 20      | Production         | 10.0.20.0/24  | Node APIs, Redis, ERPNext, n8n      | VLAN 20 ↔ VLAN 30 (DB), VLAN 10 (proxy)          | Yes                 |
+| 30      | Database           | 10.0.30.0/24  | Supabase PostgreSQL primary         | Inbound from VLAN 20 only (port 5432)            | Yes                 |
+| 40      | Backup             | 10.0.40.0/24  | Backup server, offsite staging      | VLAN 20 → 40 (push backups), VLAN 30 (snapshots) | Yes                 |
+| 50      | Development        | 10.0.50.0/24  | Dev/Staging containers, CI/CD       | No access to VLAN 30 (production DB)             | Yes                 |
+| 100     | IoT/Infrastructure | 10.0.100.0/24 | TP-Link Omada controllers, switches | SSH/SNMP from VLAN 1 only                        | Yes                 |
 
 ### TP-Link Omada Network Components
 
 **Hardware Stack**
 
-| Device | Model | Purpose | Port Count | Function |
-|--------|-------|---------|-----------|----------|
-| **Wireless Controller** | OC200 (Cloud-based alternative: OC300) | Network management, SSID provisioning, traffic shaping | N/A (software) | Centralized AP management, VLAN automation |
-| **Gateway/Router** | ER605 (PoE budget: 95W) | Primary gateway, VLAN routing, firewall, QoS | 5x Gigabit (1 WAN) | Routing between VLANs, threat defense |
-| **Managed Switch** | SG2008P (8x Gigabit, PoE budget: 250W) | VLAN switching, AP/device PoE | 8 Gigabit + 1 SFP | VLAN tagging, loop protection (RSTP) |
+| Device                  | Model                                  | Purpose                                                | Port Count         | Function                                   |
+| ----------------------- | -------------------------------------- | ------------------------------------------------------ | ------------------ | ------------------------------------------ |
+| **Wireless Controller** | OC200 (Cloud-based alternative: OC300) | Network management, SSID provisioning, traffic shaping | N/A (software)     | Centralized AP management, VLAN automation |
+| **Gateway/Router**      | ER605 (PoE budget: 95W)                | Primary gateway, VLAN routing, firewall, QoS           | 5x Gigabit (1 WAN) | Routing between VLANs, threat defense      |
+| **Managed Switch**      | SG2008P (8x Gigabit, PoE budget: 250W) | VLAN switching, AP/device PoE                          | 8 Gigabit + 1 SFP  | VLAN tagging, loop protection (RSTP)       |
 
 **TP-Link Omada SDN Configuration**
 
@@ -297,39 +299,14 @@ Components:
 
 ```yaml
 # /etc/tailscale/policy.hujson
-{
-  "acls": [
-    # Admin access to Proxmox Web UI
-    {
-      "action": "accept",
-      "src": ["tag:admin"],
-      "dst": ["proxmox:100"]
-    },
-    # Production services accessible from mobile
-    {
-      "action": "accept",
-      "src": ["tag:ops"],
-      "dst": ["api:443", "erp:443", "redis:6379"]
-    },
-    # Cross-container communication over Tailscale
-    {
-      "action": "accept",
-      "src": ["proxmox:100"],
-      "dst": ["*"]
-    }
-  ],
-  "hosts": {
-    "proxmox": "100.x.x.x",
-    "api": "10.0.20.50",
-    "erp": "10.0.20.51",
-    "redis": "10.0.20.60",
-    "backup": "10.0.40.10"
-  },
-  "tagOwners": {
-    "tag:admin": ["your-github-user"],
-    "tag:ops": ["your-github-user"]
-  }
-}
+{ 'acls': [
+      # Admin access to Proxmox Web UI
+      { 'action': 'accept', 'src': ['tag:admin'], 'dst': ['proxmox:100'] },
+      # Production services accessible from mobile
+      { 'action': 'accept', 'src': ['tag:ops'], 'dst': ['api:443', 'erp:443', 'redis:6379'] },
+      # Cross-container communication over Tailscale
+      { 'action': 'accept', 'src': ['proxmox:100'], 'dst': ['*'] },
+    ], 'hosts': { 'proxmox': '100.x.x.x', 'api': '10.0.20.50', 'erp': '10.0.20.51', 'redis': '10.0.20.60', 'backup': '10.0.40.10' }, 'tagOwners': { 'tag:admin': ['your-github-user'], 'tag:ops': ['your-github-user'] } }
 ```
 
 **Subnet Routing (Future Multi-Node)**
@@ -388,18 +365,18 @@ Intermediate Certificates:
 
 ### Firewall Rules
 
-| Source | Destination | Port | Protocol | Action | Comment |
-|--------|-------------|------|----------|--------|---------|
-| WAN (ISP) | VLAN 10 (DMZ) | 80, 443 | TCP | ACCEPT | HTTP/HTTPS ingress only |
-| VLAN 1 (Management) | VLAN 20, 30, 40, 50 | All | Any | ACCEPT | Admin access to all zones |
-| VLAN 20 (Production) | VLAN 30 (Database) | 5432 | TCP | ACCEPT | PostgreSQL query port |
-| VLAN 20 (Production) | VLAN 40 (Backup) | 22, 9100 | TCP | ACCEPT | Backup sync, Prometheus scrape |
-| VLAN 10 (DMZ) | VLAN 20 (Production) | 80, 443 | TCP | ACCEPT | Proxy to backend services |
-| VLAN 50 (Development) | VLAN 30 (Database) | Any | Any | REJECT | Prevent dev from prod DB |
-| VLAN 50 (Development) | VLAN 20 (Production) | 443 | TCP | ACCEPT (limited) | Dev-to-prod API calls only |
-| Any VLAN | VLAN 100 (IoT/Infra) | 22, 161 | TCP/UDP | ACCEPT (from VLAN 1) | SSH, SNMP management |
-| Any VLAN | WAN (ISP) | 53, 123 | UDP | ACCEPT | DNS, NTP outbound |
-| VLAN 20, 30, 40 | WAN (ISP) | 443 | TCP | ACCEPT | Outbound HTTPS (updates) |
+| Source                | Destination          | Port     | Protocol | Action               | Comment                        |
+| --------------------- | -------------------- | -------- | -------- | -------------------- | ------------------------------ |
+| WAN (ISP)             | VLAN 10 (DMZ)        | 80, 443  | TCP      | ACCEPT               | HTTP/HTTPS ingress only        |
+| VLAN 1 (Management)   | VLAN 20, 30, 40, 50  | All      | Any      | ACCEPT               | Admin access to all zones      |
+| VLAN 20 (Production)  | VLAN 30 (Database)   | 5432     | TCP      | ACCEPT               | PostgreSQL query port          |
+| VLAN 20 (Production)  | VLAN 40 (Backup)     | 22, 9100 | TCP      | ACCEPT               | Backup sync, Prometheus scrape |
+| VLAN 10 (DMZ)         | VLAN 20 (Production) | 80, 443  | TCP      | ACCEPT               | Proxy to backend services      |
+| VLAN 50 (Development) | VLAN 30 (Database)   | Any      | Any      | REJECT               | Prevent dev from prod DB       |
+| VLAN 50 (Development) | VLAN 20 (Production) | 443      | TCP      | ACCEPT (limited)     | Dev-to-prod API calls only     |
+| Any VLAN              | VLAN 100 (IoT/Infra) | 22, 161  | TCP/UDP  | ACCEPT (from VLAN 1) | SSH, SNMP management           |
+| Any VLAN              | WAN (ISP)            | 53, 123  | UDP      | ACCEPT               | DNS, NTP outbound              |
+| VLAN 20, 30, 40       | WAN (ISP)            | 443      | TCP      | ACCEPT               | Outbound HTTPS (updates)       |
 
 **Rate Limiting & DPI**
 
@@ -475,10 +452,7 @@ export default withBundleConfig({
 
   // Image optimization
   images: {
-    remotePatterns: [
-      { hostname: 'images.krewpact.io' },
-      { hostname: 'cdn.krewpact.io' },
-    ],
+    remotePatterns: [{ hostname: 'images.krewpact.io' }, { hostname: 'cdn.krewpact.io' }],
     formats: ['image/webp', 'image/avif'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
@@ -621,13 +595,13 @@ export async function middleware(request: NextRequest) {
 
 ### Core Web Vitals Targets
 
-| Metric | Target | Tool | Action on Failure |
-|--------|--------|------|-------------------|
-| **LCP** (Largest Contentful Paint) | < 2.5s | Lighthouse, Sentry RUM | Optimize image sizes, defer non-critical JS |
-| **FID** (First Input Delay) | < 100ms | Sentry, Chrome RUM | Reduce main thread blocking, code split |
-| **CLS** (Cumulative Layout Shift) | < 0.1 | Lighthouse, Sentry | Reserve space for ads, fonts, images |
-| **TTFB** (Time to First Byte) | < 600ms | Vercel Analytics | Cache static content, optimize API |
-| **FCP** (First Contentful Paint) | < 1.8s | Lighthouse | Inline critical CSS, defer parsing JS |
+| Metric                             | Target  | Tool                   | Action on Failure                           |
+| ---------------------------------- | ------- | ---------------------- | ------------------------------------------- |
+| **LCP** (Largest Contentful Paint) | < 2.5s  | Lighthouse, Sentry RUM | Optimize image sizes, defer non-critical JS |
+| **FID** (First Input Delay)        | < 100ms | Sentry, Chrome RUM     | Reduce main thread blocking, code split     |
+| **CLS** (Cumulative Layout Shift)  | < 0.1   | Lighthouse, Sentry     | Reserve space for ads, fonts, images        |
+| **TTFB** (Time to First Byte)      | < 600ms | Vercel Analytics       | Cache static content, optimize API          |
+| **FCP** (First Contentful Paint)   | < 1.8s  | Lighthouse             | Inline critical CSS, defer parsing JS       |
 
 **Performance Monitoring**
 
@@ -651,22 +625,23 @@ Sentry.io Integration:
 
 ### Self-Hosted vs Cloud Decision Matrix
 
-| Aspect | Self-Hosted (Recommended for KrewPact) | Supabase Cloud |
-|--------|------------------------------------------|-----------------|
-| **Cost (500 users)** | $500/month hardware (amortized) | $2000-5000/month |
-| **Data Residency** | Full control, on-prem | Supabase managed regions |
-| **Backup Control** | 3-2-1 strategy, custom retention | Daily backups, 35-day retention |
-| **Performance** | LAN latency (1-5ms), no API rate limits | 1-50ms via HTTPS, metered requests |
-| **Scaling** | Vertical then horizontal (cluster) | Automatic, transparent pricing |
-| **Compliance** | HIPAA, GDPR feasible | Shared infrastructure, SOC2 only |
-| **Downtime Risk** | Dependent on infrastructure | 99.9% SLA, multiple failovers |
-| **Real-time Subscriptions** | Full control, internal network | Rate-limited, $100+/month |
+| Aspect                      | Self-Hosted (Recommended for KrewPact)  | Supabase Cloud                     |
+| --------------------------- | --------------------------------------- | ---------------------------------- |
+| **Cost (500 users)**        | $500/month hardware (amortized)         | $2000-5000/month                   |
+| **Data Residency**          | Full control, on-prem                   | Supabase managed regions           |
+| **Backup Control**          | 3-2-1 strategy, custom retention        | Daily backups, 35-day retention    |
+| **Performance**             | LAN latency (1-5ms), no API rate limits | 1-50ms via HTTPS, metered requests |
+| **Scaling**                 | Vertical then horizontal (cluster)      | Automatic, transparent pricing     |
+| **Compliance**              | HIPAA, GDPR feasible                    | Shared infrastructure, SOC2 only   |
+| **Downtime Risk**           | Dependent on infrastructure             | 99.9% SLA, multiple failovers      |
+| **Real-time Subscriptions** | Full control, internal network          | Rate-limited, $100+/month          |
 
 **Selected: Self-hosted PostgreSQL on Proxmox (Cost + Control)**
 
 ### PostgreSQL Configuration (Self-Hosted VM)
 
 **VM Specifications**
+
 - vCPU: 8 cores (pinned to NUMA node if multi-socket)
 - RAM: 32 GB (16 GB shared_buffers, 16 GB OS cache)
 - Storage: 500 GB NVMe on ZFS dataset (tank/vm/supabase)
@@ -783,16 +758,16 @@ stats_users = monitoring
 
 **Installed Extensions**
 
-| Extension | Purpose | Config |
-|-----------|---------|--------|
-| **uuid-ossp** | UUID v1/v3/v4 generation | CREATE EXTENSION uuid-ossp |
-| **pgcrypto** | Encryption, hashing (bcrypt, SHA256) | CREATE EXTENSION pgcrypto |
-| **pg_trgm** | Text search, fuzzy matching | CREATE EXTENSION pg_trgm |
-| **citext** | Case-insensitive text (emails) | CREATE EXTENSION citext |
-| **hstore** | Key-value data type | CREATE EXTENSION hstore |
-| **json** | JSON/JSONB support | Built-in (PostgreSQL 9.2+) |
-| **timescaledb** | Time-series data (future) | CREATE EXTENSION timescaledb |
-| **pg_cron** | Scheduled jobs (backups, cleanup) | CREATE EXTENSION pg_cron |
+| Extension       | Purpose                              | Config                       |
+| --------------- | ------------------------------------ | ---------------------------- |
+| **uuid-ossp**   | UUID v1/v3/v4 generation             | CREATE EXTENSION uuid-ossp   |
+| **pgcrypto**    | Encryption, hashing (bcrypt, SHA256) | CREATE EXTENSION pgcrypto    |
+| **pg_trgm**     | Text search, fuzzy matching          | CREATE EXTENSION pg_trgm     |
+| **citext**      | Case-insensitive text (emails)       | CREATE EXTENSION citext      |
+| **hstore**      | Key-value data type                  | CREATE EXTENSION hstore      |
+| **json**        | JSON/JSONB support                   | Built-in (PostgreSQL 9.2+)   |
+| **timescaledb** | Time-series data (future)            | CREATE EXTENSION timescaledb |
+| **pg_cron**     | Scheduled jobs (backups, cleanup)    | CREATE EXTENSION pg_cron     |
 
 **Schema and Multi-Tenancy**
 
@@ -1196,15 +1171,15 @@ server {
 
 **Installed Modules**
 
-| Module | Purpose | Custom Workflows |
-|--------|---------|------------------|
-| **Accounts** | Invoicing, journals, tax | AP/AR aging, multi-currency |
-| **Selling** | Quotes, sales orders, shipments | Approval routing, discount rules |
-| **Buying** | Purchase orders, supplier management | RFQ automation, vendor scoring |
-| **Inventory** | Stock, warehouses, transfers | Bin management, reorder levels |
-| **HR** | Payroll, leave, attendance | Custom org chart, training tracking |
-| **CRM** | Leads, opportunities, cases | Pipeline management, forecasting |
-| **Manufacturing** | BOM, work orders, quality | Custom routing, shop floor control |
+| Module            | Purpose                              | Custom Workflows                    |
+| ----------------- | ------------------------------------ | ----------------------------------- |
+| **Accounts**      | Invoicing, journals, tax             | AP/AR aging, multi-currency         |
+| **Selling**       | Quotes, sales orders, shipments      | Approval routing, discount rules    |
+| **Buying**        | Purchase orders, supplier management | RFQ automation, vendor scoring      |
+| **Inventory**     | Stock, warehouses, transfers         | Bin management, reorder levels      |
+| **HR**            | Payroll, leave, attendance           | Custom org chart, training tracking |
+| **CRM**           | Leads, opportunities, cases          | Pipeline management, forecasting    |
+| **Manufacturing** | BOM, work orders, quality            | Custom routing, shop floor control  |
 
 **Custom App Integration (custom_app/)**
 
@@ -1240,19 +1215,19 @@ after_migrate = [
 
 ### Environment Matrix
 
-| Aspect | Development | Staging | Production | Disaster Recovery |
-|--------|-------------|---------|------------|-------------------|
-| **Location** | Proxmox VLAN 50 | Proxmox VLAN 50 (isolated) | Proxmox VLAN 20 | Backup VM VLAN 40 |
-| **Database** | PostgreSQL clone (daily) | PostgreSQL clone (daily) | PostgreSQL primary | PostgreSQL from backup |
-| **API Key Scope** | Development/test | Staging sandbox | Production live | Read-only audit trail |
-| **Data Retention** | 7 days | 30 days | Indefinite | 90 days (archived) |
-| **SSL Certs** | Self-signed | Let's Encrypt staging | Let's Encrypt prod | Inherited from prod |
-| **Backup Frequency** | None | Daily @ 2am | Hourly | Every 6 hours (tested weekly) |
-| **User Access** | Unrestricted | Engineering team only | Role-based (RBAC) | SRE + Founder only |
-| **Feature Flags** | All enabled | Selected features | Canary rollout | Feature parity with prod |
-| **Monitoring** | Basic logs | Prometheus + Grafana | Full alerting | Read-only dashboards |
-| **Deploy Frequency** | Ad-hoc (multiple/day) | On PR merge to staging | Weekly release window | Manual (incident response) |
-| **Scaling** | Manual | Manual | Auto-scaling rules | Fixed (manual recovery) |
+| Aspect               | Development              | Staging                    | Production            | Disaster Recovery             |
+| -------------------- | ------------------------ | -------------------------- | --------------------- | ----------------------------- |
+| **Location**         | Proxmox VLAN 50          | Proxmox VLAN 50 (isolated) | Proxmox VLAN 20       | Backup VM VLAN 40             |
+| **Database**         | PostgreSQL clone (daily) | PostgreSQL clone (daily)   | PostgreSQL primary    | PostgreSQL from backup        |
+| **API Key Scope**    | Development/test         | Staging sandbox            | Production live       | Read-only audit trail         |
+| **Data Retention**   | 7 days                   | 30 days                    | Indefinite            | 90 days (archived)            |
+| **SSL Certs**        | Self-signed              | Let's Encrypt staging      | Let's Encrypt prod    | Inherited from prod           |
+| **Backup Frequency** | None                     | Daily @ 2am                | Hourly                | Every 6 hours (tested weekly) |
+| **User Access**      | Unrestricted             | Engineering team only      | Role-based (RBAC)     | SRE + Founder only            |
+| **Feature Flags**    | All enabled              | Selected features          | Canary rollout        | Feature parity with prod      |
+| **Monitoring**       | Basic logs               | Prometheus + Grafana       | Full alerting         | Read-only dashboards          |
+| **Deploy Frequency** | Ad-hoc (multiple/day)    | On PR merge to staging     | Weekly release window | Manual (incident response)    |
+| **Scaling**          | Manual                   | Manual                     | Auto-scaling rules    | Fixed (manual recovery)       |
 
 ### Environment Parity and Sync
 
@@ -1294,9 +1269,9 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./init-scripts:/docker-entrypoint-initdb.d
     ports:
-      - "5432:5432"
+      - '5432:5432'
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U krewpact_user"]
+      test: ['CMD-SHELL', 'pg_isready -U krewpact_user']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -1304,7 +1279,7 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - '6379:6379'
     volumes:
       - redis_data:/data
 
@@ -1319,7 +1294,7 @@ services:
       API_PORT: 3000
       LOG_LEVEL: debug
     ports:
-      - "3000:3000"
+      - '3000:3000'
     depends_on:
       postgres:
         condition: service_healthy
@@ -1335,7 +1310,7 @@ services:
       NEXT_PUBLIC_API_URL: http://localhost:3000
       NEXT_PUBLIC_SUPABASE_URL: http://localhost:5432
     ports:
-      - "3001:3000"
+      - '3001:3000'
     depends_on:
       - api
 
@@ -1416,13 +1391,13 @@ export function BetaFeature() {
 
 **Flag Management Matrix**
 
-| Flag Name | Dev | Staging | Production | Rollout % | Tied to Plan |
-|-----------|-----|---------|------------|-----------|--------------|
-| **new-dashboard** | true | true | false | 0% (canary) | Enterprise |
-| **advanced-analytics** | true | true | true | 100% | Pro+ |
-| **bulk-export** | true | true | true | 100% | All |
-| **gpu-rendering** | true | false | false | 0% | Enterprise (beta) |
-| **ai-estimator** | true | true | false | 0% | Coming soon |
+| Flag Name              | Dev  | Staging | Production | Rollout %   | Tied to Plan      |
+| ---------------------- | ---- | ------- | ---------- | ----------- | ----------------- |
+| **new-dashboard**      | true | true    | false      | 0% (canary) | Enterprise        |
+| **advanced-analytics** | true | true    | true       | 100%        | Pro+              |
+| **bulk-export**        | true | true    | true       | 100%        | All               |
+| **gpu-rendering**      | true | false   | false      | 0%          | Enterprise (beta) |
+| **ai-estimator**       | true | true    | false      | 0%          | Coming soon       |
 
 ---
 
@@ -1455,16 +1430,16 @@ Backup Strategy:
 
 ### Backup Schedule Per Component
 
-| Component | Type | Frequency | Tool | Retention | Verify Method |
-|-----------|------|-----------|------|-----------|----------------|
-| **PostgreSQL** | Full + Incremental | Hourly snapshot, daily dump | pg_dump + ZFS send | 30 days | pg_restore test query |
-| **ERPNext DB** | Full + Incremental | Daily @ 2am | mysqldump (compressed) | 30 days | ERPNext data import test |
-| **Supabase Storage** | Rsync | Daily @ 4am | rsync -av --delete | 30 days | File count/checksum verify |
-| **Nginx configs** | Tar archive | Weekly | tar.gz | 52 weeks | Config validation test |
-| **Monitoring data** | Prometheus snapshots | Daily | snapshot + upload | 30 days | Query metric replay |
-| **Redis cache** | RDB dump | Daily @ 1am | BGSAVE | 7 days | AOF reconstruction test |
-| **n8n workflows** | Database + config export | Daily | n8n export CLI | 365 days | Workflow import test |
-| **ZFS pools** | Snapshot replicate | Hourly | zfs send/recv | See above | Snapshot diff verification |
+| Component            | Type                     | Frequency                   | Tool                   | Retention | Verify Method              |
+| -------------------- | ------------------------ | --------------------------- | ---------------------- | --------- | -------------------------- |
+| **PostgreSQL**       | Full + Incremental       | Hourly snapshot, daily dump | pg_dump + ZFS send     | 30 days   | pg_restore test query      |
+| **ERPNext DB**       | Full + Incremental       | Daily @ 2am                 | mysqldump (compressed) | 30 days   | ERPNext data import test   |
+| **Supabase Storage** | Rsync                    | Daily @ 4am                 | rsync -av --delete     | 30 days   | File count/checksum verify |
+| **Nginx configs**    | Tar archive              | Weekly                      | tar.gz                 | 52 weeks  | Config validation test     |
+| **Monitoring data**  | Prometheus snapshots     | Daily                       | snapshot + upload      | 30 days   | Query metric replay        |
+| **Redis cache**      | RDB dump                 | Daily @ 1am                 | BGSAVE                 | 7 days    | AOF reconstruction test    |
+| **n8n workflows**    | Database + config export | Daily                       | n8n export CLI         | 365 days  | Workflow import test       |
+| **ZFS pools**        | Snapshot replicate       | Hourly                      | zfs send/recv          | See above | Snapshot diff verification |
 
 **Backup Execution Script (/usr/local/bin/backup-all.sh)**
 
@@ -1523,15 +1498,15 @@ log "All backups completed successfully"
 
 ### RPO/RTO Targets
 
-| Component | RPO | RTO | Recovery Procedure |
-|-----------|-----|-----|-------------------|
-| **PostgreSQL (primary)** | 1 hour | 5 minutes | Restore from ZFS snapshot on standby |
-| **PostgreSQL (full recovery)** | 24 hours | 30 minutes | pg_restore from daily dump |
-| **ERPNext VM** | 6 hours | 20 minutes | Proxmox: VM backup restore + MariaDB recovery |
-| **Redis cache** | 1 hour | 2 minutes | Restart from RDB dump (empty OK) |
-| **Frontend (Vercel)** | N/A | ~5 minutes | Rollback deployment via Vercel dashboard |
-| **Nginx reverse proxy** | 1 hour | 10 minutes | Restore config from tar + restart container |
-| **Full site disaster** | 24 hours | 2 hours | Restore from offsite backup, rebuild Proxmox |
+| Component                      | RPO      | RTO        | Recovery Procedure                            |
+| ------------------------------ | -------- | ---------- | --------------------------------------------- |
+| **PostgreSQL (primary)**       | 1 hour   | 5 minutes  | Restore from ZFS snapshot on standby          |
+| **PostgreSQL (full recovery)** | 24 hours | 30 minutes | pg_restore from daily dump                    |
+| **ERPNext VM**                 | 6 hours  | 20 minutes | Proxmox: VM backup restore + MariaDB recovery |
+| **Redis cache**                | 1 hour   | 2 minutes  | Restart from RDB dump (empty OK)              |
+| **Frontend (Vercel)**          | N/A      | ~5 minutes | Rollback deployment via Vercel dashboard      |
+| **Nginx reverse proxy**        | 1 hour   | 10 minutes | Restore config from tar + restart container   |
+| **Full site disaster**         | 24 hours | 2 hours    | Restore from offsite backup, rebuild Proxmox  |
 
 ### Recovery Runbooks
 
@@ -1539,25 +1514,28 @@ log "All backups completed successfully"
 
 ```markdown
 ## Scenario
+
 - PostgreSQL reports corruption (e.g., "invalid page in block")
 - Queries fail with: ERROR: invalid page in relation
 
 ## Detection
-pg_dump krewpact > /tmp/dump.sql 2>&1  # Will fail with corruption message
+
+pg_dump krewpact > /tmp/dump.sql 2>&1 # Will fail with corruption message
 
 ## Recovery Steps
+
 1. Identify corrupted table:
    - Check PostgreSQL logs: /var/log/postgresql/postgresql.log
    - Search for: "invalid page", "checksum failed"
 
 2. Stop affected application:
-   - systemctl stop frappe-bench  # Stop ERPNext if affected
+   - systemctl stop frappe-bench # Stop ERPNext if affected
    - Stop Node.js API connections
 
 3. Restore from ZFS snapshot (best case):
    - List snapshots: zfs list -t snapshot
    - Restore latest clean: zfs rollback tank/vm/supabase@hourly-2025-02-09T13:00:00Z
-   - Verify: psql -c "SELECT COUNT(*) FROM affected_table;"
+   - Verify: psql -c "SELECT COUNT(\*) FROM affected_table;"
    - Restart PostgreSQL: systemctl restart postgresql
 
 4. If ZFS rollback loses data:
@@ -1572,6 +1550,7 @@ pg_dump krewpact > /tmp/dump.sql 2>&1  # Will fail with corruption message
 6. Alert: Notify team of incident + RCA in Slack
 
 ## Prevention
+
 - Enable PostgreSQL checksums: ALTER SYSTEM SET data_checksums = on;
 - Monitor disk health: smartctl -H /dev/nvme0n1
 - Regular verification: pg_verify_checksums -D /var/lib/postgresql/14/main
@@ -1581,22 +1560,26 @@ pg_dump krewpact > /tmp/dump.sql 2>&1  # Will fail with corruption message
 
 ```markdown
 ## Scenario
+
 - Proxmox host crashes (hardware failure, kernel panic)
 - VMs are down: PostgreSQL, ERPNext, Redis, all services
 
 ## Detection
+
 - Monitoring alert: "Proxmox host unreachable"
 - Check IPMI console for errors
 
 ## Recovery Steps (Single Node → Multi-Node Migration)
 
 ### Immediate (< 5 min)
+
 1. Power on backup Proxmox host (if available, pre-configured clone)
 2. Restore from Backup VM:
    - Backup Server (10.0.40.10) has daily VM backups
    - Procedure: Proxmox → Backup Server → New Host
 
 ### Step-by-Step (30-120 min)
+
 1. Boot backup Proxmox from ISO (same ZFS config as primary)
 2. Import ZFS pool: zpool import tank
 3. Start critical VMs in order:
@@ -1612,6 +1595,7 @@ pg_dump krewpact > /tmp/dump.sql 2>&1  # Will fail with corruption message
 6. Notify stakeholders: "Service restored, investigating root cause"
 
 ### Post-Recovery (RCA)
+
 - Identify hardware failure (HDD, NVMe, PSU)
 - Replace component, reinstall OS
 - Resync ZFS pool: zfs send/recv tank from backup
@@ -1622,19 +1606,22 @@ pg_dump krewpact > /tmp/dump.sql 2>&1  # Will fail with corruption message
 
 ```markdown
 ## Scenario
+
 - Ransomware or bad deployment deletes/corrupts production DB
 - All snapshots also compromised (encrypted)
 - Last clean backup: 24 hours ago
 
 ## Detection
+
 - Monitoring alert: "Critical data missing"
 - Team notifies: "Data looks wrong"
 
 ## Recovery Steps
+
 1. **Immediate containment:**
    - Isolate Proxmox from network: unplug physical NIC
    - Stop all services: systemctl stop frappe-bench, node-api
-   - Preserve logs for forensics: /var/log/* to external drive
+   - Preserve logs for forensics: /var/log/\* to external drive
 
 2. **Assess data integrity:**
    - Backup Server (10.0.40.10): Check last daily backup timestamp
@@ -1663,6 +1650,7 @@ pg_dump krewpact > /tmp/dump.sql 2>&1  # Will fail with corruption message
    - Implement additional security: EDR on Proxmox host, file integrity monitoring
 
 ## Prevention
+
 - Air-gapped backup (Backup VM isolated by default)
 - Immutable backups (S3 Object Lock for archive)
 - Backup testing: Monthly restore-and-verify exercise
@@ -1677,6 +1665,7 @@ pg_dump krewpact > /tmp/dump.sql 2>&1  # Will fail with corruption message
 ### Scaling Philosophy: Vertical Then Horizontal
 
 **Stage 1: Single-Node Optimization (0-300 users)**
+
 - Current state (KrewPact today)
 - Scale vertically: CPU, RAM, storage
 - Focus: Optimize queries, cache layer, DB tuning
@@ -1684,6 +1673,7 @@ pg_dump krewpact > /tmp/dump.sql 2>&1  # Will fail with corruption message
 - Cost: Hardware investment (one-time)
 
 **Stage 2: Horizontal Foundation (300-500 users)**
+
 - Add second Proxmox node
 - Database replication (PostgreSQL → Standby)
 - Load balancing: Nginx upstream pools
@@ -1691,6 +1681,7 @@ pg_dump krewpact > /tmp/dump.sql 2>&1  # Will fail with corruption message
 - Cost: Second host + network infrastructure
 
 **Stage 3: Full Cluster (500-1000+ users)**
+
 - Kubernetes deployment (k3s lightweight option)
 - Database sharding (if needed)
 - Multi-region replication (future)
@@ -1700,6 +1691,7 @@ pg_dump krewpact > /tmp/dump.sql 2>&1  # Will fail with corruption message
 ### Capacity Planning Projections
 
 **User Growth Assumptions**
+
 ```
 Month 1: 50 users
 Month 6: 150 users
@@ -1716,15 +1708,16 @@ Baseline per-user metrics:
 
 **Database Capacity Projections**
 
-| Users | Transactions/day | Table size | RAM needed | vCPU | RTO |
-|-------|------------------|-----------|-----------|------|-----|
-| **100** | 10K | 2 GB | 16 GB | 4 | 5 min |
-| **300** | 50K | 10 GB | 32 GB | 8 | 10 min |
-| **500** | 100K | 20 GB | 48 GB | 12 | 15 min |
-| **1000** | 200K | 40 GB | 64 GB | 16 | 20 min |
-| **2000** | 500K | 100 GB | 128 GB | 24 | 30 min |
+| Users    | Transactions/day | Table size | RAM needed | vCPU | RTO    |
+| -------- | ---------------- | ---------- | ---------- | ---- | ------ |
+| **100**  | 10K              | 2 GB       | 16 GB      | 4    | 5 min  |
+| **300**  | 50K              | 10 GB      | 32 GB      | 8    | 10 min |
+| **500**  | 100K             | 20 GB      | 48 GB      | 12   | 15 min |
+| **1000** | 200K             | 40 GB      | 64 GB      | 16   | 20 min |
+| **2000** | 500K             | 100 GB     | 128 GB     | 24   | 30 min |
 
 **Action triggers:**
+
 ```
 If active connections > 150: Upgrade shared_buffers (add RAM)
 If query response time > 1s: Add read replicas, optimize slow queries
@@ -1735,6 +1728,7 @@ If CPU utilization > 70% sustained: Upgrade vCPU or distribute load
 ### Storage Scaling Strategy
 
 **Current (300 users): 500 GB SSD**
+
 ```
 Projects table:       50 GB
 Tasks/subtasks:       30 GB
@@ -1745,6 +1739,7 @@ Overhead:             20 GB
 ```
 
 **Stage 2 (500 users): 1 TB SSD + Tiered Archive**
+
 ```
 Hot tier (SSD):
   - Current month data
@@ -1770,6 +1765,7 @@ Automated archival:
 ### Network and Bandwidth Scaling
 
 **Current (Single Node): Single 1GbE link sufficient**
+
 ```
 Peak throughput estimate: 200 Mbps
   - API request/response: ~100 Mbps
@@ -1781,6 +1777,7 @@ Action trigger: Scale when > 200 Mbps sustained
 ```
 
 **Stage 2 (Dual Node): 10GbE between nodes + 1GbE to WAN**
+
 ```
 Inter-node communication:
   - Database replication: 500 Mbps peak
@@ -1797,12 +1794,12 @@ Topology:
 
 **Node.js API Horizontal Scaling**
 
-| Stage | Instances | CPU | RAM | Connections | RPS (requests/sec) |
-|-------|-----------|-----|-----|------------|--------------------|
-| **0-300 users** | 1 | 4 vCPU | 8 GB | 100 | 500 |
-| **300-500** | 2 | 4 vCPU x2 | 8 GB x2 | 200 | 1000 |
-| **500-1000** | 4 | 4 vCPU x4 | 8 GB x4 | 400 | 2000 |
-| **1000+** | 8+ (K8s) | 2-4 vCPU ea | 4-8 GB ea | 800+ | 4000+ |
+| Stage           | Instances | CPU         | RAM       | Connections | RPS (requests/sec) |
+| --------------- | --------- | ----------- | --------- | ----------- | ------------------ |
+| **0-300 users** | 1         | 4 vCPU      | 8 GB      | 100         | 500                |
+| **300-500**     | 2         | 4 vCPU x2   | 8 GB x2   | 200         | 1000               |
+| **500-1000**    | 4         | 4 vCPU x4   | 8 GB x4   | 400         | 2000               |
+| **1000+**       | 8+ (K8s)  | 2-4 vCPU ea | 4-8 GB ea | 800+        | 4000+              |
 
 **Load Balancing (Nginx Proxy Manager)**
 
@@ -1830,6 +1827,7 @@ server {
 ```
 
 **Vercel Frontend Auto-Scaling (Already Handled)**
+
 ```
 - Vercel scales automatically based on traffic
 - No configuration needed
@@ -1869,7 +1867,7 @@ groups:
 
       # Network saturation
       - alert: EgressBandwidthHigh
-        expr: 'rate(node_network_transmit_bytes_total{device="eth0"}[5m]) > 900000000'  # 900 Mbps
+        expr: 'rate(node_network_transmit_bytes_total{device="eth0"}[5m]) > 900000000' # 900 Mbps
         for: 5m
         labels:
           action: add_network_link
@@ -1906,19 +1904,20 @@ curl -I http://api-3.internal:3000/health
 
 **Proxmox Host (Single-Node, 300 users)**
 
-| Component | Minimum | Recommended | Rationale |
-|-----------|---------|-------------|-----------|
-| **CPU** | 8 cores | 16 cores | Overhead: Proxmox (2 cores) + VMs (6-12 cores) + buffering |
-| **RAM** | 64 GB | 128 GB | 32 GB PostgreSQL + 8 GB ERPNext + 4 GB containers + OS |
-| **Storage Boot** | 100 GB NVMe | 500 GB NVMe RAID-1 | OS + container images + snapshots |
-| **Storage Data** | 1 TB SSD | 2 TB RAID-1 NVMe | User data, backups, snapshots (growth buffer) |
-| **Storage Archive** | 2 TB HDD | 4 TB HDD RAID-6 | Cold storage tier, backups |
-| **Network** | 1x 1GbE | 2x 1GbE | Primary + failover link |
-| **Memory Speed** | DDR4-3200 | DDR4-3600 | Lower latency for database |
-| **Power Supply** | 750W | 1000W | Headroom for upgrades |
-| **Redundancy** | None | UPS + 8hr battery | Graceful shutdown on power loss |
+| Component           | Minimum     | Recommended        | Rationale                                                  |
+| ------------------- | ----------- | ------------------ | ---------------------------------------------------------- |
+| **CPU**             | 8 cores     | 16 cores           | Overhead: Proxmox (2 cores) + VMs (6-12 cores) + buffering |
+| **RAM**             | 64 GB       | 128 GB             | 32 GB PostgreSQL + 8 GB ERPNext + 4 GB containers + OS     |
+| **Storage Boot**    | 100 GB NVMe | 500 GB NVMe RAID-1 | OS + container images + snapshots                          |
+| **Storage Data**    | 1 TB SSD    | 2 TB RAID-1 NVMe   | User data, backups, snapshots (growth buffer)              |
+| **Storage Archive** | 2 TB HDD    | 4 TB HDD RAID-6    | Cold storage tier, backups                                 |
+| **Network**         | 1x 1GbE     | 2x 1GbE            | Primary + failover link                                    |
+| **Memory Speed**    | DDR4-3200   | DDR4-3600          | Lower latency for database                                 |
+| **Power Supply**    | 750W        | 1000W              | Headroom for upgrades                                      |
+| **Redundancy**      | None        | UPS + 8hr battery  | Graceful shutdown on power loss                            |
 
 **Cost Estimate (Single Node)**
+
 ```
 CPU: Xeon E-2388G (8 core) or AMD EPYC 3251  $400-800
 RAM: 128 GB DDR4 (8x16GB)                     $800-1200
@@ -1935,46 +1934,47 @@ Total Single-Node Hardware                    $3800-6400
 
 **Proxmox Host (Dual-Node Cluster, 500-1000 users)**
 
-| Component | Quantity | Specification | Cost |
-|-----------|----------|---------------|------|
-| **Proxmox Nodes** | 2 | 16 core, 256 GB RAM, 5 TB SSD, 8 TB HDD | $8000-12000 |
-| **Network Switch** | 1 | TP-Link OC200 + ER605 + SG2008P | $800-1200 |
-| **Network Links** | 4 | 10GbE cluster, 1GbE x2 WAN failover | $1000-2000 |
-| **Storage Expansion** | As needed | Additional NVMe/HDD | Variable |
-| **Shared Storage** (optional) | 1 | NAS or SAN device | $2000-5000 |
+| Component                     | Quantity  | Specification                           | Cost        |
+| ----------------------------- | --------- | --------------------------------------- | ----------- |
+| **Proxmox Nodes**             | 2         | 16 core, 256 GB RAM, 5 TB SSD, 8 TB HDD | $8000-12000 |
+| **Network Switch**            | 1         | TP-Link OC200 + ER605 + SG2008P         | $800-1200   |
+| **Network Links**             | 4         | 10GbE cluster, 1GbE x2 WAN failover     | $1000-2000  |
+| **Storage Expansion**         | As needed | Additional NVMe/HDD                     | Variable    |
+| **Shared Storage** (optional) | 1         | NAS or SAN device                       | $2000-5000  |
 
 ### Cloud Service Monthly Cost Estimates (Comparison)
 
 **KrewPact on Vercel + Self-Hosted Backend (Recommended)**
 
-| Service | Usage | Monthly Cost | Notes |
-|---------|-------|--------------|-------|
-| **Vercel (Frontend)** | 1M monthly visits | $150-300 | Includes 100 GB bandwidth |
-| **Bandwidth (CDN)** | 500 GB/month overages | $0-50 | Beyond Vercel's included quota |
-| **Proxmox Hardware** | Amortized 3-year | ~$150-200 | Hosting cost spread |
-| **DNS (Cloudflare)** | Free tier | $0 | 1 domain, basic DNS |
-| **Let's Encrypt Certs** | Automatic renewal | $0 | Free public CA |
-| **Backups (AWS S3)** | 1 TB archive storage | $15-30 | Quarterly uploads |
-| **Monitoring (self-hosted)** | Prometheus + Grafana | $0 | On-prem, no SaaS |
-| **Domain registration** | 1 year | $12 | Annual only |
-| **Email forwarding** | Via external service | $25-50 | SendGrid or equivalent |
-| | | |
-| **Total Monthly** | | **~$350-700** | At 300-500 users |
+| Service                      | Usage                 | Monthly Cost  | Notes                          |
+| ---------------------------- | --------------------- | ------------- | ------------------------------ |
+| **Vercel (Frontend)**        | 1M monthly visits     | $150-300      | Includes 100 GB bandwidth      |
+| **Bandwidth (CDN)**          | 500 GB/month overages | $0-50         | Beyond Vercel's included quota |
+| **Proxmox Hardware**         | Amortized 3-year      | ~$150-200     | Hosting cost spread            |
+| **DNS (Cloudflare)**         | Free tier             | $0            | 1 domain, basic DNS            |
+| **Let's Encrypt Certs**      | Automatic renewal     | $0            | Free public CA                 |
+| **Backups (AWS S3)**         | 1 TB archive storage  | $15-30        | Quarterly uploads              |
+| **Monitoring (self-hosted)** | Prometheus + Grafana  | $0            | On-prem, no SaaS               |
+| **Domain registration**      | 1 year                | $12           | Annual only                    |
+| **Email forwarding**         | Via external service  | $25-50        | SendGrid or equivalent         |
+|                              |                       |               |
+| **Total Monthly**            |                       | **~$350-700** | At 300-500 users               |
 
 **vs. Fully-Cloud Alternative**
 
-| Service | Monthly Cost | Notes |
-|---------|--------------|-------|
-| **Supabase Cloud** | $2000-5000 | PostgreSQL + Real-time + Storage |
-| **Vercel** | $200-500 | Frontend |
-| **ERPNext Cloud (ERPNext.com)** | $1500-3000 | Hosted ERP |
-| **AWS RDS (backup)** | $500-1000 | Replication, snapshots |
-| **Monitoring (DataDog)** | $300-1000 | APM + Logs |
-| **CDN (CloudFlare Pro)** | $200 | Optional |
-| | |
-| **Total Monthly** | **$4700-10500** | Same scale, fully outsourced |
+| Service                         | Monthly Cost    | Notes                            |
+| ------------------------------- | --------------- | -------------------------------- |
+| **Supabase Cloud**              | $2000-5000      | PostgreSQL + Real-time + Storage |
+| **Vercel**                      | $200-500        | Frontend                         |
+| **ERPNext Cloud (ERPNext.com)** | $1500-3000      | Hosted ERP                       |
+| **AWS RDS (backup)**            | $500-1000       | Replication, snapshots           |
+| **Monitoring (DataDog)**        | $300-1000       | APM + Logs                       |
+| **CDN (CloudFlare Pro)**        | $200            | Optional                         |
+|                                 |                 |
+| **Total Monthly**               | **$4700-10500** | Same scale, fully outsourced     |
 
 **Savings with Self-Hosted Model**
+
 ```
 Monthly savings: $4700-10500 (cloud) - $350-700 (self-hosted) = $4000-9800/month
 

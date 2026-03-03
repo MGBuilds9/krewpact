@@ -28,7 +28,14 @@ type FormValues = z.infer<typeof timeEntryFormSchema>;
 
 interface TimeEntryFormProps {
   userId: string;
-  onSubmit: (values: { user_id: string; work_date: string; hours_regular: number; hours_overtime?: number; cost_code?: string; notes?: string }) => void;
+  onSubmit: (values: {
+    user_id: string;
+    work_date: string;
+    hours_regular: number;
+    hours_overtime?: number;
+    cost_code?: string;
+    notes?: string;
+  }) => void;
   isLoading?: boolean;
 }
 

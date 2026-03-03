@@ -79,9 +79,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
   // Build opportunity data, allowing name override
   const opportunityData = {
     ...result.opportunityData,
-    ...(parsed.data.opportunity_name
-      ? { opportunity_name: parsed.data.opportunity_name }
-      : {}),
+    ...(parsed.data.opportunity_name ? { opportunity_name: parsed.data.opportunity_name } : {}),
   };
 
   // Insert opportunity

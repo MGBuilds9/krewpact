@@ -43,9 +43,7 @@ export function StepConfigPanel({ step, onUpdate, onClose }: StepConfigPanelProp
     <div className="flex h-full w-72 shrink-0 flex-col rounded-lg border bg-background shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between border-b px-4 py-3">
-        <p className="text-sm font-semibold capitalize">
-          Configure {step.action_type}
-        </p>
+        <p className="text-sm font-semibold capitalize">Configure {step.action_type}</p>
         <button
           onClick={onClose}
           className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -64,7 +62,7 @@ export function StepConfigPanel({ step, onUpdate, onClose }: StepConfigPanelProp
               <Input
                 id="template_id"
                 placeholder="template-uuid"
-                value={(getConfig<string>(step, 'template_id') ?? '')}
+                value={getConfig<string>(step, 'template_id') ?? ''}
                 onChange={(e) => updateConfig('template_id', e.target.value)}
               />
             </div>
@@ -73,7 +71,7 @@ export function StepConfigPanel({ step, onUpdate, onClose }: StepConfigPanelProp
               <Input
                 id="subject"
                 placeholder="Leave blank to use template subject"
-                value={(getConfig<string>(step, 'subject') ?? '')}
+                value={getConfig<string>(step, 'subject') ?? ''}
                 onChange={(e) => updateConfig('subject', e.target.value)}
               />
             </div>
@@ -83,7 +81,7 @@ export function StepConfigPanel({ step, onUpdate, onClose }: StepConfigPanelProp
                 id="body"
                 placeholder="Leave blank to use template body"
                 rows={4}
-                value={(getConfig<string>(step, 'body') ?? '')}
+                value={getConfig<string>(step, 'body') ?? ''}
                 onChange={(e) => updateConfig('body', e.target.value)}
               />
             </div>
@@ -97,7 +95,7 @@ export function StepConfigPanel({ step, onUpdate, onClose }: StepConfigPanelProp
               <Input
                 id="task_title"
                 placeholder="Follow up with lead"
-                value={(getConfig<string>(step, 'title') ?? '')}
+                value={getConfig<string>(step, 'title') ?? ''}
                 onChange={(e) => updateConfig('title', e.target.value)}
               />
             </div>
@@ -107,7 +105,7 @@ export function StepConfigPanel({ step, onUpdate, onClose }: StepConfigPanelProp
                 id="task_desc"
                 placeholder="Task description..."
                 rows={3}
-                value={(getConfig<string>(step, 'description') ?? '')}
+                value={getConfig<string>(step, 'description') ?? ''}
                 onChange={(e) => updateConfig('description', e.target.value)}
               />
             </div>
@@ -116,7 +114,7 @@ export function StepConfigPanel({ step, onUpdate, onClose }: StepConfigPanelProp
               <Input
                 id="assign_to"
                 placeholder="user-uuid"
-                value={(getConfig<string>(step, 'assign_to') ?? '')}
+                value={getConfig<string>(step, 'assign_to') ?? ''}
                 onChange={(e) => updateConfig('assign_to', e.target.value)}
               />
             </div>
@@ -127,7 +125,7 @@ export function StepConfigPanel({ step, onUpdate, onClose }: StepConfigPanelProp
                 type="number"
                 min={0}
                 placeholder="3"
-                value={(getConfig<number>(step, 'due_in_days') ?? '')}
+                value={getConfig<number>(step, 'due_in_days') ?? ''}
                 onChange={(e) => updateConfig('due_in_days', Number(e.target.value))}
               />
             </div>
@@ -192,7 +190,7 @@ export function StepConfigPanel({ step, onUpdate, onClose }: StepConfigPanelProp
                   min={0}
                   max={100}
                   placeholder="50"
-                  value={(getConditionConfig<number>(step, 'min_score') ?? '')}
+                  value={getConditionConfig<number>(step, 'min_score') ?? ''}
                   onChange={(e) => updateConditionConfig('min_score', Number(e.target.value))}
                 />
               </div>
@@ -204,7 +202,7 @@ export function StepConfigPanel({ step, onUpdate, onClose }: StepConfigPanelProp
                 <Input
                   id="tag_id"
                   placeholder="tag-uuid"
-                  value={(getConditionConfig<string>(step, 'tag_id') ?? '')}
+                  value={getConditionConfig<string>(step, 'tag_id') ?? ''}
                   onChange={(e) => updateConditionConfig('tag_id', e.target.value)}
                 />
               </div>
@@ -214,7 +212,7 @@ export function StepConfigPanel({ step, onUpdate, onClose }: StepConfigPanelProp
               <div className="space-y-1.5">
                 <Label>Stage</Label>
                 <Select
-                  value={(getConditionConfig<string>(step, 'stage') ?? '')}
+                  value={getConditionConfig<string>(step, 'stage') ?? ''}
                   onValueChange={(val) => updateConditionConfig('stage', val)}
                 >
                   <SelectTrigger>

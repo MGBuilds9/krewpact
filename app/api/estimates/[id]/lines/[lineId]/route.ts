@@ -113,10 +113,7 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
   const { id, lineId } = await context.params;
   const supabase = await createUserClient();
 
-  const { error } = await supabase
-    .from('estimate_lines')
-    .delete()
-    .eq('id', lineId);
+  const { error } = await supabase.from('estimate_lines').delete().eq('id', lineId);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

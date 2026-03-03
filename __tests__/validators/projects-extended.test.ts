@@ -37,7 +37,12 @@ describe('taskDependencyCreateSchema', () => {
   });
 
   it('accepts all valid dependency types', () => {
-    const types = ['finish_to_start', 'start_to_start', 'finish_to_finish', 'start_to_finish'] as const;
+    const types = [
+      'finish_to_start',
+      'start_to_start',
+      'finish_to_finish',
+      'start_to_finish',
+    ] as const;
     for (const dep_type of types) {
       const result = taskDependencyCreateSchema.safeParse({
         task_id: VALID_UUID_1,
@@ -89,7 +94,15 @@ describe('siteDiaryEntryCreateSchema', () => {
   });
 
   it('accepts all valid entry types', () => {
-    const types = ['observation', 'visitor', 'delivery', 'weather', 'safety', 'progress', 'other'] as const;
+    const types = [
+      'observation',
+      'visitor',
+      'delivery',
+      'weather',
+      'safety',
+      'progress',
+      'other',
+    ] as const;
     for (const entry_type of types) {
       const result = siteDiaryEntryCreateSchema.safeParse({
         entry_at: '2026-02-26',

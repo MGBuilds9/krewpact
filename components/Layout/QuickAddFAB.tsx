@@ -8,11 +8,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
+import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export function QuickAddFAB() {
-  const router = useRouter();
+  const { push: orgPush } = useOrgRouter();
   const pathname = usePathname();
 
   const getContextAwareActions = () => {
@@ -60,7 +61,7 @@ export function QuickAddFAB() {
           {actions.map((action) => (
             <DropdownMenuItem
               key={action.label}
-              onClick={() => router.push(action.href)}
+              onClick={() => orgPush(action.href)}
               className="cursor-pointer py-3 text-base"
             >
               <action.icon className="mr-3 h-5 w-5 text-muted-foreground" />

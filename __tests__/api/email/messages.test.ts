@@ -16,11 +16,7 @@ import { auth } from '@clerk/nextjs/server';
 import { getMicrosoftToken, graphFetch, buildGraphUrl } from '@/lib/microsoft/graph';
 import { GET } from '@/app/api/email/messages/route';
 import { GET as GET_BY_ID } from '@/app/api/email/messages/[id]/route';
-import {
-  mockClerkAuth,
-  mockClerkUnauth,
-  makeRequest,
-} from '@/__tests__/helpers';
+import { mockClerkAuth, mockClerkUnauth, makeRequest } from '@/__tests__/helpers';
 import type { GraphListResponse, GraphMessage } from '@/lib/microsoft/types';
 
 const mockAuth = vi.mocked(auth);
@@ -34,9 +30,7 @@ function makeGraphMessage(overrides: Partial<GraphMessage> = {}): GraphMessage {
     subject: 'Test Subject',
     bodyPreview: 'Hello world...',
     from: { emailAddress: { name: 'Sender', address: 'sender@example.com' } },
-    toRecipients: [
-      { emailAddress: { name: 'Recipient', address: 'recipient@example.com' } },
-    ],
+    toRecipients: [{ emailAddress: { name: 'Recipient', address: 'recipient@example.com' } }],
     receivedDateTime: '2026-02-24T10:00:00Z',
     sentDateTime: '2026-02-24T09:59:00Z',
     isRead: false,
@@ -96,9 +90,7 @@ describe('GET /api/email/messages', () => {
     mockClerkAuth(mockAuth);
     mockGraphFetch.mockResolvedValue(messages);
 
-    const res = await GET(
-      makeRequest('/api/email/messages?mailbox=shared@example.com'),
-    );
+    const res = await GET(makeRequest('/api/email/messages?mailbox=shared@example.com'));
     expect(res.status).toBe(200);
     expect(mockBuildGraphUrl).toHaveBeenCalledWith(
       expect.stringContaining('/mailFolders/inbox/messages'),
@@ -111,14 +103,9 @@ describe('GET /api/email/messages', () => {
     mockClerkAuth(mockAuth);
     mockGraphFetch.mockResolvedValue(messages);
 
-    const res = await GET(
-      makeRequest('/api/email/messages?search=invoice'),
-    );
+    const res = await GET(makeRequest('/api/email/messages?search=invoice'));
     expect(res.status).toBe(200);
-    expect(mockBuildGraphUrl).toHaveBeenCalledWith(
-      expect.stringContaining('%24search'),
-      undefined,
-    );
+    expect(mockBuildGraphUrl).toHaveBeenCalledWith(expect.stringContaining('%24search'), undefined);
   });
 
   it('validates top parameter max', async () => {
@@ -138,9 +125,7 @@ describe('GET /api/email/messages', () => {
     mockClerkAuth(mockAuth);
     mockGraphFetch.mockResolvedValue(messages);
 
-    const res = await GET(
-      makeRequest('/api/email/messages?folder=sentitems'),
-    );
+    const res = await GET(makeRequest('/api/email/messages?folder=sentitems'));
     expect(res.status).toBe(200);
     expect(mockBuildGraphUrl).toHaveBeenCalledWith(
       expect.stringContaining('/mailFolders/sentitems/messages'),
@@ -153,18 +138,10 @@ describe('GET /api/email/messages', () => {
     mockClerkAuth(mockAuth);
     mockGraphFetch.mockResolvedValue(messages);
 
-    const res = await GET(
-      makeRequest('/api/email/messages?top=10&skip=20'),
-    );
+    const res = await GET(makeRequest('/api/email/messages?top=10&skip=20'));
     expect(res.status).toBe(200);
-    expect(mockBuildGraphUrl).toHaveBeenCalledWith(
-      expect.stringMatching(/%24top=10/),
-      undefined,
-    );
-    expect(mockBuildGraphUrl).toHaveBeenCalledWith(
-      expect.stringMatching(/%24skip=20/),
-      undefined,
-    );
+    expect(mockBuildGraphUrl).toHaveBeenCalledWith(expect.stringMatching(/%24top=10/), undefined);
+    expect(mockBuildGraphUrl).toHaveBeenCalledWith(expect.stringMatching(/%24skip=20/), undefined);
   });
 });
 
@@ -183,10 +160,7 @@ describe('GET /api/email/messages/[id]', () => {
 
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
-    const res = await GET_BY_ID(
-      makeRequest('/api/email/messages/msg-001'),
-      makeContext('msg-001'),
-    );
+    const res = await GET_BY_ID(makeRequest('/api/email/messages/msg-001'), makeContext('msg-001'));
     expect(res.status).toBe(401);
   });
 
@@ -195,17 +169,11 @@ describe('GET /api/email/messages/[id]', () => {
     mockClerkAuth(mockAuth);
     mockGraphFetch.mockResolvedValue(message);
 
-    const res = await GET_BY_ID(
-      makeRequest('/api/email/messages/msg-001'),
-      makeContext('msg-001'),
-    );
+    const res = await GET_BY_ID(makeRequest('/api/email/messages/msg-001'), makeContext('msg-001'));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.id).toBe('msg-001');
-    expect(mockBuildGraphUrl).toHaveBeenCalledWith(
-      '/messages/msg-001',
-      undefined,
-    );
+    expect(mockBuildGraphUrl).toHaveBeenCalledWith('/messages/msg-001', undefined);
   });
 
   it('supports shared mailbox for single message', async () => {
@@ -218,9 +186,6 @@ describe('GET /api/email/messages/[id]', () => {
       makeContext('msg-001'),
     );
     expect(res.status).toBe(200);
-    expect(mockBuildGraphUrl).toHaveBeenCalledWith(
-      '/messages/msg-001',
-      'shared@example.com',
-    );
+    expect(mockBuildGraphUrl).toHaveBeenCalledWith('/messages/msg-001', 'shared@example.com');
   });
 });

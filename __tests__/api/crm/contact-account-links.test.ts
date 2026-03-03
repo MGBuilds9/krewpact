@@ -5,11 +5,7 @@ vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
 
 import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
-import {
-  GET,
-  POST,
-  DELETE,
-} from '@/app/api/crm/contacts/[id]/accounts/route';
+import { GET, POST, DELETE } from '@/app/api/crm/contacts/[id]/accounts/route';
 import {
   mockClerkAuth,
   mockClerkUnauth,
@@ -114,10 +110,9 @@ describe('DELETE /api/crm/contacts/[id]/accounts', () => {
 
   it('returns 401 if unauthenticated', async () => {
     mockClerkUnauth(mockAuth);
-    const req = makeRequest(
-      `/api/crm/contacts/${CONTACT_ID}/accounts?account_id=${ACCOUNT_ID}`,
-      { method: 'DELETE' },
-    );
+    const req = makeRequest(`/api/crm/contacts/${CONTACT_ID}/accounts?account_id=${ACCOUNT_ID}`, {
+      method: 'DELETE',
+    });
     const res = await DELETE(req, makeContext(CONTACT_ID));
     expect(res.status).toBe(401);
   });
@@ -129,10 +124,9 @@ describe('DELETE /api/crm/contacts/[id]/accounts', () => {
     });
     mockCreateUserClient.mockResolvedValue(client);
 
-    const req = makeRequest(
-      `/api/crm/contacts/${CONTACT_ID}/accounts?account_id=${ACCOUNT_ID}`,
-      { method: 'DELETE' },
-    );
+    const req = makeRequest(`/api/crm/contacts/${CONTACT_ID}/accounts?account_id=${ACCOUNT_ID}`, {
+      method: 'DELETE',
+    });
     const res = await DELETE(req, makeContext(CONTACT_ID));
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -141,10 +135,7 @@ describe('DELETE /api/crm/contacts/[id]/accounts', () => {
 
   it('returns 400 without account_id param', async () => {
     mockClerkAuth(mockAuth);
-    const req = makeRequest(
-      `/api/crm/contacts/${CONTACT_ID}/accounts`,
-      { method: 'DELETE' },
-    );
+    const req = makeRequest(`/api/crm/contacts/${CONTACT_ID}/accounts`, { method: 'DELETE' });
     const res = await DELETE(req, makeContext(CONTACT_ID));
     expect(res.status).toBe(400);
   });

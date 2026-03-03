@@ -110,19 +110,14 @@ export function GlobalSearch() {
       >
         <Search className="h-4 w-4" />
         <span>Search CRM...</span>
-        <kbd className="ml-2 rounded border px-1.5 py-0.5 text-xs font-mono">
-          Cmd+K
-        </kbd>
+        <kbd className="ml-2 rounded border px-1.5 py-0.5 text-xs font-mono">Cmd+K</kbd>
       </button>
     );
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh]">
-      <div
-        className="fixed inset-0 bg-black/50"
-        onClick={handleClose}
-      />
+      <div className="fixed inset-0 bg-black/50" onClick={handleClose} />
       <div className="relative z-10 w-full max-w-lg rounded-lg border bg-background shadow-xl">
         <div className="flex items-center border-b px-4">
           <Search className="h-4 w-4 text-muted-foreground" />
@@ -151,18 +146,13 @@ export function GlobalSearch() {
                 onClick={() => handleSelect(result)}
                 onMouseEnter={() => setSelectedIndex(i)}
               >
-                <Badge
-                  variant="secondary"
-                  className={`${TYPE_COLORS[result.type] ?? ''} text-xs`}
-                >
+                <Badge variant="secondary" className={`${TYPE_COLORS[result.type] ?? ''} text-xs`}>
                   {result.type}
                 </Badge>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{result.title}</p>
                   {result.subtitle && (
-                    <p className="text-xs text-muted-foreground truncate">
-                      {result.subtitle}
-                    </p>
+                    <p className="text-xs text-muted-foreground truncate">{result.subtitle}</p>
                   )}
                 </div>
               </button>

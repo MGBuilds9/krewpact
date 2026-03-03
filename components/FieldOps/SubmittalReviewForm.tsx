@@ -52,9 +52,7 @@ export function SubmittalReviewForm({
 
   async function onSubmit(values: FormValues) {
     try {
-      await createReview.mutateAsync(
-        values as Parameters<typeof createReview.mutateAsync>[0],
-      );
+      await createReview.mutateAsync(values as Parameters<typeof createReview.mutateAsync>[0]);
       toast.success('Review submitted');
       form.reset();
       onSuccess?.();

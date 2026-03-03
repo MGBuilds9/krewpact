@@ -68,10 +68,9 @@ describe('useCRM hooks', () => {
     it('calls /api/crm/accounts with division_id filter', async () => {
       mockApiFetch.mockResolvedValue([]);
 
-      const { result } = renderHook(
-        () => useAccounts({ divisionId: 'div-1' }),
-        { wrapper: createWrapper() },
-      );
+      const { result } = renderHook(() => useAccounts({ divisionId: 'div-1' }), {
+        wrapper: createWrapper(),
+      });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
       expect(mockApiFetch).toHaveBeenCalledWith('/api/crm/accounts', {
@@ -82,10 +81,9 @@ describe('useCRM hooks', () => {
     it('calls /api/crm/accounts with search filter', async () => {
       mockApiFetch.mockResolvedValue([]);
 
-      const { result } = renderHook(
-        () => useAccounts({ search: 'acme' }),
-        { wrapper: createWrapper() },
-      );
+      const { result } = renderHook(() => useAccounts({ search: 'acme' }), {
+        wrapper: createWrapper(),
+      });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
       expect(mockApiFetch).toHaveBeenCalledWith('/api/crm/accounts', {
@@ -129,10 +127,9 @@ describe('useCRM hooks', () => {
     it('calls /api/crm/leads with status filter', async () => {
       mockApiFetch.mockResolvedValue([]);
 
-      const { result } = renderHook(
-        () => useLeads({ status: 'qualified' }),
-        { wrapper: createWrapper() },
-      );
+      const { result } = renderHook(() => useLeads({ status: 'qualified' }), {
+        wrapper: createWrapper(),
+      });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
       expect(mockApiFetch).toHaveBeenCalledWith('/api/crm/leads', {
@@ -162,10 +159,9 @@ describe('useCRM hooks', () => {
       const mockPipeline = { stages: {} };
       mockApiFetch.mockResolvedValue(mockPipeline);
 
-      const { result } = renderHook(
-        () => usePipeline({ divisionId: 'div-1' }),
-        { wrapper: createWrapper() },
-      );
+      const { result } = renderHook(() => usePipeline({ divisionId: 'div-1' }), {
+        wrapper: createWrapper(),
+      });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
       expect(mockApiFetch).toHaveBeenCalledWith('/api/crm/opportunities', {
@@ -178,10 +174,9 @@ describe('useCRM hooks', () => {
     it('calls /api/crm/activities with opportunity filter', async () => {
       mockApiFetch.mockResolvedValue([]);
 
-      const { result } = renderHook(
-        () => useActivities({ opportunityId: 'opp-1' }),
-        { wrapper: createWrapper() },
-      );
+      const { result } = renderHook(() => useActivities({ opportunityId: 'opp-1' }), {
+        wrapper: createWrapper(),
+      });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
       expect(mockApiFetch).toHaveBeenCalledWith('/api/crm/activities', {

@@ -91,16 +91,12 @@ export function EmailAnalyticsCard({ templateId, sequenceId }: EmailAnalyticsCar
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-1">
               <m.icon className="h-4 w-4 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground font-medium">
-                {m.label}
-              </span>
+              <span className="text-xs text-muted-foreground font-medium">{m.label}</span>
             </div>
             <div className="flex items-baseline gap-2">
               <span className="text-2xl font-bold">{m.value}</span>
               {m.rate !== null && (
-                <span className={`text-sm font-medium ${m.colorClass}`}>
-                  {m.rate}%
-                </span>
+                <span className={`text-sm font-medium ${m.colorClass}`}>{m.rate}%</span>
               )}
             </div>
           </CardContent>

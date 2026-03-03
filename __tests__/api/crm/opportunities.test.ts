@@ -13,11 +13,7 @@ vi.mock('@/lib/supabase/server', () => ({
 import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { GET, POST } from '@/app/api/crm/opportunities/route';
-import {
-  GET as GET_ID,
-  PATCH,
-  DELETE,
-} from '@/app/api/crm/opportunities/[id]/route';
+import { GET as GET_ID, PATCH, DELETE } from '@/app/api/crm/opportunities/[id]/route';
 import {
   mockSupabaseClient,
   mockClerkAuth,
@@ -79,9 +75,7 @@ describe('GET /api/crm/opportunities', () => {
     mockCreateUserClient.mockResolvedValue(client);
 
     const res = await GET(
-      makeRequest(
-        '/api/crm/opportunities?division_id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-      ),
+      makeRequest('/api/crm/opportunities?division_id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'),
     );
     expect(res.status).toBe(200);
     expect(client.from).toHaveBeenCalledWith('opportunities');
@@ -95,9 +89,7 @@ describe('GET /api/crm/opportunities', () => {
     });
     mockCreateUserClient.mockResolvedValue(client);
 
-    const res = await GET(
-      makeRequest('/api/crm/opportunities?stage=proposal'),
-    );
+    const res = await GET(makeRequest('/api/crm/opportunities?stage=proposal'));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body).toEqual(opportunities);
@@ -112,9 +104,7 @@ describe('GET /api/crm/opportunities', () => {
     mockCreateUserClient.mockResolvedValue(client);
 
     const res = await GET(
-      makeRequest(
-        '/api/crm/opportunities?owner_user_id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-      ),
+      makeRequest('/api/crm/opportunities?owner_user_id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'),
     );
     expect(res.status).toBe(200);
     expect(client.from).toHaveBeenCalledWith('opportunities');
@@ -133,9 +123,7 @@ describe('GET /api/crm/opportunities', () => {
       }),
     );
 
-    const res = await GET(
-      makeRequest('/api/crm/opportunities?view=pipeline'),
-    );
+    const res = await GET(makeRequest('/api/crm/opportunities?view=pipeline'));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.stages).toBeDefined();
@@ -198,9 +186,7 @@ describe('POST /api/crm/opportunities', () => {
 
   it('returns 400 for invalid data', async () => {
     mockClerkAuth(mockAuth);
-    const res = await POST(
-      makeJsonRequest('/api/crm/opportunities', { stage: 'intake' }),
-    );
+    const res = await POST(makeJsonRequest('/api/crm/opportunities', { stage: 'intake' }));
     expect(res.status).toBe(400);
   });
 });
@@ -230,7 +216,10 @@ describe('GET /api/crm/opportunities/[id]', () => {
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({
         tables: {
-          opportunities: { data: { ...opportunity, opportunity_stage_history: stageHistory }, error: null },
+          opportunities: {
+            data: { ...opportunity, opportunity_stage_history: stageHistory },
+            error: null,
+          },
         },
       }),
     );
@@ -314,11 +303,7 @@ describe('PATCH /api/crm/opportunities/[id]', () => {
     mockCreateUserClient.mockResolvedValue(client);
 
     const res = await PATCH(
-      makeJsonRequest(
-        '/api/crm/opportunities/123',
-        { stage: 'site_visit' },
-        'PATCH',
-      ),
+      makeJsonRequest('/api/crm/opportunities/123', { stage: 'site_visit' }, 'PATCH'),
       makeContext(currentOpp.id),
     );
     expect(res.status).toBe(200);
@@ -338,11 +323,7 @@ describe('PATCH /api/crm/opportunities/[id]', () => {
     mockCreateUserClient.mockResolvedValue(client);
 
     const res = await PATCH(
-      makeJsonRequest(
-        '/api/crm/opportunities/123',
-        { opportunity_name: 'Same Stage' },
-        'PATCH',
-      ),
+      makeJsonRequest('/api/crm/opportunities/123', { opportunity_name: 'Same Stage' }, 'PATCH'),
       makeContext(currentOpp.id),
     );
     expect(res.status).toBe(200);
@@ -371,10 +352,7 @@ describe('DELETE /api/crm/opportunities/[id]', () => {
       }),
     );
 
-    const res = await DELETE(
-      makeRequest('/api/crm/opportunities/123'),
-      makeContext('some-id'),
-    );
+    const res = await DELETE(makeRequest('/api/crm/opportunities/123'), makeContext('some-id'));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);

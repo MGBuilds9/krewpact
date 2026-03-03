@@ -1,66 +1,78 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { TagBadge } from './TagBadge'
-import { Plus } from 'lucide-react'
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { TagBadge } from './TagBadge';
+import { Plus } from 'lucide-react';
 
 interface Tag {
-  id: string
-  name: string
-  color: string
+  id: string;
+  name: string;
+  color: string;
 }
 
 interface TagSelectorProps {
-  entityType: 'lead' | 'contact' | 'account' | 'opportunity'
-  entityId: string
-  existingTags: Tag[]
-  onTagsChanged?: () => void
+  entityType: 'lead' | 'contact' | 'account' | 'opportunity';
+  entityId: string;
+  existingTags: Tag[];
+  onTagsChanged?: () => void;
 }
 
 const PRESET_COLORS = [
-  '#ef4444', '#f97316', '#eab308', '#22c55e',
-  '#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899',
-  '#64748b', '#0f172a',
-]
+  '#ef4444',
+  '#f97316',
+  '#eab308',
+  '#22c55e',
+  '#06b6d4',
+  '#3b82f6',
+  '#8b5cf6',
+  '#ec4899',
+  '#64748b',
+  '#0f172a',
+];
 
-export function TagSelector({ entityType, entityId, existingTags, onTagsChanged }: TagSelectorProps) {
-  const [appliedTags, setAppliedTags] = useState<Tag[]>(existingTags)
-  const [availableTags, setAvailableTags] = useState<Tag[]>([])
-  const [open, setOpen] = useState(false)
-  const [search, setSearch] = useState('')
-  const [creating, setCreating] = useState(false)
-  const [newTagName, setNewTagName] = useState('')
-  const [newTagColor, setNewTagColor] = useState(PRESET_COLORS[5])
-  const [loading, setLoading] = useState(false)
+export function TagSelector({
+  entityType,
+  entityId,
+  existingTags,
+  onTagsChanged,
+}: TagSelectorProps) {
+  const [appliedTags, setAppliedTags] = useState<Tag[]>(existingTags);
+  const [availableTags, setAvailableTags] = useState<Tag[]>([]);
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [newTagName, setNewTagName] = useState('');
+  const [newTagColor, setNewTagColor] = useState(PRESET_COLORS[5]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetch('/api/crm/tags')
-      .then(r => r.json())
-      .then(res => setAvailableTags(res.data ?? []))
-      .catch(() => {})
-  }, [])
+      .then((r) => r.json())
+      .then((res) => setAvailableTags(res.data ?? []))
+      .catch(() => {});
+  }, []);
 
-  const appliedIds = new Set(appliedTags.map(t => t.id))
+  const appliedIds = new Set(appliedTags.map((t) => t.id));
   const filteredTags = availableTags.filter(
-    t => !appliedIds.has(t.id) && t.name.toLowerCase().includes(search.toLowerCase())
-  )
+    (t) => !appliedIds.has(t.id) && t.name.toLowerCase().includes(search.toLowerCase()),
+  );
 
   async function applyTag(tag: Tag) {
-    setLoading(true)
+    setLoading(true);
     try {
       await fetch('/api/crm/entity-tags', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ entity_type: entityType, entity_id: entityId, tag_id: tag.id }),
-      })
-      setAppliedTags(prev => [...prev, tag])
-      onTagsChanged?.()
+      });
+      setAppliedTags((prev) => [...prev, tag]);
+      onTagsChanged?.();
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
@@ -68,36 +80,36 @@ export function TagSelector({ entityType, entityId, existingTags, onTagsChanged 
     try {
       await fetch(
         `/api/crm/entity-tags?entity_type=${entityType}&entity_id=${entityId}&tag_id=${tagId}`,
-        { method: 'DELETE' }
-      )
-      setAppliedTags(prev => prev.filter(t => t.id !== tagId))
-      onTagsChanged?.()
+        { method: 'DELETE' },
+      );
+      setAppliedTags((prev) => prev.filter((t) => t.id !== tagId));
+      onTagsChanged?.();
     } catch {}
   }
 
   async function createAndApplyTag() {
-    if (!newTagName.trim()) return
-    setLoading(true)
+    if (!newTagName.trim()) return;
+    setLoading(true);
     try {
       const res = await fetch('/api/crm/tags', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newTagName.trim(), color: newTagColor }),
-      })
-      const tag: Tag = await res.json()
-      setAvailableTags(prev => [...prev, tag])
-      await applyTag(tag)
-      setNewTagName('')
-      setCreating(false)
-      setOpen(false)
+      });
+      const tag: Tag = await res.json();
+      setAvailableTags((prev) => [...prev, tag]);
+      await applyTag(tag);
+      setNewTagName('');
+      setCreating(false);
+      setOpen(false);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      {appliedTags.map(tag => (
+      {appliedTags.map((tag) => (
         <TagBadge key={tag.id} tag={tag} onRemove={removeTag} />
       ))}
 
@@ -112,7 +124,7 @@ export function TagSelector({ entityType, entityId, existingTags, onTagsChanged 
           <Input
             placeholder="Search tags..."
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={(e) => setSearch(e.target.value)}
             className="h-7 text-xs mb-2"
           />
 
@@ -120,10 +132,13 @@ export function TagSelector({ entityType, entityId, existingTags, onTagsChanged 
             {filteredTags.length === 0 && (
               <p className="text-xs text-muted-foreground px-2 py-1">No tags found</p>
             )}
-            {filteredTags.map(tag => (
+            {filteredTags.map((tag) => (
               <button
                 key={tag.id}
-                onClick={() => { applyTag(tag); setOpen(false) }}
+                onClick={() => {
+                  applyTag(tag);
+                  setOpen(false);
+                }}
                 disabled={loading}
                 className="w-full flex items-center gap-2 rounded px-2 py-1 text-xs hover:bg-muted transition-colors text-left"
               >
@@ -150,14 +165,14 @@ export function TagSelector({ entityType, entityId, existingTags, onTagsChanged 
                 <Input
                   placeholder="Tag name"
                   value={newTagName}
-                  onChange={e => setNewTagName(e.target.value)}
+                  onChange={(e) => setNewTagName(e.target.value)}
                   className="h-7 text-xs"
                   autoFocus
                 />
                 <div>
                   <Label className="text-xs text-muted-foreground mb-1 block">Color</Label>
                   <div className="flex flex-wrap gap-1">
-                    {PRESET_COLORS.map(color => (
+                    {PRESET_COLORS.map((color) => (
                       <button
                         key={color}
                         onClick={() => setNewTagColor(color)}
@@ -171,10 +186,20 @@ export function TagSelector({ entityType, entityId, existingTags, onTagsChanged 
                   </div>
                 </div>
                 <div className="flex gap-1">
-                  <Button size="sm" className="h-6 text-xs flex-1" onClick={createAndApplyTag} disabled={loading || !newTagName.trim()}>
+                  <Button
+                    size="sm"
+                    className="h-6 text-xs flex-1"
+                    onClick={createAndApplyTag}
+                    disabled={loading || !newTagName.trim()}
+                  >
                     Create
                   </Button>
-                  <Button size="sm" variant="ghost" className="h-6 text-xs" onClick={() => setCreating(false)}>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 text-xs"
+                    onClick={() => setCreating(false)}
+                  >
                     Cancel
                   </Button>
                 </div>
@@ -184,5 +209,5 @@ export function TagSelector({ entityType, entityId, existingTags, onTagsChanged 
         </PopoverContent>
       </Popover>
     </div>
-  )
+  );
 }

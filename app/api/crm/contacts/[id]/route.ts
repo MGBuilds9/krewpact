@@ -13,11 +13,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
   const { id } = await context.params;
   const supabase = await createUserClient();
-  const { data, error } = await supabase
-    .from('contacts')
-    .select('*')
-    .eq('id', id)
-    .single();
+  const { data, error } = await supabase.from('contacts').select('*').eq('id', id).single();
 
   if (error) {
     const status = error.code === 'PGRST116' ? 404 : 500;

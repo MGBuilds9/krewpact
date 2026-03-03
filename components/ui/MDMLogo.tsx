@@ -24,10 +24,24 @@ function LogoMark({ height }: { height: number }) {
       aria-label="MDM Group Inc logo"
       className="flex-shrink-0"
     >
-      <polygon fill="#FFFFFF" points="46.313,25.04 80.375,25.04 81.563,67.728 80.5,84.728 46.063,84.728" className="dark:fill-slate-200" />
-      <path fill="#EF7922" d="M60.251,79.19c0,0,4.023,0.48,4.023-2.658V35.914c0,0-0.268-2.3-4.023-1.927V79.19z" />
-      <polygon fill="#FFFFFF" points="113.18,58.603 113.18,51.603 125.282,51.603 125.282,63.123" className="dark:fill-slate-200" />
-      <polygon fill="#EF7922" points="119.008,60.843 113.18,54.565 113.18,85.08 125.283,85.08 125.283,54.12 122.409,54.12" />
+      <polygon
+        fill="#FFFFFF"
+        points="46.313,25.04 80.375,25.04 81.563,67.728 80.5,84.728 46.063,84.728"
+        className="dark:fill-slate-200"
+      />
+      <path
+        fill="#EF7922"
+        d="M60.251,79.19c0,0,4.023,0.48,4.023-2.658V35.914c0,0-0.268-2.3-4.023-1.927V79.19z"
+      />
+      <polygon
+        fill="#FFFFFF"
+        points="113.18,58.603 113.18,51.603 125.282,51.603 125.282,63.123"
+        className="dark:fill-slate-200"
+      />
+      <polygon
+        fill="#EF7922"
+        points="119.008,60.843 113.18,54.565 113.18,85.08 125.283,85.08 125.283,54.12 122.409,54.12"
+      />
       <path
         fill="#EF7922"
         d="M153,42.643l-9.915-4.098l1.834-7.023l-14.43,1.708l16.596-15.081l-8.506-1.12l2.987-14.495
@@ -64,9 +78,7 @@ export function MDMLogo({ size = 'md', showText = true, className = '' }: MDMLog
       <LogoMark height={s.logo} />
       {showText && (
         <div className="flex flex-col leading-tight">
-          <span className={`${s.label} font-semibold tracking-wide text-[#EF7922]`}>
-            KrewPact
-          </span>
+          <span className={`${s.label} font-semibold tracking-wide text-[#EF7922]`}>KrewPact</span>
         </div>
       )}
     </div>

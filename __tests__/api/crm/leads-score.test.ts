@@ -45,9 +45,20 @@ describe('GET /api/crm/leads/[id]/score', () => {
   });
 
   it('returns score and history for a lead', async () => {
-    const lead = makeLead({ lead_score: 75, fit_score: 30, intent_score: 25, engagement_score: 20 });
+    const lead = makeLead({
+      lead_score: 75,
+      fit_score: 30,
+      intent_score: 25,
+      engagement_score: 20,
+    });
     const history = [
-      { id: 'h1', lead_id: lead.id, score: 75, previous_score: 50, created_at: '2026-02-24T00:00:00Z' },
+      {
+        id: 'h1',
+        lead_id: lead.id,
+        score: 75,
+        previous_score: 50,
+        created_at: '2026-02-24T00:00:00Z',
+      },
     ];
     mockClerkAuth(mockAuth);
     mockCreateUserClient.mockResolvedValue(

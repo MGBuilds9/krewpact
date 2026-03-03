@@ -59,9 +59,7 @@ export function StepNode({ step, selected, onSelect, onDelete }: StepNodeProps) 
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium leading-none">{labelMap[step.action_type]}</p>
-        {summary && (
-          <p className="mt-1 truncate text-xs text-muted-foreground">{summary}</p>
-        )}
+        {summary && <p className="mt-1 truncate text-xs text-muted-foreground">{summary}</p>}
       </div>
       <button
         onClick={(e) => {

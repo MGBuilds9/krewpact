@@ -29,10 +29,7 @@ export async function DELETE(_req: NextRequest, context: RouteContext) {
   const { batchId } = await context.params;
   const supabase = await createUserClient();
 
-  const { error } = await supabase
-    .from('timesheet_batches')
-    .delete()
-    .eq('id', batchId);
+  const { error } = await supabase.from('timesheet_batches').delete().eq('id', batchId);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 

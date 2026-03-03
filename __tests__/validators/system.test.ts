@@ -53,7 +53,9 @@ describe('erpSyncControlSchema', () => {
 
   it('accepts all valid action enum values', () => {
     for (const action of ['pause', 'resume', 'retry', 'cancel'] as const) {
-      expect(erpSyncControlSchema.safeParse({ entity_type: 'Customer', action }).success).toBe(true);
+      expect(erpSyncControlSchema.safeParse({ entity_type: 'Customer', action }).success).toBe(
+        true,
+      );
     }
   });
 

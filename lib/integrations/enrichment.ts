@@ -69,7 +69,11 @@ export async function enrichLead(
         linkedin_url: contact.linkedin_url,
       });
 
-      results.push({ source: 'apollo_match', data: apolloResult as unknown as Record<string, unknown>, success: true });
+      results.push({
+        source: 'apollo_match',
+        data: apolloResult as unknown as Record<string, unknown>,
+        success: true,
+      });
 
       // Side effects: update lead domain if Apollo found a website
       if (apolloResult.website_url && !lead.domain) {
@@ -91,7 +95,11 @@ export async function enrichLead(
   // ── Step 2: Brave Web Search ───────────────────────────────────────────
   try {
     const braveResult = await enrichFromBrave(lead.company_name, lead.province);
-    results.push({ source: 'brave', data: braveResult as unknown as Record<string, unknown>, success: true });
+    results.push({
+      source: 'brave',
+      data: braveResult as unknown as Record<string, unknown>,
+      success: true,
+    });
 
     // If we still don't have a domain, try to extract from Brave's first result
     if (!lead.domain && !sideEffects.domain && braveResult.website) {
@@ -109,15 +117,26 @@ export async function enrichLead(
   // ── Step 3: Tavily AI Search ───────────────────────────────────────────
   try {
     const tavilyResult = await enrichFromTavily(lead.company_name, resolvedCity);
-    results.push({ source: 'tavily', data: tavilyResult as unknown as Record<string, unknown>, success: true });
+    results.push({
+      source: 'tavily',
+      data: tavilyResult as unknown as Record<string, unknown>,
+      success: true,
+    });
   } catch (err) {
     results.push({ source: 'tavily', data: {}, success: false, error: String(err) });
   }
 
   // ── Step 4: Google Maps Places ─────────────────────────────────────────
   try {
-    const mapsResult: GoogleMapsResult = await enrichFromGoogleMaps(lead.company_name, resolvedCity);
-    results.push({ source: 'google_maps', data: mapsResult as unknown as Record<string, unknown>, success: true });
+    const mapsResult: GoogleMapsResult = await enrichFromGoogleMaps(
+      lead.company_name,
+      resolvedCity,
+    );
+    results.push({
+      source: 'google_maps',
+      data: mapsResult as unknown as Record<string, unknown>,
+      success: true,
+    });
 
     // Side effect: if Google Maps found a city and we didn't have one
     if (mapsResult.city && !resolvedCity) {

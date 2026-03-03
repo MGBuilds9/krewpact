@@ -27,7 +27,12 @@ function COApprovalCard({ co, canApprove, projectId }: COApprovalCardProps) {
   const router = useRouter();
 
   const handleApprove = async () => {
-    if (!confirm(`Approve Change Order "${co.title}" for $${co.total_amount.toLocaleString('en-CA')}?`)) return;
+    if (
+      !confirm(
+        `Approve Change Order "${co.title}" for $${co.total_amount.toLocaleString('en-CA')}?`,
+      )
+    )
+      return;
     setLoading(true);
     setError(null);
     try {
@@ -62,7 +67,9 @@ function COApprovalCard({ co, canApprove, projectId }: COApprovalCardProps) {
             <p className="text-sm text-gray-500 mt-1 line-clamp-2">{co.description}</p>
           )}
         </div>
-        <span className={`shrink-0 text-xs font-medium px-2 py-1 rounded-full ${STATUS_STYLE[co.status] ?? 'bg-gray-100 text-gray-500'}`}>
+        <span
+          className={`shrink-0 text-xs font-medium px-2 py-1 rounded-full ${STATUS_STYLE[co.status] ?? 'bg-gray-100 text-gray-500'}`}
+        >
           {co.status.replace(/_/g, ' ')}
         </span>
       </div>
@@ -70,11 +77,15 @@ function COApprovalCard({ co, canApprove, projectId }: COApprovalCardProps) {
       <div className="flex items-center justify-between">
         <div>
           <p className="text-xs text-gray-400">Amount</p>
-          <p className="font-semibold text-gray-900">${co.total_amount.toLocaleString('en-CA')} CAD</p>
+          <p className="font-semibold text-gray-900">
+            ${co.total_amount.toLocaleString('en-CA')} CAD
+          </p>
         </div>
         <div className="text-right">
           <p className="text-xs text-gray-400">Submitted</p>
-          <p className="text-sm text-gray-600">{new Date(co.submitted_at).toLocaleDateString('en-CA')}</p>
+          <p className="text-sm text-gray-600">
+            {new Date(co.submitted_at).toLocaleDateString('en-CA')}
+          </p>
         </div>
       </div>
 

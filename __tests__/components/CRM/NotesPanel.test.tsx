@@ -11,8 +11,18 @@ beforeEach(() => {
     ok: true,
     json: async () => ({
       data: [
-        { id: 'note-1', content: 'First note', is_pinned: true, created_at: '2026-02-26T12:00:00Z' },
-        { id: 'note-2', content: 'Second note', is_pinned: false, created_at: '2026-02-26T10:00:00Z' },
+        {
+          id: 'note-1',
+          content: 'First note',
+          is_pinned: true,
+          created_at: '2026-02-26T12:00:00Z',
+        },
+        {
+          id: 'note-2',
+          content: 'Second note',
+          is_pinned: false,
+          created_at: '2026-02-26T10:00:00Z',
+        },
       ],
       total: 2,
       hasMore: false,

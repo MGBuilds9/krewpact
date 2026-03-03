@@ -42,9 +42,7 @@ describe('matchEmailToEntities', () => {
       tables: {
         leads: { data: [], error: null },
         contacts: {
-          data: [
-            { id: 'contact-1', first_name: 'Jane', last_name: 'Doe', account_id: null },
-          ],
+          data: [{ id: 'contact-1', first_name: 'Jane', last_name: 'Doe', account_id: null }],
           error: null,
         },
       },
@@ -52,9 +50,7 @@ describe('matchEmailToEntities', () => {
 
     const result = await matchEmailToEntities(client, 'jane@example.com');
 
-    expect(result.contacts).toEqual([
-      { id: 'contact-1', first_name: 'Jane', last_name: 'Doe' },
-    ]);
+    expect(result.contacts).toEqual([{ id: 'contact-1', first_name: 'Jane', last_name: 'Doe' }]);
     expect(result.accounts).toEqual([]);
   });
 
@@ -63,9 +59,7 @@ describe('matchEmailToEntities', () => {
       tables: {
         leads: { data: [], error: null },
         contacts: {
-          data: [
-            { id: 'contact-1', first_name: 'Jane', last_name: 'Doe', account_id: 'acct-1' },
-          ],
+          data: [{ id: 'contact-1', first_name: 'Jane', last_name: 'Doe', account_id: 'acct-1' }],
           error: null,
         },
         accounts: {
@@ -109,9 +103,7 @@ describe('matchEmailToEntities', () => {
           error: null,
         },
         contacts: {
-          data: [
-            { id: 'contact-1', first_name: 'Jane', last_name: 'Doe', account_id: null },
-          ],
+          data: [{ id: 'contact-1', first_name: 'Jane', last_name: 'Doe', account_id: null }],
           error: null,
         },
       },

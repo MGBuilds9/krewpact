@@ -3,10 +3,7 @@ import { createUserClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { complianceDocUpdateSchema } from '@/lib/validators/procurement';
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ docId: string }> },
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ docId: string }> }) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -22,10 +19,7 @@ export async function GET(
   return NextResponse.json(data);
 }
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ docId: string }> },
-) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ docId: string }> }) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 

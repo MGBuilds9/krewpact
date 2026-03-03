@@ -27,13 +27,13 @@ MDM currently runs on Sage 50 Accounting, Sage Construction Management, spreadsh
 
 ## Current Systems Being Replaced
 
-| Current System | What It Does | Replaced By |
-|---|---|---|
-| Sage 50 Accounting | General ledger, accounts payable/receivable, payroll | ERPNext |
-| Sage Construction Management | Project tracking, cost codes, estimates, job costing | KrewPact + ERPNext |
-| Spreadsheets | Lead tracking, estimating, scheduling, budget tracking | KrewPact CRM + Estimating |
-| Email / manual | Client communication, approvals, document distribution | KrewPact Portals + BoldSign e-signatures |
-| OneDrive / SMB file shares | Document storage, contract filing, photo archives | KrewPact Document Management (Supabase Storage) |
+| Current System               | What It Does                                           | Replaced By                                     |
+| ---------------------------- | ------------------------------------------------------ | ----------------------------------------------- |
+| Sage 50 Accounting           | General ledger, accounts payable/receivable, payroll   | ERPNext                                         |
+| Sage Construction Management | Project tracking, cost codes, estimates, job costing   | KrewPact + ERPNext                              |
+| Spreadsheets                 | Lead tracking, estimating, scheduling, budget tracking | KrewPact CRM + Estimating                       |
+| Email / manual               | Client communication, approvals, document distribution | KrewPact Portals + BoldSign e-signatures        |
+| OneDrive / SMB file shares   | Document storage, contract filing, photo archives      | KrewPact Document Management (Supabase Storage) |
 
 ---
 
@@ -84,14 +84,14 @@ JobTread was evaluated as a commercial construction project management platform.
 
 ## MDM Group Divisions
 
-| Division Code | Name | Description |
-|---|---|---|
+| Division Code | Name            | Description                             |
+| ------------- | --------------- | --------------------------------------- |
 | `contracting` | MDM Contracting | General contracting — the core business |
-| `homes` | MDM Homes | Residential construction |
-| `wood` | MDM Wood | Wood and lumber supply |
-| `telecom` | MDM Telecom | Telecommunications and electrical |
-| `group-inc` | MDM Group Inc. | Parent company and corporate operations |
-| `management` | MDM Management | Property management |
+| `homes`       | MDM Homes       | Residential construction                |
+| `wood`        | MDM Wood        | Wood and lumber supply                  |
+| `telecom`     | MDM Telecom     | Telecommunications and electrical       |
+| `group-inc`   | MDM Group Inc.  | Parent company and corporate operations |
+| `management`  | MDM Management  | Property management                     |
 
 All six divisions share one KrewPact platform. Each user's access is scoped to their division(s) and role. An estimator in Contracting sees only Contracting data; an executive sees across all divisions.
 
@@ -116,12 +116,12 @@ When KrewPact is fully implemented, MDM Group will operate with:
 
 The MVP is a focused 12-week build. The goal is to replace the most painful manual workflows with a working, production-deployed platform — not to build everything at once.
 
-| Phase | Weeks | What Gets Built |
-|---|---|---|
-| Foundation | 1-2 | User login, roles and permissions, database, ERPNext connection, app shell, CI/CD pipeline |
-| CRM + Estimating | 3-6 | Leads, opportunities, accounts, contacts, estimate builder, ERPNext customer and quotation sync |
-| Contracting + Projects | 7-9 | Proposals, e-signatures via BoldSign, project creation, milestones, ERPNext sync (Sales Order, Project) |
-| Execution + Go-Live | 10-12 | Tasks, daily logs, document upload, invoice snapshots, executive dashboard, testing, production deploy |
+| Phase                  | Weeks | What Gets Built                                                                                         |
+| ---------------------- | ----- | ------------------------------------------------------------------------------------------------------- |
+| Foundation             | 1-2   | User login, roles and permissions, database, ERPNext connection, app shell, CI/CD pipeline              |
+| CRM + Estimating       | 3-6   | Leads, opportunities, accounts, contacts, estimate builder, ERPNext customer and quotation sync         |
+| Contracting + Projects | 7-9   | Proposals, e-signatures via BoldSign, project creation, milestones, ERPNext sync (Sales Order, Project) |
+| Execution + Go-Live    | 10-12 | Tasks, daily logs, document upload, invoice snapshots, executive dashboard, testing, production deploy  |
 
 **MVP delivers approximately:** 25 features | 40 API endpoints | 30 forms | 12 ERPNext integrations
 
@@ -136,16 +136,16 @@ The MVP is a focused 12-week build. The goal is to replace the most painful manu
 
 The following decisions are locked. A complete decision register with rationale is in the [Decisions Register](./KrewPact-Decisions-Register.md).
 
-| Decision | What Was Decided |
-|---|---|
-| Architecture model | Hybrid ERPNext-first: ERPNext owns finance, KrewPact owns everything else |
-| Hosting | Managed cloud (Vercel + Supabase) for the app; on-premises ERPNext at MDM |
-| Authentication | Clerk with Microsoft 365 SSO — staff log in with their existing MDM email |
-| Data sync | Eventual consistency between KrewPact and ERPNext (background queue, not real-time locks) |
-| Compliance | US-hosted services (Vercel, Supabase, Clerk) disclosed per PIPEDA; field-level encryption for sensitive data |
-| Scale target | Up to 300 internal users; 99.5% uptime for MVP |
-| Monthly SaaS cost | Approximately $455-635 CAD/month (Supabase, Vercel, BoldSign, monitoring) |
-| Development approach | AI-assisted development with automated testing — 12-week MVP is aggressive but achievable |
+| Decision             | What Was Decided                                                                                             |
+| -------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Architecture model   | Hybrid ERPNext-first: ERPNext owns finance, KrewPact owns everything else                                    |
+| Hosting              | Managed cloud (Vercel + Supabase) for the app; on-premises ERPNext at MDM                                    |
+| Authentication       | Clerk with Microsoft 365 SSO — staff log in with their existing MDM email                                    |
+| Data sync            | Eventual consistency between KrewPact and ERPNext (background queue, not real-time locks)                    |
+| Compliance           | US-hosted services (Vercel, Supabase, Clerk) disclosed per PIPEDA; field-level encryption for sensitive data |
+| Scale target         | Up to 300 internal users; 99.5% uptime for MVP                                                               |
+| Monthly SaaS cost    | Approximately $455-635 CAD/month (Supabase, Vercel, BoldSign, monitoring)                                    |
+| Development approach | AI-assisted development with automated testing — 12-week MVP is aggressive but achievable                    |
 
 ---
 
@@ -153,30 +153,30 @@ The following decisions are locked. A complete decision register with rationale 
 
 This folder contains the complete KrewPact architecture and planning documentation. Use the table below to find the right document for your question.
 
-| # | Document | What It Covers | Best For |
-|---|---|---|---|
-| 1 | [Architecture Overview](./KrewPact-Architecture-Overview.md) | This document — holistic summary of the platform | Everyone |
-| 2 | [Decisions Register](./KrewPact-Decisions-Register.md) | All locked decisions in one place | Executives, project leads |
-| 3 | [Architecture Resolution](./KrewPact-Architecture-Resolution.md) | Detailed decision rationale, contradictions resolved | Technical leads |
-| 4 | [Master Plan](./KrewPact-Master-Plan.md) | Full execution plan, locked assumptions, architecture | Project managers |
-| 5 | [Product Vision & Strategy](./KrewPact-Product-Vision-and-Strategy.md) | Market positioning, competitive analysis, growth strategy | Executives, strategy |
-| 6 | [Technology Stack ADRs](./KrewPact-Technology-Stack-ADRs.md) | 25 architecture decision records with rationale | Developers |
-| 7 | [Feature PRD Checklist](./KrewPact-Feature-Function-PRD-Checklist.md) | 70+ features across 16 epics with acceptance criteria | Product, QA |
-| 8 | [Backend SQL Schema](./KrewPact-Backend-SQL-Schema-Draft.sql) | Database design (28 enums, 19+ table groups) | Developers |
-| 9 | [Security & Compliance](./KrewPact-Security-and-Compliance-Framework.md) | PIPEDA, AODA, encryption, audit trails | Compliance, IT |
-| 10 | [Licensing & Legal](./KrewPact-Licensing-and-Legal-Audit.md) | GPL boundary, vendor agreements, legal risks | Legal, executives |
-| 11 | [Infrastructure & Deployment](./KrewPact-Infrastructure-and-Deployment.md) | Hosting, networking, Cloudflare, Tailscale | IT, DevOps |
-| 12 | [Integration Contracts](./KrewPact-Integration-Contracts.md) | ERPNext sync architecture, webhooks, queue patterns | Developers |
-| 13 | [ERPNext Doctype Mapping](./KrewPact-ERPNext-Doctype-Field-Mapping.md) | Field-level mapping for 43 ERPNext doctypes | Developers, ERP admin |
-| 14 | [DevOps & CI/CD](./KrewPact-DevOps-and-CI-CD.md) | Pipeline, testing, deployment automation | DevOps |
-| 15 | [Monitoring & Observability](./KrewPact-Monitoring-and-Observability.md) | Uptime, error tracking, alerting | IT, DevOps |
-| 16 | [Cost & Vendor Analysis](./KrewPact-Cost-and-Vendor-Analysis.md) | TCO breakdown, vendor comparison, ROI | Finance, executives |
-| 17 | [API & Test Matrix](./KrewPact-API-Acceptance-and-Test-Matrix.md) | API endpoints, test coverage targets | QA, developers |
-| 18 | [Execution Board](./KrewPact-Execution-Board.md) | Week-by-week plan with dependencies and gates | Project managers |
-| 19 | [Forms Registry](./KrewPact-Forms-Registry.md) | All 30 MVP forms with field specs | Developers, UX |
-| 20 | [Access & Workflow Plan](./KrewPact-Access-and-Workflow-Plan.md) | Environment setup, credentials, build sequence | Developers |
+| #   | Document                                                                   | What It Covers                                            | Best For                  |
+| --- | -------------------------------------------------------------------------- | --------------------------------------------------------- | ------------------------- |
+| 1   | [Architecture Overview](./KrewPact-Architecture-Overview.md)               | This document — holistic summary of the platform          | Everyone                  |
+| 2   | [Decisions Register](./KrewPact-Decisions-Register.md)                     | All locked decisions in one place                         | Executives, project leads |
+| 3   | [Architecture Resolution](./KrewPact-Architecture-Resolution.md)           | Detailed decision rationale, contradictions resolved      | Technical leads           |
+| 4   | [Master Plan](./KrewPact-Master-Plan.md)                                   | Full execution plan, locked assumptions, architecture     | Project managers          |
+| 5   | [Product Vision & Strategy](./KrewPact-Product-Vision-and-Strategy.md)     | Market positioning, competitive analysis, growth strategy | Executives, strategy      |
+| 6   | [Technology Stack ADRs](./KrewPact-Technology-Stack-ADRs.md)               | 25 architecture decision records with rationale           | Developers                |
+| 7   | [Feature PRD Checklist](./KrewPact-Feature-Function-PRD-Checklist.md)      | 70+ features across 16 epics with acceptance criteria     | Product, QA               |
+| 8   | [Backend SQL Schema](./KrewPact-Backend-SQL-Schema-Draft.sql)              | Database design (28 enums, 19+ table groups)              | Developers                |
+| 9   | [Security & Compliance](./KrewPact-Security-and-Compliance-Framework.md)   | PIPEDA, AODA, encryption, audit trails                    | Compliance, IT            |
+| 10  | [Licensing & Legal](./KrewPact-Licensing-and-Legal-Audit.md)               | GPL boundary, vendor agreements, legal risks              | Legal, executives         |
+| 11  | [Infrastructure & Deployment](./KrewPact-Infrastructure-and-Deployment.md) | Hosting, networking, Cloudflare, Tailscale                | IT, DevOps                |
+| 12  | [Integration Contracts](./KrewPact-Integration-Contracts.md)               | ERPNext sync architecture, webhooks, queue patterns       | Developers                |
+| 13  | [ERPNext Doctype Mapping](./KrewPact-ERPNext-Doctype-Field-Mapping.md)     | Field-level mapping for 43 ERPNext doctypes               | Developers, ERP admin     |
+| 14  | [DevOps & CI/CD](./KrewPact-DevOps-and-CI-CD.md)                           | Pipeline, testing, deployment automation                  | DevOps                    |
+| 15  | [Monitoring & Observability](./KrewPact-Monitoring-and-Observability.md)   | Uptime, error tracking, alerting                          | IT, DevOps                |
+| 16  | [Cost & Vendor Analysis](./KrewPact-Cost-and-Vendor-Analysis.md)           | TCO breakdown, vendor comparison, ROI                     | Finance, executives       |
+| 17  | [API & Test Matrix](./KrewPact-API-Acceptance-and-Test-Matrix.md)          | API endpoints, test coverage targets                      | QA, developers            |
+| 18  | [Execution Board](./KrewPact-Execution-Board.md)                           | Week-by-week plan with dependencies and gates             | Project managers          |
+| 19  | [Forms Registry](./KrewPact-Forms-Registry.md)                             | All 30 MVP forms with field specs                         | Developers, UX            |
+| 20  | [Access & Workflow Plan](./KrewPact-Access-and-Workflow-Plan.md)           | Environment setup, credentials, build sequence            | Developers                |
 
 ---
 
-*Last updated: February 19, 2026*
-*Prepared for: Ehab Guirguis (CEO), David Guirguis (COO), Nervine (CFO)*
+_Last updated: February 19, 2026_
+_Prepared for: Ehab Guirguis (CEO), David Guirguis (COO), Nervine (CFO)_

@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { usePathname, useRouter, useParams } from 'next/navigation';
+import { usePathname, useParams } from 'next/navigation';
+import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { Home, ChevronDown } from 'lucide-react';
 import {
   Breadcrumb,
@@ -36,14 +37,19 @@ const routeLabels: Record<string, string> = {
 
 export function Breadcrumbs() {
   const pathname = usePathname();
-  const router = useRouter();
+  const { orgPath, router } = useOrgRouter();
   const params = useParams();
   const [isCollapsed, setIsCollapsed] = React.useState(false);
 
+  // Strip /org/[slug] prefix from pathname for breadcrumb generation
+  const orgSlug = params?.orgSlug as string | undefined;
+  const orgPrefix = orgSlug ? `/org/${orgSlug}` : '';
+  const strippedPath = orgPrefix ? pathname.replace(orgPrefix, '') || '/' : pathname;
+
   const generateBreadcrumbs = () => {
-    const paths = pathname.split('/').filter(Boolean);
+    const paths = strippedPath.split('/').filter(Boolean);
     const breadcrumbs: { label: string; path: string }[] = [
-      { label: 'Dashboard', path: '/dashboard' },
+      { label: 'Dashboard', path: orgPath('/dashboard') },
     ];
 
     let currentPath = '';
@@ -54,7 +60,9 @@ export function Breadcrumbs() {
         const paramValue = Object.values(params).find((v) => v === segment);
         if (paramValue) {
           // For UUID-like segments, show a contextual label based on parent route
-          const isUUID = /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i.test(segment);
+          const isUUID = /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i.test(
+            segment,
+          );
           if (isUUID) {
             const parentSegment = paths[paths.indexOf(segment) - 1];
             const contextLabels: Record<string, string> = {
@@ -76,7 +84,7 @@ export function Breadcrumbs() {
           label = segment.charAt(0).toUpperCase() + segment.slice(1);
         }
       }
-      breadcrumbs.push({ label, path: currentPath });
+      breadcrumbs.push({ label, path: orgPath(currentPath) });
     });
 
     return breadcrumbs;
@@ -84,7 +92,7 @@ export function Breadcrumbs() {
 
   const breadcrumbs = generateBreadcrumbs();
 
-  if (pathname === '/dashboard' || pathname === '/') {
+  if (strippedPath === '/dashboard' || strippedPath === '/' || strippedPath === '') {
     return null;
   }
 

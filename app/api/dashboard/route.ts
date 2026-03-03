@@ -14,9 +14,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const parsed = querySchema.safeParse(
-    Object.fromEntries(req.nextUrl.searchParams),
-  );
+  const parsed = querySchema.safeParse(Object.fromEntries(req.nextUrl.searchParams));
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
@@ -64,7 +62,9 @@ export async function GET(req: NextRequest) {
       (() => {
         let q = supabase
           .from('projects')
-          .select('id, project_name, project_number, status, site_address, start_date, target_completion_date, baseline_budget, current_budget')
+          .select(
+            'id, project_name, project_number, status, site_address, start_date, target_completion_date, baseline_budget, current_budget',
+          )
           .order('created_at', { ascending: false })
           .limit(5);
         if (division_id) q = q.eq('division_id', division_id);

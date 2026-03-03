@@ -11,7 +11,7 @@ vi.mock('next/navigation', () => ({
     back: vi.fn(),
   }),
   usePathname: () => '/crm/accounts',
-  useParams: () => ({ id: 'test-account-id' }),
+  useParams: () => ({ orgSlug: 'default', id: 'test-account-id' }),
   useSearchParams: () => new URLSearchParams(),
 }));
 
@@ -41,7 +41,7 @@ vi.mock('@/hooks/use-mobile', () => ({
   useIsMobile: () => false,
 }));
 
-import AccountsPage from '@/app/(dashboard)/crm/accounts/page';
+import AccountsPage from '@/app/(dashboard)/org/[orgSlug]/crm/accounts/page';
 
 describe('Accounts List Page', () => {
   beforeAll(() => {

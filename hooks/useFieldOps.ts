@@ -36,7 +36,13 @@ export interface Submittal {
   project_id: string;
   submittal_number: string;
   title: string;
-  status: 'draft' | 'submitted' | 'revise_and_resubmit' | 'approved' | 'approved_as_noted' | 'rejected';
+  status:
+    | 'draft'
+    | 'submitted'
+    | 'revise_and_resubmit'
+    | 'approved'
+    | 'approved_as_noted'
+    | 'rejected';
   due_at: string | null;
   submitted_by: string | null;
   submitted_at: string | null;
@@ -96,8 +102,7 @@ interface PaginatedResponse<T> {
 export function useRFIs(projectId: string) {
   return useQuery({
     queryKey: ['rfis', projectId],
-    queryFn: () =>
-      apiFetch<PaginatedResponse<RFIItem>>(`/api/projects/${projectId}/rfis`),
+    queryFn: () => apiFetch<PaginatedResponse<RFIItem>>(`/api/projects/${projectId}/rfis`),
     enabled: !!projectId,
     staleTime: 30_000,
   });
@@ -146,9 +151,7 @@ export function useRFIThreads(projectId: string, rfiId: string) {
   return useQuery({
     queryKey: ['rfi-threads', projectId, rfiId],
     queryFn: () =>
-      apiFetch<PaginatedResponse<RFIThread>>(
-        `/api/projects/${projectId}/rfis/${rfiId}/threads`,
-      ),
+      apiFetch<PaginatedResponse<RFIThread>>(`/api/projects/${projectId}/rfis/${rfiId}/threads`),
     enabled: !!projectId && !!rfiId,
     staleTime: 30_000,
   });
@@ -175,8 +178,7 @@ export function useCreateRFIThread(projectId: string, rfiId: string) {
 export function useSubmittals(projectId: string) {
   return useQuery({
     queryKey: ['submittals', projectId],
-    queryFn: () =>
-      apiFetch<PaginatedResponse<Submittal>>(`/api/projects/${projectId}/submittals`),
+    queryFn: () => apiFetch<PaginatedResponse<Submittal>>(`/api/projects/${projectId}/submittals`),
     enabled: !!projectId,
     staleTime: 30_000,
   });
@@ -240,10 +242,10 @@ export function useCreateSubmittalReview(projectId: string, subId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: Partial<SubmittalReview>) =>
-      apiFetch<SubmittalReview>(
-        `/api/projects/${projectId}/submittals/${subId}/reviews`,
-        { method: 'POST', body: data },
-      ),
+      apiFetch<SubmittalReview>(`/api/projects/${projectId}/submittals/${subId}/reviews`, {
+        method: 'POST',
+        body: data,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['submittal-reviews', projectId, subId] });
       queryClient.invalidateQueries({ queryKey: ['submittals', projectId] });
@@ -259,9 +261,7 @@ export function useChangeRequests(projectId: string) {
   return useQuery({
     queryKey: ['change-requests', projectId],
     queryFn: () =>
-      apiFetch<PaginatedResponse<ChangeRequest>>(
-        `/api/projects/${projectId}/change-requests`,
-      ),
+      apiFetch<PaginatedResponse<ChangeRequest>>(`/api/projects/${projectId}/change-requests`),
     enabled: !!projectId,
     staleTime: 30_000,
   });
@@ -270,8 +270,7 @@ export function useChangeRequests(projectId: string) {
 export function useChangeRequest(projectId: string, crId: string) {
   return useQuery({
     queryKey: ['change-request', projectId, crId],
-    queryFn: () =>
-      apiFetch<ChangeRequest>(`/api/projects/${projectId}/change-requests/${crId}`),
+    queryFn: () => apiFetch<ChangeRequest>(`/api/projects/${projectId}/change-requests/${crId}`),
     enabled: !!projectId && !!crId,
     staleTime: 30_000,
   });
@@ -325,8 +324,7 @@ export function useChangeOrders(projectId: string) {
 export function useChangeOrder(projectId: string, coId: string) {
   return useQuery({
     queryKey: ['change-order', projectId, coId],
-    queryFn: () =>
-      apiFetch<ChangeOrder>(`/api/projects/${projectId}/change-orders/${coId}`),
+    queryFn: () => apiFetch<ChangeOrder>(`/api/projects/${projectId}/change-orders/${coId}`),
     enabled: !!projectId && !!coId,
     staleTime: 30_000,
   });

@@ -10,7 +10,7 @@ describe('Portal Account Validators', () => {
       email: 'client@example.com',
       company_name: 'Acme Corp',
       contact_name: 'John Doe',
-      phone: '+1 555-555-5555'
+      phone: '+1 555-555-5555',
     };
 
     const result = portalAccountInviteSchema.safeParse(validData);
@@ -24,9 +24,9 @@ describe('Portal Account Validators', () => {
   it('fails if email is invalid', () => {
     const invalidData = {
       actor_type: 'client',
-      email: 'not-an-email'
+      email: 'not-an-email',
     };
-    
+
     const result = portalAccountInviteSchema.safeParse(invalidData);
     expect(result.success).toBe(false);
   });
@@ -35,7 +35,7 @@ describe('Portal Account Validators', () => {
     const validData = {
       actor_type: 'trade_partner',
       role: 'trade_partner_admin',
-      email: 'subcontractor@example.com'
+      email: 'subcontractor@example.com',
     };
 
     const result = portalAccountInviteSchema.safeParse(validData);

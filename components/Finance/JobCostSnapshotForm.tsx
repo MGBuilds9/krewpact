@@ -155,7 +155,14 @@ export function JobCostSnapshotForm({
               <FormItem>
                 <FormLabel>Forecast Margin (%)</FormLabel>
                 <FormControl>
-                  <Input type="number" step="0.01" min="-100" max="100" placeholder="0.00" {...field} />
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="-100"
+                    max="100"
+                    placeholder="0.00"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

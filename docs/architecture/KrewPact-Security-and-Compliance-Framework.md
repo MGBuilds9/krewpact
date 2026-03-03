@@ -14,11 +14,13 @@
 KrewPact implements a multi-layered security architecture protecting data across network, application, and data tiers:
 
 **Layer 1: Perimeter Security**
+
 - DDoS mitigation via Vercel/Cloudflare edge network
 - WAF rules blocking malicious patterns
 - Geographic IP filtering for Canadian operations
 
 **Layer 2: Network Security**
+
 - Tailscale zero-trust mesh network for system-to-system communication
 - VPC isolation on AWS Canada (ca-central-1)
 - VLAN segmentation via TP-Link Omada for internal network
@@ -26,6 +28,7 @@ KrewPact implements a multi-layered security architecture protecting data across
 - Private database endpoints (no public internet exposure)
 
 **Layer 3: Authentication & Authorization**
+
 - Clerk OAuth 2.0/SSO for all user authentication
 - Multi-factor authentication (mandatory for admin, recommended for all)
 - JWT token validation on every API request
@@ -33,6 +36,7 @@ KrewPact implements a multi-layered security architecture protecting data across
 - Role-based access control (RBAC) with principle of least privilege
 
 **Layer 4: Application Security**
+
 - Input validation via Zod schemas
 - Output encoding to prevent XSS
 - CSRF tokens on state-changing operations
@@ -41,6 +45,7 @@ KrewPact implements a multi-layered security architecture protecting data across
 - Content Security Policy (CSP) headers
 
 **Layer 5: Data Protection**
+
 - AES-256 encryption at rest in Supabase
 - TLS 1.3 in transit for all connections
 - Field-level encryption for PII (SIN numbers, banking information)
@@ -48,6 +53,7 @@ KrewPact implements a multi-layered security architecture protecting data across
 - Database connection pooling with encryption
 
 **Layer 6: Logging & Detection**
+
 - Immutable audit logs for all data mutations
 - Real-time anomaly detection for suspicious patterns
 - Security event aggregation and alerting
@@ -55,36 +61,40 @@ KrewPact implements a multi-layered security architecture protecting data across
 
 ### 1.2 Trust Boundaries and Security Zones
 
-| Security Zone | Description | Trust Level | Access Method | Key Controls |
-|---|---|---|---|---|
-| **Public Portal** | Unauthenticated client/trade partner portals | Untrusted | HTTPS only | Rate limiting, input validation, CAPTCHA |
-| **Authenticated Users** | Internal staff and verified external users | Conditionally trusted | OAuth 2.0 + MFA | Session management, device fingerprinting, RLS policies |
-| **Admin Zone** | Internal administrators (finance, operations) | Trusted | OAuth 2.0 + mandatory MFA | Audit logging of all actions, admin-only API endpoints |
-| **System-to-System** | API communication between KrewPact and external systems | Cryptographically trusted | TLS + API key/webhook signature | Webhook signature verification, rate limiting, IP allowlisting |
-| **ERPNext Integration** | Bidirectional sync with financial/operational data | Trusted (isolated) | Tailscale + VPN | Encrypted tunnel, request signing, audit trail |
-| **Internal Network** | Proxmox, Docker containers, backend services | Physically secured | Zero-trust overlay (Tailscale) | Network segmentation, SSH keys only, automatic security updates |
+| Security Zone           | Description                                             | Trust Level               | Access Method                   | Key Controls                                                    |
+| ----------------------- | ------------------------------------------------------- | ------------------------- | ------------------------------- | --------------------------------------------------------------- |
+| **Public Portal**       | Unauthenticated client/trade partner portals            | Untrusted                 | HTTPS only                      | Rate limiting, input validation, CAPTCHA                        |
+| **Authenticated Users** | Internal staff and verified external users              | Conditionally trusted     | OAuth 2.0 + MFA                 | Session management, device fingerprinting, RLS policies         |
+| **Admin Zone**          | Internal administrators (finance, operations)           | Trusted                   | OAuth 2.0 + mandatory MFA       | Audit logging of all actions, admin-only API endpoints          |
+| **System-to-System**    | API communication between KrewPact and external systems | Cryptographically trusted | TLS + API key/webhook signature | Webhook signature verification, rate limiting, IP allowlisting  |
+| **ERPNext Integration** | Bidirectional sync with financial/operational data      | Trusted (isolated)        | Tailscale + VPN                 | Encrypted tunnel, request signing, audit trail                  |
+| **Internal Network**    | Proxmox, Docker containers, backend services            | Physically secured        | Zero-trust overlay (Tailscale)  | Network segmentation, SSH keys only, automatic security updates |
 
 ### 1.3 Zero-Trust Principles Implementation
 
 **Verify Every Request:**
+
 - All API requests require valid JWT token
 - Token claims validated against user permissions and resource scope
 - Session must be active in Clerk auth system
 - Device trust evaluated for anomaly detection
 
 **Assume Breach:**
+
 - Network segmentation via Tailscale prevents lateral movement
 - RLS policies prevent data exfiltration even if database is compromised
 - Audit logs are immutable (separate storage layer)
 - Encryption keys stored separately from encrypted data
 
 **Least Privilege Access:**
+
 - Users granted minimum permissions required for role
 - Permissions scoped to divisions/projects, not global
 - Admin permissions explicitly logged and time-limited if possible
 - External portal users isolated to specific projects/documents
 
 **Continuous Monitoring:**
+
 - Rate limiting triggers alert on threshold breach
 - Failed authentication attempts logged with IP/fingerprint
 - Unusual data access patterns detected
@@ -100,6 +110,7 @@ KrewPact implements a multi-layered security architecture protecting data across
 KrewPact uses Clerk as the authoritative identity provider for all users (internal and external).
 
 **OAuth 2.0 Configuration:**
+
 ```
 Authorization Flow: Authorization Code Flow with PKCE
 Token Type: JWT (self-signed by Clerk)
@@ -109,6 +120,7 @@ Grant Types: authorization_code, refresh_token
 ```
 
 **SSO Provider Integration:**
+
 - Google Workspace for internal staff (MDM Group corporate email)
 - Azure AD available for enterprise clients (optional)
 - Social providers disabled for security (internal/B2B only)
@@ -116,12 +128,12 @@ Grant Types: authorization_code, refresh_token
 
 **Session Token Lifecycle:**
 
-| Token Type | Purpose | Expiry | Refresh Strategy |
-|---|---|---|---|
-| Access Token (JWT) | API authentication | 1 hour | Automatic refresh via refresh token |
-| Refresh Token | Obtain new access token | 30 days | Rotated on use (refresh token rotation) |
-| Session Cookie | Browser state management | 30 days sliding | Renewed on each API request |
-| ID Token | OpenID Connect claims | 1 hour | Obtained with access token |
+| Token Type         | Purpose                  | Expiry          | Refresh Strategy                        |
+| ------------------ | ------------------------ | --------------- | --------------------------------------- |
+| Access Token (JWT) | API authentication       | 1 hour          | Automatic refresh via refresh token     |
+| Refresh Token      | Obtain new access token  | 30 days         | Rotated on use (refresh token rotation) |
+| Session Cookie     | Browser state management | 30 days sliding | Renewed on each API request             |
+| ID Token           | OpenID Connect claims    | 1 hour          | Obtained with access token              |
 
 **JWT Claims Structure:**
 
@@ -153,6 +165,7 @@ Grant Types: authorization_code, refresh_token
 - Admin logins from new devices always require MFA
 
 **Token Revocation:**
+
 - Session invalidation: User logout immediately revokes all active tokens in Clerk
 - Admin action: Administrators can revoke user sessions from admin dashboard
 - Automatic: Tokens expire at specified time (1 hour access, 30 days refresh)
@@ -162,16 +175,19 @@ Grant Types: authorization_code, refresh_token
 ### 2.2 Multi-Factor Authentication (MFA)
 
 **Mandatory Requirements:**
+
 - All admin users: MFA required
 - All internal staff accessing financial/HR data: MFA required
 - External users: MFA recommended (optional for initial onboarding)
 
 **Supported Methods:**
+
 1. Time-based One-Time Password (TOTP) - authenticator app (Google Authenticator, Authy, Microsoft Authenticator)
 2. Backup codes (10 codes per user, stored encrypted in Supabase)
 3. SMS-based OTP (secondary option for users without authenticator)
 
 **MFA Enrollment:**
+
 - Enforced during first login for mandatory users
 - User can configure multiple devices
 - Backup codes must be securely stored by user
@@ -181,40 +197,43 @@ Grant Types: authorization_code, refresh_token
 
 **Internal Roles (9 total):**
 
-| Role | Purpose | Division-Scoped | Typical Users |
-|---|---|---|---|
-| Super Admin | System-wide access, user management, compliance | No (global) | IT Lead, Compliance Officer |
-| Org Admin | Organization-level access, can manage users within org | Yes | General Manager |
-| Finance Manager | Financial records, invoicing, holdback, lien management | Yes | Accounting Manager |
-| Finance Reviewer | View-only access to financial data | Yes | Finance Lead |
-| Project Manager | Manage projects, resources, schedules, documents | Yes | Construction Supervisors |
-| Safety Officer | WSIB records, incident reporting, COR tracking | Yes | Safety Director |
-| HR Manager | Employee records, payroll data, safety certifications | No (cross-division access) | HR Manager |
-| Operations Manager | View operational data, reports, analytics | Yes | Operations Director |
-| Report Viewer | Read-only access to reports and dashboards | Yes | Executive, Client stakeholders |
+| Role               | Purpose                                                 | Division-Scoped            | Typical Users                  |
+| ------------------ | ------------------------------------------------------- | -------------------------- | ------------------------------ |
+| Super Admin        | System-wide access, user management, compliance         | No (global)                | IT Lead, Compliance Officer    |
+| Org Admin          | Organization-level access, can manage users within org  | Yes                        | General Manager                |
+| Finance Manager    | Financial records, invoicing, holdback, lien management | Yes                        | Accounting Manager             |
+| Finance Reviewer   | View-only access to financial data                      | Yes                        | Finance Lead                   |
+| Project Manager    | Manage projects, resources, schedules, documents        | Yes                        | Construction Supervisors       |
+| Safety Officer     | WSIB records, incident reporting, COR tracking          | Yes                        | Safety Director                |
+| HR Manager         | Employee records, payroll data, safety certifications   | No (cross-division access) | HR Manager                     |
+| Operations Manager | View operational data, reports, analytics               | Yes                        | Operations Director            |
+| Report Viewer      | Read-only access to reports and dashboards              | Yes                        | Executive, Client stakeholders |
 
 **External Roles (4 total):**
 
-| Role | Purpose | Access Scope | Typical Users |
-|---|---|---|---|
-| Trade Partner Portal User | Access to project documents, timesheets, lien forms | Assigned projects only | Subcontractors, suppliers |
-| Client Portal User | View project progress, documents, holdback info | Assigned projects only | Owner representatives, consultants |
-| Lien Claimant | Submit and track lien claims | Specific project lien records | Subcontractors, laborers |
-| Document Reviewer | Review and comment on documents (RFIs, drawings) | Assigned projects and documents | Client consultants, engineers |
+| Role                      | Purpose                                             | Access Scope                    | Typical Users                      |
+| ------------------------- | --------------------------------------------------- | ------------------------------- | ---------------------------------- |
+| Trade Partner Portal User | Access to project documents, timesheets, lien forms | Assigned projects only          | Subcontractors, suppliers          |
+| Client Portal User        | View project progress, documents, holdback info     | Assigned projects only          | Owner representatives, consultants |
+| Lien Claimant             | Submit and track lien claims                        | Specific project lien records   | Subcontractors, laborers           |
+| Document Reviewer         | Review and comment on documents (RFIs, drawings)    | Assigned projects and documents | Client consultants, engineers      |
 
 **Permission Model: Resource + Action + Scope**
 
 Each permission is defined as: `resource:action@scope`
 
 **Resource Types:**
+
 - `project`, `financial_record`, `employee`, `safety_record`, `document`, `contract`, `user`, `audit_log`
 
 **Action Types:**
+
 - `create`, `read`, `update`, `delete` (CRUD)
 - `sign` (for documents), `approve` (for workflows), `export` (for reports)
 - `admin:manage_users`, `admin:manage_roles`, `admin:revoke_sessions`
 
 **Scope Types:**
+
 - `global` - access to all divisions and projects
 - `division:{division_id}` - access to all projects in specific division
 - `project:{project_id}` - access to specific project only
@@ -250,6 +269,7 @@ trade_partner_portal_user@project_123:
 ```
 
 **Role Hierarchy:**
+
 ```
 Super Admin (all permissions)
 ├── Org Admin (all within org)
@@ -269,6 +289,7 @@ External:
 ```
 
 **Role Inheritance Rules:**
+
 - Higher roles inherit all permissions of lower roles
 - Org Admin inherits Finance Manager permissions for scoped division
 - Project Manager inherits Report Viewer permissions for scoped project
@@ -276,30 +297,32 @@ External:
 
 **Permission Matrix: Role × Resource × Actions**
 
-| Role | Project (CRUD+) | Financial (CRUD) | Employee (R) | Safety (CRU) | Document (CRUD) | User Admin | Audit (R) |
-|---|---|---|---|---|---|---|---|
-| Super Admin | ✓ All | ✓ All | ✓ All | ✓ All | ✓ All | ✓ All | ✓ All |
-| Org Admin | ✓ All | ✓ All | ✓ Div | ✓ Div | ✓ All | ✓ Div | ✓ Div |
-| Finance Manager | ✓ R | ✓ CRUD | ✗ | ✗ | ✓ R | ✗ | ✓ R |
-| Finance Reviewer | ✓ R | ✓ R | ✗ | ✗ | ✓ R | ✗ | ✓ R |
-| Project Manager | ✓ CRUD | ✗ | ✗ | ✗ | ✓ CRUD | ✗ | ✓ R |
-| Safety Officer | ✓ R | ✗ | ✓ Div | ✓ All | ✓ R | ✗ | ✓ R |
-| HR Manager | ✓ R | ✗ | ✓ All | ✗ | ✓ R | ✓ All | ✓ R |
-| Operations Manager | ✓ R | ✓ R | ✓ Div | ✓ Div | ✓ R | ✗ | ✓ R |
-| Report Viewer | ✓ R | ✓ R | ✗ | ✗ | ✓ R | ✗ | ✗ |
-| Trade Partner User | ✓ R(lim) | ✗ | ✗ | ✗ | ✓ R(assign) | ✗ | ✗ |
-| Client Portal User | ✓ R(lim) | ✓ R(hold) | ✗ | ✗ | ✓ R(assign) | ✗ | ✗ |
+| Role               | Project (CRUD+) | Financial (CRUD) | Employee (R) | Safety (CRU) | Document (CRUD) | User Admin | Audit (R) |
+| ------------------ | --------------- | ---------------- | ------------ | ------------ | --------------- | ---------- | --------- |
+| Super Admin        | ✓ All           | ✓ All            | ✓ All        | ✓ All        | ✓ All           | ✓ All      | ✓ All     |
+| Org Admin          | ✓ All           | ✓ All            | ✓ Div        | ✓ Div        | ✓ All           | ✓ Div      | ✓ Div     |
+| Finance Manager    | ✓ R             | ✓ CRUD           | ✗            | ✗            | ✓ R             | ✗          | ✓ R       |
+| Finance Reviewer   | ✓ R             | ✓ R              | ✗            | ✗            | ✓ R             | ✗          | ✓ R       |
+| Project Manager    | ✓ CRUD          | ✗                | ✗            | ✗            | ✓ CRUD          | ✗          | ✓ R       |
+| Safety Officer     | ✓ R             | ✗                | ✓ Div        | ✓ All        | ✓ R             | ✗          | ✓ R       |
+| HR Manager         | ✓ R             | ✗                | ✓ All        | ✗            | ✓ R             | ✓ All      | ✓ R       |
+| Operations Manager | ✓ R             | ✓ R              | ✓ Div        | ✓ Div        | ✓ R             | ✗          | ✓ R       |
+| Report Viewer      | ✓ R             | ✓ R              | ✗            | ✗            | ✓ R             | ✗          | ✗         |
+| Trade Partner User | ✓ R(lim)        | ✗                | ✗            | ✗            | ✓ R(assign)     | ✗          | ✗         |
+| Client Portal User | ✓ R(lim)        | ✓ R(hold)        | ✗            | ✗            | ✓ R(assign)     | ✗          | ✗         |
 
 Legend: ✓ = permission, ✗ = no permission, R(lim) = limited read, R(assign) = read assigned only
 
 **Policy Overrides Mechanism:**
 
 Override permissions can be temporarily granted by Org Admin for:
+
 - Emergency access during incident (logged, maximum 4 hours)
 - Temporary project contractor access (logged, time-limited)
 - Data access requests by legal/compliance (logged, time-limited)
 
 Override workflow:
+
 1. Requestor submits override request with justification
 2. Org Admin approves/rejects
 3. If approved: temporary permission granted with expiry timestamp
@@ -491,24 +514,28 @@ EXPLAIN ANALYZE SELECT * FROM projects;
 **Encryption at Rest:**
 
 **Supabase PostgreSQL Database:**
+
 - Encryption: AES-256 (AWS KMS managed keys)
 - Coverage: All data in ca-central-1 region
 - Key rotation: AWS-managed (automatic annual rotation)
 - Backup encryption: Yes, inherited from instance encryption
 
 **File Storage (AWS S3):**
+
 - Bucket: `krewpact-files-ca`
 - Encryption: AES-256 server-side encryption (S3-managed or KMS)
 - Enable: SSE-S3 with block public access enabled
 - Versioning: Enabled for all documents (e-signatures, contracts, drawings)
 
 **ERPNext Self-Hosted (Proxmox):**
+
 - Disk encryption: LUKS2 on all data volumes
 - Encryption key: Stored in hardware security module (HSM) or key vault
 - Backup encryption: GPG encrypted before transmission
 - Database encryption: MySQL with AES encryption for sensitive fields
 
 **Clerk Authentication Service:**
+
 - Encryption: In-transit only (TLS 1.3)
 - Data stored: EU region (Germany/Ireland) - not end-to-end encrypted by Clerk
 - Mitigation: Clerk stores minimal data (email, phone, metadata)
@@ -605,12 +632,12 @@ gpg --decrypt krewpact_db_20250209.sql.gpg | pg_restore -d test_db
 
 ### 3.2 Data Classification
 
-| Classification Level | Description | Examples | Handling Requirements | Access Controls | Retention |
-|---|---|---|---|---|---|
-| **Public** | Information safe for public disclosure | General project info, company news, marketing materials | Can be published without approval | No restrictions (available to all) | Indefinite |
-| **Internal** | Not for public disclosure but low sensitivity | General employee directory, internal policies, organizational charts | Must be kept internal; requires approval for external sharing | All internal staff | 3 years after last access |
-| **Confidential** | Sensitive business data; unauthorized disclosure causes harm | Financial records, client contracts, project budgets, proprietary processes | Restricted to business-need-to-know; encryption required in transit and at rest | Division-based access controls | Legal/business retention period |
-| **Restricted** | Highly sensitive; severe impact if disclosed | SIN numbers, banking info, WSIB claims, health data, personal medical records | Must be encrypted at rest and in transit; field-level encryption; minimal access logging | Admin/legal only; time-limited access | Regulatory minimum (CRA 6 years) |
+| Classification Level | Description                                                  | Examples                                                                      | Handling Requirements                                                                    | Access Controls                       | Retention                        |
+| -------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------- | -------------------------------- |
+| **Public**           | Information safe for public disclosure                       | General project info, company news, marketing materials                       | Can be published without approval                                                        | No restrictions (available to all)    | Indefinite                       |
+| **Internal**         | Not for public disclosure but low sensitivity                | General employee directory, internal policies, organizational charts          | Must be kept internal; requires approval for external sharing                            | All internal staff                    | 3 years after last access        |
+| **Confidential**     | Sensitive business data; unauthorized disclosure causes harm | Financial records, client contracts, project budgets, proprietary processes   | Restricted to business-need-to-know; encryption required in transit and at rest          | Division-based access controls        | Legal/business retention period  |
+| **Restricted**       | Highly sensitive; severe impact if disclosed                 | SIN numbers, banking info, WSIB claims, health data, personal medical records | Must be encrypted at rest and in transit; field-level encryption; minimal access logging | Admin/legal only; time-limited access | Regulatory minimum (CRA 6 years) |
 
 **Data Classification Examples:**
 
@@ -646,36 +673,39 @@ RESTRICTED:
 
 ### 3.3 Data Retention and Disposal
 
-| Data Category | Retention Period | Legal Basis | Disposal Method | Responsible Party |
-|---|---|---|---|---|
-| **Financial Records** | 6 years from creation | CRA tax law requirements | Secure deletion (DoD 5220.22-M standard) | Finance Manager |
-| **Employee Records** | 6 years after termination | Ontario Employment Standards Act | Secure deletion + certificate of destruction | HR Manager |
-| **Payroll Records** | 6 years from date of payment | CRA payroll deductions requirements | Secure deletion | HR Manager |
-| **Audit Logs** | 7 years minimum (financial), 2+ years general | SOX/accounting standards; PIPEDA | Immutable storage; archived logs deleted securely | Compliance Officer |
-| **Project Documents** | 7 years after project completion | Construction Act lien claims; CRA deductibility | Archive to cold storage after 2 years; destroy after 7 | Project Admin |
-| **E-Signature Records** | 7 years minimum | BoldSign compliance; construction contracts | Immutable storage; no deletion | Document Admin |
-| **WSIB/Safety Records** | Indefinite (safety-critical) | WSIB recordkeeping; OH&S Act | Permanent archival | Safety Officer |
-| **Portal User Data** | Duration of relationship + 2 years | PIPEDA; business records retention | Secure deletion upon request or retention end date | Privacy Officer |
-| **Backup Archives** | Minimum 2 years; max 7 years | Disaster recovery; regulatory compliance | Secure destruction per encryption schedule | IT Operations |
-| **Email/Communications** | 2 years active; 5 years archive | PIPEDA; litigation hold procedures | Automated purge; litigation hold on request | IT Operations |
-| **Cookies/Tracking Data** | Duration of user consent | PIPEDA; Consent Management System | Automatic deletion at consent expiry | Privacy Officer |
-| **Deleted User Data** | 30 days post-deletion | GDPR right-to-be-forgotten; data protection | Purge from all systems after 30-day grace period | Privacy Officer |
+| Data Category             | Retention Period                              | Legal Basis                                     | Disposal Method                                        | Responsible Party  |
+| ------------------------- | --------------------------------------------- | ----------------------------------------------- | ------------------------------------------------------ | ------------------ |
+| **Financial Records**     | 6 years from creation                         | CRA tax law requirements                        | Secure deletion (DoD 5220.22-M standard)               | Finance Manager    |
+| **Employee Records**      | 6 years after termination                     | Ontario Employment Standards Act                | Secure deletion + certificate of destruction           | HR Manager         |
+| **Payroll Records**       | 6 years from date of payment                  | CRA payroll deductions requirements             | Secure deletion                                        | HR Manager         |
+| **Audit Logs**            | 7 years minimum (financial), 2+ years general | SOX/accounting standards; PIPEDA                | Immutable storage; archived logs deleted securely      | Compliance Officer |
+| **Project Documents**     | 7 years after project completion              | Construction Act lien claims; CRA deductibility | Archive to cold storage after 2 years; destroy after 7 | Project Admin      |
+| **E-Signature Records**   | 7 years minimum                               | BoldSign compliance; construction contracts     | Immutable storage; no deletion                         | Document Admin     |
+| **WSIB/Safety Records**   | Indefinite (safety-critical)                  | WSIB recordkeeping; OH&S Act                    | Permanent archival                                     | Safety Officer     |
+| **Portal User Data**      | Duration of relationship + 2 years            | PIPEDA; business records retention              | Secure deletion upon request or retention end date     | Privacy Officer    |
+| **Backup Archives**       | Minimum 2 years; max 7 years                  | Disaster recovery; regulatory compliance        | Secure destruction per encryption schedule             | IT Operations      |
+| **Email/Communications**  | 2 years active; 5 years archive               | PIPEDA; litigation hold procedures              | Automated purge; litigation hold on request            | IT Operations      |
+| **Cookies/Tracking Data** | Duration of user consent                      | PIPEDA; Consent Management System               | Automatic deletion at consent expiry                   | Privacy Officer    |
+| **Deleted User Data**     | 30 days post-deletion                         | GDPR right-to-be-forgotten; data protection     | Purge from all systems after 30-day grace period       | Privacy Officer    |
 
 **Disposal Methods:**
 
 **Secure Deletion (Standard):**
+
 - NIST SP 800-88 Secure Deletion Guidelines
 - DoD 5220.22-M standard: 7-pass overwrite (or crypto-erase for SSD)
 - Tool: BleachBit or shred with -vfz-27 option
 - Verification: Certificate of destruction with deletion timestamp
 
 **Immutable Archival:**
+
 - WORM (Write-Once-Read-Many) storage for audit logs
 - AWS S3 Object Lock: Compliance mode, minimum 7-year retention
 - No deletion possible until retention period expires
 - Verification: Amazon S3 access logs confirm immutability
 
 **Cryptographic Erase:**
+
 - For encrypted data: Destroy encryption key only
 - Data becomes unrecoverable instantly (key destroyed)
 - Certificate issued showing key destruction
@@ -729,16 +759,16 @@ RESTRICTED:
 
 **Data Residency Compliance Matrix:**
 
-| System | Data Type | Location | Compliance | Notes |
-|---|---|---|---|---|
-| Supabase PostgreSQL | All operational data | AWS ca-central-1 | PIPEDA compliant | Primary system |
-| AWS S3 Backups | Database backups | AWS ca-west-1 | PIPEDA compliant | DR copy |
-| AWS S3 Files | Documents, files | AWS ca-central-1 | PIPEDA compliant | Project files |
-| Clerk Auth | User metadata | EU (Germany/Ireland) | GDPR compliant | Minimal data |
-| BoldSign | Signed documents | Australia (TBD) | Electronic Commerce Act | Local copy maintained |
-| ERPNext | Financial records | Canadian datacenter | PIPEDA compliant | Self-hosted |
-| Vercel CDN | Static assets | Global PoPs | PIPEDA compliant | CDN layer only |
-| Vercel Edge Functions | Request processing | Canadian PoPs | PIPEDA compliant | Transient data |
+| System                | Data Type            | Location             | Compliance              | Notes                 |
+| --------------------- | -------------------- | -------------------- | ----------------------- | --------------------- |
+| Supabase PostgreSQL   | All operational data | AWS ca-central-1     | PIPEDA compliant        | Primary system        |
+| AWS S3 Backups        | Database backups     | AWS ca-west-1        | PIPEDA compliant        | DR copy               |
+| AWS S3 Files          | Documents, files     | AWS ca-central-1     | PIPEDA compliant        | Project files         |
+| Clerk Auth            | User metadata        | EU (Germany/Ireland) | GDPR compliant          | Minimal data          |
+| BoldSign              | Signed documents     | Australia (TBD)      | Electronic Commerce Act | Local copy maintained |
+| ERPNext               | Financial records    | Canadian datacenter  | PIPEDA compliant        | Self-hosted           |
+| Vercel CDN            | Static assets        | Global PoPs          | PIPEDA compliant        | CDN layer only        |
+| Vercel Edge Functions | Request processing   | Canadian PoPs        | PIPEDA compliant        | Transient data        |
 
 **Cross-Border Data Transfer Controls:**
 
@@ -756,13 +786,13 @@ RESTRICTED:
 
 ### PIPEDA Requirements → Technical Implementation Mapping
 
-| PIPEDA Requirement | Legal Reference | Technical Implementation |
-|-------------------|-----------------|--------------------------|
-| Consent management | Licensing §4 | Consent Management System (Security §4.3) |
-| Breach notification (30 days) | Licensing §4 | Incident response workflow (Security §4.2) |
-| Privacy access requests (DSAR) | Licensing §4 | Privacy request lifecycle (Security §4.1) |
-| Data retention policies | Licensing §4 | Automated purge rules (Security §4.1) |
-| Audit trails (7 years financial) | Licensing §4 | Immutable audit design (Security §4) |
+| PIPEDA Requirement               | Legal Reference | Technical Implementation                   |
+| -------------------------------- | --------------- | ------------------------------------------ |
+| Consent management               | Licensing §4    | Consent Management System (Security §4.3)  |
+| Breach notification (30 days)    | Licensing §4    | Incident response workflow (Security §4.2) |
+| Privacy access requests (DSAR)   | Licensing §4    | Privacy request lifecycle (Security §4.1)  |
+| Data retention policies          | Licensing §4    | Automated purge rules (Security §4.1)      |
+| Audit trails (7 years financial) | Licensing §4    | Immutable audit design (Security §4)       |
 
 ### 4.1 Privacy by Design
 
@@ -776,6 +806,7 @@ KrewPact implements privacy by design principles throughout system architecture,
 - Field-level tracking: Record purpose for every data field collected
 
 **Data Minimization Checklist:**
+
 ```
 Employee Data:
   ✓ Required: Name, email, phone, job title, division
@@ -807,6 +838,7 @@ Vendor/Contractor Data:
 Conduct PIA before implementing new features that collect/process data:
 
 **PIA Checklist:**
+
 ```
 1. Data Collection
    □ What personal information will be collected?
@@ -848,15 +880,15 @@ Conduct PIA before implementing new features that collect/process data:
 
 **Consent Collection Points:**
 
-| Collection Point | Purpose | Consent Type | Duration | Withdrawal | Legal Basis |
-|---|---|---|---|---|---|
-| **User Registration** | Create KrewPact account, receive updates | Explicit opt-in | Until withdrawal | One-click unsubscribe | Contractual |
-| **Portal Signup** | Create external portal access | Explicit opt-in (separate form) | Duration of portal access | Self-service in portal | Contractual |
-| **Data Processing** | Allow processing of personal data for operational purposes | Implied (T&C) | Duration of employment/contract | Through account settings | Legal obligation (employment) |
-| **Cookies/Analytics** | Website analytics, performance monitoring | Explicit opt-in (cookie banner) | Duration of consent | Cookie preferences page | Explicit consent |
-| **Marketing Communications** | Email newsletters, product updates | Explicit opt-in (separate checkbox) | Until withdrawal | Email footer unsubscribe link | Explicit consent |
-| **Third-Party Integration** | Connect with ADP, ERPNext, Clerk | Explicit opt-in (OAuth scope approval) | Until revoked | Account integrations settings | User authorization |
-| **Data Transfer to External Services** | Transfer to BoldSign for e-signatures | Explicit (document workflow) | For document processing only | Request after document signed | Purpose-specific consent |
+| Collection Point                       | Purpose                                                    | Consent Type                           | Duration                        | Withdrawal                    | Legal Basis                   |
+| -------------------------------------- | ---------------------------------------------------------- | -------------------------------------- | ------------------------------- | ----------------------------- | ----------------------------- |
+| **User Registration**                  | Create KrewPact account, receive updates                   | Explicit opt-in                        | Until withdrawal                | One-click unsubscribe         | Contractual                   |
+| **Portal Signup**                      | Create external portal access                              | Explicit opt-in (separate form)        | Duration of portal access       | Self-service in portal        | Contractual                   |
+| **Data Processing**                    | Allow processing of personal data for operational purposes | Implied (T&C)                          | Duration of employment/contract | Through account settings      | Legal obligation (employment) |
+| **Cookies/Analytics**                  | Website analytics, performance monitoring                  | Explicit opt-in (cookie banner)        | Duration of consent             | Cookie preferences page       | Explicit consent              |
+| **Marketing Communications**           | Email newsletters, product updates                         | Explicit opt-in (separate checkbox)    | Until withdrawal                | Email footer unsubscribe link | Explicit consent              |
+| **Third-Party Integration**            | Connect with ADP, ERPNext, Clerk                           | Explicit opt-in (OAuth scope approval) | Until revoked                   | Account integrations settings | User authorization            |
+| **Data Transfer to External Services** | Transfer to BoldSign for e-signatures                      | Explicit (document workflow)           | For document processing only    | Request after document signed | Purpose-specific consent      |
 
 **Consent Management Database Schema:**
 
@@ -1115,27 +1147,30 @@ Manual:
 
 **Breach Classification (Severity Matrix):**
 
-| Severity | Impact | Examples | Response Time | Regulatory Notice |
-|---|---|---|---|---|
-| **S1 - Critical** | Widespread data exposure; severe privacy harm | Full database dump, all SIN numbers exposed, financial records leaked | Immediate (< 1 hour) | Yes, 24-48 hours |
-| **S2 - High** | Significant data exposure; PII compromised | 100+ employee SINs exposed, banking info leaked | Within 4 hours | Yes, 24-48 hours |
-| **S3 - Medium** | Limited exposure; containable impact | < 10 records exposed, isolated project data, non-sensitive info | Within 24 hours | Assess; likely yes |
-| **S4 - Low** | Minimal exposure; no PII involved | Public project names disclosed, non-sensitive metadata | Within 1 week | Unlikely |
+| Severity          | Impact                                        | Examples                                                              | Response Time        | Regulatory Notice  |
+| ----------------- | --------------------------------------------- | --------------------------------------------------------------------- | -------------------- | ------------------ |
+| **S1 - Critical** | Widespread data exposure; severe privacy harm | Full database dump, all SIN numbers exposed, financial records leaked | Immediate (< 1 hour) | Yes, 24-48 hours   |
+| **S2 - High**     | Significant data exposure; PII compromised    | 100+ employee SINs exposed, banking info leaked                       | Within 4 hours       | Yes, 24-48 hours   |
+| **S3 - Medium**   | Limited exposure; containable impact          | < 10 records exposed, isolated project data, non-sensitive info       | Within 24 hours      | Assess; likely yes |
+| **S4 - Low**      | Minimal exposure; no PII involved             | Public project names disclosed, non-sensitive metadata                | Within 1 week        | Unlikely           |
 
 **Notification Requirements:**
 
 **Office of the Privacy Commissioner (OPC) - Federal:**
+
 - Notify if reasonable belief personal information has been stolen/misused
 - Timeline: Without unreasonable delay
 - Method: Online form at OPC website
 - Information: Description of information involved, steps being taken
 
 **Provincial Regulators (if applicable):**
+
 - Quebec CNIL: If Quebec residents affected
 - British Columbia: If BC residents affected
 - Ontario: If breach involves health information
 
 **Affected Individuals:**
+
 - Notify if breach creates real risk of identity theft
 - Timeline: Without unreasonable delay
 - Method: Email (preferred), mail, public notice if mass breach
@@ -1235,14 +1270,14 @@ CREATE TABLE security_breach_records (
 
 **Data Processing Agreements (DPA) Required For:**
 
-| Vendor | Service | Data Processed | DPA Status | Review Frequency |
-|---|---|---|---|---|
-| **Supabase** | PostgreSQL database | All operational data, PII | Signed | Annually |
-| **Clerk** | Authentication | User email, OAuth metadata | Signed | Annually |
-| **BoldSign** | E-signatures | Signed documents, user metadata | Signed | Annually |
-| **ADP** | Payroll integration | Employee names, SINs, banking | Signed | Semi-annually |
-| **Vercel** | Application hosting | Transient request data, logs | Signed | Annually |
-| **AWS** | Cloud infrastructure | Database, backups, files | Signed (via Supabase) | Annually |
+| Vendor       | Service              | Data Processed                  | DPA Status            | Review Frequency |
+| ------------ | -------------------- | ------------------------------- | --------------------- | ---------------- |
+| **Supabase** | PostgreSQL database  | All operational data, PII       | Signed                | Annually         |
+| **Clerk**    | Authentication       | User email, OAuth metadata      | Signed                | Annually         |
+| **BoldSign** | E-signatures         | Signed documents, user metadata | Signed                | Annually         |
+| **ADP**      | Payroll integration  | Employee names, SINs, banking   | Signed                | Semi-annually    |
+| **Vercel**   | Application hosting  | Transient request data, logs    | Signed                | Annually         |
+| **AWS**      | Cloud infrastructure | Database, backups, files        | Signed (via Supabase) | Annually         |
 
 **DPA Review Checklist:**
 
@@ -1399,7 +1434,7 @@ async function initiateContractTermination(contractId, terminatingParty, reason)
     contract_id: contractId,
     termination_initiated_date: new Date(),
     terminating_party: terminatingParty,
-    reason: reason
+    reason: reason,
   });
 
   // 2. Calculate entitlements
@@ -1417,14 +1452,14 @@ async function initiateContractTermination(contractId, terminatingParty, reason)
   scheduleTask({
     type: 'generate_form_6',
     termination_id: termination.id,
-    scheduled_date: addDays(new Date(), 7)
+    scheduled_date: addDays(new Date(), 7),
   });
 
   // 5. Record in audit log
   await auditLog.record({
     action: 'CONTRACT_TERMINATED',
     resource: contractId,
-    details: { reason, amount: earnedAmount }
+    details: { reason, amount: earnedAmount },
   });
 
   return termination;
@@ -1779,14 +1814,14 @@ CREATE TABLE safety_postings (
 
 **Record Retention for Safety Documents:**
 
-| Record Type | Retention Period | Legal Basis | Storage Location |
-|---|---|---|---|
-| Incident Reports | 7 years minimum | OHSA Section 34 | Supabase + Archive |
-| WSIB Claims | Indefinite | Claim history | ERPNext + Archive |
-| Safety Inspections | 3-5 years | OHSA Section 34 | Supabase + Archive |
-| Health & Safety Certificates | Duration of employment + 3 years | OHSA recordkeeping | Supabase + Archive |
-| COR Audit Records | 5 years | COR certification | Supabase + Archive |
-| Accident Investigation Reports | 7 years minimum | OHSA Section 34 | Supabase + Archive |
+| Record Type                    | Retention Period                 | Legal Basis        | Storage Location   |
+| ------------------------------ | -------------------------------- | ------------------ | ------------------ |
+| Incident Reports               | 7 years minimum                  | OHSA Section 34    | Supabase + Archive |
+| WSIB Claims                    | Indefinite                       | Claim history      | ERPNext + Archive  |
+| Safety Inspections             | 3-5 years                        | OHSA Section 34    | Supabase + Archive |
+| Health & Safety Certificates   | Duration of employment + 3 years | OHSA recordkeeping | Supabase + Archive |
+| COR Audit Records              | 5 years                          | COR certification  | Supabase + Archive |
+| Accident Investigation Reports | 7 years minimum                  | OHSA Section 34    | Supabase + Archive |
 
 **COR Certification Support:**
 
@@ -1836,6 +1871,7 @@ CREATE TABLE cor_certification_tracking (
 **PIPEDA Part 2 Compliance:**
 
 PIPEDA allows electronic consent and communications if:
+
 - Consent for electronic communication obtained in writing (electronic or paper)
 - Capability to withdraw consent and request paper format
 - Electronic documents provide same information as paper equivalent
@@ -1992,7 +2028,7 @@ ORDER BY event_timestamp ASC;
 
 Signed documents must remain verifiable for 7+ years:
 
-```
+````
 Strategy 1: Long-Term Validation (LTV)
   - Include complete certificate chain in PDF
   - Include OCSP responses (proof certificate was valid at signing time)
@@ -2135,7 +2171,7 @@ button:disabled {
   background-color: #cccccc;
   color: #808080; /* #808080 on #cccccc = 3.11:1 ✓ */
 }
-```
+````
 
 **Focus Management:**
 
@@ -2227,16 +2263,10 @@ function openModal(modalId) {
 </form>
 
 <!-- Alert/status region -->
-<div role="alert" aria-live="polite">
-  <strong>Success!</strong> Project created successfully.
-</div>
+<div role="alert" aria-live="polite"><strong>Success!</strong> Project created successfully.</div>
 
 <!-- Expandable section (accordion) -->
-<button
-  aria-expanded="false"
-  aria-controls="section-content"
-  onclick="toggleSection(this)"
->
+<button aria-expanded="false" aria-controls="section-content" onclick="toggleSection(this)">
   Project Details ▼
 </button>
 <div id="section-content" hidden>
@@ -2280,10 +2310,10 @@ document.addEventListener('keydown', (event) => {
 // Document keyboard shortcuts
 const keyboardShortcuts = {
   'Alt+S': 'Submit form',
-  'Escape': 'Close dialog',
+  Escape: 'Close dialog',
   'Arrow Up/Down': 'Navigate list',
-  'Enter': 'Activate button',
-  'Space': 'Toggle checkbox'
+  Enter: 'Activate button',
+  Space: 'Toggle checkbox',
 };
 ```
 
@@ -2345,11 +2375,7 @@ const keyboardShortcuts = {
 
 <!-- Help text associated with input -->
 <label for="email">Email</label>
-<input
-  id="email"
-  type="email"
-  aria-describedby="email-help"
-/>
+<input id="email" type="email" aria-describedby="email-help" />
 <span id="email-help">We'll send you project updates at this email.</span>
 ```
 
@@ -2364,7 +2390,8 @@ const keyboardShortcuts = {
 </select>
 
 <!-- Bad: Placeholder as label (doesn't persist) -->
-<input type="text" placeholder="Project Name"> <!-- ✗ -->
+<input type="text" placeholder="Project Name" />
+<!-- ✗ -->
 
 <!-- Good: Required indicator accessible -->
 <label for="division_id">Division <span aria-label="required">*</span></label>
@@ -2374,12 +2401,7 @@ const keyboardShortcuts = {
 
 <!-- Good: Error messages associated with input -->
 <label for="budget">Budget</label>
-<input
-  id="budget"
-  type="number"
-  aria-describedby="budget-error"
-  aria-invalid="true"
-/>
+<input id="budget" type="number" aria-describedby="budget-error" aria-invalid="true" />
 <span id="budget-error" role="alert">Budget must be greater than zero.</span>
 
 <!-- Good: Optional indicator -->
@@ -2455,9 +2477,9 @@ async function testAccessibility(page) {
   const violations = accessibilityScanResults.violations;
   if (violations.length > 0) {
     console.error('Accessibility violations found:');
-    violations.forEach(violation => {
+    violations.forEach((violation) => {
       console.error(`- ${violation.id}: ${violation.description}`);
-      violation.nodes.forEach(node => {
+      violation.nodes.forEach((node) => {
         console.error(`  Element: ${node.html}`);
       });
     });
@@ -2535,14 +2557,14 @@ Motion Testing:
 
 **Assistive Technology Testing Matrix:**
 
-| Technology | Browser | OS | WCAG Coverage | Test Frequency |
-|---|---|---|---|---|
-| **NVDA** | Firefox | Windows | Headings, links, forms, tables | Weekly (automated) |
-| **JAWS** | Chrome | Windows | Screen reader features | Monthly |
-| **VoiceOver** | Safari | macOS | Native screen reader | Monthly |
-| **VoiceOver** | Safari | iOS | Mobile accessibility | Quarterly |
-| **TalkBack** | Chrome | Android | Mobile accessibility | Quarterly |
-| **Zoom for Mac** | Safari | macOS | Magnification, gestures | Quarterly |
+| Technology       | Browser | OS      | WCAG Coverage                  | Test Frequency     |
+| ---------------- | ------- | ------- | ------------------------------ | ------------------ |
+| **NVDA**         | Firefox | Windows | Headings, links, forms, tables | Weekly (automated) |
+| **JAWS**         | Chrome  | Windows | Screen reader features         | Monthly            |
+| **VoiceOver**    | Safari  | macOS   | Native screen reader           | Monthly            |
+| **VoiceOver**    | Safari  | iOS     | Mobile accessibility           | Quarterly          |
+| **TalkBack**     | Chrome  | Android | Mobile accessibility           | Quarterly          |
+| **Zoom for Mac** | Safari  | macOS   | Magnification, gestures        | Quarterly          |
 
 **Compliance Reporting Schedule:**
 
@@ -2561,7 +2583,7 @@ Motion Testing:
 
 Access control failures allow unauthorized data access. KrewPact mitigations:
 
-```
+````
 Implementation:
 - RBAC with role-based permissions (Resource:Action@Scope model)
 - Row-Level Security (RLS) in PostgreSQL database
@@ -2596,13 +2618,13 @@ async function projectRouter(req, res) {
 
   res.json(projects);
 }
-```
+````
 
 **2. Cryptographic Failures**
 
 Sensitive data must be encrypted in transit and at rest.
 
-```
+````
 Implementation:
 - TLS 1.3 for all connections (no HTTP)
 - AES-256 encryption at rest (Supabase, ERPNext, S3)
@@ -2638,13 +2660,13 @@ app.use((req, res, next) => {
   }
   next();
 });
-```
+````
 
 **3. Injection**
 
 SQL injection, NoSQL injection, command injection prevented through parameterized queries.
 
-```
+````
 Implementation:
 - Use parameterized queries (Supabase client prevents injection)
 - Input validation with Zod schemas
@@ -2674,7 +2696,7 @@ const SearchSchema = z.object({
 
 const search = await SearchSchema.parseAsync(req.query);
 // If invalid: throws error (never reaches database)
-```
+````
 
 **4. Insecure Design**
 
@@ -2690,22 +2712,27 @@ Implementation:
 
 Threat Model Example:
 ```
+
 Feature: Employee SIN Storage and Display
 
 Threat 1: SIN display on screen
-  - Risk: Shoulder surfing, unattended screen
-  - Mitigation: Mask SIN except last 4 digits in UI
-  - Mitigation: Require re-authentication to view full SIN
+
+- Risk: Shoulder surfing, unattended screen
+- Mitigation: Mask SIN except last 4 digits in UI
+- Mitigation: Require re-authentication to view full SIN
 
 Threat 2: SIN export to CSV
-  - Risk: CSV shared insecurely
-  - Mitigation: Encrypt CSV before download
-  - Mitigation: Audit log records all exports with who/when
+
+- Risk: CSV shared insecurely
+- Mitigation: Encrypt CSV before download
+- Mitigation: Audit log records all exports with who/when
 
 Threat 3: SIN in logs
-  - Risk: Logs exposed in error messages
-  - Mitigation: Never log full SIN (use last 4 only)
-  - Mitigation: Redact from error messages sent to client
+
+- Risk: Logs exposed in error messages
+- Mitigation: Never log full SIN (use last 4 only)
+- Mitigation: Redact from error messages sent to client
+
 ```
 
 **5. Security Misconfiguration**
@@ -2713,7 +2740,9 @@ Threat 3: SIN in logs
 Misconfigured security settings are common vulnerability source.
 
 ```
+
 Implementation:
+
 - Use security configuration as code (Infrastructure as Code)
 - Automated configuration auditing
 - No default credentials (change defaults immediately)
@@ -2722,6 +2751,7 @@ Implementation:
 - Regular security configuration review
 
 Code Example:
+
 ```javascript
 // Security headers middleware
 app.use((req, res, next) => {
@@ -2734,7 +2764,7 @@ app.use((req, res, next) => {
   // Content Security Policy
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline' trusted-cdn.com; img-src 'self' data: https:;"
+    "default-src 'self'; script-src 'self' 'unsafe-inline' trusted-cdn.com; img-src 'self' data: https:;",
   );
 
   // HSTS (force HTTPS)
@@ -2761,7 +2791,7 @@ const checkDefaultCredentials = async () => {
 
 Dependencies must be kept updated.
 
-```
+````
 Implementation:
 - Regular dependency updates (npm audit)
 - Automated vulnerability scanning (Snyk, GitHub Dependabot)
@@ -2782,13 +2812,13 @@ npm outdated  # See what can be updated
 - Use Snyk (scans dependencies on commit)
 - GitHub Dependabot (automated PRs for updates)
 - npm audit in pre-commit hook
-```
+````
 
 **7. Authentication & Session Management Failures**
 
 Weak authentication bypassed.
 
-```
+````
 Implementation:
 - Use Clerk (OAuth 2.0 compliant)
 - MFA mandatory for sensitive accounts
@@ -2840,13 +2870,13 @@ async function recordFailedAttempt(email) {
     return res.status(429).json({ error: 'Account locked. Try again in 15 minutes.' });
   }
 }
-```
+````
 
 **8. Software and Data Integrity Failures**
 
 Updates and deployments must be secure.
 
-```
+````
 Implementation:
 - Code signing (Git commit signing)
 - Artifact signing (Docker image signatures)
@@ -2874,13 +2904,13 @@ async function verifyArtifactSignature(artifactPath, signaturePath) {
 
 // Call before deployment
 await verifyArtifactSignature('/app/docker-image.tar', '/app/docker-image.tar.sig');
-```
+````
 
 **9. Logging & Monitoring Failures**
 
 Lack of logging prevents incident detection.
 
-```
+````
 Implementation:
 - Log all authentication events
 - Log all data access (RLS prevents unauthorized access)
@@ -2917,13 +2947,13 @@ async function logSecurityEvent(event) {
     });
   }
 }
-```
+````
 
 **10. Server-Side Request Forgery (SSRF)**
 
 Backend makes requests to unintended locations.
 
-```
+````
 Implementation:
 - Allowlist only necessary external endpoints
 - Validate redirect URLs
@@ -2970,7 +3000,7 @@ async function makeExternalRequest(url, options) {
     clearTimeout(timeout);
   }
 }
-```
+````
 
 ### 7.2 API Security
 
@@ -3004,7 +3034,7 @@ async function rateLimit(req, res, next) {
   if (current > limit.points) {
     return res.status(429).json({
       error: 'Too many requests',
-      retryAfter: limit.duration
+      retryAfter: limit.duration,
     });
   }
 
@@ -3056,9 +3086,9 @@ function encodeHTML(str) {
     '<': '&lt;',
     '>': '&gt;',
     '"': '&quot;',
-    "'": '&#39;'
+    "'": '&#39;',
   };
-  return String(str).replace(/[&<>"']/g, char => entities[char]);
+  return String(str).replace(/[&<>"']/g, (char) => entities[char]);
 }
 
 // In response
@@ -3082,7 +3112,7 @@ const corsOptions = {
     const allowedOrigins = [
       'https://app.krewpact.io',
       'https://portal.krewpact.io',
-      'https://admin.krewpact.io'
+      'https://admin.krewpact.io',
     ];
 
     if (allowedOrigins.includes(origin) || !origin) {
@@ -3095,7 +3125,7 @@ const corsOptions = {
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   exposedHeaders: ['X-Total-Count', 'X-Page-Number'],
-  maxAge: 3600 // Preflight cache 1 hour
+  maxAge: 3600, // Preflight cache 1 hour
 };
 
 app.use(cors(corsOptions));
@@ -3175,10 +3205,7 @@ async function verifyWebhookSignature(payload, signature, secret) {
     .digest('hex');
 
   // Constant-time comparison (prevents timing attacks)
-  const isValid = crypto.timingSafeEqual(
-    Buffer.from(signature),
-    Buffer.from(expectedSignature)
-  );
+  const isValid = crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
 
   return isValid;
 }
@@ -3191,7 +3218,7 @@ async function handleBoldSignWebhook(req, res) {
   const isValid = await verifyWebhookSignature(
     payload,
     signature,
-    process.env.BOLD_SIGN_WEBHOOK_SECRET
+    process.env.BOLD_SIGN_WEBHOOK_SECRET,
   );
 
   if (!isValid) {
@@ -3217,18 +3244,18 @@ app.use((req, res, next) => {
   res.setHeader(
     'Content-Security-Policy',
     [
-      "default-src 'self'",  // Default: only same-origin
+      "default-src 'self'", // Default: only same-origin
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://trusted-cdn.com",
       "style-src 'self' 'unsafe-inline' https://trusted-cdn.com",
       "img-src 'self' data: https:",
       "font-src 'self' https://fonts.googleapis.com",
       "connect-src 'self' https://api.krewpact.io https://clerk.io",
-      "frame-src 'none'",  // No iframes
-      "object-src 'none'",  // No Flash, plugins
+      "frame-src 'none'", // No iframes
+      "object-src 'none'", // No Flash, plugins
       "base-uri 'self'",
       "form-action 'self'",
-      "upgrade-insecure-requests"  // Upgrade HTTP to HTTPS
-    ].join('; ')
+      'upgrade-insecure-requests', // Upgrade HTTP to HTTPS
+    ].join('; '),
   );
   next();
 });
@@ -3283,9 +3310,9 @@ async function createProject(projectData) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-CSRF-Token': csrfToken
+      'X-CSRF-Token': csrfToken,
     },
-    body: JSON.stringify(projectData)
+    body: JSON.stringify(projectData),
   });
 
   return response.json();
@@ -3337,19 +3364,13 @@ const query = `SELECT * FROM users WHERE email = '${req.body.email}'`;
 db.run(query);
 
 // GOOD: Parameterized (safe)
-const { data, error } = await supabase
-  .from('users')
-  .select('*')
-  .eq('email', req.body.email);  // Parameter safely escaped
+const { data, error } = await supabase.from('users').select('*').eq('email', req.body.email); // Parameter safely escaped
 
 // Even safer: Zod validation first
 const EmailSchema = z.string().email();
 const email = await EmailSchema.parseAsync(req.body.email);
 
-const { data, error } = await supabase
-  .from('users')
-  .select('*')
-  .eq('email', email);
+const { data, error } = await supabase.from('users').select('*').eq('email', email);
 ```
 
 **Connection Pooling Security:**
@@ -3363,12 +3384,12 @@ const pool = new PgPool({
   password: process.env.DB_PASSWORD,
   port: 5432,
   ssl: {
-    rejectUnauthorized: true,  // Verify SSL certificate
+    rejectUnauthorized: true, // Verify SSL certificate
     ca: fs.readFileSync('./ca-cert.pem'),
     key: fs.readFileSync('./client-key.pem'),
-    cert: fs.readFileSync('./client-cert.pem')
+    cert: fs.readFileSync('./client-cert.pem'),
   },
-  max: 20,  // Maximum pool size
+  max: 20, // Maximum pool size
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
 });
@@ -3431,7 +3452,7 @@ CREATE TABLE suspicious_queries (
 
 KrewPact uses Tailscale for system-to-system communication, creating a zero-trust overlay network:
 
-```
+````
 Architecture:
   - All backend services connect to Tailscale VPN
   - Encrypted tunnel between each service
@@ -3477,7 +3498,7 @@ tailscale status
     }
   ]
 }
-```
+````
 
 **VLAN Segmentation (TP-Link Omada):**
 
@@ -3634,7 +3655,7 @@ services:
       - /var/run
 
     # Non-root user
-    user: "1000:1000"
+    user: '1000:1000'
 
     # Resource limits
     deploy:
@@ -3652,7 +3673,7 @@ services:
 
     # Healthcheck
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:8080/health']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -3671,12 +3692,12 @@ services:
 
     environment:
       POSTGRES_USER: krewpact_user
-      POSTGRES_PASSWORD: ${DB_PASSWORD}  # From .env
+      POSTGRES_PASSWORD: ${DB_PASSWORD} # From .env
 
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-    user: "999:999"
+    user: '999:999'
     read_only: true
     tmpfs:
       - /tmp
@@ -4267,7 +4288,7 @@ const suspiciousPatterns = [
       HAVING COUNT(*) >= 5
     `,
     action: 'block_ip', // Block IP for 1 hour
-    severity: 'high'
+    severity: 'high',
   },
 
   // Pattern 2: Access to data outside user's division
@@ -4283,7 +4304,7 @@ const suspiciousPatterns = [
       HAVING COUNT(*) >= 3
     `,
     action: 'alert_admin',
-    severity: 'medium'
+    severity: 'medium',
   },
 
   // Pattern 3: Unusual export volume
@@ -4298,7 +4319,7 @@ const suspiciousPatterns = [
       HAVING COUNT(*) >= 10 OR SUM(export_rows) >= 100000
     `,
     action: 'revoke_session_and_alert',
-    severity: 'high'
+    severity: 'high',
   },
 
   // Pattern 4: After-hours access to sensitive data
@@ -4314,19 +4335,22 @@ const suspiciousPatterns = [
       HAVING COUNT(*) >= 5
     `,
     action: 'alert_admin',
-    severity: 'medium'
-  }
+    severity: 'medium',
+  },
 ];
 
 // Run pattern detection every 5 minutes
-setInterval(async () => {
-  for (const pattern of suspiciousPatterns) {
-    const results = await db.query(pattern.query);
-    if (results.length > 0) {
-      await handleSuspiciousPattern(pattern, results);
+setInterval(
+  async () => {
+    for (const pattern of suspiciousPatterns) {
+      const results = await db.query(pattern.query);
+      if (results.length > 0) {
+        await handleSuspiciousPattern(pattern, results);
+      }
     }
-  }
-}, 5 * 60 * 1000);
+  },
+  5 * 60 * 1000,
+);
 
 async function handleSuspiciousPattern(pattern, results) {
   if (pattern.action === 'block_ip') {
@@ -4522,12 +4546,12 @@ Quarterly Access Review:
 
 **Severity Matrix:**
 
-| Severity | Definition | Examples | Response Time | Escalation | Communication |
-|---|---|---|---|---|---|
-| **S1 - Critical** | Widespread data exposure; service unavailable; regulatory breach | Full database dump exposed, all SIN numbers stolen, ransomware, 1000+ users affected | Immediate (< 15 min response) | CEO, Privacy Officer, Legal | OPC notification within 24h, Public disclosure plan |
-| **S2 - High** | Significant data compromise; limited availability; 100-1000 users affected | 100+ employee records exposed, financial data breach, auth service down 1+ hour | Within 1 hour | VP Operations, CISO, Privacy Officer | Regulatory assessment, Customer notification plan |
-| **S3 - Medium** | Limited data exposure; 10-100 users affected; containable impact | 10-50 records exposed, single project access incident, temporary service interruption | Within 4 hours | Ops Manager, Security Lead | Internal notification, Customer if applicable |
-| **S4 - Low** | Minimal/no data exposure; no PII; isolated incident | Failed login attempt, outdated library, non-critical service slow | Within 24 hours | Ops Team | Log entry only |
+| Severity          | Definition                                                                 | Examples                                                                              | Response Time                 | Escalation                           | Communication                                       |
+| ----------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ----------------------------- | ------------------------------------ | --------------------------------------------------- |
+| **S1 - Critical** | Widespread data exposure; service unavailable; regulatory breach           | Full database dump exposed, all SIN numbers stolen, ransomware, 1000+ users affected  | Immediate (< 15 min response) | CEO, Privacy Officer, Legal          | OPC notification within 24h, Public disclosure plan |
+| **S2 - High**     | Significant data compromise; limited availability; 100-1000 users affected | 100+ employee records exposed, financial data breach, auth service down 1+ hour       | Within 1 hour                 | VP Operations, CISO, Privacy Officer | Regulatory assessment, Customer notification plan   |
+| **S3 - Medium**   | Limited data exposure; 10-100 users affected; containable impact           | 10-50 records exposed, single project access incident, temporary service interruption | Within 4 hours                | Ops Manager, Security Lead           | Internal notification, Customer if applicable       |
+| **S4 - Low**      | Minimal/no data exposure; no PII; isolated incident                        | Failed login attempt, outdated library, non-critical service slow                     | Within 24 hours               | Ops Team                             | Log entry only                                      |
 
 ### 10.2 Response Procedures
 
@@ -4699,15 +4723,15 @@ Post-Incident Review Report (template):
 
 **RPO/RTO Targets:**
 
-| System/Service | RTO (Recovery Time) | RPO (Recovery Point) | Rationale |
-|---|---|---|---|
-| **Public Portal (KrewPact UI)** | 4 hours | 1 hour | Customer-facing, loss of 1h acceptable |
-| **Internal Web App** | 2 hours | 30 minutes | Critical operations |
-| **Database (Supabase)** | 1 hour | 5 minutes | Core data, needs frequent backup |
-| **ERPNext Financial System** | 4 hours | 30 minutes | Financial records critical, compliance |
-| **Email/Communications** | 8 hours | 4 hours | Important but less critical |
-| **File Storage (S3)** | 24 hours | 1 hour | Documents can be reconstructed |
-| **Backup Systems** | 48 hours | 12 hours | Backup of backup; lower priority |
+| System/Service                  | RTO (Recovery Time) | RPO (Recovery Point) | Rationale                              |
+| ------------------------------- | ------------------- | -------------------- | -------------------------------------- |
+| **Public Portal (KrewPact UI)** | 4 hours             | 1 hour               | Customer-facing, loss of 1h acceptable |
+| **Internal Web App**            | 2 hours             | 30 minutes           | Critical operations                    |
+| **Database (Supabase)**         | 1 hour              | 5 minutes            | Core data, needs frequent backup       |
+| **ERPNext Financial System**    | 4 hours             | 30 minutes           | Financial records critical, compliance |
+| **Email/Communications**        | 8 hours             | 4 hours              | Important but less critical            |
+| **File Storage (S3)**           | 24 hours            | 1 hour               | Documents can be reconstructed         |
+| **Backup Systems**              | 48 hours            | 12 hours             | Backup of backup; lower priority       |
 
 **Backup Strategy (3-2-1 Rule):**
 
@@ -4862,14 +4886,13 @@ Scenario 4: Application/Code Issue
 
 ```yaml
 # Kubernetes/Docker Orchestration Example
-
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: krewpact-api
 spec:
-  replicas: 3  # Multiple replicas for high availability
+  replicas: 3 # Multiple replicas for high availability
   selector:
     matchLabels:
       app: krewpact-api
@@ -4879,34 +4902,34 @@ spec:
         app: krewpact-api
     spec:
       containers:
-      - name: api
-        image: krewpact:v1.2.3
-        ports:
-        - containerPort: 8080
+        - name: api
+          image: krewpact:v1.2.3
+          ports:
+            - containerPort: 8080
 
-        # Health checks for automatic failover
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-          initialDelaySeconds: 30
-          periodSeconds: 10
+          # Health checks for automatic failover
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
 
-        readinessProbe:
-          httpGet:
-            path: /ready
-            port: 8080
-          initialDelaySeconds: 5
-          periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
 
-        # Resource limits prevent cascade failures
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "500m"
-          limits:
-            memory: "512Mi"
-            cpu: "1000m"
+          # Resource limits prevent cascade failures
+          resources:
+            requests:
+              memory: '256Mi'
+              cpu: '500m'
+            limits:
+              memory: '512Mi'
+              cpu: '1000m'
 
 ---
 apiVersion: policy/v1
@@ -4914,7 +4937,7 @@ kind: PodDisruptionBudget
 metadata:
   name: krewpact-api-pdb
 spec:
-  minAvailable: 2  # Keep at least 2 replicas running
+  minAvailable: 2 # Keep at least 2 replicas running
   selector:
     matchLabels:
       app: krewpact-api
@@ -4928,10 +4951,10 @@ spec:
   selector:
     app: krewpact-api
   ports:
-  - protocol: TCP
-    port: 443
-    targetPort: 8080
-  type: LoadBalancer  # Automatic load balancing across replicas
+    - protocol: TCP
+      port: 443
+      targetPort: 8080
+  type: LoadBalancer # Automatic load balancing across replicas
 
 ---
 # Database failover
@@ -4940,11 +4963,11 @@ kind: Cluster
 metadata:
   name: krewpact-db
 spec:
-  instances: 3  # 1 primary + 2 standbys
+  instances: 3 # 1 primary + 2 standbys
   primaryUpdateStrategy: unsupervised
   postgresql:
     parameters:
-      max_connections: "200"
+      max_connections: '200'
 ```
 
 ---
@@ -4953,52 +4976,53 @@ spec:
 
 **Master Compliance Checklist: All Regulatory Requirements**
 
-| Requirement | Regulation/Standard | Current Status | Owner | Evidence/Documentation | Last Reviewed | Next Review | Notes |
-|---|---|---|---|---|---|---|---|
-| **PIPEDA - Accountability** | PIPEDA Section 4 | ✓ Implemented | Privacy Officer | DPA with all vendors, Privacy Policy | 2025-01-15 | 2025-04-15 | Quarterly reviews |
-| **PIPEDA - Identifier Minimization** | PIPEDA Section 4.2 | ✓ Implemented | Privacy Officer | Data minimization checklist, Field audit | 2025-01-20 | 2025-04-20 | Annual audit |
-| **PIPEDA - Retention & Disposal** | PIPEDA Section 4.3 | ✓ Implemented | Compliance Officer | Data retention schedule, Disposal certs | 2025-01-10 | 2025-04-10 | Monitor execution |
-| **PIPEDA - Accuracy** | PIPEDA Section 4.4 | ✓ Implemented | Privacy Officer | Correction request process, Records | 2025-01-25 | 2025-04-25 | Track corrections |
-| **PIPEDA - Safeguarding** | PIPEDA Section 4.5 | ✓ Implemented | CISO | Encryption matrix, Access controls | 2025-01-15 | 2025-04-15 | Quarterly assessment |
-| **PIPEDA - Openness** | PIPEDA Section 4.6 | ✓ Implemented | Privacy Officer | Privacy policy published, Contact info | 2025-01-12 | 2025-04-12 | Review policy changes |
-| **PIPEDA - Individual Access** | PIPEDA Section 4.7 | ✓ Implemented | Privacy Officer | Access request process, SLA tracking | 2025-01-18 | 2025-04-18 | Monitor SLA compliance |
-| **PIPEDA - Challenge Accuracy** | PIPEDA Section 4.8 | ✓ Implemented | Privacy Officer | Correction process, Record disputes | 2025-01-20 | 2025-04-20 | Track disputes |
-| **AODA - Web Accessibility** | AODA 2005 Section 11.2 | ✓ Implemented | Product Manager | WCAG 2.0 AA compliance report | 2025-02-01 | 2025-05-01 | Monthly auto-testing |
-| **AODA - Training** | AODA 2005 Section 11.3 | ✓ Implemented | HR Manager | Training certificates, Attendance records | 2025-01-30 | 2025-04-30 | Annual refresher |
-| **AODA - Feedback Process** | AODA 2005 Section 11.4 | ✓ Implemented | Operations | Feedback form, Response records | 2025-02-05 | 2025-05-05 | Track feedback trends |
-| **Construction Act - 7-Day Notice** | Ontario Construction Act 2026 | ✓ Implemented | Legal Dept | Notice templates, Send logs | 2025-01-22 | 2025-04-22 | Verify on terminations |
-| **Construction Act - Lien Tracking** | Ontario Construction Act | ✓ Implemented | Finance Manager | Lien management system, Ledger | 2025-01-25 | 2025-04-25 | Monthly audit |
-| **Construction Act - Form 6 Release** | Ontario Construction Act | ✓ Implemented | Finance Manager | Form 6 generation, Payment tracking | 2025-01-20 | 2025-04-20 | Verify timeliness |
-| **Construction Act - Trust Funds** | Ontario Construction Act | ✓ Implemented | Finance Manager | Bank account agreement, Movement log | 2025-01-15 | 2025-04-15 | Quarterly reconciliation |
-| **CRA - Payroll Records** | Income Tax Act (Canada) | ✓ Implemented | HR Manager | Payroll system, T4 filings | 2025-01-10 | 2025-04-10 | Annual T4 verification |
-| **CRA - Financial Records** | Income Tax Act (Canada) | ✓ Implemented | Finance Manager | Accounting system, 6-year retention | 2025-01-10 | 2025-04-10 | Annual audit coordination |
-| **WSIB - Incident Reporting** | Occupational Health & Safety Act | ✓ Implemented | Safety Officer | Incident database, MOL reports | 2025-01-28 | 2025-04-28 | Monthly incident review |
-| **WSIB - Record Retention** | O. Reg. 833 | ✓ Implemented | Safety Officer | Archive system, 7-year retention | 2025-01-15 | 2025-04-15 | Annual cleanup |
-| **OHSA - Safety Posting** | Occupational Health & Safety Act | ✓ Implemented | Safety Officer | Posting checklist, Photos at site | 2025-02-01 | 2025-05-01 | Quarterly verification |
-| **E-Signature - PIPEDA Part 2** | PIPEDA Section 4 & Consent | ✓ Implemented | Privacy Officer | E-consent process, Records | 2025-01-25 | 2025-04-25 | Monitor consent records |
-| **E-Signature - Electronic Commerce Act** | Ontario Electronic Commerce Act | ✓ Implemented | Legal Dept | Signature audit trail, Validation | 2025-01-20 | 2025-04-20 | Quarterly validation test |
-| **Encryption - Data at Rest** | Industry Best Practice (AES-256) | ✓ Implemented | CISO | Encryption settings verified, Keys managed | 2025-01-15 | 2025-04-15 | Key rotation schedule |
-| **Encryption - Data in Transit** | Industry Best Practice (TLS 1.3) | ✓ Implemented | CISO | SSL certificate audit, TLS version check | 2025-01-18 | 2025-04-18 | Certificate renewal schedule |
-| **MFA - Admin Access** | Industry Best Practice | ✓ Implemented | CISO | MFA enrollment status, Backup codes | 2025-01-20 | 2025-04-20 | Quarterly review |
-| **Access Controls - RBAC** | Principle of Least Privilege | ✓ Implemented | Security Lead | Role matrix, Permission audit | 2025-01-25 | 2025-04-25 | Monthly access review |
-| **Audit Logging** | SOX / PIPEDA / CRA | ✓ Implemented | CISO | Audit log testing, Retention policy | 2025-01-15 | 2025-04-15 | Monthly log review |
-| **Backup & Disaster Recovery** | Business Continuity Best Practice | ✓ Implemented | IT Ops Manager | Backup schedule, DR test results | 2025-01-20 | 2025-04-20 | Quarterly DR test |
-| **Incident Response Plan** | PIPEDA / Industry Best Practice | ✓ Implemented | CISO | Plan document, Contact list, Drills | 2025-01-25 | 2025-04-25 | Annual drill execution |
-| **Vendor DPA - Supabase** | PIPEDA Section 4.5 | ✓ Signed | Privacy Officer | DPA document, Security assessment | 2025-01-10 | 2025-04-10 | Annual review |
-| **Vendor DPA - Clerk** | PIPEDA Section 4.5 | ✓ Signed | Privacy Officer | DPA document, SOC 2 certificate | 2025-01-12 | 2025-04-12 | Annual review |
-| **Vendor DPA - BoldSign** | PIPEDA Section 4.5 | ✓ Signed | Privacy Officer | DPA document, Security audit | 2025-01-14 | 2025-04-14 | Annual review |
-| **Vendor DPA - ADP** | PIPEDA Section 4.5 | ✓ Signed | Privacy Officer | DPA document, SOC 2 certificate | 2025-01-16 | 2025-04-16 | Annual review |
-| **Vendor DPA - Vercel** | PIPEDA Section 4.5 | ✓ Signed | Privacy Officer | DPA document, Security policy | 2025-01-18 | 2025-04-18 | Annual review |
-| **Security Training - All Staff** | PIPEDA / Industry Best Practice | ✓ Completed | HR Manager | Training records, Completion certs | 2025-01-31 | 2025-04-30 | Annual mandatory training |
-| **Privacy Training - Data Handlers** | PIPEDA Section 4 | ✓ Completed | Privacy Officer | Training roster, Comprehension test | 2025-01-31 | 2025-04-30 | Annual mandatory training |
-| **Penetration Testing** | Industry Best Practice | ✓ Completed | CISO | Pentest report, Remediation tracking | 2025-01-30 | 2025-04-30 | Annual (Q1) |
-| **Vulnerability Scanning** | Industry Best Practice | ✓ Ongoing | CISO | Scan reports, Patch tracking | 2025-02-01 | 2025-05-01 | Monthly scans |
-| **Data Residency - Canada** | PIPEDA Best Practice | ✓ Verified | CISO | Data residency audit, Contracts | 2025-01-20 | 2025-04-20 | Annual verification |
-| **Third-Party Security Assessment** | PIPEDA Section 4.5 | ✓ Completed | CISO | Assessment results, Scores | 2025-01-25 | 2025-04-25 | Annual assessments |
-| **Compliance Reporting - Monthly** | Internal Control | ✓ Completed | Compliance Officer | Monthly dashboard, Management report | 2025-02-05 | 2025-03-05 | Monthly cadence |
-| **Compliance Certification - Annual** | External Audit | → In Progress | Compliance Officer | Audit report, Certification | Expected 2025-03-31 | 2026-03-31 | External auditor engaged |
+| Requirement                               | Regulation/Standard               | Current Status | Owner              | Evidence/Documentation                     | Last Reviewed       | Next Review | Notes                        |
+| ----------------------------------------- | --------------------------------- | -------------- | ------------------ | ------------------------------------------ | ------------------- | ----------- | ---------------------------- |
+| **PIPEDA - Accountability**               | PIPEDA Section 4                  | ✓ Implemented  | Privacy Officer    | DPA with all vendors, Privacy Policy       | 2025-01-15          | 2025-04-15  | Quarterly reviews            |
+| **PIPEDA - Identifier Minimization**      | PIPEDA Section 4.2                | ✓ Implemented  | Privacy Officer    | Data minimization checklist, Field audit   | 2025-01-20          | 2025-04-20  | Annual audit                 |
+| **PIPEDA - Retention & Disposal**         | PIPEDA Section 4.3                | ✓ Implemented  | Compliance Officer | Data retention schedule, Disposal certs    | 2025-01-10          | 2025-04-10  | Monitor execution            |
+| **PIPEDA - Accuracy**                     | PIPEDA Section 4.4                | ✓ Implemented  | Privacy Officer    | Correction request process, Records        | 2025-01-25          | 2025-04-25  | Track corrections            |
+| **PIPEDA - Safeguarding**                 | PIPEDA Section 4.5                | ✓ Implemented  | CISO               | Encryption matrix, Access controls         | 2025-01-15          | 2025-04-15  | Quarterly assessment         |
+| **PIPEDA - Openness**                     | PIPEDA Section 4.6                | ✓ Implemented  | Privacy Officer    | Privacy policy published, Contact info     | 2025-01-12          | 2025-04-12  | Review policy changes        |
+| **PIPEDA - Individual Access**            | PIPEDA Section 4.7                | ✓ Implemented  | Privacy Officer    | Access request process, SLA tracking       | 2025-01-18          | 2025-04-18  | Monitor SLA compliance       |
+| **PIPEDA - Challenge Accuracy**           | PIPEDA Section 4.8                | ✓ Implemented  | Privacy Officer    | Correction process, Record disputes        | 2025-01-20          | 2025-04-20  | Track disputes               |
+| **AODA - Web Accessibility**              | AODA 2005 Section 11.2            | ✓ Implemented  | Product Manager    | WCAG 2.0 AA compliance report              | 2025-02-01          | 2025-05-01  | Monthly auto-testing         |
+| **AODA - Training**                       | AODA 2005 Section 11.3            | ✓ Implemented  | HR Manager         | Training certificates, Attendance records  | 2025-01-30          | 2025-04-30  | Annual refresher             |
+| **AODA - Feedback Process**               | AODA 2005 Section 11.4            | ✓ Implemented  | Operations         | Feedback form, Response records            | 2025-02-05          | 2025-05-05  | Track feedback trends        |
+| **Construction Act - 7-Day Notice**       | Ontario Construction Act 2026     | ✓ Implemented  | Legal Dept         | Notice templates, Send logs                | 2025-01-22          | 2025-04-22  | Verify on terminations       |
+| **Construction Act - Lien Tracking**      | Ontario Construction Act          | ✓ Implemented  | Finance Manager    | Lien management system, Ledger             | 2025-01-25          | 2025-04-25  | Monthly audit                |
+| **Construction Act - Form 6 Release**     | Ontario Construction Act          | ✓ Implemented  | Finance Manager    | Form 6 generation, Payment tracking        | 2025-01-20          | 2025-04-20  | Verify timeliness            |
+| **Construction Act - Trust Funds**        | Ontario Construction Act          | ✓ Implemented  | Finance Manager    | Bank account agreement, Movement log       | 2025-01-15          | 2025-04-15  | Quarterly reconciliation     |
+| **CRA - Payroll Records**                 | Income Tax Act (Canada)           | ✓ Implemented  | HR Manager         | Payroll system, T4 filings                 | 2025-01-10          | 2025-04-10  | Annual T4 verification       |
+| **CRA - Financial Records**               | Income Tax Act (Canada)           | ✓ Implemented  | Finance Manager    | Accounting system, 6-year retention        | 2025-01-10          | 2025-04-10  | Annual audit coordination    |
+| **WSIB - Incident Reporting**             | Occupational Health & Safety Act  | ✓ Implemented  | Safety Officer     | Incident database, MOL reports             | 2025-01-28          | 2025-04-28  | Monthly incident review      |
+| **WSIB - Record Retention**               | O. Reg. 833                       | ✓ Implemented  | Safety Officer     | Archive system, 7-year retention           | 2025-01-15          | 2025-04-15  | Annual cleanup               |
+| **OHSA - Safety Posting**                 | Occupational Health & Safety Act  | ✓ Implemented  | Safety Officer     | Posting checklist, Photos at site          | 2025-02-01          | 2025-05-01  | Quarterly verification       |
+| **E-Signature - PIPEDA Part 2**           | PIPEDA Section 4 & Consent        | ✓ Implemented  | Privacy Officer    | E-consent process, Records                 | 2025-01-25          | 2025-04-25  | Monitor consent records      |
+| **E-Signature - Electronic Commerce Act** | Ontario Electronic Commerce Act   | ✓ Implemented  | Legal Dept         | Signature audit trail, Validation          | 2025-01-20          | 2025-04-20  | Quarterly validation test    |
+| **Encryption - Data at Rest**             | Industry Best Practice (AES-256)  | ✓ Implemented  | CISO               | Encryption settings verified, Keys managed | 2025-01-15          | 2025-04-15  | Key rotation schedule        |
+| **Encryption - Data in Transit**          | Industry Best Practice (TLS 1.3)  | ✓ Implemented  | CISO               | SSL certificate audit, TLS version check   | 2025-01-18          | 2025-04-18  | Certificate renewal schedule |
+| **MFA - Admin Access**                    | Industry Best Practice            | ✓ Implemented  | CISO               | MFA enrollment status, Backup codes        | 2025-01-20          | 2025-04-20  | Quarterly review             |
+| **Access Controls - RBAC**                | Principle of Least Privilege      | ✓ Implemented  | Security Lead      | Role matrix, Permission audit              | 2025-01-25          | 2025-04-25  | Monthly access review        |
+| **Audit Logging**                         | SOX / PIPEDA / CRA                | ✓ Implemented  | CISO               | Audit log testing, Retention policy        | 2025-01-15          | 2025-04-15  | Monthly log review           |
+| **Backup & Disaster Recovery**            | Business Continuity Best Practice | ✓ Implemented  | IT Ops Manager     | Backup schedule, DR test results           | 2025-01-20          | 2025-04-20  | Quarterly DR test            |
+| **Incident Response Plan**                | PIPEDA / Industry Best Practice   | ✓ Implemented  | CISO               | Plan document, Contact list, Drills        | 2025-01-25          | 2025-04-25  | Annual drill execution       |
+| **Vendor DPA - Supabase**                 | PIPEDA Section 4.5                | ✓ Signed       | Privacy Officer    | DPA document, Security assessment          | 2025-01-10          | 2025-04-10  | Annual review                |
+| **Vendor DPA - Clerk**                    | PIPEDA Section 4.5                | ✓ Signed       | Privacy Officer    | DPA document, SOC 2 certificate            | 2025-01-12          | 2025-04-12  | Annual review                |
+| **Vendor DPA - BoldSign**                 | PIPEDA Section 4.5                | ✓ Signed       | Privacy Officer    | DPA document, Security audit               | 2025-01-14          | 2025-04-14  | Annual review                |
+| **Vendor DPA - ADP**                      | PIPEDA Section 4.5                | ✓ Signed       | Privacy Officer    | DPA document, SOC 2 certificate            | 2025-01-16          | 2025-04-16  | Annual review                |
+| **Vendor DPA - Vercel**                   | PIPEDA Section 4.5                | ✓ Signed       | Privacy Officer    | DPA document, Security policy              | 2025-01-18          | 2025-04-18  | Annual review                |
+| **Security Training - All Staff**         | PIPEDA / Industry Best Practice   | ✓ Completed    | HR Manager         | Training records, Completion certs         | 2025-01-31          | 2025-04-30  | Annual mandatory training    |
+| **Privacy Training - Data Handlers**      | PIPEDA Section 4                  | ✓ Completed    | Privacy Officer    | Training roster, Comprehension test        | 2025-01-31          | 2025-04-30  | Annual mandatory training    |
+| **Penetration Testing**                   | Industry Best Practice            | ✓ Completed    | CISO               | Pentest report, Remediation tracking       | 2025-01-30          | 2025-04-30  | Annual (Q1)                  |
+| **Vulnerability Scanning**                | Industry Best Practice            | ✓ Ongoing      | CISO               | Scan reports, Patch tracking               | 2025-02-01          | 2025-05-01  | Monthly scans                |
+| **Data Residency - Canada**               | PIPEDA Best Practice              | ✓ Verified     | CISO               | Data residency audit, Contracts            | 2025-01-20          | 2025-04-20  | Annual verification          |
+| **Third-Party Security Assessment**       | PIPEDA Section 4.5                | ✓ Completed    | CISO               | Assessment results, Scores                 | 2025-01-25          | 2025-04-25  | Annual assessments           |
+| **Compliance Reporting - Monthly**        | Internal Control                  | ✓ Completed    | Compliance Officer | Monthly dashboard, Management report       | 2025-02-05          | 2025-03-05  | Monthly cadence              |
+| **Compliance Certification - Annual**     | External Audit                    | → In Progress  | Compliance Officer | Audit report, Certification                | Expected 2025-03-31 | 2026-03-31  | External auditor engaged     |
 
 **Compliance Status Legend:**
+
 - ✓ Implemented: Requirement met, controls in place, tested
 - → In Progress: Work underway, completion expected on schedule
 - ⚠ At Risk: Mitigation in place but may not meet deadline
@@ -5076,15 +5100,16 @@ December:
 
 **Version History:**
 
-| Version | Date | Author | Changes |
-|---|---|---|---|
-| 1.0 | 2025-02-09 | Security & Compliance Team | Initial comprehensive framework document |
+| Version | Date       | Author                     | Changes                                  |
+| ------- | ---------- | -------------------------- | ---------------------------------------- |
+| 1.0     | 2025-02-09 | Security & Compliance Team | Initial comprehensive framework document |
 
 **Document Classification:** INTERNAL - Confidential
 
 **Owner:** Chief Information Security Officer (CISO)
 
 **Distribution:**
+
 - Executive Leadership (CEO, CFO, COO)
 - Privacy Officer
 - Compliance Officer
@@ -5095,6 +5120,7 @@ December:
 **Review Schedule:** Quarterly (next review: 2025-05-09)
 
 **Amendment Process:**
+
 1. Submit change request to CISO
 2. Review by Compliance Officer and Privacy Officer
 3. Approval by security governance committee
@@ -5107,8 +5133,8 @@ December:
 
 This KrewPact Security and Compliance Framework establishes the foundational security and privacy standards for the platform. All personnel must adhere to these requirements. Questions or concerns should be escalated to the Chief Information Security Officer.
 
-
 ```
 
 
 
+```

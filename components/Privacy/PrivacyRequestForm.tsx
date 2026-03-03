@@ -38,7 +38,13 @@ export function PrivacyRequestForm({ onSuccess, onCancel }: PrivacyRequestFormPr
 
   const form = useForm<FormValues>({
     resolver: zodResolver(privacyRequestCreateSchema),
-    defaultValues: { requester_email: '', requester_name: '', request_type: 'access', legal_basis: '', notes: '' },
+    defaultValues: {
+      requester_email: '',
+      requester_name: '',
+      request_type: 'access',
+      legal_basis: '',
+      notes: '',
+    },
   });
 
   async function onSubmit(values: FormValues) {
@@ -61,7 +67,9 @@ export function PrivacyRequestForm({ onSuccess, onCancel }: PrivacyRequestFormPr
           render={({ field }) => (
             <FormItem>
               <FormLabel>Requester Email</FormLabel>
-              <FormControl><Input type="email" placeholder="requester@example.com" {...field} /></FormControl>
+              <FormControl>
+                <Input type="email" placeholder="requester@example.com" {...field} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -72,7 +80,9 @@ export function PrivacyRequestForm({ onSuccess, onCancel }: PrivacyRequestFormPr
           render={({ field }) => (
             <FormItem>
               <FormLabel>Requester Name</FormLabel>
-              <FormControl><Input placeholder="Full name" {...field} /></FormControl>
+              <FormControl>
+                <Input placeholder="Full name" {...field} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -85,7 +95,9 @@ export function PrivacyRequestForm({ onSuccess, onCancel }: PrivacyRequestFormPr
               <FormLabel>Request Type</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                 </FormControl>
                 <SelectContent>
                   <SelectItem value="access">Access</SelectItem>
@@ -104,7 +116,9 @@ export function PrivacyRequestForm({ onSuccess, onCancel }: PrivacyRequestFormPr
           render={({ field }) => (
             <FormItem>
               <FormLabel>Notes</FormLabel>
-              <FormControl><Textarea placeholder="Additional notes..." {...field} /></FormControl>
+              <FormControl>
+                <Textarea placeholder="Additional notes..." {...field} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -114,7 +128,11 @@ export function PrivacyRequestForm({ onSuccess, onCancel }: PrivacyRequestFormPr
             {create.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Log Request
           </Button>
-          {onCancel && <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>}
+          {onCancel && (
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
+          )}
         </div>
       </form>
     </Form>

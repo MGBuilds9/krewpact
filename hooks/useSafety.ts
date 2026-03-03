@@ -61,7 +61,10 @@ export interface Inspection {
 export function useSafetyForms(projectId: string) {
   return useQuery({
     queryKey: ['safety-forms', projectId],
-    queryFn: () => apiFetch<{ data: SafetyForm[]; total: number; hasMore: boolean }>(`/api/projects/${projectId}/safety/forms`),
+    queryFn: () =>
+      apiFetch<{ data: SafetyForm[]; total: number; hasMore: boolean }>(
+        `/api/projects/${projectId}/safety/forms`,
+      ),
     staleTime: 30_000,
   });
 }
@@ -79,7 +82,10 @@ export function useUpdateSafetyForm(projectId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, ...body }: { id: string } & Record<string, unknown>) =>
-      apiFetch<SafetyForm>(`/api/projects/${projectId}/safety/forms/${id}`, { method: 'PATCH', body }),
+      apiFetch<SafetyForm>(`/api/projects/${projectId}/safety/forms/${id}`, {
+        method: 'PATCH',
+        body,
+      }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['safety-forms', projectId] }),
   });
 }
@@ -98,7 +104,10 @@ export function useDeleteSafetyForm(projectId: string) {
 export function useSafetyIncidents(projectId: string) {
   return useQuery({
     queryKey: ['safety-incidents', projectId],
-    queryFn: () => apiFetch<{ data: SafetyIncident[]; total: number; hasMore: boolean }>(`/api/projects/${projectId}/safety/incidents`),
+    queryFn: () =>
+      apiFetch<{ data: SafetyIncident[]; total: number; hasMore: boolean }>(
+        `/api/projects/${projectId}/safety/incidents`,
+      ),
     staleTime: 30_000,
   });
 }
@@ -107,7 +116,10 @@ export function useCreateSafetyIncident(projectId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (body: unknown) =>
-      apiFetch<SafetyIncident>(`/api/projects/${projectId}/safety/incidents`, { method: 'POST', body }),
+      apiFetch<SafetyIncident>(`/api/projects/${projectId}/safety/incidents`, {
+        method: 'POST',
+        body,
+      }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['safety-incidents', projectId] }),
   });
 }
@@ -116,7 +128,10 @@ export function useUpdateSafetyIncident(projectId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, ...body }: { id: string } & Record<string, unknown>) =>
-      apiFetch<SafetyIncident>(`/api/projects/${projectId}/safety/incidents/${id}`, { method: 'PATCH', body }),
+      apiFetch<SafetyIncident>(`/api/projects/${projectId}/safety/incidents/${id}`, {
+        method: 'PATCH',
+        body,
+      }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['safety-incidents', projectId] }),
   });
 }
@@ -135,7 +150,10 @@ export function useDeleteSafetyIncident(projectId: string) {
 export function useToolboxTalks(projectId: string) {
   return useQuery({
     queryKey: ['toolbox-talks', projectId],
-    queryFn: () => apiFetch<{ data: ToolboxTalk[]; total: number; hasMore: boolean }>(`/api/projects/${projectId}/safety/toolbox-talks`),
+    queryFn: () =>
+      apiFetch<{ data: ToolboxTalk[]; total: number; hasMore: boolean }>(
+        `/api/projects/${projectId}/safety/toolbox-talks`,
+      ),
     staleTime: 30_000,
   });
 }
@@ -144,7 +162,10 @@ export function useCreateToolboxTalk(projectId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (body: unknown) =>
-      apiFetch<ToolboxTalk>(`/api/projects/${projectId}/safety/toolbox-talks`, { method: 'POST', body }),
+      apiFetch<ToolboxTalk>(`/api/projects/${projectId}/safety/toolbox-talks`, {
+        method: 'POST',
+        body,
+      }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['toolbox-talks', projectId] }),
   });
 }
@@ -153,7 +174,10 @@ export function useUpdateToolboxTalk(projectId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, ...body }: { id: string } & Record<string, unknown>) =>
-      apiFetch<ToolboxTalk>(`/api/projects/${projectId}/safety/toolbox-talks/${id}`, { method: 'PATCH', body }),
+      apiFetch<ToolboxTalk>(`/api/projects/${projectId}/safety/toolbox-talks/${id}`, {
+        method: 'PATCH',
+        body,
+      }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['toolbox-talks', projectId] }),
   });
 }
@@ -172,7 +196,10 @@ export function useDeleteToolboxTalk(projectId: string) {
 export function useInspections(projectId: string) {
   return useQuery({
     queryKey: ['inspections', projectId],
-    queryFn: () => apiFetch<{ data: Inspection[]; total: number; hasMore: boolean }>(`/api/projects/${projectId}/safety/inspections`),
+    queryFn: () =>
+      apiFetch<{ data: Inspection[]; total: number; hasMore: boolean }>(
+        `/api/projects/${projectId}/safety/inspections`,
+      ),
     staleTime: 30_000,
   });
 }
@@ -181,7 +208,10 @@ export function useCreateInspection(projectId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (body: unknown) =>
-      apiFetch<Inspection>(`/api/projects/${projectId}/safety/inspections`, { method: 'POST', body }),
+      apiFetch<Inspection>(`/api/projects/${projectId}/safety/inspections`, {
+        method: 'POST',
+        body,
+      }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['inspections', projectId] }),
   });
 }
@@ -190,7 +220,10 @@ export function useUpdateInspection(projectId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, ...body }: { id: string } & Record<string, unknown>) =>
-      apiFetch<Inspection>(`/api/projects/${projectId}/safety/inspections/${id}`, { method: 'PATCH', body }),
+      apiFetch<Inspection>(`/api/projects/${projectId}/safety/inspections/${id}`, {
+        method: 'PATCH',
+        body,
+      }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['inspections', projectId] }),
   });
 }

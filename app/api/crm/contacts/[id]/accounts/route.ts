@@ -11,10 +11,7 @@ const linkSchema = z.object({
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-export async function GET(
-  _req: NextRequest,
-  context: RouteContext,
-) {
+export async function GET(_req: NextRequest, context: RouteContext) {
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -35,10 +32,7 @@ export async function GET(
   return NextResponse.json({ data });
 }
 
-export async function POST(
-  req: NextRequest,
-  context: RouteContext,
-) {
+export async function POST(req: NextRequest, context: RouteContext) {
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -78,10 +72,7 @@ export async function POST(
   return NextResponse.json({ data }, { status: 201 });
 }
 
-export async function DELETE(
-  req: NextRequest,
-  context: RouteContext,
-) {
+export async function DELETE(req: NextRequest, context: RouteContext) {
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

@@ -81,11 +81,7 @@ describe('mockSupabaseClient', () => {
     });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const from = client.from('accounts') as any;
-    const result = await from
-      .update({ account_name: 'Updated' })
-      .eq('id', '1')
-      .select()
-      .single();
+    const result = await from.update({ account_name: 'Updated' }).eq('id', '1').select().single();
     expect(result).toEqual({ data: updated, error: null });
   });
 
@@ -113,10 +109,7 @@ describe('mockSupabaseClient', () => {
     const client = mockSupabaseClient({
       defaultResponse: { data, error: null },
     });
-    const result = await client
-      .from('accounts')
-      .select('*')
-      .ilike('account_name', '%acme%');
+    const result = await client.from('accounts').select('*').ilike('account_name', '%acme%');
     expect(result).toEqual({ data, error: null });
   });
 });
@@ -171,11 +164,7 @@ describe('makeJsonRequest', () => {
   });
 
   it('supports custom method', async () => {
-    const req = makeJsonRequest(
-      '/api/accounts/123',
-      { account_name: 'Updated' },
-      'PATCH',
-    );
+    const req = makeJsonRequest('/api/accounts/123', { account_name: 'Updated' }, 'PATCH');
     expect(req.method).toBe('PATCH');
   });
 });

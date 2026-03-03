@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  ALLOWED_TRANSITIONS,
-  validateTransition,
-  type LeadStage,
-} from '@/lib/crm/lead-stages';
+import { ALLOWED_TRANSITIONS, validateTransition, type LeadStage } from '@/lib/crm/lead-stages';
 
 describe('ALLOWED_TRANSITIONS', () => {
   it('defines transitions for all 7 stages', () => {
@@ -16,9 +12,7 @@ describe('ALLOWED_TRANSITIONS', () => {
       'won',
       'lost',
     ];
-    expect(Object.keys(ALLOWED_TRANSITIONS)).toEqual(
-      expect.arrayContaining(stages),
-    );
+    expect(Object.keys(ALLOWED_TRANSITIONS)).toEqual(expect.arrayContaining(stages));
     expect(Object.keys(ALLOWED_TRANSITIONS)).toHaveLength(7);
   });
 
@@ -58,12 +52,7 @@ describe('validateTransition', () => {
   });
 
   it('allows any stage → lost', () => {
-    const stagesWithLost: LeadStage[] = [
-      'new',
-      'qualified',
-      'estimating',
-      'proposal_sent',
-    ];
+    const stagesWithLost: LeadStage[] = ['new', 'qualified', 'estimating', 'proposal_sent'];
     for (const stage of stagesWithLost) {
       const result = validateTransition(stage, 'lost');
       expect(result).toEqual({ valid: true });

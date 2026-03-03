@@ -20,15 +20,15 @@ Most perceived "overlap" is actually **intentional layering** for different audi
 
 ## Seven Identified Overlaps
 
-| # | Overlap | Type | Recommendation | Impact |
-|---|---------|------|----------------|--------|
-| **1** | Vision vs. Master Plan (feature scope) | Strategic vs. Execution | **KEEP BOTH** — add cross-reference | None (clarifies) |
-| **2** | Licensing vs. Security (PIPEDA/AODA) | Legal risk vs. Implementation | **KEEP BOTH** — tighten duplication | Saves 1–2 KB |
-| **3** | ADRs vs. DevOps (CI/CD) | Decision rationale vs. Implementation | **MERGE** — remove from DevOps | Saves 2–3 KB |
-| **4** | Integration-Contracts vs. Doctype-Mapping (ERPNext) | High-level vs. Detailed | **KEEP BOTH** — different audiences | None (clarifies) |
-| **5** | Master Plan vs. Feature-PRD (feature list) | Summary vs. Detailed | **ABSORB** — remove from Master Plan | Saves 4–5 KB |
-| **6** | Blueprint-Gap-Matrix (legacy coverage) | Context | **ABSORB** — move to Feature PRD | Saves 2.6 KB file |
-| **7** | Strategic-Assessment (meta-review) | Health check | **REPOSITION** — move to reference folder | None (clarifies role) |
+| #     | Overlap                                             | Type                                  | Recommendation                            | Impact                |
+| ----- | --------------------------------------------------- | ------------------------------------- | ----------------------------------------- | --------------------- |
+| **1** | Vision vs. Master Plan (feature scope)              | Strategic vs. Execution               | **KEEP BOTH** — add cross-reference       | None (clarifies)      |
+| **2** | Licensing vs. Security (PIPEDA/AODA)                | Legal risk vs. Implementation         | **KEEP BOTH** — tighten duplication       | Saves 1–2 KB          |
+| **3** | ADRs vs. DevOps (CI/CD)                             | Decision rationale vs. Implementation | **MERGE** — remove from DevOps            | Saves 2–3 KB          |
+| **4** | Integration-Contracts vs. Doctype-Mapping (ERPNext) | High-level vs. Detailed               | **KEEP BOTH** — different audiences       | None (clarifies)      |
+| **5** | Master Plan vs. Feature-PRD (feature list)          | Summary vs. Detailed                  | **ABSORB** — remove from Master Plan      | Saves 4–5 KB          |
+| **6** | Blueprint-Gap-Matrix (legacy coverage)              | Context                               | **ABSORB** — move to Feature PRD          | Saves 2.6 KB file     |
+| **7** | Strategic-Assessment (meta-review)                  | Health check                          | **REPOSITION** — move to reference folder | None (clarifies role) |
 
 ---
 
@@ -53,6 +53,7 @@ Most perceived "overlap" is actually **intentional layering** for different audi
 ## Three-Phase Implementation Path
 
 ### Phase 1: Quick Wins (1.5 hours, very low risk)
+
 1. Remove CI/CD duplication from DevOps doc (30 min)
 2. Move Blueprint-Gap-Matrix content into Feature PRD (30 min)
 3. Remove feature table from Master Plan (20 min)
@@ -60,6 +61,7 @@ Most perceived "overlap" is actually **intentional layering** for different audi
 **Result:** 16 documents, cleaner, no information loss
 
 ### Phase 2: Cross-Linking (1.5 hours, very low risk)
+
 4. Link PIPEDA between Licensing and Security (30 min)
 5. Link ERPNext details between Contracts and Doctype-Mapping (15 min)
 6. Move Strategic Assessment to reference folder (20 min)
@@ -67,6 +69,7 @@ Most perceived "overlap" is actually **intentional layering** for different audi
 **Result:** 15 core documents + 1 reference, explicit cross-references
 
 ### Phase 3: Polish (1 hour, optional)
+
 7. Update README index and add maintenance guide (60 min)
 
 **Result:** Professional, maintainable pack ready for long-term use
@@ -81,6 +84,7 @@ The consolidations are **low-risk** and **high-clarity**. They reduce cognitive 
 - **Phase 2** clarifies intentional layering (PIPEDA in two docs for different audiences)
 
 **Do NOT consolidate:**
+
 - Vision + Master Plan (different purposes: strategic vs. execution)
 - Integration-Contracts + Doctype-Mapping (different audiences: architects vs. ERP admins)
 
@@ -126,18 +130,21 @@ REFERENCE DOCUMENTS (Meta-Review)
 ## Checklist for Decision-Makers
 
 ### For Strategic Leaders
+
 - [ ] Vision document covers what, why, market, and principles ✓
 - [ ] Licensing audit covers legal risks and vendor terms ✓
 - [ ] Cost analysis covers investment scenarios ✓
 - [ ] Strategic assessment validates plan quality vs. codebase ✓
 
 ### For Technical Leaders
+
 - [ ] 25 ADRs cover every major technology choice ✓
 - [ ] Security framework covers defense-in-depth and compliance ✓
 - [ ] Infrastructure doc covers hosting and scalability ✓
 - [ ] Integration contracts cover all 6 external systems ✓
 
 ### For Implementation Teams
+
 - [ ] Master Plan covers locked decisions and phases ✓
 - [ ] Feature PRD covers 70+ features with acceptance criteria ✓
 - [ ] SQL schema covers data model and RLS ✓
@@ -145,6 +152,7 @@ REFERENCE DOCUMENTS (Meta-Review)
 - [ ] ERPNext mapping covers 43 doctypes and sync rules ✓
 
 ### For Document Maintenance
+
 - [ ] No duplicate feature lists across documents ✓
 - [ ] No duplicate compliance requirements across documents ✓
 - [ ] No duplicate technology decisions without context ✓
@@ -166,12 +174,12 @@ The pack's strengths remain:
 
 ## Implementation Timeline
 
-| Phase | Tasks | Time | Start |
-|-------|-------|------|-------|
-| **Phase 1** | Dedup CI/CD, absorb Blueprint, reduce Master Plan | 1.5 hrs | Week 1 Mon |
-| **Phase 2** | Cross-link PIPEDA, ERPNext, reposition Assessment | 1.5 hrs | Week 2 Mon |
-| **Phase 3** | Update README, doc maintenance guide | 1 hr | Week 3 Mon (optional) |
-| **Total** | — | **3 hours** | — |
+| Phase       | Tasks                                             | Time        | Start                 |
+| ----------- | ------------------------------------------------- | ----------- | --------------------- |
+| **Phase 1** | Dedup CI/CD, absorb Blueprint, reduce Master Plan | 1.5 hrs     | Week 1 Mon            |
+| **Phase 2** | Cross-link PIPEDA, ERPNext, reposition Assessment | 1.5 hrs     | Week 2 Mon            |
+| **Phase 3** | Update README, doc maintenance guide              | 1 hr        | Week 3 Mon (optional) |
+| **Total**   | —                                                 | **3 hours** | —                     |
 
 ---
 

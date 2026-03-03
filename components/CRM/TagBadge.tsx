@@ -1,14 +1,14 @@
-'use client'
+'use client';
 
 interface Tag {
-  id: string
-  name: string
-  color: string
+  id: string;
+  name: string;
+  color: string;
 }
 
 interface TagBadgeProps {
-  tag: Tag
-  onRemove?: (tagId: string) => void
+  tag: Tag;
+  onRemove?: (tagId: string) => void;
 }
 
 export function TagBadge({ tag, onRemove }: TagBadgeProps) {
@@ -28,5 +28,5 @@ export function TagBadge({ tag, onRemove }: TagBadgeProps) {
         </button>
       )}
     </span>
-  )
+  );
 }

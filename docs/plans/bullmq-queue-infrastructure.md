@@ -28,14 +28,14 @@ Upstash Redis adapter for BullMQ. Uses REST API (reachable from Vercel serverles
 
 ### 3. Job Type Definitions (`lib/queue/jobs.ts`)
 
-| Job Type | Source | Target |
-|----------|--------|--------|
-| `erp.sync.customer` | Account → | ERPNext Customer |
-| `erp.sync.contact` | Contact → | ERPNext Contact |
-| `erp.sync.opportunity` | Opportunity → | ERPNext Opportunity |
-| `erp.sync.quotation` | Estimate → | ERPNext Quotation |
+| Job Type               | Source                 | Target              |
+| ---------------------- | ---------------------- | ------------------- |
+| `erp.sync.customer`    | Account →              | ERPNext Customer    |
+| `erp.sync.contact`     | Contact →              | ERPNext Contact     |
+| `erp.sync.opportunity` | Opportunity →          | ERPNext Opportunity |
+| `erp.sync.quotation`   | Estimate →             | ERPNext Quotation   |
 | `erp.sync.sales-order` | Project (contracted) → | ERPNext Sales Order |
-| `erp.sync.project` | Project → | ERPNext Project |
+| `erp.sync.project`     | Project →              | ERPNext Project     |
 
 ### 4. Producer (`lib/queue/producer.ts`)
 
@@ -72,6 +72,7 @@ Returns: active jobs, waiting jobs, failed jobs, dead-letter count. Admin-only (
 ### 8. API Route Updates
 
 Replace inline ERPNext calls in these routes:
+
 - `POST /api/crm/accounts` → enqueue `erp.sync.customer`
 - `POST /api/crm/contacts` → enqueue `erp.sync.contact`
 - `POST /api/crm/opportunities/[id]/won` → enqueue `erp.sync.sales-order`

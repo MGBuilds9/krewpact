@@ -1,10 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
-import {
-  LEAD_SLA_CONFIG,
-  OPPORTUNITY_SLA_CONFIG,
-  calculateSLAStatus,
-} from '@/lib/crm/sla-config';
+import { LEAD_SLA_CONFIG, OPPORTUNITY_SLA_CONFIG, calculateSLAStatus } from '@/lib/crm/sla-config';
 import { NextResponse } from 'next/server';
 
 export async function GET() {
@@ -40,24 +36,14 @@ export async function GET() {
   // Calculate SLA status for each
   const overdueLeads = (leads ?? [])
     .map((lead) => {
-      const sla = calculateSLAStatus(
-        lead.status,
-        lead.stage_entered_at,
-        LEAD_SLA_CONFIG,
-        now
-      );
+      const sla = calculateSLAStatus(lead.status, lead.stage_entered_at, LEAD_SLA_CONFIG, now);
       return { ...lead, sla, entityType: 'lead' as const };
     })
     .filter((l) => l.sla?.isOverdue);
 
   const overdueOpportunities = (opportunities ?? [])
     .map((opp) => {
-      const sla = calculateSLAStatus(
-        opp.stage,
-        opp.stage_entered_at,
-        OPPORTUNITY_SLA_CONFIG,
-        now
-      );
+      const sla = calculateSLAStatus(opp.stage, opp.stage_entered_at, OPPORTUNITY_SLA_CONFIG, now);
       return { ...opp, sla, entityType: 'opportunity' as const };
     })
     .filter((o) => o.sla?.isOverdue);

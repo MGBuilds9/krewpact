@@ -32,7 +32,13 @@ export function PolicyOverrideForm({ onSuccess, onCancel }: PolicyOverrideFormPr
 
   const form = useForm<FormValues>({
     resolver: zodResolver(policyOverrideCreateSchema),
-    defaultValues: { user_id: '', permission_id: '', override_value: true, reason: '', expires_at: '' },
+    defaultValues: {
+      user_id: '',
+      permission_id: '',
+      override_value: true,
+      reason: '',
+      expires_at: '',
+    },
   });
 
   async function onSubmit(values: FormValues) {
@@ -55,7 +61,9 @@ export function PolicyOverrideForm({ onSuccess, onCancel }: PolicyOverrideFormPr
           render={({ field }) => (
             <FormItem>
               <FormLabel>User ID</FormLabel>
-              <FormControl><Input placeholder="User UUID" {...field} /></FormControl>
+              <FormControl>
+                <Input placeholder="User UUID" {...field} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -67,7 +75,9 @@ export function PolicyOverrideForm({ onSuccess, onCancel }: PolicyOverrideFormPr
           render={({ field }) => (
             <FormItem>
               <FormLabel>Permission ID</FormLabel>
-              <FormControl><Input placeholder="Permission UUID" {...field} /></FormControl>
+              <FormControl>
+                <Input placeholder="Permission UUID" {...field} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -78,7 +88,9 @@ export function PolicyOverrideForm({ onSuccess, onCancel }: PolicyOverrideFormPr
           name="override_value"
           render={({ field }) => (
             <FormItem className="flex items-center gap-3">
-              <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+              <FormControl>
+                <Switch checked={field.value} onCheckedChange={field.onChange} />
+              </FormControl>
               <FormLabel>Grant (on) / Deny (off)</FormLabel>
               <FormMessage />
             </FormItem>
@@ -91,7 +103,9 @@ export function PolicyOverrideForm({ onSuccess, onCancel }: PolicyOverrideFormPr
           render={({ field }) => (
             <FormItem>
               <FormLabel>Reason</FormLabel>
-              <FormControl><Textarea placeholder="Reason for override" {...field} /></FormControl>
+              <FormControl>
+                <Textarea placeholder="Reason for override" {...field} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -103,7 +117,9 @@ export function PolicyOverrideForm({ onSuccess, onCancel }: PolicyOverrideFormPr
           render={({ field }) => (
             <FormItem>
               <FormLabel>Expires At (optional)</FormLabel>
-              <FormControl><Input type="datetime-local" {...field} /></FormControl>
+              <FormControl>
+                <Input type="datetime-local" {...field} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -114,7 +130,11 @@ export function PolicyOverrideForm({ onSuccess, onCancel }: PolicyOverrideFormPr
             {createOverride.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Create Override
           </Button>
-          {onCancel && <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>}
+          {onCancel && (
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
+          )}
         </div>
       </form>
     </Form>

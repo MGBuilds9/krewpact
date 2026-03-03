@@ -30,10 +30,7 @@ export async function POST(req: NextRequest) {
   const { primary_id, secondary_id } = parsed.data;
 
   if (primary_id === secondary_id) {
-    return NextResponse.json(
-      { error: 'Cannot merge a lead with itself' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'Cannot merge a lead with itself' }, { status: 400 });
   }
 
   const supabase = await createUserClient();
@@ -47,14 +44,14 @@ export async function POST(req: NextRequest) {
   if (primaryResult.error) {
     return NextResponse.json(
       { error: `Primary lead not found: ${primaryResult.error.message}` },
-      { status: 404 }
+      { status: 404 },
     );
   }
 
   if (secondaryResult.error) {
     return NextResponse.json(
       { error: `Secondary lead not found: ${secondaryResult.error.message}` },
-      { status: 404 }
+      { status: 404 },
     );
   }
 
@@ -64,7 +61,7 @@ export async function POST(req: NextRequest) {
   // Compute merge
   const { updates, mergedFields } = computeLeadMerge(
     primary as Record<string, unknown>,
-    secondary as Record<string, unknown>
+    secondary as Record<string, unknown>,
   );
 
   // Reassign contacts from secondary to primary

@@ -27,17 +27,12 @@ export const ALLOWED_TRANSITIONS: Record<LeadStage, LeadStage[]> = {
   lost: [],
 };
 
-export type TransitionResult =
-  | { valid: true }
-  | { valid: false; reason: string };
+export type TransitionResult = { valid: true } | { valid: false; reason: string };
 
 /**
  * Validate whether a stage transition is allowed.
  */
-export function validateTransition(
-  currentStage: LeadStage,
-  newStage: LeadStage,
-): TransitionResult {
+export function validateTransition(currentStage: LeadStage, newStage: LeadStage): TransitionResult {
   if (currentStage === newStage) {
     return { valid: false, reason: `Already in stage '${currentStage}'` };
   }

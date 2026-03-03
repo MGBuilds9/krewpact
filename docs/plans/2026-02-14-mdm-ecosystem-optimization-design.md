@@ -11,19 +11,19 @@
 
 ### Active Ecosystem (3 repos + 1 automation)
 
-| Repo | Role | Deploy |
-|------|------|--------|
-| **mdm-website-v2** | Public site + client portal + lead capture + visitor tracking | Vercel → mdmcontracting.ca |
-| **KrewPact** | Operations nucleus: CRM, estimating, projects, analytics, APIs | Vercel (frontend) + ERPNext (self-hosted) |
-| **MDM-Book-Internal** | Strategic intelligence, SOPs, templates, company knowledge | Cloudflare Pages (dashboards) |
-| **n8n/MDM** | Workflow automation (email gen, intake, enrichment) | Self-hosted n8n.mdmgroupinc.ca |
+| Repo                  | Role                                                           | Deploy                                    |
+| --------------------- | -------------------------------------------------------------- | ----------------------------------------- |
+| **mdm-website-v2**    | Public site + client portal + lead capture + visitor tracking  | Vercel → mdmcontracting.ca                |
+| **KrewPact**          | Operations nucleus: CRM, estimating, projects, analytics, APIs | Vercel (frontend) + ERPNext (self-hosted) |
+| **MDM-Book-Internal** | Strategic intelligence, SOPs, templates, company knowledge     | Cloudflare Pages (dashboards)             |
+| **n8n/MDM**           | Workflow automation (email gen, intake, enrichment)            | Self-hosted n8n.mdmgroupinc.ca            |
 
 ### Archived
 
-| Repo | Reason |
-|------|--------|
-| LeadForge-MDM-Group | Merged into KrewPact CRM (Feb 2026) |
-| MDM-Hub-Project | Superseded by KrewPact (Feb 2026) |
+| Repo                | Reason                                           |
+| ------------------- | ------------------------------------------------ |
+| LeadForge-MDM-Group | Merged into KrewPact CRM (Feb 2026)              |
+| MDM-Hub-Project     | Superseded by KrewPact (Feb 2026)                |
 | mdm-contracting-hub | Dead scaffold, superseded by KrewPact (Feb 2026) |
 
 ### Corrections Applied
@@ -55,28 +55,30 @@ Code/MDM-Projects/
 
 ### Tools & Costs
 
-| Category | Tool | Cost | Notes |
-|----------|------|------|-------|
-| Visitor tracking | PostHog (cloud free tier) | $0/mo | 1M events/mo free |
-| Lead enrichment | Apollo.io (free tier) | $0/mo | 100 credits/mo |
-| Email verification | Reoon (free tier) | $0/mo | 600 verifications/mo |
-| Speed-to-lead alerts | Microsoft Teams webhook | $0/mo | Already have M365 |
-| Cookie consent | CookieYes or open-source | $0-12/mo | PIPEDA compliance |
-| Email sending | Resend (free tier) | $0/mo | 3,000 emails/mo |
-| Website hosting | Vercel | Existing | Already configured |
-| CMS database | Neon | Existing | Already configured |
+| Category             | Tool                      | Cost     | Notes                |
+| -------------------- | ------------------------- | -------- | -------------------- |
+| Visitor tracking     | PostHog (cloud free tier) | $0/mo    | 1M events/mo free    |
+| Lead enrichment      | Apollo.io (free tier)     | $0/mo    | 100 credits/mo       |
+| Email verification   | Reoon (free tier)         | $0/mo    | 600 verifications/mo |
+| Speed-to-lead alerts | Microsoft Teams webhook   | $0/mo    | Already have M365    |
+| Cookie consent       | CookieYes or open-source  | $0-12/mo | PIPEDA compliance    |
+| Email sending        | Resend (free tier)        | $0/mo    | 3,000 emails/mo      |
+| Website hosting      | Vercel                    | Existing | Already configured   |
+| CMS database         | Neon                      | Existing | Already configured   |
 
 **Total new cost: $0-12/month**
 
 ### What We Build
 
 **Visitor Tracking:**
+
 - PostHog snippet on all pages
 - Cookie consent banner (PIPEDA)
 - Track: pages viewed, time on page, return visits, service pages visited, gallery projects viewed
 - Anonymous visitor profiles accumulate behavior data
 
 **Smart Contact Forms (upgrade existing):**
+
 - Add fields: project type, budget range, timeline, how they found us
 - POST to KrewPact API (queued locally until CRM exists)
 - Auto-enrichment on submit: Apollo company lookup, Reoon email verification
@@ -85,18 +87,18 @@ Code/MDM-Projects/
 
 **Lead Scoring (passive):**
 
-| Signal | Points | Source |
-|--------|--------|--------|
-| Visited services page | +5 | PostHog |
-| Viewed gallery project | +3 | PostHog |
-| Visited contact page | +10 | PostHog |
-| Return visit | +15 | PostHog |
-| Form submission | +50 | Website |
-| Email verified valid | +10 | Reoon |
-| Company found in Apollo | +20 | Apollo |
-| Company size 10+ employees | +10 | Apollo |
-| Budget > $100K | +25 | Form field |
-| Hot lead threshold | 80+ | Triggers priority alert |
+| Signal                     | Points | Source                  |
+| -------------------------- | ------ | ----------------------- |
+| Visited services page      | +5     | PostHog                 |
+| Viewed gallery project     | +3     | PostHog                 |
+| Visited contact page       | +10    | PostHog                 |
+| Return visit               | +15    | PostHog                 |
+| Form submission            | +50    | Website                 |
+| Email verified valid       | +10    | Reoon                   |
+| Company found in Apollo    | +20    | Apollo                  |
+| Company size 10+ employees | +10    | Apollo                  |
+| Budget > $100K             | +25    | Form field              |
+| Hot lead threshold         | 80+    | Triggers priority alert |
 
 ### Integration Pattern
 
@@ -168,15 +170,16 @@ Website form / Outbound / Bid platform
 
 **Access:** MDM creates account when deal won → client gets invite email → Clerk auth (client role) → sees only their data (Supabase RLS)
 
-| Section | Data Source | Description |
-|---------|-----------|-------------|
-| My Projects | KrewPact API | Active projects, status, milestones, % complete |
-| Documents | KrewPact API + S3 | Contracts, change orders, permits, drawings |
-| Invoices | KrewPact API (Sage data later) | Invoice history, amounts, payment status |
-| Messages | KrewPact API | Thread-based PM communication |
-| Photo Updates | KrewPact API + S3 | Site progress photos |
+| Section       | Data Source                    | Description                                     |
+| ------------- | ------------------------------ | ----------------------------------------------- |
+| My Projects   | KrewPact API                   | Active projects, status, milestones, % complete |
+| Documents     | KrewPact API + S3              | Contracts, change orders, permits, drawings     |
+| Invoices      | KrewPact API (Sage data later) | Invoice history, amounts, payment status        |
+| Messages      | KrewPact API                   | Thread-based PM communication                   |
+| Photo Updates | KrewPact API + S3              | Site progress photos                            |
 
 **Technical flow:**
+
 ```
 mdm-website-v2 (/portal routes)
     → Clerk auth (client role)
@@ -190,11 +193,13 @@ Portal lives IN the website. Clients never see internal tools.
 ### Layer 2: Smart Personalization (anonymous + known visitors)
 
 **Known visitors (cookie-linked to CRM):**
+
 - Contact form pre-fills name/email
 - Gallery highlights project types matching their inquiry
 - CTA changes: "Get a Quote" → "Check on Your Project" for active clients
 
 **Anonymous visitors:**
+
 - Standard marketing experience
 - PostHog tracks behavior → feeds lead scoring
 
@@ -210,18 +215,19 @@ Portal lives IN the website. Clients never see internal tools.
 
 ### Data Sources
 
-| Data | Source | Method |
-|------|--------|--------|
-| Revenue by division | Sage 50 exports | CSV import (manual → ERPNext later) |
-| Project profitability | Sage Construction Mgmt | CSV import |
-| Lead pipeline | KrewPact CRM (Supabase) | Direct query |
-| Website traffic | PostHog | PostHog API |
-| Conversion rates | KrewPact CRM | Calculated |
-| Win rates | KrewPact CRM | Calculated |
+| Data                  | Source                  | Method                              |
+| --------------------- | ----------------------- | ----------------------------------- |
+| Revenue by division   | Sage 50 exports         | CSV import (manual → ERPNext later) |
+| Project profitability | Sage Construction Mgmt  | CSV import                          |
+| Lead pipeline         | KrewPact CRM (Supabase) | Direct query                        |
+| Website traffic       | PostHog                 | PostHog API                         |
+| Conversion rates      | KrewPact CRM            | Calculated                          |
+| Win rates             | KrewPact CRM            | Calculated                          |
 
 ### Three Dashboards
 
 **Executive Overview** (Ehab, David, Nervine):
+
 - Revenue trend (monthly, by division)
 - Active pipeline value
 - Win rate (30/60/90 days)
@@ -230,6 +236,7 @@ Portal lives IN the website. Clients never see internal tools.
 - Cash position (Sage export)
 
 **Marketing & Sales Funnel** (Sales team + Michael):
+
 - Full funnel: visitors → forms → leads → qualified → opps → won
 - Lead source breakdown
 - Cost per lead by source
@@ -239,6 +246,7 @@ Portal lives IN the website. Clients never see internal tools.
 - Speed-to-lead metric
 
 **Operations** (David + PMs):
+
 - Active projects by stage
 - Budget vs actuals (Sage exports)
 - Timeline adherence

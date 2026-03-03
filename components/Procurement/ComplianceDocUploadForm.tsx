@@ -86,7 +86,11 @@ export function ComplianceDocUploadForm({
             <FormItem>
               <FormLabel>Portal Account ID</FormLabel>
               <FormControl>
-                <Input placeholder="Trade partner portal account UUID" {...field} readOnly={!!portalAccountId} />
+                <Input
+                  placeholder="Trade partner portal account UUID"
+                  {...field}
+                  readOnly={!!portalAccountId}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

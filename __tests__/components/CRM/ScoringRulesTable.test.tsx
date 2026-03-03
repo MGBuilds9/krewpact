@@ -26,7 +26,18 @@ describe('ScoringRulesTable', () => {
   });
 
   it('renders rule rows', () => {
-    const rules = [makeRuleRow(), makeRuleRow({ id: 'rule-2', name: 'High Value', field_name: 'estimated_value', operator: 'greater_than', value: '100000', score_impact: 30, category: 'intent' })];
+    const rules = [
+      makeRuleRow(),
+      makeRuleRow({
+        id: 'rule-2',
+        name: 'High Value',
+        field_name: 'estimated_value',
+        operator: 'greater_than',
+        value: '100000',
+        score_impact: 30,
+        category: 'intent',
+      }),
+    ];
     render(<ScoringRulesTable rules={rules} />);
     expect(screen.getByText('Referral Bonus')).toBeDefined();
     expect(screen.getByText('High Value')).toBeDefined();
@@ -35,7 +46,10 @@ describe('ScoringRulesTable', () => {
   });
 
   it('displays score with sign', () => {
-    const rules = [makeRuleRow({ score_impact: 20 }), makeRuleRow({ id: 'rule-2', name: 'Penalty', score_impact: -5 })];
+    const rules = [
+      makeRuleRow({ score_impact: 20 }),
+      makeRuleRow({ id: 'rule-2', name: 'Penalty', score_impact: -5 }),
+    ];
     render(<ScoringRulesTable rules={rules} />);
     expect(screen.getByText('+20')).toBeDefined();
     expect(screen.getByText('-5')).toBeDefined();

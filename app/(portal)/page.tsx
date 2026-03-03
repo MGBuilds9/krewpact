@@ -7,7 +7,8 @@ export default function PortalDashboard() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Client Portal</h1>
         <p className="text-muted-foreground mt-2">
-          Welcome to your project dashboard. Here you can view project documents, approve change orders, and track your financial summaries.
+          Welcome to your project dashboard. Here you can view project documents, approve change
+          orders, and track your financial summaries.
         </p>
       </div>
 

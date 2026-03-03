@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { estimateCreateSchema } from '@/lib/validators/estimating';
 import { generateEstimateNumber } from '@/lib/estimating/calculations';
+import { getOrgIdFromAuth } from '@/lib/api/org';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -28,10 +29,7 @@ export async function GET(req: NextRequest) {
   const { division_id, status, opportunity_id, limit, offset } = parsed.data;
   const supabase = await createUserClient();
 
-  let query = supabase
-    .from('estimates')
-    .select('*')
-    .order('created_at', { ascending: false });
+  let query = supabase.from('estimates').select('*').order('created_at', { ascending: false });
 
   if (division_id) {
     query = query.eq('division_id', division_id);
@@ -83,11 +81,11 @@ export async function POST(req: NextRequest) {
   const supabase = await createUserClient();
 
   // Count existing estimates to generate next number
-  const { count } = await supabase
-    .from('estimates')
-    .select('*', { count: 'exact', head: true });
+  const { count } = await supabase.from('estimates').select('*', { count: 'exact', head: true });
 
   const estimate_number = generateEstimateNumber(count ?? 0);
+
+  const orgId = await getOrgIdFromAuth();
 
   const { data, error } = await supabase
     .from('estimates')
@@ -95,6 +93,7 @@ export async function POST(req: NextRequest) {
       ...parsed.data,
       estimate_number,
       status: 'draft',
+      org_id: orgId,
     })
     .select()
     .single();

@@ -61,7 +61,9 @@ export async function POST(req: NextRequest) {
       const validated = importRowSchema.safeParse(mapped);
       if (!validated.success) {
         results.skipped++;
-        results.errors.push(`Row ${i + 1}: ${validated.error.issues[0]?.message ?? 'Invalid data'}`);
+        results.errors.push(
+          `Row ${i + 1}: ${validated.error.issues[0]?.message ?? 'Invalid data'}`,
+        );
         continue;
       }
 

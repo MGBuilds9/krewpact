@@ -71,7 +71,12 @@ export interface ProposalData {
 
 function formatAddress(addr: Record<string, string> | null): string | null {
   if (!addr) return null;
-  const parts = [addr.street, addr.city, addr.province || addr.state, addr.postal_code || addr.zip].filter(Boolean);
+  const parts = [
+    addr.street,
+    addr.city,
+    addr.province || addr.state,
+    addr.postal_code || addr.zip,
+  ].filter(Boolean);
   return parts.length > 0 ? parts.join(', ') : null;
 }
 

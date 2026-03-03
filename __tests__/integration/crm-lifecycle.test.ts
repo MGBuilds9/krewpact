@@ -182,7 +182,9 @@ describe('CRM Lifecycle: Search', () => {
   it('searches across all entity types', async () => {
     mockClerkAuth(mockAuth);
     const leads = [{ id: UUID1, company_name: 'MDM Contracting', stage: 'qualified' }];
-    const contacts = [{ id: UUID2, first_name: 'Michael', last_name: 'MDM', email: 'michael@mdm.ca' }];
+    const contacts = [
+      { id: UUID2, first_name: 'Michael', last_name: 'MDM', email: 'michael@mdm.ca' },
+    ];
     const client = mockSupabaseClient({
       tables: {
         leads: { data: leads, error: null },

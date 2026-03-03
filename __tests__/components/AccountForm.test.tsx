@@ -40,10 +40,7 @@ function createWrapper() {
 }
 
 function renderForm(props: Parameters<typeof AccountForm>[0] = {}) {
-  return render(
-    React.createElement(AccountForm, props),
-    { wrapper: createWrapper() },
-  );
+  return render(React.createElement(AccountForm, props), { wrapper: createWrapper() });
 }
 
 function makeAccount(overrides: Partial<Account> = {}): Account {

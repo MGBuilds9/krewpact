@@ -154,7 +154,14 @@ describe('submittalUpdateSchema', () => {
   });
 
   it('accepts valid status enum values', () => {
-    const statuses = ['draft', 'submitted', 'revise_and_resubmit', 'approved', 'approved_as_noted', 'rejected'] as const;
+    const statuses = [
+      'draft',
+      'submitted',
+      'revise_and_resubmit',
+      'approved',
+      'approved_as_noted',
+      'rejected',
+    ] as const;
     for (const status of statuses) {
       expect(submittalUpdateSchema.safeParse({ status }).success).toBe(true);
     }
@@ -228,7 +235,7 @@ describe('changeRequestCreateSchema', () => {
       request_number: 'PCO-001',
       title: 'Additional excavation',
       description: 'Rock encountered.',
-      estimated_cost_impact: 15000.00,
+      estimated_cost_impact: 15000.0,
       estimated_days_impact: 5,
     });
     expect(result.success).toBe(true);
@@ -298,7 +305,14 @@ describe('changeOrderUpdateSchema', () => {
   });
 
   it('accepts valid status enum values', () => {
-    const statuses = ['draft', 'submitted', 'client_review', 'approved', 'rejected', 'void'] as const;
+    const statuses = [
+      'draft',
+      'submitted',
+      'client_review',
+      'approved',
+      'rejected',
+      'void',
+    ] as const;
     for (const status of statuses) {
       expect(changeOrderUpdateSchema.safeParse({ status }).success).toBe(true);
     }

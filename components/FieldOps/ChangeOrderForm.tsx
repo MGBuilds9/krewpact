@@ -95,11 +95,7 @@ export function ChangeOrderForm({
             <FormItem>
               <FormLabel>Reason (optional)</FormLabel>
               <FormControl>
-                <Textarea
-                  placeholder="Reason for this change order..."
-                  rows={3}
-                  {...field}
-                />
+                <Textarea placeholder="Reason for this change order..." rows={3} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

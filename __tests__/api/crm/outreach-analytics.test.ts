@@ -22,8 +22,20 @@ function createAnalyticsMock(counts: {
 
   const chain: Record<string, unknown> = {};
   const methods = [
-    'select', 'eq', 'gte', 'lte', 'not', 'gt', 'lt', 'neq',
-    'order', 'limit', 'range', 'or', 'filter', 'is',
+    'select',
+    'eq',
+    'gte',
+    'lte',
+    'not',
+    'gt',
+    'lt',
+    'neq',
+    'order',
+    'limit',
+    'range',
+    'or',
+    'filter',
+    'is',
   ];
   for (const m of methods) {
     chain[m] = vi.fn().mockReturnValue(chain);
@@ -39,9 +51,7 @@ function createAnalyticsMock(counts: {
     // select with head:true returns {count}
     resolveChain.select = vi.fn().mockImplementation(() => {
       resolveChain.then = (resolve: (v: unknown) => void) =>
-        Promise.resolve(
-          resolve({ count: countValues[currentCall] ?? 0, data: null, error: null }),
-        );
+        Promise.resolve(resolve({ count: countValues[currentCall] ?? 0, data: null, error: null }));
       return resolveChain;
     });
     return resolveChain;

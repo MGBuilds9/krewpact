@@ -1,5 +1,5 @@
-import type { NextConfig } from "next";
-import path from "path";
+import type { NextConfig } from 'next';
+import path from 'path';
 
 const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 

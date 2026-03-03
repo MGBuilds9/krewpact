@@ -67,7 +67,9 @@ export function InspectionForm({ onSubmit, isLoading }: InspectionFormProps) {
                 </FormControl>
                 <SelectContent>
                   {INSPECTION_TYPES.map((t) => (
-                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                    <SelectItem key={t} value={t}>
+                      {t}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>

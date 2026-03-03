@@ -16,15 +16,18 @@ export interface ActivityLogDialogProps {
   entityId: string;
 }
 
-export function ActivityLogDialog({ open, onOpenChange, entityType, entityId }: ActivityLogDialogProps) {
+export function ActivityLogDialog({
+  open,
+  onOpenChange,
+  entityType,
+  entityId,
+}: ActivityLogDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Log Activity</DialogTitle>
-          <DialogDescription>
-            Record a call, meeting, note, or other activity.
-          </DialogDescription>
+          <DialogDescription>Record a call, meeting, note, or other activity.</DialogDescription>
         </DialogHeader>
         <ActivityForm
           entityType={entityType}

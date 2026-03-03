@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string; coId: string }> }
+  { params }: { params: Promise<{ id: string; coId: string }> },
 ) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -38,7 +38,10 @@ export async function POST(
 
   const permSet: Record<string, boolean> = (perm?.permission_set as Record<string, boolean>) ?? {};
   if (!permSet.approve_change_orders) {
-    return NextResponse.json({ error: 'Insufficient permissions to approve change orders' }, { status: 403 });
+    return NextResponse.json(
+      { error: 'Insufficient permissions to approve change orders' },
+      { status: 403 },
+    );
   }
 
   // 3. Fetch CO and verify state
@@ -49,11 +52,12 @@ export async function POST(
     .eq('project_id', projectId)
     .single();
 
-  if (coError || !co) return NextResponse.json({ error: 'Change order not found' }, { status: 404 });
+  if (coError || !co)
+    return NextResponse.json({ error: 'Change order not found' }, { status: 404 });
   if (co.status !== 'pending_client_approval') {
     return NextResponse.json(
       { error: `Cannot approve CO in status: ${co.status}` },
-      { status: 400 }
+      { status: 400 },
     );
   }
 

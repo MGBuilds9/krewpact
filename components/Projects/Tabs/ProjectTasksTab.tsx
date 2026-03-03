@@ -146,10 +146,7 @@ export function ProjectTasksTab({ projectId }: ProjectTasksTabProps) {
               {tasks
                 .filter((task) => task.status === column.status)
                 .map((task) => (
-                  <Card
-                    key={task.id}
-                    className="p-4 hover:shadow-md transition-shadow"
-                  >
+                  <Card key={task.id} className="p-4 hover:shadow-md transition-shadow">
                     <h4 className="font-medium mb-2">{task.title}</h4>
                     {task.description && (
                       <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
@@ -166,7 +163,8 @@ export function ProjectTasksTab({ projectId }: ProjectTasksTabProps) {
                       {task.assigned_user_id && (
                         <div className="flex items-center gap-1">
                           <User className="h-3 w-3" />
-                          {users?.find((u) => u.id === task.assigned_user_id)?.first_name || 'Assigned'}
+                          {users?.find((u) => u.id === task.assigned_user_id)?.first_name ||
+                            'Assigned'}
                         </div>
                       )}
                     </div>

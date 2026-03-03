@@ -30,7 +30,8 @@ export function ProfileForm({ defaultValues, onSuccess }: ProfileFormProps) {
   const queryClient = useQueryClient();
 
   const updateProfile = useMutation({
-    mutationFn: (data: FormValues) => apiFetch('/api/user/profile', { method: 'PATCH', body: data }),
+    mutationFn: (data: FormValues) =>
+      apiFetch('/api/user/profile', { method: 'PATCH', body: data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-profile'] });
       toast.success('Profile updated');

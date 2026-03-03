@@ -15,10 +15,7 @@ import { createUserClient } from '@/lib/supabase/server';
 
 // Estimate routes
 import { GET as estimatesGET, POST as estimatesPOST } from '@/app/api/estimates/route';
-import {
-  PATCH as estimatePATCH,
-  DELETE as estimateDELETE,
-} from '@/app/api/estimates/[id]/route';
+import { PATCH as estimatePATCH, DELETE as estimateDELETE } from '@/app/api/estimates/[id]/route';
 
 // Estimate line routes
 import {
@@ -26,15 +23,10 @@ import {
   POST as linePOST,
   PUT as linesPUT,
 } from '@/app/api/estimates/[id]/lines/route';
-import {
-  PATCH as linePATCH,
-} from '@/app/api/estimates/[id]/lines/[lineId]/route';
+import { PATCH as linePATCH } from '@/app/api/estimates/[id]/lines/[lineId]/route';
 
 // Estimate version routes
-import {
-  GET as versionsGET,
-  POST as versionPOST,
-} from '@/app/api/estimates/[id]/versions/route';
+import { GET as versionsGET, POST as versionPOST } from '@/app/api/estimates/[id]/versions/route';
 
 import {
   mockSupabaseClient,
@@ -48,10 +40,7 @@ import {
 } from '@/__tests__/helpers';
 
 // Pure calculation functions
-import {
-  calculateLineTotal,
-  calculateEstimateTotals,
-} from '@/lib/estimating/calculations';
+import { calculateLineTotal, calculateEstimateTotals } from '@/lib/estimating/calculations';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClient = vi.mocked(createUserClient);
@@ -242,7 +231,11 @@ describe('Estimating Integration: Full happy path', () => {
     expect(version1Res.status).toBe(201);
 
     // Step 5: Update line quantities (double labour hours)
-    const updatedLabour = { ...labourLine, quantity: 160, line_total: calculateLineTotal(160, 65, 10) };
+    const updatedLabour = {
+      ...labourLine,
+      quantity: 160,
+      line_total: calculateLineTotal(160, 65, 10),
+    };
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({
         tables: {
@@ -253,7 +246,11 @@ describe('Estimating Integration: Full happy path', () => {
     );
 
     const updateRes = await linePATCH(
-      makeJsonRequest(`/api/estimates/${ESTIMATE_ID}/lines/${LINE_ID_1}`, { quantity: 160 }, 'PATCH'),
+      makeJsonRequest(
+        `/api/estimates/${ESTIMATE_ID}/lines/${LINE_ID_1}`,
+        { quantity: 160 },
+        'PATCH',
+      ),
       makeLineItemContext(ESTIMATE_ID, LINE_ID_1),
     );
     expect(updateRes.status).toBe(200);
@@ -273,7 +270,11 @@ describe('Estimating Integration: Full happy path', () => {
       id: 'v2-id',
       estimate_id: ESTIMATE_ID,
       revision_no: 2,
-      snapshot: { estimate: { ...estimate, revision_no: 2 }, lines: recalcLines, created_at: '2026-02-13T01:00:00Z' },
+      snapshot: {
+        estimate: { ...estimate, revision_no: 2 },
+        lines: recalcLines,
+        created_at: '2026-02-13T01:00:00Z',
+      },
       reason: 'Doubled labour hours',
       created_by: USER_ID,
       created_at: '2026-02-13T01:00:00Z',
@@ -281,7 +282,10 @@ describe('Estimating Integration: Full happy path', () => {
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({
         tables: {
-          estimates: { data: { ...estimate, revision_no: 2, estimate_lines: recalcLines }, error: null },
+          estimates: {
+            data: { ...estimate, revision_no: 2, estimate_lines: recalcLines },
+            error: null,
+          },
           estimate_versions: { data: version2, error: null },
         },
       }),
@@ -391,7 +395,10 @@ describe('Estimating Integration: Optional lines excluded from totals', () => {
       mockSupabaseClient({
         tables: {
           estimate_lines: { data: optionalLine, error: null },
-          estimates: { data: makeEstimate({ subtotal_amount: 1000, tax_amount: 130, total_amount: 1130 }), error: null },
+          estimates: {
+            data: makeEstimate({ subtotal_amount: 1000, tax_amount: 130, total_amount: 1130 }),
+            error: null,
+          },
         },
       }),
     );
@@ -483,7 +490,10 @@ describe('Estimating Integration: Zero quantity line', () => {
       mockSupabaseClient({
         tables: {
           estimate_lines: { data: zeroLine, error: null },
-          estimates: { data: makeEstimate({ subtotal_amount: 0, tax_amount: 0, total_amount: 0 }), error: null },
+          estimates: {
+            data: makeEstimate({ subtotal_amount: 0, tax_amount: 0, total_amount: 0 }),
+            error: null,
+          },
         },
       }),
     );
@@ -648,7 +658,10 @@ describe('Estimating Integration: Batch line update', () => {
       mockSupabaseClient({
         tables: {
           estimate_lines: { data: newLines, error: null },
-          estimates: { data: makeEstimate({ subtotal_amount: 2000, tax_amount: 260, total_amount: 2260 }), error: null },
+          estimates: {
+            data: makeEstimate({ subtotal_amount: 2000, tax_amount: 260, total_amount: 2260 }),
+            error: null,
+          },
         },
       }),
     );

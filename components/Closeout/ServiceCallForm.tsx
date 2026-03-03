@@ -23,7 +23,9 @@ interface ServiceCallFormProps {
 
 export function ServiceCallForm({ projectId, onSuccess, onCancel }: ServiceCallFormProps) {
   const create = useCreateServiceCall(projectId);
-  const form = useForm<FormState>({ defaultValues: { call_number: '', title: '', description: '', priority: 'medium' } });
+  const form = useForm<FormState>({
+    defaultValues: { call_number: '', title: '', description: '', priority: 'medium' },
+  });
 
   async function onSubmit(values: FormState) {
     try {
@@ -49,7 +51,10 @@ export function ServiceCallForm({ projectId, onSuccess, onCancel }: ServiceCallF
         </div>
         <div>
           <label className="text-sm font-medium">Priority</label>
-          <select className="mt-1 block w-full rounded-md border px-3 py-2 text-sm" {...form.register('priority')}>
+          <select
+            className="mt-1 block w-full rounded-md border px-3 py-2 text-sm"
+            {...form.register('priority')}
+          >
             <option value="low">Low</option>
             <option value="medium">Medium</option>
             <option value="high">High</option>
@@ -70,7 +75,11 @@ export function ServiceCallForm({ projectId, onSuccess, onCancel }: ServiceCallF
           {create.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Create Service Call
         </Button>
-        {onCancel && <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>}
+        {onCancel && (
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+        )}
       </div>
     </form>
   );

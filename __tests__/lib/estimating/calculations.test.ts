@@ -61,9 +61,7 @@ describe('calculateEstimateTotals', () => {
   });
 
   it('applies 13% HST for tax calculation', () => {
-    const lines = [
-      { line_total: 10000, is_optional: false },
-    ];
+    const lines = [{ line_total: 10000, is_optional: false }];
     const result = calculateEstimateTotals(lines);
     expect(result.subtotal_amount).toBe(10000);
     expect(result.tax_amount).toBe(1300);
@@ -103,9 +101,7 @@ describe('calculateEstimateTotals', () => {
 
   it('rounds tax to 2 decimal places', () => {
     // subtotal = 999.99, tax = 999.99 * 0.13 = 129.9987 → 130.00
-    const lines = [
-      { line_total: 999.99, is_optional: false },
-    ];
+    const lines = [{ line_total: 999.99, is_optional: false }];
     const result = calculateEstimateTotals(lines);
     expect(result.subtotal_amount).toBe(999.99);
     expect(result.tax_amount).toBe(130);

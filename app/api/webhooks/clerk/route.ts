@@ -18,10 +18,7 @@ type ClerkWebhookEvent = {
 export async function POST(req: Request) {
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
   if (!WEBHOOK_SECRET) {
-    return NextResponse.json(
-      { error: 'CLERK_WEBHOOK_SECRET not configured' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'CLERK_WEBHOOK_SECRET not configured' }, { status: 500 });
   }
 
   const headerPayload = await headers();
@@ -30,10 +27,7 @@ export async function POST(req: Request) {
   const svixSignature = headerPayload.get('svix-signature');
 
   if (!svixId || !svixTimestamp || !svixSignature) {
-    return NextResponse.json(
-      { error: 'Missing svix headers' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'Missing svix headers' }, { status: 400 });
   }
 
   const body = await req.text();
@@ -47,10 +41,7 @@ export async function POST(req: Request) {
       'svix-signature': svixSignature,
     }) as ClerkWebhookEvent;
   } catch {
-    return NextResponse.json(
-      { error: 'Invalid webhook signature' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'Invalid webhook signature' }, { status: 400 });
   }
 
   const supabase = createServiceClient();

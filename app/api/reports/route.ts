@@ -35,7 +35,9 @@ export async function GET(req: NextRequest) {
   const supabase = await createUserClient();
   let query = supabase
     .from('project_daily_logs')
-    .select('*, submitted_user:users!project_daily_logs_submitted_by_fkey(first_name, last_name, avatar_url), project:projects(project_name)')
+    .select(
+      '*, submitted_user:users!project_daily_logs_submitted_by_fkey(first_name, last_name, avatar_url), project:projects(project_name)',
+    )
     .order('log_date', { ascending: false });
 
   if (project_id) query = query.eq('project_id', project_id);

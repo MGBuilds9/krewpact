@@ -55,9 +55,30 @@ describe('SequenceStepEditor', () => {
 
   it('renders steps with correct info', () => {
     const steps = [
-      makeStep({ id: 'step-1', step_number: 1, action_type: 'email', action_config: { subject: 'Hello' }, delay_days: 2, delay_hours: 0 }),
-      makeStep({ id: 'step-2', step_number: 2, action_type: 'task', action_config: { title: 'Call client' }, delay_days: 0, delay_hours: 4 }),
-      makeStep({ id: 'step-3', step_number: 3, action_type: 'wait', action_config: {}, delay_days: 0, delay_hours: 0 }),
+      makeStep({
+        id: 'step-1',
+        step_number: 1,
+        action_type: 'email',
+        action_config: { subject: 'Hello' },
+        delay_days: 2,
+        delay_hours: 0,
+      }),
+      makeStep({
+        id: 'step-2',
+        step_number: 2,
+        action_type: 'task',
+        action_config: { title: 'Call client' },
+        delay_days: 0,
+        delay_hours: 4,
+      }),
+      makeStep({
+        id: 'step-3',
+        step_number: 3,
+        action_type: 'wait',
+        action_config: {},
+        delay_days: 0,
+        delay_hours: 0,
+      }),
     ];
 
     render(

@@ -10,7 +10,13 @@ import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { GET as getCompliance } from '@/app/api/portal/trade/compliance/route';
 import { GET as getBids, POST as postBid } from '@/app/api/portal/trade/bids/route';
-import { mockClerkAuth, mockClerkUnauth, makeRequest, makeJsonRequest, TEST_IDS } from '@/__tests__/helpers';
+import {
+  mockClerkAuth,
+  mockClerkUnauth,
+  makeRequest,
+  makeJsonRequest,
+  TEST_IDS,
+} from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClient = vi.mocked(createUserClient);
@@ -36,7 +42,10 @@ function makeTradeSupabaseMock(portalAccount = ACTIVE_TRADE_PA) {
     order: vi.fn().mockResolvedValue({ data: [], error: null }),
   });
   const insert = vi.fn().mockReturnThis();
-  const fromInsert = vi.fn().mockReturnThis() as ReturnType<typeof vi.fn> & { select: ReturnType<typeof vi.fn>; single: ReturnType<typeof vi.fn> };
+  const fromInsert = vi.fn().mockReturnThis() as ReturnType<typeof vi.fn> & {
+    select: ReturnType<typeof vi.fn>;
+    single: ReturnType<typeof vi.fn>;
+  };
   fromInsert.select = vi.fn().mockReturnThis();
   fromInsert.single = vi.fn().mockResolvedValue({ data: { id: 'proposal-001' }, error: null });
 
@@ -63,7 +72,9 @@ describe('GET /api/portal/trade/compliance', () => {
 
   it('returns 403 when portal account is client type (not trade_partner)', async () => {
     mockClerkAuth(mockAuth, 'clerk_user_client');
-    mockCreateUserClient.mockReturnValue(makeTradeSupabaseMock(INACTIVE_CLIENT_PA) as unknown as ReturnType<typeof createUserClient>);
+    mockCreateUserClient.mockReturnValue(
+      makeTradeSupabaseMock(INACTIVE_CLIENT_PA) as unknown as ReturnType<typeof createUserClient>,
+    );
     const res = await getCompliance(makeRequest('/api/portal/trade/compliance'));
     expect(res.status).toBe(403);
   });
@@ -83,7 +94,9 @@ describe('GET /api/portal/trade/bids', () => {
 
   it('returns 403 when actor_type is client', async () => {
     mockClerkAuth(mockAuth, 'clerk_user_client');
-    mockCreateUserClient.mockReturnValue(makeTradeSupabaseMock(INACTIVE_CLIENT_PA) as unknown as ReturnType<typeof createUserClient>);
+    mockCreateUserClient.mockReturnValue(
+      makeTradeSupabaseMock(INACTIVE_CLIENT_PA) as unknown as ReturnType<typeof createUserClient>,
+    );
     const res = await getBids(makeRequest('/api/portal/trade/bids'));
     expect(res.status).toBe(403);
   });
@@ -94,40 +107,74 @@ describe('POST /api/portal/trade/bids', () => {
 
   it('returns 401 when unauthenticated', async () => {
     mockClerkUnauth(mockAuth);
-    const res = await postBid(makeJsonRequest('/api/portal/trade/bids', { project_id: TEST_IDS.PROJECT_ID, bid_amount: 50000, scope_summary: 'Full electrical scope for Phase 1' }, 'POST'));
+    const res = await postBid(
+      makeJsonRequest(
+        '/api/portal/trade/bids',
+        {
+          project_id: TEST_IDS.PROJECT_ID,
+          bid_amount: 50000,
+          scope_summary: 'Full electrical scope for Phase 1',
+        },
+        'POST',
+      ),
+    );
     expect(res.status).toBe(401);
   });
 
   it('returns 400 when bid_amount is missing', async () => {
     mockClerkAuth(mockAuth, 'clerk_trade_user');
-    mockCreateUserClient.mockReturnValue(makeTradeSupabaseMock() as unknown as ReturnType<typeof createUserClient>);
-    const res = await postBid(makeJsonRequest('/api/portal/trade/bids', {
-      project_id: TEST_IDS.PROJECT_ID,
-      scope_summary: 'Scope without amount',
-      // bid_amount missing
-    }, 'POST'));
+    mockCreateUserClient.mockReturnValue(
+      makeTradeSupabaseMock() as unknown as ReturnType<typeof createUserClient>,
+    );
+    const res = await postBid(
+      makeJsonRequest(
+        '/api/portal/trade/bids',
+        {
+          project_id: TEST_IDS.PROJECT_ID,
+          scope_summary: 'Scope without amount',
+          // bid_amount missing
+        },
+        'POST',
+      ),
+    );
     expect(res.status).toBe(400);
   });
 
   it('returns 400 when scope_summary is too short', async () => {
     mockClerkAuth(mockAuth, 'clerk_trade_user');
-    mockCreateUserClient.mockReturnValue(makeTradeSupabaseMock() as unknown as ReturnType<typeof createUserClient>);
-    const res = await postBid(makeJsonRequest('/api/portal/trade/bids', {
-      project_id: TEST_IDS.PROJECT_ID,
-      bid_amount: 10000,
-      scope_summary: 'Short', // Less than 10 chars
-    }, 'POST'));
+    mockCreateUserClient.mockReturnValue(
+      makeTradeSupabaseMock() as unknown as ReturnType<typeof createUserClient>,
+    );
+    const res = await postBid(
+      makeJsonRequest(
+        '/api/portal/trade/bids',
+        {
+          project_id: TEST_IDS.PROJECT_ID,
+          bid_amount: 10000,
+          scope_summary: 'Short', // Less than 10 chars
+        },
+        'POST',
+      ),
+    );
     expect(res.status).toBe(400);
   });
 
   it('returns 400 for negative bid_amount', async () => {
     mockClerkAuth(mockAuth, 'clerk_trade_user');
-    mockCreateUserClient.mockReturnValue(makeTradeSupabaseMock() as unknown as ReturnType<typeof createUserClient>);
-    const res = await postBid(makeJsonRequest('/api/portal/trade/bids', {
-      project_id: TEST_IDS.PROJECT_ID,
-      bid_amount: -1000,
-      scope_summary: 'Full electrical scope for Phase 1',
-    }, 'POST'));
+    mockCreateUserClient.mockReturnValue(
+      makeTradeSupabaseMock() as unknown as ReturnType<typeof createUserClient>,
+    );
+    const res = await postBid(
+      makeJsonRequest(
+        '/api/portal/trade/bids',
+        {
+          project_id: TEST_IDS.PROJECT_ID,
+          bid_amount: -1000,
+          scope_summary: 'Full electrical scope for Phase 1',
+        },
+        'POST',
+      ),
+    );
     expect(res.status).toBe(400);
   });
 });

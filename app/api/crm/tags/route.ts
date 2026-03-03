@@ -62,11 +62,7 @@ export async function POST(req: NextRequest) {
   }
 
   const supabase = await createUserClient();
-  const { data, error } = await supabase
-    .from('tags')
-    .insert(parsed.data)
-    .select()
-    .single();
+  const { data, error } = await supabase.from('tags').insert(parsed.data).select().single();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

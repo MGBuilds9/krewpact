@@ -48,7 +48,9 @@ export function BulkActionBar({
 
   async function handleStageChange() {
     if (entityType !== 'lead') return;
-    const stage = prompt('Enter new stage (new, contacted, qualified, proposal, negotiation, won, lost):');
+    const stage = prompt(
+      'Enter new stage (new, contacted, qualified, proposal, negotiation, won, lost):',
+    );
     if (stage) {
       await executeBulk('stage', { stage });
     }
@@ -70,23 +72,13 @@ export function BulkActionBar({
 
         <div className="flex-1" />
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleTag}
-          disabled={loading}
-        >
+        <Button variant="outline" size="sm" onClick={handleTag} disabled={loading}>
           <Tag className="mr-1.5 h-3.5 w-3.5" />
           Tag
         </Button>
 
         {entityType === 'lead' && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleStageChange}
-            disabled={loading}
-          >
+          <Button variant="outline" size="sm" onClick={handleStageChange} disabled={loading}>
             <ArrowRight className="mr-1.5 h-3.5 w-3.5" />
             Stage
           </Button>
@@ -107,12 +99,7 @@ export function BulkActionBar({
           </Button>
         )}
 
-        <Button
-          variant="destructive"
-          size="sm"
-          onClick={handleDelete}
-          disabled={loading}
-        >
+        <Button variant="destructive" size="sm" onClick={handleDelete} disabled={loading}>
           <Trash2 className="mr-1.5 h-3.5 w-3.5" />
           Delete
         </Button>

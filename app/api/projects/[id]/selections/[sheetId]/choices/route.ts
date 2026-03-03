@@ -3,7 +3,10 @@ import { createUserClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { selectionChoiceSchema } from '@/lib/validators/selections';
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string; sheetId: string }> }) {
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string; sheetId: string }> },
+) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -19,13 +22,20 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   return NextResponse.json(data);
 }
 
-export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string; sheetId: string }> }) {
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string; sheetId: string }> },
+) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { sheetId } = await params;
   let body: unknown;
-  try { body = await req.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+  }
 
   const parsed = selectionChoiceSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
@@ -33,7 +43,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const supabase = await createUserClient();
   const { data, error } = await supabase
     .from('selection_choices')
-    .upsert({ ...parsed.data, selection_sheet_id: sheetId, chosen_by: userId, chosen_at: new Date().toISOString() }, { onConflict: 'selection_sheet_id,selection_option_id' })
+    .upsert(
+      {
+        ...parsed.data,
+        selection_sheet_id: sheetId,
+        chosen_by: userId,
+        chosen_at: new Date().toISOString(),
+      },
+      { onConflict: 'selection_sheet_id,selection_option_id' },
+    )
     .select()
     .single();
 

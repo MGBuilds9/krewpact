@@ -6,11 +6,7 @@ vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
 import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { GET, POST } from '@/app/api/crm/email-templates/route';
-import {
-  GET as GET_BY_ID,
-  PATCH,
-  DELETE,
-} from '@/app/api/crm/email-templates/[id]/route';
+import { GET as GET_BY_ID, PATCH, DELETE } from '@/app/api/crm/email-templates/[id]/route';
 import {
   mockClerkAuth,
   mockClerkUnauth,
@@ -33,9 +29,7 @@ describe('GET /api/crm/email-templates', () => {
 
   it('returns templates list', async () => {
     mockClerkAuth(mockAuth);
-    const templates = [
-      { id: 'tpl-1', name: 'Test', category: 'outreach', subject: 'Hi' },
-    ];
+    const templates = [{ id: 'tpl-1', name: 'Test', category: 'outreach', subject: 'Hi' }];
     const client = mockSupabaseClient({
       tables: { email_templates: { data: templates, error: null } },
     });
@@ -104,10 +98,9 @@ describe('GET /api/crm/email-templates/[id]', () => {
     });
     mockCreateUserClient.mockResolvedValue(client);
 
-    const res = await GET_BY_ID(
-      makeRequest('/api/crm/email-templates/tpl-1'),
-      { params: Promise.resolve({ id: 'tpl-1' }) },
-    );
+    const res = await GET_BY_ID(makeRequest('/api/crm/email-templates/tpl-1'), {
+      params: Promise.resolve({ id: 'tpl-1' }),
+    });
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.data.id).toBe('tpl-1');
@@ -131,11 +124,7 @@ describe('PATCH /api/crm/email-templates/[id]', () => {
     });
     mockCreateUserClient.mockResolvedValue(client);
 
-    const req = makeJsonRequest(
-      '/api/crm/email-templates/tpl-1',
-      { name: 'Updated' },
-      'PATCH',
-    );
+    const req = makeJsonRequest('/api/crm/email-templates/tpl-1', { name: 'Updated' }, 'PATCH');
     const res = await PATCH(req, {
       params: Promise.resolve({ id: 'tpl-1' }),
     });
@@ -155,10 +144,9 @@ describe('DELETE /api/crm/email-templates/[id]', () => {
     });
     mockCreateUserClient.mockResolvedValue(client);
 
-    const res = await DELETE(
-      makeRequest('/api/crm/email-templates/tpl-1', { method: 'DELETE' }),
-      { params: Promise.resolve({ id: 'tpl-1' }) },
-    );
+    const res = await DELETE(makeRequest('/api/crm/email-templates/tpl-1', { method: 'DELETE' }), {
+      params: Promise.resolve({ id: 'tpl-1' }),
+    });
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);

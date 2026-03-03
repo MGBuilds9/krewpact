@@ -205,9 +205,7 @@ describe('Data Integrity: Estimate version snapshot immutability', () => {
 
     // Step 1: Create a version
     const estimate = makeEstimate({ id: ESTIMATE_ID, revision_no: 1 });
-    const lines = [
-      makeEstimateLine({ estimate_id: ESTIMATE_ID, line_total: 5000 }),
-    ];
+    const lines = [makeEstimateLine({ estimate_id: ESTIMATE_ID, line_total: 5000 })];
     const version = {
       id: 'v1-id',
       estimate_id: ESTIMATE_ID,

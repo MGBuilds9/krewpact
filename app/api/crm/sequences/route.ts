@@ -26,10 +26,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const { division_id, is_active, limit, offset } = parsed.data;
   const supabase = await createUserClient();
 
-  let query = supabase
-    .from('sequences')
-    .select('*')
-    .order('created_at', { ascending: false });
+  let query = supabase.from('sequences').select('*').order('created_at', { ascending: false });
 
   if (division_id) {
     query = query.eq('division_id', division_id);
@@ -75,11 +72,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   const supabase = await createUserClient();
-  const { data, error } = await supabase
-    .from('sequences')
-    .insert(parsed.data)
-    .select()
-    .single();
+  const { data, error } = await supabase.from('sequences').insert(parsed.data).select().single();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -28,9 +28,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const parsed = getQuerySchema.safeParse(
-    Object.fromEntries(req.nextUrl.searchParams),
-  );
+  const parsed = getQuerySchema.safeParse(Object.fromEntries(req.nextUrl.searchParams));
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
@@ -38,10 +36,7 @@ export async function GET(req: NextRequest) {
   const { project_id, status, assigned_user_id, limit } = parsed.data;
 
   const supabase = await createUserClient();
-  let query = supabase
-    .from('tasks')
-    .select('*')
-    .order('created_at', { ascending: false });
+  let query = supabase.from('tasks').select('*').order('created_at', { ascending: false });
 
   if (project_id) query = query.eq('project_id', project_id);
   if (status) query = query.eq('status', status);
@@ -75,11 +70,7 @@ export async function POST(req: NextRequest) {
   }
 
   const supabase = await createUserClient();
-  const { data, error } = await supabase
-    .from('tasks')
-    .insert(parsed.data)
-    .select()
-    .single();
+  const { data, error } = await supabase.from('tasks').insert(parsed.data).select().single();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

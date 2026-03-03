@@ -31,7 +31,7 @@ describe('DuplicateWarningDialog', () => {
         onMerge={vi.fn()}
         onForceCreate={vi.fn()}
         onCancel={vi.fn()}
-      />
+      />,
     );
 
     expect(screen.getByText('Potential Duplicates Found')).toBeInTheDocument();
@@ -45,7 +45,7 @@ describe('DuplicateWarningDialog', () => {
         onMerge={vi.fn()}
         onForceCreate={vi.fn()}
         onCancel={vi.fn()}
-      />
+      />,
     );
 
     expect(screen.getByText('mdmcontracting.ca')).toBeInTheDocument();
@@ -63,7 +63,7 @@ describe('DuplicateWarningDialog', () => {
         onMerge={vi.fn()}
         onForceCreate={vi.fn()}
         onCancel={onCancel}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByText('Cancel'));
@@ -79,7 +79,7 @@ describe('DuplicateWarningDialog', () => {
         onMerge={vi.fn()}
         onForceCreate={onForceCreate}
         onCancel={vi.fn()}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByText('Create Anyway'));
@@ -94,7 +94,7 @@ describe('DuplicateWarningDialog', () => {
         onMerge={vi.fn()}
         onForceCreate={vi.fn()}
         onCancel={vi.fn()}
-      />
+      />,
     );
 
     const mergeBtn = screen.getByText('Merge');
@@ -110,7 +110,7 @@ describe('DuplicateWarningDialog', () => {
         onMerge={onMerge}
         onForceCreate={vi.fn()}
         onCancel={vi.fn()}
-      />
+      />,
     );
 
     // Select first match
@@ -129,7 +129,7 @@ describe('DuplicateWarningDialog', () => {
         onMerge={vi.fn()}
         onForceCreate={vi.fn()}
         onCancel={vi.fn()}
-      />
+      />,
     );
 
     expect(screen.getByText(/2 potential duplicate contact/)).toBeInTheDocument();

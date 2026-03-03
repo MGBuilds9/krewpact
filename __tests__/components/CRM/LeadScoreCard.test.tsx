@@ -27,9 +27,7 @@ describe('LeadScoreCard', () => {
   });
 
   it('displays category scores', () => {
-    render(
-      <LeadScoreCard score={60} fitScore={25} intentScore={20} engagementScore={15} />,
-    );
+    render(<LeadScoreCard score={60} fitScore={25} intentScore={20} engagementScore={15} />);
     expect(screen.getByText('Fit')).toBeDefined();
     expect(screen.getByText('25')).toBeDefined();
     expect(screen.getByText('Intent')).toBeDefined();
@@ -53,9 +51,7 @@ describe('LeadScoreCard', () => {
   });
 
   it('shows recalculating state', () => {
-    render(
-      <LeadScoreCard score={50} onRecalculate={() => {}} isRecalculating={true} />,
-    );
+    render(<LeadScoreCard score={50} onRecalculate={() => {}} isRecalculating={true} />);
     expect(screen.getByText('Recalculating...')).toBeDefined();
   });
 

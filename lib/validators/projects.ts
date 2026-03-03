@@ -4,22 +4,36 @@ import { z } from 'zod';
 // Task dependency schemas
 // ============================================================
 
-const dependencyTypes = ['finish_to_start', 'start_to_start', 'finish_to_finish', 'start_to_finish'] as const;
+const dependencyTypes = [
+  'finish_to_start',
+  'start_to_start',
+  'finish_to_finish',
+  'start_to_finish',
+] as const;
 
-export const taskDependencyCreateSchema = z.object({
-  task_id: z.string().uuid(),
-  depends_on_task_id: z.string().uuid(),
-  dependency_type: z.enum(dependencyTypes).default('finish_to_start'),
-}).refine(
-  (data) => data.task_id !== data.depends_on_task_id,
-  { message: 'A task cannot depend on itself' },
-);
+export const taskDependencyCreateSchema = z
+  .object({
+    task_id: z.string().uuid(),
+    depends_on_task_id: z.string().uuid(),
+    dependency_type: z.enum(dependencyTypes).default('finish_to_start'),
+  })
+  .refine((data) => data.task_id !== data.depends_on_task_id, {
+    message: 'A task cannot depend on itself',
+  });
 
 // ============================================================
 // Site diary schemas
 // ============================================================
 
-const diaryEntryTypes = ['observation', 'visitor', 'delivery', 'weather', 'safety', 'progress', 'other'] as const;
+const diaryEntryTypes = [
+  'observation',
+  'visitor',
+  'delivery',
+  'weather',
+  'safety',
+  'progress',
+  'other',
+] as const;
 
 export const siteDiaryEntryCreateSchema = z.object({
   entry_at: z.string().min(1),
@@ -73,11 +87,15 @@ export const meetingMinutesSchema = z.object({
   attendees: z.array(z.string()).min(1),
   agenda: z.string().optional(),
   notes: z.string().min(1),
-  action_items: z.array(z.object({
-    description: z.string().min(1),
-    assignee: z.string().optional(),
-    due_date: z.string().optional(),
-  })).optional(),
+  action_items: z
+    .array(
+      z.object({
+        description: z.string().min(1),
+        assignee: z.string().optional(),
+        due_date: z.string().optional(),
+      }),
+    )
+    .optional(),
 });
 
 // ============================================================

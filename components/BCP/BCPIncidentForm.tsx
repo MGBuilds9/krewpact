@@ -62,7 +62,9 @@ export function BCPIncidentForm({ onSuccess, onCancel }: BCPIncidentFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Incident Number</FormLabel>
-                <FormControl><Input placeholder="INC-2026-001" {...field} /></FormControl>
+                <FormControl>
+                  <Input placeholder="INC-2026-001" {...field} />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
@@ -75,7 +77,9 @@ export function BCPIncidentForm({ onSuccess, onCancel }: BCPIncidentFormProps) {
                 <FormLabel>Severity</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                   </FormControl>
                   <SelectContent>
                     <SelectItem value="sev1">SEV1 — Critical</SelectItem>
@@ -95,7 +99,9 @@ export function BCPIncidentForm({ onSuccess, onCancel }: BCPIncidentFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Title</FormLabel>
-              <FormControl><Input placeholder="Incident title" {...field} /></FormControl>
+              <FormControl>
+                <Input placeholder="Incident title" {...field} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -106,7 +112,9 @@ export function BCPIncidentForm({ onSuccess, onCancel }: BCPIncidentFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Summary</FormLabel>
-              <FormControl><Textarea placeholder="Incident summary..." {...field} /></FormControl>
+              <FormControl>
+                <Textarea placeholder="Incident summary..." {...field} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -116,7 +124,11 @@ export function BCPIncidentForm({ onSuccess, onCancel }: BCPIncidentFormProps) {
             {create.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Declare Incident
           </Button>
-          {onCancel && <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>}
+          {onCancel && (
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
+          )}
         </div>
       </form>
     </Form>

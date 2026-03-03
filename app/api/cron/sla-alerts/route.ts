@@ -1,9 +1,5 @@
 import { createUserClient } from '@/lib/supabase/server';
-import {
-  LEAD_SLA_CONFIG,
-  OPPORTUNITY_SLA_CONFIG,
-  isOverdue,
-} from '@/lib/crm/sla-config';
+import { LEAD_SLA_CONFIG, OPPORTUNITY_SLA_CONFIG, isOverdue } from '@/lib/crm/sla-config';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest) {

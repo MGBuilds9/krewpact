@@ -40,10 +40,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   for (const lead of leads) {
     try {
       // Mark as in_progress
-      await supabase
-        .from('leads')
-        .update({ enrichment_status: 'in_progress' })
-        .eq('id', lead.id);
+      await supabase.from('leads').update({ enrichment_status: 'in_progress' }).eq('id', lead.id);
 
       // Fetch primary contact for this lead (for Apollo Match)
       const { data: contacts } = await supabase
@@ -122,7 +119,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         if (sideEffects.contactEmail) contactUpdate.email = sideEffects.contactEmail;
         if (sideEffects.contactPhone) contactUpdate.phone = sideEffects.contactPhone;
         if (sideEffects.contactTitle) contactUpdate.title = sideEffects.contactTitle;
-        if (sideEffects.contactLinkedinUrl) contactUpdate.linkedin_url = sideEffects.contactLinkedinUrl;
+        if (sideEffects.contactLinkedinUrl)
+          contactUpdate.linkedin_url = sideEffects.contactLinkedinUrl;
 
         await supabase
           .from('contacts')
@@ -137,10 +135,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       console.error(`Enrichment error for ${lead.id}:`, err);
 
       // Mark as failed
-      await supabase
-        .from('leads')
-        .update({ enrichment_status: 'failed' })
-        .eq('id', lead.id);
+      await supabase.from('leads').update({ enrichment_status: 'failed' }).eq('id', lead.id);
     }
   }
 

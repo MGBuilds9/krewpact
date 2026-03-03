@@ -105,19 +105,11 @@ export function evaluateOperator(
     }
 
     case 'exists': {
-      return (
-        fieldValue !== null &&
-        fieldValue !== undefined &&
-        fieldValue !== ''
-      );
+      return fieldValue !== null && fieldValue !== undefined && fieldValue !== '';
     }
 
     case 'not_exists': {
-      return (
-        fieldValue === null ||
-        fieldValue === undefined ||
-        fieldValue === ''
-      );
+      return fieldValue === null || fieldValue === undefined || fieldValue === '';
     }
 
     case 'starts_with': {
@@ -142,11 +134,13 @@ export function evaluateOperator(
  * e.g. getNestedValue(obj, 'enrichment_data.google_maps.google_rating')
  */
 export function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
-  return path.split('.').reduce<unknown>(
-    (curr, key) =>
-      curr && typeof curr === 'object' ? (curr as Record<string, unknown>)[key] : undefined,
-    obj,
-  );
+  return path
+    .split('.')
+    .reduce<unknown>(
+      (curr, key) =>
+        curr && typeof curr === 'object' ? (curr as Record<string, unknown>)[key] : undefined,
+      obj,
+    );
 }
 
 /**
@@ -154,10 +148,7 @@ export function getNestedValue(obj: Record<string, unknown>, path: string): unkn
  * Only active rules are evaluated. Returns total and per-category scores.
  * Supports dot-notation field names for nested enrichment_data access.
  */
-export function scoreLead(
-  leadData: Record<string, unknown>,
-  rules: ScoringRule[],
-): ScoringResult {
+export function scoreLead(leadData: Record<string, unknown>, rules: ScoringRule[]): ScoringResult {
   const ruleResults: RuleResult[] = [];
   let fitScore = 0;
   let intentScore = 0;

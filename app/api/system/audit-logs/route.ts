@@ -11,7 +11,16 @@ export async function GET(req: NextRequest) {
   const parsed = auditLogQuerySchema.safeParse(params);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const { entity_type, entity_id, actor_user_id, action, from_date, to_date, limit = 50, offset = 0 } = parsed.data;
+  const {
+    entity_type,
+    entity_id,
+    actor_user_id,
+    action,
+    from_date,
+    to_date,
+    limit = 50,
+    offset = 0,
+  } = parsed.data;
   const supabase = await createUserClient();
 
   let query = supabase

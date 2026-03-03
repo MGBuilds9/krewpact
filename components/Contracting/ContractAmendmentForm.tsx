@@ -3,7 +3,14 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -24,7 +31,11 @@ export interface ContractAmendmentFormProps {
   onCancel?: () => void;
 }
 
-export function ContractAmendmentForm({ contractId, onSuccess, onCancel }: ContractAmendmentFormProps) {
+export function ContractAmendmentForm({
+  contractId,
+  onSuccess,
+  onCancel,
+}: ContractAmendmentFormProps) {
   const updateContract = useUpdateContractTerms();
 
   const form = useForm<FormValues>({

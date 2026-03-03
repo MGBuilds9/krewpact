@@ -8,13 +8,7 @@ import 'dotenv/config';
 // Configuration
 const BOOK_REL_PATH = '../MDM-Book-Internal';
 // Whitelisted top-level directories only
-const TARGET_DIRS = [
-  '01-company',
-  '02-market',
-  '03-competitors',
-  '04-strategy',
-  '05-operations'
-];
+const TARGET_DIRS = ['01-company', '02-market', '03-competitors', '04-strategy', '05-operations'];
 // 07-sensitive is explicitly EXCLUDED by omission
 
 async function main() {
@@ -31,7 +25,9 @@ async function main() {
 
   if (!isDryRun) {
     if (!supabaseUrl || !supabaseKey) {
-      console.error('❌ Missing Supabase credentials (NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)');
+      console.error(
+        '❌ Missing Supabase credentials (NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)',
+      );
       process.exit(1);
     }
     if (!openaiKey) {
@@ -63,7 +59,7 @@ async function main() {
   const manifest = {
     ingested: [] as string[],
     skipped_sensitive: [] as string[],
-    skipped_other: [] as string[]
+    skipped_other: [] as string[],
   };
 
   for (const dir of TARGET_DIRS) {
@@ -125,13 +121,16 @@ async function main() {
       // Upsert
       const { data: doc, error: docError } = await supabase!
         .from('knowledge_docs')
-        .upsert({
-          file_path: relPath,
-          title: title,
-          category: dir.split('-')[1] || 'general',
-          checksum,
-          last_synced_at: new Date().toISOString()
-        }, { onConflict: 'file_path' })
+        .upsert(
+          {
+            file_path: relPath,
+            title: title,
+            category: dir.split('-')[1] || 'general',
+            checksum,
+            last_synced_at: new Date().toISOString(),
+          },
+          { onConflict: 'file_path' },
+        )
         .select()
         .single();
 
@@ -151,14 +150,14 @@ async function main() {
 
         const embeddingResponse = await openai!.embeddings.create({
           model: 'text-embedding-ada-002',
-          input: chunk.replace(/\n/g, ' ')
+          input: chunk.replace(/\n/g, ' '),
         });
 
         embeddingsToInsert.push({
           doc_id: doc.id,
           chunk_index: i,
           content: chunk,
-          embedding: embeddingResponse.data[0].embedding
+          embedding: embeddingResponse.data[0].embedding,
         });
       }
 
@@ -178,7 +177,7 @@ async function main() {
 
   if (manifest.skipped_sensitive.length > 0) {
     console.log('\n🚫 SKIPPED (SENSITIVE FLAG):');
-    manifest.skipped_sensitive.forEach(f => console.log(`   - ${f}`));
+    manifest.skipped_sensitive.forEach((f) => console.log(`   - ${f}`));
   }
 
   console.log(`\n✅ TO BE INGESTED (${manifest.ingested.length} files):`);
@@ -186,7 +185,7 @@ async function main() {
   const byFolder = Object.groupBy(manifest.ingested, (f) => f.split(path.sep)[0]);
   for (const [folder, files] of Object.entries(byFolder)) {
     console.log(`\n   📂 ${folder} (${files?.length})`);
-    files?.slice(0, 5).forEach(f => console.log(`      - ${path.basename(f)}`));
+    files?.slice(0, 5).forEach((f) => console.log(`      - ${path.basename(f)}`));
     if (files && files.length > 5) console.log(`      ... and ${files.length - 5} more`);
   }
 
@@ -203,11 +202,13 @@ async function main() {
 // Helpers
 async function getMarkdownFiles(dir: string): Promise<string[]> {
   const dirents = await fs.readdir(dir, { withFileTypes: true });
-  const files = await Promise.all(dirents.map((dirent) => {
-    const res = path.resolve(dir, dirent.name);
-    return dirent.isDirectory() ? getMarkdownFiles(res) : res;
-  }));
-  return Array.prototype.concat(...files).filter(f => f.endsWith('.md'));
+  const files = await Promise.all(
+    dirents.map((dirent) => {
+      const res = path.resolve(dir, dirent.name);
+      return dirent.isDirectory() ? getMarkdownFiles(res) : res;
+    }),
+  );
+  return Array.prototype.concat(...files).filter((f) => f.endsWith('.md'));
 }
 
 function splitIntoChunks(text: string, maxLength: number): string[] {

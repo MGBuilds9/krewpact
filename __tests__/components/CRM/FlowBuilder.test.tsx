@@ -101,12 +101,16 @@ describe('StepNode', () => {
 
 describe('ConditionNode', () => {
   it('renders with condition type label', () => {
-    render(<ConditionNode step={conditionStep} selected={false} onSelect={vi.fn()} onDelete={vi.fn()} />);
+    render(
+      <ConditionNode step={conditionStep} selected={false} onSelect={vi.fn()} onDelete={vi.fn()} />,
+    );
     expect(screen.getByText(/score check/i)).toBeInTheDocument();
   });
 
   it('shows Yes and No branch labels', () => {
-    render(<ConditionNode step={conditionStep} selected={false} onSelect={vi.fn()} onDelete={vi.fn()} />);
+    render(
+      <ConditionNode step={conditionStep} selected={false} onSelect={vi.fn()} onDelete={vi.fn()} />,
+    );
     expect(screen.getByText(/yes/i)).toBeInTheDocument();
     expect(screen.getByText(/no/i)).toBeInTheDocument();
   });

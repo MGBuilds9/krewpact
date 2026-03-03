@@ -17,11 +17,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-const FUNNEL_COLORS = [
-  'hsl(210, 80%, 55%)',
-  'hsl(40, 90%, 55%)',
-  'hsl(140, 70%, 45%)',
-];
+const FUNNEL_COLORS = ['hsl(210, 80%, 55%)', 'hsl(40, 90%, 55%)', 'hsl(140, 70%, 45%)'];
 
 function formatPct(value: number): string {
   return `${(value * 100).toFixed(1)}%`;

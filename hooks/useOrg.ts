@@ -164,9 +164,10 @@ export function useSetRolePermission() {
 export function usePolicyOverrides(userId?: string) {
   return useQuery({
     queryKey: ['policy-overrides', userId],
-    queryFn: () => apiFetch<PaginatedResponse<PolicyOverride>>('/api/org/policy-overrides', {
-      params: { user_id: userId },
-    }),
+    queryFn: () =>
+      apiFetch<PaginatedResponse<PolicyOverride>>('/api/org/policy-overrides', {
+        params: { user_id: userId },
+      }),
     staleTime: 30_000,
   });
 }
@@ -195,7 +196,10 @@ export function useUpdateNotificationPreferences() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: Record<string, unknown>) =>
-      apiFetch<NotificationPreference>('/api/notifications/preferences', { method: 'PATCH', body: data }),
+      apiFetch<NotificationPreference>('/api/notifications/preferences', {
+        method: 'PATCH',
+        body: data,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notification-preferences'] });
     },

@@ -11,7 +11,7 @@ vi.mock('next/navigation', () => ({
     back: vi.fn(),
   }),
   usePathname: () => '/crm/opportunities',
-  useParams: () => ({}),
+  useParams: () => ({ orgSlug: 'default' }),
   useSearchParams: () => new URLSearchParams(),
 }));
 
@@ -33,7 +33,7 @@ vi.mock('@/hooks/use-mobile', () => ({
   useIsMobile: () => false,
 }));
 
-import OpportunitiesPage from '@/app/(dashboard)/crm/opportunities/page';
+import OpportunitiesPage from '@/app/(dashboard)/org/[orgSlug]/crm/opportunities/page';
 
 describe('Opportunities Pipeline Page', () => {
   beforeEach(() => {

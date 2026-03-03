@@ -139,10 +139,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
     line_total: calculateLineTotal(line.quantity, line.unit_cost, line.markup_pct ?? 0),
   }));
 
-  const { data, error } = await supabase
-    .from('estimate_lines')
-    .insert(linesWithTotals)
-    .select();
+  const { data, error } = await supabase.from('estimate_lines').insert(linesWithTotals).select();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

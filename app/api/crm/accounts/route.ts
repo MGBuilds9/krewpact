@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { accountCreateSchema } from '@/lib/validators/crm';
+import { getOrgIdFromAuth } from '@/lib/api/org';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -59,7 +60,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     data: data ?? [],
     total: count ?? 0,
-    hasMore: (effectiveOffset + (data?.length ?? 0)) < (count ?? 0),
+    hasMore: effectiveOffset + (data?.length ?? 0) < (count ?? 0),
   });
 }
 
@@ -81,10 +82,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
+  const orgId = await getOrgIdFromAuth();
   const supabase = await createUserClient();
   const { data, error } = await supabase
     .from('accounts')
-    .insert(parsed.data)
+    .insert({ ...parsed.data, org_id: orgId })
     .select()
     .single();
 

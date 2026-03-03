@@ -58,9 +58,7 @@ describe('Division Isolation: Leads', () => {
       mockSupabaseClient({ tables: { leads: { data: contractingLeads, error: null } } }),
     );
 
-    const res = await leadsGET(
-      makeRequest(`/api/crm/leads?division_id=${DIVISION_A}`),
-    );
+    const res = await leadsGET(makeRequest(`/api/crm/leads?division_id=${DIVISION_A}`));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.data).toHaveLength(2);
@@ -75,9 +73,7 @@ describe('Division Isolation: Leads', () => {
       mockSupabaseClient({ tables: { leads: { data: [], error: null } } }),
     );
 
-    const res = await leadsGET(
-      makeRequest(`/api/crm/leads?division_id=${DIVISION_B}`),
-    );
+    const res = await leadsGET(makeRequest(`/api/crm/leads?division_id=${DIVISION_B}`));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.data).toHaveLength(0);
@@ -184,13 +180,11 @@ describe('Division Isolation: Estimates', () => {
       }),
     );
 
-    const res = await estimatesGET(
-      makeRequest(`/api/estimates?division_id=${DIVISION_A}`),
-    );
+    const res = await estimatesGET(makeRequest(`/api/estimates?division_id=${DIVISION_A}`));
     expect(res.status).toBe(200);
     const body = await res.json();
     // User in division B sees no estimates from division A (estimates returns raw array)
-    expect(Array.isArray(body) ? body : body.data ?? body).toHaveLength(0);
+    expect(Array.isArray(body) ? body : (body.data ?? body)).toHaveLength(0);
   });
 
   it('user sees only their own division estimates when filtering', async () => {
@@ -205,12 +199,10 @@ describe('Division Isolation: Estimates', () => {
       }),
     );
 
-    const res = await estimatesGET(
-      makeRequest(`/api/estimates?division_id=${DIVISION_A}`),
-    );
+    const res = await estimatesGET(makeRequest(`/api/estimates?division_id=${DIVISION_A}`));
     expect(res.status).toBe(200);
     const body = await res.json();
-    const arr = Array.isArray(body) ? body : body.data ?? body;
+    const arr = Array.isArray(body) ? body : (body.data ?? body);
     expect(arr).toHaveLength(2);
     expect(arr.every((e: Record<string, unknown>) => e.division_id === DIVISION_A)).toBe(true);
   });

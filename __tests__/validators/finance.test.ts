@@ -32,11 +32,13 @@ describe('invoiceSnapshotSchema', () => {
   it('accepts valid status enum values', () => {
     const statuses = ['draft', 'submitted', 'paid', 'overdue', 'cancelled'] as const;
     for (const status of statuses) {
-      expect(invoiceSnapshotSchema.safeParse({
-        invoice_number: 'INV-001',
-        snapshot_payload: {},
-        status,
-      }).success).toBe(true);
+      expect(
+        invoiceSnapshotSchema.safeParse({
+          invoice_number: 'INV-001',
+          snapshot_payload: {},
+          status,
+        }).success,
+      ).toBe(true);
     }
   });
 
@@ -62,10 +64,10 @@ describe('invoiceSnapshotSchema', () => {
     const result = invoiceSnapshotSchema.safeParse({
       invoice_number: 'INV-2026-001',
       snapshot_payload: {},
-      subtotal_amount: 10000.00,
-      tax_amount: 1300.00,
-      total_amount: 11300.00,
-      amount_paid: 5000.00,
+      subtotal_amount: 10000.0,
+      tax_amount: 1300.0,
+      total_amount: 11300.0,
+      amount_paid: 5000.0,
     });
     expect(result.success).toBe(true);
   });
@@ -96,11 +98,13 @@ describe('poSnapshotSchema', () => {
   it('accepts valid status enum values', () => {
     const statuses = ['draft', 'submitted', 'approved', 'received', 'closed', 'cancelled'] as const;
     for (const status of statuses) {
-      expect(poSnapshotSchema.safeParse({
-        po_number: 'PO-001',
-        snapshot_payload: {},
-        status,
-      }).success).toBe(true);
+      expect(
+        poSnapshotSchema.safeParse({
+          po_number: 'PO-001',
+          snapshot_payload: {},
+          status,
+        }).success,
+      ).toBe(true);
     }
   });
 

@@ -42,9 +42,7 @@ export function RFIResponseForm({ projectId, rfiId, onSuccess, onCancel }: RFIRe
 
   async function onSubmit(values: FormValues) {
     try {
-      await createThread.mutateAsync(
-        values as Parameters<typeof createThread.mutateAsync>[0],
-      );
+      await createThread.mutateAsync(values as Parameters<typeof createThread.mutateAsync>[0]);
       toast.success('Response posted');
       form.reset();
       onSuccess?.();

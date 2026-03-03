@@ -13,10 +13,7 @@ const taskStatusSchema = z.object({
  * Allows a trade partner to update the status of one of their assigned tasks.
  * Immutability guard: once 'done', cannot be reverted by trade portal.
  */
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -35,7 +32,11 @@ export async function PATCH(
   }
 
   let body: unknown;
-  try { body = await req.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+  }
 
   const parsed = taskStatusSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
@@ -51,12 +52,18 @@ export async function PATCH(
 
   const metadata = (task.metadata as Record<string, unknown>) ?? {};
   if (metadata.trade_portal_id !== pa.id) {
-    return NextResponse.json({ error: 'This task is not assigned to your account' }, { status: 403 });
+    return NextResponse.json(
+      { error: 'This task is not assigned to your account' },
+      { status: 403 },
+    );
   }
 
   // Immutability: 'done' is terminal for portal users
   if (task.status === 'done') {
-    return NextResponse.json({ error: 'Completed tasks cannot be modified via the portal' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'Completed tasks cannot be modified via the portal' },
+      { status: 400 },
+    );
   }
 
   const { data: updated, error: updateError } = await supabase

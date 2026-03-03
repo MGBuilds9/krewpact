@@ -1,11 +1,6 @@
 'use client';
 
-import {
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-  type ColumnDef,
-} from '@tanstack/react-table';
+import { flexRender, getCoreRowModel, useReactTable, type ColumnDef } from '@tanstack/react-table';
 import {
   Table,
   TableBody,
@@ -157,9 +152,7 @@ export function DataTable<T>({
       {/* Pagination */}
       <div className="flex items-center justify-between px-2">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span>
-            {total > 0 ? `Showing ${startRow}-${endRow} of ${total}` : 'No results'}
-          </span>
+          <span>{total > 0 ? `Showing ${startRow}-${endRow} of ${total}` : 'No results'}</span>
           <Select
             value={String(pageSize)}
             onValueChange={(val) => {

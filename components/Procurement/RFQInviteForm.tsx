@@ -14,13 +14,15 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
-const formSchema = z.object({
-  invited_email: z.string().email('Must be a valid email').optional().or(z.literal('')),
-  portal_account_id: z.string().uuid('Must be a valid UUID').optional().or(z.literal('')),
-}).refine(
-  (data) => data.invited_email || data.portal_account_id,
-  { message: 'Either email or portal account ID is required', path: ['invited_email'] },
-);
+const formSchema = z
+  .object({
+    invited_email: z.string().email('Must be a valid email').optional().or(z.literal('')),
+    portal_account_id: z.string().uuid('Must be a valid UUID').optional().or(z.literal('')),
+  })
+  .refine((data) => data.invited_email || data.portal_account_id, {
+    message: 'Either email or portal account ID is required',
+    path: ['invited_email'],
+  });
 
 type FormValues = z.infer<typeof formSchema>;
 

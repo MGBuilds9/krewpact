@@ -24,9 +24,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const { id } = await params;
   let body: unknown;
-  try { body = await req.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+  }
 
-  const parsed = rolePermissionEditorSchema.safeParse({ ...body as Record<string, unknown>, role_id: id });
+  const parsed = rolePermissionEditorSchema.safeParse({
+    ...(body as Record<string, unknown>),
+    role_id: id,
+  });
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
   const supabase = await createUserClient();
