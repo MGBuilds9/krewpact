@@ -50,12 +50,18 @@ export function ActivityTimeline({ activities }: ActivityTimelineProps) {
     <div className="space-y-4">
       {activities.map((activity) => {
         const Icon = activityIcons[activity.activity_type] || StickyNote;
-        const colorClass = activityColors[activity.activity_type] || 'bg-gray-100 text-gray-700 border-gray-200';
+        const colorClass =
+          activityColors[activity.activity_type] || 'bg-gray-100 text-gray-700 border-gray-200';
 
         return (
           <div key={activity.id} className="flex gap-3">
             <div className="flex-shrink-0 mt-1">
-              <div className={cn('w-8 h-8 rounded-full flex items-center justify-center border', colorClass)}>
+              <div
+                className={cn(
+                  'w-8 h-8 rounded-full flex items-center justify-center border',
+                  colorClass,
+                )}
+              >
                 <Icon className="h-4 w-4" />
               </div>
             </div>

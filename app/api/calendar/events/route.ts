@@ -1,19 +1,8 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  getMicrosoftToken,
-  graphFetch,
-  buildGraphUrl,
-} from '@/lib/microsoft/graph';
-import {
-  calendarQuerySchema,
-  createEventSchema,
-} from '@/lib/validators/calendar';
-import type {
-  GraphEvent,
-  GraphListResponse,
-  CreateEventPayload,
-} from '@/lib/microsoft/types';
+import { getMicrosoftToken, graphFetch, buildGraphUrl } from '@/lib/microsoft/graph';
+import { calendarQuerySchema, createEventSchema } from '@/lib/validators/calendar';
+import type { GraphEvent, GraphListResponse, CreateEventPayload } from '@/lib/microsoft/types';
 
 const EVENT_SELECT = [
   'id',
@@ -38,10 +27,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const params = Object.fromEntries(req.nextUrl.searchParams);
   const parsed = calendarQuerySchema.safeParse(params);
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.error.flatten() },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
   const { mailbox, startDateTime, endDateTime, top } = parsed.data;
@@ -57,14 +43,14 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   if (startDateTime && endDateTime) {
     queryParams.set(
       '$filter',
-      `start/dateTime ge '${startDateTime}' and end/dateTime le '${endDateTime}'`
+      `start/dateTime ge '${startDateTime}' and end/dateTime le '${endDateTime}'`,
     );
   }
 
   const url = buildGraphUrl('/events', mailbox);
   const data = await graphFetch<GraphListResponse<GraphEvent>>(
     token,
-    `${url}?${queryParams.toString()}`
+    `${url}?${queryParams.toString()}`,
   );
 
   return NextResponse.json(data);
@@ -85,10 +71,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const parsed = createEventSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.error.flatten() },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
   const {

@@ -56,10 +56,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   for (const lead of leads) {
     try {
-      const result = scoreLead(
-        lead as Record<string, unknown>,
-        rules as ScoringRule[],
-      );
+      const result = scoreLead(lead as Record<string, unknown>, rules as ScoringRule[]);
 
       const previousScore = lead.lead_score ?? 0;
 
@@ -90,19 +87,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
       // Auto deep research for high-scored leads (80+)
       const enrichmentData = lead.enrichment_data as Record<string, unknown> | null;
-      if (
-        result.total_score >= 80 &&
-        enrichmentData &&
-        !enrichmentData.deep_research
-      ) {
+      if (result.total_score >= 80 && enrichmentData && !enrichmentData.deep_research) {
         try {
           const brave = enrichmentData.brave as Record<string, unknown> | undefined;
           const website = (brave?.website as string) ?? (lead.domain as string | null);
-          const research = await deepResearchLead(
-            lead.company_name ?? '',
-            website,
-            enrichmentData,
-          );
+          const research = await deepResearchLead(lead.company_name ?? '', website, enrichmentData);
           await supabase
             .from('leads')
             .update({

@@ -7,10 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
  * Returns a single project detail for a portal user.
  * Guard: portal_permissions row must exist for the calling portal_account.
  */
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -47,7 +44,9 @@ export async function GET(
   // 3. Fetch project details
   const { data: project, error: projectError } = await supabase
     .from('projects')
-    .select('id, project_name, project_number, status, start_date, target_completion_date, actual_completion_date, site_address, baseline_budget, current_budget, account_id')
+    .select(
+      'id, project_name, project_number, status, start_date, target_completion_date, actual_completion_date, site_address, baseline_budget, current_budget, account_id',
+    )
     .eq('id', projectId)
     .single();
 
@@ -55,7 +54,8 @@ export async function GET(
     return NextResponse.json({ error: 'Project not found' }, { status: 404 });
   }
 
-  const permSet: Record<string, boolean> = (permission.permission_set as Record<string, boolean>) ?? {};
+  const permSet: Record<string, boolean> =
+    (permission.permission_set as Record<string, boolean>) ?? {};
 
   // Log the view
   await supabase.from('portal_view_logs').insert({

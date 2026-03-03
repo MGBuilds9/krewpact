@@ -134,8 +134,7 @@ export function useUpdateProposal() {
 export function useDeleteProposal() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) =>
-      apiFetch(`/api/proposals/${id}`, { method: 'DELETE' }),
+    mutationFn: (id: string) => apiFetch(`/api/proposals/${id}`, { method: 'DELETE' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['proposals'] });
     },
@@ -156,7 +155,10 @@ export function useCreateProposalEvent() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ proposalId, ...data }: Partial<ProposalEvent> & { proposalId: string }) =>
-      apiFetch<ProposalEvent>(`/api/proposals/${proposalId}/events`, { method: 'POST', body: data }),
+      apiFetch<ProposalEvent>(`/api/proposals/${proposalId}/events`, {
+        method: 'POST',
+        body: data,
+      }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['proposal-events', variables.proposalId] });
       queryClient.invalidateQueries({ queryKey: ['proposal', variables.proposalId] });

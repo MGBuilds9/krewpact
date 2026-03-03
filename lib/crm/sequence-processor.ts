@@ -141,7 +141,9 @@ export async function processSequences(
           if (activityError) {
             throw new Error(`Failed to create activity: ${activityError.message}`);
           }
-        } else if (MANUAL_ACTION_TYPES.includes(actionType as typeof MANUAL_ACTION_TYPES[number])) {
+        } else if (
+          MANUAL_ACTION_TYPES.includes(actionType as (typeof MANUAL_ACTION_TYPES)[number])
+        ) {
           // Manual action types: create a task reminder for the salesperson
           const label = MANUAL_ACTION_LABELS[actionType] ?? actionType;
           const { error: activityError } = await supabase.from('activities').insert({
@@ -209,7 +211,12 @@ export async function processSequences(
         }
 
         // 5. Fetch next step details for delay calculation
-        let nextStep: { id: string; step_number: number; delay_days: number | null; delay_hours: number | null } | null = null;
+        let nextStep: {
+          id: string;
+          step_number: number;
+          delay_days: number | null;
+          delay_hours: number | null;
+        } | null = null;
 
         if (nextStepId) {
           const { data } = await supabase
@@ -261,12 +268,7 @@ export async function processSequences(
         // DLQ: check retries and move to dead_letter if exceeded
         try {
           const stepId = enrollment.current_step_id ?? '';
-          const movedToDLQ = await checkAndMoveToDLQ(
-            supabase,
-            enrollment.id,
-            stepId,
-            message,
-          );
+          const movedToDLQ = await checkAndMoveToDLQ(supabase, enrollment.id, stepId, message);
           if (movedToDLQ) {
             result.deadLettered++;
           }
@@ -324,7 +326,9 @@ async function executeEmailStep(
   }
 
   // Send real email if sender is provided
-  const contactEmail = ((enrollment.contacts ?? {}) as Record<string, unknown>).email as string | undefined;
+  const contactEmail = ((enrollment.contacts ?? {}) as Record<string, unknown>).email as
+    | string
+    | undefined;
   if (options.emailSender && contactEmail) {
     sendResult = await options.emailSender.send({
       to: contactEmail,
@@ -430,11 +434,7 @@ export async function evaluateCondition(
       const stage = conditionConfig.stage as string | undefined;
       if (!stage) return false;
 
-      const { data: lead } = await supabase
-        .from('leads')
-        .select('stage')
-        .eq('id', leadId)
-        .single();
+      const { data: lead } = await supabase.from('leads').select('stage').eq('id', leadId).single();
 
       if (!lead) return false;
       return (lead.stage as string) === stage;

@@ -43,7 +43,7 @@ export function calculateSLAStatus(
   stage: string,
   stageEnteredAt: string | Date | null,
   slaConfigs: SLAConfig[],
-  now: Date = new Date()
+  now: Date = new Date(),
 ): SLAStatus | null {
   const config = slaConfigs.find((c) => c.stage === stage);
   if (!config) return null;
@@ -80,7 +80,7 @@ export function calculateSLAStatus(
 export function isOverdue(
   stage: string,
   stageEnteredAt: string | Date | null,
-  slaConfigs: SLAConfig[]
+  slaConfigs: SLAConfig[],
 ): boolean {
   const status = calculateSLAStatus(stage, stageEnteredAt, slaConfigs);
   return status?.isOverdue ?? false;

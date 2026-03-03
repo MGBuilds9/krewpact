@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { evaluateOperator, scoreLead, getNestedValue, type ScoringRule } from '@/lib/crm/scoring-engine';
+import {
+  evaluateOperator,
+  scoreLead,
+  getNestedValue,
+  type ScoringRule,
+} from '@/lib/crm/scoring-engine';
 
 // ============================================================
 // Edge cases for evaluateOperator
@@ -176,21 +181,126 @@ describe('scoreLead enrichment edge cases', () => {
   it('handles all 15 seed rules against a fully enriched lead', () => {
     // Simulate the actual seed rules matching against a well-enriched lead
     const rules: ScoringRule[] = [
-      makeRule({ id: 'r1', field_name: 'industry', operator: 'contains', value: 'construction', score_impact: 15, category: 'fit' }),
-      makeRule({ id: 'r2', field_name: 'enrichment_data.google_maps.google_rating', operator: 'greater_than', value: '4.0', score_impact: 10, category: 'fit' }),
-      makeRule({ id: 'r3', field_name: 'enrichment_data.google_maps.google_reviews_count', operator: 'greater_than', value: '20', score_impact: 5, category: 'fit' }),
-      makeRule({ id: 'r4', field_name: 'enrichment_data.google_maps.business_status', operator: 'equals', value: 'OPERATIONAL', score_impact: 5, category: 'fit' }),
-      makeRule({ id: 'r5', field_name: 'province', operator: 'equals', value: 'Ontario', score_impact: 10, category: 'fit' }),
-      makeRule({ id: 'r6', field_name: 'city', operator: 'exists', value: '_', score_impact: 5, category: 'fit' }),
-      makeRule({ id: 'r7', field_name: 'enrichment_data.brave.website', operator: 'exists', value: '_', score_impact: 10, category: 'intent' }),
-      makeRule({ id: 'r8', field_name: 'enrichment_data.apollo_match.email', operator: 'exists', value: '_', score_impact: 10, category: 'intent' }),
-      makeRule({ id: 'r9', field_name: 'enrichment_data.brave.description', operator: 'contains', value: 'construction', score_impact: 5, category: 'intent' }),
-      makeRule({ id: 'r10', field_name: 'domain', operator: 'exists', value: '_', score_impact: 5, category: 'intent' }),
-      makeRule({ id: 'r11', field_name: 'status', operator: 'equals', value: 'contacted', score_impact: 15, category: 'engagement' }),
-      makeRule({ id: 'r12', field_name: 'status', operator: 'equals', value: 'qualified', score_impact: 20, category: 'engagement' }),
-      makeRule({ id: 'r13', field_name: 'enrichment_data.apollo_match.linkedin_url', operator: 'exists', value: '_', score_impact: 5, category: 'engagement' }),
-      makeRule({ id: 'r14', field_name: 'status', operator: 'equals', value: 'proposal', score_impact: 25, category: 'engagement' }),
-      makeRule({ id: 'r15', field_name: 'status', operator: 'equals', value: 'won', score_impact: 30, category: 'engagement' }),
+      makeRule({
+        id: 'r1',
+        field_name: 'industry',
+        operator: 'contains',
+        value: 'construction',
+        score_impact: 15,
+        category: 'fit',
+      }),
+      makeRule({
+        id: 'r2',
+        field_name: 'enrichment_data.google_maps.google_rating',
+        operator: 'greater_than',
+        value: '4.0',
+        score_impact: 10,
+        category: 'fit',
+      }),
+      makeRule({
+        id: 'r3',
+        field_name: 'enrichment_data.google_maps.google_reviews_count',
+        operator: 'greater_than',
+        value: '20',
+        score_impact: 5,
+        category: 'fit',
+      }),
+      makeRule({
+        id: 'r4',
+        field_name: 'enrichment_data.google_maps.business_status',
+        operator: 'equals',
+        value: 'OPERATIONAL',
+        score_impact: 5,
+        category: 'fit',
+      }),
+      makeRule({
+        id: 'r5',
+        field_name: 'province',
+        operator: 'equals',
+        value: 'Ontario',
+        score_impact: 10,
+        category: 'fit',
+      }),
+      makeRule({
+        id: 'r6',
+        field_name: 'city',
+        operator: 'exists',
+        value: '_',
+        score_impact: 5,
+        category: 'fit',
+      }),
+      makeRule({
+        id: 'r7',
+        field_name: 'enrichment_data.brave.website',
+        operator: 'exists',
+        value: '_',
+        score_impact: 10,
+        category: 'intent',
+      }),
+      makeRule({
+        id: 'r8',
+        field_name: 'enrichment_data.apollo_match.email',
+        operator: 'exists',
+        value: '_',
+        score_impact: 10,
+        category: 'intent',
+      }),
+      makeRule({
+        id: 'r9',
+        field_name: 'enrichment_data.brave.description',
+        operator: 'contains',
+        value: 'construction',
+        score_impact: 5,
+        category: 'intent',
+      }),
+      makeRule({
+        id: 'r10',
+        field_name: 'domain',
+        operator: 'exists',
+        value: '_',
+        score_impact: 5,
+        category: 'intent',
+      }),
+      makeRule({
+        id: 'r11',
+        field_name: 'status',
+        operator: 'equals',
+        value: 'contacted',
+        score_impact: 15,
+        category: 'engagement',
+      }),
+      makeRule({
+        id: 'r12',
+        field_name: 'status',
+        operator: 'equals',
+        value: 'qualified',
+        score_impact: 20,
+        category: 'engagement',
+      }),
+      makeRule({
+        id: 'r13',
+        field_name: 'enrichment_data.apollo_match.linkedin_url',
+        operator: 'exists',
+        value: '_',
+        score_impact: 5,
+        category: 'engagement',
+      }),
+      makeRule({
+        id: 'r14',
+        field_name: 'status',
+        operator: 'equals',
+        value: 'proposal',
+        score_impact: 25,
+        category: 'engagement',
+      }),
+      makeRule({
+        id: 'r15',
+        field_name: 'status',
+        operator: 'equals',
+        value: 'won',
+        score_impact: 30,
+        category: 'engagement',
+      }),
     ];
 
     const lead = {
@@ -235,7 +345,13 @@ describe('scoreLead enrichment edge cases', () => {
   it('handles lead with no matching rules', () => {
     const rules: ScoringRule[] = [
       makeRule({ field_name: 'industry', operator: 'contains', value: 'tech', score_impact: 15 }),
-      makeRule({ id: 'r2', field_name: 'province', operator: 'equals', value: 'British Columbia', score_impact: 10 }),
+      makeRule({
+        id: 'r2',
+        field_name: 'province',
+        operator: 'equals',
+        value: 'British Columbia',
+        score_impact: 10,
+      }),
     ];
     const lead = { industry: 'Real Estate', province: 'Ontario' };
     const result = scoreLead(lead, rules);
@@ -247,7 +363,14 @@ describe('scoreLead enrichment edge cases', () => {
     const rules: ScoringRule[] = [
       makeRule({ id: 'r1', is_active: true, score_impact: 15 }),
       makeRule({ id: 'r2', is_active: false, score_impact: 100 }),
-      makeRule({ id: 'r3', is_active: true, field_name: 'province', operator: 'equals', value: 'Ontario', score_impact: 10 }),
+      makeRule({
+        id: 'r3',
+        is_active: true,
+        field_name: 'province',
+        operator: 'equals',
+        value: 'Ontario',
+        score_impact: 10,
+      }),
     ];
     const lead = { industry: 'Construction', province: 'Ontario' };
     const result = scoreLead(lead, rules);

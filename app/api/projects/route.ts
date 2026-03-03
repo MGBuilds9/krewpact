@@ -1,11 +1,14 @@
 import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
+import { getOrgIdFromAuth } from '@/lib/api/org';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 
 const querySchema = z.object({
   division_id: z.string().min(1).optional(),
-  status: z.enum(['planning', 'active', 'on_hold', 'substantial_complete', 'closed', 'cancelled']).optional(),
+  status: z
+    .enum(['planning', 'active', 'on_hold', 'substantial_complete', 'closed', 'cancelled'])
+    .optional(),
   search: z.string().optional(),
   limit: z.coerce.number().int().positive().max(100).optional(),
   offset: z.coerce.number().int().nonnegative().optional(),
@@ -15,7 +18,9 @@ const createSchema = z.object({
   project_name: z.string().min(1).max(200),
   project_number: z.string().min(1).max(50),
   division_id: z.string().min(1),
-  status: z.enum(['planning', 'active', 'on_hold', 'substantial_complete', 'closed', 'cancelled']).optional(),
+  status: z
+    .enum(['planning', 'active', 'on_hold', 'substantial_complete', 'closed', 'cancelled'])
+    .optional(),
   site_address: z.record(z.string(), z.any()).nullable().optional(),
   baseline_budget: z.number().nonnegative().optional(),
   current_budget: z.number().nonnegative().optional(),
@@ -41,10 +46,7 @@ export async function GET(req: NextRequest) {
   const { division_id, status, search, limit, offset } = parsed.data;
   const supabase = await createUserClient();
 
-  let query = supabase
-    .from('projects')
-    .select('*')
-    .order('created_at', { ascending: false });
+  let query = supabase.from('projects').select('*').order('created_at', { ascending: false });
 
   if (division_id) {
     query = query.eq('division_id', division_id);
@@ -93,10 +95,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
+  const orgId = await getOrgIdFromAuth();
   const supabase = await createUserClient();
   const { data, error } = await supabase
     .from('projects')
-    .insert(parsed.data)
+    .insert({ ...parsed.data, org_id: orgId })
     .select()
     .single();
 

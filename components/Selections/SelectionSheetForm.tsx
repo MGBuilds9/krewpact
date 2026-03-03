@@ -22,7 +22,10 @@ import {
 } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 import { useCreateSelectionSheet, useUpdateSelectionSheet } from '@/hooks/useSelections';
-import { selectionSheetCreateSchema, selectionSheetUpdateSchema } from '@/lib/validators/selections';
+import {
+  selectionSheetCreateSchema,
+  selectionSheetUpdateSchema,
+} from '@/lib/validators/selections';
 import { toast } from 'sonner';
 
 type CreateValues = z.infer<typeof selectionSheetCreateSchema>;
@@ -36,7 +39,13 @@ interface SelectionSheetFormProps {
   onCancel?: () => void;
 }
 
-export function SelectionSheetForm({ projectId, sheetId, defaultValues, onSuccess, onCancel }: SelectionSheetFormProps) {
+export function SelectionSheetForm({
+  projectId,
+  sheetId,
+  defaultValues,
+  onSuccess,
+  onCancel,
+}: SelectionSheetFormProps) {
   const create = useCreateSelectionSheet(projectId);
   const update = useUpdateSelectionSheet(projectId);
   const isEdit = !!sheetId;
@@ -85,7 +94,11 @@ export function SelectionSheetForm({ projectId, sheetId, defaultValues, onSucces
             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isEdit ? 'Update Sheet' : 'Create Sheet'}
           </Button>
-          {onCancel && <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>}
+          {onCancel && (
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
+          )}
         </div>
       </form>
     </Form>

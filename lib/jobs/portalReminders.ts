@@ -13,7 +13,11 @@ import { createServiceClient } from '@/lib/supabase/server';
 const REMINDER_DAYS_THRESHOLD = 3;
 const IDEMPOTENCY_TTL_HOURS = 23;
 
-export async function runPortalReminderJob(): Promise<{ sent: number; skipped: number; errors: string[] }> {
+export async function runPortalReminderJob(): Promise<{
+  sent: number;
+  skipped: number;
+  errors: string[];
+}> {
   const supabase = createServiceClient();
   const now = new Date();
   const thresholdDate = new Date(now.getTime() - REMINDER_DAYS_THRESHOLD * 24 * 60 * 60 * 1000);
@@ -87,7 +91,9 @@ export async function runPortalReminderJob(): Promise<{ sent: number; skipped: n
       });
 
       // 6. Record idempotency key
-      const expiresAt = new Date(now.getTime() + IDEMPOTENCY_TTL_HOURS * 60 * 60 * 1000).toISOString();
+      const expiresAt = new Date(
+        now.getTime() + IDEMPOTENCY_TTL_HOURS * 60 * 60 * 1000,
+      ).toISOString();
       await supabase.from('idempotency_keys').insert({
         key_value: idempotencyKey,
         endpoint: 'cron/portal-reminders',

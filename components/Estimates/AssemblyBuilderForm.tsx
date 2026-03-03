@@ -3,7 +3,14 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -30,7 +37,12 @@ export interface AssemblyBuilderFormProps {
   onCancel?: () => void;
 }
 
-export function AssemblyBuilderForm({ assembly, divisionId, onSuccess, onCancel }: AssemblyBuilderFormProps) {
+export function AssemblyBuilderForm({
+  assembly,
+  divisionId,
+  onSuccess,
+  onCancel,
+}: AssemblyBuilderFormProps) {
   const createAssembly = useCreateAssembly();
   const updateAssembly = useUpdateAssembly();
   const isEditing = !!assembly;
@@ -57,12 +69,21 @@ export function AssemblyBuilderForm({ assembly, divisionId, onSuccess, onCancel 
     };
 
     if (isEditing) {
-      updateAssembly.mutate({ id: assembly.id, ...payload }, {
-        onSuccess: () => { form.reset(); onSuccess?.(); },
-      });
+      updateAssembly.mutate(
+        { id: assembly.id, ...payload },
+        {
+          onSuccess: () => {
+            form.reset();
+            onSuccess?.();
+          },
+        },
+      );
     } else {
       createAssembly.mutate(payload, {
-        onSuccess: () => { form.reset(); onSuccess?.(); },
+        onSuccess: () => {
+          form.reset();
+          onSuccess?.();
+        },
       });
     }
   }

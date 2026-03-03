@@ -112,9 +112,7 @@ describe('POST /api/erp/sync', () => {
 
   it('returns 400 for missing entity_id', async () => {
     mockClerkAuth(mockAuth);
-    const res = await POST(
-      makeJsonRequest('/api/erp/sync', { entity_type: 'account' }),
-    );
+    const res = await POST(makeJsonRequest('/api/erp/sync', { entity_type: 'account' }));
     expect(res.status).toBe(400);
   });
 });

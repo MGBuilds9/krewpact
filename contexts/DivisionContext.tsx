@@ -59,7 +59,8 @@ export function DivisionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!hasInitialized.current && userDivisions.length > 0 && !activeDivisionId) {
       hasInitialized.current = true;
-      const savedId = typeof window !== 'undefined' ? localStorage.getItem('activeDivisionId') : null;
+      const savedId =
+        typeof window !== 'undefined' ? localStorage.getItem('activeDivisionId') : null;
       if (savedId && userDivisions.some((d) => d.id === savedId)) {
         queueMicrotask(() => setActiveDivisionId(savedId));
       } else {

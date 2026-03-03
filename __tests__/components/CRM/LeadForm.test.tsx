@@ -42,10 +42,7 @@ function createWrapper() {
 }
 
 function renderForm(props: Parameters<typeof LeadForm>[0] = {}) {
-  return render(
-    React.createElement(LeadForm, props),
-    { wrapper: createWrapper() },
-  );
+  return render(React.createElement(LeadForm, props), { wrapper: createWrapper() });
 }
 
 function makeLead(overrides: Partial<Lead> = {}): Lead {

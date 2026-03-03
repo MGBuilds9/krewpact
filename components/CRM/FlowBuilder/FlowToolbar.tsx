@@ -51,12 +51,7 @@ export function FlowToolbar({ onAddStep, onSave, saving }: FlowToolbarProps) {
       </Button>
 
       <div className="ml-auto">
-        <Button
-          size="sm"
-          className="h-8 gap-1.5 text-xs"
-          onClick={onSave}
-          disabled={saving}
-        >
+        <Button size="sm" className="h-8 gap-1.5 text-xs" onClick={onSave} disabled={saving}>
           {saving ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
           ) : (

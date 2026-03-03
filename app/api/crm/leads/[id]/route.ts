@@ -4,7 +4,14 @@ import { leadUpdateSchema } from '@/lib/validators/crm';
 import { NextRequest, NextResponse } from 'next/server';
 import { scoreLead } from '@/lib/crm/scoring-engine';
 import type { ScoringRule } from '@/lib/crm/scoring-engine';
-import { UNAUTHORIZED, INVALID_JSON, validationError, notFound, dbError, errorResponse } from '@/lib/api/errors';
+import {
+  UNAUTHORIZED,
+  INVALID_JSON,
+  validationError,
+  notFound,
+  dbError,
+  errorResponse,
+} from '@/lib/api/errors';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -53,10 +60,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 
   // Auto-score on update (non-blocking)
   try {
-    let rulesQuery = supabase
-      .from('scoring_rules')
-      .select('*')
-      .eq('is_active', true);
+    let rulesQuery = supabase.from('scoring_rules').select('*').eq('is_active', true);
 
     if (data.division_id) {
       rulesQuery = rulesQuery.or(`division_id.eq.${data.division_id},division_id.is.null`);
@@ -66,10 +70,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     if (rules && rules.length > 0) {
       const previousScore = data.lead_score ?? 0;
       const result = scoreLead(data as Record<string, unknown>, rules as ScoringRule[]);
-      await supabase
-        .from('leads')
-        .update({ lead_score: result.total_score })
-        .eq('id', id);
+      await supabase.from('leads').update({ lead_score: result.total_score }).eq('id', id);
 
       await supabase.from('lead_score_history').insert({
         lead_id: id,

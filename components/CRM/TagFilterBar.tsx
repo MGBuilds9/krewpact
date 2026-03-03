@@ -1,43 +1,43 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
 
 interface Tag {
-  id: string
-  name: string
-  color: string
+  id: string;
+  name: string;
+  color: string;
 }
 
 interface TagFilterBarProps {
-  selectedTagIds: string[]
-  onTagFilterChange: (tagIds: string[]) => void
+  selectedTagIds: string[];
+  onTagFilterChange: (tagIds: string[]) => void;
 }
 
 export function TagFilterBar({ selectedTagIds, onTagFilterChange }: TagFilterBarProps) {
-  const [tags, setTags] = useState<Tag[]>([])
+  const [tags, setTags] = useState<Tag[]>([]);
 
   useEffect(() => {
     fetch('/api/crm/tags')
-      .then(r => r.json())
-      .then(res => setTags(res.data ?? []))
-      .catch(() => {})
-  }, [])
+      .then((r) => r.json())
+      .then((res) => setTags(res.data ?? []))
+      .catch(() => {});
+  }, []);
 
   function toggleTag(tagId: string) {
     if (selectedTagIds.includes(tagId)) {
-      onTagFilterChange(selectedTagIds.filter(id => id !== tagId))
+      onTagFilterChange(selectedTagIds.filter((id) => id !== tagId));
     } else {
-      onTagFilterChange([...selectedTagIds, tagId])
+      onTagFilterChange([...selectedTagIds, tagId]);
     }
   }
 
-  if (tags.length === 0) return null
+  if (tags.length === 0) return null;
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      {tags.map(tag => {
-        const isSelected = selectedTagIds.includes(tag.id)
+      {tags.map((tag) => {
+        const isSelected = selectedTagIds.includes(tag.id);
         return (
           <button
             key={tag.id}
@@ -51,7 +51,7 @@ export function TagFilterBar({ selectedTagIds, onTagFilterChange }: TagFilterBar
           >
             {tag.name}
           </button>
-        )
+        );
       })}
 
       {selectedTagIds.length > 0 && (
@@ -65,5 +65,5 @@ export function TagFilterBar({ selectedTagIds, onTagFilterChange }: TagFilterBar
         </Button>
       )}
     </div>
-  )
+  );
 }

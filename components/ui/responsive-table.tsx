@@ -1,18 +1,18 @@
 'use client';
 
-import * as React from "react";
-import { cn } from "@/lib/utils";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Eye, Edit, Trash2 } from "lucide-react";
+import * as React from 'react';
+import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { MoreHorizontal, Eye, Edit, Trash2 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 
 interface Column<T> {
   key: string;
@@ -40,14 +40,14 @@ export function ResponsiveTable<T extends Record<string, unknown>>({
   onEdit,
   onDelete,
   className,
-  emptyMessage = "No data available",
+  emptyMessage = 'No data available',
   keyExtractor,
 }: ResponsiveTableProps<T>) {
   const isMobile = useIsMobile();
 
   if (isMobile) {
     return (
-      <div className={cn("space-y-4", className)}>
+      <div className={cn('space-y-4', className)}>
         {data.length === 0 ? (
           <Card>
             <CardContent className="flex items-center justify-center py-8">
@@ -82,8 +82,8 @@ export function ResponsiveTable<T extends Record<string, unknown>>({
                         </DropdownMenuItem>
                       )}
                       {onDelete && (
-                        <DropdownMenuItem 
-                          onClick={() => onDelete(item)} 
+                        <DropdownMenuItem
+                          onClick={() => onDelete(item)}
                           className="touch-target text-destructive focus:text-destructive"
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
@@ -116,7 +116,7 @@ export function ResponsiveTable<T extends Record<string, unknown>>({
   }
 
   return (
-    <div className={cn("relative w-full overflow-auto", className)}>
+    <div className={cn('relative w-full overflow-auto', className)}>
       <table className="w-full caption-bottom text-sm min-w-[600px]">
         <thead>
           <tr className="border-b">
@@ -124,8 +124,8 @@ export function ResponsiveTable<T extends Record<string, unknown>>({
               <th
                 key={column.key}
                 className={cn(
-                  "h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0",
-                  column.className
+                  'h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0',
+                  column.className,
                 )}
               >
                 {column.label}
@@ -141,7 +141,10 @@ export function ResponsiveTable<T extends Record<string, unknown>>({
         <tbody>
           {data.length === 0 ? (
             <tr>
-              <td colSpan={columns.length + (onView || onEdit || onDelete ? 1 : 0)} className="h-24 text-center">
+              <td
+                colSpan={columns.length + (onView || onEdit || onDelete ? 1 : 0)}
+                className="h-24 text-center"
+              >
                 <p className="text-muted-foreground">{emptyMessage}</p>
               </td>
             </tr>
@@ -152,8 +155,8 @@ export function ResponsiveTable<T extends Record<string, unknown>>({
                   <td
                     key={column.key}
                     className={cn(
-                      "p-4 align-middle [&:has([role=checkbox])]:pr-0",
-                      column.className
+                      'p-4 align-middle [&:has([role=checkbox])]:pr-0',
+                      column.className,
                     )}
                   >
                     {column.render ? column.render(item) : String(item[column.key] || '-')}
@@ -181,8 +184,8 @@ export function ResponsiveTable<T extends Record<string, unknown>>({
                           </DropdownMenuItem>
                         )}
                         {onDelete && (
-                          <DropdownMenuItem 
-                            onClick={() => onDelete(item)} 
+                          <DropdownMenuItem
+                            onClick={() => onDelete(item)}
                             className="touch-target text-destructive focus:text-destructive"
                           >
                             <Trash2 className="mr-2 h-4 w-4" />

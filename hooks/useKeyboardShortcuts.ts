@@ -15,28 +15,18 @@ export interface ShortcutConfig {
 function isInputElement(target: EventTarget | null): boolean {
   if (!target || !(target instanceof HTMLElement)) return false;
   const tag = target.tagName.toLowerCase();
-  return (
-    tag === 'input' ||
-    tag === 'textarea' ||
-    tag === 'select' ||
-    target.isContentEditable
-  );
+  return tag === 'input' || tag === 'textarea' || tag === 'select' || target.isContentEditable;
 }
 
 export function useKeyboardShortcuts(shortcuts: ShortcutConfig[]) {
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       for (const shortcut of shortcuts) {
-        const metaMatch =
-          shortcut.metaKey ? (e.metaKey || e.ctrlKey) : true;
+        const metaMatch = shortcut.metaKey ? e.metaKey || e.ctrlKey : true;
         const shiftMatch =
           shortcut.shiftKey !== undefined ? e.shiftKey === shortcut.shiftKey : true;
 
-        if (
-          e.key.toLowerCase() === shortcut.key.toLowerCase() &&
-          metaMatch &&
-          shiftMatch
-        ) {
+        if (e.key.toLowerCase() === shortcut.key.toLowerCase() && metaMatch && shiftMatch) {
           if (shortcut.ignoreInputs !== false && isInputElement(e.target)) {
             continue;
           }

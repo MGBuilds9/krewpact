@@ -2,7 +2,7 @@
 
 import { Camera, FileText, DollarSign, FolderPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useRouter } from 'next/navigation';
+import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { cn } from '@/lib/utils';
 
 interface QuickAccessToolbarProps {
@@ -37,10 +37,10 @@ const quickActions = [
 ];
 
 export function QuickAccessToolbar({ className }: QuickAccessToolbarProps) {
-  const router = useRouter();
+  const { push: orgPush } = useOrgRouter();
 
   const handleQuickAction = (path: string, query?: string) => {
-    router.push(`${path}${query || ''}`);
+    orgPush(`${path}${query || ''}`);
   };
 
   return (

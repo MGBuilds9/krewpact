@@ -11,7 +11,12 @@ vi.mock('@/lib/supabase/server', () => ({
 import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { POST } from '@/app/api/crm/leads/[id]/stage/route';
-import { mockSupabaseClient, makeJsonRequest, mockClerkAuth, mockClerkUnauth } from '@/__tests__/helpers';
+import {
+  mockSupabaseClient,
+  makeJsonRequest,
+  mockClerkAuth,
+  mockClerkUnauth,
+} from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClient = vi.mocked(createUserClient);
@@ -47,7 +52,10 @@ describe('Lead Stage Enforcement', () => {
 
   it('allows new → lost (with lost_reason)', async () => {
     setupLead('new');
-    const req = makeJsonRequest(`/api/crm/leads/${leadId}/stage`, { stage: 'lost', lost_reason: 'No budget' });
+    const req = makeJsonRequest(`/api/crm/leads/${leadId}/stage`, {
+      stage: 'lost',
+      lost_reason: 'No budget',
+    });
     const res = await POST(req, makeContext(leadId));
     expect(res.status).toBe(200);
   });

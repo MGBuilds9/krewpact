@@ -62,9 +62,7 @@ export function mockCustomerResponse(account: AccountData): {
       territory: 'Canada',
       krewpact_id: account.id,
       default_currency: 'CAD',
-      primary_address: account.billing_address
-        ? JSON.stringify(account.billing_address)
-        : null,
+      primary_address: account.billing_address ? JSON.stringify(account.billing_address) : null,
       creation: new Date().toISOString(),
       modified: new Date().toISOString(),
       docstatus: 0,
@@ -78,10 +76,7 @@ export function mockCustomerResponse(account: AccountData): {
 /**
  * Generate a mock ERPNext Opportunity response from a KrewPact opportunity.
  */
-export function mockOpportunityResponse(opp: {
-  id: string;
-  opportunity_name: string;
-}): {
+export function mockOpportunityResponse(opp: { id: string; opportunity_name: string }): {
   doctype: string;
   name: string;
   data: Record<string, unknown>;
@@ -109,11 +104,7 @@ export function mockOpportunityResponse(opp: {
 /**
  * Generate a mock ERPNext Sales Order response from a won deal.
  */
-export function mockSalesOrderResponse(input: {
-  id: string;
-  name: string;
-  amount: number;
-}): {
+export function mockSalesOrderResponse(input: { id: string; name: string; amount: number }): {
   doctype: string;
   name: string;
   data: Record<string, unknown>;
@@ -211,11 +202,7 @@ export function mockProjectResponse(project: {
 /**
  * Generate a mock ERPNext Task response from a KrewPact task.
  */
-export function mockTaskResponse(task: {
-  id: string;
-  title: string;
-  project_id: string;
-}): {
+export function mockTaskResponse(task: { id: string; title: string; project_id: string }): {
   doctype: string;
   name: string;
   data: Record<string, unknown>;
@@ -241,10 +228,7 @@ export function mockTaskResponse(task: {
 /**
  * Generate a mock ERPNext Supplier response from a KrewPact trade partner.
  */
-export function mockSupplierResponse(supplier: {
-  id: string;
-  company_name: string;
-}): {
+export function mockSupplierResponse(supplier: { id: string; company_name: string }): {
   doctype: string;
   name: string;
   data: Record<string, unknown>;

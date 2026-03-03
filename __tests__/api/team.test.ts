@@ -56,15 +56,15 @@ describe('GET /api/team', () => {
     const client = mockSupabaseClient({ tables: { users: { data: [], error: null } } });
     mockCreateUserClient.mockResolvedValue(client);
 
-    const res = await GET(makeRequest('/api/team?division_id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'));
+    const res = await GET(
+      makeRequest('/api/team?division_id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'),
+    );
     expect(res.status).toBe(200);
     expect(client.from).toHaveBeenCalledWith('users');
   });
 
   it('supports search param', async () => {
-    const members = [
-      { id: '1', first_name: 'John', last_name: 'Doe', email: 'john@mdm.com' },
-    ];
+    const members = [{ id: '1', first_name: 'John', last_name: 'Doe', email: 'john@mdm.com' }];
 
     mockClerkAuth(mockAuth, 'user_123');
     mockCreateUserClient.mockResolvedValue(

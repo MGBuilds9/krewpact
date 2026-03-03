@@ -2,8 +2,20 @@
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { leadCreateSchema, leadUpdateSchema, type LeadCreate, type LeadUpdate } from '@/lib/validators/crm';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import {
+  leadCreateSchema,
+  leadUpdateSchema,
+  type LeadCreate,
+  type LeadUpdate,
+} from '@/lib/validators/crm';
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -106,7 +118,11 @@ export function LeadForm({ lead, onSuccess, onCancel }: LeadFormProps) {
             <FormItem>
               <FormLabel>Company Name *</FormLabel>
               <FormControl>
-                <Input placeholder="e.g. Tim Hortons, Rogers" {...field} value={field.value ?? ''} />
+                <Input
+                  placeholder="e.g. Tim Hortons, Rogers"
+                  {...field}
+                  value={field.value ?? ''}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -128,7 +144,9 @@ export function LeadForm({ lead, onSuccess, onCancel }: LeadFormProps) {
                   </FormControl>
                   <SelectContent>
                     {INDUSTRIES.map((ind) => (
-                      <SelectItem key={ind} value={ind}>{ind}</SelectItem>
+                      <SelectItem key={ind} value={ind}>
+                        {ind}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -192,7 +210,9 @@ export function LeadForm({ lead, onSuccess, onCancel }: LeadFormProps) {
                   </FormControl>
                   <SelectContent>
                     {PROVINCES.map((prov) => (
-                      <SelectItem key={prov} value={prov}>{prov}</SelectItem>
+                      <SelectItem key={prov} value={prov}>
+                        {prov}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

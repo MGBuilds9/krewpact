@@ -20,11 +20,7 @@ import { auth } from '@clerk/nextjs/server';
 import { createUserClient, createServiceClient } from '@/lib/supabase/server';
 import { processSequences } from '@/lib/crm/sequence-processor';
 import { POST } from '@/app/api/crm/sequences/process/route';
-import {
-  mockClerkAuth,
-  mockClerkUnauth,
-  makeRequest,
-} from '@/__tests__/helpers';
+import { mockClerkAuth, mockClerkUnauth, makeRequest } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClient = vi.mocked(createUserClient);
@@ -47,7 +43,12 @@ describe('POST /api/crm/sequences/process', () => {
     mockClerkAuth(mockAuth);
     const mockClient = {} as never;
     mockCreateUserClient.mockResolvedValue(mockClient);
-    mockProcessSequences.mockResolvedValue({ processed: 3, completed: 1, errors: [], deadLettered: 0 });
+    mockProcessSequences.mockResolvedValue({
+      processed: 3,
+      completed: 1,
+      errors: [],
+      deadLettered: 0,
+    });
 
     const res = await POST(makeRequest('/api/crm/sequences/process', { method: 'POST' }));
     expect(res.status).toBe(200);
@@ -60,7 +61,12 @@ describe('POST /api/crm/sequences/process', () => {
     process.env.CRON_SECRET = 'test-cron-secret';
     const mockClient = {} as never;
     mockCreateServiceClient.mockReturnValue(mockClient);
-    mockProcessSequences.mockResolvedValue({ processed: 5, completed: 2, errors: [], deadLettered: 0 });
+    mockProcessSequences.mockResolvedValue({
+      processed: 5,
+      completed: 2,
+      errors: [],
+      deadLettered: 0,
+    });
 
     const res = await POST(
       makeRequest('/api/crm/sequences/process', {

@@ -9,11 +9,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const { id } = await params;
   const supabase = await createUserClient();
-  const { data, error } = await supabase
-    .from('po_snapshots')
-    .select('*')
-    .eq('id', id)
-    .single();
+  const { data, error } = await supabase.from('po_snapshots').select('*').eq('id', id).single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 404 });
   return NextResponse.json(data);

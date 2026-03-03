@@ -13,11 +13,7 @@ vi.mock('@/lib/supabase/server', () => ({
 import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { GET, POST } from '@/app/api/estimates/route';
-import {
-  GET as GET_ID,
-  PATCH,
-  DELETE,
-} from '@/app/api/estimates/[id]/route';
+import { GET as GET_ID, PATCH, DELETE } from '@/app/api/estimates/[id]/route';
 import {
   mockSupabaseClient,
   mockClerkAuth,
@@ -174,9 +170,7 @@ describe('POST /api/estimates', () => {
 
   it('returns 400 for invalid division_id', async () => {
     mockClerkAuth(mockAuth);
-    const res = await POST(
-      makeJsonRequest('/api/estimates', { division_id: 'not-a-uuid' }),
-    );
+    const res = await POST(makeJsonRequest('/api/estimates', { division_id: 'not-a-uuid' }));
     expect(res.status).toBe(400);
   });
 });
@@ -200,10 +194,7 @@ describe('GET /api/estimates/[id]', () => {
       }),
     );
 
-    const res = await GET_ID(
-      makeRequest('/api/estimates/123'),
-      makeContext(estimate.id),
-    );
+    const res = await GET_ID(makeRequest('/api/estimates/123'), makeContext(estimate.id));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.estimate_lines).toHaveLength(2);
@@ -222,10 +213,7 @@ describe('GET /api/estimates/[id]', () => {
       }),
     );
 
-    const res = await GET_ID(
-      makeRequest('/api/estimates/nonexistent'),
-      makeContext('nonexistent'),
-    );
+    const res = await GET_ID(makeRequest('/api/estimates/nonexistent'), makeContext('nonexistent'));
     expect(res.status).toBe(404);
   });
 });
@@ -325,10 +313,7 @@ describe('DELETE /api/estimates/[id]', () => {
       }),
     );
 
-    const res = await DELETE(
-      makeRequest('/api/estimates/123'),
-      makeContext('some-id'),
-    );
+    const res = await DELETE(makeRequest('/api/estimates/123'), makeContext('some-id'));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);
@@ -341,10 +326,7 @@ describe('DELETE /api/estimates/[id]', () => {
     });
     mockCreateUserClient.mockResolvedValue(client);
 
-    const res = await DELETE(
-      makeRequest('/api/estimates/123'),
-      makeContext('some-id'),
-    );
+    const res = await DELETE(makeRequest('/api/estimates/123'), makeContext('some-id'));
     expect(res.status).toBe(200);
     // The DB cascade handles line/version deletion, route just deletes the estimate
     expect(client.from).toHaveBeenCalledWith('estimates');

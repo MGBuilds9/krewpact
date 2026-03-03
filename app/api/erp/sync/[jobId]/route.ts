@@ -5,10 +5,7 @@ import { createUserClient } from '@/lib/supabase/server';
 /**
  * GET /api/erp/sync/[jobId] — Get the status of a sync job.
  */
-export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ jobId: string }> },
-) {
+export async function GET(request: NextRequest, context: { params: Promise<{ jobId: string }> }) {
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

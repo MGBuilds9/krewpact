@@ -2,7 +2,13 @@ import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
-import { UNAUTHORIZED, INVALID_JSON, validationError, dbError, errorResponse } from '@/lib/api/errors';
+import {
+  UNAUTHORIZED,
+  INVALID_JSON,
+  validationError,
+  dbError,
+  errorResponse,
+} from '@/lib/api/errors';
 
 const savedViewUpdateSchema = z.object({
   name: z.string().min(1).max(100).optional(),
@@ -13,31 +19,21 @@ const savedViewUpdateSchema = z.object({
   is_default: z.boolean().optional(),
 });
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth();
   if (!userId) return errorResponse(UNAUTHORIZED);
 
   const { id } = await params;
   const supabase = await createUserClient();
 
-  const { data, error } = await supabase
-    .from('crm_saved_views')
-    .select('*')
-    .eq('id', id)
-    .single();
+  const { data, error } = await supabase.from('crm_saved_views').select('*').eq('id', id).single();
 
   if (error) return errorResponse(dbError(error.message));
 
   return NextResponse.json(data);
 }
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth();
   if (!userId) return errorResponse(UNAUTHORIZED);
 
@@ -85,20 +81,14 @@ export async function PATCH(
   return NextResponse.json(data);
 }
 
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth();
   if (!userId) return errorResponse(UNAUTHORIZED);
 
   const { id } = await params;
   const supabase = await createUserClient();
 
-  const { error } = await supabase
-    .from('crm_saved_views')
-    .delete()
-    .eq('id', id);
+  const { error } = await supabase.from('crm_saved_views').delete().eq('id', id);
 
   if (error) return errorResponse(dbError(error.message));
 

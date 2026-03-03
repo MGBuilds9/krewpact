@@ -1,22 +1,22 @@
 'use client';
 
-import React from "react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
+import React from 'react';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 interface LoadingSkeletonProps {
-  variant?: "card" | "list" | "table" | "form";
+  variant?: 'card' | 'list' | 'table' | 'form';
   count?: number;
   className?: string;
 }
 
-export function LoadingSkeleton({ variant = "card", count = 1, className }: LoadingSkeletonProps) {
+export function LoadingSkeleton({ variant = 'card', count = 1, className }: LoadingSkeletonProps) {
   const items = Array.from({ length: count }, (_, i) => i);
 
-  if (variant === "card") {
+  if (variant === 'card') {
     return (
-      <div className={cn("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6", className)}>
+      <div className={cn('grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6', className)}>
         {items.map((i) => (
           <Card key={i} className="animate-pulse">
             <CardHeader>
@@ -36,9 +36,9 @@ export function LoadingSkeleton({ variant = "card", count = 1, className }: Load
     );
   }
 
-  if (variant === "list") {
+  if (variant === 'list') {
     return (
-      <div className={cn("space-y-4", className)}>
+      <div className={cn('space-y-4', className)}>
         {items.map((i) => (
           <Card key={i} className="animate-pulse">
             <CardContent className="p-6">
@@ -56,9 +56,9 @@ export function LoadingSkeleton({ variant = "card", count = 1, className }: Load
     );
   }
 
-  if (variant === "table") {
+  if (variant === 'table') {
     return (
-      <Card className={cn("animate-pulse", className)}>
+      <Card className={cn('animate-pulse', className)}>
         <CardContent className="p-0">
           <div className="divide-y">
             {items.map((i) => (
@@ -75,9 +75,9 @@ export function LoadingSkeleton({ variant = "card", count = 1, className }: Load
     );
   }
 
-  if (variant === "form") {
+  if (variant === 'form') {
     return (
-      <Card className={cn("animate-pulse", className)}>
+      <Card className={cn('animate-pulse', className)}>
         <CardContent className="p-6 space-y-6">
           {items.map((i) => (
             <div key={i} className="space-y-2">

@@ -8,7 +8,14 @@ import {
   type OpportunityCreate,
   type OpportunityUpdate,
 } from '@/lib/validators/crm';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useCreateOpportunity, useUpdateOpportunity, type Opportunity } from '@/hooks/useCRM';
@@ -25,7 +32,12 @@ interface OpportunityFormProps {
   onCancel?: () => void;
 }
 
-export function OpportunityForm({ opportunity, leadId, onSuccess, onCancel }: OpportunityFormProps) {
+export function OpportunityForm({
+  opportunity,
+  leadId,
+  onSuccess,
+  onCancel,
+}: OpportunityFormProps) {
   const isEdit = !!opportunity;
   const createOpportunity = useCreateOpportunity();
   const updateOpportunity = useUpdateOpportunity();
@@ -107,7 +119,9 @@ export function OpportunityForm({ opportunity, leadId, onSuccess, onCancel }: Op
                     placeholder="0"
                     {...field}
                     value={field.value ?? ''}
-                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                    onChange={(e) =>
+                      field.onChange(e.target.value ? Number(e.target.value) : undefined)
+                    }
                   />
                 </FormControl>
                 <FormMessage />
@@ -130,7 +144,9 @@ export function OpportunityForm({ opportunity, leadId, onSuccess, onCancel }: Op
                   placeholder="0"
                   {...field}
                   value={field.value ?? ''}
-                  onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                  onChange={(e) =>
+                    field.onChange(e.target.value ? Number(e.target.value) : undefined)
+                  }
                 />
               </FormControl>
               <FormMessage />

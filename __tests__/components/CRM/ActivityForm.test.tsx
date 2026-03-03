@@ -15,18 +15,20 @@ vi.mock('@/hooks/useCRM', () => ({
 // We need to mock the form components since they use React context from react-hook-form
 // and shadcn Select uses Radix portals which are tricky in jsdom
 vi.mock('@/components/ui/select', () => ({
-  Select: ({ children, onValueChange, defaultValue }: { children: React.ReactNode; onValueChange: (v: string) => void; defaultValue?: string }) => (
-    <div data-testid="select-root">{children}</div>
-  ),
+  Select: ({
+    children,
+    onValueChange,
+    defaultValue,
+  }: {
+    children: React.ReactNode;
+    onValueChange: (v: string) => void;
+    defaultValue?: string;
+  }) => <div data-testid="select-root">{children}</div>,
   SelectTrigger: ({ children }: { children: React.ReactNode }) => (
     <button data-testid="select-trigger">{children}</button>
   ),
-  SelectValue: ({ placeholder }: { placeholder?: string }) => (
-    <span>{placeholder}</span>
-  ),
-  SelectContent: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
+  SelectValue: ({ placeholder }: { placeholder?: string }) => <span>{placeholder}</span>,
+  SelectContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   SelectItem: ({ children, value }: { children: React.ReactNode; value: string }) => (
     <option value={value}>{children}</option>
   ),

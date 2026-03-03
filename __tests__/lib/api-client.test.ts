@@ -27,9 +27,7 @@ describe('apiFetch', () => {
   });
 
   it('appends query params to URL', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response('[]', { status: 200 }),
-    );
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('[]', { status: 200 }));
 
     await apiFetch('/api/projects', {
       params: { division_id: 'abc', limit: 10, empty: undefined },
@@ -42,9 +40,7 @@ describe('apiFetch', () => {
   });
 
   it('sends JSON body for POST', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response('{"id":"1"}', { status: 201 }),
-    );
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{"id":"1"}', { status: 201 }));
 
     await apiFetch('/api/projects', {
       method: 'POST',

@@ -27,30 +27,36 @@ If ALL stories have `passes: true`, output `<promise>COMPLETE</promise>` and exi
 **You CANNOT commit or mark `passes: true` until ALL of these pass:**
 
 ### 3a: Lint Check
+
 - Run the project's linter on all changed files
 - Auto-fix safe issues and stage fixes
 - If unfixable lint errors remain → fix them before proceeding
 
 ### 3b: Type Check
+
 - TypeScript: `npx tsc --noEmit`
 - Python: `pyright` or `mypy`
 - Skip if not applicable
 
 ### 3c: Full Test Suite
+
 - Run the **complete** test suite — ALL tests, not just the current story
 - If ANY test fails (including pre-existing tests you didn't touch) → fix before proceeding
 - Capture: total, passed, failed, skipped
 
 ### 3d: Build Check
+
 - Run the project's build command (next build, vite build, cargo build, etc.)
 - If build fails → fix before proceeding
 
 ### 3e: Acceptance Criteria Verification
+
 - Go through EACH acceptance criterion in the current story
 - Verify it is objectively met
 - If any criterion is not met → implement what's missing
 
 **If ANY check fails after 3 fix attempts:**
+
 - Add a detailed note to the story's `notes` field explaining the blocker
 - Do NOT mark `passes: true`
 - Log what you tried in progress.txt

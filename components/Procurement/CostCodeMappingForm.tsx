@@ -29,7 +29,11 @@ interface CostCodeMappingFormProps {
   isLoading?: boolean;
 }
 
-export function CostCodeMappingForm({ defaultValues, onSubmit, isLoading }: CostCodeMappingFormProps) {
+export function CostCodeMappingForm({
+  defaultValues,
+  onSubmit,
+  isLoading,
+}: CostCodeMappingFormProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {

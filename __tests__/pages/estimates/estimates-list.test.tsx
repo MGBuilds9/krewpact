@@ -12,7 +12,7 @@ vi.mock('next/navigation', () => ({
     back: vi.fn(),
   }),
   usePathname: () => '/estimates',
-  useParams: () => ({}),
+  useParams: () => ({ orgSlug: 'default' }),
   useSearchParams: () => new URLSearchParams(),
 }));
 
@@ -35,7 +35,7 @@ vi.mock('@/hooks/use-mobile', () => ({
   useIsMobile: () => false,
 }));
 
-import EstimatesListPage from '@/app/(dashboard)/estimates/page';
+import EstimatesListPage from '@/app/(dashboard)/org/[orgSlug]/estimates/page';
 
 describe('Estimates List Page', () => {
   beforeEach(() => {
@@ -96,7 +96,9 @@ describe('Estimates List Page', () => {
     });
 
     const { container } = render(<EstimatesListPage />);
-    const skeletons = container.querySelectorAll('[class*="animate-pulse"], [data-testid="skeleton"]');
+    const skeletons = container.querySelectorAll(
+      '[class*="animate-pulse"], [data-testid="skeleton"]',
+    );
     expect(skeletons.length).toBeGreaterThan(0);
   });
 

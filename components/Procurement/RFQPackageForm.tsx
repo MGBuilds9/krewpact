@@ -39,7 +39,12 @@ interface RFQPackageFormProps {
   mode?: 'create' | 'edit';
 }
 
-export function RFQPackageForm({ defaultValues, onSubmit, isLoading, mode = 'create' }: RFQPackageFormProps) {
+export function RFQPackageForm({
+  defaultValues,
+  onSubmit,
+  isLoading,
+  mode = 'create',
+}: RFQPackageFormProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -102,11 +107,7 @@ export function RFQPackageForm({ defaultValues, onSubmit, isLoading, mode = 'cre
             <FormItem>
               <FormLabel>Scope Summary</FormLabel>
               <FormControl>
-                <Textarea
-                  placeholder="Describe the scope of work..."
-                  rows={4}
-                  {...field}
-                />
+                <Textarea placeholder="Describe the scope of work..." rows={4} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

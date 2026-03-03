@@ -34,9 +34,11 @@ describe('validateConversion', () => {
   });
 
   it('rejects lead not in won stage', () => {
-    const result = validateConversion(makeInput({
-      lead: { ...makeInput().lead, stage: 'new' },
-    }));
+    const result = validateConversion(
+      makeInput({
+        lead: { ...makeInput().lead, stage: 'new' },
+      }),
+    );
     expect(result.valid).toBe(false);
     if (!result.valid) {
       expect(result.reason).toContain('won');
@@ -45,9 +47,11 @@ describe('validateConversion', () => {
   });
 
   it('rejects lead already converted', () => {
-    const result = validateConversion(makeInput({
-      existingOpportunityForLead: true,
-    }));
+    const result = validateConversion(
+      makeInput({
+        existingOpportunityForLead: true,
+      }),
+    );
     expect(result.valid).toBe(false);
     if (!result.valid) {
       expect(result.reason).toContain('already been converted');
@@ -55,10 +59,12 @@ describe('validateConversion', () => {
   });
 
   it('passes account_id and contact_id through', () => {
-    const result = validateConversion(makeInput({
-      accountId: 'acct-1',
-      contactId: 'contact-1',
-    }));
+    const result = validateConversion(
+      makeInput({
+        accountId: 'acct-1',
+        contactId: 'contact-1',
+      }),
+    );
     expect(result.valid).toBe(true);
     if (result.valid) {
       expect(result.opportunityData.account_id).toBe('acct-1');
@@ -76,9 +82,11 @@ describe('validateConversion', () => {
   });
 
   it('handles null estimated_value', () => {
-    const result = validateConversion(makeInput({
-      lead: { ...makeInput().lead, estimated_value: null },
-    }));
+    const result = validateConversion(
+      makeInput({
+        lead: { ...makeInput().lead, estimated_value: null },
+      }),
+    );
     expect(result.valid).toBe(true);
     if (result.valid) {
       expect(result.opportunityData.estimated_revenue).toBeNull();
@@ -86,9 +94,11 @@ describe('validateConversion', () => {
   });
 
   it('handles null division_id', () => {
-    const result = validateConversion(makeInput({
-      lead: { ...makeInput().lead, division_id: null },
-    }));
+    const result = validateConversion(
+      makeInput({
+        lead: { ...makeInput().lead, division_id: null },
+      }),
+    );
     expect(result.valid).toBe(true);
     if (result.valid) {
       expect(result.opportunityData.division_id).toBeNull();

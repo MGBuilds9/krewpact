@@ -11,7 +11,12 @@ vi.mock('@/lib/supabase/server', () => ({
 import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { POST } from '@/app/api/crm/leads/merge/route';
-import { mockSupabaseClient, makeJsonRequest, mockClerkAuth, mockClerkUnauth } from '@/__tests__/helpers';
+import {
+  mockSupabaseClient,
+  makeJsonRequest,
+  mockClerkAuth,
+  mockClerkUnauth,
+} from '@/__tests__/helpers';
 
 const primaryLead = {
   id: '11111111-1111-1111-1111-111111111111',
@@ -34,7 +39,7 @@ beforeEach(() => {
         outreach: { data: [], error: null },
         sequence_enrollments: { data: [], error: null },
       },
-    })
+    }),
   );
 });
 

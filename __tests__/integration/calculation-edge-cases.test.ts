@@ -14,12 +14,8 @@ import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 
 // Estimate line routes
-import {
-  PUT as linesPUT,
-} from '@/app/api/estimates/[id]/lines/route';
-import {
-  DELETE as lineDELETE,
-} from '@/app/api/estimates/[id]/lines/[lineId]/route';
+import { PUT as linesPUT } from '@/app/api/estimates/[id]/lines/route';
+import { DELETE as lineDELETE } from '@/app/api/estimates/[id]/lines/[lineId]/route';
 
 import {
   mockSupabaseClient,
@@ -32,10 +28,7 @@ import {
 } from '@/__tests__/helpers';
 
 // Pure calculation functions
-import {
-  calculateLineTotal,
-  calculateEstimateTotals,
-} from '@/lib/estimating/calculations';
+import { calculateLineTotal, calculateEstimateTotals } from '@/lib/estimating/calculations';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClient = vi.mocked(createUserClient);
@@ -196,9 +189,7 @@ describe('Calculation Edge Cases: Zero and boundary values', () => {
     expect(totals.subtotal_amount).toBe(1234567.89);
     // HST = Math.round(1234567.89 * 13) / 100 = Math.round(16049382.57) / 100 = 160493.83
     expect(totals.tax_amount).toBe(160493.83);
-    expect(totals.total_amount).toBe(
-      Math.round((1234567.89 + 160493.83) * 100) / 100,
-    );
+    expect(totals.total_amount).toBe(Math.round((1234567.89 + 160493.83) * 100) / 100);
 
     // Verify CAD formatting works with large numbers
     const formatted = new Intl.NumberFormat('en-CA', {

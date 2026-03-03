@@ -53,6 +53,7 @@ React with Next.js (App Router) has been selected as the frontend framework. The
 ### Consequences
 
 **Positive**:
+
 - Next.js App Router provides native server-side rendering and static site generation, improving initial page load performance and enabling SEO optimization for public-facing content
 - Server components reduce JavaScript bundle size by moving logic to the server, particularly important for complex dashboard pages
 - Unified routing model simplifies navigation and reduces the need for multiple routing libraries
@@ -65,6 +66,7 @@ React with Next.js (App Router) has been selected as the frontend framework. The
 - Vercel integration is seamless, providing preview deployments and analytics out of the box
 
 **Negative**:
+
 - App Router is relatively young with fewer third-party library compatibility guarantees compared to Pages Router; some libraries may require custom solutions
 - Server-side rendering increases complexity compared to pure client-side frameworks, requiring careful consideration of what runs where
 - Incremental Static Regeneration has limitations with highly dynamic content; frequent database queries in ISR can impact performance
@@ -108,6 +110,7 @@ The BFF will be implemented using Express.js or Fastify, with TypeScript for typ
 ### Consequences
 
 **Positive**:
+
 - Decouples frontend from backend complexity; frontend developers focus on UI while backend developers manage integrations
 - Centralized location for authentication, authorization, and role-based access control, making security updates easier
 - Enables request aggregation and batching to reduce chatty API calls to expensive services like ADP
@@ -120,6 +123,7 @@ The BFF will be implemented using Express.js or Fastify, with TypeScript for typ
 - Allows independent scaling of frontend and backend tier
 
 **Negative**:
+
 - Introduces an additional network hop between frontend and backend, increasing latency
 - Adds operational complexity requiring monitoring and management of another service
 - Network failures between frontend and BFF can degrade user experience; requires client-side retry logic
@@ -162,6 +166,7 @@ Supabase (managed PostgreSQL 15+) has been selected as the primary relational da
 ### Consequences
 
 **Positive**:
+
 - PostgreSQL is battle-tested in production environments and handles complex schemas required for construction operations
 - Supabase's Row-Level Security policies provide database-level access control, ensuring data isolation across tenants and divisions even if application logic fails
 - Built-in real-time subscriptions via WebSocket enable live updates without additional message queue infrastructure
@@ -174,6 +179,7 @@ Supabase (managed PostgreSQL 15+) has been selected as the primary relational da
 - Window functions enable financial calculations (running totals, period comparisons) required in accounting workflows
 
 **Negative**:
+
 - Supabase is not Canadian-hosted; data residency concerns may require additional privacy considerations or compliance documentation
 - Managed service means limited control over instance configuration and performance tuning
 - Vendor lock-in makes migration to other databases costly and time-consuming
@@ -214,6 +220,7 @@ KrewPact itself will not modify, extend, or distribute Frappe/ERPNext code; inte
 ### Consequences
 
 **Positive**:
+
 - Eliminates 6-12 months of development effort for core ERP functionality; KrewPact can focus on construction-specific optimizations and user experience
 - ERPNext community has significant construction industry expertise, providing pre-built patterns for bill of materials, project costing, and procurement
 - Self-hosting provides complete control over data, infrastructure, and customization
@@ -226,6 +233,7 @@ KrewPact itself will not modify, extend, or distribute Frappe/ERPNext code; inte
 - GPL v3 licensing is permissive about usage; only code distribution triggers obligations, not API integration
 
 **Negative**:
+
 - GPL v3 licensing creates contractual and legal obligations: if KrewPact code is distributed and links to ERPNext, full source must be made available
 - Self-hosting operational burden: ERPNext requires maintenance, patching, backup, and monitoring
 - API integration relies on ERPNext availability; if ERPNext instance goes down, KrewPact loses ERP functionality
@@ -275,6 +283,7 @@ GPL v3 is a copyleft license requiring that derivative works and modifications b
 ### Context
 
 KrewPact requires a secure, production-grade authentication system supporting:
+
 - User account management and password security
 - Multi-factor authentication (MFA) for compliance
 - Social sign-on for user convenience (Google, Microsoft, etc.)
@@ -294,6 +303,7 @@ Clerk has been selected as the authentication provider. Clerk is a modern authen
 ### Consequences
 
 **Positive**:
+
 - Eliminates implementation of authentication logic, reducing security attack surface
 - Clerk's Next.js SDK integrates seamlessly with App Router, handling authentication middleware automatically
 - Clerk manages password security, requiring strong passwords and supporting password reset workflows
@@ -306,6 +316,7 @@ Clerk has been selected as the authentication provider. Clerk is a modern authen
 - Third-party audit and compliance (SOC 2 Type II) reduces KrewPact compliance burden
 
 **Negative**:
+
 - No Canadian data residency; user authentication data is stored in US infrastructure, creating data sovereignty concerns
 - Vendor lock-in: switching providers requires significant user data migration
 - Pricing becomes expensive at high user counts (potential scaling concern, though unlikely near term)
@@ -363,6 +374,7 @@ KrewPact operates in construction, where contracts, change orders, and complianc
 - Customer proposals and project agreements
 
 An e-signature provider must:
+
 - Provide legally binding signatures recognized in jurisdictions where KrewPact operates
 - Integrate cleanly with workflows (embedded signing, email invitations)
 - Support templating and prefilled fields for repetitive documents
@@ -376,6 +388,7 @@ BoldSign (Syncfusion) has been selected as the e-signature provider. BoldSign is
 ### Consequences
 
 **Positive**:
+
 - Legally binding signatures recognized in most jurisdictions, meeting construction industry requirements
 - Syncfusion backing provides stability and active development
 - Competitively priced; cost scales with documents signed, not per-user seats
@@ -388,6 +401,7 @@ BoldSign (Syncfusion) has been selected as the e-signature provider. BoldSign is
 - Cloud-hosted service eliminates infrastructure requirements
 
 **Negative**:
+
 - Integration requires managing document generation and template synchronization across systems
 - API rate limiting may impact high-volume signing operations; requires queueing strategy
 - Pricing becomes expensive if document volume is very high; cost per signature adds up
@@ -416,6 +430,7 @@ BoldSign (Syncfusion) has been selected as the e-signature provider. BoldSign is
 KrewPact manages construction crews and personnel, requiring integration with payroll systems for compensation, tax withholding, and compliance reporting. Payroll is highly regulated and varies by jurisdiction, so building custom payroll logic is infeasible. Instead, KrewPact must integrate with an existing payroll provider.
 
 ADP Workforce Now is the dominant payroll platform in North America, particularly strong in construction and field service industries. Integration must:
+
 - Synchronize employee master data (names, wages, tax withholding)
 - Synchronize timekeeping data (hours worked, job assignments)
 - Handle state and federal tax compliance reporting
@@ -431,6 +446,7 @@ ADP Workforce Now has been selected as the payroll integration partner. Integrat
 ### Consequences
 
 **Positive**:
+
 - ADP dominates the construction payroll market; most construction companies already use ADP, simplifying integration from customer perspective
 - ADP's API is mature and well-documented; integration complexity is manageable
 - Eliminates payroll processing from KrewPact scope; ADP handles tax compliance, regulatory changes, and reporting
@@ -441,6 +457,7 @@ ADP Workforce Now has been selected as the payroll integration partner. Integrat
 - Strong security for sensitive payroll data (SSN, tax IDs, wages) through ADP's encryption and compliance controls
 
 **Negative**:
+
 - ADP's partner program has contractual restrictions: API access requires partnership agreement, revenue-sharing may apply if payroll services are resold
 - Integration lock-in: switching payroll providers requires significant integration rework
 - API rate limiting and strict data access controls may require careful implementation to avoid throttling
@@ -479,6 +496,7 @@ The ADP partner program has specific restrictions that KrewPact must respect:
 ### Context
 
 KrewPact requires file storage for:
+
 - Construction documents (blueprints, specifications, permits)
 - Compliance records (certifications, training records, background checks)
 - Project photos and evidence
@@ -487,6 +505,7 @@ KrewPact requires file storage for:
 - Financial documents (invoices, receipts, financial statements)
 
 File storage must:
+
 - Support large file sizes (blueprints can be 50+ MB)
 - Provide secure access control aligned with tenant/division structure
 - Support efficient downloads from field environments
@@ -509,6 +528,7 @@ The BFF will handle file upload/download orchestration, enforcing access control
 ### Consequences
 
 **Positive**:
+
 - S3-compatible interface provides standardized API, enabling migration between providers if needed
 - Supabase Storage integration with Row-Level Security provides database-level security synchronization
 - Presigned URLs enable direct client uploads/downloads, reducing BFF bandwidth and latency
@@ -519,6 +539,7 @@ The BFF will handle file upload/download orchestration, enforcing access control
 - Cost is predictable and transparent, scaling with actual usage
 
 **Negative**:
+
 - Egress charges (especially with Supabase Storage using AWS S3) can be expensive if users download large files frequently
 - Access control requires careful integration of authorization logic with storage layer
 - Compliance with data residency requirements: if using AWS S3 (Supabase Storage), data is not Canadian-resident
@@ -559,6 +580,7 @@ KrewPact has asynchronous work that cannot be handled in the request-response cy
 - File transcoding (image optimization, video processing if construction documentation includes video)
 
 These jobs require:
+
 - Durability: jobs must not be lost if the application crashes
 - Retry logic: failed jobs should be retried with exponential backoff
 - Scheduling: some jobs run on fixed schedules (daily financial reconciliation)
@@ -582,6 +604,7 @@ Job queue selection is deferred pending implementation experience. Three candida
 **BullMQ**:
 
 **Positive**:
+
 - Extremely flexible; supports any job pattern (scheduled, delayed, event-driven, recurring)
 - Mature ecosystem with extensive community solutions and third-party integrations
 - Excellent monitoring capabilities through web dashboard (Bull Board)
@@ -589,6 +612,7 @@ Job queue selection is deferred pending implementation experience. Three candida
 - No vendor lock-in; can be self-hosted or used with managed Redis providers
 
 **Negative**:
+
 - Requires operational management of Redis infrastructure (monitoring, backups, high availability)
 - Adds operational complexity with another service to maintain and scale
 - Learning curve for distributed job processing concepts (job idempotency, failure handling)
@@ -597,6 +621,7 @@ Job queue selection is deferred pending implementation experience. Three candida
 **Inngest**:
 
 **Positive**:
+
 - Serverless; no infrastructure management required
 - Built-in dashboard and monitoring superior to most alternatives
 - Generous free tier allows significant usage without costs
@@ -606,6 +631,7 @@ Job queue selection is deferred pending implementation experience. Three candida
 - Deep integration with framework SDKs (Next.js, Express)
 
 **Negative**:
+
 - Vendor lock-in; migrating away from Inngest requires rewriting job definitions
 - Pricing transparency unclear at high volume; cost may become significant
 - Limited visibility into job internals; debugging jobs is less transparent than self-hosted solutions
@@ -614,12 +640,14 @@ Job queue selection is deferred pending implementation experience. Three candida
 **Supabase pg_cron**:
 
 **Positive**:
+
 - No external infrastructure; runs directly in PostgreSQL
 - Seamless integration with Supabase; same connection and authentication
 - Simple for scheduled jobs; cron expression syntax is familiar
 - Minimal operational overhead
 
 **Negative**:
+
 - Limited to scheduled jobs; not well-suited for event-driven work
 - Cannot handle complex job workflows (dependencies, conditional branching)
 - Job code must be in PostgreSQL (PL/pgSQL) or trigger external webhooks; awkward for Node.js-based jobs
@@ -642,6 +670,7 @@ Job queue selection is deferred pending implementation experience. Three candida
 ### Context
 
 The Next.js frontend must be deployed to a publicly accessible environment. Deployment must:
+
 - Provide HTTPS with automatic certificate management
 - Support preview deployments for testing pull requests
 - Enable continuous integration/continuous deployment (CI/CD)
@@ -657,6 +686,7 @@ Vercel (created by the Next.js team) has been selected for frontend hosting. Ver
 ### Consequences
 
 **Positive**:
+
 - Vercel is optimized for Next.js; deployment and performance are superior to generic hosting
 - GitHub integration enables preview deployments on every pull request, simplifying code review
 - Automatic HTTPS with certificate management eliminates security infrastructure burden
@@ -669,6 +699,7 @@ Vercel (created by the Next.js team) has been selected for frontend hosting. Ver
 - Built-in Vercel Analytics integration provides performance monitoring and Core Web Vitals tracking
 
 **Negative**:
+
 - Vendor lock-in: migrating to another host requires infrastructure changes
 - Pricing scales with bandwidth and compute; high-traffic deployments can become expensive
 - Limited control over infrastructure; cannot install custom system packages or heavily customize deployment environment
@@ -713,6 +744,7 @@ Deployment automation (Docker Compose or Kubernetes) will be used to manage mult
 ### Consequences
 
 **Positive**:
+
 - Complete control over infrastructure; infrastructure choices can be optimized for cost and performance
 - Data remains on-premises; improved compliance with data residency and privacy requirements
 - No vendor lock-in; infrastructure can be migrated to alternative providers if needed
@@ -724,6 +756,7 @@ Deployment automation (Docker Compose or Kubernetes) will be used to manage mult
 - Isolation between environment (dev/staging/production) through separate VMs/containers
 
 **Negative**:
+
 - Operational burden falls on the founder: monitoring, patching, backup, disaster recovery, capacity planning
 - Initial infrastructure setup requires time and expertise; not suitable for founders without infrastructure experience
 - Hardware failures are possible; infrastructure must be designed with redundancy (though single-node is acceptable initially)
@@ -767,6 +800,7 @@ The founder's Proxmox setup provides significant advantages for self-hosting:
 ### Context
 
 KrewPact architecture includes multiple services across different infrastructure:
+
 - Vercel-hosted Next.js frontend
 - Proxmox-hosted Node.js BFF
 - Proxmox-hosted ERPNext instance
@@ -798,6 +832,7 @@ Authorization is managed through Tailscale's access control lists (ACLs), defini
 ### Consequences
 
 **Positive**:
+
 - Automatic encryption of inter-service traffic eliminates need for manual TLS/mTLS setup
 - Mesh network topology eliminates central load balancer/gateway as a single point of failure
 - Private IP routing keeps services off the public internet, reducing attack surface
@@ -810,6 +845,7 @@ Authorization is managed through Tailscale's access control lists (ACLs), defini
 - Split DNS enables accessing Tailscale devices by name (e.g., bff.internal.krewpact)
 
 **Negative**:
+
 - Vendor dependency: Tailscale control plane is proprietary; cannot self-host (free tier only)
 - Network complexity increases; debugging network connectivity issues requires Tailscale knowledge
 - Latency overhead is minimal but not zero; encrypted tunnel adds microseconds to packet transit
@@ -860,6 +896,7 @@ Deployment:
 ### Consequences
 
 **Positive**:
+
 - Simplifies Nginx management through a web UI rather than manual configuration
 - Let's Encrypt integration provides automatic certificate provisioning and renewal
 - No manual TLS/mTLS management for inter-proxy communication
@@ -872,6 +909,7 @@ Deployment:
 - Can be deployed on Proxmox alongside other services
 
 **Negative**:
+
 - Nginx Proxy Manager UI requires securing separately (SSH tunnel, Tailscale access)
 - Configuration is stored in Docker; backing up configuration requires backing up Docker volumes
 - Nginx Proxy Manager updates may require recreation of the container; configuration should be version-controlled
@@ -897,11 +935,13 @@ Deployment:
 ### Context
 
 KrewPact has multiple codebases that need automated testing, building, and deployment:
+
 - Next.js frontend
 - Node.js BFF
 - Potentially custom ERPNext modules
 
 CI/CD must:
+
 - Run on every push and pull request
 - Execute unit and integration tests
 - Lint code and enforce code quality standards
@@ -915,6 +955,7 @@ CI/CD must:
 GitHub Actions has been selected for CI/CD. GitHub Actions integrates natively with GitHub repositories, eliminating the need for external CI/CD platforms.
 
 Workflows will:
+
 - Run tests and linting on every push and PR
 - Build and tag Docker images for backend services
 - Deploy frontend to Vercel on merge to main branch
@@ -924,6 +965,7 @@ Workflows will:
 ### Consequences
 
 **Positive**:
+
 - Native GitHub integration; no external platform to manage
 - Generous free tier; sufficient for early-stage product development
 - Straightforward YAML configuration; workflows are readable and maintainable
@@ -935,6 +977,7 @@ Workflows will:
 - Extensive community actions available for common tasks (Docker build, Vercel deploy, notifications)
 
 **Negative**:
+
 - Workflow execution can queue if many pipelines are running; may slow down deployment during high activity
 - Limited control over runtime environment; custom dependencies must be installed at workflow runtime
 - Debugging failed workflows requires examining logs; not as interactive as local development
@@ -961,6 +1004,7 @@ Workflows will:
 ### Context
 
 The Next.js frontend must manage client-side state for:
+
 - User authentication and session information
 - Current user's tenant and division context
 - Sidebar navigation and UI state (collapsed/expanded)
@@ -971,6 +1015,7 @@ The Next.js frontend must manage client-side state for:
 - Theme and user preferences
 
 State management approaches vary in complexity:
+
 - React Context API: built-in, lightweight, sufficient for simple state
 - Redux: comprehensive, mature, opinionated, heavy boilerplate
 - Zustand: lightweight, intuitive, good for small-to-medium applications
@@ -995,6 +1040,7 @@ This layered approach avoids over-engineering state management early on while pr
 **Context + Tanstack Query Approach**:
 
 **Positive**:
+
 - Tanstack Query handles the common pattern of fetching and caching server data, eliminating custom fetching logic
 - React Context is built-in; no external dependencies for simple state
 - Zustand can be added later if complex UI state becomes unwieldy
@@ -1004,6 +1050,7 @@ This layered approach avoids over-engineering state management early on while pr
 - DevTools available for both Tanstack Query and Zustand (if added) for debugging
 
 **Negative**:
+
 - Multiple libraries mean developers must understand different state management patterns
 - Tanstack Query has a learning curve; mutation and invalidation logic requires understanding
 - Context API re-renders can be inefficient if state is updated frequently; may require refactoring
@@ -1025,6 +1072,7 @@ This layered approach avoids over-engineering state management early on while pr
 ### Context
 
 The Node.js BFF must expose APIs that the Next.js frontend consumes. API design choices impact:
+
 - Developer productivity (query simplicity, fewer network roundtrips)
 - Over-fetching and under-fetching of data
 - Caching strategy (HTTP caching vs client-side caching)
@@ -1043,15 +1091,21 @@ REST API with REST query parameters for filtering, sorting, and pagination has b
 - `DELETE /api/projects/:id` - delete project
 
 Query parameters support filtering and pagination:
+
 - `GET /api/projects?division_id=123&status=active&page=1&limit=50`
 - `GET /api/projects/:id?include=financials,tasks` (include related data to reduce roundtrips)
 
 Responses follow a consistent envelope format:
+
 ```json
 {
-  "data": { /* resource or array of resources */ },
+  "data": {
+    /* resource or array of resources */
+  },
   "meta": { "page": 1, "limit": 50, "total": 200 },
-  "errors": [ /* validation errors or warnings */ ]
+  "errors": [
+    /* validation errors or warnings */
+  ]
 }
 ```
 
@@ -1060,6 +1114,7 @@ Tanstack Query (React Query) on the frontend handles caching, deduplication, and
 ### Consequences
 
 **Positive**:
+
 - REST is industry standard; widely understood by developers
 - HTTP caching works well with REST; browser and CDN caching can reduce backend load
 - Easy to debug; REST endpoints can be tested with curl or Postman
@@ -1070,6 +1125,7 @@ Tanstack Query (React Query) on the frontend handles caching, deduplication, and
 - Versioning is straightforward (v1, v2 in URL path)
 
 **Negative**:
+
 - Over-fetching: clients may receive more data than needed (though `include` parameter mitigates this)
 - Under-fetching: clients may need multiple roundtrips to fetch related data (though `include` mitigates this)
 - N+1 problem: fetching a list of projects and then their tasks requires N+1 requests without careful design
@@ -1081,6 +1137,7 @@ Tanstack Query (React Query) on the frontend handles caching, deduplication, and
 **Query Parameter Filtering Design**:
 
 The API will support a flexible filtering syntax:
+
 - `GET /api/projects?division_id=123` - exact match
 - `GET /api/projects?status[in]=active,completed` - array match
 - `GET /api/projects?budget[gt]=10000` - greater than
@@ -1105,6 +1162,7 @@ This avoids GraphQL complexity while providing reasonable querying flexibility.
 ### Context
 
 KrewPact has features requiring real-time updates:
+
 - Live project status changes (task completions, status updates)
 - Real-time crew availability and location (for field management)
 - Financial data updates (invoice changes, payment tracking)
@@ -1112,6 +1170,7 @@ KrewPact has features requiring real-time updates:
 - Collaborative editing (multiple users viewing same project)
 
 Real-time updates must:
+
 - Have low latency (<1 second for most use cases)
 - Scale to support many concurrent users
 - Be reliable; messages should not be lost
@@ -1135,6 +1194,7 @@ Initial implementation will use Supabase Realtime for critical data (projects, t
 **Supabase Realtime**:
 
 **Positive**:
+
 - Automatic; database changes trigger subscriptions without application logic
 - Low latency; change is transmitted immediately upon database commit
 - Scales to many concurrent subscribers
@@ -1143,6 +1203,7 @@ Initial implementation will use Supabase Realtime for critical data (projects, t
 - Efficient bandwidth; only changed rows are transmitted
 
 **Negative**:
+
 - Latency is ultimately limited by network; <1 second typical, but not guaranteed <100ms
 - Supabase Realtime has connection limits; high-frequency subscriptions may hit rate limits
 - Network failures require client-side reconnection logic
@@ -1152,12 +1213,14 @@ Initial implementation will use Supabase Realtime for critical data (projects, t
 **Server-Sent Events**:
 
 **Positive**:
+
 - Simpler than WebSocket; uses HTTP protocol with long-polling underneath
 - One-way communication is sufficient for notifications
 - Browser support is excellent; no special libraries needed (though libraries simplify handling)
 - Integrates naturally with REST API; endpoint can serve both data and events
 
 **Negative**:
+
 - One-way only; cannot send updates from client to server
 - Reconnection is automatic but may have delays
 - Browser connection limits (max 6 concurrent connections per domain) can be limiting
@@ -1179,12 +1242,14 @@ Initial implementation will use Supabase Realtime for critical data (projects, t
 ### Context
 
 Construction field operations frequently encounter poor network connectivity: tunnels, rural areas, basement work, etc. Users in the field should be able to:
+
 - View projects, tasks, and crew information offline
 - Update task status and log work hours offline
 - View financial data and contracts offline
 - Sync changes when connectivity is restored
 
 Building offline-first architecture requires:
+
 - Client-side data storage (IndexedDB, SQLite)
 - Conflict resolution for concurrent edits
 - Sync strategy for uploading changes
@@ -1199,6 +1264,7 @@ Offline-first capabilities will be deferred to Phase 2 of product development. I
 For future implementation, **Watermelon DB** is the recommended library: it's designed specifically for offline-first React applications, handles synchronization automatically, and provides conflict resolution.
 
 When implemented, offline-first will:
+
 - Use Watermelon DB for local storage on mobile and desktop
 - Sync layer will be implemented in the BFF, tracking user changes and resolving conflicts
 - Optimistic updates in the UI show changes immediately even while offline
@@ -1209,12 +1275,14 @@ When implemented, offline-first will:
 **Phase 1 (Current): No Offline Support**
 
 **Positive**:
+
 - Simplifies initial development; focus on core features
 - Reduces client-side complexity
 - Assumes connectivity (reasonable for construction sites with planning)
 - Can gather real usage patterns before investing in offline infrastructure
 
 **Negative**:
+
 - Poor experience for field users in low-connectivity areas
 - Tasks and information must be cached in browser (limited offline visibility)
 - Users may lose work if editing and connection drops
@@ -1222,12 +1290,14 @@ When implemented, offline-first will:
 **Phase 2 (Future): Offline-First with Watermelon DB**
 
 **Positive**:
+
 - Field users can work offline; dramatic improvement in UX
 - Sync is automatic; users don't manage sync explicitly
 - Conflict resolution is built-in; reduces data loss risk
 - Watermelon DB is designed specifically for this pattern
 
 **Negative**:
+
 - Increased client-side complexity
 - Sync logic is complex; requires careful testing
 - Database schema changes are difficult when clients have local databases
@@ -1256,6 +1326,7 @@ KrewPact serves construction companies that often have multiple divisions (e.g.,
 - Some users have cross-division visibility (executives) while others are division-limited (supervisors)
 
 The data model must support:
+
 - Tenant isolation (one customer's data is completely separate)
 - Division filtering (one user may see multiple divisions)
 - Audit trails (who accessed what data)
@@ -1287,6 +1358,7 @@ Multi-tenancy will be implemented at the database level using Supabase Row-Level
 ### Consequences
 
 **Positive**:
+
 - Database-level enforcement is more secure than application-level checks
 - RLS is automatically enforced even if application logic fails or is bypassed
 - Efficient queries; database filters at the row level rather than application layer
@@ -1295,6 +1367,7 @@ Multi-tenancy will be implemented at the database level using Supabase Row-Level
 - Clear separation of concerns; database layer owns access control
 
 **Negative**:
+
 - RLS policies can become complex with nested logic (roles with multiple divisions, hierarchical access)
 - Debugging RLS issues requires understanding Supabase's policy evaluation
 - Performance can be impacted if RLS policies join many tables; requires careful query optimization
@@ -1317,6 +1390,7 @@ Multi-tenancy will be implemented at the database level using Supabase Row-Level
 ### Context
 
 KrewPact requires full-text search across multiple data types:
+
 - Project search (by name, description, address, status)
 - Crew search (by name, trade, company)
 - Document search (contracts, compliance records)
@@ -1324,6 +1398,7 @@ KrewPact requires full-text search across multiple data types:
 - Task search (by description, assignment, project)
 
 Typical PostgreSQL full-text search has limitations:
+
 - Boolean operators and phrase search are limited
 - Typo tolerance (fuzzy matching) is not built-in
 - Performance degrades with large datasets
@@ -1355,12 +1430,14 @@ When implemented:
 **Phase 1 (Current): PostgreSQL ILIKE**
 
 **Positive**:
+
 - Simple to implement; no additional infrastructure
 - Sufficient for small datasets
 - Familiar to developers
 - No additional dependencies
 
 **Negative**:
+
 - Poor performance on large datasets (millions of records)
 - No typo tolerance
 - Limited relevance ranking
@@ -1369,6 +1446,7 @@ When implemented:
 **Phase 2 (Future): Meilisearch**
 
 **Positive**:
+
 - Fast search even with millions of records
 - Typo tolerance (user types "projcet" and still finds "project")
 - Excellent relevance ranking with customizable weights
@@ -1376,6 +1454,7 @@ When implemented:
 - Supports advanced queries (filters, ranges, facets)
 
 **Negative**:
+
 - Another service to deploy and maintain
 - Index synchronization complexity (keeping Meilisearch in sync with PostgreSQL)
 - Storage overhead (search index duplicates data)
@@ -1396,6 +1475,7 @@ When implemented:
 ### Context
 
 KrewPact requires notifications for various events:
+
 - User @mentions and comments
 - Task assignments
 - Approval requests
@@ -1405,6 +1485,7 @@ KrewPact requires notifications for various events:
 - Daily/weekly digests
 
 Notification delivery must support:
+
 - In-app notifications (via Server-Sent Events or WebSocket)
 - Email notifications
 - SMS notifications (optional, future)
@@ -1443,11 +1524,13 @@ For Phase 2, the recommended architecture uses **Inngest** for job orchestration
 **Phase 1 (Current): Email Only**
 
 **Positive**:
+
 - Simple implementation
 - Reliable email delivery via standard SMTP
 - Familiar pattern for users
 
 **Negative**:
+
 - Limited notification channels
 - Email overload risk; users may disable email to reduce volume
 - No real-time in-app notifications
@@ -1456,6 +1539,7 @@ For Phase 2, the recommended architecture uses **Inngest** for job orchestration
 **Phase 2 (Future): Multi-Channel with Inngest**
 
 **Positive**:
+
 - Flexible notification delivery
 - User control over notification preferences
 - In-app notifications provide immediate feedback
@@ -1463,6 +1547,7 @@ For Phase 2, the recommended architecture uses **Inngest** for job orchestration
 - Scales to many users and notification types
 
 **Negative**:
+
 - Increased complexity with multiple delivery channels
 - Must manage multiple third-party services (SMTP, Inngest, SMS provider, etc.)
 - Notification preferences UI adds product complexity
@@ -1490,6 +1575,7 @@ KrewPact operates in construction where compliance and liability are critical. A
 - Data exports (for compliance investigation)
 
 Audit trails must:
+
 - Be comprehensive (capture all significant changes)
 - Be tamper-proof (difficult to alter retroactively)
 - Have minimal performance impact
@@ -1528,6 +1614,7 @@ Audit trails will be implemented using a combination of Supabase's built-in audi
 ### Consequences
 
 **Positive**:
+
 - Comprehensive audit trail with minimal additional code
 - Supabase audit logs are automatic; no code changes needed
 - Tamper-proof; audit logs are system-managed and cannot be modified
@@ -1536,6 +1623,7 @@ Audit trails will be implemented using a combination of Supabase's built-in audi
 - Regulatory compliance support (audit trails required for construction and financial regulations)
 
 **Negative**:
+
 - Audit logs consume storage; historical logs must be archived/retained according to compliance requirements
 - Querying large audit logs can be slow; indexes and partitioning may be required
 - Complex business logic may generate many audit entries; alerting on specific audit events requires careful configuration
@@ -1556,11 +1644,13 @@ Audit trails will be implemented using a combination of Supabase's built-in audi
 ### Context
 
 KrewPact has performance-sensitive operations:
+
 - Dashboard loading (displaying projects, crew, financials)
 - Report generation (financial consolidation, project status)
 - Frequent queries (crew schedules, project timelines)
 
 Caching can significantly improve performance and reduce database/API load. However, caching introduces complexity:
+
 - Cache invalidation (ensuring stale data is not served)
 - Consistency issues (cached data diverging from source of truth)
 - Storage overhead
@@ -1602,6 +1692,7 @@ A layered caching strategy will be implemented:
 ### Consequences
 
 **Positive**:
+
 - Reduced latency for frequently accessed data
 - Reduced database load; fewer queries executed
 - Reduced API calls to external services (ERPNext, ADP)
@@ -1609,6 +1700,7 @@ A layered caching strategy will be implemented:
 - Layered caching provides flexibility; different data types use appropriate caching strategies
 
 **Negative**:
+
 - Cache invalidation complexity; stale data is the primary risk
 - Increased debugging difficulty; cache-related bugs are subtle
 - Memory overhead; cached data consumes additional resources
@@ -1639,6 +1731,7 @@ KrewPact requires visibility into system health, errors, and performance:
 - User errors (invalid data, permission denials)
 
 Observability requires:
+
 - Logging (structured logs for debugging)
 - Error tracking (identifying and aggregating errors)
 - Performance monitoring (latency, throughput)
@@ -1658,6 +1751,7 @@ Error handling and observability will be implemented in phases:
    - Log to stdout (captured by Docker logs)
 
 2. **Error Response Standardization**:
+
    ```json
    {
      "error": {
@@ -1683,6 +1777,7 @@ Implement a proper observability stack with one of:
 - **Sentry**: Error tracking and performance monitoring, good for early-stage
 
 Recommendation: **Sentry** for Phase 2
+
 - Generous free tier
 - Excellent error tracking and aggregation
 - Performance monitoring (transaction tracing)
@@ -1694,12 +1789,14 @@ Recommendation: **Sentry** for Phase 2
 **Phase 1 (Structured Logging)**
 
 **Positive**:
+
 - Low overhead; minimal performance impact
 - Easy to debug: logs are queryable and searchable
 - No vendor dependency; logs are stored in your database
 - Cheap or free; logs are just database entries
 
 **Negative**:
+
 - Manual investigation required; no automatic alerting
 - No aggregation or correlation; related logs must be found manually
 - No performance metrics (latency, throughput)
@@ -1708,6 +1805,7 @@ Recommendation: **Sentry** for Phase 2
 **Phase 2 (Sentry + Structured Logging)**
 
 **Positive**:
+
 - Automatic error aggregation; see error frequency and trends
 - Performance monitoring reveals slow operations
 - Release tracking (which version introduced the error)
@@ -1715,6 +1813,7 @@ Recommendation: **Sentry** for Phase 2
 - Beautiful dashboard and developer UX
 
 **Negative**:
+
 - Vendor dependency (Sentry)
 - Pricing can increase with high error volume or long retention
 - Learning curve for Sentry's features and configuration
@@ -1806,6 +1905,7 @@ A comprehensive testing strategy with different test types will be implemented:
 ### Consequences
 
 **Positive**:
+
 - Comprehensive testing provides confidence in code quality
 - Tests document expected behavior (executable documentation)
 - Catch bugs early before production deployment
@@ -1815,6 +1915,7 @@ A comprehensive testing strategy with different test types will be implemented:
 - RLS policy tests ensure access control is enforced correctly
 
 **Negative**:
+
 - Writing and maintaining tests requires time and discipline
 - Test code is code; test code also has bugs
 - Some tests (integration, end-to-end) are slow; slows down CI/CD

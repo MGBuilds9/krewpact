@@ -28,9 +28,7 @@ export async function POST(req: NextRequest) {
   const matches = await matchEmailToEntities(supabase, email_address);
 
   const hasMatches =
-    matches.leads.length > 0 ||
-    matches.contacts.length > 0 ||
-    matches.accounts.length > 0;
+    matches.leads.length > 0 || matches.contacts.length > 0 || matches.accounts.length > 0;
 
   if (!hasMatches) {
     return NextResponse.json({ matched: false, activities_created: 0 });
@@ -71,9 +69,7 @@ export async function POST(req: NextRequest) {
 
   // Create activity for accounts not already covered by contacts
   const accountsCoveredByContacts = new Set(
-    activityRecords
-      .filter((r) => r.account_id)
-      .map((r) => r.account_id as string),
+    activityRecords.filter((r) => r.account_id).map((r) => r.account_id as string),
   );
   for (const account of matches.accounts) {
     if (!accountsCoveredByContacts.has(account.id)) {

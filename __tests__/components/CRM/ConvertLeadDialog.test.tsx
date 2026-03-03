@@ -14,14 +14,10 @@ vi.mock('next/navigation', () => ({
 // Mock the CRM hooks
 vi.mock('@/hooks/useCRM', () => ({
   useAccounts: () => ({
-    data: [
-      { id: 'acct-1', account_name: 'Test Account' },
-    ],
+    data: [{ id: 'acct-1', account_name: 'Test Account' }],
   }),
   useContacts: () => ({
-    data: [
-      { id: 'contact-1', first_name: 'Jane', last_name: 'Smith' },
-    ],
+    data: [{ id: 'contact-1', first_name: 'Jane', last_name: 'Smith' }],
   }),
   useConvertLead: () => ({
     mutateAsync: vi.fn(),
@@ -73,24 +69,14 @@ function makeLead(overrides: Partial<Lead> = {}): Lead {
 
 describe('ConvertLeadDialog', () => {
   it('renders dialog title and description', () => {
-    render(
-      <ConvertLeadDialog
-        lead={makeLead()}
-        open={true}
-        onOpenChange={vi.fn()}
-      />,
-    );
+    render(<ConvertLeadDialog lead={makeLead()} open={true} onOpenChange={vi.fn()} />);
     expect(screen.getByText('Convert Lead to Opportunity')).toBeDefined();
     expect(screen.getByText(/Test Lead Corp/)).toBeDefined();
   });
 
   it('shows convert button enabled for won leads', () => {
     render(
-      <ConvertLeadDialog
-        lead={makeLead({ status: 'won' })}
-        open={true}
-        onOpenChange={vi.fn()}
-      />,
+      <ConvertLeadDialog lead={makeLead({ status: 'won' })} open={true} onOpenChange={vi.fn()} />,
     );
     const button = screen.getByRole('button', { name: /convert to opportunity/i });
     expect(button).not.toBeDisabled();
@@ -98,11 +84,7 @@ describe('ConvertLeadDialog', () => {
 
   it('shows warning and disables button for non-won leads', () => {
     render(
-      <ConvertLeadDialog
-        lead={makeLead({ status: 'new' })}
-        open={true}
-        onOpenChange={vi.fn()}
-      />,
+      <ConvertLeadDialog lead={makeLead({ status: 'new' })} open={true} onOpenChange={vi.fn()} />,
     );
     expect(screen.getByText(/must be in/i)).toBeDefined();
     const button = screen.getByRole('button', { name: /convert to opportunity/i });

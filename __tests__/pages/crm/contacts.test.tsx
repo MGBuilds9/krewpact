@@ -11,7 +11,7 @@ vi.mock('next/navigation', () => ({
     back: vi.fn(),
   }),
   usePathname: () => '/crm/contacts',
-  useParams: () => ({}),
+  useParams: () => ({ orgSlug: 'default' }),
   useSearchParams: () => new URLSearchParams(),
 }));
 
@@ -33,7 +33,7 @@ vi.mock('@/hooks/use-mobile', () => ({
   useIsMobile: () => false,
 }));
 
-import ContactsPage from '@/app/(dashboard)/crm/contacts/page';
+import ContactsPage from '@/app/(dashboard)/org/[orgSlug]/crm/contacts/page';
 
 describe('Contacts List Page', () => {
   beforeAll(() => {

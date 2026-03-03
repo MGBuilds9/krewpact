@@ -81,7 +81,9 @@ export async function checkAndMoveToDLQ(
     .eq('id', enrollmentId);
 
   if (retryError) {
-    throw new Error(`Failed to increment retry count for enrollment ${enrollmentId}: ${retryError.message}`);
+    throw new Error(
+      `Failed to increment retry count for enrollment ${enrollmentId}: ${retryError.message}`,
+    );
   }
 
   return false;

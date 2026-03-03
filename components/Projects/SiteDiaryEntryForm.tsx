@@ -3,7 +3,14 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -18,7 +25,15 @@ import { useCreateSiteDiaryEntry, useUpdateSiteDiaryEntry } from '@/hooks/usePro
 import type { SiteDiaryEntry } from '@/hooks/useProjectExtended';
 import { Loader2 } from 'lucide-react';
 
-const entryTypes = ['observation', 'visitor', 'delivery', 'weather', 'safety', 'progress', 'other'] as const;
+const entryTypes = [
+  'observation',
+  'visitor',
+  'delivery',
+  'weather',
+  'safety',
+  'progress',
+  'other',
+] as const;
 
 const entryTypeLabels: Record<string, string> = {
   observation: 'Observation',
@@ -45,7 +60,12 @@ export interface SiteDiaryEntryFormProps {
   onCancel?: () => void;
 }
 
-export function SiteDiaryEntryForm({ projectId, initialData, onSuccess, onCancel }: SiteDiaryEntryFormProps) {
+export function SiteDiaryEntryForm({
+  projectId,
+  initialData,
+  onSuccess,
+  onCancel,
+}: SiteDiaryEntryFormProps) {
   const createEntry = useCreateSiteDiaryEntry(projectId);
   const updateEntry = useUpdateSiteDiaryEntry(projectId);
   const isEditing = !!initialData;
@@ -67,11 +87,19 @@ export function SiteDiaryEntryForm({ projectId, initialData, onSuccess, onCancel
     if (isEditing) {
       updateEntry.mutate(
         { entryId: initialData.id, ...values },
-        { onSuccess: () => { form.reset(); onSuccess?.(); } },
+        {
+          onSuccess: () => {
+            form.reset();
+            onSuccess?.();
+          },
+        },
       );
     } else {
       createEntry.mutate(values, {
-        onSuccess: () => { form.reset(); onSuccess?.(); },
+        onSuccess: () => {
+          form.reset();
+          onSuccess?.();
+        },
       });
     }
   }
@@ -127,7 +155,11 @@ export function SiteDiaryEntryForm({ projectId, initialData, onSuccess, onCancel
             <FormItem>
               <FormLabel>Entry *</FormLabel>
               <FormControl>
-                <Textarea placeholder="Describe what was observed, delivered, or noted..." rows={4} {...field} />
+                <Textarea
+                  placeholder="Describe what was observed, delivered, or noted..."
+                  rows={4}
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

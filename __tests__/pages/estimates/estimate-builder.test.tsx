@@ -12,7 +12,7 @@ vi.mock('next/navigation', () => ({
     back: vi.fn(),
   }),
   usePathname: () => '/estimates/est-1',
-  useParams: () => ({ id: 'est-1' }),
+  useParams: () => ({ orgSlug: 'default', id: 'est-1' }),
   useSearchParams: () => new URLSearchParams(),
 }));
 
@@ -56,7 +56,7 @@ vi.mock('@/hooks/useContracting', () => ({
   useCreateProposal: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
-import EstimateBuilderPage from '@/app/(dashboard)/estimates/[id]/page';
+import EstimateBuilderPage from '@/app/(dashboard)/org/[orgSlug]/estimates/[id]/page';
 
 const mockEstimate = {
   id: 'est-1',

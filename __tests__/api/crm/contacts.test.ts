@@ -58,7 +58,9 @@ describe('GET /api/crm/contacts', () => {
     const client = mockSupabaseClient({ tables: { contacts: { data: contacts, error: null } } });
     mockCreateUserClient.mockResolvedValue(client);
 
-    const res = await GET(makeRequest('/api/crm/contacts?account_id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'));
+    const res = await GET(
+      makeRequest('/api/crm/contacts?account_id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'),
+    );
     expect(res.status).toBe(200);
     expect(client.from).toHaveBeenCalledWith('contacts');
   });

@@ -23,10 +23,7 @@ interface FetchOptions extends Omit<RequestInit, 'body'> {
  * Fetch wrapper that calls BFF API routes with proper error handling.
  * Automatically includes credentials for Clerk auth cookies.
  */
-export async function apiFetch<T = unknown>(
-  path: string,
-  options: FetchOptions = {},
-): Promise<T> {
+export async function apiFetch<T = unknown>(path: string, options: FetchOptions = {}): Promise<T> {
   const { body, params, headers: extraHeaders, ...rest } = options;
 
   // Build URL with query params

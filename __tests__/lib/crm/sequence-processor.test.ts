@@ -43,10 +43,26 @@ describe('processSequences', () => {
 
     const mockChain = () => {
       const chain: Record<string, unknown> = {};
-      const methods = ['select', 'insert', 'update', 'delete', 'eq', 'lte', 'order', 'limit', 'range', 'single', 'maybeSingle'];
+      const methods = [
+        'select',
+        'insert',
+        'update',
+        'delete',
+        'eq',
+        'lte',
+        'order',
+        'limit',
+        'range',
+        'single',
+        'maybeSingle',
+      ];
       for (const m of methods) {
         if (m === 'single') {
-          chain[m] = vi.fn().mockImplementation(() => Promise.resolve({ data: null, error: { code: 'PGRST116', message: 'not found' } }));
+          chain[m] = vi
+            .fn()
+            .mockImplementation(() =>
+              Promise.resolve({ data: null, error: { code: 'PGRST116', message: 'not found' } }),
+            );
         } else {
           chain[m] = vi.fn().mockImplementation(() => chain);
         }
@@ -76,13 +92,39 @@ describe('processSequences', () => {
         const chain: Record<string, unknown> = {};
         const createChain = (): Record<string, unknown> => {
           const c: Record<string, unknown> = {};
-          const methods = ['select', 'insert', 'update', 'delete', 'eq', 'lte', 'order', 'limit', 'range', 'neq', 'gt', 'gte', 'lt', 'ilike', 'is', 'or', 'not', 'contains', 'containedBy', 'filter', 'match', 'in'];
+          const methods = [
+            'select',
+            'insert',
+            'update',
+            'delete',
+            'eq',
+            'lte',
+            'order',
+            'limit',
+            'range',
+            'neq',
+            'gt',
+            'gte',
+            'lt',
+            'ilike',
+            'is',
+            'or',
+            'not',
+            'contains',
+            'containedBy',
+            'filter',
+            'match',
+            'in',
+          ];
           for (const m of methods) {
             c[m] = vi.fn().mockImplementation(() => createChain());
           }
           c.single = vi.fn().mockImplementation(() => {
             if (table === 'sequence_steps') {
-              return Promise.resolve({ data: null, error: { code: 'PGRST116', message: 'not found' } });
+              return Promise.resolve({
+                data: null,
+                error: { code: 'PGRST116', message: 'not found' },
+              });
             }
             return Promise.resolve({ data: null, error: null });
           });
@@ -132,7 +174,30 @@ describe('processSequences', () => {
       from: vi.fn().mockImplementation((table: string) => {
         const createChain = (): Record<string, unknown> => {
           const c: Record<string, unknown> = {};
-          const methods = ['select', 'insert', 'update', 'delete', 'eq', 'lte', 'order', 'limit', 'range', 'neq', 'gt', 'gte', 'lt', 'ilike', 'is', 'or', 'not', 'contains', 'containedBy', 'filter', 'match', 'in'];
+          const methods = [
+            'select',
+            'insert',
+            'update',
+            'delete',
+            'eq',
+            'lte',
+            'order',
+            'limit',
+            'range',
+            'neq',
+            'gt',
+            'gte',
+            'lt',
+            'ilike',
+            'is',
+            'or',
+            'not',
+            'contains',
+            'containedBy',
+            'filter',
+            'match',
+            'in',
+          ];
           for (const m of methods) {
             c[m] = vi.fn().mockImplementation(() => createChain());
           }
@@ -144,7 +209,10 @@ describe('processSequences', () => {
             }
             if (table === 'sequence_steps' && singleCallIndex === 2) {
               // Second call: check next step — doesn't exist
-              return Promise.resolve({ data: null, error: { code: 'PGRST116', message: 'not found' } });
+              return Promise.resolve({
+                data: null,
+                error: { code: 'PGRST116', message: 'not found' },
+              });
             }
             return Promise.resolve({ data: null, error: null });
           });
@@ -196,7 +264,30 @@ describe('processSequences', () => {
       from: vi.fn().mockImplementation((table: string) => {
         const createChain = (): Record<string, unknown> => {
           const c: Record<string, unknown> = {};
-          const methods = ['select', 'insert', 'update', 'delete', 'eq', 'lte', 'order', 'limit', 'range', 'neq', 'gt', 'gte', 'lt', 'ilike', 'is', 'or', 'not', 'contains', 'containedBy', 'filter', 'match', 'in'];
+          const methods = [
+            'select',
+            'insert',
+            'update',
+            'delete',
+            'eq',
+            'lte',
+            'order',
+            'limit',
+            'range',
+            'neq',
+            'gt',
+            'gte',
+            'lt',
+            'ilike',
+            'is',
+            'or',
+            'not',
+            'contains',
+            'containedBy',
+            'filter',
+            'match',
+            'in',
+          ];
           for (const m of methods) {
             c[m] = vi.fn().mockImplementation(() => createChain());
           }
@@ -206,7 +297,10 @@ describe('processSequences', () => {
               return Promise.resolve({ data: stepData, error: null });
             }
             if (table === 'sequence_steps' && singleCallIndex === 2) {
-              return Promise.resolve({ data: null, error: { code: 'PGRST116', message: 'not found' } });
+              return Promise.resolve({
+                data: null,
+                error: { code: 'PGRST116', message: 'not found' },
+              });
             }
             return Promise.resolve({ data: null, error: null });
           });
@@ -261,7 +355,30 @@ describe('processSequences', () => {
       from: vi.fn().mockImplementation((table: string) => {
         const createChain = (): Record<string, unknown> => {
           const c: Record<string, unknown> = {};
-          const methods = ['select', 'insert', 'update', 'delete', 'eq', 'lte', 'order', 'limit', 'range', 'neq', 'gt', 'gte', 'lt', 'ilike', 'is', 'or', 'not', 'contains', 'containedBy', 'filter', 'match', 'in'];
+          const methods = [
+            'select',
+            'insert',
+            'update',
+            'delete',
+            'eq',
+            'lte',
+            'order',
+            'limit',
+            'range',
+            'neq',
+            'gt',
+            'gte',
+            'lt',
+            'ilike',
+            'is',
+            'or',
+            'not',
+            'contains',
+            'containedBy',
+            'filter',
+            'match',
+            'in',
+          ];
           for (const m of methods) {
             c[m] = vi.fn().mockImplementation(() => createChain());
           }
@@ -323,7 +440,30 @@ describe('processSequences', () => {
       from: vi.fn().mockImplementation((table: string) => {
         const createChain = (): Record<string, unknown> => {
           const c: Record<string, unknown> = {};
-          const methods = ['select', 'insert', 'update', 'delete', 'eq', 'lte', 'order', 'limit', 'range', 'neq', 'gt', 'gte', 'lt', 'ilike', 'is', 'or', 'not', 'contains', 'containedBy', 'filter', 'match', 'in'];
+          const methods = [
+            'select',
+            'insert',
+            'update',
+            'delete',
+            'eq',
+            'lte',
+            'order',
+            'limit',
+            'range',
+            'neq',
+            'gt',
+            'gte',
+            'lt',
+            'ilike',
+            'is',
+            'or',
+            'not',
+            'contains',
+            'containedBy',
+            'filter',
+            'match',
+            'in',
+          ];
           for (const m of methods) {
             c[m] = vi.fn().mockImplementation(() => createChain());
           }

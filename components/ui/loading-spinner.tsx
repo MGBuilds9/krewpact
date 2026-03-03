@@ -12,7 +12,7 @@ export function LoadingSpinner({ size = 'md', className }: LoadingSpinnerProps) 
   const sizeClasses = {
     sm: 'h-4 w-4',
     md: 'h-6 w-6',
-    lg: 'h-8 w-8'
+    lg: 'h-8 w-8',
   };
 
   return (
@@ -20,7 +20,7 @@ export function LoadingSpinner({ size = 'md', className }: LoadingSpinnerProps) 
       className={cn(
         'animate-spin rounded-full border-2 border-primary/20 border-t-primary',
         sizeClasses[size],
-        className
+        className,
       )}
     />
   );
@@ -41,7 +41,7 @@ export function LoadingCard({ className, lines = 3 }: LoadingCardProps) {
             'h-4 bg-gradient-to-r from-muted via-muted/50 to-muted rounded animate-pulse',
             i === 0 && 'w-3/4',
             i === 1 && 'w-1/2',
-            i === 2 && 'w-5/6'
+            i === 2 && 'w-5/6',
           )}
         />
       ))}

@@ -13,7 +13,12 @@ function makeInput(overrides: Partial<ProposalInput> = {}): ProposalInput {
     account: {
       id: 'acc-1',
       account_name: 'Acme Corp',
-      billing_address: { street: '123 Main St', city: 'Toronto', province: 'ON', postal_code: 'M5V 2T6' },
+      billing_address: {
+        street: '123 Main St',
+        city: 'Toronto',
+        province: 'ON',
+        postal_code: 'M5V 2T6',
+      },
     },
     contact: {
       id: 'con-1',
@@ -66,11 +71,13 @@ describe('composeProposalData', () => {
   });
 
   it('uses estimate total when estimates exist', () => {
-    const result = composeProposalData(makeInput({
-      estimates: [
-        { id: 'est-1', estimate_number: 'EST-001', total_amount: 75000, status: 'approved' },
-      ],
-    }));
+    const result = composeProposalData(
+      makeInput({
+        estimates: [
+          { id: 'est-1', estimate_number: 'EST-001', total_amount: 75000, status: 'approved' },
+        ],
+      }),
+    );
     expect(result.totalValue).toBe(75000);
   });
 
@@ -94,23 +101,27 @@ describe('composeProposalData', () => {
   });
 
   it('handles null billing_address', () => {
-    const result = composeProposalData(makeInput({
-      account: { id: 'acc-1', account_name: 'Acme', billing_address: null },
-    }));
+    const result = composeProposalData(
+      makeInput({
+        account: { id: 'acc-1', account_name: 'Acme', billing_address: null },
+      }),
+    );
     expect(result.client.address).toBeNull();
   });
 
   it('returns zero total when no estimates and null revenue', () => {
-    const result = composeProposalData(makeInput({
-      opportunity: {
-        id: 'abcd1234-0000-0000-0000-000000000000',
-        opportunity_name: 'Test',
-        estimated_revenue: null,
-        target_close_date: null,
-        stage: 'intake',
-      },
-      estimates: [],
-    }));
+    const result = composeProposalData(
+      makeInput({
+        opportunity: {
+          id: 'abcd1234-0000-0000-0000-000000000000',
+          opportunity_name: 'Test',
+          estimated_revenue: null,
+          target_close_date: null,
+          stage: 'intake',
+        },
+        estimates: [],
+      }),
+    );
     expect(result.totalValue).toBe(0);
   });
 });

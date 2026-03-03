@@ -79,7 +79,7 @@ describe('mapTimesheetToErp', () => {
   it('sets activity_type to Execution on all entries', () => {
     const result = mapTimesheetToErp(makeInput());
     const timeLogs = result.time_logs as Record<string, unknown>[];
-    timeLogs.forEach(log => {
+    timeLogs.forEach((log) => {
       expect(log.activity_type).toBe('Execution');
     });
   });

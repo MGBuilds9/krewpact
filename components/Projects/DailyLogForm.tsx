@@ -3,7 +3,14 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -73,7 +80,12 @@ export function DailyLogForm({ projectId, initialData, onSuccess, onCancel }: Da
           safety_notes: values.safety_notes || null,
           weather: Object.keys(weather).length > 0 ? weather : null,
         },
-        { onSuccess: () => { form.reset(); onSuccess?.(); } },
+        {
+          onSuccess: () => {
+            form.reset();
+            onSuccess?.();
+          },
+        },
       );
     } else {
       createLog.mutate(
@@ -85,7 +97,12 @@ export function DailyLogForm({ projectId, initialData, onSuccess, onCancel }: Da
           safety_notes: values.safety_notes || undefined,
           weather: Object.keys(weather).length > 0 ? weather : undefined,
         },
-        { onSuccess: () => { form.reset(); onSuccess?.(); } },
+        {
+          onSuccess: () => {
+            form.reset();
+            onSuccess?.();
+          },
+        },
       );
     }
   }
@@ -188,7 +205,11 @@ export function DailyLogForm({ projectId, initialData, onSuccess, onCancel }: Da
             <FormItem>
               <FormLabel>Safety Notes</FormLabel>
               <FormControl>
-                <Textarea placeholder="Safety observations, incidents, toolbox talks..." rows={2} {...field} />
+                <Textarea
+                  placeholder="Safety observations, incidents, toolbox talks..."
+                  rows={2}
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

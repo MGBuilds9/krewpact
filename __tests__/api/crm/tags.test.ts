@@ -86,10 +86,11 @@ describe('POST /api/crm/tags', () => {
     );
 
     const res = await POST(
-      makeJsonRequest(
-        'http://localhost/api/crm/tags',
-        { name: 'Priority Client', color: '#EF4444', division_id: DIVISION_ID },
-      ),
+      makeJsonRequest('http://localhost/api/crm/tags', {
+        name: 'Priority Client',
+        color: '#EF4444',
+        division_id: DIVISION_ID,
+      }),
     );
     expect(res.status).toBe(201);
     const body = await res.json();
@@ -99,10 +100,7 @@ describe('POST /api/crm/tags', () => {
   it('returns 400 for invalid body (empty name)', async () => {
     mockClerkAuth(mockAuth);
     const res = await POST(
-      makeJsonRequest(
-        'http://localhost/api/crm/tags',
-        { name: '', color: '#EF4444' },
-      ),
+      makeJsonRequest('http://localhost/api/crm/tags', { name: '', color: '#EF4444' }),
     );
     expect(res.status).toBe(400);
   });
@@ -134,9 +132,7 @@ describe('DELETE /api/crm/tags', () => {
 
   it('returns 400 if id missing', async () => {
     mockClerkAuth(mockAuth);
-    const res = await DELETE(
-      makeJsonRequest('http://localhost/api/crm/tags', {}, 'DELETE'),
-    );
+    const res = await DELETE(makeJsonRequest('http://localhost/api/crm/tags', {}, 'DELETE'));
     expect(res.status).toBe(400);
   });
 });

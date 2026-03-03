@@ -77,7 +77,9 @@ describe('GET /api/portals/accounts', () => {
     mockClerkAuth(mockAuth, 'user_staff');
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({
-        tables: { portal_accounts: { data: null, error: { message: 'DB error', code: 'PGRST000' } } },
+        tables: {
+          portal_accounts: { data: null, error: { message: 'DB error', code: 'PGRST000' } },
+        },
       }),
     );
     const res = await GET(makeRequest('/api/portals/accounts'));
@@ -131,10 +133,12 @@ describe('POST /api/portals/accounts', () => {
     const created = makePortalAccount();
     mockClerkAuth(mockAuth, 'user_pm');
     mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: {
-        portal_accounts: { data: created, error: null },
-        portal_permissions: { data: [], error: null },
-      }}),
+      mockSupabaseClient({
+        tables: {
+          portal_accounts: { data: created, error: null },
+          portal_permissions: { data: [], error: null },
+        },
+      }),
     );
 
     const res = await POST(
@@ -185,7 +189,9 @@ describe('Webhook portal_accounts link logic', () => {
       is: vi.fn().mockResolvedValue({ error: null }),
     };
     mockClient.from.mockReturnValue(mockClient);
-    vi.mocked(createServiceClient).mockReturnValue(mockClient as unknown as ReturnType<typeof createServiceClient>);
+    vi.mocked(createServiceClient).mockReturnValue(
+      mockClient as unknown as ReturnType<typeof createServiceClient>,
+    );
 
     // Simulate the webhook handler's portal linking logic directly
     const PORTAL_ACCOUNT_ID = 'pa-fake-uuid-123';

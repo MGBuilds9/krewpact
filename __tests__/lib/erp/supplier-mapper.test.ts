@@ -6,7 +6,12 @@ function makeInput(overrides: Partial<SupplierMapInput> = {}): SupplierMapInput 
     id: 'portal-001',
     company_name: 'Premier Electrical Ltd.',
     account_type: 'trade_partner',
-    billing_address: { street: '100 Industrial Rd', city: 'Brampton', province: 'ON', postal_code: 'L6T 2E8' },
+    billing_address: {
+      street: '100 Industrial Rd',
+      city: 'Brampton',
+      province: 'ON',
+      postal_code: 'L6T 2E8',
+    },
     division_id: 'div-telecom',
     ...overrides,
   };

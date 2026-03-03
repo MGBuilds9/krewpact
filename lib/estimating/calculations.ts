@@ -7,11 +7,7 @@
  * Calculate the total for a single estimate line.
  * Formula: round(quantity * unitCost * (1 + markupPct / 100), 2)
  */
-export function calculateLineTotal(
-  quantity: number,
-  unitCost: number,
-  markupPct: number,
-): number {
+export function calculateLineTotal(quantity: number, unitCost: number, markupPct: number): number {
   const raw = quantity * unitCost * (1 + markupPct / 100);
   return Math.round(raw * 100) / 100;
 }

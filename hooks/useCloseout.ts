@@ -74,7 +74,8 @@ export interface PaginatedResponse<T> {
 export function useCloseoutPackages(projectId: string) {
   return useQuery({
     queryKey: ['closeout-packages', projectId],
-    queryFn: () => apiFetch<PaginatedResponse<CloseoutPackage>>(`/api/projects/${projectId}/closeout`),
+    queryFn: () =>
+      apiFetch<PaginatedResponse<CloseoutPackage>>(`/api/projects/${projectId}/closeout`),
     enabled: !!projectId,
     staleTime: 30_000,
   });
@@ -84,7 +85,10 @@ export function useCreateCloseoutPackage(projectId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: Record<string, unknown>) =>
-      apiFetch<CloseoutPackage>(`/api/projects/${projectId}/closeout`, { method: 'POST', body: data }),
+      apiFetch<CloseoutPackage>(`/api/projects/${projectId}/closeout`, {
+        method: 'POST',
+        body: data,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['closeout-packages', projectId] });
     },
@@ -95,7 +99,10 @@ export function useUpdateCloseoutPackage(projectId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ pkgId, ...data }: { pkgId: string } & Record<string, unknown>) =>
-      apiFetch<CloseoutPackage>(`/api/projects/${projectId}/closeout/${pkgId}`, { method: 'PATCH', body: data }),
+      apiFetch<CloseoutPackage>(`/api/projects/${projectId}/closeout/${pkgId}`, {
+        method: 'PATCH',
+        body: data,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['closeout-packages', projectId] });
     },
@@ -106,7 +113,8 @@ export function useUpdateCloseoutPackage(projectId: string) {
 export function useDeficiencies(projectId: string) {
   return useQuery({
     queryKey: ['deficiencies', projectId],
-    queryFn: () => apiFetch<PaginatedResponse<DeficiencyItem>>(`/api/projects/${projectId}/deficiencies`),
+    queryFn: () =>
+      apiFetch<PaginatedResponse<DeficiencyItem>>(`/api/projects/${projectId}/deficiencies`),
     enabled: !!projectId,
     staleTime: 30_000,
   });
@@ -116,7 +124,10 @@ export function useCreateDeficiency(projectId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: Record<string, unknown>) =>
-      apiFetch<DeficiencyItem>(`/api/projects/${projectId}/deficiencies`, { method: 'POST', body: data }),
+      apiFetch<DeficiencyItem>(`/api/projects/${projectId}/deficiencies`, {
+        method: 'POST',
+        body: data,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['deficiencies', projectId] });
     },
@@ -127,7 +138,10 @@ export function useUpdateDeficiency(projectId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ defId, ...data }: { defId: string } & Record<string, unknown>) =>
-      apiFetch<DeficiencyItem>(`/api/projects/${projectId}/deficiencies/${defId}`, { method: 'PATCH', body: data }),
+      apiFetch<DeficiencyItem>(`/api/projects/${projectId}/deficiencies/${defId}`, {
+        method: 'PATCH',
+        body: data,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['deficiencies', projectId] });
     },
@@ -159,7 +173,8 @@ export function useCreateWarrantyItem(projectId: string) {
 export function useServiceCalls(projectId: string) {
   return useQuery({
     queryKey: ['service-calls', projectId],
-    queryFn: () => apiFetch<PaginatedResponse<ServiceCall>>(`/api/projects/${projectId}/service-calls`),
+    queryFn: () =>
+      apiFetch<PaginatedResponse<ServiceCall>>(`/api/projects/${projectId}/service-calls`),
     enabled: !!projectId,
     staleTime: 30_000,
   });
@@ -169,7 +184,10 @@ export function useCreateServiceCall(projectId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: Record<string, unknown>) =>
-      apiFetch<ServiceCall>(`/api/projects/${projectId}/service-calls`, { method: 'POST', body: data }),
+      apiFetch<ServiceCall>(`/api/projects/${projectId}/service-calls`, {
+        method: 'POST',
+        body: data,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-calls', projectId] });
     },
@@ -180,7 +198,10 @@ export function useUpdateServiceCall(projectId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ callId, ...data }: { callId: string } & Record<string, unknown>) =>
-      apiFetch<ServiceCall>(`/api/projects/${projectId}/service-calls/${callId}`, { method: 'PATCH', body: data }),
+      apiFetch<ServiceCall>(`/api/projects/${projectId}/service-calls/${callId}`, {
+        method: 'PATCH',
+        body: data,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-calls', projectId] });
     },
@@ -191,7 +212,10 @@ export function useAddServiceCallEvent(projectId: string, callId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: Record<string, unknown>) =>
-      apiFetch<ServiceCallEvent>(`/api/projects/${projectId}/service-calls/${callId}/events`, { method: 'POST', body: data }),
+      apiFetch<ServiceCallEvent>(`/api/projects/${projectId}/service-calls/${callId}/events`, {
+        method: 'POST',
+        body: data,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-calls', projectId] });
     },

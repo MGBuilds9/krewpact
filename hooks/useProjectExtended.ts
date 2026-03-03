@@ -18,7 +18,15 @@ export interface SiteDiaryEntry {
   id: string;
   project_id: string;
   entry_at: string;
-  entry_type: 'observation' | 'visitor' | 'delivery' | 'weather' | 'safety' | 'progress' | 'other' | 'meeting';
+  entry_type:
+    | 'observation'
+    | 'visitor'
+    | 'delivery'
+    | 'weather'
+    | 'safety'
+    | 'progress'
+    | 'other'
+    | 'meeting';
   entry_text: string;
   created_by: string | null;
   created_at: string;
@@ -76,7 +84,9 @@ export function useDeleteTaskDependency(taskId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (dependencyId: string) =>
-      apiFetch(`/api/tasks/${taskId}/dependencies?dependency_id=${dependencyId}`, { method: 'DELETE' }),
+      apiFetch(`/api/tasks/${taskId}/dependencies?dependency_id=${dependencyId}`, {
+        method: 'DELETE',
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['task-dependencies', taskId] });
     },
@@ -85,7 +95,10 @@ export function useDeleteTaskDependency(taskId: string) {
 
 // --- Site Diary ---
 
-export function useSiteDiary(projectId: string, filters?: { entry_type?: string; limit?: number; offset?: number }) {
+export function useSiteDiary(
+  projectId: string,
+  filters?: { entry_type?: string; limit?: number; offset?: number },
+) {
   return useQuery({
     queryKey: ['site-diary', projectId, filters],
     queryFn: () =>
@@ -116,8 +129,19 @@ export function useCreateSiteDiaryEntry(projectId: string) {
 export function useUpdateSiteDiaryEntry(projectId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ entryId, ...data }: { entryId: string; entry_at?: string; entry_type?: string; entry_text?: string }) =>
-      apiFetch<SiteDiaryEntry>(`/api/projects/${projectId}/diary/${entryId}`, { method: 'PATCH', body: data }),
+    mutationFn: ({
+      entryId,
+      ...data
+    }: {
+      entryId: string;
+      entry_at?: string;
+      entry_type?: string;
+      entry_text?: string;
+    }) =>
+      apiFetch<SiteDiaryEntry>(`/api/projects/${projectId}/diary/${entryId}`, {
+        method: 'PATCH',
+        body: data,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['site-diary', projectId] });
     },
@@ -187,7 +211,10 @@ export function useCreateDailyLog(projectId: string) {
 export function useUpdateDailyLog(projectId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ logId, ...data }: {
+    mutationFn: ({
+      logId,
+      ...data
+    }: {
       logId: string;
       weather?: Record<string, unknown> | null;
       crew_count?: number | null;
@@ -195,7 +222,10 @@ export function useUpdateDailyLog(projectId: string) {
       delays?: string | null;
       safety_notes?: string | null;
     }) =>
-      apiFetch<DailyLog>(`/api/projects/${projectId}/daily-logs/${logId}`, { method: 'PATCH', body: data }),
+      apiFetch<DailyLog>(`/api/projects/${projectId}/daily-logs/${logId}`, {
+        method: 'PATCH',
+        body: data,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['daily-logs', projectId] });
     },
@@ -231,7 +261,10 @@ export function useCreateMeeting(projectId: string) {
       notes: string;
       action_items?: Array<{ description: string; assignee?: string; due_date?: string }>;
     }) =>
-      apiFetch<SiteDiaryEntry>(`/api/projects/${projectId}/meetings`, { method: 'POST', body: data }),
+      apiFetch<SiteDiaryEntry>(`/api/projects/${projectId}/meetings`, {
+        method: 'POST',
+        body: data,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['meetings', projectId] });
       queryClient.invalidateQueries({ queryKey: ['site-diary', projectId] });

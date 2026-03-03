@@ -56,7 +56,8 @@ export default async function PortalProjectsPage() {
         <div className="text-5xl">🔒</div>
         <h2 className="text-xl font-semibold text-gray-700">No project access found</h2>
         <p className="text-gray-500 text-sm text-center max-w-sm">
-          Your portal account hasn&apos;t been linked to any projects yet. Contact your project manager to get access.
+          Your portal account hasn&apos;t been linked to any projects yet. Contact your project
+          manager to get access.
         </p>
       </div>
     );
@@ -71,7 +72,8 @@ export default async function PortalProjectsPage() {
         <p className="text-slate-400 text-sm font-medium">Welcome back</p>
         <h1 className="text-2xl font-bold mt-1">{portal_account.company_name}</h1>
         <p className="text-slate-300 text-sm mt-2 capitalize">
-          {portal_account.actor_type.replace('_', ' ')} Portal · {projects.length} project{projects.length !== 1 ? 's' : ''} assigned
+          {portal_account.actor_type.replace('_', ' ')} Portal · {projects.length} project
+          {projects.length !== 1 ? 's' : ''} assigned
         </p>
       </div>
 
@@ -95,7 +97,9 @@ export default async function PortalProjectsPage() {
                     {project.project_name}
                   </h3>
                 </div>
-                <span className={`text-xs font-medium px-2 py-1 rounded-full ${STATUS_COLORS[project.status] ?? 'bg-gray-100 text-gray-500'}`}>
+                <span
+                  className={`text-xs font-medium px-2 py-1 rounded-full ${STATUS_COLORS[project.status] ?? 'bg-gray-100 text-gray-500'}`}
+                >
                   {project.status.replace('_', ' ')}
                 </span>
               </div>
@@ -110,13 +114,17 @@ export default async function PortalProjectsPage() {
                 {project.target_completion_date && !project.actual_completion_date && (
                   <div className="flex justify-between">
                     <span>Target completion</span>
-                    <span>{new Date(project.target_completion_date).toLocaleDateString('en-CA')}</span>
+                    <span>
+                      {new Date(project.target_completion_date).toLocaleDateString('en-CA')}
+                    </span>
                   </div>
                 )}
                 {project.actual_completion_date && (
                   <div className="flex justify-between text-emerald-600">
                     <span>Completed</span>
-                    <span>{new Date(project.actual_completion_date).toLocaleDateString('en-CA')}</span>
+                    <span>
+                      {new Date(project.actual_completion_date).toLocaleDateString('en-CA')}
+                    </span>
                   </div>
                 )}
               </div>
@@ -124,13 +132,19 @@ export default async function PortalProjectsPage() {
               {/* Permission badges */}
               <div className="mt-4 flex flex-wrap gap-1.5">
                 {project.permission_set.view_documents && (
-                  <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">Documents</span>
+                  <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
+                    Documents
+                  </span>
                 )}
                 {project.permission_set.approve_change_orders && (
-                  <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">CO Approvals</span>
+                  <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">
+                    CO Approvals
+                  </span>
                 )}
                 {project.permission_set.view_financials && (
-                  <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full">Financials</span>
+                  <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full">
+                    Financials
+                  </span>
                 )}
               </div>
             </a>

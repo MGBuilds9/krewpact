@@ -3,7 +3,14 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -48,7 +55,12 @@ const itemTypeLabels: Record<string, string> = {
   other: 'Other',
 };
 
-export function CostCatalogItemForm({ item, divisionId, onSuccess, onCancel }: CostCatalogItemFormProps) {
+export function CostCatalogItemForm({
+  item,
+  divisionId,
+  onSuccess,
+  onCancel,
+}: CostCatalogItemFormProps) {
   const createItem = useCreateCostCatalogItem();
   const updateItem = useUpdateCostCatalogItem();
   const isEditing = !!item;
@@ -90,12 +102,21 @@ export function CostCatalogItemForm({ item, divisionId, onSuccess, onCancel }: C
     };
 
     if (isEditing) {
-      updateItem.mutate({ id: item.id, ...payload }, {
-        onSuccess: () => { form.reset(); onSuccess?.(); },
-      });
+      updateItem.mutate(
+        { id: item.id, ...payload },
+        {
+          onSuccess: () => {
+            form.reset();
+            onSuccess?.();
+          },
+        },
+      );
     } else {
       createItem.mutate(payload, {
-        onSuccess: () => { form.reset(); onSuccess?.(); },
+        onSuccess: () => {
+          form.reset();
+          onSuccess?.();
+        },
       });
     }
   }

@@ -29,7 +29,11 @@ interface PortalPermissionFormProps {
 
 const defaultPermissions = ['view_project', 'view_documents', 'view_schedule', 'submit_messages'];
 
-export function PortalPermissionForm({ portalAccountId, onSuccess, onCancel }: PortalPermissionFormProps) {
+export function PortalPermissionForm({
+  portalAccountId,
+  onSuccess,
+  onCancel,
+}: PortalPermissionFormProps) {
   const setPermission = useSetPortalPermission();
 
   const form = useForm<FormValues>({

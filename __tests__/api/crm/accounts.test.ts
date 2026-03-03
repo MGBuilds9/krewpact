@@ -66,7 +66,9 @@ describe('GET /api/crm/accounts', () => {
     const client = mockSupabaseClient({ tables: { accounts: { data: accounts, error: null } } });
     mockCreateUserClient.mockResolvedValue(client);
 
-    const res = await GET(makeRequest('/api/crm/accounts?division_id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'));
+    const res = await GET(
+      makeRequest('/api/crm/accounts?division_id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'),
+    );
     expect(res.status).toBe(200);
     expect(client.from).toHaveBeenCalledWith('accounts');
   });

@@ -62,9 +62,7 @@ export function LinkedEstimateCard({ estimates, onCreateEstimate }: LinkedEstima
                       {formatCurrency(est.total_amount)}
                     </span>
                   </div>
-                  <Badge variant={statusVariant(est.status)}>
-                    {est.status}
-                  </Badge>
+                  <Badge variant={statusVariant(est.status)}>{est.status}</Badge>
                 </button>
               </li>
             ))}

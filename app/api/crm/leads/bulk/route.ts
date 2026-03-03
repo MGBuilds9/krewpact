@@ -77,10 +77,7 @@ export async function POST(req: NextRequest) {
       if (!stage) {
         return NextResponse.json({ error: 'stage required' }, { status: 400 });
       }
-      const { error } = await supabase
-        .from('leads')
-        .update({ stage })
-        .in('id', ids);
+      const { error } = await supabase.from('leads').update({ stage }).in('id', ids);
       if (error) {
         results.failed = ids.length;
         results.errors.push(error.message);
@@ -104,10 +101,7 @@ export async function POST(req: NextRequest) {
       break;
     }
     case 'delete': {
-      const { error } = await supabase
-        .from('leads')
-        .delete()
-        .in('id', ids);
+      const { error } = await supabase.from('leads').delete().in('id', ids);
       if (error) {
         results.failed = ids.length;
         results.errors.push(error.message);

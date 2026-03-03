@@ -3,11 +3,7 @@ import { render, fireEvent } from '@testing-library/react';
 import React from 'react';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 
-function TestComponent({
-  shortcuts,
-}: {
-  shortcuts: Parameters<typeof useKeyboardShortcuts>[0];
-}) {
+function TestComponent({ shortcuts }: { shortcuts: Parameters<typeof useKeyboardShortcuts>[0] }) {
   useKeyboardShortcuts(shortcuts);
   return <div data-testid="container">Test</div>;
 }
@@ -24,9 +20,7 @@ describe('useKeyboardShortcuts', () => {
 
   it('requires metaKey when specified', () => {
     const handler = vi.fn();
-    render(
-      <TestComponent shortcuts={[{ key: 'k', metaKey: true, handler }]} />,
-    );
+    render(<TestComponent shortcuts={[{ key: 'k', metaKey: true, handler }]} />);
     fireEvent.keyDown(document, { key: 'k' });
     expect(handler).not.toHaveBeenCalled();
     fireEvent.keyDown(document, { key: 'k', metaKey: true });
@@ -35,20 +29,14 @@ describe('useKeyboardShortcuts', () => {
 
   it('works with ctrlKey as meta alternative', () => {
     const handler = vi.fn();
-    render(
-      <TestComponent shortcuts={[{ key: 'k', metaKey: true, handler }]} />,
-    );
+    render(<TestComponent shortcuts={[{ key: 'k', metaKey: true, handler }]} />);
     fireEvent.keyDown(document, { key: 'k', ctrlKey: true });
     expect(handler).toHaveBeenCalledTimes(1);
   });
 
   it('requires shiftKey when specified', () => {
     const handler = vi.fn();
-    render(
-      <TestComponent
-        shortcuts={[{ key: 'n', shiftKey: true, handler }]}
-      />,
-    );
+    render(<TestComponent shortcuts={[{ key: 'n', shiftKey: true, handler }]} />);
     fireEvent.keyDown(document, { key: 'n' });
     expect(handler).not.toHaveBeenCalled();
     fireEvent.keyDown(document, { key: 'n', shiftKey: true });
@@ -72,9 +60,7 @@ describe('useKeyboardShortcuts', () => {
     const handler = vi.fn();
     const { getByTestId } = render(
       <>
-        <TestComponent
-          shortcuts={[{ key: 'Escape', handler, ignoreInputs: false }]}
-        />
+        <TestComponent shortcuts={[{ key: 'Escape', handler, ignoreInputs: false }]} />
         <input data-testid="input" />
       </>,
     );

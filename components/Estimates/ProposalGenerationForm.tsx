@@ -3,7 +3,14 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -28,7 +35,12 @@ export interface ProposalGenerationFormProps {
   onCancel?: () => void;
 }
 
-export function ProposalGenerationForm({ estimateId, estimateNumber, onSuccess, onCancel }: ProposalGenerationFormProps) {
+export function ProposalGenerationForm({
+  estimateId,
+  estimateNumber,
+  onSuccess,
+  onCancel,
+}: ProposalGenerationFormProps) {
   const createProposal = useCreateProposal();
 
   const form = useForm<FormValues>({

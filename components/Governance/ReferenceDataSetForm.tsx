@@ -53,7 +53,9 @@ export function ReferenceDataSetForm({ onSuccess, onCancel }: ReferenceDataSetFo
           render={({ field }) => (
             <FormItem>
               <FormLabel>Key</FormLabel>
-              <FormControl><Input placeholder="e.g. project_types" {...field} /></FormControl>
+              <FormControl>
+                <Input placeholder="e.g. project_types" {...field} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -64,7 +66,9 @@ export function ReferenceDataSetForm({ onSuccess, onCancel }: ReferenceDataSetFo
           render={({ field }) => (
             <FormItem>
               <FormLabel>Name</FormLabel>
-              <FormControl><Input placeholder="e.g. Project Types" {...field} /></FormControl>
+              <FormControl>
+                <Input placeholder="e.g. Project Types" {...field} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -74,7 +78,11 @@ export function ReferenceDataSetForm({ onSuccess, onCancel }: ReferenceDataSetFo
             {create.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Create Set
           </Button>
-          {onCancel && <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>}
+          {onCancel && (
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
+          )}
         </div>
       </form>
     </Form>

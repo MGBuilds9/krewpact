@@ -11,11 +11,34 @@ vi.mock('@/lib/supabase/server', () => ({
 import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { POST } from '@/app/api/crm/leads/check-duplicates/route';
-import { mockSupabaseClient, makeJsonRequest, mockClerkAuth, mockClerkUnauth } from '@/__tests__/helpers';
+import {
+  mockSupabaseClient,
+  makeJsonRequest,
+  mockClerkAuth,
+  mockClerkUnauth,
+} from '@/__tests__/helpers';
 
 const existingLeads = [
-  { id: 'lead-1', company_name: 'MDM Contracting', domain: 'mdmcontracting.ca', city: 'Mississauga', lead_score: 80, status: 'qualified', division_id: 'div-1', created_at: '2026-01-01' },
-  { id: 'lead-2', company_name: 'Shoppers Drug Mart', domain: 'shoppersdrugmart.ca', city: 'Toronto', lead_score: 50, status: 'new', division_id: 'div-1', created_at: '2026-01-02' },
+  {
+    id: 'lead-1',
+    company_name: 'MDM Contracting',
+    domain: 'mdmcontracting.ca',
+    city: 'Mississauga',
+    lead_score: 80,
+    status: 'qualified',
+    division_id: 'div-1',
+    created_at: '2026-01-01',
+  },
+  {
+    id: 'lead-2',
+    company_name: 'Shoppers Drug Mart',
+    domain: 'shoppersdrugmart.ca',
+    city: 'Toronto',
+    lead_score: 50,
+    status: 'new',
+    division_id: 'div-1',
+    created_at: '2026-01-02',
+  },
 ];
 
 beforeEach(() => {
@@ -25,7 +48,7 @@ beforeEach(() => {
       tables: {
         leads: { data: existingLeads, error: null },
       },
-    })
+    }),
   );
 });
 

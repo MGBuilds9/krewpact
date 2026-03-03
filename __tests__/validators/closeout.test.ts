@@ -174,7 +174,10 @@ describe('serviceCallCreateSchema', () => {
 
   it('accepts valid priority values', () => {
     for (const priority of ['low', 'medium', 'high', 'urgent'] as const) {
-      expect(serviceCallCreateSchema.safeParse({ call_number: 'SC-001', title: 'Issue', priority }).success).toBe(true);
+      expect(
+        serviceCallCreateSchema.safeParse({ call_number: 'SC-001', title: 'Issue', priority })
+          .success,
+      ).toBe(true);
     }
   });
 
@@ -198,7 +201,14 @@ describe('serviceCallUpdateSchema', () => {
   });
 
   it('accepts valid status enum values', () => {
-    const statuses = ['open', 'scheduled', 'in_progress', 'resolved', 'closed', 'cancelled'] as const;
+    const statuses = [
+      'open',
+      'scheduled',
+      'in_progress',
+      'resolved',
+      'closed',
+      'cancelled',
+    ] as const;
     for (const status of statuses) {
       expect(serviceCallUpdateSchema.safeParse({ status }).success).toBe(true);
     }

@@ -42,7 +42,9 @@ export async function POST(req: NextRequest, context: RouteContext) {
   const oppData = opportunity as Record<string, unknown>;
   if (oppData.stage !== 'contracted') {
     return NextResponse.json(
-      { error: `Only opportunities in 'contracted' stage can be marked as won. Current stage: '${oppData.stage}'` },
+      {
+        error: `Only opportunities in 'contracted' stage can be marked as won. Current stage: '${oppData.stage}'`,
+      },
       { status: 400 },
     );
   }

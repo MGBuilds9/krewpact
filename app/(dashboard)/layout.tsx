@@ -27,7 +27,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <Breadcrumbs />
 
           {/* Main content */}
-          <main id="main-content" className="container mx-auto px-4 md:px-6 py-6 pb-24 md:pb-6">{children}</main>
+          <main id="main-content" className="container mx-auto px-4 md:px-6 py-6 pb-24 md:pb-6">
+            {children}
+          </main>
 
           {/* Mobile bottom navigation */}
           <BottomNav />

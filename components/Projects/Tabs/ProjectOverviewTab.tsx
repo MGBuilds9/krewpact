@@ -4,14 +4,7 @@ import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import {
-  DollarSign,
-  Calendar,
-  MapPin,
-  Building,
-  TrendingUp,
-  Clock,
-} from 'lucide-react';
+import { DollarSign, Calendar, MapPin, Building, TrendingUp, Clock } from 'lucide-react';
 import { Project } from '@/hooks/useProjects';
 
 interface ProjectOverviewTabProps {
@@ -20,12 +13,19 @@ interface ProjectOverviewTabProps {
 
 function formatAddress(siteAddress: Record<string, string> | null): string {
   if (!siteAddress) return 'Not specified';
-  const parts = [siteAddress.street, siteAddress.city, siteAddress.province, siteAddress.postal_code].filter(Boolean);
+  const parts = [
+    siteAddress.street,
+    siteAddress.city,
+    siteAddress.province,
+    siteAddress.postal_code,
+  ].filter(Boolean);
   return parts.length > 0 ? parts.join(', ') : 'Not specified';
 }
 
 export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
-  const budgetProgress = project.baseline_budget ? (project.current_budget / project.baseline_budget) * 100 : 0;
+  const budgetProgress = project.baseline_budget
+    ? (project.current_budget / project.baseline_budget) * 100
+    : 0;
   const [now] = React.useState(() => Date.now());
   const daysElapsed = React.useMemo(
     () =>
@@ -37,7 +37,8 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
   const totalDays =
     project.start_date && project.target_completion_date
       ? Math.floor(
-          (new Date(project.target_completion_date).getTime() - new Date(project.start_date).getTime()) /
+          (new Date(project.target_completion_date).getTime() -
+            new Date(project.start_date).getTime()) /
             (1000 * 60 * 60 * 24),
         )
       : 0;
@@ -53,7 +54,9 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${(project.baseline_budget || 0).toLocaleString()}</div>
+            <div className="text-2xl font-bold">
+              ${(project.baseline_budget || 0).toLocaleString()}
+            </div>
             <p className="text-xs text-muted-foreground mt-1">
               Current: ${(project.current_budget || 0).toLocaleString()}
             </p>
@@ -108,7 +111,9 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
               <Building className="h-5 w-5 text-muted-foreground mt-0.5" />
               <div>
                 <p className="text-sm font-medium">Project Number</p>
-                <p className="text-sm text-muted-foreground">{project.project_number || 'Not specified'}</p>
+                <p className="text-sm text-muted-foreground">
+                  {project.project_number || 'Not specified'}
+                </p>
               </div>
             </div>
 

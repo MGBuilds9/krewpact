@@ -96,7 +96,9 @@ export function DivisionSetupForm({ onSuccess, onCancel }: DivisionSetupFormProp
             Create Division
           </Button>
           {onCancel && (
-            <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
           )}
         </div>
       </form>

@@ -85,7 +85,9 @@ export function UserProvisioningForm({ onSuccess, onCancel }: UserProvisioningFo
             Provision User
           </Button>
           {onCancel && (
-            <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
           )}
         </div>
       </form>

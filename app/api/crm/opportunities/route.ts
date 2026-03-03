@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { opportunityCreateSchema } from '@/lib/validators/crm';
+import { getOrgIdFromAuth } from '@/lib/api/org';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -36,14 +37,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { division_id, stage, owner_user_id, account_id, view, limit, offset } =
-    parsed.data;
+  const { division_id, stage, owner_user_id, account_id, view, limit, offset } = parsed.data;
   const supabase = await createUserClient();
 
-  let query = supabase
-    .from('opportunities')
-    .select('*')
-    .order('created_at', { ascending: false });
+  let query = supabase.from('opportunities').select('*').order('created_at', { ascending: false });
 
   if (division_id) {
     query = query.eq('division_id', division_id);
@@ -88,8 +85,7 @@ export async function GET(req: NextRequest) {
 
     for (const opp of data ?? []) {
       const oppStage = (opp as Record<string, unknown>).stage as string;
-      const revenue =
-        ((opp as Record<string, unknown>).estimated_revenue as number) ?? 0;
+      const revenue = ((opp as Record<string, unknown>).estimated_revenue as number) ?? 0;
       if (stageMap[oppStage]) {
         stageMap[oppStage].opportunities.push(opp);
         stageMap[oppStage].total_value += revenue;
@@ -121,17 +117,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
+  const orgId = await getOrgIdFromAuth();
   const supabase = await createUserClient();
   const insertData = {
     ...parsed.data,
     stage: parsed.data.stage ?? 'intake',
+    org_id: orgId,
   };
 
-  const { data, error } = await supabase
-    .from('opportunities')
-    .insert(insertData)
-    .select()
-    .single();
+  const { data, error } = await supabase.from('opportunities').insert(insertData).select().single();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

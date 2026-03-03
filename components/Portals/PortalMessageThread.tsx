@@ -22,34 +22,36 @@ interface Props {
 export default function PortalMessageThread({ projectId, portalAccountId }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  const fetchMessages = async () => {
-    const res = await fetch(`/api/portals/messages?project_id=${projectId}&portal_account_id=${portalAccountId}&limit=100`);
-    if (res.ok) {
-      const body = await res.json();
-      setMessages(body.data ?? []);
-    }
-    setLoading(false);
-  };
-
-  const markRead = async (messageId: string) => {
-    await fetch(`/api/portals/messages/${messageId}/read`, { method: 'POST' });
-  };
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const res = await fetch(
+        `/api/portals/messages?project_id=${projectId}&portal_account_id=${portalAccountId}&limit=100`,
+      );
+      if (!cancelled && res.ok) {
+        const body = await res.json();
+        setMessages(body.data ?? []);
+      }
+      if (!cancelled) setLoading(false);
+    };
+    load();
+    const interval = setInterval(load, 30_000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [projectId, portalAccountId, refreshKey]);
 
   useEffect(() => {
-    fetchMessages();
-    // Auto-refresh every 30s
-    const interval = setInterval(fetchMessages, 30_000);
-    return () => clearInterval(interval);
-  }, [projectId, portalAccountId]);
-
-  useEffect(() => {
-    // Mark unread inbound messages as read
+    // Mark unread outbound messages as read and scroll to bottom
     messages
       .filter((m) => m.direction === 'outbound' && !m.read_at)
-      .forEach((m) => markRead(m.id));
-    // Scroll to bottom
+      .forEach((m) => {
+        fetch(`/api/portals/messages/${m.id}/read`, { method: 'POST' });
+      });
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
@@ -71,10 +73,7 @@ export default function PortalMessageThread({ projectId, portalAccountId }: Prop
         {messages.map((msg) => {
           const isFromPortal = msg.direction === 'inbound';
           return (
-            <div
-              key={msg.id}
-              className={`flex ${isFromPortal ? 'justify-end' : 'justify-start'}`}
-            >
+            <div key={msg.id} className={`flex ${isFromPortal ? 'justify-end' : 'justify-start'}`}>
               <div
                 className={`max-w-[75%] rounded-2xl px-4 py-3 shadow-sm ${
                   isFromPortal
@@ -83,13 +82,20 @@ export default function PortalMessageThread({ projectId, portalAccountId }: Prop
                 }`}
               >
                 {msg.subject && (
-                  <p className={`text-xs font-semibold mb-1 ${isFromPortal ? 'text-blue-100' : 'text-gray-500'}`}>
+                  <p
+                    className={`text-xs font-semibold mb-1 ${isFromPortal ? 'text-blue-100' : 'text-gray-500'}`}
+                  >
                     {msg.subject}
                   </p>
                 )}
                 <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.body}</p>
-                <p className={`text-[10px] mt-1.5 ${isFromPortal ? 'text-blue-200' : 'text-gray-400'}`}>
-                  {new Date(msg.created_at).toLocaleString('en-CA', { timeStyle: 'short', dateStyle: 'short' })}
+                <p
+                  className={`text-[10px] mt-1.5 ${isFromPortal ? 'text-blue-200' : 'text-gray-400'}`}
+                >
+                  {new Date(msg.created_at).toLocaleString('en-CA', {
+                    timeStyle: 'short',
+                    dateStyle: 'short',
+                  })}
                   {isFromPortal && msg.read_at && ' · Read'}
                 </p>
               </div>
@@ -103,7 +109,9 @@ export default function PortalMessageThread({ projectId, portalAccountId }: Prop
       <div className="border-t border-gray-200 pt-4">
         <PortalMessageForm
           portalAccountId={portalAccountId}
-          onSuccess={() => { fetchMessages(); }}
+          onSuccess={() => {
+            setRefreshKey((k) => k + 1);
+          }}
         />
       </div>
     </div>

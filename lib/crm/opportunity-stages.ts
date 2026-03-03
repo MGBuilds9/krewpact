@@ -27,9 +27,7 @@ export const ALLOWED_TRANSITIONS: Record<OpportunityStage, OpportunityStage[]> =
   closed_lost: [],
 };
 
-export type TransitionResult =
-  | { valid: true }
-  | { valid: false; reason: string };
+export type TransitionResult = { valid: true } | { valid: false; reason: string };
 
 /**
  * Validate whether an opportunity stage transition is allowed.

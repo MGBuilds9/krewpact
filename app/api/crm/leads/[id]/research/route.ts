@@ -37,11 +37,7 @@ export async function POST(
   const website = (brave?.website as string) ?? (lead.domain as string | null);
 
   try {
-    const result = await deepResearchLead(
-      lead.company_name ?? '',
-      website,
-      enrichmentData,
-    );
+    const result = await deepResearchLead(lead.company_name ?? '', website, enrichmentData);
 
     // Store deep research in enrichment_data
     const updatedEnrichment = {
@@ -61,9 +57,6 @@ export async function POST(
     return NextResponse.json({ success: true, research: result });
   } catch (err) {
     console.error(`Deep research error for ${id}:`, err);
-    return NextResponse.json(
-      { error: 'Deep research failed' },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: 'Deep research failed' }, { status: 500 });
   }
 }

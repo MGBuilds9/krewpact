@@ -81,7 +81,7 @@ export default function InboxPreview(): React.ReactElement {
                 key={message.id}
                 className={cn(
                   'flex items-start gap-3 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors',
-                  !message.isRead && 'bg-muted/30'
+                  !message.isRead && 'bg-muted/30',
                 )}
               >
                 <div className="flex-1 min-w-0">
@@ -89,13 +89,18 @@ export default function InboxPreview(): React.ReactElement {
                     <p
                       className={cn(
                         'text-sm truncate',
-                        !message.isRead ? 'font-semibold' : 'font-medium'
+                        !message.isRead ? 'font-semibold' : 'font-medium',
                       )}
                     >
-                      {message.from?.emailAddress.name || message.from?.emailAddress.address || 'Unknown'}
+                      {message.from?.emailAddress.name ||
+                        message.from?.emailAddress.address ||
+                        'Unknown'}
                     </p>
                     {!message.isRead && (
-                      <Badge variant="default" className="text-[10px] px-1.5 py-0 h-4 flex-shrink-0">
+                      <Badge
+                        variant="default"
+                        className="text-[10px] px-1.5 py-0 h-4 flex-shrink-0"
+                      >
                         New
                       </Badge>
                     )}
@@ -106,7 +111,7 @@ export default function InboxPreview(): React.ReactElement {
                   <p
                     className={cn(
                       'text-sm truncate',
-                      !message.isRead ? 'font-medium text-foreground' : 'text-muted-foreground'
+                      !message.isRead ? 'font-medium text-foreground' : 'text-muted-foreground',
                     )}
                   >
                     {message.subject || '(no subject)'}

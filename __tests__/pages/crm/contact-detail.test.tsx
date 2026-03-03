@@ -11,7 +11,7 @@ vi.mock('next/navigation', () => ({
     back: vi.fn(),
   }),
   usePathname: () => '/crm/contacts/ct-1',
-  useParams: () => ({ id: 'ct-1' }),
+  useParams: () => ({ orgSlug: 'default', id: 'ct-1' }),
   useSearchParams: () => new URLSearchParams(),
 }));
 
@@ -37,7 +37,7 @@ vi.mock('@/contexts/DivisionContext', () => ({
   }),
 }));
 
-import ContactDetailPage from '@/app/(dashboard)/crm/contacts/[id]/page';
+import ContactDetailPage from '@/app/(dashboard)/org/[orgSlug]/crm/contacts/[id]/page';
 
 const baseContact = {
   id: 'ct-1',
@@ -70,7 +70,10 @@ describe('Contact Detail Page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseAccount.mockReturnValue({ data: undefined, isLoading: false });
-    mockUseActivities.mockReturnValue({ data: { data: [], total: 0, hasMore: false }, isLoading: false });
+    mockUseActivities.mockReturnValue({
+      data: { data: [], total: 0, hasMore: false },
+      isLoading: false,
+    });
   });
 
   it('shows loading state', () => {
@@ -98,7 +101,10 @@ describe('Contact Detail Page', () => {
   });
 
   it('shows Primary badge when contact is_primary', () => {
-    mockUseContact.mockReturnValue({ data: { ...baseContact, is_primary: true }, isLoading: false });
+    mockUseContact.mockReturnValue({
+      data: { ...baseContact, is_primary: true },
+      isLoading: false,
+    });
     render(<ContactDetailPage />);
     expect(screen.getByText('Primary')).toBeDefined();
   });

@@ -59,7 +59,8 @@ export function WonDealDialog({ opportunity, open, onOpenChange }: WonDealDialog
 
         {!canMarkWon && (
           <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-            Only opportunities in &quot;contracted&quot; stage can be marked as won. Current stage: &quot;{opportunity.stage}&quot;
+            Only opportunities in &quot;contracted&quot; stage can be marked as won. Current stage:
+            &quot;{opportunity.stage}&quot;
           </div>
         )}
 
@@ -99,10 +100,7 @@ export function WonDealDialog({ opportunity, open, onOpenChange }: WonDealDialog
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={!canMarkWon || markWon.isPending}
-          >
+          <Button onClick={handleSubmit} disabled={!canMarkWon || markWon.isPending}>
             {markWon.isPending ? 'Saving...' : 'Mark as Won'}
           </Button>
         </DialogFooter>

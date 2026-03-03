@@ -23,8 +23,6 @@ export function mapSupplierToErp(supplier: SupplierMapInput): Record<string, unk
     default_currency: 'CAD',
     krewpact_id: supplier.id,
     supplier_details: supplier.account_type || '',
-    primary_address: supplier.billing_address
-      ? JSON.stringify(supplier.billing_address)
-      : null,
+    primary_address: supplier.billing_address ? JSON.stringify(supplier.billing_address) : null,
   };
 }

@@ -77,7 +77,10 @@ export function useCreateReferenceDataSet() {
 export function useReferenceDataValues(setId: string) {
   return useQuery({
     queryKey: ['reference-data-values', setId],
-    queryFn: () => apiFetch<PaginatedResponse<ReferenceDataValue>>(`/api/governance/reference-data/${setId}/values`),
+    queryFn: () =>
+      apiFetch<PaginatedResponse<ReferenceDataValue>>(
+        `/api/governance/reference-data/${setId}/values`,
+      ),
     enabled: !!setId,
     staleTime: 30_000,
   });
@@ -87,7 +90,10 @@ export function useAddReferenceDataValue(setId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: Record<string, unknown>) =>
-      apiFetch<ReferenceDataValue>(`/api/governance/reference-data/${setId}/values`, { method: 'POST', body: data }),
+      apiFetch<ReferenceDataValue>(`/api/governance/reference-data/${setId}/values`, {
+        method: 'POST',
+        body: data,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reference-data-values', setId] });
     },
@@ -126,7 +132,12 @@ export function useUpdatePrivacyRequest() {
 }
 
 // BCP incidents
-export function useBCPIncidents(params?: { status?: string; severity?: string; limit?: number; offset?: number }) {
+export function useBCPIncidents(params?: {
+  status?: string;
+  severity?: string;
+  limit?: number;
+  offset?: number;
+}) {
   return useQuery({
     queryKey: ['bcp-incidents', params],
     queryFn: () => apiFetch<PaginatedResponse<BCPIncident>>('/api/bcp/incidents', { params }),

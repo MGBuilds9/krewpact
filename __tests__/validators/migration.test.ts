@@ -130,10 +130,12 @@ describe('privacyRequestCreateSchema', () => {
 
   it('accepts all valid request_type enum values', () => {
     for (const request_type of ['access', 'correction', 'deletion', 'export'] as const) {
-      expect(privacyRequestCreateSchema.safeParse({
-        requester_email: 'client@example.com',
-        request_type,
-      }).success).toBe(true);
+      expect(
+        privacyRequestCreateSchema.safeParse({
+          requester_email: 'client@example.com',
+          request_type,
+        }).success,
+      ).toBe(true);
     }
   });
 
@@ -228,11 +230,13 @@ describe('bcpIncidentCreateSchema', () => {
 
   it('accepts all valid severity enum values', () => {
     for (const severity of ['sev1', 'sev2', 'sev3', 'sev4'] as const) {
-      expect(bcpIncidentCreateSchema.safeParse({
-        incident_number: 'INC-001',
-        severity,
-        title: 'Test incident',
-      }).success).toBe(true);
+      expect(
+        bcpIncidentCreateSchema.safeParse({
+          incident_number: 'INC-001',
+          severity,
+          title: 'Test incident',
+        }).success,
+      ).toBe(true);
     }
   });
 });

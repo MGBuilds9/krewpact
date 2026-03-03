@@ -109,18 +109,11 @@ const TERMINAL_STAGES = ['contracted', 'closed_lost'];
 
 // --- Pure functions ---
 
-export function calculatePipelineMetrics(
-  opportunities: OpportunityData[],
-): PipelineMetrics {
+export function calculatePipelineMetrics(opportunities: OpportunityData[]): PipelineMetrics {
   // Only count active pipeline (exclude terminal states)
-  const active = opportunities.filter(
-    (o) => !TERMINAL_STAGES.includes(o.stage),
-  );
+  const active = opportunities.filter((o) => !TERMINAL_STAGES.includes(o.stage));
 
-  const stageMap = new Map<
-    string,
-    { count: number; value: number; weightedValue: number }
-  >();
+  const stageMap = new Map<string, { count: number; value: number; weightedValue: number }>();
 
   for (const stage of ACTIVE_STAGES) {
     stageMap.set(stage, { count: 0, value: 0, weightedValue: 0 });
@@ -151,14 +144,12 @@ export function calculatePipelineMetrics(
     }
   }
 
-  const stageBreakdown = Array.from(stageMap.entries()).map(
-    ([stage, data]) => ({
-      stage,
-      count: data.count,
-      value: data.value,
-      weightedValue: data.weightedValue,
-    }),
-  );
+  const stageBreakdown = Array.from(stageMap.entries()).map(([stage, data]) => ({
+    stage,
+    count: data.count,
+    value: data.value,
+    weightedValue: data.weightedValue,
+  }));
 
   return {
     totalPipelineValue: totalValue,
@@ -169,31 +160,19 @@ export function calculatePipelineMetrics(
   };
 }
 
-export function calculateConversionMetrics(
-  leads: LeadData[],
-): ConversionMetrics {
+export function calculateConversionMetrics(leads: LeadData[]): ConversionMetrics {
   const total = leads.length;
 
   // Qualified = any stage beyond 'new' and 'contacted'
-  const qualifiedStages = [
-    'qualified',
-    'converted',
-    'won',
-    'proposal',
-    'negotiation',
-  ];
+  const qualifiedStages = ['qualified', 'converted', 'won', 'proposal', 'negotiation'];
   const convertedStages = ['converted', 'won'];
   const lostStages = ['lost', 'disqualified'];
 
   const qualified = leads.filter(
-    (l) =>
-      qualifiedStages.includes(l.status) ||
-      convertedStages.includes(l.status),
+    (l) => qualifiedStages.includes(l.status) || convertedStages.includes(l.status),
   ).length;
 
-  const converted = leads.filter((l) =>
-    convertedStages.includes(l.status),
-  ).length;
+  const converted = leads.filter((l) => convertedStages.includes(l.status)).length;
 
   const lost = leads.filter((l) => lostStages.includes(l.status)).length;
 
@@ -208,9 +187,7 @@ export function calculateConversionMetrics(
   };
 }
 
-export function calculateVelocityMetrics(
-  opportunities: OpportunityData[],
-): VelocityMetrics {
+export function calculateVelocityMetrics(opportunities: OpportunityData[]): VelocityMetrics {
   const wonDeals = opportunities.filter((o) => o.stage === 'contracted');
 
   let totalDaysToClose = 0;
@@ -235,13 +212,13 @@ export function calculateVelocityMetrics(
     // Calculate time per stage from history
     if (opp.opportunity_stage_history && opp.opportunity_stage_history.length > 0) {
       const sortedHistory = [...opp.opportunity_stage_history].sort(
-        (a, b) =>
-          new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
       );
 
       for (let i = 0; i < sortedHistory.length; i++) {
         const entry = sortedHistory[i];
-        const stageStart = i === 0 ? new Date(opp.created_at) : new Date(sortedHistory[i - 1].created_at);
+        const stageStart =
+          i === 0 ? new Date(opp.created_at) : new Date(sortedHistory[i - 1].created_at);
         const stageEnd = new Date(entry.created_at);
         const days = Math.max(
           0,
@@ -267,9 +244,7 @@ export function calculateVelocityMetrics(
 
   return {
     averageDaysToClose:
-      dealsWithCloseTime > 0
-        ? Math.round((totalDaysToClose / dealsWithCloseTime) * 10) / 10
-        : 0,
+      dealsWithCloseTime > 0 ? Math.round((totalDaysToClose / dealsWithCloseTime) * 10) / 10 : 0,
     averageDaysInStage,
     dealsClosed: wonDeals.length,
     dealsClosedValue,
@@ -277,10 +252,7 @@ export function calculateVelocityMetrics(
 }
 
 export function calculateSourceMetrics(leads: LeadData[]): SourceMetrics {
-  const sourceMap = new Map<
-    string,
-    { count: number; value: number; converted: number }
-  >();
+  const sourceMap = new Map<string, { count: number; value: number; converted: number }>();
 
   for (const lead of leads) {
     const source = lead.source_channel ?? 'Unknown';
@@ -321,8 +293,18 @@ export interface ForecastOpportunityData {
 }
 
 const MONTH_LABELS = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
 ];
 
 /**

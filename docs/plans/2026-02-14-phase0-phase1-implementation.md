@@ -15,9 +15,10 @@
 ### Task 1: Archive mdm-contracting-hub
 
 **Files:**
+
 - Move: `C:/Users/Michael/Code/mdm-contracting-hub/` → `C:/Users/Michael/Code/MDM-Projects/_archived/mdm-contracting-hub/`
 
-**Step 1: Create _archived directory if needed**
+**Step 1: Create \_archived directory if needed**
 
 Run: `mkdir -p C:/Users/Michael/Code/MDM-Projects/_archived/`
 
@@ -37,6 +38,7 @@ Expected: `LeadForge-MDM-Group/  MDM-Hub-Project/  mdm-contracting-hub/`
 **Context:** JobTread was evaluated as a construction PM platform and serves as KrewPact's long-term feature floor — the minimum feature set KrewPact must always match or exceed across all phases (P0+P1+P2). MDM currently uses Sage 50 Accounting + Sage Construction Management (being migrated to ERPNext). JobTread is a benchmark, not a rejected alternative.
 
 **Files to modify (active repos only — skip archived):**
+
 - Modify: `C:/Users/Michael/Code/MDM-Projects/CLAUDE.md`
 - Modify: `C:/Users/Michael/Code/MDM-Projects/TASKS.md`
 - Modify: `C:/Users/Michael/Code/MDM-Projects/memory/glossary.md`
@@ -58,6 +60,7 @@ Expected: `LeadForge-MDM-Group/  MDM-Hub-Project/  mdm-contracting-hub/`
 **Step 1: For each file, reframe JobTread references**
 
 Pattern: Reframe JobTread as the feature floor benchmark, not a rejected tool:
+
 - "replacing JobTread" → "matching or exceeding the JobTread feature floor"
 - "JobTread migration" → "Sage data migration"
 - "JobTread data exports" → "Sage 50 and Sage Construction Management data exports"
@@ -68,6 +71,7 @@ Pattern: Reframe JobTread as the feature floor benchmark, not a rejected tool:
 **Step 2: Commit in each repo that changed**
 
 KrewPact repo:
+
 ```bash
 cd C:/Users/Michael/Code/MDM-Projects/krewpact
 git add -A
@@ -81,6 +85,7 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 ```
 
 MDM-Book-Internal repo:
+
 ```bash
 cd C:/Users/Michael/Code/MDM-Projects/MDM-Book-Internal
 git add -A
@@ -90,6 +95,7 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 ```
 
 MDM-Projects root (CLAUDE.md, TASKS.md, memory/):
+
 ```bash
 cd C:/Users/Michael/Code/MDM-Projects
 git add CLAUDE.md TASKS.md memory/
@@ -105,6 +111,7 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 ### Task 3: Add PostHog to mdm-website-v2
 
 **Files:**
+
 - Modify: `C:/Users/Michael/Code/MDM-Projects/mdm-website-v2/package.json` (add posthog-js)
 - Create: `C:/Users/Michael/Code/MDM-Projects/mdm-website-v2/src/lib/posthog.ts`
 - Create: `C:/Users/Michael/Code/MDM-Projects/mdm-website-v2/src/components/PostHogProvider.tsx`
@@ -120,14 +127,15 @@ Run: `cd C:/Users/Michael/Code/MDM-Projects/mdm-website-v2 && npm install postho
 **Step 2: Create PostHog client utility**
 
 Create `src/lib/posthog.ts`:
+
 ```typescript
-import posthog from 'posthog-js'
+import posthog from 'posthog-js';
 
 export function initPostHog() {
-  const key = process.env.NEXT_PUBLIC_POSTHOG_KEY
-  const host = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com'
+  const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+  const host = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com';
 
-  if (typeof window === 'undefined' || !key) return
+  if (typeof window === 'undefined' || !key) return;
 
   posthog.init(key, {
     api_host: host,
@@ -136,15 +144,16 @@ export function initPostHog() {
     capture_pageleave: true,
     persistence: 'localStorage+cookie',
     cookie_banner_dismissed: false, // Respect cookie consent
-  })
+  });
 }
 
-export { posthog }
+export { posthog };
 ```
 
 **Step 3: Create PostHog provider component**
 
 Create `src/components/PostHogProvider.tsx`:
+
 ```typescript
 'use client'
 
@@ -177,12 +186,14 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
 **Step 4: Update CSP headers for PostHog**
 
 Modify `next.config.mjs` — add PostHog domains to CSP:
+
 - `script-src`: add `https://us.i.posthog.com`
 - `connect-src`: add `https://us.i.posthog.com`
 
 **Step 5: Add PostHog provider to frontend layout**
 
 Modify `src/app/(frontend)/layout.tsx`:
+
 - Import `PostHogProvider` from `@/components/PostHogProvider`
 - Wrap children with `<PostHogProvider>` inside the `<ClientLayout>` wrapper
 - Add `<Suspense>` boundary around PostHogProvider (searchParams needs it)
@@ -190,6 +201,7 @@ Modify `src/app/(frontend)/layout.tsx`:
 **Step 6: Add env vars to .env.example**
 
 Add to `.env.example`:
+
 ```env
 # PostHog Analytics (optional — tracking disabled without key)
 # NEXT_PUBLIC_POSTHOG_KEY=phc_xxxxx
@@ -199,8 +211,9 @@ Add to `.env.example`:
 **Step 7: Write test**
 
 Create `src/__tests__/posthog.test.ts`:
+
 ```typescript
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock posthog-js before import
 vi.mock('posthog-js', () => ({
@@ -214,33 +227,36 @@ vi.mock('posthog-js', () => ({
     capture: vi.fn(),
     __loaded: false,
   },
-}))
+}));
 
 describe('PostHog initialization', () => {
   beforeEach(() => {
-    vi.resetModules()
-    delete process.env.NEXT_PUBLIC_POSTHOG_KEY
-  })
+    vi.resetModules();
+    delete process.env.NEXT_PUBLIC_POSTHOG_KEY;
+  });
 
   it('does not initialize without NEXT_PUBLIC_POSTHOG_KEY', async () => {
-    const { initPostHog } = await import('@/lib/posthog')
-    const posthogModule = await import('posthog-js')
-    initPostHog()
-    expect(posthogModule.default.init).not.toHaveBeenCalled()
-  })
+    const { initPostHog } = await import('@/lib/posthog');
+    const posthogModule = await import('posthog-js');
+    initPostHog();
+    expect(posthogModule.default.init).not.toHaveBeenCalled();
+  });
 
   it('initializes with NEXT_PUBLIC_POSTHOG_KEY set', async () => {
-    process.env.NEXT_PUBLIC_POSTHOG_KEY = 'phc_test123'
+    process.env.NEXT_PUBLIC_POSTHOG_KEY = 'phc_test123';
     // Mock window
-    Object.defineProperty(global, 'window', { value: {}, writable: true })
-    const { initPostHog } = await import('@/lib/posthog')
-    const posthogModule = await import('posthog-js')
-    initPostHog()
-    expect(posthogModule.default.init).toHaveBeenCalledWith('phc_test123', expect.objectContaining({
-      capture_pageview: true,
-    }))
-  })
-})
+    Object.defineProperty(global, 'window', { value: {}, writable: true });
+    const { initPostHog } = await import('@/lib/posthog');
+    const posthogModule = await import('posthog-js');
+    initPostHog();
+    expect(posthogModule.default.init).toHaveBeenCalledWith(
+      'phc_test123',
+      expect.objectContaining({
+        capture_pageview: true,
+      }),
+    );
+  });
+});
 ```
 
 **Step 8: Run tests**
@@ -266,6 +282,7 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 ### Task 4: Add cookie consent banner (PIPEDA compliance)
 
 **Files:**
+
 - Create: `C:/Users/Michael/Code/MDM-Projects/mdm-website-v2/src/components/CookieConsent.tsx`
 - Modify: `C:/Users/Michael/Code/MDM-Projects/mdm-website-v2/src/app/(frontend)/layout.tsx` (add banner)
 - Modify: `C:/Users/Michael/Code/MDM-Projects/mdm-website-v2/src/lib/posthog.ts` (respect consent)
@@ -273,6 +290,7 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 **Step 1: Create cookie consent component**
 
 Create `src/components/CookieConsent.tsx`:
+
 ```typescript
 'use client'
 
@@ -368,12 +386,14 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 ### Task 5: Upgrade contact form with new fields
 
 **Files:**
+
 - Modify: `C:/Users/Michael/Code/MDM-Projects/mdm-website-v2/src/components/ContactForm.tsx`
 - Modify: `C:/Users/Michael/Code/MDM-Projects/mdm-website-v2/src/app/api/contact/route.ts`
 
 **Step 1: Add new fields to ContactForm.tsx**
 
 Add these fields to the form state and JSX (after the service/position row):
+
 - **Budget Range** (select): "Under $25K", "$25K - $50K", "$50K - $100K", "$100K - $250K", "$250K - $500K", "$500K+", "Not sure yet"
 - **Timeline** (select): "ASAP", "1-3 months", "3-6 months", "6-12 months", "Just exploring"
 - **How did you hear about us?** (select): "Google Search", "Referral", "Social Media", "Drive-by / Signage", "Repeat Client", "Bid Platform", "Other"
@@ -383,6 +403,7 @@ Only show budget/timeline/how-found for `mode === 'quote'` (not job applications
 **Step 2: Update API route to accept new fields**
 
 Modify `src/app/api/contact/route.ts`:
+
 - Destructure `budget`, `timeline`, `howFound` from request body
 - Add type + length validation for new fields
 - Include in email HTML template
@@ -410,6 +431,7 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 ### Task 6: Add speed-to-lead Teams webhook
 
 **Files:**
+
 - Create: `C:/Users/Michael/Code/MDM-Projects/mdm-website-v2/src/lib/teams-webhook.ts`
 - Modify: `C:/Users/Michael/Code/MDM-Projects/mdm-website-v2/src/app/api/contact/route.ts`
 - Modify: `C:/Users/Michael/Code/MDM-Projects/mdm-website-v2/.env.example`
@@ -418,21 +440,22 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 **Step 1: Create Teams webhook utility**
 
 Create `src/lib/teams-webhook.ts`:
+
 ```typescript
 type LeadAlert = {
-  name: string
-  email: string
-  phone?: string
-  service?: string
-  budget?: string
-  timeline?: string
-  howFound?: string
-  message: string
-}
+  name: string;
+  email: string;
+  phone?: string;
+  service?: string;
+  budget?: string;
+  timeline?: string;
+  howFound?: string;
+  message: string;
+};
 
 export async function sendTeamsLeadAlert(lead: LeadAlert): Promise<void> {
-  const webhookUrl = process.env.TEAMS_WEBHOOK_URL
-  if (!webhookUrl) return
+  const webhookUrl = process.env.TEAMS_WEBHOOK_URL;
+  if (!webhookUrl) return;
 
   const card = {
     type: 'message',
@@ -474,19 +497,20 @@ export async function sendTeamsLeadAlert(lead: LeadAlert): Promise<void> {
         },
       },
     ],
-  }
+  };
 
   await fetch(webhookUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(card),
-  })
+  });
 }
 ```
 
 **Step 2: Wire into contact form API**
 
 Modify `src/app/api/contact/route.ts`:
+
 - Import `sendTeamsLeadAlert`
 - After the Resend email send, fire-and-forget the Teams alert (same pattern as KrewPact integration)
 - Only send for quote submissions, not job applications
@@ -494,6 +518,7 @@ Modify `src/app/api/contact/route.ts`:
 **Step 3: Add env var**
 
 Add to `.env.example`:
+
 ```env
 # Microsoft Teams Incoming Webhook (speed-to-lead alerts)
 # TEAMS_WEBHOOK_URL=https://outlook.office.com/webhook/...
@@ -502,28 +527,29 @@ Add to `.env.example`:
 **Step 4: Write test**
 
 Create `src/__tests__/teams-webhook.test.ts`:
+
 ```typescript
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 describe('sendTeamsLeadAlert', () => {
   beforeEach(() => {
-    vi.restoreAllMocks()
-    delete process.env.TEAMS_WEBHOOK_URL
-  })
+    vi.restoreAllMocks();
+    delete process.env.TEAMS_WEBHOOK_URL;
+  });
 
   it('does nothing without TEAMS_WEBHOOK_URL', async () => {
-    const fetchSpy = vi.spyOn(global, 'fetch')
-    const { sendTeamsLeadAlert } = await import('@/lib/teams-webhook')
-    await sendTeamsLeadAlert({ name: 'Test', email: 'test@test.com', message: 'Hi' })
-    expect(fetchSpy).not.toHaveBeenCalled()
-  })
+    const fetchSpy = vi.spyOn(global, 'fetch');
+    const { sendTeamsLeadAlert } = await import('@/lib/teams-webhook');
+    await sendTeamsLeadAlert({ name: 'Test', email: 'test@test.com', message: 'Hi' });
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
 
   it('sends adaptive card to Teams webhook', async () => {
-    process.env.TEAMS_WEBHOOK_URL = 'https://outlook.office.com/webhook/test'
-    const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue(new Response('ok'))
+    process.env.TEAMS_WEBHOOK_URL = 'https://outlook.office.com/webhook/test';
+    const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue(new Response('ok'));
 
-    vi.resetModules()
-    const { sendTeamsLeadAlert } = await import('@/lib/teams-webhook')
+    vi.resetModules();
+    const { sendTeamsLeadAlert } = await import('@/lib/teams-webhook');
     await sendTeamsLeadAlert({
       name: 'John Doe',
       email: 'john@example.com',
@@ -531,14 +557,14 @@ describe('sendTeamsLeadAlert', () => {
       service: 'General Contracting',
       budget: '$100K - $250K',
       message: 'Need a renovation',
-    })
+    });
 
     expect(fetchSpy).toHaveBeenCalledWith(
       'https://outlook.office.com/webhook/test',
       expect.objectContaining({ method: 'POST' }),
-    )
-  })
-})
+    );
+  });
+});
 ```
 
 **Step 5: Run tests**
@@ -564,18 +590,21 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 ### Task 7: Add auto-reply email to form submitters
 
 **Files:**
+
 - Modify: `C:/Users/Michael/Code/MDM-Projects/mdm-website-v2/src/app/api/contact/route.ts`
 
 **Step 1: Add auto-reply after the internal notification email**
 
 After the existing `resend.emails.send()` call, add a second send for the auto-reply to the submitter:
+
 ```typescript
 // Auto-reply to submitter (fire and forget)
-resend.emails.send({
-  from: process.env.RESEND_FROM_EMAIL || 'MDM Group Inc. <noreply@updates.mdmgroupinc.ca>',
-  to: [email],
-  subject: 'Thanks for contacting MDM Contracting',
-  html: `
+resend.emails
+  .send({
+    from: process.env.RESEND_FROM_EMAIL || 'MDM Group Inc. <noreply@updates.mdmgroupinc.ca>',
+    to: [email],
+    subject: 'Thanks for contacting MDM Contracting',
+    html: `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #2d2d2d; border-bottom: 2px solid #f97316; padding-bottom: 10px;">
         Thank you, ${safeName}!
@@ -596,7 +625,8 @@ resend.emails.send({
       </p>
     </div>
   `,
-}).catch(err => console.error('Auto-reply failed:', err))
+  })
+  .catch((err) => console.error('Auto-reply failed:', err));
 ```
 
 Only send auto-reply for quote submissions (not job applications — those get a different message).
@@ -623,11 +653,13 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 ### Task 8: Track contact form events in PostHog
 
 **Files:**
+
 - Modify: `C:/Users/Michael/Code/MDM-Projects/mdm-website-v2/src/components/ContactForm.tsx`
 
 **Step 1: Add PostHog event tracking to form**
 
 Import `posthog` from `@/lib/posthog` and capture events:
+
 - On form submit success: `posthog.capture('contact_form_submitted', { service, budget, timeline, howFound })`
 - On form submit error: `posthog.capture('contact_form_error', { error: errorMsg })`
 - Identify user on success: `posthog.identify(email, { name, phone, service })`
@@ -673,6 +705,7 @@ Expected: Build succeeds
 **Step 4: Test locally**
 
 Run: `cd C:/Users/Michael/Code/MDM-Projects/mdm-website-v2 && npm run dev`
+
 - Visit http://localhost:3000 — verify site loads
 - Visit http://localhost:3000/contact — verify new form fields appear
 - Check browser console — verify no PostHog errors (won't capture without key)
@@ -697,6 +730,7 @@ If anything broke, fix and commit.
 **Step 2: Set env vars in Vercel**
 
 Run:
+
 ```bash
 cd C:/Users/Michael/Code/MDM-Projects/mdm-website-v2
 npx vercel env add NEXT_PUBLIC_POSTHOG_KEY
@@ -730,18 +764,18 @@ Vercel auto-deploys from main.
 
 ## Summary
 
-| Task | What | Repo | Est. Effort |
-|------|------|------|-------------|
-| 1 | Archive mdm-contracting-hub | filesystem | 2 min |
-| 2 | Reframe JobTread as feature floor benchmark | krewpact, MDM-Book, MDM-Projects | 30 min |
-| 3 | Add PostHog analytics | mdm-website-v2 | 20 min |
-| 4 | Cookie consent banner | mdm-website-v2 | 15 min |
-| 5 | Upgrade contact form fields | mdm-website-v2 | 20 min |
-| 6 | Teams webhook for leads | mdm-website-v2 | 15 min |
-| 7 | Auto-reply email | mdm-website-v2 | 10 min |
-| 8 | PostHog form event tracking | mdm-website-v2 | 10 min |
-| 9 | Build verification | mdm-website-v2 | 15 min |
-| 10 | PostHog + Teams setup + deploy | Vercel + services | 20 min |
+| Task | What                                        | Repo                             | Est. Effort |
+| ---- | ------------------------------------------- | -------------------------------- | ----------- |
+| 1    | Archive mdm-contracting-hub                 | filesystem                       | 2 min       |
+| 2    | Reframe JobTread as feature floor benchmark | krewpact, MDM-Book, MDM-Projects | 30 min      |
+| 3    | Add PostHog analytics                       | mdm-website-v2                   | 20 min      |
+| 4    | Cookie consent banner                       | mdm-website-v2                   | 15 min      |
+| 5    | Upgrade contact form fields                 | mdm-website-v2                   | 20 min      |
+| 6    | Teams webhook for leads                     | mdm-website-v2                   | 15 min      |
+| 7    | Auto-reply email                            | mdm-website-v2                   | 10 min      |
+| 8    | PostHog form event tracking                 | mdm-website-v2                   | 10 min      |
+| 9    | Build verification                          | mdm-website-v2                   | 15 min      |
+| 10   | PostHog + Teams setup + deploy              | Vercel + services                | 20 min      |
 
 **Total:** ~10 tasks, ~2.5 hours of implementation
 

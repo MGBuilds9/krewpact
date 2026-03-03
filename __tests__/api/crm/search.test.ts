@@ -38,7 +38,10 @@ describe('GET /api/crm/search', () => {
     const client = mockSupabaseClient({
       tables: {
         leads: { data: [{ id: 'l1', company_name: 'Acme', stage: 'new' }], error: null },
-        contacts: { data: [{ id: 'c1', first_name: 'John', last_name: 'Doe', email: 'john@acme.com' }], error: null },
+        contacts: {
+          data: [{ id: 'c1', first_name: 'John', last_name: 'Doe', email: 'john@acme.com' }],
+          error: null,
+        },
         accounts: { data: [], error: null },
         opportunities: { data: [], error: null },
       },

@@ -36,19 +36,13 @@ function is_platform_admin(claims: JWTClaims): boolean {
 // =====================================================
 
 /** Division-scoped via lead: check if the lead's division is in user's divisions */
-function canAccessViaLeadDivision(
-  claims: JWTClaims,
-  leadDivisionId: string
-): boolean {
+function canAccessViaLeadDivision(claims: JWTClaims, leadDivisionId: string): boolean {
   if (is_platform_admin(claims)) return true;
   return krewpact_divisions(claims).includes(leadDivisionId);
 }
 
 /** Sequences SELECT: null division visible to all, otherwise division-scoped */
-function canSelectSequence(
-  claims: JWTClaims,
-  sequenceDivisionId: string | null
-): boolean {
+function canSelectSequence(claims: JWTClaims, sequenceDivisionId: string | null): boolean {
   if (is_platform_admin(claims)) return true;
   if (sequenceDivisionId === null) return true;
   return krewpact_divisions(claims).includes(sequenceDivisionId);

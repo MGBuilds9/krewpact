@@ -11,19 +11,10 @@ vi.mock('@/lib/microsoft/graph', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import {
-  getMicrosoftToken,
-  graphFetch,
-  buildGraphUrl,
-} from '@/lib/microsoft/graph';
+import { getMicrosoftToken, graphFetch, buildGraphUrl } from '@/lib/microsoft/graph';
 import { GET, POST } from '@/app/api/calendar/events/route';
 import { GET as GET_BY_ID } from '@/app/api/calendar/events/[id]/route';
-import {
-  mockClerkAuth,
-  mockClerkUnauth,
-  makeRequest,
-  makeJsonRequest,
-} from '@/__tests__/helpers';
+import { mockClerkAuth, mockClerkUnauth, makeRequest, makeJsonRequest } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
 const mockGetToken = vi.mocked(getMicrosoftToken);
@@ -50,9 +41,7 @@ function makeEvent(overrides: Record<string, unknown> = {}) {
 describe('GET /api/calendar/events', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockBuildGraphUrl.mockReturnValue(
-      'https://graph.microsoft.com/v1.0/me/events'
-    );
+    mockBuildGraphUrl.mockReturnValue('https://graph.microsoft.com/v1.0/me/events');
     mockGetToken.mockResolvedValue('mock-ms-token');
   });
 
@@ -82,8 +71,8 @@ describe('GET /api/calendar/events', () => {
 
     await GET(
       makeRequest(
-        '/api/calendar/events?startDateTime=2026-03-01T00:00:00&endDateTime=2026-03-31T23:59:59'
-      )
+        '/api/calendar/events?startDateTime=2026-03-01T00:00:00&endDateTime=2026-03-31T23:59:59',
+      ),
     );
 
     const calledUrl = mockGraphFetch.mock.calls[0][1] as string;
@@ -97,9 +86,7 @@ describe('GET /api/calendar/events', () => {
     mockClerkAuth(mockAuth, 'user_123');
     mockGraphFetch.mockResolvedValue({ value: [] });
 
-    await GET(
-      makeRequest('/api/calendar/events?mailbox=shared@mdm.ca')
-    );
+    await GET(makeRequest('/api/calendar/events?mailbox=shared@mdm.ca'));
 
     expect(mockBuildGraphUrl).toHaveBeenCalledWith('/events', 'shared@mdm.ca');
   });
@@ -107,9 +94,7 @@ describe('GET /api/calendar/events', () => {
   it('returns 400 for invalid query params', async () => {
     mockClerkAuth(mockAuth, 'user_123');
 
-    const res = await GET(
-      makeRequest('/api/calendar/events?top=-5')
-    );
+    const res = await GET(makeRequest('/api/calendar/events?top=-5'));
     expect(res.status).toBe(400);
   });
 });
@@ -117,9 +102,7 @@ describe('GET /api/calendar/events', () => {
 describe('POST /api/calendar/events', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockBuildGraphUrl.mockReturnValue(
-      'https://graph.microsoft.com/v1.0/me/events'
-    );
+    mockBuildGraphUrl.mockReturnValue('https://graph.microsoft.com/v1.0/me/events');
     mockGetToken.mockResolvedValue('mock-ms-token');
   });
 
@@ -131,7 +114,7 @@ describe('POST /api/calendar/events', () => {
         subject: 'Test',
         startDateTime: '2026-03-01T09:00:00',
         endDateTime: '2026-03-01T10:00:00',
-      })
+      }),
     );
     expect(res.status).toBe(401);
   });
@@ -147,7 +130,7 @@ describe('POST /api/calendar/events', () => {
         startDateTime: '2026-03-01T09:00:00',
         endDateTime: '2026-03-01T10:00:00',
         location: 'Job Site A',
-      })
+      }),
     );
 
     expect(res.status).toBe(201);
@@ -161,7 +144,7 @@ describe('POST /api/calendar/events', () => {
       expect.objectContaining({
         method: 'POST',
         body: expect.stringContaining('Site visit'),
-      })
+      }),
     );
   });
 
@@ -176,12 +159,10 @@ describe('POST /api/calendar/events', () => {
         startDateTime: '2026-03-01T14:00:00',
         endDateTime: '2026-03-01T15:00:00',
         location: 'Conference Room B',
-      })
+      }),
     );
 
-    const callBody = JSON.parse(
-      mockGraphFetch.mock.calls[0][2]?.body as string
-    );
+    const callBody = JSON.parse(mockGraphFetch.mock.calls[0][2]?.body as string);
     expect(callBody.body.content).toBe('Discuss phase 2 estimates');
     expect(callBody.body.contentType).toBe('Text');
     expect(callBody.location.displayName).toBe('Conference Room B');
@@ -193,7 +174,7 @@ describe('POST /api/calendar/events', () => {
     const res = await POST(
       makeJsonRequest('/api/calendar/events', {
         subject: '',
-      })
+      }),
     );
     expect(res.status).toBe(400);
   });
@@ -206,7 +187,7 @@ describe('POST /api/calendar/events', () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: 'not-json',
-      })
+      }),
     );
     expect(res.status).toBe(400);
   });
@@ -215,19 +196,16 @@ describe('POST /api/calendar/events', () => {
 describe('GET /api/calendar/events/[id]', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockBuildGraphUrl.mockReturnValue(
-      'https://graph.microsoft.com/v1.0/me/events/event_1'
-    );
+    mockBuildGraphUrl.mockReturnValue('https://graph.microsoft.com/v1.0/me/events/event_1');
     mockGetToken.mockResolvedValue('mock-ms-token');
   });
 
   it('returns 401 when not authenticated', async () => {
     mockClerkUnauth(mockAuth);
 
-    const res = await GET_BY_ID(
-      makeRequest('/api/calendar/events/event_1'),
-      { params: Promise.resolve({ id: 'event_1' }) }
-    );
+    const res = await GET_BY_ID(makeRequest('/api/calendar/events/event_1'), {
+      params: Promise.resolve({ id: 'event_1' }),
+    });
     expect(res.status).toBe(401);
   });
 
@@ -236,33 +214,25 @@ describe('GET /api/calendar/events/[id]', () => {
     const event = makeEvent();
     mockGraphFetch.mockResolvedValue(event);
 
-    const res = await GET_BY_ID(
-      makeRequest('/api/calendar/events/event_1'),
-      { params: Promise.resolve({ id: 'event_1' }) }
-    );
+    const res = await GET_BY_ID(makeRequest('/api/calendar/events/event_1'), {
+      params: Promise.resolve({ id: 'event_1' }),
+    });
 
     expect(res.status).toBe(200);
 
     const body = await res.json();
     expect(body.subject).toBe('Team standup');
-    expect(mockBuildGraphUrl).toHaveBeenCalledWith(
-      '/events/event_1',
-      undefined
-    );
+    expect(mockBuildGraphUrl).toHaveBeenCalledWith('/events/event_1', undefined);
   });
 
   it('passes mailbox param for shared calendar', async () => {
     mockClerkAuth(mockAuth, 'user_123');
     mockGraphFetch.mockResolvedValue(makeEvent());
 
-    await GET_BY_ID(
-      makeRequest('/api/calendar/events/event_1?mailbox=shared@mdm.ca'),
-      { params: Promise.resolve({ id: 'event_1' }) }
-    );
+    await GET_BY_ID(makeRequest('/api/calendar/events/event_1?mailbox=shared@mdm.ca'), {
+      params: Promise.resolve({ id: 'event_1' }),
+    });
 
-    expect(mockBuildGraphUrl).toHaveBeenCalledWith(
-      '/events/event_1',
-      'shared@mdm.ca'
-    );
+    expect(mockBuildGraphUrl).toHaveBeenCalledWith('/events/event_1', 'shared@mdm.ca');
   });
 });

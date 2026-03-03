@@ -25,7 +25,10 @@ import { GET as leadsGET, POST as leadsPOST } from '@/app/api/crm/leads/route';
 import { POST as leadStagePOST } from '@/app/api/crm/leads/[id]/stage/route';
 
 // Opportunity routes
-import { GET as opportunitiesGET, POST as opportunitiesPOST } from '@/app/api/crm/opportunities/route';
+import {
+  GET as opportunitiesGET,
+  POST as opportunitiesPOST,
+} from '@/app/api/crm/opportunities/route';
 import {
   GET as opportunityGET,
   PATCH as opportunityPATCH,
@@ -199,16 +202,12 @@ describe('CRM Integration: Full happy path', () => {
     expect(activityRes.status).toBe(201);
 
     // Step 8: Verify pipeline shows opportunity in correct stage
-    const pipelineData = [
-      makeOpportunity({ stage: 'estimating', estimated_revenue: 250000 }),
-    ];
+    const pipelineData = [makeOpportunity({ stage: 'estimating', estimated_revenue: 250000 })];
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({ tables: { opportunities: { data: pipelineData, error: null } } }),
     );
 
-    const pipelineRes = await opportunitiesGET(
-      makeRequest('/api/crm/opportunities?view=pipeline'),
-    );
+    const pipelineRes = await opportunitiesGET(makeRequest('/api/crm/opportunities?view=pipeline'));
     expect(pipelineRes.status).toBe(200);
     const pipeline = await pipelineRes.json();
     expect(pipeline.stages).toBeDefined();
@@ -228,17 +227,13 @@ describe('CRM Integration: Division isolation', () => {
   });
 
   it('user with division A only sees leads in division A', async () => {
-    const divALeads = [
-      makeLead({ division_id: VALID_DIVISION_ID, company_name: 'Div A Lead' }),
-    ];
+    const divALeads = [makeLead({ division_id: VALID_DIVISION_ID, company_name: 'Div A Lead' })];
     mockClerkAuth(mockAuth);
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({ tables: { leads: { data: divALeads, error: null } } }),
     );
 
-    const res = await leadsGET(
-      makeRequest(`/api/crm/leads?division_id=${VALID_DIVISION_ID}`),
-    );
+    const res = await leadsGET(makeRequest(`/api/crm/leads?division_id=${VALID_DIVISION_ID}`));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.data).toHaveLength(1);
@@ -253,9 +248,7 @@ describe('CRM Integration: Division isolation', () => {
       mockSupabaseClient({ tables: { leads: { data: [], error: null } } }),
     );
 
-    const res = await leadsGET(
-      makeRequest(`/api/crm/leads?division_id=${divBId}`),
-    );
+    const res = await leadsGET(makeRequest(`/api/crm/leads?division_id=${divBId}`));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.data).toHaveLength(0);
@@ -337,9 +330,7 @@ describe('CRM Integration: Pipeline aggregation', () => {
       mockSupabaseClient({ tables: { opportunities: { data: opportunities, error: null } } }),
     );
 
-    const res = await opportunitiesGET(
-      makeRequest('/api/crm/opportunities?view=pipeline'),
-    );
+    const res = await opportunitiesGET(makeRequest('/api/crm/opportunities?view=pipeline'));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.stages.intake.count).toBe(1);
@@ -361,9 +352,7 @@ describe('CRM Integration: Pipeline aggregation', () => {
       mockSupabaseClient({ tables: { opportunities: { data: opportunities, error: null } } }),
     );
 
-    const res = await opportunitiesGET(
-      makeRequest('/api/crm/opportunities?view=pipeline'),
-    );
+    const res = await opportunitiesGET(makeRequest('/api/crm/opportunities?view=pipeline'));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.stages.intake.count).toBe(3);
@@ -383,9 +372,30 @@ describe('CRM Integration: Stage history', () => {
   it('transitioning opportunity through 3 stages records full history', async () => {
     const opp = makeOpportunity({ stage: 'intake' });
     const stageHistory = [
-      { id: 'h1', opportunity_id: opp.id, from_stage: 'intake', to_stage: 'site_visit', changed_by: TEST_IDS.USER_ID, changed_at: '2026-01-10T00:00:00Z' },
-      { id: 'h2', opportunity_id: opp.id, from_stage: 'site_visit', to_stage: 'estimating', changed_by: TEST_IDS.USER_ID, changed_at: '2026-01-15T00:00:00Z' },
-      { id: 'h3', opportunity_id: opp.id, from_stage: 'estimating', to_stage: 'proposal', changed_by: TEST_IDS.USER_ID, changed_at: '2026-01-20T00:00:00Z' },
+      {
+        id: 'h1',
+        opportunity_id: opp.id,
+        from_stage: 'intake',
+        to_stage: 'site_visit',
+        changed_by: TEST_IDS.USER_ID,
+        changed_at: '2026-01-10T00:00:00Z',
+      },
+      {
+        id: 'h2',
+        opportunity_id: opp.id,
+        from_stage: 'site_visit',
+        to_stage: 'estimating',
+        changed_by: TEST_IDS.USER_ID,
+        changed_at: '2026-01-15T00:00:00Z',
+      },
+      {
+        id: 'h3',
+        opportunity_id: opp.id,
+        from_stage: 'estimating',
+        to_stage: 'proposal',
+        changed_by: TEST_IDS.USER_ID,
+        changed_at: '2026-01-20T00:00:00Z',
+      },
     ];
     mockClerkAuth(mockAuth);
     mockCreateUserClient.mockResolvedValue(
@@ -450,9 +460,7 @@ describe('CRM Integration: Search', () => {
   });
 
   it('search accounts returns matching results', async () => {
-    const matchingAccounts = [
-      makeAccount({ account_name: 'MDM Contracting' }),
-    ];
+    const matchingAccounts = [makeAccount({ account_name: 'MDM Contracting' })];
     mockClerkAuth(mockAuth);
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({ tables: { accounts: { data: matchingAccounts, error: null } } }),
@@ -471,9 +479,7 @@ describe('CRM Integration: Search', () => {
       mockSupabaseClient({ tables: { accounts: { data: [], error: null } } }),
     );
 
-    const res = await accountsGET(
-      makeRequest('/api/crm/accounts?search=NonExistentCompany'),
-    );
+    const res = await accountsGET(makeRequest('/api/crm/accounts?search=NonExistentCompany'));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.data).toHaveLength(0);
@@ -511,9 +517,7 @@ describe('CRM Integration: Cascading behavior', () => {
       mockSupabaseClient({ tables: { contacts: { data: [], error: null } } }),
     );
 
-    const res = await contactsGET(
-      makeRequest(`/api/crm/contacts?account_id=${VALID_ACCOUNT_ID}`),
-    );
+    const res = await contactsGET(makeRequest(`/api/crm/contacts?account_id=${VALID_ACCOUNT_ID}`));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.data).toHaveLength(0);

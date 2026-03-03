@@ -3,7 +3,14 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -152,7 +159,12 @@ export function ActivityForm({ entityType, entityId, onSuccess, onCancel }: Acti
 
         <div className="flex gap-2 justify-end pt-2">
           {onCancel && (
-            <Button type="button" variant="outline" onClick={onCancel} disabled={createActivity.isPending}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              disabled={createActivity.isPending}
+            >
               Cancel
             </Button>
           )}

@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { evaluateOperator, scoreLead, getNestedValue, type ScoringRule } from '@/lib/crm/scoring-engine';
+import {
+  evaluateOperator,
+  scoreLead,
+  getNestedValue,
+  type ScoringRule,
+} from '@/lib/crm/scoring-engine';
 
 // ============================================================
 // evaluateOperator — individual operator tests
@@ -233,7 +238,14 @@ describe('scoreLead', () => {
   it('sums multiple matching rules', () => {
     const rules = [
       makeRule({ id: 'r1', score_impact: 15 }),
-      makeRule({ id: 'r2', field_name: 'estimated_value', operator: 'greater_than', value: '50000', score_impact: 25, category: 'intent' }),
+      makeRule({
+        id: 'r2',
+        field_name: 'estimated_value',
+        operator: 'greater_than',
+        value: '50000',
+        score_impact: 25,
+        category: 'intent',
+      }),
     ];
     const lead = { source: 'referral', estimated_value: 100000 };
     const result = scoreLead(lead, rules);
@@ -243,9 +255,7 @@ describe('scoreLead', () => {
   });
 
   it('handles negative score impact', () => {
-    const rules = [
-      makeRule({ score_impact: -10 }),
-    ];
+    const rules = [makeRule({ score_impact: -10 })];
     const result = scoreLead({ source: 'referral' }, rules);
     expect(result.total_score).toBe(-10);
     expect(result.fit_score).toBe(-10);
@@ -254,8 +264,22 @@ describe('scoreLead', () => {
   it('separates scores by category', () => {
     const rules = [
       makeRule({ id: 'r1', category: 'fit', score_impact: 10 }),
-      makeRule({ id: 'r2', field_name: 'company_name', operator: 'exists', value: '', score_impact: 15, category: 'intent' }),
-      makeRule({ id: 'r3', field_name: 'email', operator: 'exists', value: '', score_impact: 5, category: 'engagement' }),
+      makeRule({
+        id: 'r2',
+        field_name: 'company_name',
+        operator: 'exists',
+        value: '',
+        score_impact: 15,
+        category: 'intent',
+      }),
+      makeRule({
+        id: 'r3',
+        field_name: 'email',
+        operator: 'exists',
+        value: '',
+        score_impact: 5,
+        category: 'engagement',
+      }),
     ];
     const lead = { source: 'referral', company_name: 'ABC Corp', email: 'test@test.com' };
     const result = scoreLead(lead, rules);
@@ -321,9 +345,30 @@ describe('scoreLead', () => {
 
   it('scores mixed flat + nested rules correctly', () => {
     const rules = [
-      makeRule({ id: 'r1', field_name: 'industry', operator: 'contains', value: 'construction', score_impact: 15, category: 'fit' }),
-      makeRule({ id: 'r2', field_name: 'enrichment_data.google_maps.business_status', operator: 'equals', value: 'OPERATIONAL', score_impact: 5, category: 'fit' }),
-      makeRule({ id: 'r3', field_name: 'enrichment_data.apollo_match.email', operator: 'exists', value: '_', score_impact: 10, category: 'intent' }),
+      makeRule({
+        id: 'r1',
+        field_name: 'industry',
+        operator: 'contains',
+        value: 'construction',
+        score_impact: 15,
+        category: 'fit',
+      }),
+      makeRule({
+        id: 'r2',
+        field_name: 'enrichment_data.google_maps.business_status',
+        operator: 'equals',
+        value: 'OPERATIONAL',
+        score_impact: 5,
+        category: 'fit',
+      }),
+      makeRule({
+        id: 'r3',
+        field_name: 'enrichment_data.apollo_match.email',
+        operator: 'exists',
+        value: '_',
+        score_impact: 10,
+        category: 'intent',
+      }),
     ];
     const lead = {
       industry: 'General Construction',

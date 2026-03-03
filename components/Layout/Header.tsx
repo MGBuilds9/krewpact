@@ -1,18 +1,9 @@
-"use client";
+'use client';
 
-import React from "react";
-import {
-  Settings,
-  User,
-  Menu,
-  LogOut,
-  Bell,
-  MoreHorizontal,
-  Eye,
-  X,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import React from 'react';
+import { Settings, User, Menu, LogOut, Bell, MoreHorizontal, Eye, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,55 +11,56 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Navigation } from "./Navigation";
-import { DivisionSelector } from "./DivisionSelector";
-import { MobileNavigationDrawer } from "./MobileNavigationDrawer";
-import { QuickAccessToolbar } from "./QuickAccessToolbar";
-import { NotificationBell } from "@/components/Notifications";
-import { MDMLogo } from "@/components/ui/MDMLogo";
-import { CommandPalette } from "./CommandPalette";
-import { useUser, useClerk } from "@clerk/nextjs";
-import { useRouter, usePathname } from "next/navigation";
-import { useImpersonation } from "@/contexts/ImpersonationContext";
-import { useUserRBAC } from "@/hooks/useRBAC";
-import { toast } from "sonner";
+} from '@/components/ui/dropdown-menu';
+import { Navigation } from './Navigation';
+import { DivisionSelector } from './DivisionSelector';
+import { MobileNavigationDrawer } from './MobileNavigationDrawer';
+import { QuickAccessToolbar } from './QuickAccessToolbar';
+import { NotificationBell } from '@/components/Notifications';
+import { MDMLogo } from '@/components/ui/MDMLogo';
+import { CommandPalette } from './CommandPalette';
+import { useUser, useClerk } from '@clerk/nextjs';
+import { usePathname } from 'next/navigation';
+import { useOrgRouter } from '@/hooks/useOrgRouter';
+import { useImpersonation } from '@/contexts/ImpersonationContext';
+import { useUserRBAC } from '@/hooks/useRBAC';
+import { toast } from 'sonner';
 
 export function Header() {
   const { user } = useUser();
   const { signOut } = useClerk();
-  const router = useRouter();
+  const { push: orgPush, orgPath } = useOrgRouter();
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = React.useState(false);
 
   const { isImpersonating, stopImpersonation } = useImpersonation();
   const { isAdmin, primaryRole } = useUserRBAC();
-  const userName = user ? `${user.firstName} ${user.lastName}` : "Loading...";
+  const userName = user ? `${user.firstName} ${user.lastName}` : 'Loading...';
   const userRole = primaryRole
-    ? primaryRole.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())
-    : "Team Member";
-  const showQuickAccessToolbar = pathname !== "/dashboard" && pathname !== "/";
+    ? primaryRole.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
+    : 'Team Member';
+  const showQuickAccessToolbar = !pathname.endsWith('/dashboard') && pathname !== '/';
 
   const handleSignOut = async () => {
     try {
       await signOut();
     } catch {
-      toast.error("Failed to sign out. Please try again.");
+      toast.error('Failed to sign out. Please try again.');
     }
   };
 
   // Keyboard shortcut for command palette
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         setIsCommandPaletteOpen(true);
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   return (
@@ -136,12 +128,8 @@ export function Header() {
               {/* User Info - Hidden on small screens */}
               <div className="hidden lg:flex items-center gap-3 bg-muted/30 rounded-lg px-3 py-2 border border-border/50">
                 <div className="text-right">
-                  <div className="text-sm font-semibold text-foreground">
-                    {userName}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {userRole}
-                  </div>
+                  <div className="text-sm font-semibold text-foreground">{userName}</div>
+                  <div className="text-xs text-muted-foreground">{userRole}</div>
                 </div>
               </div>
 
@@ -173,21 +161,21 @@ export function Header() {
                   )}
                   <DropdownMenuItem
                     className="cursor-pointer touch-target transition-colors duration-200"
-                    onClick={() => router.push("/settings")}
+                    onClick={() => orgPush('/settings')}
                   >
                     <Settings className="mr-2 h-4 w-4" />
                     <span>General Settings</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="cursor-pointer touch-target transition-colors duration-200"
-                    onClick={() => router.push("/notifications")}
+                    onClick={() => orgPush('/notifications')}
                   >
                     <Bell className="mr-2 h-4 w-4" />
                     <span>Notifications</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="cursor-pointer touch-target transition-colors duration-200"
-                    onClick={() => router.push("/settings")}
+                    onClick={() => orgPush('/settings')}
                   >
                     <User className="mr-2 h-4 w-4" />
                     <span>Account Settings</span>
@@ -204,12 +192,12 @@ export function Header() {
                     aria-label="User menu"
                   >
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={user?.imageUrl || ""} alt={userName} />
+                      <AvatarImage src={user?.imageUrl || ''} alt={userName} />
                       <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
                         {userName
-                          .split(" ")
+                          .split(' ')
                           .map((n) => n[0])
-                          .join("")}
+                          .join('')}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
@@ -217,9 +205,7 @@ export function Header() {
                 <DropdownMenuContent className="w-56" align="end" forceMount>
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">
-                        {userName}
-                      </p>
+                      <p className="text-sm font-medium leading-none">{userName}</p>
                       <p className="text-xs leading-none text-muted-foreground">
                         {user?.primaryEmailAddress?.emailAddress}
                       </p>
@@ -228,14 +214,14 @@ export function Header() {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="cursor-pointer touch-target hover:bg-accent transition-colors duration-200"
-                    onClick={() => router.push("/settings")}
+                    onClick={() => orgPush('/settings')}
                   >
                     <User className="mr-2 h-4 w-4" />
                     <span>Profile</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="cursor-pointer touch-target hover:bg-accent transition-colors duration-200"
-                    onClick={() => router.push("/settings")}
+                    onClick={() => orgPush('/settings')}
                   >
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Settings</span>

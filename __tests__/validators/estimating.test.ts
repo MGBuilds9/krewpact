@@ -106,7 +106,7 @@ describe('estimateLineCreateSchema', () => {
     const result = estimateLineCreateSchema.safeParse({
       description: 'Material — Lumber',
       quantity: 100,
-      unit_cost: 25.50,
+      unit_cost: 25.5,
       parent_line_id: VALID_UUID_1,
       line_type: 'material',
       unit: 'bf',

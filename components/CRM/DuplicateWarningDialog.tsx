@@ -35,12 +35,10 @@ export function DuplicateWarningDialog({
       aria-label="Potential duplicates found"
     >
       <div className="mx-4 w-full max-w-lg rounded-lg bg-white p-6 shadow-xl">
-        <h2 className="mb-2 text-lg font-semibold text-gray-900">
-          Potential Duplicates Found
-        </h2>
+        <h2 className="mb-2 text-lg font-semibold text-gray-900">Potential Duplicates Found</h2>
         <p className="mb-4 text-sm text-gray-600">
-          We found {matches.length} potential duplicate {entityType}(s). You can
-          merge with an existing record or create a new one anyway.
+          We found {matches.length} potential duplicate {entityType}(s). You can merge with an
+          existing record or create a new one anyway.
         </p>
 
         <div className="mb-4 max-h-60 space-y-2 overflow-y-auto">
@@ -56,16 +54,13 @@ export function DuplicateWarningDialog({
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className="font-medium text-gray-900">
-                  {match.matchedValue}
-                </span>
+                <span className="font-medium text-gray-900">{match.matchedValue}</span>
                 <span className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
                   {Math.round(match.similarity * 100)}% match
                 </span>
               </div>
               <span className="text-xs text-gray-500">
-                {matchTypeLabels[match.matchType] ?? match.matchType} on{' '}
-                {match.matchedField}
+                {matchTypeLabels[match.matchType] ?? match.matchType} on {match.matchedField}
               </span>
             </button>
           ))}

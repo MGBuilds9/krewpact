@@ -5,10 +5,7 @@ export const emailQuerySchema = z.object({
   top: z.coerce.number().int().positive().max(50).optional().default(25),
   skip: z.coerce.number().int().min(0).optional().default(0),
   search: z.string().optional(),
-  folder: z
-    .enum(['inbox', 'sentitems', 'drafts'])
-    .optional()
-    .default('inbox'),
+  folder: z.enum(['inbox', 'sentitems', 'drafts']).optional().default('inbox'),
 });
 
 export type EmailQuery = z.infer<typeof emailQuerySchema>;

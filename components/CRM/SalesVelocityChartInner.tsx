@@ -60,7 +60,9 @@ export function SalesVelocityChartInner({ metrics }: SalesVelocityChartInnerProp
             <p className="text-xs text-muted-foreground">Deals Won</p>
           </div>
           <div className="rounded-lg bg-muted/50 p-3">
-            <p className="text-2xl font-bold text-green-600">{formatCurrency(metrics.dealsClosedValue)}</p>
+            <p className="text-2xl font-bold text-green-600">
+              {formatCurrency(metrics.dealsClosedValue)}
+            </p>
             <p className="text-xs text-muted-foreground">Value Won</p>
           </div>
         </div>
@@ -69,28 +71,12 @@ export function SalesVelocityChartInner({ metrics }: SalesVelocityChartInnerProp
           <>
             <p className="mb-3 text-sm font-medium">Average Days per Stage</p>
             <ChartContainer config={chartConfig} className="aspect-auto h-[160px] w-full">
-              <BarChart
-                data={stageData}
-                margin={{ left: 8, right: 16, top: 8, bottom: 8 }}
-              >
+              <BarChart data={stageData} margin={{ left: 8, right: 16, top: 8, bottom: 8 }}>
                 <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="stage"
-                  tickLine={false}
-                  axisLine={false}
-                  tick={{ fontSize: 11 }}
-                />
-                <YAxis
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(v) => `${v}d`}
-                />
+                <XAxis dataKey="stage" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} />
+                <YAxis tickLine={false} axisLine={false} tickFormatter={(v) => `${v}d`} />
                 <ChartTooltip
-                  content={
-                    <ChartTooltipContent
-                      formatter={(value) => <span>{value} days</span>}
-                    />
-                  }
+                  content={<ChartTooltipContent formatter={(value) => <span>{value} days</span>} />}
                 />
                 <Bar
                   dataKey="days"

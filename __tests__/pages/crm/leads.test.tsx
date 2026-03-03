@@ -12,7 +12,7 @@ vi.mock('next/navigation', () => ({
     back: vi.fn(),
   }),
   usePathname: () => '/crm/leads',
-  useParams: () => ({ id: 'test-lead-id' }),
+  useParams: () => ({ orgSlug: 'default', id: 'test-lead-id' }),
   useSearchParams: () => new URLSearchParams(),
 }));
 
@@ -44,7 +44,7 @@ vi.mock('@/hooks/use-mobile', () => ({
   useIsMobile: () => false,
 }));
 
-import LeadsPage from '@/app/(dashboard)/crm/leads/page';
+import LeadsPage from '@/app/(dashboard)/org/[orgSlug]/crm/leads/page';
 
 describe('Leads List Page', () => {
   beforeAll(() => {
@@ -126,7 +126,9 @@ describe('Leads List Page', () => {
 
     const { container } = render(<LeadsPage />);
     // Should show skeleton loading elements
-    const skeletons = container.querySelectorAll('[class*="animate-pulse"], [data-testid="skeleton"]');
+    const skeletons = container.querySelectorAll(
+      '[class*="animate-pulse"], [data-testid="skeleton"]',
+    );
     expect(skeletons.length).toBeGreaterThan(0);
   });
 

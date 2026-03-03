@@ -16,9 +16,7 @@ describe('ALLOWED_TRANSITIONS', () => {
       'contracted',
       'closed_lost',
     ];
-    expect(Object.keys(ALLOWED_TRANSITIONS)).toEqual(
-      expect.arrayContaining(stages),
-    );
+    expect(Object.keys(ALLOWED_TRANSITIONS)).toEqual(expect.arrayContaining(stages));
     expect(Object.keys(ALLOWED_TRANSITIONS)).toHaveLength(7);
   });
 

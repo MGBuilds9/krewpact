@@ -19,10 +19,7 @@ export async function GET(req: NextRequest) {
   const [rolesResult, permissionsResult, divisionsResult] = await Promise.all([
     supabase.rpc('get_user_role_names', { p_user_id: userIdParam }),
     supabase.rpc('get_user_permissions', { p_user_id: userIdParam }),
-    supabase
-      .from('user_divisions')
-      .select('division_id')
-      .eq('user_id', userIdParam),
+    supabase.from('user_divisions').select('division_id').eq('user_id', userIdParam),
   ]);
 
   if (rolesResult.error || permissionsResult.error || divisionsResult.error) {

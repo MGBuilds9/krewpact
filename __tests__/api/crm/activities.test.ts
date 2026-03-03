@@ -13,11 +13,7 @@ vi.mock('@/lib/supabase/server', () => ({
 import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { GET, POST } from '@/app/api/crm/activities/route';
-import {
-  GET as GET_ID,
-  PATCH,
-  DELETE,
-} from '@/app/api/crm/activities/[id]/route';
+import { GET as GET_ID, PATCH, DELETE } from '@/app/api/crm/activities/[id]/route';
 import {
   mockSupabaseClient,
   mockClerkAuth,
@@ -79,9 +75,7 @@ describe('GET /api/crm/activities', () => {
     mockCreateUserClient.mockResolvedValue(client);
 
     const res = await GET(
-      makeRequest(
-        '/api/crm/activities?opportunity_id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-      ),
+      makeRequest('/api/crm/activities?opportunity_id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'),
     );
     expect(res.status).toBe(200);
     expect(client.from).toHaveBeenCalledWith('activities');
@@ -96,9 +90,7 @@ describe('GET /api/crm/activities', () => {
     mockCreateUserClient.mockResolvedValue(client);
 
     const res = await GET(
-      makeRequest(
-        '/api/crm/activities?lead_id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-      ),
+      makeRequest('/api/crm/activities?lead_id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'),
     );
     expect(res.status).toBe(200);
     expect(client.from).toHaveBeenCalledWith('activities');
@@ -113,9 +105,7 @@ describe('GET /api/crm/activities', () => {
     mockCreateUserClient.mockResolvedValue(client);
 
     const res = await GET(
-      makeRequest(
-        '/api/crm/activities?account_id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-      ),
+      makeRequest('/api/crm/activities?account_id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'),
     );
     expect(res.status).toBe(200);
     expect(client.from).toHaveBeenCalledWith('activities');
@@ -129,9 +119,7 @@ describe('GET /api/crm/activities', () => {
     });
     mockCreateUserClient.mockResolvedValue(client);
 
-    const res = await GET(
-      makeRequest('/api/crm/activities?activity_type=email'),
-    );
+    const res = await GET(makeRequest('/api/crm/activities?activity_type=email'));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.data).toEqual(activities);
@@ -234,10 +222,7 @@ describe('GET /api/crm/activities/[id]', () => {
       }),
     );
 
-    const res = await GET_ID(
-      makeRequest('/api/crm/activities/123'),
-      makeContext(activity.id),
-    );
+    const res = await GET_ID(makeRequest('/api/crm/activities/123'), makeContext(activity.id));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.title).toBe('Follow-up call');
@@ -283,11 +268,7 @@ describe('PATCH /api/crm/activities/[id]', () => {
     );
 
     const res = await PATCH(
-      makeJsonRequest(
-        '/api/crm/activities/123',
-        { title: 'Updated call notes' },
-        'PATCH',
-      ),
+      makeJsonRequest('/api/crm/activities/123', { title: 'Updated call notes' }, 'PATCH'),
       makeContext(updated.id),
     );
     expect(res.status).toBe(200);
@@ -313,10 +294,7 @@ describe('DELETE /api/crm/activities/[id]', () => {
       }),
     );
 
-    const res = await DELETE(
-      makeRequest('/api/crm/activities/123'),
-      makeContext('some-id'),
-    );
+    const res = await DELETE(makeRequest('/api/crm/activities/123'), makeContext('some-id'));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);

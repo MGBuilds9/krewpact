@@ -41,13 +41,7 @@ function makeOpp(overrides: Partial<Opportunity> = {}): Opportunity {
 
 describe('WonDealDialog', () => {
   it('renders dialog title and description', () => {
-    render(
-      <WonDealDialog
-        opportunity={makeOpp()}
-        open={true}
-        onOpenChange={vi.fn()}
-      />,
-    );
+    render(<WonDealDialog opportunity={makeOpp()} open={true} onOpenChange={vi.fn()} />);
     expect(screen.getByText('Mark Deal as Won')).toBeDefined();
     expect(screen.getByText(/Test Opportunity/)).toBeDefined();
   });
@@ -78,13 +72,7 @@ describe('WonDealDialog', () => {
   });
 
   it('renders won date input with default value', () => {
-    render(
-      <WonDealDialog
-        opportunity={makeOpp()}
-        open={true}
-        onOpenChange={vi.fn()}
-      />,
-    );
+    render(<WonDealDialog opportunity={makeOpp()} open={true} onOpenChange={vi.fn()} />);
     const dateInput = screen.getByLabelText('Won Date') as HTMLInputElement;
     expect(dateInput).toBeDefined();
     // Default is today
@@ -93,24 +81,12 @@ describe('WonDealDialog', () => {
   });
 
   it('renders notes textarea', () => {
-    render(
-      <WonDealDialog
-        opportunity={makeOpp()}
-        open={true}
-        onOpenChange={vi.fn()}
-      />,
-    );
+    render(<WonDealDialog opportunity={makeOpp()} open={true} onOpenChange={vi.fn()} />);
     expect(screen.getByLabelText('Notes')).toBeDefined();
   });
 
   it('renders Sync to ERPNext checkbox', () => {
-    render(
-      <WonDealDialog
-        opportunity={makeOpp()}
-        open={true}
-        onOpenChange={vi.fn()}
-      />,
-    );
+    render(<WonDealDialog opportunity={makeOpp()} open={true} onOpenChange={vi.fn()} />);
     expect(screen.getByLabelText('Sync to ERPNext')).toBeDefined();
   });
 });

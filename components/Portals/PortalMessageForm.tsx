@@ -27,7 +27,11 @@ interface PortalMessageFormProps {
   onCancel?: () => void;
 }
 
-export function PortalMessageForm({ portalAccountId, onSuccess, onCancel }: PortalMessageFormProps) {
+export function PortalMessageForm({
+  portalAccountId,
+  onSuccess,
+  onCancel,
+}: PortalMessageFormProps) {
   const sendMessage = useSendPortalMessage();
 
   const form = useForm<FormValues>({

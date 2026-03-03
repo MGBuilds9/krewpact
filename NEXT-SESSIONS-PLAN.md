@@ -10,6 +10,7 @@
 **Objective:** Get all services provisioned so code can talk to real backends.
 
 ### Tasks
+
 1. **Provision Supabase cloud instance** (if not already done)
    - Create project on supabase.com
    - Run all 4 migrations (`00001` through `00004`)
@@ -30,6 +31,7 @@
 5. **Verify `npm run dev` loads** — dashboard should render (even with empty data)
 
 ### Deliverable
+
 All external services reachable from local dev. `npm run dev` shows the dashboard with 0 projects.
 
 ---
@@ -39,6 +41,7 @@ All external services reachable from local dev. `npm run dev` shows the dashboar
 **Objective:** Create the core tables that pages need to render real data.
 
 ### Tasks
+
 1. **Create migration `00005_crm_core.sql`:**
    - `accounts` — Companies/clients (name, industry, division_id, website, address, status)
    - `contacts` — People at accounts (first_name, last_name, email, phone, account_id, role)
@@ -59,6 +62,7 @@ All external services reachable from local dev. `npm run dev` shows the dashboar
 6. **Run migrations** against cloud Supabase instance
 
 ### Deliverable
+
 13+ tables live with RLS. TypeScript types generated for type-safe queries.
 
 ---
@@ -68,6 +72,7 @@ All external services reachable from local dev. `npm run dev` shows the dashboar
 **Objective:** Replace mock data with real Supabase queries. Core CRUD working.
 
 ### Tasks
+
 1. **Fix API routes to use real Supabase client:**
    - `api/projects/route.ts` — GET (list with filters), POST (create)
    - `api/projects/[id]/route.ts` — GET, PUT, DELETE
@@ -87,6 +92,7 @@ All external services reachable from local dev. `npm run dev` shows the dashboar
 4. **Test end-to-end:** Create a project via UI → verify in Supabase dashboard
 
 ### Deliverable
+
 Dashboard shows real KPIs. Projects CRUD works end-to-end. User shows up in users table after first login.
 
 ---
@@ -96,6 +102,7 @@ Dashboard shows real KPIs. Projects CRUD works end-to-end. User shows up in user
 **Objective:** Complete remaining page connections.
 
 ### Tasks
+
 1. **CRM pages:**
    - `/crm/accounts` — List/create accounts
    - `/crm/contacts` — List/create contacts
@@ -116,6 +123,7 @@ Dashboard shows real KPIs. Projects CRUD works end-to-end. User shows up in user
    - Role badges, contact info
 
 ### Deliverable
+
 All core pages render real data. Users can create accounts, log expenses, manage tasks.
 
 ---
@@ -125,6 +133,7 @@ All core pages render real data. Users can create accounts, log expenses, manage
 **Objective:** Two-way sync between KrewPact and ERPNext for key entities.
 
 ### Tasks
+
 1. **Outbound sync (KrewPact → ERPNext):**
    - Customer: On account create → POST ERPNext Customer doctype
    - Quotation: On estimate approve → POST ERPNext Quotation
@@ -144,6 +153,7 @@ All core pages render real data. Users can create accounts, log expenses, manage
    - `/admin/sync` — Show last sync status, failed items, manual retry button
 
 ### Deliverable
+
 Creating a customer in KrewPact creates it in ERPNext. Invoices from ERPNext visible in KrewPact.
 
 ---
@@ -153,6 +163,7 @@ Creating a customer in KrewPact creates it in ERPNext. Invoices from ERPNext vis
 **Objective:** Load real MDM data, write tests, deploy to Vercel.
 
 ### Tasks
+
 1. **Seed data import scripts:**
    - Parse `data/seed/Customer List.xlsx` → `accounts` + `contacts`
    - Parse `data/seed/Leads for contracting.xlsx` → `leads`
@@ -176,19 +187,20 @@ Creating a customer in KrewPact creates it in ERPNext. Invoices from ERPNext vis
    - Import via ERPNext Data Import tool or API scripts
 
 ### Deliverable
+
 KrewPact live with real MDM data. Tests passing. Team can start using it.
 
 ---
 
 ## Blockers to Resolve Before Session 1
 
-| Blocker | Owner | Action |
-|---------|-------|--------|
-| Supabase cloud instance | Michael | Create on supabase.com, share credentials |
-| Clerk JWT template | Michael | Configure in Clerk dashboard |
-| ERPNext instance URL | Michael/David | Verify Cloudflare Tunnel or direct access |
-| Domain email (@mdmconstruction.com) | Michael | Verify Clerk can auth with actual MDM emails |
-| Vercel project for KrewPact | Michael | Create on company Vercel account |
+| Blocker                             | Owner         | Action                                       |
+| ----------------------------------- | ------------- | -------------------------------------------- |
+| Supabase cloud instance             | Michael       | Create on supabase.com, share credentials    |
+| Clerk JWT template                  | Michael       | Configure in Clerk dashboard                 |
+| ERPNext instance URL                | Michael/David | Verify Cloudflare Tunnel or direct access    |
+| Domain email (@mdmconstruction.com) | Michael       | Verify Clerk can auth with actual MDM emails |
+| Vercel project for KrewPact         | Michael       | Create on company Vercel account             |
 
 ---
 

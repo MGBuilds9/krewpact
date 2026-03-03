@@ -72,11 +72,7 @@ export function OpportunityStageProgressBar({ currentStage }: OpportunityStagePr
       </div>
 
       {isLost && (
-        <div
-          className="mt-2 text-center"
-          aria-current="step"
-          data-lost="true"
-        >
+        <div className="mt-2 text-center" aria-current="step" data-lost="true">
           <div className="h-2 rounded-full bg-destructive mb-1.5" />
           <span className="text-xs font-medium text-destructive">Closed Lost</span>
         </div>

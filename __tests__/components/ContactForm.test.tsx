@@ -34,10 +34,7 @@ function createWrapper() {
 }
 
 function renderForm(props: Parameters<typeof ContactForm>[0] = {}) {
-  return render(
-    React.createElement(ContactForm, props),
-    { wrapper: createWrapper() },
-  );
+  return render(React.createElement(ContactForm, props), { wrapper: createWrapper() });
 }
 
 function makeContact(overrides: Partial<Contact> = {}): Contact {

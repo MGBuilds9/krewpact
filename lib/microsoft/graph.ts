@@ -17,13 +17,11 @@ export async function getMicrosoftToken(clerkUserId: string): Promise<string> {
       headers: {
         Authorization: `Bearer ${clerkSecretKey}`,
       },
-    }
+    },
   );
 
   if (!res.ok) {
-    throw new Error(
-      `Clerk OAuth token fetch failed: ${res.status} ${res.statusText}`
-    );
+    throw new Error(`Clerk OAuth token fetch failed: ${res.status} ${res.statusText}`);
   }
 
   const tokens = await res.json();
@@ -37,7 +35,7 @@ export async function getMicrosoftToken(clerkUserId: string): Promise<string> {
 export async function graphFetch<T = unknown>(
   token: string,
   url: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
 ): Promise<T> {
   const res = await fetch(url, {
     ...options,
@@ -49,9 +47,7 @@ export async function graphFetch<T = unknown>(
   });
 
   if (!res.ok) {
-    const error = await res
-      .json()
-      .catch(() => ({ error: { message: res.statusText } }));
+    const error = await res.json().catch(() => ({ error: { message: res.statusText } }));
     throw new Error(error?.error?.message || `Graph API error: ${res.status}`);
   }
 

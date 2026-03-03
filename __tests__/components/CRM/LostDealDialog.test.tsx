@@ -41,25 +41,13 @@ function makeOpp(overrides: Partial<Opportunity> = {}): Opportunity {
 
 describe('LostDealDialog', () => {
   it('renders dialog title and description', () => {
-    render(
-      <LostDealDialog
-        opportunity={makeOpp()}
-        open={true}
-        onOpenChange={vi.fn()}
-      />,
-    );
+    render(<LostDealDialog opportunity={makeOpp()} open={true} onOpenChange={vi.fn()} />);
     expect(screen.getByText('Mark Deal as Lost')).toBeDefined();
     expect(screen.getByText(/Test Opportunity/)).toBeDefined();
   });
 
   it('shows Mark as Lost button disabled when no reason selected', () => {
-    render(
-      <LostDealDialog
-        opportunity={makeOpp()}
-        open={true}
-        onOpenChange={vi.fn()}
-      />,
-    );
+    render(<LostDealDialog opportunity={makeOpp()} open={true} onOpenChange={vi.fn()} />);
     const button = screen.getByRole('button', { name: /mark as lost/i });
     expect(button).toBeDisabled();
   });
@@ -76,46 +64,22 @@ describe('LostDealDialog', () => {
   });
 
   it('renders lost reason select', () => {
-    render(
-      <LostDealDialog
-        opportunity={makeOpp()}
-        open={true}
-        onOpenChange={vi.fn()}
-      />,
-    );
+    render(<LostDealDialog opportunity={makeOpp()} open={true} onOpenChange={vi.fn()} />);
     expect(screen.getByLabelText('Lost Reason')).toBeDefined();
   });
 
   it('renders competitor input field', () => {
-    render(
-      <LostDealDialog
-        opportunity={makeOpp()}
-        open={true}
-        onOpenChange={vi.fn()}
-      />,
-    );
+    render(<LostDealDialog opportunity={makeOpp()} open={true} onOpenChange={vi.fn()} />);
     expect(screen.getByLabelText('Competitor (optional)')).toBeDefined();
   });
 
   it('renders re-open as lead checkbox', () => {
-    render(
-      <LostDealDialog
-        opportunity={makeOpp()}
-        open={true}
-        onOpenChange={vi.fn()}
-      />,
-    );
+    render(<LostDealDialog opportunity={makeOpp()} open={true} onOpenChange={vi.fn()} />);
     expect(screen.getByLabelText('Re-open as Lead for re-nurture')).toBeDefined();
   });
 
   it('renders notes textarea', () => {
-    render(
-      <LostDealDialog
-        opportunity={makeOpp()}
-        open={true}
-        onOpenChange={vi.fn()}
-      />,
-    );
+    render(<LostDealDialog opportunity={makeOpp()} open={true} onOpenChange={vi.fn()} />);
     expect(screen.getByLabelText('Notes')).toBeDefined();
   });
 });

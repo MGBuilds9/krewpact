@@ -178,7 +178,7 @@ describe('expenseReceiptCreateSchema', () => {
     const result = expenseReceiptCreateSchema.safeParse({
       expense_id: VALID_UUID,
       file_id: VALID_UUID,
-      ocr_payload: { vendor: 'Home Depot', amount: 245.60, date: '2026-02-26' },
+      ocr_payload: { vendor: 'Home Depot', amount: 245.6, date: '2026-02-26' },
     });
     expect(result.success).toBe(true);
   });

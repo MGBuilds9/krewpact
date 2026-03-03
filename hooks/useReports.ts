@@ -16,7 +16,11 @@ export interface DailyLog {
   submitted_at: string | null;
   is_offline_origin: boolean;
   created_at: string;
-  submitted_user: { first_name: string | null; last_name: string | null; avatar_url: string | null } | null;
+  submitted_user: {
+    first_name: string | null;
+    last_name: string | null;
+    avatar_url: string | null;
+  } | null;
   project: { project_name: string } | null;
 }
 

@@ -23,7 +23,9 @@ export function useViewMode(): [ViewMode, (mode: ViewMode) => void] {
 
   const setViewMode = useCallback((newMode: ViewMode) => {
     setMode(newMode);
-    try { localStorage.setItem(STORAGE_KEY, newMode); } catch {}
+    try {
+      localStorage.setItem(STORAGE_KEY, newMode);
+    } catch {}
   }, []);
 
   return [mode, setViewMode];

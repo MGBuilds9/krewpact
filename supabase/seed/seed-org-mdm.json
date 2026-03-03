@@ -18,12 +18,20 @@
     "feature_flags": {}
   },
   "divisions": [
-    { "code": "contracting", "name": "MDM Contracting", "description": "General contracting division" },
+    {
+      "code": "contracting",
+      "name": "MDM Contracting",
+      "description": "General contracting division"
+    },
     { "code": "homes", "name": "MDM Homes", "description": "Residential construction division" },
     { "code": "wood", "name": "MDM Wood", "description": "Wood/lumber division" },
     { "code": "telecom", "name": "MDM Telecom", "description": "Telecommunications division" },
     { "code": "group-inc", "name": "MDM Group Inc.", "description": "Parent company / corporate" },
-    { "code": "management", "name": "MDM Management", "description": "Property management division" }
+    {
+      "code": "management",
+      "name": "MDM Management",
+      "description": "Property management division"
+    }
   ],
   "roles": [
     { "role_key": "platform_admin", "role_name": "Platform Admin", "scope": "company" },

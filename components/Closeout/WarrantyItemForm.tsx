@@ -24,7 +24,15 @@ interface WarrantyItemFormProps {
 
 export function WarrantyItemForm({ projectId, onSuccess, onCancel }: WarrantyItemFormProps) {
   const create = useCreateWarrantyItem(projectId);
-  const form = useForm<FormState>({ defaultValues: { title: '', provider_name: '', warranty_start: '', warranty_end: '', terms: '' } });
+  const form = useForm<FormState>({
+    defaultValues: {
+      title: '',
+      provider_name: '',
+      warranty_start: '',
+      warranty_end: '',
+      terms: '',
+    },
+  });
 
   async function onSubmit(values: FormState) {
     try {
@@ -71,7 +79,11 @@ export function WarrantyItemForm({ projectId, onSuccess, onCancel }: WarrantyIte
           {create.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Create Warranty
         </Button>
-        {onCancel && <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>}
+        {onCancel && (
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+        )}
       </div>
     </form>
   );

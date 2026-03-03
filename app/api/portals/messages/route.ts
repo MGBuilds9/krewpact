@@ -32,7 +32,10 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from('portal_messages')
-    .select('id, project_id, portal_account_id, sender_user_id, direction, subject, body, read_at, created_at, updated_at', { count: 'exact' })
+    .select(
+      'id, project_id, portal_account_id, sender_user_id, direction, subject, body, read_at, created_at, updated_at',
+      { count: 'exact' },
+    )
     .order('created_at', { ascending: true })
     .range(offset, offset + limit - 1);
 
@@ -58,7 +61,11 @@ export async function POST(req: NextRequest) {
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   let body: unknown;
-  try { body = await req.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+  }
 
   const parsed = portalMessageSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });

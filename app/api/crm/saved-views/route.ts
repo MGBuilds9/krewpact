@@ -2,7 +2,13 @@ import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
-import { UNAUTHORIZED, INVALID_JSON, validationError, dbError, errorResponse } from '@/lib/api/errors';
+import {
+  UNAUTHORIZED,
+  INVALID_JSON,
+  validationError,
+  dbError,
+  errorResponse,
+} from '@/lib/api/errors';
 
 const entityTypes = ['lead', 'contact', 'account', 'opportunity'] as const;
 

@@ -52,10 +52,9 @@ describe('useEstimates hooks', () => {
     it('calls /api/estimates with status filter', async () => {
       mockApiFetch.mockResolvedValue([]);
 
-      const { result } = renderHook(
-        () => useEstimates({ status: 'draft' }),
-        { wrapper: createWrapper() },
-      );
+      const { result } = renderHook(() => useEstimates({ status: 'draft' }), {
+        wrapper: createWrapper(),
+      });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
       expect(mockApiFetch).toHaveBeenCalledWith('/api/estimates', {
@@ -66,10 +65,9 @@ describe('useEstimates hooks', () => {
     it('calls /api/estimates with division_id filter', async () => {
       mockApiFetch.mockResolvedValue([]);
 
-      const { result } = renderHook(
-        () => useEstimates({ divisionId: 'div-1' }),
-        { wrapper: createWrapper() },
-      );
+      const { result } = renderHook(() => useEstimates({ divisionId: 'div-1' }), {
+        wrapper: createWrapper(),
+      });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
       expect(mockApiFetch).toHaveBeenCalledWith('/api/estimates', {
@@ -94,10 +92,7 @@ describe('useEstimates hooks', () => {
     it('calls /api/estimates/:id/lines', async () => {
       mockApiFetch.mockResolvedValue([]);
 
-      const { result } = renderHook(
-        () => useEstimateLines('est-1'),
-        { wrapper: createWrapper() },
-      );
+      const { result } = renderHook(() => useEstimateLines('est-1'), { wrapper: createWrapper() });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
       expect(mockApiFetch).toHaveBeenCalledWith('/api/estimates/est-1/lines');
@@ -125,10 +120,9 @@ describe('useEstimates hooks', () => {
     it('calls /api/estimates/:id/versions', async () => {
       mockApiFetch.mockResolvedValue([]);
 
-      const { result } = renderHook(
-        () => useEstimateVersions('est-1'),
-        { wrapper: createWrapper() },
-      );
+      const { result } = renderHook(() => useEstimateVersions('est-1'), {
+        wrapper: createWrapper(),
+      });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
       expect(mockApiFetch).toHaveBeenCalledWith('/api/estimates/est-1/versions');

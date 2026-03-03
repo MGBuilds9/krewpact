@@ -13,9 +13,28 @@ function createChainableMock(responses: Record<string, { data: unknown; error: u
 
       const chain: Record<string, unknown> = {};
       const methods = [
-        'select', 'insert', 'update', 'delete', 'eq', 'lte', 'gte', 'gt', 'lt',
-        'neq', 'order', 'limit', 'range', 'ilike', 'is', 'not', 'or', 'filter',
-        'match', 'in', 'contains', 'containedBy',
+        'select',
+        'insert',
+        'update',
+        'delete',
+        'eq',
+        'lte',
+        'gte',
+        'gt',
+        'lt',
+        'neq',
+        'order',
+        'limit',
+        'range',
+        'ilike',
+        'is',
+        'not',
+        'or',
+        'filter',
+        'match',
+        'in',
+        'contains',
+        'containedBy',
       ];
       for (const m of methods) {
         chain[m] = vi.fn().mockReturnValue(chain);
@@ -78,7 +97,9 @@ describe('evaluateCondition', () => {
     const supabase = createChainableMock({
       entity_tags: { data: { id: 'et-1' }, error: null },
     });
-    const result = await evaluateCondition(supabase, baseEnrollment, 'if_tag', { tag_id: 'tag-xyz' });
+    const result = await evaluateCondition(supabase, baseEnrollment, 'if_tag', {
+      tag_id: 'tag-xyz',
+    });
     expect(result).toBe(true);
   });
 
@@ -86,7 +107,9 @@ describe('evaluateCondition', () => {
     const supabase = createChainableMock({
       leads: { data: { stage: 'qualified' }, error: null },
     });
-    const result = await evaluateCondition(supabase, baseEnrollment, 'if_stage', { stage: 'qualified' });
+    const result = await evaluateCondition(supabase, baseEnrollment, 'if_stage', {
+      stage: 'qualified',
+    });
     expect(result).toBe(true);
   });
 
@@ -109,8 +132,21 @@ describe('processSequences (branching)', () => {
       from: vi.fn(() => {
         const chain: Record<string, unknown> = {};
         const methods = [
-          'select', 'insert', 'update', 'delete', 'eq', 'lte', 'gte',
-          'order', 'limit', 'range', 'neq', 'is', 'not', 'or', 'filter',
+          'select',
+          'insert',
+          'update',
+          'delete',
+          'eq',
+          'lte',
+          'gte',
+          'order',
+          'limit',
+          'range',
+          'neq',
+          'is',
+          'not',
+          'or',
+          'filter',
         ];
         for (const m of methods) {
           chain[m] = vi.fn().mockReturnValue(chain);

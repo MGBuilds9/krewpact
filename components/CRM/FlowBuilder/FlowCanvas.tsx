@@ -29,10 +29,18 @@ function computeConnections(steps: FlowStep[]): FlowConnection[] {
 
     if (current.action_type === 'condition') {
       if (current.true_next_step_id) {
-        connections.push({ from_step_id: current.id, to_step_id: current.true_next_step_id, label: 'Yes' });
+        connections.push({
+          from_step_id: current.id,
+          to_step_id: current.true_next_step_id,
+          label: 'Yes',
+        });
       }
       if (current.false_next_step_id) {
-        connections.push({ from_step_id: current.id, to_step_id: current.false_next_step_id, label: 'No' });
+        connections.push({
+          from_step_id: current.id,
+          to_step_id: current.false_next_step_id,
+          label: 'No',
+        });
       }
       // Fallback: connect to next step if no branch targets set
       if (!current.true_next_step_id && !current.false_next_step_id) {
@@ -46,38 +54,42 @@ function computeConnections(steps: FlowStep[]): FlowConnection[] {
   return connections;
 }
 
-export function FlowCanvas({ sequenceId: _sequenceId, initialSteps = [], onSave }: FlowCanvasProps) {
+export function FlowCanvas({
+  sequenceId: _sequenceId,
+  initialSteps = [],
+  onSave,
+}: FlowCanvasProps) {
   const [steps, setSteps] = useState<FlowStep[]>(initialSteps);
   const [selectedStepId, setSelectedStepId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const sorted = useMemo(
-    () => [...steps].sort((a, b) => a.step_number - b.step_number),
-    [steps]
-  );
+  const sorted = useMemo(() => [...steps].sort((a, b) => a.step_number - b.step_number), [steps]);
 
   const connections = useMemo(() => computeConnections(steps), [steps]);
 
-  const addStep = useCallback((type: FlowStep['action_type']) => {
-    const maxNum = steps.length > 0 ? Math.max(...steps.map((s) => s.step_number)) : 0;
-    const yPos = (maxNum) * (NODE_HEIGHT + NODE_GAP);
-    const newStep: FlowStep = {
-      id: nanoid(),
-      step_number: maxNum + 1,
-      action_type: type,
-      action_config: {},
-      condition_type: null,
-      condition_config: null,
-      true_next_step_id: null,
-      false_next_step_id: null,
-      position_x: CANVAS_X,
-      position_y: yPos,
-      delay_days: type === 'wait' ? 1 : undefined,
-      delay_hours: type === 'wait' ? 0 : undefined,
-    };
-    setSteps((prev) => [...prev, newStep]);
-    setSelectedStepId(newStep.id);
-  }, [steps]);
+  const addStep = useCallback(
+    (type: FlowStep['action_type']) => {
+      const maxNum = steps.length > 0 ? Math.max(...steps.map((s) => s.step_number)) : 0;
+      const yPos = maxNum * (NODE_HEIGHT + NODE_GAP);
+      const newStep: FlowStep = {
+        id: nanoid(),
+        step_number: maxNum + 1,
+        action_type: type,
+        action_config: {},
+        condition_type: null,
+        condition_config: null,
+        true_next_step_id: null,
+        false_next_step_id: null,
+        position_x: CANVAS_X,
+        position_y: yPos,
+        delay_days: type === 'wait' ? 1 : undefined,
+        delay_hours: type === 'wait' ? 0 : undefined,
+      };
+      setSteps((prev) => [...prev, newStep]);
+      setSelectedStepId(newStep.id);
+    },
+    [steps],
+  );
 
   const removeStep = useCallback((id: string) => {
     setSteps((prev) => {
@@ -103,18 +115,14 @@ export function FlowCanvas({ sequenceId: _sequenceId, initialSteps = [], onSave 
     }
   }, [steps, onSave]);
 
-  const selectedStep = selectedStepId ? steps.find((s) => s.id === selectedStepId) ?? null : null;
+  const selectedStep = selectedStepId ? (steps.find((s) => s.id === selectedStepId) ?? null) : null;
 
   // SVG canvas dimensions
   const svgHeight = Math.max(sorted.length * (NODE_HEIGHT + NODE_GAP), 100);
 
   return (
     <div className="flex flex-col gap-3">
-      <FlowToolbar
-        onAddStep={addStep}
-        onSave={handleSave}
-        saving={saving}
-      />
+      <FlowToolbar onAddStep={addStep} onSave={handleSave} saving={saving} />
 
       <div className="flex gap-4">
         {/* Main canvas */}
@@ -122,7 +130,9 @@ export function FlowCanvas({ sequenceId: _sequenceId, initialSteps = [], onSave 
           {sorted.length === 0 ? (
             <div className="flex h-full min-h-[300px] flex-col items-center justify-center gap-2 text-center text-muted-foreground">
               <p className="text-sm font-medium">No steps yet</p>
-              <p className="text-xs">Use the toolbar above to add email, task, wait, or condition steps.</p>
+              <p className="text-xs">
+                Use the toolbar above to add email, task, wait, or condition steps.
+              </p>
             </div>
           ) : (
             <div className="relative" style={{ minHeight: svgHeight + 20 }}>

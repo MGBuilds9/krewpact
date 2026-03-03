@@ -69,9 +69,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
 
   // 2) Build snapshot
   const estimateRecord = estimate as Record<string, unknown>;
-  const lines = Array.isArray(estimateRecord.estimate_lines)
-    ? estimateRecord.estimate_lines
-    : [];
+  const lines = Array.isArray(estimateRecord.estimate_lines) ? estimateRecord.estimate_lines : [];
 
   // Remove the nested lines from the estimate snapshot
   const estimateData = Object.fromEntries(

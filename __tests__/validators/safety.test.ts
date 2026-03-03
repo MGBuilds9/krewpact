@@ -110,12 +110,14 @@ describe('safetyIncidentCreateSchema', () => {
 
   it('accepts all valid severity levels', () => {
     for (const severity of ['low', 'medium', 'high', 'critical'] as const) {
-      expect(safetyIncidentCreateSchema.safeParse({
-        incident_date: '2026-02-26',
-        severity,
-        summary: 'Test incident.',
-        details: {},
-      }).success).toBe(true);
+      expect(
+        safetyIncidentCreateSchema.safeParse({
+          incident_date: '2026-02-26',
+          severity,
+          summary: 'Test incident.',
+          details: {},
+        }).success,
+      ).toBe(true);
     }
   });
 

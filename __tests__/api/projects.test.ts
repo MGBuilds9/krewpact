@@ -71,7 +71,9 @@ describe('GET /api/projects', () => {
     const mockProjects = [makeProject({ division_id: TEST_IDS.DIVISION_ID })];
 
     mockClerkAuth(mockAuth, 'user_123');
-    const client = mockSupabaseClient({ tables: { projects: { data: mockProjects, error: null } } });
+    const client = mockSupabaseClient({
+      tables: { projects: { data: mockProjects, error: null } },
+    });
     mockCreateUserClient.mockResolvedValue(client);
 
     const res = await GET(makeRequest(`/api/projects?division_id=${TEST_IDS.DIVISION_ID}`));
@@ -83,7 +85,9 @@ describe('GET /api/projects', () => {
     mockClerkAuth(mockAuth, 'user_123');
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({
-        tables: { projects: { data: null, error: { message: 'Database error', code: 'PGRST000' } } },
+        tables: {
+          projects: { data: null, error: { message: 'Database error', code: 'PGRST000' } },
+        },
       }),
     );
 
@@ -189,10 +193,9 @@ describe('GET /api/projects/[id]', () => {
       mockSupabaseClient({ tables: { projects: { data: project, error: null } } }),
     );
 
-    const res = await GET_BY_ID(
-      makeRequest('/api/projects/some-id'),
-      { params: Promise.resolve({ id: 'some-id' }) },
-    );
+    const res = await GET_BY_ID(makeRequest('/api/projects/some-id'), {
+      params: Promise.resolve({ id: 'some-id' }),
+    });
     expect(res.status).toBe(200);
   });
 
@@ -204,10 +207,9 @@ describe('GET /api/projects/[id]', () => {
       }),
     );
 
-    const res = await GET_BY_ID(
-      makeRequest('/api/projects/missing-id'),
-      { params: Promise.resolve({ id: 'missing-id' }) },
-    );
+    const res = await GET_BY_ID(makeRequest('/api/projects/missing-id'), {
+      params: Promise.resolve({ id: 'missing-id' }),
+    });
     expect(res.status).toBe(404);
   });
 });
@@ -245,10 +247,9 @@ describe('DELETE /api/projects/[id]', () => {
       mockSupabaseClient({ tables: { projects: { data: null, error: null } } }),
     );
 
-    const res = await DELETE(
-      makeRequest('/api/projects/some-id'),
-      { params: Promise.resolve({ id: 'some-id' }) },
-    );
+    const res = await DELETE(makeRequest('/api/projects/some-id'), {
+      params: Promise.resolve({ id: 'some-id' }),
+    });
     expect(res.status).toBe(200);
   });
 });

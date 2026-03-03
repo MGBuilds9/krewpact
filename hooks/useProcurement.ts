@@ -175,8 +175,7 @@ export function useCreateRFQInvite(projectId: string, rfqId: string) {
         method: 'POST',
         body: data,
       }),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ['rfq-invites', projectId, rfqId] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['rfq-invites', projectId, rfqId] }),
   });
 }
 
@@ -187,8 +186,7 @@ export function useCreateRFQInvite(projectId: string, rfqId: string) {
 export function useRFQBids(projectId: string, rfqId: string) {
   return useQuery({
     queryKey: ['rfq-bids', projectId, rfqId],
-    queryFn: () =>
-      apiFetch<ListResponse<RFQBid>>(`/api/projects/${projectId}/rfqs/${rfqId}/bids`),
+    queryFn: () => apiFetch<ListResponse<RFQBid>>(`/api/projects/${projectId}/rfqs/${rfqId}/bids`),
     staleTime: 30_000,
     enabled: !!projectId && !!rfqId,
   });

@@ -66,9 +66,7 @@ describe('GET /api/crm/export', () => {
 
   it('escapes CSV values with commas and quotes', async () => {
     mockClerkAuth(mockAuth);
-    const rows = [
-      { id: '1', company_name: 'Acme, "Corp"', notes: 'line1\nline2' },
-    ];
+    const rows = [{ id: '1', company_name: 'Acme, "Corp"', notes: 'line1\nline2' }];
     const client = mockSupabaseClient({
       tables: { leads: { data: rows, error: null } },
     });
@@ -98,9 +96,7 @@ describe('GET /api/crm/export', () => {
 
   it('exports contacts', async () => {
     mockClerkAuth(mockAuth);
-    const rows = [
-      { id: '1', first_name: 'John', last_name: 'Doe', email: 'john@test.com' },
-    ];
+    const rows = [{ id: '1', first_name: 'John', last_name: 'Doe', email: 'john@test.com' }];
     const client = mockSupabaseClient({
       tables: { contacts: { data: rows, error: null } },
     });

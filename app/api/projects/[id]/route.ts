@@ -6,7 +6,9 @@ import { NextRequest, NextResponse } from 'next/server';
 const updateSchema = z.object({
   project_name: z.string().min(1).max(200).optional(),
   project_number: z.string().min(1).max(50).optional(),
-  status: z.enum(['planning', 'active', 'on_hold', 'substantial_complete', 'closed', 'cancelled']).optional(),
+  status: z
+    .enum(['planning', 'active', 'on_hold', 'substantial_complete', 'closed', 'cancelled'])
+    .optional(),
   site_address: z.record(z.string(), z.any()).nullable().optional(),
   baseline_budget: z.number().nonnegative().nullable().optional(),
   current_budget: z.number().nonnegative().nullable().optional(),
@@ -30,11 +32,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
   const { id } = await context.params;
   const supabase = await createUserClient();
-  const { data, error } = await supabase
-    .from('projects')
-    .select('*')
-    .eq('id', id)
-    .single();
+  const { data, error } = await supabase.from('projects').select('*').eq('id', id).single();
 
   if (error) {
     const status = error.code === 'PGRST116' ? 404 : 500;

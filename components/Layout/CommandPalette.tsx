@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
+import { useOrgRouter } from '@/hooks/useOrgRouter';
 import {
   FolderKanban,
   FileText,
@@ -62,7 +63,7 @@ interface CommandPaletteProps {
 }
 
 export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
-  const router = useRouter();
+  const { push: orgPush, orgPath } = useOrgRouter();
   const pathname = usePathname();
   const { data: currentUser } = useCurrentUser();
   const [searchQuery, setSearchQuery] = useState('');
@@ -84,7 +85,10 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
       lastPathRef.current = pathname;
       const stored = localStorage.getItem('recentPages');
       const current = stored ? JSON.parse(stored) : [];
-      const updatedRecent = [pathname, ...current.filter((p: string) => p !== pathname)].slice(0, 5);
+      const updatedRecent = [pathname, ...current.filter((p: string) => p !== pathname)].slice(
+        0,
+        5,
+      );
       localStorage.setItem('recentPages', JSON.stringify(updatedRecent));
       queueMicrotask(() => {
         setRecentPages(updatedRecent);
@@ -105,8 +109,8 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
     }
   }, [isOpen, onClose]);
 
-  const handleNavigation = (href: string) => {
-    router.push(href);
+  const handleNavigation = (path: string) => {
+    orgPush(path);
     onClose();
   };
 

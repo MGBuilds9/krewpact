@@ -32,26 +32,26 @@ The 18 documents cover product strategy, architecture, security, compliance, inf
 
 ### Critical Gaps in Documentation
 
-| Gap | Impact | Priority |
-|-----|--------|----------|
-| **No formal MVP scope** | 16 epics with no explicit Phase 1 cutline — everything looks equally important | Critical |
-| **No Sage data migration playbook** | Data migration strategy mentioned but not specified (schema mapping, validation, rollback) | Critical |
-| **No offline sync conflict resolution algorithm** | "Offline-first" declared as mandatory but conflict resolution logic undefined | High |
-| **No performance SLOs** | No API response time targets, page load budgets, or sync latency requirements | High |
-| **No change management plan** | 300+ users transitioning to KrewPact with no training strategy | High |
-| **No disaster recovery plan** | Backup strategy exists but RTO/RPO targets undefined | Medium |
-| **No vendor contingency plans** | Heavy reliance on Clerk, Supabase, Vercel with no fallback if a vendor fails | Medium |
-| **No post-launch operations** | SLAs, on-call rotation, incident response, and runbooks not documented | Medium |
+| Gap                                               | Impact                                                                                     | Priority |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------ | -------- |
+| **No formal MVP scope**                           | 16 epics with no explicit Phase 1 cutline — everything looks equally important             | Critical |
+| **No Sage data migration playbook**               | Data migration strategy mentioned but not specified (schema mapping, validation, rollback) | Critical |
+| **No offline sync conflict resolution algorithm** | "Offline-first" declared as mandatory but conflict resolution logic undefined              | High     |
+| **No performance SLOs**                           | No API response time targets, page load budgets, or sync latency requirements              | High     |
+| **No change management plan**                     | 300+ users transitioning to KrewPact with no training strategy                             | High     |
+| **No disaster recovery plan**                     | Backup strategy exists but RTO/RPO targets undefined                                       | Medium   |
+| **No vendor contingency plans**                   | Heavy reliance on Clerk, Supabase, Vercel with no fallback if a vendor fails               | Medium   |
+| **No post-launch operations**                     | SLAs, on-call rotation, incident response, and runbooks not documented                     | Medium   |
 
 ### Internal Contradictions
 
-| Document A | Document B | Contradiction |
-|-----------|-----------|---------------|
-| ADR-001: Next.js + Vercel | Codebase: Vite SPA | Code uses Vite, not Next.js — no SSR, no API routes, no middleware |
-| ADR-002: Node.js BFF pattern | Codebase: Supabase Edge Functions | No BFF exists — frontend calls Supabase directly |
-| ADR-009: BullMQ + Redis for job queue | Codebase: No queue found | Zero background job infrastructure |
-| Master Plan: "Offline-first mandatory" | Codebase: No offline capability | No IndexedDB, no service workers, no sync queue |
-| Integration Contracts: ERPNext sync | Codebase: Zero ERPNext code | Most documented integration doesn't exist |
+| Document A                             | Document B                        | Contradiction                                                      |
+| -------------------------------------- | --------------------------------- | ------------------------------------------------------------------ |
+| ADR-001: Next.js + Vercel              | Codebase: Vite SPA                | Code uses Vite, not Next.js — no SSR, no API routes, no middleware |
+| ADR-002: Node.js BFF pattern           | Codebase: Supabase Edge Functions | No BFF exists — frontend calls Supabase directly                   |
+| ADR-009: BullMQ + Redis for job queue  | Codebase: No queue found          | Zero background job infrastructure                                 |
+| Master Plan: "Offline-first mandatory" | Codebase: No offline capability   | No IndexedDB, no service workers, no sync queue                    |
+| Integration Contracts: ERPNext sync    | Codebase: Zero ERPNext code       | Most documented integration doesn't exist                          |
 
 ---
 
@@ -59,39 +59,39 @@ The 18 documents cover product strategy, architecture, security, compliance, inf
 
 ### Vital Statistics
 
-| Metric | Value |
-|--------|-------|
-| Framework | Vite 5.4 + React 18.3 (NOT Next.js) |
-| Language | TypeScript 5.8 (strict mode) |
-| Lines of code | ~36,000 |
-| Source files | 214 TypeScript/TSX |
-| Components | 135+ (60+ shadcn/ui + 75+ custom) |
-| Custom hooks | 30 |
-| Test files | 9 (4.2% file coverage) |
-| Supabase migrations | 63 |
-| Git commits | 202 over 5 months |
-| Contributors | 49% AI-generated (gpt-engineer-app[bot]), 34% human (Michael), 11% AI (Jules), 5% Narcothetechy |
+| Metric              | Value                                                                                           |
+| ------------------- | ----------------------------------------------------------------------------------------------- |
+| Framework           | Vite 5.4 + React 18.3 (NOT Next.js)                                                             |
+| Language            | TypeScript 5.8 (strict mode)                                                                    |
+| Lines of code       | ~36,000                                                                                         |
+| Source files        | 214 TypeScript/TSX                                                                              |
+| Components          | 135+ (60+ shadcn/ui + 75+ custom)                                                               |
+| Custom hooks        | 30                                                                                              |
+| Test files          | 9 (4.2% file coverage)                                                                          |
+| Supabase migrations | 63                                                                                              |
+| Git commits         | 202 over 5 months                                                                               |
+| Contributors        | 49% AI-generated (gpt-engineer-app[bot]), 34% human (Michael), 11% AI (Jules), 5% Narcothetechy |
 
 ### What's Actually Built (vs. Documented)
 
-| Epic | Documented | Code Status | Gap |
-|------|-----------|-------------|-----|
-| Identity & Access | Full RBAC, MFA, domain restriction | ✅ Implemented (Clerk + RBAC hooks) | Minor polish |
-| Project Management | Full lifecycle, scheduling, tasks | ✅ Implemented (ProjectDetail, calendar, task tabs) | Working |
-| Team & Organization | Org chart, skill matrix, divisions | ✅ Implemented (TeamProfileModal, OrgChart) | Working |
-| Documents & Files | Upload, preview, share, versioning | ✅ Implemented (DocumentManager, FilePreview) | Working |
-| Notifications | Email, in-app, celebration reminders | ✅ Implemented (NotificationCenter) | Working |
-| Settings & Config | Account, profile, system, notifications | ✅ Implemented (5 settings tabs) | Working |
-| Dashboard & Reporting | Smart dashboard, widgets, analytics | 🟡 Partial (widgets exist, limited data) | Needs data |
-| Financial Operations | AR/AP, budgets, invoicing, ERPNext sync | 🟡 Partial (expenses only) | Major gap |
-| CRM & Pipeline | Leads, contacts, opportunities | 🔴 Not found | Full build |
-| Estimating Engine | Assemblies, pricing, proposals | 🔴 Not found | Full build |
-| Contracting | Contracts, e-signatures (BoldSign) | 🔴 Not found | Full build |
-| Change Orders | CO workflow, approvals, cost impact | 🔴 Not found | Full build |
-| RFIs & Submittals | RFI creation, tracking, responses | 🔴 Not found | Full build |
-| Field Operations | Daily logs, inspections, offline | 🔴 Not found | Full build |
-| Time & Payroll | Time tracking, ADP integration | 🔴 Minimal | Full build |
-| Quality & Compliance | Inspections, punch lists, warranty | 🔴 Not found | Full build |
+| Epic                  | Documented                              | Code Status                                         | Gap          |
+| --------------------- | --------------------------------------- | --------------------------------------------------- | ------------ |
+| Identity & Access     | Full RBAC, MFA, domain restriction      | ✅ Implemented (Clerk + RBAC hooks)                 | Minor polish |
+| Project Management    | Full lifecycle, scheduling, tasks       | ✅ Implemented (ProjectDetail, calendar, task tabs) | Working      |
+| Team & Organization   | Org chart, skill matrix, divisions      | ✅ Implemented (TeamProfileModal, OrgChart)         | Working      |
+| Documents & Files     | Upload, preview, share, versioning      | ✅ Implemented (DocumentManager, FilePreview)       | Working      |
+| Notifications         | Email, in-app, celebration reminders    | ✅ Implemented (NotificationCenter)                 | Working      |
+| Settings & Config     | Account, profile, system, notifications | ✅ Implemented (5 settings tabs)                    | Working      |
+| Dashboard & Reporting | Smart dashboard, widgets, analytics     | 🟡 Partial (widgets exist, limited data)            | Needs data   |
+| Financial Operations  | AR/AP, budgets, invoicing, ERPNext sync | 🟡 Partial (expenses only)                          | Major gap    |
+| CRM & Pipeline        | Leads, contacts, opportunities          | 🔴 Not found                                        | Full build   |
+| Estimating Engine     | Assemblies, pricing, proposals          | 🔴 Not found                                        | Full build   |
+| Contracting           | Contracts, e-signatures (BoldSign)      | 🔴 Not found                                        | Full build   |
+| Change Orders         | CO workflow, approvals, cost impact     | 🔴 Not found                                        | Full build   |
+| RFIs & Submittals     | RFI creation, tracking, responses       | 🔴 Not found                                        | Full build   |
+| Field Operations      | Daily logs, inspections, offline        | 🔴 Not found                                        | Full build   |
+| Time & Payroll        | Time tracking, ADP integration          | 🔴 Minimal                                          | Full build   |
+| Quality & Compliance  | Inspections, punch lists, warranty      | 🔴 Not found                                        | Full build   |
 
 **Summary:** ~6 of 16 epics have real code. The remaining 10 epics are unbuilt.
 
@@ -115,6 +115,7 @@ Frontend hooks call `supabase.from('table')` directly without an abstraction lay
 ### Code Quality Assessment
 
 **Strengths:**
+
 - Clean component organization (feature-based folders)
 - 30 well-structured custom hooks with proper React Query integration
 - Error boundaries at app, route, and component levels
@@ -123,6 +124,7 @@ Frontend hooks call `supabase.from('table')` directly without an abstraction lay
 - RLS policies on all tables (recently refactored to use `requesting_user_id()`)
 
 **Weaknesses:**
+
 - 4.2% test coverage (9 test files for 214 source files)
 - 85+ ESLint warnings (mostly `any` types and unused vars)
 - 60+ console.log/console.error in production code
@@ -141,12 +143,14 @@ Frontend hooks call `supabase.from('table')` directly without an abstraction lay
 **Risk:** Medium-High
 
 **Pros:**
+
 - 5 months of work preserved (~36k LOC)
 - Working auth, projects, team, documents, settings
 - 63 database migrations (schema is solid)
 - Familiar to current contributors
 
 **Cons:**
+
 - Must migrate Vite → Next.js (significant refactor)
 - Must build BFF layer from scratch
 - Must build 10 missing epics
@@ -160,6 +164,7 @@ Frontend hooks call `supabase.from('table')` directly without an abstraction lay
 **Risk:** Medium
 
 **Pros:**
+
 - Clean architecture from day 1 (Next.js + BFF as documented)
 - Consistent with all 18 planning docs
 - Can enforce test coverage minimums from start
@@ -167,6 +172,7 @@ Frontend hooks call `supabase.from('table')` directly without an abstraction lay
 - Proper offline-first from the beginning
 
 **Cons:**
+
 - 5 months of work discarded
 - Must rebuild working features (auth, projects, team, etc.)
 - Database schema work partially wasted (though schema can be reused)
@@ -179,6 +185,7 @@ Frontend hooks call `supabase.from('table')` directly without an abstraction lay
 **Risk:** Medium-Low
 
 **What to keep:**
+
 - Database schema and all 63 migrations (Supabase)
 - shadcn/ui component library (60+ components)
 - Custom React components that are UI-only (no direct Supabase calls)
@@ -186,6 +193,7 @@ Frontend hooks call `supabase.from('table')` directly without an abstraction lay
 - Design patterns and business logic from hooks
 
 **What to rebuild:**
+
 - Project scaffolding (Vite → Next.js App Router)
 - API layer (add Next.js API routes as BFF)
 - Data fetching (refactor hooks to call BFF instead of Supabase directly)
@@ -194,6 +202,7 @@ Frontend hooks call `supabase.from('table')` directly without an abstraction lay
 - All 10 missing epics (build correctly from start)
 
 **What to fix:**
+
 - Test coverage (target 50%+ for critical paths)
 - Remove hardcoded values and console.logs
 - Add proper error handling and validation
@@ -219,6 +228,7 @@ Frontend hooks call `supabase.from('table')` directly without an abstraction lay
 **Goal:** Ship the features that replace fragmented manual workflows for daily use.
 
 Port from existing code (refactor to use BFF):
+
 - Project management (ProjectDetail, tasks, calendar)
 - Team & organization (org chart, divisions)
 - Document management (upload, preview, share)
@@ -227,6 +237,7 @@ Port from existing code (refactor to use BFF):
 - Notifications
 
 Build new:
+
 - **ERPNext integration** (the most critical missing piece)
 - **Estimating engine** (core to construction workflow)
 - **Contracting** (with BoldSign e-signatures)
@@ -235,6 +246,7 @@ Build new:
 ### Phase 2: Field & Compliance (Weeks 13-20)
 
 Build new:
+
 - Field operations (daily logs, inspections, offline-first)
 - Time tracking (with ADP integration)
 - RFIs & submittals
@@ -256,56 +268,56 @@ Build new:
 
 These are blocking questions that need answers before any code is written:
 
-| # | Decision | Options | Impact |
-|---|----------|---------|--------|
-| 1 | **Confirm Next.js migration** | Migrate to Next.js (align with docs) vs. stay on Vite (diverge from docs) | Architecture foundation |
-| 2 | **Define MVP scope** | Which of the 16 epics must ship in v1? Which can wait? | Timeline and resource planning |
-| 3 | **ERPNext integration depth** | Full bidirectional sync vs. read-only from ERPNext vs. defer entirely | Backend complexity |
-| 4 | **Offline requirement** | True offline-first (PWA + IndexedDB) vs. graceful degradation vs. defer | Architecture complexity |
-| 5 | **Team composition** | Solo + AI vs. small team vs. contractor(s) | Delivery velocity |
-| 6 | **Legacy system sunset timeline** | Hard deadline vs. parallel run vs. gradual migration | Pressure on delivery |
-| 7 | **White-label priority** | Build for MDM only first vs. multi-tenant from day 1 | Architecture decisions |
-| 8 | **Clerk data residency** | Accept US hosting vs. find Canadian alternative vs. self-host auth | Compliance risk |
+| #   | Decision                          | Options                                                                   | Impact                         |
+| --- | --------------------------------- | ------------------------------------------------------------------------- | ------------------------------ |
+| 1   | **Confirm Next.js migration**     | Migrate to Next.js (align with docs) vs. stay on Vite (diverge from docs) | Architecture foundation        |
+| 2   | **Define MVP scope**              | Which of the 16 epics must ship in v1? Which can wait?                    | Timeline and resource planning |
+| 3   | **ERPNext integration depth**     | Full bidirectional sync vs. read-only from ERPNext vs. defer entirely     | Backend complexity             |
+| 4   | **Offline requirement**           | True offline-first (PWA + IndexedDB) vs. graceful degradation vs. defer   | Architecture complexity        |
+| 5   | **Team composition**              | Solo + AI vs. small team vs. contractor(s)                                | Delivery velocity              |
+| 6   | **Legacy system sunset timeline** | Hard deadline vs. parallel run vs. gradual migration                      | Pressure on delivery           |
+| 7   | **White-label priority**          | Build for MDM only first vs. multi-tenant from day 1                      | Architecture decisions         |
+| 8   | **Clerk data residency**          | Accept US hosting vs. find Canadian alternative vs. self-host auth        | Compliance risk                |
 
 ---
 
 ## Part 6: Risk Register
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|-----------|--------|------------|
-| ERPNext integration more complex than estimated | High | High | Spike/prototype ERPNext sync in week 1-2; define minimal sync scope |
-| Scope creep across 16 epics | High | High | Formalize MVP scope; say "no" to Phase 2 features until Phase 1 ships |
-| Single Proxmox node failure | Medium | Critical | Add HA node or cloud failover before production launch |
-| Clerk outage blocks all access | Medium | High | Implement graceful degradation; cache auth tokens locally |
-| GPL v3 licensing challenge from Frappe Foundation | Low | High | Get written clarification from Frappe; maintain strict API boundary |
-| Team burnout (solo + AI development) | High | Medium | Set realistic timelines; consider bringing on 1-2 contractors for Phase 1 |
-| Sage data loss during migration | Medium | High | Build migration validation suite; run parallel for 30+ days |
-| PIPEDA non-compliance discovered post-launch | Low | High | Commission external privacy audit before launch |
+| Risk                                              | Likelihood | Impact   | Mitigation                                                                |
+| ------------------------------------------------- | ---------- | -------- | ------------------------------------------------------------------------- |
+| ERPNext integration more complex than estimated   | High       | High     | Spike/prototype ERPNext sync in week 1-2; define minimal sync scope       |
+| Scope creep across 16 epics                       | High       | High     | Formalize MVP scope; say "no" to Phase 2 features until Phase 1 ships     |
+| Single Proxmox node failure                       | Medium     | Critical | Add HA node or cloud failover before production launch                    |
+| Clerk outage blocks all access                    | Medium     | High     | Implement graceful degradation; cache auth tokens locally                 |
+| GPL v3 licensing challenge from Frappe Foundation | Low        | High     | Get written clarification from Frappe; maintain strict API boundary       |
+| Team burnout (solo + AI development)              | High       | Medium   | Set realistic timelines; consider bringing on 1-2 contractors for Phase 1 |
+| Sage data loss during migration                   | Medium     | High     | Build migration validation suite; run parallel for 30+ days               |
+| PIPEDA non-compliance discovered post-launch      | Low        | High     | Commission external privacy audit before launch                           |
 
 ---
 
 ## Appendix: Document-to-Code Traceability Matrix
 
-| Document | Purpose | Code Alignment |
-|----------|---------|---------------|
-| Master Plan | Product vision, 16 epics | 🟡 Partially aligned (6/16 epics built) |
-| Execution Board | Team, phases, sprints | 🔴 Not followed (no sprint structure visible in commits) |
-| Feature PRD Checklist | Requirements traceability | 🟡 Partially covered |
-| Blueprint Gap Matrix | Gap analysis vs. legacy systems/ERPNext | 🔴 Gaps still open |
-| ERPNext Doctype Mapping | Sync contract | 🔴 Zero implementation |
-| SQL Schema Draft | Database design | ✅ Well-aligned (63 migrations, RLS, audit trails) |
-| Forms Registry | UI form specifications | 🟡 Some forms built, most missing |
-| API Test Matrix | Endpoint specs + test cases | 🔴 No BFF, no API layer, 4% test coverage |
-| Product Vision & Strategy | Strategic direction | ✅ Directionally aligned |
-| Cost & Vendor Analysis | Budget justification | ✅ Vendors match (Supabase, Clerk, Vercel) |
-| Technology Stack ADRs | 25 architecture decisions | 🔴 Major deviation (Vite not Next.js, no BFF, no BullMQ) |
-| Security Framework | Auth, RBAC, encryption | 🟡 Clerk + RLS implemented; gaps in rate limiting, CSRF |
-| DevOps & CI/CD | Pipeline architecture | 🟡 GitHub exists, no CI/CD pipeline configured |
-| Infrastructure & Deployment | Proxmox, VMs, networking | ⚠️ Not validated (infra separate from code) |
-| Integration Contracts | Sync patterns, error handling | 🔴 Not implemented |
-| Monitoring & Observability | Prometheus, Grafana, Loki | 🟡 OpenTelemetry in code; no Prometheus/Grafana |
-| Licensing & Legal Audit | GPL, PIPEDA, AODA | ✅ Informational (no code impact) |
+| Document                    | Purpose                                 | Code Alignment                                           |
+| --------------------------- | --------------------------------------- | -------------------------------------------------------- |
+| Master Plan                 | Product vision, 16 epics                | 🟡 Partially aligned (6/16 epics built)                  |
+| Execution Board             | Team, phases, sprints                   | 🔴 Not followed (no sprint structure visible in commits) |
+| Feature PRD Checklist       | Requirements traceability               | 🟡 Partially covered                                     |
+| Blueprint Gap Matrix        | Gap analysis vs. legacy systems/ERPNext | 🔴 Gaps still open                                       |
+| ERPNext Doctype Mapping     | Sync contract                           | 🔴 Zero implementation                                   |
+| SQL Schema Draft            | Database design                         | ✅ Well-aligned (63 migrations, RLS, audit trails)       |
+| Forms Registry              | UI form specifications                  | 🟡 Some forms built, most missing                        |
+| API Test Matrix             | Endpoint specs + test cases             | 🔴 No BFF, no API layer, 4% test coverage                |
+| Product Vision & Strategy   | Strategic direction                     | ✅ Directionally aligned                                 |
+| Cost & Vendor Analysis      | Budget justification                    | ✅ Vendors match (Supabase, Clerk, Vercel)               |
+| Technology Stack ADRs       | 25 architecture decisions               | 🔴 Major deviation (Vite not Next.js, no BFF, no BullMQ) |
+| Security Framework          | Auth, RBAC, encryption                  | 🟡 Clerk + RLS implemented; gaps in rate limiting, CSRF  |
+| DevOps & CI/CD              | Pipeline architecture                   | 🟡 GitHub exists, no CI/CD pipeline configured           |
+| Infrastructure & Deployment | Proxmox, VMs, networking                | ⚠️ Not validated (infra separate from code)              |
+| Integration Contracts       | Sync patterns, error handling           | 🔴 Not implemented                                       |
+| Monitoring & Observability  | Prometheus, Grafana, Loki               | 🟡 OpenTelemetry in code; no Prometheus/Grafana          |
+| Licensing & Legal Audit     | GPL, PIPEDA, AODA                       | ✅ Informational (no code impact)                        |
 
 ---
 
-*This assessment is based on a full read of all 18 planning documents and a deep analysis of the 202-commit codebase. The recommendations prioritize shipping a production-ready MVP for MDM Group while preserving the work already done.*
+_This assessment is based on a full read of all 18 planning documents and a deep analysis of the 202-commit codebase. The recommendations prioritize shipping a production-ready MVP for MDM Group while preserving the work already done._

@@ -46,10 +46,7 @@ export function ProjectTimelineTab({ project }: ProjectTimelineTabProps) {
     {
       id: 5,
       title: 'Mid-Project Review',
-      date:
-        startDate && endDate
-          ? new Date((startDate.getTime() + endDate.getTime()) / 2)
-          : null,
+      date: startDate && endDate ? new Date((startDate.getTime() + endDate.getTime()) / 2) : null,
       status: 'pending',
       description: 'Review progress and adjust timeline if needed',
     },

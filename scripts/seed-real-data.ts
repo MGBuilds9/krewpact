@@ -65,13 +65,13 @@ function parseName(fullName: string): { first_name: string; last_name: string } 
 }
 
 function isEmptyRow(row: unknown[]): boolean {
-  return !row || row.every(v => v == null || String(v).trim() === '');
+  return !row || row.every((v) => v == null || String(v).trim() === '');
 }
 
 function isDecisionMaker(seniority: string): boolean {
   const dm = ['owner', 'director', 'c-suite', 'head', 'partner', 'founder', 'president', 'vp'];
   const lower = (seniority || '').toLowerCase();
-  return dm.some(s => lower.includes(s));
+  return dm.some((s) => lower.includes(s));
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -82,7 +82,9 @@ async function softInsert(table: string, rows: any[], selectCols = '*'): Promise
     const batch = rows.slice(i, i + 50);
     const { data, error } = await supabase.from(table).insert(batch).select(selectCols);
     if (error) {
-      console.warn(`   ⚠️  ${table} insert warning (batch ${Math.floor(i / 50) + 1}): ${error.message}`);
+      console.warn(
+        `   ⚠️  ${table} insert warning (batch ${Math.floor(i / 50) + 1}): ${error.message}`,
+      );
     } else if (data) {
       results.push(...data);
     }
@@ -118,8 +120,12 @@ async function seed() {
       .replace(/\s+/g, '-')
       .replace(/[^a-z0-9-]/g, '');
     const canonical: Record<string, string> = {
-      'mdm-contracting': 'contracting', 'mdm-homes': 'homes', 'mdm-wood': 'wood',
-      'mdm-telecom': 'telecom', 'mdm-group-inc': 'group-inc', 'mdm-management': 'management',
+      'mdm-contracting': 'contracting',
+      'mdm-homes': 'homes',
+      'mdm-wood': 'wood',
+      'mdm-telecom': 'telecom',
+      'mdm-group-inc': 'group-inc',
+      'mdm-management': 'management',
     };
     divMap[canonical[nameKey] ?? nameKey] = rec.id as string;
   }
@@ -130,16 +136,25 @@ async function seed() {
     console.log('\n   🧹 Cleaning existing real data (tagged records)...');
     const sources = ['apollo', 'networking', 'outreach', 'door_knocking', 'existing_client'];
     // Get lead IDs for these sources
-    const { data: taggedLeads } = await supabase.from('leads').select('id').in('source_channel', sources);
-    const leadIds = (taggedLeads ?? []).map(l => l.id);
+    const { data: taggedLeads } = await supabase
+      .from('leads')
+      .select('id')
+      .in('source_channel', sources);
+    const leadIds = (taggedLeads ?? []).map((l) => l.id);
     if (leadIds.length) {
       // Delete contacts linked to those leads (batch to avoid URL length limits)
       for (let i = 0; i < leadIds.length; i += 100) {
-        await supabase.from('contacts').delete().in('lead_id', leadIds.slice(i, i + 100));
+        await supabase
+          .from('contacts')
+          .delete()
+          .in('lead_id', leadIds.slice(i, i + 100));
       }
       // Delete the leads themselves
       for (let i = 0; i < leadIds.length; i += 100) {
-        await supabase.from('leads').delete().in('id', leadIds.slice(i, i + 100));
+        await supabase
+          .from('leads')
+          .delete()
+          .in('id', leadIds.slice(i, i + 100));
       }
     }
     // Delete accounts tagged as real data
@@ -211,21 +226,23 @@ async function seed() {
 
   // Dedup accounts by name
   const { data: existingAccounts } = await supabase.from('accounts').select('account_name');
-  const existingNames = new Set((existingAccounts ?? []).map(a => a.account_name));
-  const newAccounts = accountRows.filter(a => !existingNames.has(a.account_name));
+  const existingNames = new Set((existingAccounts ?? []).map((a) => a.account_name));
+  const newAccounts = accountRows.filter((a) => !existingNames.has(a.account_name));
 
   const insertedAccounts = await softInsert('accounts', newAccounts, 'id, account_name');
-  console.log(`   Inserted ${insertedAccounts.length} accounts (${accountRows.length - newAccounts.length} skipped as duplicates).`);
+  console.log(
+    `   Inserted ${insertedAccounts.length} accounts (${accountRows.length - newAccounts.length} skipped as duplicates).`,
+  );
 
   // Insert customer leads
   const insertedCustLeads = await softInsert('leads', customerLeadRows, 'id, company_name');
   console.log(`   Inserted ${insertedCustLeads.length} customer leads.`);
-  const custLeadMap = Object.fromEntries(insertedCustLeads.map(l => [l.company_name, l.id]));
+  const custLeadMap = Object.fromEntries(insertedCustLeads.map((l) => [l.company_name, l.id]));
 
   // Link contacts to leads
   const linkedContacts = customerContactData
-    .filter(c => custLeadMap[c.pharmacy])
-    .map(c => ({
+    .filter((c) => custLeadMap[c.pharmacy])
+    .map((c) => ({
       ...c.contact,
       lead_id: custLeadMap[c.pharmacy],
     }));
@@ -314,18 +331,20 @@ async function seed() {
   console.log(`   Inserted ${insertedApolloLeads.length} Apollo leads.`);
 
   // Map company_name → lead_id for contact linking
-  const apolloLeadMap = Object.fromEntries(
-    insertedApolloLeads.map(l => [l.company_name, l.id])
-  );
+  const apolloLeadMap = Object.fromEntries(insertedApolloLeads.map((l) => [l.company_name, l.id]));
 
   const linkedApolloContacts = apolloContactData
-    .filter(c => apolloLeadMap[c.companyName])
-    .map(c => ({
+    .filter((c) => apolloLeadMap[c.companyName])
+    .map((c) => ({
       ...c.contact,
       lead_id: apolloLeadMap[c.companyName],
     }));
 
-  const insertedApolloContacts = await softInsert('contacts', linkedApolloContacts, 'id, full_name');
+  const insertedApolloContacts = await softInsert(
+    'contacts',
+    linkedApolloContacts,
+    'id, full_name',
+  );
   console.log(`   Inserted ${insertedApolloContacts.length} Apollo contacts.`);
 
   // ── 4. Curated MDM Meet → leads ─────────────────────────────
@@ -513,12 +532,19 @@ async function seed() {
   // ── Summary ────────────────────────────────────────────────
   const totalAccounts = insertedAccounts.length;
   const totalContacts = insertedCustContacts.length + insertedApolloContacts.length;
-  const totalLeads = insertedCustLeads.length + insertedApolloLeads.length + insertedMeetLeads.length +
-    insertedGroupLeads.length + insertedPlazaLeads.length + insertedCityLeads.length;
+  const totalLeads =
+    insertedCustLeads.length +
+    insertedApolloLeads.length +
+    insertedMeetLeads.length +
+    insertedGroupLeads.length +
+    insertedPlazaLeads.length +
+    insertedCityLeads.length;
 
   console.log('\n✅ Real data seed complete!');
   console.log(`   - ${totalAccounts} accounts (pharmacy clients)`);
-  console.log(`   - ${totalContacts} contacts (${insertedCustContacts.length} customer + ${insertedApolloContacts.length} Apollo)`);
+  console.log(
+    `   - ${totalContacts} contacts (${insertedCustContacts.length} customer + ${insertedApolloContacts.length} Apollo)`,
+  );
   console.log(`   - ${totalLeads} leads:`);
   console.log(`     · ${insertedCustLeads.length} existing clients (pharmacies)`);
   console.log(`     · ${insertedApolloLeads.length} Apollo (clinics/healthcare)`);

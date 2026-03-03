@@ -20,7 +20,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Plus, Mail, UserMinus } from 'lucide-react';
-import { useProjectMembers, useAddProjectMember, useRemoveProjectMember } from '@/hooks/useProjectMembers';
+import {
+  useProjectMembers,
+  useAddProjectMember,
+  useRemoveProjectMember,
+} from '@/hooks/useProjectMembers';
 import { useUsers } from '@/hooks/useUsers';
 import { toast } from 'sonner';
 
@@ -106,11 +110,7 @@ export function ProjectTeamTab({ projectId }: ProjectTeamTabProps) {
                   </SelectContent>
                 </Select>
               </div>
-              <Button
-                onClick={handleAddMember}
-                className="w-full"
-                disabled={!selectedUserId}
-              >
+              <Button onClick={handleAddMember} className="w-full" disabled={!selectedUserId}>
                 Add to Team
               </Button>
             </div>
@@ -146,11 +146,7 @@ export function ProjectTeamTab({ projectId }: ProjectTeamTabProps) {
                     )}
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleRemoveMember(member.id)}
-                >
+                <Button variant="ghost" size="sm" onClick={() => handleRemoveMember(member.id)}>
                   <UserMinus className="h-4 w-4" />
                 </Button>
               </div>

@@ -112,16 +112,19 @@ describe('POST /api/crm/opportunities/[id]/estimate', () => {
 
   it('returns 400 for invalid body', async () => {
     mockAuth.mockResolvedValue({ userId: 'user-1' });
-    const res = await POST(
-      makeRequest({ total_amount: -1 }) as never,
-      makeContext(),
-    );
+    const res = await POST(makeRequest({ total_amount: -1 }) as never, makeContext());
     expect(res.status).toBe(400);
   });
 
   it('creates an estimate linked to the opportunity', async () => {
     mockAuth.mockResolvedValue({ userId: 'user-1' });
-    const created = { id: 'est-new', estimate_number: 'EST-003', total_amount: 7500, status: 'draft', opportunity_id: 'opp-123' };
+    const created = {
+      id: 'est-new',
+      estimate_number: 'EST-003',
+      total_amount: 7500,
+      status: 'draft',
+      opportunity_id: 'opp-123',
+    };
     let callCount = 0;
     mockFrom.mockImplementation(() => {
       callCount++;

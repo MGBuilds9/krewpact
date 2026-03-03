@@ -98,8 +98,7 @@ interface PaginatedResponse<T> {
 export function useFolders(projectId: string) {
   return useQuery({
     queryKey: ['folders', projectId],
-    queryFn: () =>
-      apiFetch<PaginatedResponse<FileFolder>>(`/api/projects/${projectId}/folders`),
+    queryFn: () => apiFetch<PaginatedResponse<FileFolder>>(`/api/projects/${projectId}/folders`),
     enabled: !!projectId,
     staleTime: 30_000,
   });
@@ -247,9 +246,7 @@ export function useFileShares(projectId: string, fileId: string) {
   return useQuery({
     queryKey: ['file-shares', projectId, fileId],
     queryFn: () =>
-      apiFetch<PaginatedResponse<FileShare>>(
-        `/api/projects/${projectId}/files/${fileId}/share`,
-      ),
+      apiFetch<PaginatedResponse<FileShare>>(`/api/projects/${projectId}/files/${fileId}/share`),
     enabled: !!projectId && !!fileId,
     staleTime: 30_000,
   });
@@ -276,8 +273,7 @@ export function useCreateFileShare(projectId: string, fileId: string) {
 export function usePhotos(projectId: string) {
   return useQuery({
     queryKey: ['photos', projectId],
-    queryFn: () =>
-      apiFetch<PaginatedResponse<PhotoAsset>>(`/api/projects/${projectId}/photos`),
+    queryFn: () => apiFetch<PaginatedResponse<PhotoAsset>>(`/api/projects/${projectId}/photos`),
     enabled: !!projectId,
     staleTime: 30_000,
   });
@@ -326,10 +322,10 @@ export function useCreatePhotoAnnotation(projectId: string, photoId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: Partial<PhotoAnnotation>) =>
-      apiFetch<PhotoAnnotation>(
-        `/api/projects/${projectId}/photos/${photoId}/annotations`,
-        { method: 'POST', body: data },
-      ),
+      apiFetch<PhotoAnnotation>(`/api/projects/${projectId}/photos/${photoId}/annotations`, {
+        method: 'POST',
+        body: data,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['photo-annotations', projectId, photoId] });
     },

@@ -69,7 +69,13 @@ export class SyncService {
         .single();
 
       if (accountError || !account) {
-        return this.failJob(supabase, job.id, 'account', accountId, `Account not found: ${accountError?.message || 'null'}`);
+        return this.failJob(
+          supabase,
+          job.id,
+          'account',
+          accountId,
+          `Account not found: ${accountError?.message || 'null'}`,
+        );
       }
 
       // 3. Call ERPNext (or mock)
@@ -144,7 +150,13 @@ export class SyncService {
         .single();
 
       if (estimateError || !estimate) {
-        return this.failJob(supabase, job.id, 'estimate', estimateId, `Estimate not found: ${estimateError?.message || 'null'}`);
+        return this.failJob(
+          supabase,
+          job.id,
+          'estimate',
+          estimateId,
+          `Estimate not found: ${estimateError?.message || 'null'}`,
+        );
       }
 
       // 3. Call ERPNext (or mock)
@@ -241,7 +253,13 @@ export class SyncService {
         .single();
 
       if (oppError || !opportunity) {
-        return this.failJob(supabase, job.id, 'opportunity', opportunityId, `Opportunity not found: ${oppError?.message || 'null'}`);
+        return this.failJob(
+          supabase,
+          job.id,
+          'opportunity',
+          opportunityId,
+          `Opportunity not found: ${oppError?.message || 'null'}`,
+        );
       }
 
       // 3. Call ERPNext (or mock)
@@ -315,7 +333,13 @@ export class SyncService {
         .single();
 
       if (oppError || !opportunity) {
-        return this.failJob(supabase, job.id, 'sales_order', opportunityId, `Opportunity not found: ${oppError?.message || 'null'}`);
+        return this.failJob(
+          supabase,
+          job.id,
+          'sales_order',
+          opportunityId,
+          `Opportunity not found: ${oppError?.message || 'null'}`,
+        );
       }
 
       const oppData = opportunity as Record<string, unknown>;
@@ -386,7 +410,13 @@ export class SyncService {
         .single();
 
       if (contactError || !contact) {
-        return this.failJob(supabase, job.id, 'contact', contactId, `Contact not found: ${contactError?.message || 'null'}`);
+        return this.failJob(
+          supabase,
+          job.id,
+          'contact',
+          contactId,
+          `Contact not found: ${contactError?.message || 'null'}`,
+        );
       }
 
       const c = contact as Record<string, unknown>;
@@ -416,10 +446,21 @@ export class SyncService {
       }
 
       await this.upsertSyncMap(supabase, 'contact', contactId, 'Contact', erpDocname);
-      await this.logEvent(supabase, job.id, 'sync_completed', { entity_type: 'contact', entity_id: contactId, erp_docname: erpDocname });
+      await this.logEvent(supabase, job.id, 'sync_completed', {
+        entity_type: 'contact',
+        entity_id: contactId,
+        erp_docname: erpDocname,
+      });
       await this.updateJobStatus(supabase, job.id, 'succeeded');
 
-      return { id: job.id, status: 'succeeded', entity_type: 'contact', entity_id: contactId, erp_docname: erpDocname, attempt_count: 1 };
+      return {
+        id: job.id,
+        status: 'succeeded',
+        entity_type: 'contact',
+        entity_id: contactId,
+        erp_docname: erpDocname,
+        attempt_count: 1,
+      };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       return this.failJob(supabase, job.id, 'contact', contactId, message);
@@ -441,7 +482,13 @@ export class SyncService {
         .single();
 
       if (projectError || !project) {
-        return this.failJob(supabase, job.id, 'project', projectId, `Project not found: ${projectError?.message || 'null'}`);
+        return this.failJob(
+          supabase,
+          job.id,
+          'project',
+          projectId,
+          `Project not found: ${projectError?.message || 'null'}`,
+        );
       }
 
       const p = project as Record<string, unknown>;
@@ -473,10 +520,21 @@ export class SyncService {
       }
 
       await this.upsertSyncMap(supabase, 'project', projectId, 'Project', erpDocname);
-      await this.logEvent(supabase, job.id, 'sync_completed', { entity_type: 'project', entity_id: projectId, erp_docname: erpDocname });
+      await this.logEvent(supabase, job.id, 'sync_completed', {
+        entity_type: 'project',
+        entity_id: projectId,
+        erp_docname: erpDocname,
+      });
       await this.updateJobStatus(supabase, job.id, 'succeeded');
 
-      return { id: job.id, status: 'succeeded', entity_type: 'project', entity_id: projectId, erp_docname: erpDocname, attempt_count: 1 };
+      return {
+        id: job.id,
+        status: 'succeeded',
+        entity_type: 'project',
+        entity_id: projectId,
+        erp_docname: erpDocname,
+        attempt_count: 1,
+      };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       return this.failJob(supabase, job.id, 'project', projectId, message);
@@ -498,7 +556,13 @@ export class SyncService {
         .single();
 
       if (taskError || !task) {
-        return this.failJob(supabase, job.id, 'task', taskId, `Task not found: ${taskError?.message || 'null'}`);
+        return this.failJob(
+          supabase,
+          job.id,
+          'task',
+          taskId,
+          `Task not found: ${taskError?.message || 'null'}`,
+        );
       }
 
       const t = task as Record<string, unknown>;
@@ -531,10 +595,21 @@ export class SyncService {
       }
 
       await this.upsertSyncMap(supabase, 'task', taskId, 'Task', erpDocname);
-      await this.logEvent(supabase, job.id, 'sync_completed', { entity_type: 'task', entity_id: taskId, erp_docname: erpDocname });
+      await this.logEvent(supabase, job.id, 'sync_completed', {
+        entity_type: 'task',
+        entity_id: taskId,
+        erp_docname: erpDocname,
+      });
       await this.updateJobStatus(supabase, job.id, 'succeeded');
 
-      return { id: job.id, status: 'succeeded', entity_type: 'task', entity_id: taskId, erp_docname: erpDocname, attempt_count: 1 };
+      return {
+        id: job.id,
+        status: 'succeeded',
+        entity_type: 'task',
+        entity_id: taskId,
+        erp_docname: erpDocname,
+        attempt_count: 1,
+      };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       return this.failJob(supabase, job.id, 'task', taskId, message);
@@ -556,7 +631,13 @@ export class SyncService {
         .single();
 
       if (paError || !portalAccount) {
-        return this.failJob(supabase, job.id, 'supplier', portalAccountId, `Portal account not found: ${paError?.message || 'null'}`);
+        return this.failJob(
+          supabase,
+          job.id,
+          'supplier',
+          portalAccountId,
+          `Portal account not found: ${paError?.message || 'null'}`,
+        );
       }
 
       const pa = portalAccount as Record<string, unknown>;
@@ -583,10 +664,21 @@ export class SyncService {
       }
 
       await this.upsertSyncMap(supabase, 'supplier', portalAccountId, 'Supplier', erpDocname);
-      await this.logEvent(supabase, job.id, 'sync_completed', { entity_type: 'supplier', entity_id: portalAccountId, erp_docname: erpDocname });
+      await this.logEvent(supabase, job.id, 'sync_completed', {
+        entity_type: 'supplier',
+        entity_id: portalAccountId,
+        erp_docname: erpDocname,
+      });
       await this.updateJobStatus(supabase, job.id, 'succeeded');
 
-      return { id: job.id, status: 'succeeded', entity_type: 'supplier', entity_id: portalAccountId, erp_docname: erpDocname, attempt_count: 1 };
+      return {
+        id: job.id,
+        status: 'succeeded',
+        entity_type: 'supplier',
+        entity_id: portalAccountId,
+        erp_docname: erpDocname,
+        attempt_count: 1,
+      };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       return this.failJob(supabase, job.id, 'supplier', portalAccountId, message);
@@ -608,7 +700,13 @@ export class SyncService {
         .single();
 
       if (expenseError || !expense) {
-        return this.failJob(supabase, job.id, 'expense_claim', expenseClaimId, `Expense claim not found: ${expenseError?.message || 'null'}`);
+        return this.failJob(
+          supabase,
+          job.id,
+          'expense_claim',
+          expenseClaimId,
+          `Expense claim not found: ${expenseError?.message || 'null'}`,
+        );
       }
 
       const e = expense as Record<string, unknown>;
@@ -639,11 +737,28 @@ export class SyncService {
         erpDocname = result.name;
       }
 
-      await this.upsertSyncMap(supabase, 'expense_claim', expenseClaimId, 'Expense Claim', erpDocname);
-      await this.logEvent(supabase, job.id, 'sync_completed', { entity_type: 'expense_claim', entity_id: expenseClaimId, erp_docname: erpDocname });
+      await this.upsertSyncMap(
+        supabase,
+        'expense_claim',
+        expenseClaimId,
+        'Expense Claim',
+        erpDocname,
+      );
+      await this.logEvent(supabase, job.id, 'sync_completed', {
+        entity_type: 'expense_claim',
+        entity_id: expenseClaimId,
+        erp_docname: erpDocname,
+      });
       await this.updateJobStatus(supabase, job.id, 'succeeded');
 
-      return { id: job.id, status: 'succeeded', entity_type: 'expense_claim', entity_id: expenseClaimId, erp_docname: erpDocname, attempt_count: 1 };
+      return {
+        id: job.id,
+        status: 'succeeded',
+        entity_type: 'expense_claim',
+        entity_id: expenseClaimId,
+        erp_docname: erpDocname,
+        attempt_count: 1,
+      };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       return this.failJob(supabase, job.id, 'expense_claim', expenseClaimId, message);
@@ -665,7 +780,13 @@ export class SyncService {
         .single();
 
       if (batchError || !batch) {
-        return this.failJob(supabase, job.id, 'timesheet', timesheetBatchId, `Timesheet batch not found: ${batchError?.message || 'null'}`);
+        return this.failJob(
+          supabase,
+          job.id,
+          'timesheet',
+          timesheetBatchId,
+          `Timesheet batch not found: ${batchError?.message || 'null'}`,
+        );
       }
 
       const b = batch as Record<string, unknown>;
@@ -705,10 +826,22 @@ export class SyncService {
       }
 
       await this.upsertSyncMap(supabase, 'timesheet', timesheetBatchId, 'Timesheet', erpDocname);
-      await this.logEvent(supabase, job.id, 'sync_completed', { entity_type: 'timesheet', entity_id: timesheetBatchId, erp_docname: erpDocname, entry_count: entries.length });
+      await this.logEvent(supabase, job.id, 'sync_completed', {
+        entity_type: 'timesheet',
+        entity_id: timesheetBatchId,
+        erp_docname: erpDocname,
+        entry_count: entries.length,
+      });
       await this.updateJobStatus(supabase, job.id, 'succeeded');
 
-      return { id: job.id, status: 'succeeded', entity_type: 'timesheet', entity_id: timesheetBatchId, erp_docname: erpDocname, attempt_count: 1 };
+      return {
+        id: job.id,
+        status: 'succeeded',
+        entity_type: 'timesheet',
+        entity_id: timesheetBatchId,
+        erp_docname: erpDocname,
+        attempt_count: 1,
+      };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       return this.failJob(supabase, job.id, 'timesheet', timesheetBatchId, message);
@@ -743,10 +876,20 @@ export class SyncService {
         synced_at: new Date().toISOString(),
       });
 
-      await this.logEvent(supabase, job.id, 'sync_completed', { entity_type: 'sales_invoice', erp_docname: erpDocname });
+      await this.logEvent(supabase, job.id, 'sync_completed', {
+        entity_type: 'sales_invoice',
+        erp_docname: erpDocname,
+      });
       await this.updateJobStatus(supabase, job.id, 'succeeded');
 
-      return { id: job.id, status: 'succeeded', entity_type: 'sales_invoice', entity_id: erpDocname, erp_docname: erpDocname, attempt_count: 1 };
+      return {
+        id: job.id,
+        status: 'succeeded',
+        entity_type: 'sales_invoice',
+        entity_id: erpDocname,
+        erp_docname: erpDocname,
+        attempt_count: 1,
+      };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       return this.failJob(supabase, job.id, 'sales_invoice', erpDocname, message);
@@ -781,10 +924,20 @@ export class SyncService {
         synced_at: new Date().toISOString(),
       });
 
-      await this.logEvent(supabase, job.id, 'sync_completed', { entity_type: 'purchase_invoice', erp_docname: erpDocname });
+      await this.logEvent(supabase, job.id, 'sync_completed', {
+        entity_type: 'purchase_invoice',
+        erp_docname: erpDocname,
+      });
       await this.updateJobStatus(supabase, job.id, 'succeeded');
 
-      return { id: job.id, status: 'succeeded', entity_type: 'purchase_invoice', entity_id: erpDocname, erp_docname: erpDocname, attempt_count: 1 };
+      return {
+        id: job.id,
+        status: 'succeeded',
+        entity_type: 'purchase_invoice',
+        entity_id: erpDocname,
+        erp_docname: erpDocname,
+        attempt_count: 1,
+      };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       return this.failJob(supabase, job.id, 'purchase_invoice', erpDocname, message);
@@ -795,7 +948,10 @@ export class SyncService {
    * Get the sync status for a given entity type and ID.
    * Returns the sync map entry or null if not synced.
    */
-  async getSyncStatus(entityType: string, entityId: string): Promise<Record<string, unknown> | null> {
+  async getSyncStatus(
+    entityType: string,
+    entityId: string,
+  ): Promise<Record<string, unknown> | null> {
     const supabase = await createUserClient();
 
     const { data } = await supabase
@@ -829,7 +985,7 @@ export class SyncService {
       .select('id')
       .single();
 
-    return { id: (data as Record<string, unknown>)?.id as string || 'unknown' };
+    return { id: ((data as Record<string, unknown>)?.id as string) || 'unknown' };
   }
 
   private async updateJobStatus(
@@ -854,15 +1010,13 @@ export class SyncService {
     erpDoctype: string,
     erpDocname: string,
   ): Promise<void> {
-    await supabase
-      .from('erp_sync_map')
-      .upsert({
-        entity_type: entityType,
-        local_id: localId,
-        erp_doctype: erpDoctype,
-        erp_docname: erpDocname,
-        direction: 'outbound',
-      });
+    await supabase.from('erp_sync_map').upsert({
+      entity_type: entityType,
+      local_id: localId,
+      erp_doctype: erpDoctype,
+      erp_docname: erpDocname,
+      direction: 'outbound',
+    });
   }
 
   private async logEvent(
@@ -871,13 +1025,11 @@ export class SyncService {
     eventType: string,
     payload: Record<string, unknown>,
   ): Promise<void> {
-    await supabase
-      .from('erp_sync_events')
-      .insert({
-        job_id: jobId,
-        event_type: eventType,
-        event_payload: payload,
-      });
+    await supabase.from('erp_sync_events').insert({
+      job_id: jobId,
+      event_type: eventType,
+      event_payload: payload,
+    });
   }
 
   private async failJob(
@@ -888,13 +1040,11 @@ export class SyncService {
     errorMessage: string,
   ): Promise<SyncResult> {
     // Log error
-    await supabase
-      .from('erp_sync_errors')
-      .insert({
-        job_id: jobId,
-        error_message: errorMessage,
-        error_code: 'SYNC_ERROR',
-      });
+    await supabase.from('erp_sync_errors').insert({
+      job_id: jobId,
+      error_message: errorMessage,
+      error_code: 'SYNC_ERROR',
+    });
 
     // Log event
     await this.logEvent(supabase, jobId, 'sync_failed', {

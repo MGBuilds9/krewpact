@@ -32,7 +32,12 @@ interface CostCodeFormProps {
   mode?: 'create' | 'edit';
 }
 
-export function CostCodeForm({ defaultValues, onSubmit, isLoading, mode = 'create' }: CostCodeFormProps) {
+export function CostCodeForm({
+  defaultValues,
+  onSubmit,
+  isLoading,
+  mode = 'create',
+}: CostCodeFormProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {

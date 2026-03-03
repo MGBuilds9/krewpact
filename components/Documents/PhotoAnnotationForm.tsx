@@ -83,9 +83,7 @@ export function PhotoAnnotationForm({
             </Button>
           )}
           <Button type="submit" disabled={createAnnotation.isPending}>
-            {createAnnotation.isPending && (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            )}
+            {createAnnotation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             Add Annotation
           </Button>
         </div>

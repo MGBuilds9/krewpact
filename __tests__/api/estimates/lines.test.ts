@@ -122,7 +122,10 @@ describe('POST /api/estimates/[id]/lines', () => {
     const client = mockSupabaseClient({
       tables: {
         estimate_lines: { data: newLine, error: null },
-        estimates: { data: makeEstimate({ subtotal_amount: 500, tax_amount: 65, total_amount: 565 }), error: null },
+        estimates: {
+          data: makeEstimate({ subtotal_amount: 500, tax_amount: 65, total_amount: 565 }),
+          error: null,
+        },
       },
     });
     mockCreateUserClient.mockResolvedValue(client);
@@ -287,7 +290,10 @@ describe('PUT /api/estimates/[id]/lines', () => {
     const client = mockSupabaseClient({
       tables: {
         estimate_lines: { data: newLines, error: null },
-        estimates: { data: makeEstimate({ subtotal_amount: 1500, tax_amount: 195, total_amount: 1695 }), error: null },
+        estimates: {
+          data: makeEstimate({ subtotal_amount: 1500, tax_amount: 195, total_amount: 1695 }),
+          error: null,
+        },
       },
     });
     mockCreateUserClient.mockResolvedValue(client);
@@ -334,11 +340,7 @@ describe('PATCH /api/estimates/[id]/lines/[lineId]', () => {
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
     const res = await PATCH_LINE(
-      makeJsonRequest(
-        `/api/estimates/${ESTIMATE_ID}/lines/${LINE_ID}`,
-        { quantity: 20 },
-        'PATCH',
-      ),
+      makeJsonRequest(`/api/estimates/${ESTIMATE_ID}/lines/${LINE_ID}`, { quantity: 20 }, 'PATCH'),
       makeLineItemContext(ESTIMATE_ID, LINE_ID),
     );
     expect(res.status).toBe(401);
@@ -358,17 +360,16 @@ describe('PATCH /api/estimates/[id]/lines/[lineId]', () => {
     const client = mockSupabaseClient({
       tables: {
         estimate_lines: { data: updatedLine, error: null },
-        estimates: { data: makeEstimate({ subtotal_amount: 1000, tax_amount: 130, total_amount: 1130 }), error: null },
+        estimates: {
+          data: makeEstimate({ subtotal_amount: 1000, tax_amount: 130, total_amount: 1130 }),
+          error: null,
+        },
       },
     });
     mockCreateUserClient.mockResolvedValue(client);
 
     const res = await PATCH_LINE(
-      makeJsonRequest(
-        `/api/estimates/${ESTIMATE_ID}/lines/${LINE_ID}`,
-        { quantity: 20 },
-        'PATCH',
-      ),
+      makeJsonRequest(`/api/estimates/${ESTIMATE_ID}/lines/${LINE_ID}`, { quantity: 20 }, 'PATCH'),
       makeLineItemContext(ESTIMATE_ID, LINE_ID),
     );
     expect(res.status).toBe(200);
@@ -414,7 +415,10 @@ describe('DELETE /api/estimates/[id]/lines/[lineId]', () => {
     const client = mockSupabaseClient({
       tables: {
         estimate_lines: { data: [], error: null },
-        estimates: { data: makeEstimate({ subtotal_amount: 0, tax_amount: 0, total_amount: 0 }), error: null },
+        estimates: {
+          data: makeEstimate({ subtotal_amount: 0, tax_amount: 0, total_amount: 0 }),
+          error: null,
+        },
       },
     });
     mockCreateUserClient.mockResolvedValue(client);
@@ -433,7 +437,10 @@ describe('DELETE /api/estimates/[id]/lines/[lineId]', () => {
     const client = mockSupabaseClient({
       tables: {
         estimate_lines: { data: [], error: null },
-        estimates: { data: makeEstimate({ subtotal_amount: 0, tax_amount: 0, total_amount: 0 }), error: null },
+        estimates: {
+          data: makeEstimate({ subtotal_amount: 0, tax_amount: 0, total_amount: 0 }),
+          error: null,
+        },
       },
     });
     mockCreateUserClient.mockResolvedValue(client);

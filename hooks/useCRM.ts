@@ -118,11 +118,14 @@ export interface Activity {
 }
 
 export interface PipelineData {
-  stages: Record<string, {
-    opportunities: Opportunity[];
-    total_value: number;
-    count: number;
-  }>;
+  stages: Record<
+    string,
+    {
+      opportunities: Opportunity[];
+      total_value: number;
+      count: number;
+    }
+  >;
 }
 
 // --- Filter interfaces ---
@@ -240,8 +243,7 @@ export function useUpdateAccount() {
 export function useDeleteAccount() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) =>
-      apiFetch(`/api/crm/accounts/${id}`, { method: 'DELETE' }),
+    mutationFn: (id: string) => apiFetch(`/api/crm/accounts/${id}`, { method: 'DELETE' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
     },
@@ -304,8 +306,7 @@ export function useUpdateContact() {
 export function useDeleteContact() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) =>
-      apiFetch(`/api/crm/contacts/${id}`, { method: 'DELETE' }),
+    mutationFn: (id: string) => apiFetch(`/api/crm/contacts/${id}`, { method: 'DELETE' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contacts'] });
     },
@@ -369,8 +370,7 @@ export function useUpdateLead() {
 export function useDeleteLead() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) =>
-      apiFetch(`/api/crm/leads/${id}`, { method: 'DELETE' }),
+    mutationFn: (id: string) => apiFetch(`/api/crm/leads/${id}`, { method: 'DELETE' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
     },
@@ -392,8 +392,15 @@ export function useLeadStageTransition() {
 export function useConvertLead() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ leadId, ...data }: { leadId: string; account_id?: string; contact_id?: string; opportunity_name?: string }) =>
-      apiFetch<Opportunity>(`/api/crm/leads/${leadId}/convert`, { method: 'POST', body: data }),
+    mutationFn: ({
+      leadId,
+      ...data
+    }: {
+      leadId: string;
+      account_id?: string;
+      contact_id?: string;
+      opportunity_name?: string;
+    }) => apiFetch<Opportunity>(`/api/crm/leads/${leadId}/convert`, { method: 'POST', body: data }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
       queryClient.invalidateQueries({ queryKey: ['lead', variables.leadId] });
@@ -628,8 +635,7 @@ export function useUpdateSequence() {
 export function useDeleteSequence() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) =>
-      apiFetch(`/api/crm/sequences/${id}`, { method: 'DELETE' }),
+    mutationFn: (id: string) => apiFetch(`/api/crm/sequences/${id}`, { method: 'DELETE' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sequences'] });
     },
@@ -648,7 +654,10 @@ export function useCreateSequenceStep() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ sequenceId, ...data }: Partial<SequenceStep> & { sequenceId: string }) =>
-      apiFetch<SequenceStep>(`/api/crm/sequences/${sequenceId}/steps`, { method: 'POST', body: data }),
+      apiFetch<SequenceStep>(`/api/crm/sequences/${sequenceId}/steps`, {
+        method: 'POST',
+        body: data,
+      }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['sequence-steps', variables.sequenceId] });
       queryClient.invalidateQueries({ queryKey: ['sequence', variables.sequenceId] });
@@ -659,8 +668,18 @@ export function useCreateSequenceStep() {
 export function useEnrollInSequence() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ sequenceId, ...data }: { sequenceId: string; lead_id: string; contact_id?: string }) =>
-      apiFetch<SequenceEnrollment>(`/api/crm/sequences/${sequenceId}/enroll`, { method: 'POST', body: data }),
+    mutationFn: ({
+      sequenceId,
+      ...data
+    }: {
+      sequenceId: string;
+      lead_id: string;
+      contact_id?: string;
+    }) =>
+      apiFetch<SequenceEnrollment>(`/api/crm/sequences/${sequenceId}/enroll`, {
+        method: 'POST',
+        body: data,
+      }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['sequence-enrollments', variables.sequenceId] });
       queryClient.invalidateQueries({ queryKey: ['leads'] });
@@ -751,8 +770,7 @@ export function useUpdateScoringRule() {
 export function useDeleteScoringRule() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) =>
-      apiFetch(`/api/crm/scoring-rules/${id}`, { method: 'DELETE' }),
+    mutationFn: (id: string) => apiFetch(`/api/crm/scoring-rules/${id}`, { method: 'DELETE' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['scoring-rules'] });
     },
@@ -783,8 +801,16 @@ export function useRecalculateLeadScore() {
 export function useAutoLogActivity() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: { email_address: string; subject: string; direction: 'inbound' | 'outbound'; message_preview?: string }) =>
-      apiFetch<{ matched: boolean; activities_created: number }>('/api/crm/activities/auto-log', { method: 'POST', body: data }),
+    mutationFn: (data: {
+      email_address: string;
+      subject: string;
+      direction: 'inbound' | 'outbound';
+      message_preview?: string;
+    }) =>
+      apiFetch<{ matched: boolean; activities_created: number }>('/api/crm/activities/auto-log', {
+        method: 'POST',
+        body: data,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['activities'] });
     },
@@ -794,8 +820,15 @@ export function useAutoLogActivity() {
 export function useSendEmail() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: { to: { name?: string; address: string }[]; subject: string; body: string; bodyType?: string; leadId?: string; contactId?: string; accountId?: string }) =>
-      apiFetch<{ success: boolean }>('/api/email/send', { method: 'POST', body: data }),
+    mutationFn: (data: {
+      to: { name?: string; address: string }[];
+      subject: string;
+      body: string;
+      bodyType?: string;
+      leadId?: string;
+      contactId?: string;
+      accountId?: string;
+    }) => apiFetch<{ success: boolean }>('/api/email/send', { method: 'POST', body: data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['activities'] });
     },
@@ -818,7 +851,10 @@ export function useProcessSequences() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: () =>
-      apiFetch<{ processed: number; completed: number; errors: string[] }>('/api/crm/sequences/process', { method: 'POST' }),
+      apiFetch<{ processed: number; completed: number; errors: string[] }>(
+        '/api/crm/sequences/process',
+        { method: 'POST' },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sequence-enrollments'] });
     },
@@ -843,7 +879,10 @@ export function useCreateOutreach() {
 export function useOpportunityEstimates(opportunityId: string) {
   return useQuery({
     queryKey: ['opportunity-estimates', opportunityId],
-    queryFn: () => apiFetch<{ id: string; estimate_number: string; total_amount: number; status: string }[]>(`/api/crm/opportunities/${opportunityId}/estimate`),
+    queryFn: () =>
+      apiFetch<{ id: string; estimate_number: string; total_amount: number; status: string }[]>(
+        `/api/crm/opportunities/${opportunityId}/estimate`,
+      ),
     enabled: !!opportunityId,
   });
 }
@@ -854,7 +893,9 @@ export function useCreateLinkedEstimate() {
     mutationFn: ({ opportunityId, ...data }: { opportunityId: string; [key: string]: unknown }) =>
       apiFetch(`/api/crm/opportunities/${opportunityId}/estimate`, { method: 'POST', body: data }),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['opportunity-estimates', variables.opportunityId] });
+      queryClient.invalidateQueries({
+        queryKey: ['opportunity-estimates', variables.opportunityId],
+      });
     },
   });
 }
@@ -862,7 +903,10 @@ export function useCreateLinkedEstimate() {
 export function useProposalData(opportunityId: string) {
   return useQuery({
     queryKey: ['proposal-data', opportunityId],
-    queryFn: () => apiFetch<import('@/lib/crm/proposal-generator').ProposalData>(`/api/crm/opportunities/${opportunityId}/proposal`),
+    queryFn: () =>
+      apiFetch<import('@/lib/crm/proposal-generator').ProposalData>(
+        `/api/crm/opportunities/${opportunityId}/proposal`,
+      ),
     enabled: false, // only fetch on demand
   });
 }
@@ -884,8 +928,15 @@ export function useDashboardMetrics(divisionId?: string, period?: string) {
 export function useMarkOpportunityWon() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, ...data }: { id: string; won_date?: string; won_notes?: string; sync_to_erp?: boolean }) =>
-      apiFetch<Opportunity>(`/api/crm/opportunities/${id}/won`, { method: 'POST', body: data }),
+    mutationFn: ({
+      id,
+      ...data
+    }: {
+      id: string;
+      won_date?: string;
+      won_notes?: string;
+      sync_to_erp?: boolean;
+    }) => apiFetch<Opportunity>(`/api/crm/opportunities/${id}/won`, { method: 'POST', body: data }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['opportunities'] });
       queryClient.invalidateQueries({ queryKey: ['opportunity', variables.id] });
@@ -897,7 +948,16 @@ export function useMarkOpportunityWon() {
 export function useMarkOpportunityLost() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, ...data }: { id: string; lost_reason: string; lost_notes?: string; competitor?: string; reopen_as_lead?: boolean }) =>
+    mutationFn: ({
+      id,
+      ...data
+    }: {
+      id: string;
+      lost_reason: string;
+      lost_notes?: string;
+      competitor?: string;
+      reopen_as_lead?: boolean;
+    }) =>
       apiFetch<Opportunity>(`/api/crm/opportunities/${id}/lost`, { method: 'POST', body: data }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['opportunities'] });

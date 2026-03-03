@@ -72,7 +72,8 @@ export function LeadSourceBreakdownChart({ metrics }: LeadSourceBreakdownChartPr
                     const data = item?.payload;
                     return (
                       <span>
-                        {value} leads &middot; {formatCurrency(data?.totalValue ?? 0)} &middot; Conv: {formatPct(data?.conversionRate ?? 0)}
+                        {value} leads &middot; {formatCurrency(data?.totalValue ?? 0)} &middot;
+                        Conv: {formatPct(data?.conversionRate ?? 0)}
                       </span>
                     );
                   }}
@@ -95,8 +96,15 @@ export function LeadSourceBreakdownChart({ metrics }: LeadSourceBreakdownChartPr
                 <Cell key={index} fill={entry.fill} />
               ))}
             </Pie>
-            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-            <ChartLegend content={<ChartLegendContent nameKey="name" payload={undefined as any} />} />
+            <ChartLegend
+              content={
+                <ChartLegendContent
+                  nameKey="name"
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  payload={undefined as any}
+                />
+              }
+            />
           </PieChart>
         </ChartContainer>
       </CardContent>

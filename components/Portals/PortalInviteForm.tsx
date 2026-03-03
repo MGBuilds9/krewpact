@@ -91,7 +91,12 @@ export function PortalInviteForm({ onSuccess, onCancel }: PortalInviteFormProps)
           render={({ field }) => (
             <FormItem>
               <FormLabel>Role</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value || (actorType === 'client' ? 'client_owner' : 'trade_partner_admin')}>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={
+                  field.value || (actorType === 'client' ? 'client_owner' : 'trade_partner_admin')
+                }
+              >
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select role" />

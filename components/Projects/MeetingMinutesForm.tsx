@@ -3,7 +3,14 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -53,7 +60,9 @@ export function MeetingMinutesForm({ projectId, onSuccess, onCancel }: MeetingMi
       return;
     }
 
-    let action_items: Array<{ description: string; assignee?: string; due_date?: string }> | undefined;
+    let action_items:
+      | Array<{ description: string; assignee?: string; due_date?: string }>
+      | undefined;
     if (values.action_items_raw?.trim()) {
       try {
         action_items = JSON.parse(values.action_items_raw);
@@ -77,7 +86,10 @@ export function MeetingMinutesForm({ projectId, onSuccess, onCancel }: MeetingMi
         action_items,
       },
       {
-        onSuccess: () => { form.reset(); onSuccess?.(); },
+        onSuccess: () => {
+          form.reset();
+          onSuccess?.();
+        },
       },
     );
   }
@@ -150,7 +162,11 @@ export function MeetingMinutesForm({ projectId, onSuccess, onCancel }: MeetingMi
             <FormItem>
               <FormLabel>Notes *</FormLabel>
               <FormControl>
-                <Textarea placeholder="Meeting notes and discussion points..." rows={4} {...field} />
+                <Textarea
+                  placeholder="Meeting notes and discussion points..."
+                  rows={4}
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -177,7 +193,12 @@ export function MeetingMinutesForm({ projectId, onSuccess, onCancel }: MeetingMi
 
         <div className="flex gap-2 justify-end pt-2">
           {onCancel && (
-            <Button type="button" variant="outline" onClick={onCancel} disabled={createMeeting.isPending}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              disabled={createMeeting.isPending}
+            >
               Cancel
             </Button>
           )}

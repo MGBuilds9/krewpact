@@ -43,9 +43,7 @@ export interface GoogleMapsResult {
 
 // ─── Apollo People Match ─────────────────────────────────────────────────────
 
-export async function enrichFromApolloMatch(
-  input: ApolloMatchInput,
-): Promise<ApolloMatchResult> {
+export async function enrichFromApolloMatch(input: ApolloMatchInput): Promise<ApolloMatchResult> {
   const apiKey = process.env.APOLLO_API_KEY;
   if (!apiKey) throw new Error('APOLLO_API_KEY not configured');
 
@@ -75,7 +73,8 @@ export async function enrichFromApolloMatch(
 
   const data = await res.json();
   const person = data.person;
-  if (!person) return { email: null, phone: null, website_url: null, linkedin_url: null, title: null };
+  if (!person)
+    return { email: null, phone: null, website_url: null, linkedin_url: null, title: null };
 
   return {
     email: person.email ?? null,
@@ -102,7 +101,7 @@ export async function enrichFromBrave(
 
   const res = await fetch(url.toString(), {
     headers: {
-      'Accept': 'application/json',
+      Accept: 'application/json',
       'Accept-Encoding': 'gzip',
       'X-Subscription-Token': apiKey,
     },
@@ -165,13 +164,13 @@ export async function enrichFromTavily(
 
   return {
     answer: data.answer ?? null,
-    results: (data.results ?? []).slice(0, 5).map(
-      (r: { title: string; url: string; content: string }) => ({
+    results: (data.results ?? [])
+      .slice(0, 5)
+      .map((r: { title: string; url: string; content: string }) => ({
         title: r.title,
         url: r.url,
         content: r.content?.slice(0, 500) ?? '',
-      }),
-    ),
+      })),
   };
 }
 
@@ -184,14 +183,15 @@ export async function enrichFromGoogleMaps(
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
   if (!apiKey) throw new Error('GOOGLE_MAPS_API_KEY not configured');
 
-  const query = city
-    ? `"${companyName}" ${city} Ontario`
-    : `"${companyName}" Ontario`;
+  const query = city ? `"${companyName}" ${city} Ontario` : `"${companyName}" Ontario`;
 
   const url = new URL('https://maps.googleapis.com/maps/api/place/findplacefromtext/json');
   url.searchParams.set('input', query);
   url.searchParams.set('inputtype', 'textquery');
-  url.searchParams.set('fields', 'formatted_address,name,rating,user_ratings_total,types,business_status');
+  url.searchParams.set(
+    'fields',
+    'formatted_address,name,rating,user_ratings_total,types,business_status',
+  );
   url.searchParams.set('key', apiKey);
 
   const res = await fetch(url.toString());
@@ -202,11 +202,19 @@ export async function enrichFromGoogleMaps(
 
   const data = await res.json();
   const place = data.candidates?.[0];
-  if (!place) return { address: null, city: null, google_rating: null, google_reviews_count: null, business_types: null, business_status: null };
+  if (!place)
+    return {
+      address: null,
+      city: null,
+      google_rating: null,
+      google_reviews_count: null,
+      business_types: null,
+      business_status: null,
+    };
 
   // Try to extract city from formatted_address (e.g. "123 Main St, Mississauga, ON L5B 1M2")
   const addressParts = place.formatted_address?.split(',') ?? [];
-  const extractedCity = addressParts.length >= 2 ? addressParts[1]?.trim() ?? null : null;
+  const extractedCity = addressParts.length >= 2 ? (addressParts[1]?.trim() ?? null) : null;
 
   return {
     address: place.formatted_address ?? null,

@@ -26,11 +26,7 @@ interface SubmittalCreateFormProps {
   onCancel?: () => void;
 }
 
-export function SubmittalCreateForm({
-  projectId,
-  onSuccess,
-  onCancel,
-}: SubmittalCreateFormProps) {
+export function SubmittalCreateForm({ projectId, onSuccess, onCancel }: SubmittalCreateFormProps) {
   const createSubmittal = useCreateSubmittal(projectId);
 
   const form = useForm<FormValues>({

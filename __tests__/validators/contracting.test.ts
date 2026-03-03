@@ -70,7 +70,15 @@ describe('proposalUpdateSchema', () => {
   });
 
   it('accepts valid status enum values', () => {
-    const statuses = ['draft', 'sent', 'viewed', 'accepted', 'rejected', 'expired', 'superseded'] as const;
+    const statuses = [
+      'draft',
+      'sent',
+      'viewed',
+      'accepted',
+      'rejected',
+      'expired',
+      'superseded',
+    ] as const;
     for (const status of statuses) {
       const result = proposalUpdateSchema.safeParse({ status });
       expect(result.success).toBe(true);

@@ -1,5 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
-import { matchesConditions, approveEnrollment, rejectEnrollment } from '@/lib/crm/enrollment-engine';
+import {
+  matchesConditions,
+  approveEnrollment,
+  rejectEnrollment,
+} from '@/lib/crm/enrollment-engine';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 // ---------------------------------------------------------------------------
@@ -8,7 +12,11 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 describe('matchesConditions', () => {
   it('on_stage_change: matches when stage equals conditions.stage', () => {
-    const result = matchesConditions('on_stage_change', { stage: 'qualified' }, { stage: 'qualified' });
+    const result = matchesConditions(
+      'on_stage_change',
+      { stage: 'qualified' },
+      { stage: 'qualified' },
+    );
     expect(result).toBe(true);
   });
 
@@ -59,12 +67,20 @@ describe('matchesConditions', () => {
 
 describe('matchesConditions — form_submitted', () => {
   it('on_form_submitted: matches when form_id matches', () => {
-    const result = matchesConditions('on_form_submitted', { form_id: 'form-1' }, { form_id: 'form-1' });
+    const result = matchesConditions(
+      'on_form_submitted',
+      { form_id: 'form-1' },
+      { form_id: 'form-1' },
+    );
     expect(result).toBe(true);
   });
 
   it('on_form_submitted: no match when form_id differs', () => {
-    const result = matchesConditions('on_form_submitted', { form_id: 'form-1' }, { form_id: 'form-2' });
+    const result = matchesConditions(
+      'on_form_submitted',
+      { form_id: 'form-1' },
+      { form_id: 'form-2' },
+    );
     expect(result).toBe(false);
   });
 });
@@ -81,8 +97,7 @@ function createMockSupabase(updateResult: { data: unknown; error: unknown }) {
   }
   chain.single = vi.fn().mockResolvedValue(updateResult);
   // Make chain thenable so `await supabase.from().update().eq().eq()` resolves with updateResult
-  chain.then = (resolve: (v: unknown) => void) =>
-    Promise.resolve(resolve(updateResult));
+  chain.then = (resolve: (v: unknown) => void) => Promise.resolve(resolve(updateResult));
   return chain as unknown as SupabaseClient;
 }
 

@@ -15,6 +15,7 @@
 ### Task 1: Archive MDM-LeadForge
 
 **Files:**
+
 - Modify: `/Users/mkgbuilds/Sites/Local Development/MDM-LeadForge/README.md`
 
 **Step 1: Read current README**
@@ -24,6 +25,7 @@ Read `/Users/mkgbuilds/Sites/Local Development/MDM-LeadForge/README.md` to confi
 **Step 2: Add archive header to README**
 
 Prepend to `README.md`:
+
 ```markdown
 # [ARCHIVED] MDM LeadForge
 
@@ -33,7 +35,6 @@ Prepend to `README.md`:
 > **Successor:** KrewPact — `KrewPact-Backend-SQL-Schema-Draft.sql` contains all LeadForge tables (lead_scoring_rules, outreach_sequences, enrichment_jobs, etc.)
 
 ---
-
 ```
 
 Keep the rest of the existing README intact below the header.
@@ -56,6 +57,7 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 ### Task 2: Move mdm-strategy-2026 Content to Book-Internal
 
 **Files:**
+
 - Read: `/Users/mkgbuilds/Sites/Local Development/mdm-strategy-2026/index.html`
 - Create: `/Users/mkgbuilds/Sites/Local Development/MDM-Book-Internal/assets/strategy/index.html`
 
@@ -92,6 +94,7 @@ mv "/Users/mkgbuilds/Sites/Local Development/mdm-strategy-2026" \
 ### Task 3: Verify MDM-Website Status & Archive
 
 **Files:**
+
 - Read: `/Users/mkgbuilds/Sites/Local Development/MDM-Website/MDM-Website/` contents
 
 **Step 1: Inspect the nested directory**
@@ -114,6 +117,7 @@ mv "/Users/mkgbuilds/Sites/Local Development/MDM-Website" \
 ### Task 4: Update INDEX.md
 
 **Files:**
+
 - Modify: `/Users/mkgbuilds/Sites/Local Development/INDEX.md`
 
 **Step 1: Read current INDEX.md**
@@ -188,6 +192,7 @@ cd "/Users/mkgbuilds/Sites/Local Development"
 ### Task 5: Update Root CLAUDE.md Pending Section
 
 **Files:**
+
 - Modify: `/Users/mkgbuilds/CLAUDE.md`
 
 **Step 1: Read current CLAUDE.md**
@@ -228,12 +233,14 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 ### Task 6: Consolidate KrewPact Directory Structure
 
 The current layout has a problem:
+
 - `.../krewpact/` = app shell (NOT in git)
 - `.../krewpact/krewpact/` = planning pack (IS in git)
 
 We need ONE git repo with both app code and planning docs.
 
 **Files:**
+
 - Move planning docs into app shell
 - Git init the app shell
 
@@ -287,6 +294,7 @@ cp krewpact/README.md ./README.md
 ### Task 7: Git Init KrewPact App Shell
 
 **Files:**
+
 - Create: `/Users/mkgbuilds/Sites/Local Development/krewpact/.gitignore`
 - Init git repo
 
@@ -299,6 +307,7 @@ cat "/Users/mkgbuilds/Sites/Local Development/krewpact/.gitignore" 2>/dev/null |
 ```
 
 If missing, create with:
+
 ```
 # dependencies
 node_modules/
@@ -374,6 +383,7 @@ gh repo create krewpact --private --source=. --push
 ### Task 8: Create KrewPact .env.local Template
 
 **Files:**
+
 - Create: `/Users/mkgbuilds/Sites/Local Development/krewpact/.env.example`
 
 **Step 1: Create .env.example with all required vars**
@@ -456,6 +466,7 @@ Expected: PASS. Note any env var warnings — those are expected without `.env.l
 ### Task 10: Write Supabase Client Library Tests
 
 **Files:**
+
 - Create: `/Users/mkgbuilds/Sites/Local Development/krewpact/__tests__/lib/supabase/client.test.ts`
 - Verify: `/Users/mkgbuilds/Sites/Local Development/krewpact/lib/supabase/` exists or needs creation
 
@@ -535,6 +546,7 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 ### Task 11: Write ERPNext Client Library Tests
 
 **Files:**
+
 - Create: `/Users/mkgbuilds/Sites/Local Development/krewpact/__tests__/lib/erp/client.test.ts`
 - Create: `/Users/mkgbuilds/Sites/Local Development/krewpact/lib/erp/client.ts`
 
@@ -613,7 +625,7 @@ export class ErpClient {
 
   getAuthHeaders(): Record<string, string> {
     return {
-      'Authorization': `token ${this.apiKey}:${this.apiSecret}`,
+      Authorization: `token ${this.apiKey}:${this.apiSecret}`,
       'Content-Type': 'application/json',
     };
   }
@@ -640,7 +652,12 @@ export class ErpClient {
     return json.data as T;
   }
 
-  async list<T>(doctype: string, filters?: Record<string, unknown>, fields?: string[], limit?: number): Promise<T[]> {
+  async list<T>(
+    doctype: string,
+    filters?: Record<string, unknown>,
+    fields?: string[],
+    limit?: number,
+  ): Promise<T[]> {
     const params = new URLSearchParams();
     if (filters) params.set('filters', JSON.stringify(filters));
     if (fields) params.set('fields', JSON.stringify(fields));
@@ -686,6 +703,7 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 ### Task 12: Write Supabase Server Client (with Clerk JWT)
 
 **Files:**
+
 - Create: `/Users/mkgbuilds/Sites/Local Development/krewpact/__tests__/lib/supabase/server.test.ts`
 - Create: `/Users/mkgbuilds/Sites/Local Development/krewpact/lib/supabase/server.ts`
 
@@ -746,7 +764,7 @@ export async function createServerClient() {
           Authorization: `Bearer ${token}`,
         },
       },
-    }
+    },
   );
 }
 
@@ -760,7 +778,7 @@ export function createServiceClient() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     {
       auth: { persistSession: false },
-    }
+    },
   );
 }
 ```
@@ -790,6 +808,7 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 ### Task 13: Create Supabase Migration — Foundation Tables
 
 **Files:**
+
 - Create: `/Users/mkgbuilds/Sites/Local Development/krewpact/supabase/migrations/00001_foundation.sql`
 
 This creates ONLY the Phase 1 foundation tables (not the full 1800-line schema). Start minimal.
@@ -803,6 +822,7 @@ mkdir -p "/Users/mkgbuilds/Sites/Local Development/krewpact/supabase/migrations"
 **Step 2: Write foundation migration**
 
 Extract from `KrewPact-Backend-SQL-Schema-Draft.sql` only:
+
 - Enums needed for foundation (division_code, role_key, etc.)
 - `divisions` table + seed data
 - `users` table
@@ -831,6 +851,7 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 ### Task 14: Set Up Vitest Configuration
 
 **Files:**
+
 - Verify/Create: `/Users/mkgbuilds/Sites/Local Development/krewpact/vitest.config.ts`
 
 **Step 1: Check if vitest config exists**
@@ -890,6 +911,7 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 ### Task 15: Set Up GitHub Actions CI
 
 **Files:**
+
 - Create: `/Users/mkgbuilds/Sites/Local Development/krewpact/.github/workflows/ci.yml`
 
 **Step 1: Create CI workflow**

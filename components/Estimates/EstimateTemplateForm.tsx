@@ -3,7 +3,14 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -29,7 +36,12 @@ export interface EstimateTemplateFormProps {
   onCancel?: () => void;
 }
 
-export function EstimateTemplateForm({ template, divisionId, onSuccess, onCancel }: EstimateTemplateFormProps) {
+export function EstimateTemplateForm({
+  template,
+  divisionId,
+  onSuccess,
+  onCancel,
+}: EstimateTemplateFormProps) {
   const createTemplate = useCreateEstimateTemplate();
   const updateTemplate = useUpdateEstimateTemplate();
   const isEditing = !!template;
@@ -65,12 +77,21 @@ export function EstimateTemplateForm({ template, divisionId, onSuccess, onCancel
     };
 
     if (isEditing) {
-      updateTemplate.mutate({ id: template.id, ...data }, {
-        onSuccess: () => { form.reset(); onSuccess?.(); },
-      });
+      updateTemplate.mutate(
+        { id: template.id, ...data },
+        {
+          onSuccess: () => {
+            form.reset();
+            onSuccess?.();
+          },
+        },
+      );
     } else {
       createTemplate.mutate(data, {
-        onSuccess: () => { form.reset(); onSuccess?.(); },
+        onSuccess: () => {
+          form.reset();
+          onSuccess?.();
+        },
       });
     }
   }

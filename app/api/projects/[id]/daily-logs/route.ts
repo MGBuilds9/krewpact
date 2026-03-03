@@ -43,7 +43,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
   return NextResponse.json({
     data: data ?? [],
     total: count ?? 0,
-    hasMore: (effectiveOffset + (data?.length ?? 0)) < (count ?? 0),
+    hasMore: effectiveOffset + (data?.length ?? 0) < (count ?? 0),
   });
 }
 

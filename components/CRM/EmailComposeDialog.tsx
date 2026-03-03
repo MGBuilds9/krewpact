@@ -111,10 +111,7 @@ export function EmailComposeDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={!to || !subject || !body || sendEmail.isPending}
-          >
+          <Button onClick={handleSubmit} disabled={!to || !subject || !body || sendEmail.isPending}>
             {sendEmail.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             {sendEmail.isPending ? 'Sending...' : 'Send Email'}
           </Button>

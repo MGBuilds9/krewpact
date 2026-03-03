@@ -41,7 +41,12 @@ export interface PaginatedResponse<T> {
   hasMore: boolean;
 }
 
-export function usePortalAccounts(params?: { status?: string; actor_type?: string; limit?: number; offset?: number }) {
+export function usePortalAccounts(params?: {
+  status?: string;
+  actor_type?: string;
+  limit?: number;
+  offset?: number;
+}) {
   return useQuery({
     queryKey: ['portal-accounts', params],
     queryFn: () => apiFetch<PaginatedResponse<PortalAccount>>('/api/portals/accounts', { params }),
@@ -84,9 +89,10 @@ export function useUpdatePortalAccount() {
 export function usePortalPermissions(portalAccountId?: string) {
   return useQuery({
     queryKey: ['portal-permissions', portalAccountId],
-    queryFn: () => apiFetch<PaginatedResponse<PortalPermission>>('/api/portals/permissions', {
-      params: { portal_account_id: portalAccountId },
-    }),
+    queryFn: () =>
+      apiFetch<PaginatedResponse<PortalPermission>>('/api/portals/permissions', {
+        params: { portal_account_id: portalAccountId },
+      }),
     enabled: !!portalAccountId,
     staleTime: 30_000,
   });
@@ -106,9 +112,10 @@ export function useSetPortalPermission() {
 export function usePortalMessages(portalAccountId?: string) {
   return useQuery({
     queryKey: ['portal-messages', portalAccountId],
-    queryFn: () => apiFetch<PaginatedResponse<PortalMessage>>('/api/portals/messages', {
-      params: { portal_account_id: portalAccountId },
-    }),
+    queryFn: () =>
+      apiFetch<PaginatedResponse<PortalMessage>>('/api/portals/messages', {
+        params: { portal_account_id: portalAccountId },
+      }),
     staleTime: 30_000,
   });
 }

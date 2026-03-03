@@ -13,11 +13,7 @@ vi.mock('@/lib/supabase/server', () => ({
 import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { GET, POST } from '@/app/api/crm/leads/route';
-import {
-  GET as GET_ID,
-  PATCH,
-  DELETE,
-} from '@/app/api/crm/leads/[id]/route';
+import { GET as GET_ID, PATCH, DELETE } from '@/app/api/crm/leads/[id]/route';
 import { POST as STAGE_POST } from '@/app/api/crm/leads/[id]/stage/route';
 import {
   mockSupabaseClient,
@@ -78,9 +74,7 @@ describe('GET /api/crm/leads', () => {
     mockCreateUserClient.mockResolvedValue(client);
 
     const res = await GET(
-      makeRequest(
-        '/api/crm/leads?division_id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-      ),
+      makeRequest('/api/crm/leads?division_id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'),
     );
     expect(res.status).toBe(200);
     expect(client.from).toHaveBeenCalledWith('leads');
@@ -111,9 +105,7 @@ describe('GET /api/crm/leads', () => {
     mockCreateUserClient.mockResolvedValue(client);
 
     const res = await GET(
-      makeRequest(
-        '/api/crm/leads?assigned_to=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-      ),
+      makeRequest('/api/crm/leads?assigned_to=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'),
     );
     expect(res.status).toBe(200);
     expect(client.from).toHaveBeenCalledWith('leads');
@@ -147,9 +139,7 @@ describe('POST /api/crm/leads', () => {
 
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
-    const res = await POST(
-      makeJsonRequest('/api/crm/leads', { company_name: 'Test Lead' }),
-    );
+    const res = await POST(makeJsonRequest('/api/crm/leads', { company_name: 'Test Lead' }));
     expect(res.status).toBe(401);
   });
 
@@ -160,9 +150,7 @@ describe('POST /api/crm/leads', () => {
       mockSupabaseClient({ tables: { leads: { data: created, error: null } } }),
     );
 
-    const res = await POST(
-      makeJsonRequest('/api/crm/leads', { company_name: 'Test Lead' }),
-    );
+    const res = await POST(makeJsonRequest('/api/crm/leads', { company_name: 'Test Lead' }));
     expect(res.status).toBe(201);
     const body = await res.json();
     expect(body.status).toBe('new');
@@ -196,9 +184,7 @@ describe('POST /api/crm/leads', () => {
 
   it('returns 400 for invalid data (missing company_name)', async () => {
     mockClerkAuth(mockAuth);
-    const res = await POST(
-      makeJsonRequest('/api/crm/leads', { source_channel: 'website' }),
-    );
+    const res = await POST(makeJsonRequest('/api/crm/leads', { source_channel: 'website' }));
     expect(res.status).toBe(400);
   });
 });
@@ -219,10 +205,7 @@ describe('GET /api/crm/leads/[id]', () => {
       mockSupabaseClient({ tables: { leads: { data: lead, error: null } } }),
     );
 
-    const res = await GET_ID(
-      makeRequest('/api/crm/leads/123'),
-      makeContext(lead.id),
-    );
+    const res = await GET_ID(makeRequest('/api/crm/leads/123'), makeContext(lead.id));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.company_name).toBe('Big Construction Project');
@@ -241,10 +224,7 @@ describe('GET /api/crm/leads/[id]', () => {
       }),
     );
 
-    const res = await GET_ID(
-      makeRequest('/api/crm/leads/nonexistent'),
-      makeContext('nonexistent'),
-    );
+    const res = await GET_ID(makeRequest('/api/crm/leads/nonexistent'), makeContext('nonexistent'));
     expect(res.status).toBe(404);
   });
 });
@@ -266,11 +246,7 @@ describe('PATCH /api/crm/leads/[id]', () => {
     );
 
     const res = await PATCH(
-      makeJsonRequest(
-        '/api/crm/leads/123',
-        { company_name: 'Updated Lead' },
-        'PATCH',
-      ),
+      makeJsonRequest('/api/crm/leads/123', { company_name: 'Updated Lead' }, 'PATCH'),
       makeContext(updated.id),
     );
     expect(res.status).toBe(200);
@@ -294,10 +270,7 @@ describe('DELETE /api/crm/leads/[id]', () => {
       mockSupabaseClient({ tables: { leads: { data: null, error: null } } }),
     );
 
-    const res = await DELETE(
-      makeRequest('/api/crm/leads/123'),
-      makeContext('some-id'),
-    );
+    const res = await DELETE(makeRequest('/api/crm/leads/123'), makeContext('some-id'));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);

@@ -49,9 +49,7 @@ export function ProjectReportsTab({ projectId }: ProjectReportsTabProps) {
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3">
-                      <span className="font-semibold">
-                        {log.work_summary || 'No summary'}
-                      </span>
+                      <span className="font-semibold">{log.work_summary || 'No summary'}</span>
                     </div>
                     <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
                       <span className="flex items-center gap-1">
@@ -64,9 +62,7 @@ export function ProjectReportsTab({ projectId }: ProjectReportsTabProps) {
                           {log.submitted_user.first_name} {log.submitted_user.last_name}
                         </span>
                       )}
-                      {log.crew_count != null && (
-                        <span>Crew: {log.crew_count}</span>
-                      )}
+                      {log.crew_count != null && <span>Crew: {log.crew_count}</span>}
                     </div>
                   </div>
                 </div>
@@ -79,9 +75,7 @@ export function ProjectReportsTab({ projectId }: ProjectReportsTabProps) {
           <CardContent className="py-12 text-center">
             <ClipboardList className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
             <h3 className="text-lg font-medium mb-2">No daily logs yet</h3>
-            <p className="text-muted-foreground">
-              Daily logs for this project will appear here
-            </p>
+            <p className="text-muted-foreground">Daily logs for this project will appear here</p>
           </CardContent>
         </Card>
       )}

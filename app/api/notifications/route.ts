@@ -22,10 +22,7 @@ export async function GET(req: NextRequest) {
   const { limit, unread_only } = parsed.data;
 
   const supabase = await createUserClient();
-  let query = supabase
-    .from('notifications')
-    .select('*')
-    .order('created_at', { ascending: false });
+  let query = supabase.from('notifications').select('*').order('created_at', { ascending: false });
 
   if (unread_only === 'true') {
     query = query.neq('state', 'read');

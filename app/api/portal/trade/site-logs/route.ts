@@ -13,7 +13,10 @@ const siteLogSchema = z.object({
   delays: z.string().max(1000).optional(),
 });
 
-async function resolveActiveTradePartner(userId: string, supabase: Awaited<ReturnType<typeof createUserClient>>) {
+async function resolveActiveTradePartner(
+  userId: string,
+  supabase: Awaited<ReturnType<typeof createUserClient>>,
+) {
   const { data: pa } = await supabase
     .from('portal_accounts')
     .select('id, status, actor_type')
@@ -39,12 +42,14 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from('project_daily_logs')
-    .select('id, project_id, log_date, work_summary, crew_count, weather, safety_notes, delays, submitted_at, created_at')
+    .select(
+      'id, project_id, log_date, work_summary, crew_count, weather, safety_notes, delays, submitted_at, created_at',
+    )
     .contains('metadata', { trade_portal_id: pa.id })
     .order('log_date', { ascending: false })
     .limit(90); // Last 90 days of logs
 
-  if (projectId) query = (query as any).eq('project_id', projectId);
+  if (projectId) query = query.eq('project_id', projectId);
 
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -62,7 +67,11 @@ export async function POST(req: NextRequest) {
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   let body: unknown;
-  try { body = await req.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+  }
 
   const parsed = siteLogSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
@@ -93,7 +102,7 @@ export async function POST(req: NextRequest) {
   if (existing) {
     return NextResponse.json(
       { error: `A site log already exists for ${parsed.data.log_date} from your account` },
-      { status: 409 }
+      { status: 409 },
     );
   }
 

@@ -61,12 +61,16 @@ describe('PipelineView', () => {
     const data: PipelineData = {
       stages: {
         intake: {
-          opportunities: [makeOpp({ id: 'opp-1', opportunity_name: 'Alpha Project', stage: 'intake' })],
+          opportunities: [
+            makeOpp({ id: 'opp-1', opportunity_name: 'Alpha Project', stage: 'intake' }),
+          ],
           total_value: 50000,
           count: 1,
         },
         estimating: {
-          opportunities: [makeOpp({ id: 'opp-2', opportunity_name: 'Beta Project', stage: 'estimating' })],
+          opportunities: [
+            makeOpp({ id: 'opp-2', opportunity_name: 'Beta Project', stage: 'estimating' }),
+          ],
           total_value: 75000,
           count: 1,
         },

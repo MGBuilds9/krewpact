@@ -73,10 +73,7 @@ export async function POST(req: NextRequest) {
       break;
     }
     case 'delete': {
-      const { error } = await supabase
-        .from('contacts')
-        .delete()
-        .in('id', ids);
+      const { error } = await supabase.from('contacts').delete().in('id', ids);
       if (error) {
         results.failed = ids.length;
         results.errors.push(error.message);

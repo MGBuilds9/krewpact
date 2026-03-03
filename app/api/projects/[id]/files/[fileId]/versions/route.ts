@@ -64,10 +64,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   // Update version_no on file_metadata
-  await supabase
-    .from('file_metadata')
-    .update({ version_no: nextVersion })
-    .eq('id', fileId);
+  await supabase.from('file_metadata').update({ version_no: nextVersion }).eq('id', fileId);
 
   return NextResponse.json(data, { status: 201 });
 }

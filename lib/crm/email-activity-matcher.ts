@@ -18,10 +18,7 @@ export async function matchEmailToEntities(
 
   // Query leads and contacts in parallel
   const [leadsResult, contactsResult] = await Promise.all([
-    supabase
-      .from('leads')
-      .select('id, lead_name')
-      .eq('email', normalizedEmail),
+    supabase.from('leads').select('id, lead_name').eq('email', normalizedEmail),
     supabase
       .from('contacts')
       .select('id, first_name, last_name, account_id')

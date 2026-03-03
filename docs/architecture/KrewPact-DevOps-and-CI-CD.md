@@ -9,6 +9,7 @@
 The continuous integration and continuous deployment pipeline is the backbone of KrewPact development velocity and reliability. GitHub Actions serves as the primary automation platform, leveraging native GitHub integration to eliminate external dependencies.
 
 **Workflow Organization:**
+
 - Individual workflow files per pipeline stage for modularity and reusability
 - Shared action workflows for common operations (build, test, deploy)
 - Environment-specific configuration via GitHub Actions secrets and variables
@@ -16,6 +17,7 @@ The continuous integration and continuous deployment pipeline is the backbone of
 - Conditional execution based on file changes and branch patterns
 
 **Permissions Model:**
+
 - Minimal required permissions per workflow (principle of least privilege)
 - Branch protection rules enforce required status checks before merging
 - GITHUB_TOKEN scoped appropriately for each workflow job
@@ -26,6 +28,7 @@ The continuous integration and continuous deployment pipeline is the backbone of
 The continuous integration pipeline follows a strictly linear progression, ensuring code quality gates are enforced before production deployment.
 
 **Stage 1: Lint**
+
 - ESLint validation across all TypeScript and JavaScript files
 - Markdown linting for documentation
 - YAML validation for configuration files
@@ -34,6 +37,7 @@ The continuous integration pipeline follows a strictly linear progression, ensur
 - Failure at this stage blocks progression to subsequent stages
 
 **Stage 2: Type Check**
+
 - TypeScript strict mode compilation without code generation
 - No JavaScript runtime execution, pure type validation
 - tsc --noEmit for both frontend and backend codebases
@@ -41,6 +45,7 @@ The continuous integration pipeline follows a strictly linear progression, ensur
 - Catch refactoring errors early before testing
 
 **Stage 3: Unit Test**
+
 - Vitest execution for frontend components and utilities
 - Vitest execution for backend API handlers and services
 - Coverage thresholds enforced (minimum 70% overall, 80% for critical paths)
@@ -48,6 +53,7 @@ The continuous integration pipeline follows a strictly linear progression, ensur
 - HTML coverage reports uploaded to GitHub Actions artifacts
 
 **Stage 4: Build**
+
 - Frontend: Next.js production build validation
 - Backend: Node.js TypeScript compilation to JavaScript
 - Docker image build for backend API (if Dockerfile changes)
@@ -55,6 +61,7 @@ The continuous integration pipeline follows a strictly linear progression, ensur
 - Build artifact size reporting and alerts on significant increases
 
 **Stage 5: Integration Test**
+
 - API integration tests against test Supabase instance
 - ERPNext API mocking and integration validation
 - Database state verification after operations
@@ -62,6 +69,7 @@ The continuous integration pipeline follows a strictly linear progression, ensur
 - Payment gateway mock testing
 
 **Stage 6: Deploy**
+
 - Frontend deployment to Vercel (preview or production)
 - Backend Docker image push to container registry
 - Backend service deployment to Proxmox infrastructure
@@ -74,6 +82,7 @@ The continuous integration pipeline follows a strictly linear progression, ensur
 The branching model supports parallel development while maintaining production stability.
 
 **Main Branch (main)**
+
 - Protected branch requiring at least one approved review
 - Deploy to production automatically on successful merge
 - Only fast-forward merges from develop or hotfix branches
@@ -81,13 +90,15 @@ The branching model supports parallel development while maintaining production s
 - Backed up daily for disaster recovery
 
 **Develop Branch (develop)**
+
 - Integration branch for feature completion
 - Deploy to staging environment automatically on merge
 - Created from main at release time, merges back to main after testing
 - Contains pre-release versions of features
 - Synced with main at minimum weekly
 
-**Feature Branches (feature/*)**
+**Feature Branches (feature/\*)**
+
 - Branch naming: feature/ISSUE-NUMBER-description
 - Example: feature/AUTH-42-oauth-integration
 - Created from develop, merged back via pull request
@@ -95,14 +106,16 @@ The branching model supports parallel development while maintaining production s
 - Preview deployments generated automatically on push
 - Maximum 10 open feature branches at any time
 
-**Hotfix Branches (hotfix/*)**
+**Hotfix Branches (hotfix/\*)**
+
 - Branch naming: hotfix/ISSUE-NUMBER-description
 - Created from main for critical production fixes
 - Merged to both main and develop
 - Deployed directly to production after review
 - Bumps patch version immediately
 
-**Release Branches (release/*)**
+**Release Branches (release/\*)**
+
 - Branch naming: release/VERSION (example: release/2.1.0)
 - Created from develop for release preparation
 - Contains only bug fixes and version bumps
@@ -114,6 +127,7 @@ The branching model supports parallel development while maintaining production s
 Every code change flows through a standardized pull request process.
 
 **Required Reviews:**
+
 - Minimum two approvals for changes to main branch
 - Minimum one approval for develop branch
 - Code owners file specifies domain experts for each directory
@@ -121,6 +135,7 @@ Every code change flows through a standardized pull request process.
 - Self-approval prohibited (CODEOWNERS cannot approve own PRs)
 
 **Status Checks Required Before Merge:**
+
 - All CI pipeline stages pass (lint, type, unit, build, integration)
 - No merge conflicts with base branch
 - Code review approvals from designated reviewers
@@ -129,12 +144,14 @@ Every code change flows through a standardized pull request process.
 - Commit history linear (no merge commits)
 
 **Auto-Merge Rules:**
+
 - Enable auto-merge for Dependabot PRs (patch version dependencies)
 - Require manual approval for minor and major version updates
 - Delete head branch automatically after merge
 - Squash commits into single message using conventional commit format
 
 **Pull Request Template:**
+
 - Description of changes and business context
 - Issues resolved (reference with Closes #NUMBER)
 - Testing instructions for reviewers
@@ -149,6 +166,7 @@ Every code change flows through a standardized pull request process.
 The frontend application deploys continuously to Vercel for optimal performance and developer experience.
 
 **Automatic Production Deployment**
+
 - Merging to main branch triggers production build
 - No manual deployment step required
 - Vercel builds Next.js application in optimized mode
@@ -159,6 +177,7 @@ The frontend application deploys continuously to Vercel for optimal performance 
 - Custom domain routing via Vercel configuration
 
 **Preview Deployments for Pull Requests**
+
 - Every push to feature branch generates preview deployment
 - Unique URL generated per branch (example: mybranch.myproject.vercel.app)
 - GitHub integration posts preview link as PR comment
@@ -166,6 +185,7 @@ The frontend application deploys continuously to Vercel for optimal performance 
 - Automatic cleanup when PR closes
 
 **Environment Variable Management**
+
 - Production variables stored in Vercel project settings
 - Preview variables separated from production
 - Sensitive values (API keys, database URLs) encrypted
@@ -174,6 +194,7 @@ The frontend application deploys continuously to Vercel for optimal performance 
 - Feature flag endpoints configured
 
 **Build Optimization**
+
 - Image optimization via Next.js Image component
 - WebP and AVIF format support for modern browsers
 - Automatic code splitting and tree-shaking
@@ -183,6 +204,7 @@ The frontend application deploys continuously to Vercel for optimal performance 
 - Cache-Control headers optimized for static and dynamic content
 
 **Deployment Rollback Procedure**
+
 - Vercel maintains previous 25 deployments
 - One-click rollback available in Vercel dashboard
 - GitHub Actions can revert to previous commit if needed
@@ -288,7 +310,7 @@ Custom app deployments execute database migrations.
 
 Custom apps are versioned independently from ERPNext core.
 
-- App __init__.py contains version string
+- App **init**.py contains version string
 - Semantic versioning followed (major.minor.patch)
 - Git tags mark release versions (v1.2.3)
 - Changelog maintained in app root
@@ -349,18 +371,21 @@ A comprehensive testing pyramid ensures quality at all levels, from unit tests t
 The testing strategy emphasizes speed and cost-effectiveness.
 
 **Foundation: Unit Tests (70% of tests)**
+
 - Fast execution (milliseconds per test)
 - Low cost (CPU intensive, not resource intensive)
 - High isolation (minimal external dependencies)
 - Frequent execution (every commit, every pull request)
 
 **Middle: Integration Tests (20% of tests)**
+
 - Test interaction between modules
 - Use test containers for databases and external services
 - Execute in CI pipeline on every merge
 - Moderate execution time (seconds per test)
 
 **Top: End-to-End Tests (10% of tests)**
+
 - Test complete user workflows
 - Run in staging environment
 - Execute on schedule and pre-production deployment
@@ -371,6 +396,7 @@ The testing strategy emphasizes speed and cost-effectiveness.
 Unit tests validate individual functions and components in isolation.
 
 **Frontend Unit Tests (Vitest)**
+
 - Component rendering tests using React Testing Library
 - Props validation and edge cases
 - Event handler testing (click, submit, change events)
@@ -380,6 +406,7 @@ Unit tests validate individual functions and components in isolation.
 - 80% code coverage target for critical paths, 70% overall
 
 **Test File Structure:**
+
 - Test files collocated with source files (component.test.tsx next to component.tsx)
 - Describe blocks organize tests by component/function
 - Test names describe the behavior being tested (not implementation details)
@@ -387,6 +414,7 @@ Unit tests validate individual functions and components in isolation.
 - Shared fixtures and mock factories for reusable test data
 
 **Backend API Unit Tests (Vitest)**
+
 - Route handler testing with mock requests/responses
 - Middleware validation
 - Service layer business logic testing
@@ -395,6 +423,7 @@ Unit tests validate individual functions and components in isolation.
 - 80% code coverage target for critical paths
 
 **Mock Strategy:**
+
 - vitest.mock() for module mocking
 - jest.spyOn() for spying on function calls
 - Manual mock implementations for complex services
@@ -402,6 +431,7 @@ Unit tests validate individual functions and components in isolation.
 - Mock servers for external API calls (not used in unit tests)
 
 **Coverage Reporting:**
+
 - Coverage report generated after test execution
 - HTML coverage report uploaded to GitHub Actions artifacts
 - Coverage decreases block PR merge
@@ -412,6 +442,7 @@ Unit tests validate individual functions and components in isolation.
 Integration tests validate interactions between multiple components and services.
 
 **API Integration Tests**
+
 - Test full API endpoint flows (request → business logic → database)
 - Use test Supabase instance (separate from production)
 - Test database transactions and rollbacks
@@ -420,6 +451,7 @@ Integration tests validate interactions between multiple components and services
 - Test data consistency across related entities
 
 **Supabase Test Containers**
+
 - Docker container runs PostgreSQL and Supabase emulator
 - Database starts fresh before each test suite
 - Migrations applied automatically (same migrations as production)
@@ -428,6 +460,7 @@ Integration tests validate interactions between multiple components and services
 - Tests can run in parallel (each gets isolated database)
 
 **ERPNext Integration Tests**
+
 - Test bench app endpoints and database operations
 - Mock frappe HTTP client for ERPNext API calls
 - Validate DocType behavior and validations
@@ -435,6 +468,7 @@ Integration tests validate interactions between multiple components and services
 - Test custom scripts and automation rules
 
 **Database State Verification:**
+
 - Query results verified at database level (not just in-memory)
 - Foreign key constraints validated
 - Unique constraint violations caught
@@ -446,12 +480,14 @@ Integration tests validate interactions between multiple components and services
 End-to-end tests validate complete user journeys from frontend through backend.
 
 **Playwright Test Framework**
+
 - Browser automation testing using Chromium, Firefox, WebKit
 - Headless mode for CI, headed mode for local debugging
 - Tests run against actual deployed application
 - Test isolation via session and data cleanup
 
 **Test Coverage Areas:**
+
 - User authentication flows (signup, login, password reset)
 - Estimate creation to contract signature workflow
 - Portal navigation and data retrieval
@@ -461,6 +497,7 @@ End-to-end tests validate complete user journeys from frontend through backend.
 - Payment processing flows
 
 **Test Structure:**
+
 - Page Object Model for maintainability
 - Selectors separated from test logic
 - Reusable fixtures for test setup
@@ -468,6 +505,7 @@ End-to-end tests validate complete user journeys from frontend through backend.
 - Retry failed tests automatically (flakiness handling)
 
 **Reliability and Maintenance:**
+
 - Explicit waits for dynamic content
 - Network idle strategies for SPA navigation
 - Screenshot capture on test failure
@@ -479,6 +517,7 @@ End-to-end tests validate complete user journeys from frontend through backend.
 Contract testing validates API specifications and compatibility.
 
 **Contract Definition:**
+
 - API contracts defined in OpenAPI 3.0 format
 - Request/response schemas specified explicitly
 - Validation tools check actual responses against schemas
@@ -486,6 +525,7 @@ Contract testing validates API specifications and compatibility.
 - Breaking changes caught before deployment
 
 **Testing Approach:**
+
 - Backend tests verify responses match contract
 - Frontend tests verify mock responses match contract
 - Breaking changes fail CI pipeline
@@ -496,6 +536,7 @@ Contract testing validates API specifications and compatibility.
 Performance tests identify bottlenecks and ensure scalability.
 
 **k6 Load Testing Framework**
+
 - JavaScript-based load testing tool
 - Scenario-based testing (realistic user patterns)
 - Ramp-up and soak testing strategies
@@ -504,12 +545,14 @@ Performance tests identify bottlenecks and ensure scalability.
 - Resource utilization monitoring
 
 **Test Scenarios:**
+
 - Create estimate: 10 concurrent users, 30 second duration
 - Portal login: 50 concurrent users, 5 minute duration
 - Estimate retrieval: 100 concurrent users, 10 minute duration
 - Search functionality: 50 concurrent users, 5 minute duration
 
 **Baseline and Regression:**
+
 - Performance baseline established for main branch
 - Performance compared after code changes
 - Significant regressions block merge
@@ -520,6 +563,7 @@ Performance tests identify bottlenecks and ensure scalability.
 Accessibility tests ensure product is usable by all users.
 
 **axe-core Integration Testing**
+
 - Automated accessibility scanning in CI pipeline
 - Catches common accessibility violations
 - WCAG 2.1 Level AA standards enforced
@@ -528,6 +572,7 @@ Accessibility tests ensure product is usable by all users.
 - Form label association checked
 
 **Manual Accessibility Testing:**
+
 - Keyboard navigation testing (Tab, Enter, Escape)
 - Screen reader testing with NVDA/JAWS
 - Focus management validation
@@ -543,6 +588,7 @@ Code quality standards are enforced automatically and consistently across the en
 ESLint provides static analysis and style enforcement.
 
 **Configuration Approach:**
+
 - Separate configurations for frontend and backend
 - Frontend uses eslint-config-next as base
 - Backend uses eslint-config-airbnb as base
@@ -551,6 +597,7 @@ ESLint provides static analysis and style enforcement.
 - TypeScript-specific rules: type safety, interfaces
 
 **Enforced Rules:**
+
 - No console.log in production code (allowed in development)
 - No commented-out code
 - No unused variables or imports
@@ -561,6 +608,7 @@ ESLint provides static analysis and style enforcement.
 - Trailing commas in multiline objects/arrays
 
 **Execution:**
+
 - ESLint runs as first CI pipeline stage
 - Fails pull request merge if violations found
 - Pre-commit hook runs ESLint locally before commit
@@ -571,6 +619,7 @@ ESLint provides static analysis and style enforcement.
 Prettier ensures consistent code style without debate.
 
 **Configuration:**
+
 - Single quote preference (single quotes except JSON)
 - Trailing commas (ES5 mode: only where valid)
 - Print width 100 characters
@@ -578,12 +627,14 @@ Prettier ensures consistent code style without debate.
 - Semicolons required
 
 **Scope:**
+
 - Formats JavaScript, TypeScript, JSX, TSX
 - Formats CSS, SCSS
 - Formats JSON files
 - Ignores generated files and node_modules
 
 **Integration:**
+
 - Runs as part of ESLint configuration
 - Pre-commit hook formats files before commit
 - CI pipeline fails if formatting inconsistent
@@ -594,6 +645,7 @@ Prettier ensures consistent code style without debate.
 TypeScript strict mode eliminates entire classes of bugs.
 
 **Enabled Rules:**
+
 - strict: true (enables all strict flags)
 - noImplicitAny: true (no implicit any types)
 - strictNullChecks: true (null/undefined handled explicitly)
@@ -609,6 +661,7 @@ TypeScript strict mode eliminates entire classes of bugs.
 - noUncheckedIndexedAccess: true (array access type safe)
 
 **Compilation:**
+
 - TypeScript compilation runs in CI pipeline before tests
 - Type checking uses --noEmit (no JavaScript output)
 - Takes approximately 30 seconds on typical codebase
@@ -619,11 +672,13 @@ TypeScript strict mode eliminates entire classes of bugs.
 Husky automates code quality checks before commit.
 
 **Hooks Configured:**
+
 - pre-commit: Runs ESLint and Prettier on staged files
 - pre-push: Runs unit tests locally before pushing
 - prepare-commit-msg: Adds issue number from branch name
 
 **Execution:**
+
 - Installed automatically via npm install
 - git commit triggers hooks automatically
 - Failing hooks prevent commit
@@ -631,6 +686,7 @@ Husky automates code quality checks before commit.
 - CI pipeline provides full validation (hooks can be skipped locally)
 
 **Staged File Linting:**
+
 - lint-staged tool runs linters only on staged files
 - Faster feedback loop than entire codebase
 - Prevents committing linting violations
@@ -642,6 +698,7 @@ Husky automates code quality checks before commit.
 Commitlint enforces conventional commit format.
 
 **Conventional Commits Format:**
+
 ```
 type(scope): subject
 
@@ -651,6 +708,7 @@ footer
 ```
 
 **Allowed Types:**
+
 - feat: A new feature
 - fix: A bug fix
 - docs: Documentation only changes
@@ -661,12 +719,14 @@ footer
 - chore: Changes to build process, dependencies, tooling
 
 **Examples:**
+
 - feat(auth): add OAuth integration
 - fix(api): prevent race condition in sync
 - docs(readme): update installation instructions
 - chore(deps): update Next.js to 14.0.0
 
 **Configuration:**
+
 - commitlint.config.js defines rules
 - Maximum subject line length 50 characters
 - Scope in lowercase (optional)
@@ -679,6 +739,7 @@ footer
 SonarQube provides comprehensive code quality metrics and trending.
 
 **Metrics Tracked:**
+
 - Code coverage percentage
 - Cyclomatic complexity (maximum 15 per function)
 - Cognitive complexity (maximum 25 per function)
@@ -688,6 +749,7 @@ SonarQube provides comprehensive code quality metrics and trending.
 - Duplicated code percentage (maximum 3% allowed)
 
 **Execution:**
+
 - SonarQube scanner runs in CI pipeline after tests
 - Analyzes code coverage reports from Vitest
 - Fails pipeline if quality gates not met
@@ -695,6 +757,7 @@ SonarQube provides comprehensive code quality metrics and trending.
 - Trend analysis shows quality improvements/regressions over time
 
 **Quality Gates:**
+
 - Coverage > 70%
 - No new code smells
 - No new vulnerabilities
@@ -706,6 +769,7 @@ SonarQube provides comprehensive code quality metrics and trending.
 Dependabot and Renovate keep dependencies secure and up-to-date.
 
 **Dependabot Configuration:**
+
 - Weekly scan of dependencies against known vulnerabilities
 - Automatic PR creation for security updates
 - Patch version updates auto-merged (after tests pass)
@@ -713,6 +777,7 @@ Dependabot and Renovate keep dependencies secure and up-to-date.
 - Major version updates flagged for breaking changes
 
 **Renovate Configuration (Alternative):**
+
 - More flexible configuration than Dependabot
 - Groups related dependencies (all Next.js packages together)
 - Schedules updates (weekend or off-hours)
@@ -720,6 +785,7 @@ Dependabot and Renovate keep dependencies secure and up-to-date.
 - Changelog generation in PR descriptions
 
 **Vulnerability Response:**
+
 - Critical vulnerabilities block PR merge
 - High severity vulnerabilities require immediate action
 - Regular updates prevent dependency debt
@@ -735,16 +801,19 @@ Releases are managed systematically to ensure stability and traceability.
 KrewPact follows semantic versioning (MAJOR.MINOR.PATCH).
 
 **Version Increment Rules:**
+
 - MAJOR: Breaking changes (API incompatible, data migrations required)
 - MINOR: New features (backward compatible)
 - PATCH: Bug fixes (backward compatible)
 
 **Pre-Release Versions:**
+
 - Alpha versions: 1.2.0-alpha.1 (incomplete features)
 - Beta versions: 1.2.0-beta.1 (feature complete, may have issues)
 - Release candidates: 1.2.0-rc.1 (ready for release, testing only)
 
 **Version Numbering:**
+
 - Start at 1.0.0 (never 0.x.x in production)
 - Increment major every 3-6 months typically
 - Increment minor every 1-2 weeks typically
@@ -755,26 +824,33 @@ KrewPact follows semantic versioning (MAJOR.MINOR.PATCH).
 Changelog documents all changes for each release.
 
 **Changelog Format (CHANGELOG.md):**
+
 ```markdown
 ## [1.2.0] - 2024-03-15
 
 ### Added
+
 - Feature description
 
 ### Changed
+
 - Behavior change description
 
 ### Fixed
+
 - Bug fix description
 
 ### Deprecated
+
 - Feature being phased out
 
 ### Removed
+
 - Feature removed
 ```
 
 **Commit Message to Changelog:**
+
 - feat() commits become Added section
 - fix() commits become Fixed section
 - chore() commits excluded (except breaking changes)
@@ -782,6 +858,7 @@ Changelog documents all changes for each release.
 - Scopes grouped together
 
 **Automated Generation:**
+
 - conventional-changelog tool generates automatically
 - Scans commit messages since last release
 - Groups changes by type
@@ -793,6 +870,7 @@ Changelog documents all changes for each release.
 Release notes provide user-friendly descriptions of changes.
 
 **Release Notes Content:**
+
 - Marketing description of release highlights
 - Key features added (non-technical language)
 - Known issues and workarounds
@@ -801,12 +879,14 @@ Release notes provide user-friendly descriptions of changes.
 - Link to full changelog
 
 **Creation Process:**
+
 - AI tool (e.g., ChatGPT) summarizes commits for human readability
 - Founder reviews and edits release notes
 - Draft created in GitHub Releases UI
 - Published simultaneously with tag creation
 
 **Distribution:**
+
 - Release notes visible on GitHub Releases page
 - Posted to company website/blog
 - Email notification to customers
@@ -817,6 +897,7 @@ Release notes provide user-friendly descriptions of changes.
 Feature flags enable safe feature rollout and testing.
 
 **Feature Flag System (Recommended: Unleash Open Source)**
+
 - Self-hosted Unleash server on Proxmox
 - Segment-based targeting (by user, environment, percentage)
 - Real-time toggle without redeployment
@@ -824,6 +905,7 @@ Feature flags enable safe feature rollout and testing.
 - A/B testing capabilities
 
 **Flag Lifecycle:**
+
 - Flag created in staging environment first
 - Feature code behind flag (100% off initially)
 - QA tests with flag enabled
@@ -832,6 +914,7 @@ Feature flags enable safe feature rollout and testing.
 - Flag removed after 2 weeks in production (at 100%)
 
 **Flag Configuration:**
+
 - Flag name: descriptive lowercase with hyphens (new-estimate-flow)
 - Description: business purpose and technical details
 - Owner: team member responsible
@@ -840,6 +923,7 @@ Feature flags enable safe feature rollout and testing.
 - Metrics: track adoption, errors, performance
 
 **Code Integration:**
+
 - Flag checked at feature boundary (not throughout feature)
 - Fallback behavior clear when flag disabled
 - No orphaned flag code (removed when flag removed)
@@ -850,6 +934,7 @@ Feature flags enable safe feature rollout and testing.
 Canary deployments will minimize risk of bad releases.
 
 **Strategy (Not Currently Implemented):**
+
 - Deploy new version to 5% of users
 - Monitor error rates and performance metrics
 - Automatic rollback if error rate > 1%
@@ -858,6 +943,7 @@ Canary deployments will minimize risk of bad releases.
 - On-call engineer required during canary period
 
 **Monitoring During Canary:**
+
 - Error rates by endpoint
 - Response time distribution
 - API endpoint-specific failure rates
@@ -873,6 +959,7 @@ Infrastructure is defined as code for consistency, reproducibility, and version 
 Docker Compose creates local development environment matching production.
 
 **Services Defined:**
+
 - Node.js API server (port 3000)
 - PostgreSQL database (port 5432)
 - Redis cache (port 6379)
@@ -881,6 +968,7 @@ Docker Compose creates local development environment matching production.
 - Supabase local development (if using Supabase locally)
 
 **docker-compose.yml Structure:**
+
 ```yaml
 version: '3.8'
 services:
@@ -889,7 +977,7 @@ services:
       context: ./api
       dockerfile: Dockerfile.dev
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
       - DATABASE_URL=postgres://user:pass@db:5432/krewpact_dev
       - REDIS_URL=redis://redis:6379
@@ -909,18 +997,19 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - '5432:5432'
 
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - '6379:6379'
 
 volumes:
   postgres_data:
 ```
 
 **Getting Started:**
+
 - Run: docker compose up -d
 - Database initialized with migrations
 - Seed data loaded from fixtures
@@ -929,6 +1018,7 @@ volumes:
 - Logs viewed with: docker compose logs -f SERVICE_NAME
 
 **Data Persistence:**
+
 - Named volumes persist data between restarts
 - docker compose down -v removes volumes (full reset)
 - Backup database with: docker compose exec db pg_dump > backup.sql
@@ -939,6 +1029,7 @@ volumes:
 Production Docker Compose manages helper services alongside containerized API.
 
 **Production Services:**
+
 - Node.js API server (single or multiple replicas)
 - PostgreSQL container (optional, if not using Supabase)
 - Redis container (for caching and job queues)
@@ -947,6 +1038,7 @@ Production Docker Compose manages helper services alongside containerized API.
 - Grafana (visualization)
 
 **Deployment:**
+
 - docker compose -f docker-compose.prod.yml up -d
 - Health checks ensure containers stay running
 - Restart policies handle crashes
@@ -954,12 +1046,14 @@ Production Docker Compose manages helper services alongside containerized API.
 - Only Nginx exposed to internet (ports 80, 443)
 
 **Scaling:**
+
 - Multiple API replicas: docker compose up -d --scale api=3
 - Load balancer distributes traffic across replicas
 - Shared Redis and PostgreSQL serve all API instances
 - Database connection pooling prevents connection exhaustion
 
 **Updates:**
+
 - New version: pull latest image
 - Run: docker compose -f docker-compose.prod.yml pull
 - Rolling restart: docker compose up -d (replaces containers with new image)
@@ -970,6 +1064,7 @@ Production Docker Compose manages helper services alongside containerized API.
 Ansible automates infrastructure provisioning and configuration on Proxmox.
 
 **Playbook Structure:**
+
 ```
 playbooks/
   ├── provision-vm.yml (create new VM)
@@ -985,6 +1080,7 @@ playbooks/
 ```
 
 **VM/CT Provisioning:**
+
 - Proxmox API called to create VM or LXC container
 - Base template selected (Ubuntu 22.04 LTS)
 - CPU, RAM, disk allocated per specification
@@ -994,6 +1090,7 @@ playbooks/
 - Inventory updated automatically
 
 **Configuration Management:**
+
 - Baseline packages installed (curl, git, htop, etc.)
 - Docker installed and configured
 - Docker daemon started and enabled
@@ -1004,6 +1101,7 @@ playbooks/
 - NTP time sync configured
 
 **Variable Management:**
+
 - group_vars/all.yml: global variables
 - group_vars/api_servers/: API-specific variables
 - host_vars/api-prod-01/: host-specific variables
@@ -1011,6 +1109,7 @@ playbooks/
 - Environment-specific variable sets (dev, staging, prod)
 
 **Idempotency:**
+
 - Playbooks safe to run multiple times
 - Services restarted only if configuration changed
 - Packages upgraded only if newer version available
@@ -1021,6 +1120,7 @@ playbooks/
 Application configuration stored in version control or secrets management system.
 
 **dotenv Files:**
+
 - .env.example committed to repository (no secrets)
 - .env files created from .env.example locally
 - .env files NOT committed (added to .gitignore)
@@ -1028,6 +1128,7 @@ Application configuration stored in version control or secrets management system
 - All developers have consistent environment setup
 
 **Environment Variables:**
+
 - API_URL: Backend API endpoint
 - SUPABASE_URL: Supabase project URL
 - SUPABASE_ANON_KEY: Supabase public API key
@@ -1039,6 +1140,7 @@ Application configuration stored in version control or secrets management system
 - LOG_LEVEL: debug, info, warn, error
 
 **Secrets Management (HashiCorp Vault):**
+
 - Vault server runs on Proxmox infrastructure
 - Sensitive values stored encrypted at rest
 - Access controlled via role-based authentication
@@ -1049,6 +1151,7 @@ Application configuration stored in version control or secrets management system
 - Startup fails if required secrets unavailable
 
 **Configuration Loading Priority:**
+
 1. Environment variables (highest priority)
 2. Vault secrets (if Vault enabled)
 3. .env file in application root
@@ -1064,6 +1167,7 @@ Developer experience is prioritized to maximize productivity and reduce friction
 New developers get productive within minutes following this guide.
 
 **Prerequisites:**
+
 - Node.js 20 LTS (use nvm for version management)
 - Docker Desktop (for database and helper services)
 - Git (for version control)
@@ -1098,12 +1202,14 @@ npm run dev
 ```
 
 **Verification:**
+
 - Frontend accessible at http://localhost:3001
 - API accessible at http://localhost:3000
 - Database accessible at localhost:5432
 - MailHog UI at http://localhost:8025
 
 **Troubleshooting Guide:**
+
 - Port conflicts: docker ps shows running containers
 - Database connection errors: check DATABASE_URL in .env
 - Migration failures: docker compose exec db psql to debug
@@ -1114,36 +1220,43 @@ npm run dev
 Exact tool versions prevent "works on my machine" problems.
 
 **Language and Runtime:**
+
 - Node.js 20.11.0 (LTS release)
 - TypeScript 5.3.3
 - npm 10.2.4 (or use --exact in package.json)
 
 **Database and Cache:**
+
 - PostgreSQL 15.4 (Docker image postgres:15.4-alpine)
 - Redis 7.2.3 (Docker image redis:7.2.3-alpine)
 - Supabase (cloud hosted)
 
 **Frontend Tools:**
+
 - Next.js 14.1.0
 - React 18.2.0
 - TypeScript 5.3.3
 
 **Backend Tools:**
+
 - Express.js 4.18.2
 - Prisma 5.7.0
 - Vitest 1.0.4
 
 **DevOps Tools:**
+
 - Docker 24.0.0+
 - Docker Compose 2.20.0+
 - Git 2.40.0+
 
 **Version Management:**
+
 - nvm (Node.js version manager)
 - .nvmrc file specifies Node version
 - npm ci instead of npm install (respects lockfile exactly)
 
 **Verification Command:**
+
 ```bash
 node --version     # v20.11.0
 npm --version      # 10.2.4
@@ -1156,6 +1269,7 @@ git --version      # git version 2.40.0
 Seed data enables realistic testing without complex setup.
 
 **Seed Data Included:**
+
 - 3 test users (founder, admin, user roles)
 - 10 sample projects (architectural, infrastructure, etc.)
 - 50 sample estimates (various statuses)
@@ -1164,6 +1278,7 @@ Seed data enables realistic testing without complex setup.
 - Portal access credentials for testing
 
 **Running Seeds:**
+
 ```bash
 npm run db:seed        # Seed all fixtures
 npm run db:seed:reset  # Clear then seed
@@ -1171,12 +1286,14 @@ npm run db:seed:users  # Seed only users
 ```
 
 **Seed Data Location:**
+
 - seeds/ directory contains fixture files (JSON format)
 - Each fixture file maps to database table
 - Order matters (foreign keys must exist first)
 - Idempotent seeding (runs multiple times safely)
 
 **Customization:**
+
 - Modify seed files to customize test data
 - Add new fixtures for specific test scenarios
 - Document fixture format (fields, relationships)
@@ -1187,6 +1304,7 @@ npm run db:seed:users  # Seed only users
 External APIs replaced with mocks during development.
 
 **Mocked Services:**
+
 - ERPNext API (custom responses per endpoint)
 - Stripe payment gateway (test credit cards)
 - Email service (intercepted to MailHog)
@@ -1194,6 +1312,7 @@ External APIs replaced with mocks during development.
 - File upload service (stored locally)
 
 **Mock Implementation:**
+
 ```typescript
 // api/mocks/erpnext.ts
 export const mockERPNextAPI = {
@@ -1202,17 +1321,19 @@ export const mockERPNextAPI = {
       return { name: 'EST-001', customer: 'ABC Corp', total: 50000 };
     }
     throw new Error('Document not found');
-  }
+  },
 };
 ```
 
 **Enabling Mocks:**
+
 - Environment variable MOCK_EXTERNAL_APIS=true
 - Interceptor replaces fetch/axios calls
 - Test data returned instead of real API calls
 - Reduces setup burden and makes tests faster
 
 **Mock Data:**
+
 - fixtures/mock-erpnext-responses.json contains responses
 - fixtures/mock-stripe-events.json contains payment events
 - Add new responses as needed
@@ -1223,6 +1344,7 @@ export const mockERPNextAPI = {
 Hot reload provides instant feedback during development.
 
 **Frontend Hot Reload:**
+
 - Next.js dev server runs on port 3001
 - File change triggers automatic rebuild (< 1 second)
 - Browser refreshes via Fast Refresh (component state preserved)
@@ -1230,6 +1352,7 @@ Hot reload provides instant feedback during development.
 - No manual reload required
 
 **Backend Hot Reload:**
+
 - nodemon watches backend files for changes
 - TypeScript compiles on file change
 - Server restarts automatically
@@ -1237,12 +1360,14 @@ Hot reload provides instant feedback during development.
 - Logs show restart status
 
 **Configuration:**
+
 - .eslintrc.js ignores development-only code
 - nodemon.json specifies watched directories
 - TypeScript tsconfig.json set for development
 - CORS configured for localhost:3001
 
 **Disable Hot Reload (if problematic):**
+
 - Next.js: NEXTAUTH_SKIP_ENV_VALIDATION=true (for config issues)
 - Backend: npm run dev:no-watch (manual restarts)
 - Docker: restart container manually
@@ -1252,6 +1377,7 @@ Hot reload provides instant feedback during development.
 Extensions enhance development productivity and code quality.
 
 **Essential Extensions:**
+
 - ES7+ React/Redux/React-Native snippets (dsznajder.es7-react-js-snippets)
 - TypeScript Vue Plugin (Vue.volar)
 - Prettier - Code formatter (esbenp.prettier-vscode)
@@ -1260,24 +1386,29 @@ Extensions enhance development productivity and code quality.
 - GitHub Copilot (GitHub.copilot)
 
 **Database and API Tools:**
+
 - SQLTools (mtxr.sqltools)
 - Thunder Client (rangav.vscode-thunder-client)
 - REST Client (humao.rest-client)
 
 **Testing:**
+
 - Test Explorer UI (hbenl.vscode-test-explorer)
 - Vitest (vitest.vitest)
 
 **Version Control:**
+
 - GitLens (eamodio.gitlens)
 - GitHub Pull Requests (GitHub.vscode-pull-request-github)
 
 **General Development:**
+
 - Code Spell Checker (streetsidesoftware.code-spell-checker)
 - Error Lens (usernamehw.errorlens)
 - Thunder Client (rangav.vscode-thunder-client)
 
 **Recommended Settings (settings.json):**
+
 ```json
 {
   "editor.defaultFormatter": "esbenp.prettier-vscode",
@@ -1293,6 +1424,7 @@ Extensions enhance development productivity and code quality.
 ```
 
 **Cursor-Specific:**
+
 - Cursor includes AI-powered code completion (GPT-4 based)
 - Composer feature for multi-file edits
 - Superior to standard VS Code for development

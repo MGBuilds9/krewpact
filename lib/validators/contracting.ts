@@ -4,7 +4,15 @@ import { z } from 'zod';
 // Proposal schemas
 // ============================================================
 
-const proposalStatuses = ['draft', 'sent', 'viewed', 'accepted', 'rejected', 'expired', 'superseded'] as const;
+const proposalStatuses = [
+  'draft',
+  'sent',
+  'viewed',
+  'accepted',
+  'rejected',
+  'expired',
+  'superseded',
+] as const;
 
 export const proposalCreateSchema = z.object({
   estimate_id: z.string().uuid(),

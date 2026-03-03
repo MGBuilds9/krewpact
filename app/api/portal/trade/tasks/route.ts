@@ -8,7 +8,10 @@ const taskStatusSchema = z.object({
   blocked_reason: z.string().optional(),
 });
 
-async function resolveActiveTradePartner(userId: string, supabase: Awaited<ReturnType<typeof createUserClient>>) {
+async function resolveActiveTradePartner(
+  userId: string,
+  supabase: Awaited<ReturnType<typeof createUserClient>>,
+) {
   const { data: pa } = await supabase
     .from('portal_accounts')
     .select('id, status, actor_type')
@@ -35,11 +38,13 @@ export async function GET(req: NextRequest) {
   // Fetch tasks where metadata.trade_portal_id matches this portal account
   let query = supabase
     .from('tasks')
-    .select('id, project_id, title, description, status, priority, due_at, blocked_reason, metadata, created_at, updated_at')
+    .select(
+      'id, project_id, title, description, status, priority, due_at, blocked_reason, metadata, created_at, updated_at',
+    )
     .contains('metadata', { trade_portal_id: pa.id })
     .order('due_at', { ascending: true, nullsFirst: false });
 
-  if (projectId) query = (query as any).eq('project_id', projectId);
+  if (projectId) query = query.eq('project_id', projectId);
 
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

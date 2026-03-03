@@ -34,7 +34,12 @@ interface MigrationConflictFormProps {
   onCancel?: () => void;
 }
 
-export function MigrationConflictForm({ batchId, conflictId, onSuccess, onCancel }: MigrationConflictFormProps) {
+export function MigrationConflictForm({
+  batchId,
+  conflictId,
+  onSuccess,
+  onCancel,
+}: MigrationConflictFormProps) {
   const resolve = useResolveMigrationConflict(batchId);
 
   const form = useForm<FormValues>({
@@ -63,7 +68,9 @@ export function MigrationConflictForm({ batchId, conflictId, onSuccess, onCancel
               <FormLabel>Resolution</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                 </FormControl>
                 <SelectContent>
                   <SelectItem value="resolved">Resolved</SelectItem>
@@ -80,7 +87,9 @@ export function MigrationConflictForm({ batchId, conflictId, onSuccess, onCancel
           render={({ field }) => (
             <FormItem>
               <FormLabel>Notes</FormLabel>
-              <FormControl><Textarea placeholder="Resolution notes..." {...field} /></FormControl>
+              <FormControl>
+                <Textarea placeholder="Resolution notes..." {...field} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -90,7 +99,11 @@ export function MigrationConflictForm({ batchId, conflictId, onSuccess, onCancel
             {resolve.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Apply Resolution
           </Button>
-          {onCancel && <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>}
+          {onCancel && (
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
+          )}
         </div>
       </form>
     </Form>

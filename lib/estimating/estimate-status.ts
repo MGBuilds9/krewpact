@@ -3,13 +3,7 @@
  * Pure functions — no database or auth dependencies.
  */
 
-export type EstimateStatus =
-  | 'draft'
-  | 'review'
-  | 'sent'
-  | 'approved'
-  | 'rejected'
-  | 'superseded';
+export type EstimateStatus = 'draft' | 'review' | 'sent' | 'approved' | 'rejected' | 'superseded';
 
 /**
  * Allowed transitions: key = current status, value = array of valid next statuses.
@@ -24,9 +18,7 @@ export const ALLOWED_STATUS_TRANSITIONS: Record<EstimateStatus, EstimateStatus[]
   superseded: [],
 };
 
-export type StatusTransitionResult =
-  | { valid: true }
-  | { valid: false; reason: string };
+export type StatusTransitionResult = { valid: true } | { valid: false; reason: string };
 
 /**
  * Validate whether a status transition is allowed.

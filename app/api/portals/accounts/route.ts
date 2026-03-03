@@ -43,7 +43,11 @@ export async function POST(req: NextRequest) {
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   let body: unknown;
-  try { body = await req.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+  }
 
   const parsed = portalAccountInviteSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
@@ -61,10 +65,10 @@ export async function POST(req: NextRequest) {
 
   // 1. Link projects if any
   if (projects && projects.length > 0) {
-    const permissions = projects.map(projectId => ({
+    const permissions = projects.map((projectId) => ({
       portal_account_id: account.id,
       project_id: projectId,
-      permission_set: {}
+      permission_set: {},
     }));
     const { error: permError } = await supabase.from('portal_permissions').insert(permissions);
     if (permError) console.error('Failed to link projects:', permError);
@@ -74,17 +78,17 @@ export async function POST(req: NextRequest) {
   try {
     const { clerkClient } = await import('@clerk/nextjs/server');
     const client = await clerkClient();
-    
+
     await client.invitations.createInvitation({
       emailAddress: account.email,
       notify: true,
       publicMetadata: {
         krewpact_user_id: account.id,
         krewpact_roles: role ? [role] : ['client_owner'],
-        krewpact_divisions: []
-      }
+        krewpact_divisions: [],
+      },
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Failed to invite via Clerk:', err);
     return NextResponse.json({ ...account, _warning: 'Clerk invite failed' }, { status: 201 });
   }

@@ -28,6 +28,7 @@ export function mockClerkAuth(
       ? {
           sub: userId,
           krewpact_user_id: userId,
+          krewpact_org_id: 'org_test_default',
           krewpact_divisions: ['contracting'],
           krewpact_roles: ['project_manager'],
         }

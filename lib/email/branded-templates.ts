@@ -785,13 +785,7 @@ export const BRANDED_TEMPLATES: BrandedTemplate[] = [
     subject: 'A quick ask, {{first_name}} — do you know anyone we could help?',
     body_html: referralRequestBody,
     body_text: referralRequestText,
-    merge_fields: [
-      'logo_url',
-      'first_name',
-      'company_name',
-      'referral_url',
-      'unsubscribe_url',
-    ],
+    merge_fields: ['logo_url', 'first_name', 'company_name', 'referral_url', 'unsubscribe_url'],
   },
 ];
 
@@ -803,8 +797,6 @@ export function getTemplateById(id: string): BrandedTemplate | undefined {
   return BRANDED_TEMPLATES.find((t) => t.id === id);
 }
 
-export function getTemplatesByCategory(
-  category: BrandedTemplate['category'],
-): BrandedTemplate[] {
+export function getTemplatesByCategory(category: BrandedTemplate['category']): BrandedTemplate[] {
   return BRANDED_TEMPLATES.filter((t) => t.category === category);
 }

@@ -28,7 +28,10 @@ interface TimesheetBatchApprovalFormProps {
   isLoading?: boolean;
 }
 
-export function TimesheetBatchApprovalForm({ onSubmit, isLoading }: TimesheetBatchApprovalFormProps) {
+export function TimesheetBatchApprovalForm({
+  onSubmit,
+  isLoading,
+}: TimesheetBatchApprovalFormProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(timesheetBatchApprovalSchema),
     defaultValues: { status: 'approved' },

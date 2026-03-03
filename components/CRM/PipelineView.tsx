@@ -56,7 +56,9 @@ export function PipelineView({ data }: PipelineViewProps) {
 
   // Use STAGE_ORDER for known stages, then append any extra stages from data
   const orderedStages = STAGE_ORDER.filter((s) => s in data.stages);
-  const extraStages = stageKeys.filter((s) => !STAGE_ORDER.includes(s as typeof STAGE_ORDER[number]));
+  const extraStages = stageKeys.filter(
+    (s) => !STAGE_ORDER.includes(s as (typeof STAGE_ORDER)[number]),
+  );
   const allStages = [...orderedStages, ...extraStages];
 
   // Calculate pipeline metrics
@@ -67,53 +69,50 @@ export function PipelineView({ data }: PipelineViewProps) {
 
   return (
     <>
-    <WeightedPipelineHeader
-      totalValue={totalValue}
-      weightedValue={weightedValue}
-      opportunityCount={opportunityCount}
-    />
-    <div className="flex gap-4 overflow-x-auto pb-4">
-      {allStages.map((stage) => {
-        const stageData = data.stages[stage];
-        if (!stageData) return null;
+      <WeightedPipelineHeader
+        totalValue={totalValue}
+        weightedValue={weightedValue}
+        opportunityCount={opportunityCount}
+      />
+      <div className="flex gap-4 overflow-x-auto pb-4">
+        {allStages.map((stage) => {
+          const stageData = data.stages[stage];
+          if (!stageData) return null;
 
-        return (
-          <div
-            key={stage}
-            className="flex-shrink-0 w-64 bg-muted/30 rounded-lg p-3"
-          >
-            {/* Column Header */}
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-medium text-sm">{formatStage(stage)}</h3>
-              <Badge variant="secondary" className="text-xs">
-                {stageData.count}
-              </Badge>
-            </div>
-            {stageData.total_value > 0 && (
-              <p className="text-xs text-muted-foreground mb-1">
-                {formatCurrency(stageData.total_value)}
-              </p>
-            )}
-            {stageData.opportunities.length > 0 && (
-              <p className="text-xs text-muted-foreground mb-3">
-                weighted: {formatCurrency(calculateWeightedValue(stageData.opportunities))}
-              </p>
-            )}
+          return (
+            <div key={stage} className="flex-shrink-0 w-64 bg-muted/30 rounded-lg p-3">
+              {/* Column Header */}
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-medium text-sm">{formatStage(stage)}</h3>
+                <Badge variant="secondary" className="text-xs">
+                  {stageData.count}
+                </Badge>
+              </div>
+              {stageData.total_value > 0 && (
+                <p className="text-xs text-muted-foreground mb-1">
+                  {formatCurrency(stageData.total_value)}
+                </p>
+              )}
+              {stageData.opportunities.length > 0 && (
+                <p className="text-xs text-muted-foreground mb-3">
+                  weighted: {formatCurrency(calculateWeightedValue(stageData.opportunities))}
+                </p>
+              )}
 
-            {/* Opportunity Cards */}
-            <div className="space-y-2">
-              {stageData.opportunities.map((opp) => (
-                <OpportunityCard
-                  key={opp.id}
-                  opportunity={opp}
-                  onClick={() => router.push(`/crm/opportunities/${opp.id}`)}
-                />
-              ))}
+              {/* Opportunity Cards */}
+              <div className="space-y-2">
+                {stageData.opportunities.map((opp) => (
+                  <OpportunityCard
+                    key={opp.id}
+                    opportunity={opp}
+                    onClick={() => router.push(`/crm/opportunities/${opp.id}`)}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
-        );
-      })}
-    </div>
+          );
+        })}
+      </div>
     </>
   );
 }

@@ -99,9 +99,7 @@ export default function CalendarWidget(): React.ReactElement {
                     </Badge>
                   ) : (
                     <>
-                      <p className="text-sm font-medium">
-                        {formatEventTime(event.start.dateTime)}
-                      </p>
+                      <p className="text-sm font-medium">{formatEventTime(event.start.dateTime)}</p>
                       <p className="text-xs text-muted-foreground">
                         {formatEventTime(event.end.dateTime)}
                       </p>
@@ -111,7 +109,7 @@ export default function CalendarWidget(): React.ReactElement {
                 <div
                   className={cn(
                     'w-0.5 self-stretch rounded-full flex-shrink-0',
-                    event.isAllDay ? 'bg-blue-400' : 'bg-primary'
+                    event.isAllDay ? 'bg-blue-400' : 'bg-primary',
                   )}
                 />
                 <div className="flex-1 min-w-0">

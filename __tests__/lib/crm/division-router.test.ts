@@ -53,8 +53,8 @@ describe('routeToDivision', () => {
   });
 
   it('routes structured cabling project to telecom', () => {
-    expect(
-      routeToDivision({ project_description: 'structured cabling for office' }),
-    ).toBe('telecom');
+    expect(routeToDivision({ project_description: 'structured cabling for office' })).toBe(
+      'telecom',
+    );
   });
 });

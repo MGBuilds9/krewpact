@@ -59,18 +59,14 @@ describe('POST /api/email/send', () => {
 
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
-    const res = await POST(
-      makeJsonRequest('/api/email/send', validSendPayload()),
-    );
+    const res = await POST(makeJsonRequest('/api/email/send', validSendPayload()));
     expect(res.status).toBe(401);
   });
 
   it('sends email successfully', async () => {
     mockClerkAuth(mockAuth);
 
-    const res = await POST(
-      makeJsonRequest('/api/email/send', validSendPayload()),
-    );
+    const res = await POST(makeJsonRequest('/api/email/send', validSendPayload()));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);
@@ -139,12 +135,7 @@ describe('POST /api/email/send', () => {
     mockCreateUserClient.mockResolvedValue(supabase);
 
     const leadId = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
-    const res = await POST(
-      makeJsonRequest(
-        '/api/email/send',
-        validSendPayload({ leadId }),
-      ),
-    );
+    const res = await POST(makeJsonRequest('/api/email/send', validSendPayload({ leadId })));
     expect(res.status).toBe(200);
     expect(supabase.from).toHaveBeenCalledWith('activities');
   });
@@ -157,12 +148,7 @@ describe('POST /api/email/send', () => {
     mockCreateUserClient.mockResolvedValue(supabase);
 
     const contactId = 'b1ffcd00-9c0b-4ef8-bb6d-6bb9bd380a22';
-    const res = await POST(
-      makeJsonRequest(
-        '/api/email/send',
-        validSendPayload({ contactId }),
-      ),
-    );
+    const res = await POST(makeJsonRequest('/api/email/send', validSendPayload({ contactId })));
     expect(res.status).toBe(200);
     expect(supabase.from).toHaveBeenCalledWith('activities');
   });
@@ -175,12 +161,7 @@ describe('POST /api/email/send', () => {
     mockCreateUserClient.mockResolvedValue(supabase);
 
     const accountId = 'c2aade11-9c0b-4ef8-bb6d-6bb9bd380a33';
-    const res = await POST(
-      makeJsonRequest(
-        '/api/email/send',
-        validSendPayload({ accountId }),
-      ),
-    );
+    const res = await POST(makeJsonRequest('/api/email/send', validSendPayload({ accountId })));
     expect(res.status).toBe(200);
     expect(supabase.from).toHaveBeenCalledWith('activities');
   });
@@ -188,9 +169,7 @@ describe('POST /api/email/send', () => {
   it('does not log CRM activity when no CRM ids provided', async () => {
     mockClerkAuth(mockAuth);
 
-    const res = await POST(
-      makeJsonRequest('/api/email/send', validSendPayload()),
-    );
+    const res = await POST(makeJsonRequest('/api/email/send', validSendPayload()));
     expect(res.status).toBe(200);
     expect(mockCreateUserClient).not.toHaveBeenCalled();
   });
@@ -199,16 +178,10 @@ describe('POST /api/email/send', () => {
     mockClerkAuth(mockAuth);
 
     const res = await POST(
-      makeJsonRequest(
-        '/api/email/send',
-        validSendPayload({ mailbox: 'shared@example.com' }),
-      ),
+      makeJsonRequest('/api/email/send', validSendPayload({ mailbox: 'shared@example.com' })),
     );
     expect(res.status).toBe(200);
-    expect(mockBuildGraphUrl).toHaveBeenCalledWith(
-      '/sendMail',
-      'shared@example.com',
-    );
+    expect(mockBuildGraphUrl).toHaveBeenCalledWith('/sendMail', 'shared@example.com');
   });
 
   it('sends with cc recipients', async () => {
@@ -226,17 +199,13 @@ describe('POST /api/email/send', () => {
     const callArgs = mockGraphFetch.mock.calls[0];
     const sentBody = JSON.parse((callArgs[2] as RequestInit).body as string);
     expect(sentBody.message.ccRecipients).toHaveLength(1);
-    expect(sentBody.message.ccRecipients[0].emailAddress.address).toBe(
-      'cc@example.com',
-    );
+    expect(sentBody.message.ccRecipients[0].emailAddress.address).toBe('cc@example.com');
   });
 
   it('defaults bodyType to HTML', async () => {
     mockClerkAuth(mockAuth);
 
-    const res = await POST(
-      makeJsonRequest('/api/email/send', validSendPayload()),
-    );
+    const res = await POST(makeJsonRequest('/api/email/send', validSendPayload()));
     expect(res.status).toBe(200);
     const callArgs = mockGraphFetch.mock.calls[0];
     const sentBody = JSON.parse((callArgs[2] as RequestInit).body as string);

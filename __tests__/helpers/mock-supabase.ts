@@ -81,13 +81,9 @@ export function mockSupabaseClient(config: MockSupabaseConfig = {}) {
     rpc: vi.fn().mockImplementation(() => Promise.resolve(defaultResp)),
     auth: {
       getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
-      getSession: vi
-        .fn()
-        .mockResolvedValue({ data: { session: null }, error: null }),
+      getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
     },
   };
 
-  return client as unknown as ReturnType<
-    typeof import('@supabase/supabase-js').createClient
-  >;
+  return client as unknown as ReturnType<typeof import('@supabase/supabase-js').createClient>;
 }

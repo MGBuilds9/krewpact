@@ -24,7 +24,13 @@ interface DeficiencyItemFormProps {
   onCancel?: () => void;
 }
 
-export function DeficiencyItemForm({ projectId, defId, defaultValues, onSuccess, onCancel }: DeficiencyItemFormProps) {
+export function DeficiencyItemForm({
+  projectId,
+  defId,
+  defaultValues,
+  onSuccess,
+  onCancel,
+}: DeficiencyItemFormProps) {
   const create = useCreateDeficiency(projectId);
   const update = useUpdateDeficiency(projectId);
   const isEdit = !!defId;
@@ -68,7 +74,10 @@ export function DeficiencyItemForm({ projectId, defId, defaultValues, onSuccess,
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
       <div>
         <label className="text-sm font-medium">Title</label>
-        <Input placeholder="Describe the deficiency" {...form.register('title', { required: true })} />
+        <Input
+          placeholder="Describe the deficiency"
+          {...form.register('title', { required: true })}
+        />
       </div>
       <div>
         <label className="text-sm font-medium">Details</label>
@@ -77,7 +86,10 @@ export function DeficiencyItemForm({ projectId, defId, defaultValues, onSuccess,
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="text-sm font-medium">Severity</label>
-          <select className="mt-1 block w-full rounded-md border px-3 py-2 text-sm" {...form.register('severity')}>
+          <select
+            className="mt-1 block w-full rounded-md border px-3 py-2 text-sm"
+            {...form.register('severity')}
+          >
             <option value="low">Low</option>
             <option value="medium">Medium</option>
             <option value="high">High</option>
@@ -94,7 +106,11 @@ export function DeficiencyItemForm({ projectId, defId, defaultValues, onSuccess,
           {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {isEdit ? 'Update Deficiency' : 'Create Deficiency'}
         </Button>
-        {onCancel && <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>}
+        {onCancel && (
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+        )}
       </div>
     </form>
   );

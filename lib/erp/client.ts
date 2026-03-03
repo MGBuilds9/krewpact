@@ -22,7 +22,7 @@ export class ErpClient {
 
   getAuthHeaders(): Record<string, string> {
     return {
-      'Authorization': `token ${this.apiKey}:${this.apiSecret}`,
+      Authorization: `token ${this.apiKey}:${this.apiSecret}`,
       'Content-Type': 'application/json',
     };
   }

@@ -3,7 +3,14 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useCreateTaskComment } from '@/hooks/useProjectExtended';
@@ -50,11 +57,7 @@ export function TaskCommentForm({ taskId, onSuccess, onCancel }: TaskCommentForm
             <FormItem>
               <FormLabel>Comment *</FormLabel>
               <FormControl>
-                <Textarea
-                  placeholder="Add a comment..."
-                  rows={3}
-                  {...field}
-                />
+                <Textarea placeholder="Add a comment..." rows={3} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -63,7 +66,12 @@ export function TaskCommentForm({ taskId, onSuccess, onCancel }: TaskCommentForm
 
         <div className="flex gap-2 justify-end pt-1">
           {onCancel && (
-            <Button type="button" variant="outline" onClick={onCancel} disabled={createComment.isPending}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              disabled={createComment.isPending}
+            >
               Cancel
             </Button>
           )}

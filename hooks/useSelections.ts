@@ -54,7 +54,8 @@ export interface PaginatedResponse<T> {
 export function useSelectionSheets(projectId: string) {
   return useQuery({
     queryKey: ['selection-sheets', projectId],
-    queryFn: () => apiFetch<PaginatedResponse<SelectionSheet>>(`/api/projects/${projectId}/selections`),
+    queryFn: () =>
+      apiFetch<PaginatedResponse<SelectionSheet>>(`/api/projects/${projectId}/selections`),
     enabled: !!projectId,
     staleTime: 30_000,
   });
@@ -73,7 +74,10 @@ export function useCreateSelectionSheet(projectId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: Record<string, unknown>) =>
-      apiFetch<SelectionSheet>(`/api/projects/${projectId}/selections`, { method: 'POST', body: data }),
+      apiFetch<SelectionSheet>(`/api/projects/${projectId}/selections`, {
+        method: 'POST',
+        body: data,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['selection-sheets', projectId] });
     },
@@ -84,7 +88,10 @@ export function useUpdateSelectionSheet(projectId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ sheetId, ...data }: { sheetId: string } & Record<string, unknown>) =>
-      apiFetch<SelectionSheet>(`/api/projects/${projectId}/selections/${sheetId}`, { method: 'PATCH', body: data }),
+      apiFetch<SelectionSheet>(`/api/projects/${projectId}/selections/${sheetId}`, {
+        method: 'PATCH',
+        body: data,
+      }),
     onSuccess: (_data, vars) => {
       queryClient.invalidateQueries({ queryKey: ['selection-sheets', projectId] });
       queryClient.invalidateQueries({ queryKey: ['selection-sheet', projectId, vars.sheetId] });
@@ -95,7 +102,8 @@ export function useUpdateSelectionSheet(projectId: string) {
 export function useSelectionOptions(projectId: string, sheetId: string) {
   return useQuery({
     queryKey: ['selection-options', projectId, sheetId],
-    queryFn: () => apiFetch<SelectionOption[]>(`/api/projects/${projectId}/selections/${sheetId}/options`),
+    queryFn: () =>
+      apiFetch<SelectionOption[]>(`/api/projects/${projectId}/selections/${sheetId}/options`),
     enabled: !!projectId && !!sheetId,
     staleTime: 30_000,
   });
@@ -105,7 +113,10 @@ export function useAddSelectionOption(projectId: string, sheetId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: Record<string, unknown>) =>
-      apiFetch<SelectionOption>(`/api/projects/${projectId}/selections/${sheetId}/options`, { method: 'POST', body: data }),
+      apiFetch<SelectionOption>(`/api/projects/${projectId}/selections/${sheetId}/options`, {
+        method: 'POST',
+        body: data,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['selection-options', projectId, sheetId] });
     },
@@ -115,7 +126,8 @@ export function useAddSelectionOption(projectId: string, sheetId: string) {
 export function useSelectionChoices(projectId: string, sheetId: string) {
   return useQuery({
     queryKey: ['selection-choices', projectId, sheetId],
-    queryFn: () => apiFetch<SelectionChoice[]>(`/api/projects/${projectId}/selections/${sheetId}/choices`),
+    queryFn: () =>
+      apiFetch<SelectionChoice[]>(`/api/projects/${projectId}/selections/${sheetId}/choices`),
     enabled: !!projectId && !!sheetId,
     staleTime: 30_000,
   });
@@ -125,7 +137,10 @@ export function useSubmitSelectionChoice(projectId: string, sheetId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: Record<string, unknown>) =>
-      apiFetch<SelectionChoice>(`/api/projects/${projectId}/selections/${sheetId}/choices`, { method: 'POST', body: data }),
+      apiFetch<SelectionChoice>(`/api/projects/${projectId}/selections/${sheetId}/choices`, {
+        method: 'POST',
+        body: data,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['selection-choices', projectId, sheetId] });
     },
@@ -135,7 +150,8 @@ export function useSubmitSelectionChoice(projectId: string, sheetId: string) {
 export function useAllowances(projectId: string) {
   return useQuery({
     queryKey: ['allowances', projectId],
-    queryFn: () => apiFetch<PaginatedResponse<AllowanceReconciliation>>(`/api/projects/${projectId}/allowances`),
+    queryFn: () =>
+      apiFetch<PaginatedResponse<AllowanceReconciliation>>(`/api/projects/${projectId}/allowances`),
     enabled: !!projectId,
     staleTime: 30_000,
   });
@@ -145,7 +161,10 @@ export function useCreateAllowance(projectId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: Record<string, unknown>) =>
-      apiFetch<AllowanceReconciliation>(`/api/projects/${projectId}/allowances`, { method: 'POST', body: data }),
+      apiFetch<AllowanceReconciliation>(`/api/projects/${projectId}/allowances`, {
+        method: 'POST',
+        body: data,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['allowances', projectId] });
     },

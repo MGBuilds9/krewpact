@@ -44,25 +44,13 @@ describe('LinkedEstimateCard', () => {
   });
 
   it('shows empty state when no estimates', () => {
-    render(
-      <LinkedEstimateCard
-        opportunityId="opp-1"
-        estimates={[]}
-        onCreateEstimate={vi.fn()}
-      />,
-    );
+    render(<LinkedEstimateCard opportunityId="opp-1" estimates={[]} onCreateEstimate={vi.fn()} />);
     expect(screen.getByText('No estimates linked to this opportunity.')).toBeDefined();
   });
 
   it('calls onCreateEstimate when button clicked', () => {
     const handler = vi.fn();
-    render(
-      <LinkedEstimateCard
-        opportunityId="opp-1"
-        estimates={[]}
-        onCreateEstimate={handler}
-      />,
-    );
+    render(<LinkedEstimateCard opportunityId="opp-1" estimates={[]} onCreateEstimate={handler} />);
     fireEvent.click(screen.getByText('Create Estimate'));
     expect(handler).toHaveBeenCalledOnce();
   });
