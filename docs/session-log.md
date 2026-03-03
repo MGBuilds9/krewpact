@@ -1,5 +1,11 @@
 # Session Log
 
+### Mar 2, 2026 — Team-Ready Development Environment
+
+- **Changes:** Restructured CLAUDE.md from 287→97 lines, moving architecture/session history to `docs/`. Created domain-scoped CLAUDE.md files (`app/api/CLAUDE.md`, `lib/CLAUDE.md`). Added Prettier + Husky + lint-staged pre-commit hooks. Created `.nvmrc` (Node 20), `.editorconfig`, `.prettierrc`. Built CONTRIBUTING.md with security checklist, PR template, domain ownership map (`docs/domains.md`), security best practices (`docs/security.md`). Fixed 6 pre-existing lint errors (5x `no-explicit-any` in portal routes, 1x setState-in-effect in PortalMessageThread). Hardened CI with format check + separate security audit job (`npm audit --omit=dev`). Ran Prettier across entire codebase. PR #37 merged.
+- **Decisions:** `--max-warnings 0` removed from lint-staged (205 pre-existing warnings would block commits). `types/supabase.ts` (3629 lines) added to `.prettierignore`. CI security audit uses `--omit=dev` to avoid xlsx devDep false positives. `docs/architecture.md` renamed to `docs/architecture-overview.md` to avoid collision with `docs/architecture/` directory.
+- **Tests:** 2058/2058 passing (167 files). Typecheck clean. Build clean.
+
 ### Mar 2, 2026 — Multi-Tenant Org Wiring (Path-Based Routing)
 
 - **Changes:** Merged PR #36 (organizations table, org_id on all core tables, restrictive RLS, seed script). Rewrote `middleware.ts` with org slug extraction, resolution via in-memory cache, and request header injection (`x-krewpact-org-id`, `x-krewpact-org-slug`). Moved all 16 dashboard feature directories under `app/(dashboard)/org/[orgSlug]/`. Created `contexts/OrgContext.tsx` (mirrors DivisionContext pattern), `lib/api/org.ts` (server-side org helpers), `hooks/useOrgRouter.ts` (org-aware navigation), `app/api/org/[slug]/route.ts` (GET org by slug). Updated 8 layout/nav components to use `useOrgRouter`. Updated 21 page files with org-aware routing. Updated 6 API routes with `getOrgIdFromAuth()` for org_id on INSERT. Created 2 new test files, updated 7 page tests + 2 test helpers. Added `krewpact_org_id` to JWT template docs.
