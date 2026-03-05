@@ -39,7 +39,7 @@ describe('Queue', () => {
 
   describe('enqueue', () => {
     it('creates a job with status pending', () => {
-      const job = q.enqueue(JobType.ERPSyncAccount, PAYLOAD);
+      const job = q.enqueueSync(JobType.ERPSyncAccount, PAYLOAD);
 
       expect(job.id).toBeTruthy();
       expect(job.type).toBe(JobType.ERPSyncAccount);
@@ -51,7 +51,7 @@ describe('Queue', () => {
     });
 
     it('stores the job so getJob retrieves it', () => {
-      const job = q.enqueue(JobType.ERPSyncEstimate, PAYLOAD);
+      const job = q.enqueueSync(JobType.ERPSyncEstimate, PAYLOAD);
       const retrieved = q.getJob(job.id);
 
       expect(retrieved).toBeDefined();
@@ -59,20 +59,20 @@ describe('Queue', () => {
     });
 
     it('accepts a custom maxAttempts', () => {
-      const job = q.enqueue(JobType.ERPSyncOpportunity, PAYLOAD, 5);
+      const job = q.enqueueSync(JobType.ERPSyncOpportunity, PAYLOAD, 5);
       expect(job.maxAttempts).toBe(5);
     });
 
     it('increments total in stats after enqueue', () => {
-      q.enqueue(JobType.ERPSyncAccount, PAYLOAD);
-      q.enqueue(JobType.ERPSyncEstimate, PAYLOAD);
+      q.enqueueSync(JobType.ERPSyncAccount, PAYLOAD);
+      q.enqueueSync(JobType.ERPSyncEstimate, PAYLOAD);
       expect(q.getStats().total).toBe(2);
       expect(q.getStats().pending).toBe(2);
     });
 
     it('assigns unique ids to each job', () => {
-      const a = q.enqueue(JobType.ERPSyncAccount, PAYLOAD);
-      const b = q.enqueue(JobType.ERPSyncAccount, PAYLOAD);
+      const a = q.enqueueSync(JobType.ERPSyncAccount, PAYLOAD);
+      const b = q.enqueueSync(JobType.ERPSyncAccount, PAYLOAD);
       expect(a.id).not.toBe(b.id);
     });
   });
@@ -84,7 +84,7 @@ describe('Queue', () => {
   describe('process (success)', () => {
     it('calls processJob with the job', async () => {
       mockProcessJob.mockResolvedValueOnce(undefined);
-      const job = q.enqueue(JobType.ERPSyncAccount, PAYLOAD);
+      const job = q.enqueueSync(JobType.ERPSyncAccount, PAYLOAD);
 
       await q.process();
 
@@ -95,7 +95,7 @@ describe('Queue', () => {
 
     it('transitions job to succeeded after processJob resolves', async () => {
       mockProcessJob.mockResolvedValueOnce(undefined);
-      const job = q.enqueue(JobType.ERPSyncAccount, PAYLOAD);
+      const job = q.enqueueSync(JobType.ERPSyncAccount, PAYLOAD);
 
       await q.process();
 
@@ -105,8 +105,8 @@ describe('Queue', () => {
 
     it('returns the count of jobs processed', async () => {
       mockProcessJob.mockResolvedValue(undefined);
-      q.enqueue(JobType.ERPSyncAccount, PAYLOAD);
-      q.enqueue(JobType.ERPSyncEstimate, PAYLOAD);
+      q.enqueueSync(JobType.ERPSyncAccount, PAYLOAD);
+      q.enqueueSync(JobType.ERPSyncEstimate, PAYLOAD);
 
       const count = await q.process();
 
@@ -115,7 +115,7 @@ describe('Queue', () => {
 
     it('does not process already-succeeded jobs', async () => {
       mockProcessJob.mockResolvedValue(undefined);
-      q.enqueue(JobType.ERPSyncAccount, PAYLOAD);
+      q.enqueueSync(JobType.ERPSyncAccount, PAYLOAD);
       await q.process(); // succeeds first run
 
       await q.process(); // second run — nothing to process
@@ -132,7 +132,7 @@ describe('Queue', () => {
   describe('process (failure & retry)', () => {
     it('increments attempts on failure', async () => {
       mockProcessJob.mockRejectedValueOnce(new Error('boom'));
-      const job = q.enqueue(JobType.ERPSyncAccount, PAYLOAD);
+      const job = q.enqueueSync(JobType.ERPSyncAccount, PAYLOAD);
 
       await q.process();
 
@@ -143,7 +143,7 @@ describe('Queue', () => {
 
     it('keeps job pending (with future nextRunAt) after first failure', async () => {
       mockProcessJob.mockRejectedValueOnce(new Error('transient'));
-      const job = q.enqueue(JobType.ERPSyncAccount, PAYLOAD);
+      const job = q.enqueueSync(JobType.ERPSyncAccount, PAYLOAD);
 
       await q.process();
 
@@ -154,7 +154,7 @@ describe('Queue', () => {
 
     it('stores the last error message on the job', async () => {
       mockProcessJob.mockRejectedValueOnce(new Error('network timeout'));
-      const job = q.enqueue(JobType.ERPSyncEstimate, PAYLOAD);
+      const job = q.enqueueSync(JobType.ERPSyncEstimate, PAYLOAD);
 
       await q.process();
 
@@ -167,7 +167,7 @@ describe('Queue', () => {
         .mockRejectedValueOnce(new Error('first failure'))
         .mockResolvedValueOnce(undefined);
 
-      const job = q.enqueue(JobType.ERPSyncAccount, PAYLOAD);
+      const job = q.enqueueSync(JobType.ERPSyncAccount, PAYLOAD);
 
       // First process — fails, nextRunAt pushed into future
       await q.process();
@@ -179,7 +179,7 @@ describe('Queue', () => {
       // so we test via the public API — set nextRunAt by re-creating the queue with
       // a backdated job. Instead, we inject via a clear + controlled enqueue:
       q.clear();
-      const retriedJob = q.enqueue(JobType.ERPSyncAccount, PAYLOAD);
+      const retriedJob = q.enqueueSync(JobType.ERPSyncAccount, PAYLOAD);
       // Simulate: this is now eligible (nextRunAt is now by default)
       await q.process();
 
@@ -196,7 +196,7 @@ describe('Queue', () => {
     it('marks job as dead_letter after maxAttempts failures', async () => {
       // Use maxAttempts=1 so one failure sends directly to dead_letter
       mockProcessJob.mockRejectedValue(new Error('permanent failure'));
-      const job = q.enqueue(JobType.ERPSyncAccount, PAYLOAD, 1);
+      const job = q.enqueueSync(JobType.ERPSyncAccount, PAYLOAD, 1);
 
       await q.process();
 
@@ -206,7 +206,7 @@ describe('Queue', () => {
 
     it('does not retry a dead_letter job', async () => {
       mockProcessJob.mockRejectedValue(new Error('permanent failure'));
-      const job = q.enqueue(JobType.ERPSyncAccount, PAYLOAD, 1);
+      const job = q.enqueueSync(JobType.ERPSyncAccount, PAYLOAD, 1);
 
       await q.process(); // → dead_letter
       await q.process(); // should be a no-op
@@ -217,7 +217,7 @@ describe('Queue', () => {
 
     it('records the last error on a dead_letter job', async () => {
       mockProcessJob.mockRejectedValue(new Error('fatal'));
-      const job = q.enqueue(JobType.ERPSyncEstimate, PAYLOAD, 1);
+      const job = q.enqueueSync(JobType.ERPSyncEstimate, PAYLOAD, 1);
 
       await q.process();
 
@@ -231,7 +231,7 @@ describe('Queue', () => {
       // We use maxAttempts=1 per-attempt test; for a multi-step test
       // we manually re-trigger by back-dating nextRunAt via clear/re-enqueue.
       // This tests that a fresh job with maxAttempts=1 goes directly to dead_letter.
-      const job = q.enqueue(JobType.ERPSyncOpportunity, PAYLOAD, 1);
+      const job = q.enqueueSync(JobType.ERPSyncOpportunity, PAYLOAD, 1);
       await q.process();
 
       expect(q.getJob(job.id)!.status).toBe('dead_letter');
@@ -257,8 +257,8 @@ describe('Queue', () => {
     });
 
     it('counts pending jobs correctly', () => {
-      q.enqueue(JobType.ERPSyncAccount, PAYLOAD);
-      q.enqueue(JobType.ERPSyncEstimate, PAYLOAD);
+      q.enqueueSync(JobType.ERPSyncAccount, PAYLOAD);
+      q.enqueueSync(JobType.ERPSyncEstimate, PAYLOAD);
 
       const stats = q.getStats();
       expect(stats.pending).toBe(2);
@@ -267,8 +267,8 @@ describe('Queue', () => {
 
     it('counts succeeded jobs after successful process', async () => {
       mockProcessJob.mockResolvedValue(undefined);
-      q.enqueue(JobType.ERPSyncAccount, PAYLOAD);
-      q.enqueue(JobType.ERPSyncEstimate, PAYLOAD);
+      q.enqueueSync(JobType.ERPSyncAccount, PAYLOAD);
+      q.enqueueSync(JobType.ERPSyncEstimate, PAYLOAD);
 
       await q.process();
 
@@ -280,7 +280,7 @@ describe('Queue', () => {
 
     it('counts dead_letter jobs correctly', async () => {
       mockProcessJob.mockRejectedValue(new Error('fail'));
-      q.enqueue(JobType.ERPSyncAccount, PAYLOAD, 1);
+      q.enqueueSync(JobType.ERPSyncAccount, PAYLOAD, 1);
 
       await q.process();
 
@@ -294,8 +294,8 @@ describe('Queue', () => {
         .mockResolvedValueOnce(undefined) // first job succeeds
         .mockRejectedValueOnce(new Error('fail')); // second fails → dead_letter (maxAttempts=1)
 
-      q.enqueue(JobType.ERPSyncAccount, PAYLOAD);
-      q.enqueue(JobType.ERPSyncEstimate, PAYLOAD, 1);
+      q.enqueueSync(JobType.ERPSyncAccount, PAYLOAD);
+      q.enqueueSync(JobType.ERPSyncEstimate, PAYLOAD, 1);
 
       await q.process();
 
@@ -312,8 +312,8 @@ describe('Queue', () => {
 
   describe('clear', () => {
     it('empties the queue', () => {
-      q.enqueue(JobType.ERPSyncAccount, PAYLOAD);
-      q.enqueue(JobType.ERPSyncEstimate, PAYLOAD);
+      q.enqueueSync(JobType.ERPSyncAccount, PAYLOAD);
+      q.enqueueSync(JobType.ERPSyncEstimate, PAYLOAD);
       q.clear();
 
       expect(q.getStats().total).toBe(0);
