@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { checkAccessibility } from './helpers/a11y';
 
 // Krewpact is multi-tenant and routes via orgSlug, but local demo might default or redirect.
 // We'll test the base dashboard which should redirect or load correctly in demo mode.
@@ -27,6 +28,10 @@ test.describe('Dashboard UI & Navigation - Desktop', () => {
     // Just a surface level check to ensure page doesn't crash 500
     const response = await page.request.get('/org/demo/dashboard');
     expect(response.status()).toBeLessThan(500);
+
+    // Accessibility check — no critical or serious violations
+    const { violations } = await checkAccessibility(page);
+    expect(violations).toEqual([]);
   });
 });
 

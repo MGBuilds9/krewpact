@@ -4,6 +4,8 @@
  * Auth: token-based (API key + secret).
  * See CLAUDE.md for conventions.
  */
+import { logger } from '@/lib/logger';
+
 export class ErpClient {
   private baseUrl: string;
   private apiKey: string;
@@ -42,6 +44,7 @@ export class ErpClient {
     });
 
     if (!response.ok) {
+      logger.error('ERPNext GET failed', { doctype, name, status: response.status });
       throw new Error(`ERPNext API error: ${response.status} ${response.statusText}`);
     }
 

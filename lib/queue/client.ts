@@ -10,6 +10,7 @@
  * After maxAttempts failures the job transitions to 'dead_letter'.
  */
 
+import { logger } from '@/lib/logger';
 import { processJob } from './processor';
 import { Job, JobPayload, JobStatus, JobType, QueueStats } from './types';
 
@@ -102,11 +103,19 @@ export class Queue {
     try {
       await processJob(job);
       this._updateJob(job, { status: 'succeeded' });
+      logger.debug('Job succeeded', { jobId: job.id, type: job.type });
     } catch (err) {
       const error = err instanceof Error ? err.message : String(err);
       const nextAttempts = job.attempts + 1;
 
       if (nextAttempts >= job.maxAttempts) {
+        logger.error('Job moved to dead letter queue', {
+          jobId: job.id,
+          type: job.type,
+          attempts: nextAttempts,
+          error: err instanceof Error ? err : undefined,
+          lastError: error,
+        });
         this._updateJob(job, {
           status: 'dead_letter',
           attempts: nextAttempts,

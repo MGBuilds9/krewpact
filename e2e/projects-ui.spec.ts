@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { checkAccessibility } from './helpers/a11y';
 
 // Verify the projects list page renders the new Bento Cards correctly on Mobile and Desktop
 
@@ -13,9 +14,9 @@ test.describe('Projects UI - Desktop', () => {
     const response = await page.request.get('/org/demo/projects');
     expect(response.status()).toBeLessThan(500);
 
-    // If fully loaded, we check if the main header exists
-    // Since clerk redirects might occur in pure tests without auth bypassed,
-    // sticking to standard response sanity checks to prevent false negatives.
+    // Accessibility check — no critical or serious violations
+    const { violations } = await checkAccessibility(page);
+    expect(violations).toEqual([]);
   });
 });
 

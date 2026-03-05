@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { checkAccessibility } from './helpers/a11y';
 
 // Krewpact is multi-tenant and routes via orgSlug, so we use /org/demo/ for tests
 
@@ -27,6 +28,10 @@ test.describe('Lead Lifecycle - Desktop View', () => {
 
     const response = await page.request.get('/org/demo/crm/leads/new');
     expect(response.status()).toBeLessThan(500);
+
+    // Accessibility check on lead form
+    const { violations } = await checkAccessibility(page);
+    expect(violations).toEqual([]);
   });
 });
 

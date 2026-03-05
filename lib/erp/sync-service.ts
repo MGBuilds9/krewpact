@@ -34,6 +34,9 @@ import { mapTaskToErp } from './task-mapper';
 import { mapSupplierToErp } from './supplier-mapper';
 import { mapExpenseToErp } from './expense-mapper';
 import { mapTimesheetToErp } from './timesheet-mapper';
+import { toErpCustomer, fromErpCustomer } from './customer-mapper';
+import { toErpQuotation } from './quotation-mapper';
+import { fromErpSalesInvoice } from './sales-invoice-mapper';
 
 /** Check if we're running in mock mode (no real ERPNext) */
 export function isMockMode(): boolean {
@@ -91,17 +94,21 @@ export class SyncService {
         });
         erpDocname = mockResp.name;
       } else {
-        // Real mode — delegate to ErpClient
+        // Real mode — delegate to ErpClient via customer mapper
         const { ErpClient } = await import('./client');
         const client = new ErpClient();
-        const result = await client.create<{ name: string }>('Customer', {
-          customer_name: accountData.account_name,
-          customer_type: 'Company',
-          customer_group: 'All Customer Groups',
-          territory: 'Canada',
-          krewpact_id: accountId,
-          default_currency: 'CAD',
+        const mapped = toErpCustomer({
+          id: accountId,
+          account_name: accountData.account_name as string,
+          account_type: accountData.account_type as string | null,
+          division_id: accountData.division_id as string | null,
+          status: accountData.status as string | null,
+          billing_address: accountData.billing_address as Record<string, unknown> | null,
+          phone: accountData.phone as string | null,
+          website: accountData.website as string | null,
+          industry: accountData.industry as string | null,
         });
+        const result = await client.create<{ name: string }>('Customer', mapped);
         erpDocname = result.name;
       }
 
@@ -187,23 +194,29 @@ export class SyncService {
         );
         erpDocname = mockResp.name;
       } else {
-        // Real mode — delegate to ErpClient
+        // Real mode — delegate to ErpClient via quotation mapper
         const { ErpClient } = await import('./client');
         const client = new ErpClient();
-        const result = await client.create<{ name: string }>('Quotation', {
-          title: estimateData.estimate_number,
-          quotation_to: 'Customer',
-          currency: estimateData.currency_code || 'CAD',
-          net_total: estimateData.subtotal_amount,
-          grand_total: estimateData.total_amount,
-          krewpact_id: estimateId,
-          items: lines.map((l: Record<string, unknown>) => ({
-            item_name: l.description,
-            qty: l.quantity,
-            rate: l.unit_cost,
-            amount: l.line_total,
+        const mapped = toErpQuotation(
+          {
+            id: estimateId,
+            estimate_number: estimateData.estimate_number as string,
+            revision_no: estimateData.revision_no as number | null,
+            currency_code: estimateData.currency_code as string | null,
+            account_id: estimateData.account_id as string | null,
+            account_name: (estimateData.account_name as string | null) ?? null,
+            erp_customer_name: null,
+            notes: estimateData.notes as string | null,
+          },
+          lines.map((l: Record<string, unknown>) => ({
+            description: l.description as string,
+            quantity: l.quantity as number,
+            unit_cost: l.unit_cost as number,
+            unit: l.unit as string | null,
+            line_total: l.line_total as number,
           })),
-        });
+        );
+        const result = await client.create<{ name: string }>('Quotation', mapped);
         erpDocname = result.name;
       }
 
@@ -868,12 +881,13 @@ export class SyncService {
         invoiceData = await client.get<Record<string, unknown>>('Sales Invoice', erpDocname);
       }
 
-      // Store snapshot in invoice_snapshots
+      // Transform via mapper and store snapshot in invoice_snapshots
+      const snapshot = fromErpSalesInvoice(invoiceData);
       await supabase.from('invoice_snapshots').upsert({
         erp_docname: erpDocname,
         doctype: 'Sales Invoice',
-        snapshot: invoiceData,
-        synced_at: new Date().toISOString(),
+        snapshot: { ...snapshot, raw: invoiceData },
+        synced_at: snapshot.synced_at as string,
       });
 
       await this.logEvent(supabase, job.id, 'sync_completed', {
