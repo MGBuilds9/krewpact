@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { getOrgIdFromAuth } from '@/lib/api/org';
+import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
@@ -47,10 +48,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { division_id, status, search, limit, offset } = parsed.data;
+  const { division_id, status, search } = parsed.data;
+  const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const supabase = await createUserClient();
 
-  let query = supabase.from('projects').select('*').order('created_at', { ascending: false });
+  let query = supabase.from('projects').select('*', { count: 'exact' }).order('created_at', { ascending: false });
 
   if (division_id) {
     query = query.eq('division_id', division_id);
@@ -64,21 +66,15 @@ export async function GET(req: NextRequest) {
     query = query.ilike('project_name', `%${search}%`);
   }
 
-  if (limit) {
-    query = query.limit(limit);
-  }
+  query = query.range(offset, offset + limit - 1);
 
-  if (offset) {
-    query = query.range(offset, offset + (limit || 20) - 1);
-  }
-
-  const { data, error } = await query;
+  const { data, error, count } = await query;
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(data);
+  return NextResponse.json(paginatedResponse(data, count, limit, offset));
 }
 
 export async function POST(req: NextRequest) {

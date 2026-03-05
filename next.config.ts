@@ -1,6 +1,11 @@
 import type { NextConfig } from 'next';
 import { withSentryConfig } from '@sentry/nextjs';
+import withBundleAnalyzer from '@next/bundle-analyzer';
 import path from 'path';
+
+const analyzeBundles = withBundleAnalyzer({
+  enabled: process.env.ANALYZE === 'true',
+});
 
 const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
@@ -65,7 +70,7 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withSentryConfig(nextConfig, {
+export default withSentryConfig(analyzeBundles(nextConfig), {
   // Suppress Sentry build logs when no auth token is set
   silent: !process.env.SENTRY_AUTH_TOKEN,
 

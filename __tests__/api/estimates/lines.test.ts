@@ -82,7 +82,7 @@ describe('GET /api/estimates/[id]/lines', () => {
     );
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toHaveLength(3);
+    expect(body.data).toHaveLength(3);
     expect(client.from).toHaveBeenCalledWith('estimate_lines');
   });
 });

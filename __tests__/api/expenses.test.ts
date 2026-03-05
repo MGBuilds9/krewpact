@@ -48,7 +48,7 @@ describe('GET /api/expenses', () => {
     expect(res.status).toBe(200);
 
     const body = await res.json();
-    expect(body).toEqual(expenses);
+    expect(body.data).toEqual(expenses);
   });
 
   it('queries expense_claims table (not expenses)', async () => {

@@ -1,5 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
+import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
@@ -12,29 +13,31 @@ const addMemberSchema = z.object({
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-export async function GET(_req: NextRequest, context: RouteContext) {
+export async function GET(req: NextRequest, context: RouteContext) {
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const rl = await rateLimit(_req, { limit: 60, window: '1 m', identifier: userId });
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
   if (!rl.success) return rateLimitResponse(rl);
 
   const { id } = await context.params;
+  const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const supabase = await createUserClient();
 
-  const { data, error } = await supabase
+  const { data, error, count } = await supabase
     .from('project_members')
-    .select('*, user:users(id, first_name, last_name, email, avatar_url)')
+    .select('*, user:users(id, first_name, last_name, email, avatar_url)', { count: 'exact' })
     .eq('project_id', id)
-    .is('left_at', null);
+    .is('left_at', null)
+    .range(offset, offset + limit - 1);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(data);
+  return NextResponse.json(paginatedResponse(data, count, limit, offset));
 }
 
 export async function POST(req: NextRequest, context: RouteContext) {

@@ -1,12 +1,13 @@
 import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 
 /**
  * GET /api/portal/trade/compliance
  * Returns the trade partner's compliance documents and expiry summary.
  */
-export async function GET(_req: NextRequest) {
+export async function GET(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -26,12 +27,15 @@ export async function GET(_req: NextRequest) {
   if (pa.status !== 'active')
     return NextResponse.json({ error: 'Portal account inactive' }, { status: 403 });
 
+  const { limit, offset } = parsePagination(req.nextUrl.searchParams);
+
   // Fetch compliance docs from portal_view_logs / file_metadata tagged as compliance
-  const { data: complianceDocs, error: docError } = await supabase
+  const { data: complianceDocs, error: docError, count } = await supabase
     .from('file_metadata')
-    .select('id, file_name, file_type, file_size_bytes, meta, created_at, updated_at')
+    .select('id, file_name, file_type, file_size_bytes, meta, created_at, updated_at', { count: 'exact' })
     .contains('meta', { trade_portal_id: pa.id, doc_category: 'compliance' })
-    .order('updated_at', { ascending: false });
+    .order('updated_at', { ascending: false })
+    .range(offset, offset + limit - 1);
 
   if (docError) return NextResponse.json({ error: docError.message }, { status: 500 });
 
@@ -59,9 +63,9 @@ export async function GET(_req: NextRequest) {
   });
 
   return NextResponse.json({
-    compliance_documents: docs,
+    ...paginatedResponse(docs, count, limit, offset),
     summary: {
-      total: docs.length,
+      total_docs: docs.length,
       expired: docs.filter((d) => d.status === 'expired').length,
       expiring_soon: docs.filter((d) => d.status === 'expiring_soon').length,
       valid: docs.filter((d) => d.status === 'valid').length,

@@ -1,5 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
+import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { NextRequest, NextResponse } from 'next/server';
 import { fileVersionSchema } from '@/lib/validators/documents';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
@@ -14,18 +15,19 @@ export async function GET(req: NextRequest, context: RouteContext) {
   if (!rl.success) return rateLimitResponse(rl);
 
   const { fileId } = await context.params;
+  const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const supabase = await createUserClient();
 
   const { data, error, count } = await supabase
     .from('file_versions')
     .select('*', { count: 'exact' })
     .eq('file_id', fileId)
-    .order('version_no', { ascending: false });
+    .order('version_no', { ascending: false })
+    .range(offset, offset + limit - 1);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const total = count ?? 0;
-  return NextResponse.json({ data: data ?? [], total, hasMore: false });
+  return NextResponse.json(paginatedResponse(data, count, limit, offset));
 }
 
 export async function POST(req: NextRequest, context: RouteContext) {

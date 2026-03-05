@@ -4,11 +4,10 @@ import { outreachCreateSchema } from '@/lib/validators/crm';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 
 const querySchema = z.object({
   lead_id: z.string().uuid(),
-  limit: z.coerce.number().int().positive().max(100).optional(),
-  offset: z.coerce.number().int().min(0).optional(),
 });
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
@@ -26,30 +25,22 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { lead_id, limit, offset } = parsed.data;
+  const { lead_id } = parsed.data;
+  const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const supabase = await createUserClient();
 
-  let query = supabase
+  const { data, error, count } = await supabase
     .from('outreach')
-    .select('*')
+    .select('*', { count: 'exact' })
     .eq('lead_id', lead_id)
-    .order('occurred_at', { ascending: false });
-
-  if (limit) {
-    query = query.limit(limit);
-  }
-
-  if (offset) {
-    query = query.range(offset, offset + (limit ?? 50) - 1);
-  }
-
-  const { data, error } = await query;
+    .order('occurred_at', { ascending: false })
+    .range(offset, offset + limit - 1);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(data);
+  return NextResponse.json(paginatedResponse(data, count, limit, offset));
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {

@@ -4,14 +4,13 @@ import { noteCreateSchema } from '@/lib/validators/crm';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 
 const entityTypes = ['lead', 'contact', 'account', 'opportunity'] as const;
 
 const getQuerySchema = z.object({
   entity_type: z.enum(entityTypes),
   entity_id: z.string().uuid(),
-  limit: z.coerce.number().int().positive().max(100).optional(),
-  offset: z.coerce.number().int().min(0).optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -29,9 +28,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { entity_type, entity_id, limit, offset } = parsed.data;
-  const effectiveLimit = limit ?? 25;
-  const effectiveOffset = offset ?? 0;
+  const { entity_type, entity_id } = parsed.data;
+  const { limit, offset } = parsePagination(req.nextUrl.searchParams);
 
   const supabase = await createUserClient();
   const { data, error, count } = await supabase
@@ -41,17 +39,13 @@ export async function GET(req: NextRequest) {
     .eq('entity_id', entity_id)
     .order('is_pinned', { ascending: false })
     .order('created_at', { ascending: false })
-    .range(effectiveOffset, effectiveOffset + effectiveLimit - 1);
+    .range(offset, offset + limit - 1);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({
-    data: data ?? [],
-    total: count ?? 0,
-    hasMore: effectiveOffset + (data?.length ?? 0) < (count ?? 0),
-  });
+  return NextResponse.json(paginatedResponse(data, count, limit, offset));
 }
 
 export async function POST(req: NextRequest) {

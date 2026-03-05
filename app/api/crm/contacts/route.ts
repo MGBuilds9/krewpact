@@ -5,13 +5,12 @@ import { getOrgIdFromAuth } from '@/lib/api/org';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 
 const querySchema = z.object({
   account_id: z.string().uuid().optional(),
   lead_id: z.string().uuid().optional(),
   search: z.string().optional(),
-  limit: z.coerce.number().int().positive().max(100).optional(),
-  offset: z.coerce.number().int().min(0).optional(),
   sort_by: z.string().optional(),
   sort_dir: z.enum(['asc', 'desc']).optional(),
 });
@@ -31,7 +30,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { account_id, lead_id, search, limit, offset, sort_by, sort_dir } = parsed.data;
+  const { account_id, lead_id, search, sort_by, sort_dir } = parsed.data;
+  const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const supabase = await createUserClient();
 
   let query = supabase
@@ -51,9 +51,7 @@ export async function GET(req: NextRequest) {
     query = query.or(`first_name.ilike.%${search}%,last_name.ilike.%${search}%`);
   }
 
-  const effectiveLimit = limit ?? 25;
-  const effectiveOffset = offset ?? 0;
-  query = query.range(effectiveOffset, effectiveOffset + effectiveLimit - 1);
+  query = query.range(offset, offset + limit - 1);
 
   const { data, error, count } = await query;
 
@@ -61,11 +59,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({
-    data: data ?? [],
-    total: count ?? 0,
-    hasMore: effectiveOffset + (data?.length ?? 0) < (count ?? 0),
-  });
+  return NextResponse.json(paginatedResponse(data, count, limit, offset));
 }
 
 export async function POST(req: NextRequest) {

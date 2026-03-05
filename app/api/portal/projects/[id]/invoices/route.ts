@@ -1,13 +1,14 @@
 import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 
 /**
  * GET /api/portal/projects/[id]/invoices
  * Returns invoice / job-cost snapshot data for a project.
  * Guard: permission_set.view_financials must be true.
  */
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -41,15 +42,18 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     );
   }
 
+  const { limit, offset } = parsePagination(req.nextUrl.searchParams);
+
   // 3. Fetch job cost snapshots (invoice-level summaries)
-  const { data: snapshots, error } = await supabase
+  const { data: snapshots, error, count } = await supabase
     .from('job_cost_snapshots')
     .select(
       'id, snapshot_date, period_label, labour_cost, material_cost, subcontract_cost, overhead_cost, total_cost, budget_total, variance, margin_pct, created_at',
+      { count: 'exact' },
     )
     .eq('project_id', projectId)
     .order('snapshot_date', { ascending: false })
-    .limit(24); // Last 24 months of snapshots
+    .range(offset, offset + limit - 1);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
@@ -61,5 +65,5 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     viewed_resource_id: null,
   });
 
-  return NextResponse.json({ snapshots: snapshots ?? [] });
+  return NextResponse.json(paginatedResponse(snapshots, count, limit, offset));
 }

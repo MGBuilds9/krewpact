@@ -63,7 +63,7 @@ describe('GET /api/crm/opportunities', () => {
     const res = await GET(makeRequest('/api/crm/opportunities'));
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual(opportunities);
+    expect(body.data).toEqual(opportunities);
   });
 
   it('filters by division_id', async () => {
@@ -92,7 +92,7 @@ describe('GET /api/crm/opportunities', () => {
     const res = await GET(makeRequest('/api/crm/opportunities?stage=proposal'));
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual(opportunities);
+    expect(body.data).toEqual(opportunities);
   });
 
   it('filters by owner_user_id', async () => {

@@ -2,21 +2,24 @@ import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { privacyEventSchema } from '@/lib/validators/migration';
+import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { id } = await params;
+  const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const supabase = await createUserClient();
-  const { data, error } = await supabase
+  const { data, error, count } = await supabase
     .from('privacy_request_events')
-    .select('*')
+    .select('*', { count: 'exact' })
     .eq('privacy_request_id', id)
-    .order('created_at', { ascending: true });
+    .order('created_at', { ascending: true })
+    .range(offset, offset + limit - 1);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+  return NextResponse.json(paginatedResponse(data, count, limit, offset));
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

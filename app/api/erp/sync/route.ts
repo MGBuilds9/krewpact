@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(result);
   } catch (err) {
-    logger.error('ERP sync failed:', err);
+    logger.error('ERP sync failed:', err as Record<string, unknown>);
     return NextResponse.json({ error: 'Sync failed' }, { status: 500 });
   }
 }

@@ -24,39 +24,44 @@ export async function POST(req: NextRequest) {
     .select('id, opportunity_name, stage, stage_entered_at, owner_user_id')
     .not('stage', 'in', '("contracted","closed_lost")');
 
-  let alertsCreated = 0;
+  const notifications: Array<{user_id: string; title: string; body: string; category: string; link: string}> = [];
 
-  // Create notifications for overdue leads
+  // Collect notifications for overdue leads
   for (const lead of leads ?? []) {
     if (isOverdue(lead.status, lead.stage_entered_at, LEAD_SLA_CONFIG)) {
       if (lead.assigned_to) {
-        await supabase.from('notifications').insert({
+        notifications.push({
           user_id: lead.assigned_to,
           title: `SLA Overdue: ${lead.company_name}`,
           body: `Lead "${lead.company_name}" has exceeded the SLA for the "${lead.status}" stage.`,
           category: 'sla_alert',
           link: `/crm/leads/${lead.id}`,
         });
-        alertsCreated++;
       }
     }
   }
 
-  // Create notifications for overdue opportunities
+  // Collect notifications for overdue opportunities
   for (const opp of opportunities ?? []) {
     if (isOverdue(opp.stage, opp.stage_entered_at, OPPORTUNITY_SLA_CONFIG)) {
       if (opp.owner_user_id) {
-        await supabase.from('notifications').insert({
+        notifications.push({
           user_id: opp.owner_user_id,
           title: `SLA Overdue: ${opp.opportunity_name}`,
           body: `Opportunity "${opp.opportunity_name}" has exceeded the SLA for the "${opp.stage}" stage.`,
           category: 'sla_alert',
           link: `/crm/opportunities/${opp.id}`,
         });
-        alertsCreated++;
       }
     }
   }
+
+  // Batch insert all notifications in a single DB call
+  if (notifications.length > 0) {
+    await supabase.from('notifications').insert(notifications);
+  }
+
+  const alertsCreated = notifications.length;
 
   return NextResponse.json({
     alertsCreated,

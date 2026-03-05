@@ -48,11 +48,14 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({
-    data: data ?? [],
-    total: count ?? 0,
-    hasMore: effectiveOffset + (data?.length ?? 0) < (count ?? 0),
-  });
+  return NextResponse.json(
+    {
+      data: data ?? [],
+      total: count ?? 0,
+      hasMore: effectiveOffset + (data?.length ?? 0) < (count ?? 0),
+    },
+    { headers: { 'Cache-Control': 'private, s-maxage=300, stale-while-revalidate=600' } },
+  );
 }
 
 export async function POST(req: NextRequest) {

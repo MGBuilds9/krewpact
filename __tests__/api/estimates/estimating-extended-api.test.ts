@@ -613,8 +613,8 @@ describe('GET /api/estimates/[id]/alternates', () => {
     );
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(Array.isArray(body)).toBe(true);
-    expect(body).toHaveLength(2);
+    expect(Array.isArray(body.data)).toBe(true);
+    expect(body.data).toHaveLength(2);
   });
 
   it('returns empty array when estimate has no alternates', async () => {
@@ -631,7 +631,7 @@ describe('GET /api/estimates/[id]/alternates', () => {
     );
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual([]);
+    expect(body.data).toEqual([]);
   });
 });
 
@@ -739,8 +739,8 @@ describe('GET /api/estimates/[id]/allowances', () => {
     );
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(Array.isArray(body)).toBe(true);
-    expect(body).toHaveLength(2);
+    expect(Array.isArray(body.data)).toBe(true);
+    expect(body.data).toHaveLength(2);
   });
 
   it('returns empty array when estimate has no allowances', async () => {
@@ -757,7 +757,7 @@ describe('GET /api/estimates/[id]/allowances', () => {
     );
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual([]);
+    expect(body.data).toEqual([]);
   });
 });
 

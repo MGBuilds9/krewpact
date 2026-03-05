@@ -51,6 +51,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   let processed = 0;
   let errors = 0;
+  const scoreHistoryBatch: Array<{
+    lead_id: string;
+    score: number;
+    previous_score: number;
+    rule_results: Record<string, unknown>;
+  }> = [];
 
   for (const lead of leads) {
     try {
@@ -58,7 +64,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
       const previousScore = lead.lead_score ?? 0;
 
-      // Update lead scores
+      // Update lead scores (individual — each lead has different values)
       const { error: updateError } = await supabase
         .from('leads')
         .update({
@@ -75,8 +81,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         continue;
       }
 
-      // Insert score history
-      await supabase.from('lead_score_history').insert({
+      // Collect score history for batch insert
+      scoreHistoryBatch.push({
         lead_id: lead.id,
         score: result.total_score,
         previous_score: previousScore,
@@ -106,6 +112,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     } catch (err) {
       errors++;
       logger.error(`Scoring error for ${lead.id}:`, { error: err });
+    }
+  }
+
+  // Batch insert all score history records in a single DB call
+  if (scoreHistoryBatch.length > 0) {
+    const { error: historyError } = await supabase
+      .from('lead_score_history')
+      .insert(scoreHistoryBatch);
+    if (historyError) {
+      logger.error('Batch score history insert error:', { error: historyError.message });
     }
   }
 

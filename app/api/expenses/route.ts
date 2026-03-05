@@ -1,5 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
+import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -32,24 +33,26 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { project_id, status, limit } = parsed.data;
+  const { project_id, status } = parsed.data;
+  const { limit, offset } = parsePagination(req.nextUrl.searchParams);
 
   const supabase = await createUserClient();
   let query = supabase
     .from('expense_claims')
-    .select('*, user:users(first_name, last_name, avatar_url), project:projects(project_name)')
+    .select('*, user:users(first_name, last_name, avatar_url), project:projects(project_name)', { count: 'exact' })
     .order('expense_date', { ascending: false });
 
   if (project_id) query = query.eq('project_id', project_id);
   if (status) query = query.eq('status', status);
-  if (limit) query = query.limit(limit);
 
-  const { data, error } = await query;
+  query = query.range(offset, offset + limit - 1);
+
+  const { data, error, count } = await query;
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(data);
+  return NextResponse.json(paginatedResponse(data, count, limit, offset));
 }
 
 export async function POST(req: NextRequest) {

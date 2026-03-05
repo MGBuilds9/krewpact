@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 
 async function resolvePortalPermission(
   supabase: Awaited<ReturnType<typeof createUserClient>>,
@@ -35,7 +36,7 @@ async function resolvePortalPermission(
  * Returns change orders for a project visible to the portal user.
  * Statuses visible: pending_client_approval, approved, rejected
  */
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -45,15 +46,19 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const access = await resolvePortalPermission(supabase, userId, projectId);
   if (!access) return NextResponse.json({ error: 'Access denied' }, { status: 403 });
 
+  const { limit, offset } = parsePagination(req.nextUrl.searchParams);
+
   // Fetch change orders visible to portal users
-  const { data: changeOrders, error } = await supabase
+  const { data: changeOrders, error, count } = await supabase
     .from('change_orders')
     .select(
       'id, co_number, title, description, status, total_amount, submitted_at, approved_at, rejected_at',
+      { count: 'exact' },
     )
     .eq('project_id', projectId)
     .in('status', ['pending_client_approval', 'approved', 'rejected'])
-    .order('submitted_at', { ascending: false });
+    .order('submitted_at', { ascending: false })
+    .range(offset, offset + limit - 1);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
@@ -66,7 +71,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   });
 
   return NextResponse.json({
-    change_orders: changeOrders ?? [],
+    ...paginatedResponse(changeOrders, count, limit, offset),
     can_approve: access.permSet.approve_change_orders === true,
   });
 }

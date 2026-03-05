@@ -14,6 +14,13 @@ vi.mock('@/lib/supabase/server', () => ({
   createUserClient: vi.fn(),
 }));
 
+// Mock ErpClient to disable mock mode
+vi.mock('@/lib/erp/client', () => ({
+  ErpClient: class MockErpClient {
+    isMockMode() { return false; }
+  },
+}));
+
 // Mock SyncService with a proper class
 vi.mock('@/lib/erp/sync-service', () => ({
   SyncService: class MockSyncService {

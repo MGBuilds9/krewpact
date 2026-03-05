@@ -2,20 +2,22 @@ import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { timesheetBatchCreateSchema } from '@/lib/validators/time-expense';
+import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 
 export async function GET(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const url = new URL(req.url);
-  const status = url.searchParams.get('status');
-  const divisionId = url.searchParams.get('division_id');
+  const status = req.nextUrl.searchParams.get('status');
+  const divisionId = req.nextUrl.searchParams.get('division_id');
+  const { limit, offset } = parsePagination(req.nextUrl.searchParams);
 
   const supabase = await createUserClient();
   let query = supabase
     .from('timesheet_batches')
     .select('*', { count: 'exact' })
-    .order('period_start', { ascending: false });
+    .order('period_start', { ascending: false })
+    .range(offset, offset + limit - 1);
 
   if (status) query = query.eq('status', status);
   if (divisionId) query = query.eq('division_id', divisionId);
@@ -23,7 +25,7 @@ export async function GET(req: NextRequest) {
   const { data, error, count } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  return NextResponse.json({ data: data ?? [], total: count ?? 0, hasMore: false });
+  return NextResponse.json(paginatedResponse(data, count, limit, offset));
 }
 
 export async function POST(req: NextRequest) {

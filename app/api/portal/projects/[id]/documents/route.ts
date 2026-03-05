@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 
 async function resolvePortalPermission(
   supabase: Awaited<ReturnType<typeof createUserClient>>,
@@ -35,7 +36,7 @@ async function resolvePortalPermission(
  * Returns documents that are published to the portal for this project.
  * Permission guard: `view_documents` must be true in permission_set.
  */
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -54,13 +55,16 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     );
   }
 
+  const { limit, offset } = parsePagination(req.nextUrl.searchParams);
+
   // Fetch only portal-published documents
-  const { data: documents, error } = await supabase
+  const { data: documents, error, count } = await supabase
     .from('file_metadata')
-    .select('id, file_name, file_type, file_size_bytes, folder_id, created_at, updated_at')
+    .select('id, file_name, file_type, file_size_bytes, folder_id, created_at, updated_at', { count: 'exact' })
     .eq('project_id', projectId)
     .eq('is_portal_shared', true)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
@@ -72,5 +76,5 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     viewed_resource_id: null,
   });
 
-  return NextResponse.json({ documents: documents ?? [] });
+  return NextResponse.json(paginatedResponse(documents, count, limit, offset));
 }

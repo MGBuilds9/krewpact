@@ -1,5 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
+import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { rfqBidCreateSchema } from '@/lib/validators/procurement';
@@ -25,7 +26,7 @@ export async function GET(
   const parsed = querySchema.safeParse(qp);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const { limit, offset } = parsed.data;
+  const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const supabase = await createUserClient();
   const { data, error, count } = await supabase
     .from('rfq_bids')
@@ -35,8 +36,7 @@ export async function GET(
     .range(offset, offset + limit - 1);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  const total = count ?? 0;
-  return NextResponse.json({ data, total, hasMore: offset + limit < total });
+  return NextResponse.json(paginatedResponse(data, count, limit, offset));
 }
 
 export async function POST(

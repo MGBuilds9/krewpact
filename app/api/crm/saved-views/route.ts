@@ -10,6 +10,7 @@ import {
   errorResponse,
 } from '@/lib/api/errors';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 
 const entityTypes = ['lead', 'contact', 'account', 'opportunity'] as const;
 
@@ -38,10 +39,11 @@ export async function GET(req: NextRequest) {
   const parsed = querySchema.safeParse(params);
   if (!parsed.success) return errorResponse(validationError(parsed.error.flatten()));
 
+  const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const supabase = await createUserClient();
   let query = supabase
     .from('crm_saved_views')
-    .select('*')
+    .select('*', { count: 'exact' })
     .order('is_default', { ascending: false })
     .order('name', { ascending: true });
 
@@ -49,11 +51,13 @@ export async function GET(req: NextRequest) {
     query = query.eq('entity_type', parsed.data.entity_type);
   }
 
-  const { data, error } = await query;
+  query = query.range(offset, offset + limit - 1);
+
+  const { data, error, count } = await query;
 
   if (error) return errorResponse(dbError(error.message));
 
-  return NextResponse.json({ data: data ?? [] });
+  return NextResponse.json(paginatedResponse(data, count, limit, offset));
 }
 
 export async function POST(req: NextRequest) {

@@ -66,7 +66,7 @@ describe('GET /api/estimates/[id]/versions', () => {
     );
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual([]);
+    expect(body.data).toEqual([]);
   });
 
   it('returns versions sorted by revision_no desc', async () => {
@@ -102,7 +102,7 @@ describe('GET /api/estimates/[id]/versions', () => {
     );
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toHaveLength(2);
+    expect(body.data).toHaveLength(2);
     expect(client.from).toHaveBeenCalledWith('estimate_versions');
   });
 });

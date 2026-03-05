@@ -2,11 +2,11 @@ import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
+import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 
 const querySchema = z.object({
   project_id: z.string().uuid().optional(),
   submitted_by: z.string().uuid().optional(),
-  limit: z.coerce.number().min(1).max(100).optional(),
 });
 
 const createSchema = z.object({
@@ -30,26 +30,28 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { project_id, submitted_by, limit } = parsed.data;
+  const { project_id, submitted_by } = parsed.data;
+  const { limit, offset } = parsePagination(req.nextUrl.searchParams);
 
   const supabase = await createUserClient();
   let query = supabase
     .from('project_daily_logs')
     .select(
       '*, submitted_user:users!project_daily_logs_submitted_by_fkey(first_name, last_name, avatar_url), project:projects(project_name)',
+      { count: 'exact' },
     )
-    .order('log_date', { ascending: false });
+    .order('log_date', { ascending: false })
+    .range(offset, offset + limit - 1);
 
   if (project_id) query = query.eq('project_id', project_id);
   if (submitted_by) query = query.eq('submitted_by', submitted_by);
-  if (limit) query = query.limit(limit);
 
-  const { data, error } = await query;
+  const { data, error, count } = await query;
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(data);
+  return NextResponse.json(paginatedResponse(data, count, limit, offset));
 }
 
 export async function POST(req: NextRequest) {

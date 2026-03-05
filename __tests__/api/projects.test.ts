@@ -64,7 +64,7 @@ describe('GET /api/projects', () => {
     expect(res.status).toBe(200);
 
     const body = await res.json();
-    expect(body).toEqual(mockProjects);
+    expect(body.data).toEqual(mockProjects);
   });
 
   it('filters by division_id', async () => {

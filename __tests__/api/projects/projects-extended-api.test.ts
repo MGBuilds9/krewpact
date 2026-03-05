@@ -98,7 +98,7 @@ describe('GET /api/tasks/[id]/dependencies', () => {
     const res = await getDeps(makeRequest('/api/tasks/x/dependencies'), taskCtx());
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual(deps);
+    expect(body.data).toEqual(deps);
   });
 
   it('returns 500 on DB error', async () => {

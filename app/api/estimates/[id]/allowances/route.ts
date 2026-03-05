@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { estimateAllowanceCreateSchema } from '@/lib/validators/estimating';
+import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
@@ -14,18 +15,20 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!rl.success) return rateLimitResponse(rl);
 
   const { id } = await params;
+  const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const supabase = await createUserClient();
-  const { data, error } = await supabase
+  const { data, error, count } = await supabase
     .from('estimate_allowances')
-    .select('*')
+    .select('*', { count: 'exact' })
     .eq('estimate_id', id)
-    .order('created_at', { ascending: true });
+    .order('created_at', { ascending: true })
+    .range(offset, offset + limit - 1);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(data ?? []);
+  return NextResponse.json(paginatedResponse(data, count, limit, offset));
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

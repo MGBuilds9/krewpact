@@ -1,5 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
+import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { NextRequest, NextResponse } from 'next/server';
 import { changeRequestCreateSchema } from '@/lib/validators/field-ops';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
@@ -16,8 +17,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
   const { id } = await context.params;
   const { searchParams } = new URL(req.url);
   const state = searchParams.get('state');
-  const limit = parseInt(searchParams.get('limit') ?? '50', 10);
-  const offset = parseInt(searchParams.get('offset') ?? '0', 10);
+  const { limit, offset } = parsePagination(req.nextUrl.searchParams);
 
   const supabase = await createUserClient();
   let query = supabase
@@ -32,8 +32,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
   const { data, error, count } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const total = count ?? 0;
-  return NextResponse.json({ data: data ?? [], total, hasMore: offset + limit < total });
+  return NextResponse.json(paginatedResponse(data, count, limit, offset));
 }
 
 export async function POST(req: NextRequest, context: RouteContext) {

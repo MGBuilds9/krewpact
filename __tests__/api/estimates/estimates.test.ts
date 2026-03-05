@@ -59,7 +59,7 @@ describe('GET /api/estimates', () => {
     const res = await GET(makeRequest('/api/estimates'));
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual(estimates);
+    expect(body.data).toEqual(estimates);
   });
 
   it('filters by division_id', async () => {
@@ -88,7 +88,7 @@ describe('GET /api/estimates', () => {
     const res = await GET(makeRequest('/api/estimates?status=review'));
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual(estimates);
+    expect(body.data).toEqual(estimates);
   });
 
   it('filters by opportunity_id', async () => {

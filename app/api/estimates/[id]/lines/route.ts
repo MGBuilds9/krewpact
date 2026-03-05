@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { estimateLineCreateSchema } from '@/lib/validators/estimating';
 import { calculateLineTotal, calculateEstimateTotals } from '@/lib/estimating/calculations';
+import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
@@ -50,19 +51,21 @@ export async function GET(req: NextRequest, context: RouteContext) {
   if (!rl.success) return rateLimitResponse(rl);
 
   const { id } = await context.params;
+  const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const supabase = await createUserClient();
 
-  const { data, error } = await supabase
+  const { data, error, count } = await supabase
     .from('estimate_lines')
-    .select('*')
+    .select('*', { count: 'exact' })
     .eq('estimate_id', id)
-    .order('sort_order', { ascending: true });
+    .order('sort_order', { ascending: true })
+    .range(offset, offset + limit - 1);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(data);
+  return NextResponse.json(paginatedResponse(data, count, limit, offset));
 }
 
 export async function POST(req: NextRequest, context: RouteContext) {

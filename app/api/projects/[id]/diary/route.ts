@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { siteDiaryEntryCreateSchema } from '@/lib/validators/projects';
+import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
@@ -29,9 +30,8 @@ export async function GET(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { entry_type, limit, offset } = parsed.data;
-  const effectiveLimit = limit ?? 50;
-  const effectiveOffset = offset ?? 0;
+  const { entry_type } = parsed.data;
+  const { limit, offset } = parsePagination(req.nextUrl.searchParams);
 
   const supabase = await createUserClient();
   let query = supabase
@@ -42,7 +42,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
   if (entry_type) query = query.eq('entry_type', entry_type);
 
-  query = query.range(effectiveOffset, effectiveOffset + effectiveLimit - 1);
+  query = query.range(offset, offset + limit - 1);
 
   const { data, error, count } = await query;
 
@@ -50,11 +50,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({
-    data: data ?? [],
-    total: count ?? 0,
-    hasMore: effectiveOffset + (data?.length ?? 0) < (count ?? 0),
-  });
+  return NextResponse.json(paginatedResponse(data, count, limit, offset));
 }
 
 export async function POST(req: NextRequest, context: RouteContext) {

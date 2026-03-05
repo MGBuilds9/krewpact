@@ -60,7 +60,7 @@ describe('GET /api/tasks', () => {
     const res = await GET(makeRequest('/api/tasks'));
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual(tasks);
+    expect(body.data).toEqual(tasks);
   });
 
   it('filters by project_id', async () => {

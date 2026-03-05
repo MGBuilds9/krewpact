@@ -4,12 +4,11 @@ import { sequenceCreateSchema } from '@/lib/validators/crm';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 
 const querySchema = z.object({
   division_id: z.string().min(1).optional(),
   is_active: z.coerce.boolean().optional(),
-  limit: z.coerce.number().int().positive().max(100).optional(),
-  offset: z.coerce.number().int().min(0).optional(),
 });
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
@@ -27,10 +26,11 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { division_id, is_active, limit, offset } = parsed.data;
+  const { division_id, is_active } = parsed.data;
+  const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const supabase = await createUserClient();
 
-  let query = supabase.from('sequences').select('*').order('created_at', { ascending: false });
+  let query = supabase.from('sequences').select('*', { count: 'exact' }).order('created_at', { ascending: false });
 
   if (division_id) {
     query = query.eq('division_id', division_id);
@@ -40,21 +40,15 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     query = query.eq('is_active', is_active);
   }
 
-  if (limit) {
-    query = query.limit(limit);
-  }
+  query = query.range(offset, offset + limit - 1);
 
-  if (offset) {
-    query = query.range(offset, offset + (limit ?? 50) - 1);
-  }
-
-  const { data, error } = await query;
+  const { data, error, count } = await query;
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(data);
+  return NextResponse.json(paginatedResponse(data, count, limit, offset));
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {

@@ -67,7 +67,7 @@ describe('GET /api/projects/[id]/members', () => {
     const res = await GET(makeRequest(`/api/projects/${PROJECT_ID}/members`), ctx());
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual(members);
+    expect(body.data).toEqual(members);
   });
 
   it('returns 500 on DB error', async () => {

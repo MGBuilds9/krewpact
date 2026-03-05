@@ -91,7 +91,7 @@ describe('GET /api/assemblies/[id]/items', () => {
     );
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toHaveLength(2);
+    expect(body.data).toHaveLength(2);
     expect(client.from).toHaveBeenCalledWith('assembly_items');
   });
 
@@ -109,7 +109,7 @@ describe('GET /api/assemblies/[id]/items', () => {
     );
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual([]);
+    expect(body.data).toEqual([]);
   });
 
   it('joins cost_catalog_items via select', async () => {

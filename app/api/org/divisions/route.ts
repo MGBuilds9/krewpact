@@ -33,7 +33,10 @@ export async function GET(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   const total = count ?? 0;
-  return NextResponse.json({ data, total, hasMore: offset + limit < total });
+  return NextResponse.json(
+    { data, total, hasMore: offset + limit < total },
+    { headers: { 'Cache-Control': 'private, s-maxage=300, stale-while-revalidate=600' } },
+  );
 }
 
 export async function POST(req: NextRequest) {

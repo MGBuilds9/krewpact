@@ -115,7 +115,7 @@ describe('Data Integrity: Estimate cascade to lines and versions', () => {
       makeContext(ESTIMATE_ID),
     );
     expect(linesRes.status).toBe(200);
-    expect(await linesRes.json()).toHaveLength(0);
+    expect((await linesRes.json()).data).toHaveLength(0);
 
     // Step 3: Versions for the deleted estimate should be empty
     mockCreateUserClient.mockResolvedValue(
@@ -127,7 +127,7 @@ describe('Data Integrity: Estimate cascade to lines and versions', () => {
       makeContext(ESTIMATE_ID),
     );
     expect(versionsRes.status).toBe(200);
-    expect(await versionsRes.json()).toHaveLength(0);
+    expect((await versionsRes.json()).data).toHaveLength(0);
   });
 });
 
@@ -249,10 +249,10 @@ describe('Data Integrity: Estimate version snapshot immutability', () => {
     );
     expect(listRes.status).toBe(200);
     const versions = await listRes.json();
-    expect(versions).toHaveLength(1);
-    expect(versions[0].revision_no).toBe(1);
-    expect(versions[0].snapshot.estimate).toBeDefined();
-    expect(versions[0].snapshot.lines).toBeDefined();
+    expect(versions.data).toHaveLength(1);
+    expect(versions.data[0].revision_no).toBe(1);
+    expect(versions.data[0].snapshot.estimate).toBeDefined();
+    expect(versions.data[0].snapshot.lines).toBeDefined();
     // Snapshot is a frozen point-in-time — no way to modify it via API
   });
 });

@@ -3,6 +3,7 @@ import { createUserClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 
 const categoryEnum = z.enum(['outreach', 'follow_up', 'nurture', 'event', 'referral']);
 
@@ -36,6 +37,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
+  const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const supabase = await createUserClient();
   let query = supabase
     .from('email_templates')
@@ -46,13 +48,15 @@ export async function GET(req: NextRequest) {
     query = query.eq('category', parsed.data.category);
   }
 
+  query = query.range(offset, offset + limit - 1);
+
   const { data, error, count } = await query;
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ data: data ?? [], total: count ?? 0 });
+  return NextResponse.json(paginatedResponse(data, count, limit, offset));
 }
 
 export async function POST(req: NextRequest) {

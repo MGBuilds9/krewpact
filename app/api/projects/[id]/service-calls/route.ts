@@ -1,5 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
+import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { serviceCallCreateSchema } from '@/lib/validators/closeout';
@@ -24,7 +25,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const parsed = querySchema.safeParse(qp);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const { status, priority, limit = 50, offset = 0 } = parsed.data;
+  const { status, priority } = parsed.data;
+  const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const supabase = await createUserClient();
 
   let query = supabase
@@ -39,8 +41,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const { data, error, count } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  const total = count ?? 0;
-  return NextResponse.json({ data, total, hasMore: offset + limit < total });
+  return NextResponse.json(paginatedResponse(data, count, limit, offset));
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

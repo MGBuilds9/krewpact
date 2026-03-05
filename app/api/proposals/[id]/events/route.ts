@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { proposalEventCreateSchema } from '@/lib/validators/contracting';
 import { NextRequest, NextResponse } from 'next/server';
+import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth();
@@ -10,18 +11,20 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   }
 
   const { id } = await params;
+  const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const supabase = await createUserClient();
-  const { data, error } = await supabase
+  const { data, error, count } = await supabase
     .from('proposal_events')
-    .select('*')
+    .select('*', { count: 'exact' })
     .eq('proposal_id', id)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ data: data ?? [] });
+  return NextResponse.json(paginatedResponse(data, count, limit, offset));
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

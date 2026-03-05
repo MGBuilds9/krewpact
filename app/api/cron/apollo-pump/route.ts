@@ -31,41 +31,42 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
       if (people.length === 0) break;
 
-      for (const person of people) {
-        const leadData = mapApolloToLead(person);
+      // Batch dedup: single query for all external IDs in this page
+      const externalIds = people.map(p => p.id);
+      const { data: existing } = await supabase
+        .from('leads')
+        .select('external_id')
+        .in('external_id', externalIds);
+      const existingIds = new Set((existing ?? []).map(e => e.external_id));
 
-        // Dedup check by Apollo person ID (stored as external_id)
-        const { data: existing } = await supabase
+      const newPeople = people.filter(p => !existingIds.has(p.id));
+      totalDupes += people.length - newPeople.length;
+
+      if (newPeople.length > 0) {
+        // Batch insert all new leads in a single call
+        const leadsToInsert = newPeople.map(p => ({ ...mapApolloToLead(p), external_id: p.id }));
+        const { data: insertedLeads, error: leadError } = await supabase
           .from('leads')
-          .select('id')
-          .eq('external_id', person.id)
-          .limit(1);
-
-        if (existing && existing.length > 0) {
-          totalDupes++;
-          continue;
-        }
-
-        const { data: lead, error: leadError } = await supabase
-          .from('leads')
-          .insert({ ...leadData, external_id: person.id })
-          .select('id')
-          .single();
+          .insert(leadsToInsert)
+          .select('id, external_id');
 
         if (leadError) {
-          console.error('Apollo lead insert error:', leadError.message);
-          continue;
+          console.error('Apollo bulk lead insert error:', leadError.message);
+        } else if (insertedLeads) {
+          // Batch insert all contacts in a single call
+          const leadIdMap = new Map(insertedLeads.map(l => [l.external_id, l.id]));
+          const contactsToInsert = newPeople
+            .filter(p => leadIdMap.has(p.id))
+            .map(p => mapApolloToContact(p, leadIdMap.get(p.id)!));
+
+          if (contactsToInsert.length > 0) {
+            const { error: contactError } = await supabase.from('contacts').insert(contactsToInsert);
+            if (contactError) {
+              console.error('Apollo bulk contact insert error:', contactError.message);
+            }
+          }
+          totalImported += insertedLeads.length;
         }
-
-        const { error: contactError } = await supabase
-          .from('contacts')
-          .insert(mapApolloToContact(person, lead.id));
-
-        if (contactError) {
-          console.error('Apollo contact insert error:', contactError.message);
-        }
-
-        totalImported++;
       }
     }
 

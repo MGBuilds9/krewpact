@@ -312,7 +312,7 @@ describe('Estimating Integration: Full happy path', () => {
     );
     expect(versionsRes.status).toBe(200);
     const versions = await versionsRes.json();
-    expect(versions).toHaveLength(2);
+    expect(versions.data).toHaveLength(2);
   });
 });
 
@@ -618,7 +618,7 @@ describe('Estimating Integration: Delete estimate cascades', () => {
     );
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toHaveLength(0);
+    expect(body.data).toHaveLength(0);
   });
 
   it('after deleting estimate, versions list returns empty', async () => {
@@ -635,7 +635,7 @@ describe('Estimating Integration: Delete estimate cascades', () => {
     );
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual([]);
+    expect(body.data).toEqual([]);
   });
 });
 

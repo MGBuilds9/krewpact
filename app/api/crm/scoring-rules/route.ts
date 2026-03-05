@@ -3,6 +3,7 @@ import { createUserClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 
 const scoringRuleSchema = z.object({
   name: z.string().min(1).max(200),
@@ -16,24 +17,26 @@ const scoringRuleSchema = z.object({
   division_id: z.string().min(1).optional(),
 });
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(req: NextRequest): Promise<NextResponse> {
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const supabase = await createUserClient();
-  const { data, error } = await supabase
+  const { data, error, count } = await supabase
     .from('scoring_rules')
-    .select('*')
+    .select('*', { count: 'exact' })
     .order('category')
-    .order('priority', { ascending: false });
+    .order('priority', { ascending: false })
+    .range(offset, offset + limit - 1);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(data);
+  return NextResponse.json(paginatedResponse(data, count, limit, offset));
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {

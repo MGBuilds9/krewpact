@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 
 const announcementSchema = z.object({
   project_id: z.string().uuid(),
@@ -22,18 +23,20 @@ export async function GET(req: NextRequest) {
   if (!projectId) return NextResponse.json({ error: 'project_id is required' }, { status: 400 });
 
   const supabase = await createUserClient();
+  const { limit, offset } = parsePagination(req.nextUrl.searchParams);
 
   // Announcements are portal_messages where portal_account_id IS NULL (broadcast)
-  const { data, error } = await supabase
+  const { data, error, count } = await supabase
     .from('portal_messages')
-    .select('id, project_id, subject, body, direction, created_at')
+    .select('id, project_id, subject, body, direction, created_at', { count: 'exact' })
     .eq('project_id', projectId)
     .is('portal_account_id', null)
     .eq('direction', 'outbound')
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ announcements: data ?? [] });
+  return NextResponse.json(paginatedResponse(data, count, limit, offset));
 }
 
 /**

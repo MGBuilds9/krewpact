@@ -3,6 +3,7 @@ import { createUserClient } from '@/lib/supabase/server';
 import { sequenceStepCreateSchema } from '@/lib/validators/crm';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -16,18 +17,20 @@ export async function GET(req: NextRequest, context: RouteContext): Promise<Next
   if (!rl.success) return rateLimitResponse(rl);
 
   const { id } = await context.params;
+  const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const supabase = await createUserClient();
-  const { data, error } = await supabase
+  const { data, error, count } = await supabase
     .from('sequence_steps')
-    .select('*')
+    .select('*', { count: 'exact' })
     .eq('sequence_id', id)
-    .order('step_number', { ascending: true });
+    .order('step_number', { ascending: true })
+    .range(offset, offset + limit - 1);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(data);
+  return NextResponse.json(paginatedResponse(data, count, limit, offset));
 }
 
 export async function POST(req: NextRequest, context: RouteContext): Promise<NextResponse> {

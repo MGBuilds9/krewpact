@@ -28,6 +28,7 @@ function chainMock(response: { data: unknown; error: unknown }) {
   chain.eq = vi.fn().mockReturnValue(chain);
   chain.contains = vi.fn().mockReturnValue(chain);
   chain.order = vi.fn().mockReturnValue(chain);
+  chain.range = vi.fn().mockReturnValue(chain);
   chain.single = vi.fn().mockResolvedValue(response);
   chain.then = (resolve: (v: unknown) => void) => resolve(response);
   return chain;
@@ -96,8 +97,8 @@ describe('GET /api/portal/trade/tasks', () => {
     const res = await getTradeTasks(makeRequest('/api/portal/trade/tasks'));
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.tasks).toHaveLength(1);
-    expect(body.tasks[0].title).toBe('Install HVAC');
+    expect(body.data).toHaveLength(1);
+    expect(body.data[0].title).toBe('Install HVAC');
   });
 
   it('filters tasks by project_id when provided', async () => {
@@ -120,7 +121,7 @@ describe('GET /api/portal/trade/tasks', () => {
     );
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.tasks).toEqual([]);
+    expect(body.data).toEqual([]);
   });
 });
 
