@@ -11,7 +11,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
 
   const { data: event, error: fetchError } = await supabase
     .from('webhook_events')
-    .select('*')
+    .select('id, provider, event_id, event_type, payload, received_at, processed_at, processing_status, processing_error')
     .eq('id', id)
     .single();
 

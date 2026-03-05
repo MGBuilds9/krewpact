@@ -20,7 +20,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
   const { data, error, count } = await supabase
     .from('toolbox_talks')
-    .select('*', { count: 'exact' })
+    .select('id, project_id, talk_date, topic, facilitator_user_id, attendee_count, notes, created_at, updated_at', { count: 'exact' })
     .eq('project_id', id)
     .order('talk_date', { ascending: false })
     .range(offset, offset + limit - 1);

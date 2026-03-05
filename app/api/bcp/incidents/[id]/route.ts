@@ -9,7 +9,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
   const { id } = await params;
   const supabase = await createUserClient();
-  const { data, error } = await supabase.from('bcp_incidents').select('*').eq('id', id).single();
+  const { data, error } = await supabase.from('bcp_incidents').select('id, incident_number, severity, status, title, summary, started_at, resolved_at, owner_user_id, created_at, updated_at').eq('id', id).single();
   if (error) return NextResponse.json({ error: error.message }, { status: 404 });
   return NextResponse.json(data);
 }
@@ -34,7 +34,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     .from('bcp_incidents')
     .update({ ...parsed.data, updated_at: new Date().toISOString() })
     .eq('id', id)
-    .select()
+    .select('id, incident_number, severity, status, title, summary, started_at, resolved_at, owner_user_id, created_at, updated_at')
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

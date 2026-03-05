@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from('trade_partner_compliance_docs')
-    .select('*', { count: 'exact' })
+    .select('id, portal_account_id, compliance_type, file_id, doc_number, issued_on, expires_on, status, verified_by, verified_at, created_at, updated_at', { count: 'exact' })
     .order('expires_on', { ascending: true })
     .range(offset, offset + limit - 1);
 

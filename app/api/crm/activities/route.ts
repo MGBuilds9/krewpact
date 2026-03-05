@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from('activities')
-    .select('*', { count: 'exact' })
+    .select('id, activity_type, title, details, due_at, completed_at, lead_id, contact_id, account_id, opportunity_id, owner_user_id, created_at, updated_at', { count: 'exact' })
     .order(sort_by ?? 'created_at', { ascending: sort_dir === 'asc' });
 
   if (opportunity_id) {

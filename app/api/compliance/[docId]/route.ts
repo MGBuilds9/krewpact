@@ -11,7 +11,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ docI
   const supabase = await createUserClient();
   const { data, error } = await supabase
     .from('trade_partner_compliance_docs')
-    .select('*')
+    .select('id, portal_account_id, compliance_type, file_id, doc_number, issued_on, expires_on, status, verified_by, verified_at, created_at, updated_at')
     .eq('id', docId)
     .single();
 

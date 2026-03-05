@@ -56,7 +56,8 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
   const { data, error, count } = await supabase
     .from('estimate_lines')
-    .select('*', { count: 'exact' })
+    /* excluded from list: metadata */
+    .select('id, estimate_id, line_type, description, quantity, unit, unit_cost, markup_pct, line_total, sort_order, is_optional, catalog_item_id, assembly_id, parent_line_id, created_at, updated_at', { count: 'exact' })
     .eq('estimate_id', id)
     .order('sort_order', { ascending: true })
     .range(offset, offset + limit - 1);

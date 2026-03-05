@@ -17,7 +17,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
   const supabase = await createUserClient();
   const { data, error } = await supabase
     .from('rfi_items')
-    .select('*')
+    .select('id, project_id, rfi_number, title, question_text, status, due_at, requester_user_id, responder_user_id, closed_at, created_at, updated_at')
     .eq('id', rfiId)
     .eq('project_id', id)
     .single();

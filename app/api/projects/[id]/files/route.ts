@@ -22,7 +22,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
   const supabase = await createUserClient();
   let query = supabase
     .from('file_metadata')
-    .select('*', { count: 'exact' })
+    .select('id, filename, original_filename, file_path, file_size_bytes, mime_type, folder_id, project_id, storage_bucket, tags, visibility, version_no, is_deleted, deleted_at, uploaded_by, created_at, updated_at' /* excluded from list: checksum_sha256, source_system, source_identifier */, { count: 'exact' })
     .eq('project_id', id)
     .eq('is_deleted', false)
     .order('created_at', { ascending: false })

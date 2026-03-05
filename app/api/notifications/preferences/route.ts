@@ -10,7 +10,7 @@ export async function GET() {
   const supabase = await createUserClient();
   const { data, error } = await supabase
     .from('notification_preferences')
-    .select('*')
+    .select('id, user_id, in_app_enabled, email_enabled, push_enabled, quiet_hours, created_at, updated_at')
     .eq('clerk_user_id', userId)
     .single();
 

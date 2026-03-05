@@ -28,7 +28,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
   const { data, error, count } = await supabase
     .from('contact_account_links')
-    .select('*, account:accounts(*)', { count: 'exact' })
+    .select('id, contact_id, account_id, relationship_type, is_primary, created_at, account:accounts(id, account_name, account_type, division_id, billing_address, shipping_address, notes, created_by, created_at, updated_at)', { count: 'exact' })
     .eq('contact_id', id)
     .range(offset, offset + limit - 1);
 

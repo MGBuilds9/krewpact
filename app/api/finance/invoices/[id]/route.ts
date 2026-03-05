@@ -11,7 +11,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const supabase = await createUserClient();
   const { data, error } = await supabase
     .from('invoice_snapshots')
-    .select('*')
+    .select('id, project_id, invoice_number, customer_name, invoice_date, due_date, status, subtotal_amount, tax_amount, total_amount, amount_paid, payment_link_url, erp_docname, snapshot_payload, created_at, updated_at')
     .eq('id', id)
     .single();
 

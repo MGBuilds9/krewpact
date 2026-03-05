@@ -18,7 +18,7 @@ export async function GET(
   const supabase = await createUserClient();
   const { data, error } = await supabase
     .from('service_calls')
-    .select('*')
+    .select('id, project_id, warranty_item_id, call_number, title, description, priority, status, requested_by_portal_id, assigned_to, opened_at, resolved_at, closed_at, created_at, updated_at')
     .eq('id', callId)
     .eq('project_id', projectId)
     .single();

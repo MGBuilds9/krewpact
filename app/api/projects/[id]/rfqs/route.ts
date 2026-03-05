@@ -30,7 +30,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   let query = supabase
     .from('rfq_packages')
-    .select('*', { count: 'exact' })
+    .select('id, project_id, rfq_number, title, scope_summary, due_at, status, created_by, created_at, updated_at', { count: 'exact' })
     .eq('project_id', projectId)
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);

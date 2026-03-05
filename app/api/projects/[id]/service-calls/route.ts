@@ -31,7 +31,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   let query = supabase
     .from('service_calls')
-    .select('*', { count: 'exact' })
+    .select('id, project_id, warranty_item_id, call_number, title, description, priority, status, requested_by_portal_id, assigned_to, opened_at, resolved_at, closed_at, created_at, updated_at', { count: 'exact' })
     .eq('project_id', projectId)
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);

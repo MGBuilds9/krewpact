@@ -20,7 +20,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
   const { data, error, count } = await supabase
     .from('file_folders')
-    .select('*', { count: 'exact' })
+    .select('id, folder_name, folder_path, parent_folder_id, project_id, visibility, created_by, created_at, updated_at', { count: 'exact' })
     .eq('project_id', id)
     .order('folder_name')
     .range(offset, offset + limit - 1);

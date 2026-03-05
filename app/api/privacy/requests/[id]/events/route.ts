@@ -13,7 +13,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const supabase = await createUserClient();
   const { data, error, count } = await supabase
     .from('privacy_request_events')
-    .select('*', { count: 'exact' })
+    .select('id, privacy_request_id, event_type, actor_user_id, created_at' /* excluded from list: event_payload */, { count: 'exact' })
     .eq('privacy_request_id', id)
     .order('created_at', { ascending: true })
     .range(offset, offset + limit - 1);

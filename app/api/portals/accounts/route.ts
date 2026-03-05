@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from('portal_accounts')
-    .select('*', { count: 'exact' })
+    .select('id, clerk_user_id, contact_name, email, phone, company_name, actor_type, status, invited_by, created_at, updated_at', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 

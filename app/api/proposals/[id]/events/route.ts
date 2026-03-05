@@ -15,7 +15,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const supabase = await createUserClient();
   const { data, error, count } = await supabase
     .from('proposal_events')
-    .select('*', { count: 'exact' })
+    /* excluded from list: event_payload */
+    .select('id, proposal_id, event_type, actor_user_id, occurred_at', { count: 'exact' })
     .eq('proposal_id', id)
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);

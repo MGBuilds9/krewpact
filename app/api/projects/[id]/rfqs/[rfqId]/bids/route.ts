@@ -30,7 +30,7 @@ export async function GET(
   const supabase = await createUserClient();
   const { data, error, count } = await supabase
     .from('rfq_bids')
-    .select('*', { count: 'exact' })
+    .select('id, rfq_id, invite_id, submitted_by_portal_id, submitted_at, currency_code, subtotal_amount, tax_amount, total_amount, exclusions, status, created_at, updated_at' /* excluded from list: payload */, { count: 'exact' })
     .eq('rfq_id', rfqId)
     .order('total_amount', { ascending: true })
     .range(offset, offset + limit - 1);

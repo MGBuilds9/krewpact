@@ -31,7 +31,8 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from('cost_catalog_items')
-    .select('*', { count: 'exact' })
+    /* excluded from list: metadata */
+    .select('id, item_code, item_name, item_type, unit, base_cost, vendor_name, division_id, effective_from, effective_to, created_at, updated_at', { count: 'exact' })
     .order(sort_by ?? 'item_name', { ascending: sort_dir !== 'desc' });
 
   if (division_id) query = query.eq('division_id', division_id);

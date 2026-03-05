@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
   const supabase = await createUserClient();
   let query = supabase
     .from('tags')
-    .select('*', { count: 'exact' })
+    .select('id, name, color, division_id, created_at, updated_at', { count: 'exact' })
     .order('name', { ascending: true });
 
   if (parsed.data.division_id) {

@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
   const supabase = await createUserClient();
   let query = supabase
     .from('timesheet_batches')
-    .select('*', { count: 'exact' })
+    .select('id, division_id, period_start, period_end, status, submitted_by, approved_by, exported_at, adp_export_reference, created_at, updated_at', { count: 'exact' })
     .order('period_start', { ascending: false })
     .range(offset, offset + limit - 1);
 

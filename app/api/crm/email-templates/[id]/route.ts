@@ -28,7 +28,7 @@ export async function GET(req: NextRequest, ctx: RouteContext) {
   const { id } = await ctx.params;
 
   const supabase = await createUserClient();
-  const { data, error } = await supabase.from('email_templates').select('*').eq('id', id).single();
+  const { data, error } = await supabase.from('email_templates').select('id, name, subject, body_html, body_text, category, variables, division_id, is_active, created_at, updated_at').eq('id', id).single();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 404 });

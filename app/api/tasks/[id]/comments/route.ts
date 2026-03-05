@@ -24,7 +24,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
   const supabase = await createUserClient();
   const { data, error, count } = await supabase
     .from('task_comments')
-    .select('*', { count: 'exact' })
+    .select('id, task_id, author_user_id, comment_text, created_at, updated_at', { count: 'exact' })
     .eq('task_id', id)
     .order('created_at', { ascending: true })
     .range(offset, offset + limit - 1);

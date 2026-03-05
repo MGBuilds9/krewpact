@@ -26,7 +26,8 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
   const { data, error, count } = await supabase
     .from('estimate_versions')
-    .select('*', { count: 'exact' })
+    /* excluded from list: snapshot */
+    .select('id, estimate_id, revision_no, reason, created_by, created_at', { count: 'exact' })
     .eq('estimate_id', id)
     .order('revision_no', { ascending: false })
     .range(offset, offset + limit - 1);
@@ -65,7 +66,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
   // 1) Fetch estimate with lines
   const { data: estimate, error: fetchError } = await supabase
     .from('estimates')
-    .select('*, estimate_lines(*)')
+    .select('id, estimate_number, status, subtotal_amount, tax_amount, total_amount, margin_pct, currency_code, revision_no, account_id, contact_id, opportunity_id, division_id, owner_user_id, approved_at, approved_by, metadata, created_at, updated_at, estimate_lines(id, estimate_id, line_type, description, quantity, unit, unit_cost, markup_pct, line_total, sort_order, is_optional, catalog_item_id, assembly_id, parent_line_id, metadata, created_at, updated_at)')
     .eq('id', id)
     .single();
 

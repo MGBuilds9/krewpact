@@ -30,7 +30,8 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from('po_snapshots')
-    .select('*', { count: 'exact' })
+    /* excluded from list: snapshot_payload */
+    .select('id, project_id, po_number, supplier_name, po_date, status, subtotal_amount, tax_amount, total_amount, erp_docname, created_at, updated_at', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 

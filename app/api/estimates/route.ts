@@ -35,7 +35,8 @@ export async function GET(req: NextRequest) {
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const supabase = await createUserClient();
 
-  let query = supabase.from('estimates').select('*', { count: 'exact' }).order('created_at', { ascending: false });
+  /* excluded from list: metadata */
+  let query = supabase.from('estimates').select('id, estimate_number, status, subtotal_amount, tax_amount, total_amount, margin_pct, currency_code, revision_no, account_id, contact_id, opportunity_id, division_id, owner_user_id, approved_at, approved_by, created_at, updated_at', { count: 'exact' }).order('created_at', { ascending: false });
 
   if (division_id) {
     query = query.eq('division_id', division_id);

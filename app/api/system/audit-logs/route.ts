@@ -25,7 +25,8 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from('audit_logs')
-    .select('*', { count: 'exact' })
+    /* excluded from list: old_data, new_data, context */
+    .select('id, entity_type, entity_id, action, actor_user_id, actor_portal_id, ip_address, user_agent, created_at', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(offset, offset + (limit ?? 50) - 1);
 

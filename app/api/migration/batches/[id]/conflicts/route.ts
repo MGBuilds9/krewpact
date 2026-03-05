@@ -25,7 +25,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   let query = supabase
     .from('migration_conflicts')
-    .select('*', { count: 'exact' })
+    /* excluded from list: conflict_payload */
+    .select('id, record_id, conflict_type, resolution_status, resolved_by, resolved_at, resolution_notes, created_at', { count: 'exact' })
     .eq('batch_id', batchId)
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
@@ -64,7 +65,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     .update({ ...parsed.data, resolved_by: userId, resolved_at: new Date().toISOString() })
     .eq('id', conflictId)
     .eq('batch_id', batchId)
-    .select()
+    .select('id, record_id, conflict_type, conflict_payload, resolution_status, resolved_by, resolved_at, resolution_notes, created_at')
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

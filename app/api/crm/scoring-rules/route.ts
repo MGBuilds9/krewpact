@@ -27,7 +27,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const supabase = await createUserClient();
   const { data, error, count } = await supabase
     .from('scoring_rules')
-    .select('*', { count: 'exact' })
+    .select('id, name, category, field_name, operator, value, score_impact, priority, division_id, is_active, created_at, updated_at', { count: 'exact' })
     .order('category')
     .order('priority', { ascending: false })
     .range(offset, offset + limit - 1);

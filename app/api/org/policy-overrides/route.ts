@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from('policy_overrides')
-    .select('*', { count: 'exact' })
+    .select('id, user_id, permission_id, override_value, reason, expires_at, created_by, created_at, updated_at', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 

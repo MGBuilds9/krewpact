@@ -30,7 +30,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const supabase = await createUserClient();
 
-  let query = supabase.from('sequences').select('*', { count: 'exact' }).order('created_at', { ascending: false });
+  let query = supabase.from('sequences').select('id, name, description, trigger_type, trigger_conditions, division_id, is_active, created_at, updated_at', { count: 'exact' }).order('created_at', { ascending: false });
 
   if (division_id) {
     query = query.eq('division_id', division_id);

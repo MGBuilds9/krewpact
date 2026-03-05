@@ -33,7 +33,7 @@ export async function GET(req: NextRequest, context: RouteContext): Promise<Next
 
   let query = supabase
     .from('sequence_enrollments')
-    .select('*')
+    .select('id, sequence_id, lead_id, contact_id, status, current_step, started_at, completed_at, paused_at, created_at, updated_at')
     .eq('sequence_id', id)
     .order('created_at', { ascending: false });
 

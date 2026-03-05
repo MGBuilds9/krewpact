@@ -18,7 +18,7 @@ export async function GET(
   const supabase = await createUserClient();
   const { data, error } = await supabase
     .from('selection_sheets')
-    .select('*')
+    .select('id, project_id, sheet_name, status, issued_at, locked_at, created_by, created_at, updated_at')
     .eq('id', sheetId)
     .eq('project_id', projectId)
     .single();

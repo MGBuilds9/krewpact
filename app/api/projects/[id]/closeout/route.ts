@@ -30,7 +30,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   let query = supabase
     .from('closeout_packages')
-    .select('*', { count: 'exact' })
+    .select('id, project_id, status, accepted_at, created_by, created_at, updated_at' /* excluded from list: checklist_payload */, { count: 'exact' })
     .eq('project_id', projectId)
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);

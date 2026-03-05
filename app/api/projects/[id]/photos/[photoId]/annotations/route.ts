@@ -20,7 +20,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
   const { data, error, count } = await supabase
     .from('photo_annotations')
-    .select('*', { count: 'exact' })
+    .select('id, photo_id, annotation_json, created_by, created_at', { count: 'exact' })
     .eq('photo_id', photoId)
     .order('created_at')
     .range(offset, offset + limit - 1);

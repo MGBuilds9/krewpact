@@ -17,7 +17,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
   const supabase = await createUserClient();
   const { data, error } = await supabase
     .from('change_requests')
-    .select('*')
+    .select('id, project_id, request_number, title, description, state, requested_by, estimated_cost_impact, estimated_days_impact, created_at, updated_at')
     .eq('id', crId)
     .eq('project_id', id)
     .single();

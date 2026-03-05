@@ -22,7 +22,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
   try {
     const supabase = await createUserClient();
-    const { data, error } = await supabase.from('tasks').select('*').eq('id', id).single();
+    const { data, error } = await supabase.from('tasks').select('id, project_id, title, description, status, priority, assigned_user_id, created_by, milestone_id, due_at, start_at, completed_at, blocked_reason, metadata, created_at, updated_at').eq('id', id).single();
 
     if (error) {
       if (error.code === 'PGRST116') {

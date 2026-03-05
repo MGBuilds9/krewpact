@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useParams } from 'next/navigation';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,13 +22,23 @@ import {
 import { useEstimateAllowances, useEstimateAlternates } from '@/hooks/useEstimating';
 import { LineItemEditor } from '@/components/Estimates/LineItemEditor';
 import { TotalsPanel } from '@/components/Estimates/TotalsPanel';
-import { VersionHistory } from '@/components/Estimates/VersionHistory';
-import { AllowanceForm } from '@/components/Estimates/AllowanceForm';
-import { AlternateForm } from '@/components/Estimates/AlternateForm';
-import { ProposalGenerationForm } from '@/components/Estimates/ProposalGenerationForm';
 import { ALLOWED_STATUS_TRANSITIONS } from '@/lib/estimating/estimate-status';
 import type { EstimateStatus } from '@/lib/estimating/estimate-status';
 import { cn } from '@/lib/utils';
+
+const VersionHistory = dynamic(
+  () => import('@/components/Estimates/VersionHistory').then((m) => m.VersionHistory),
+  { loading: () => <Skeleton className="h-32 w-full rounded-xl" /> },
+);
+const AllowanceForm = dynamic(
+  () => import('@/components/Estimates/AllowanceForm').then((m) => m.AllowanceForm),
+);
+const AlternateForm = dynamic(
+  () => import('@/components/Estimates/AlternateForm').then((m) => m.AlternateForm),
+);
+const ProposalGenerationForm = dynamic(
+  () => import('@/components/Estimates/ProposalGenerationForm').then((m) => m.ProposalGenerationForm),
+);
 
 const STATUS_BADGE_COLORS: Record<string, string> = {
   draft: 'bg-gray-100 text-gray-700 border-gray-200',

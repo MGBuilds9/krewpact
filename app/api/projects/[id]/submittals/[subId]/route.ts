@@ -17,7 +17,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
   const supabase = await createUserClient();
   const { data, error } = await supabase
     .from('submittals')
-    .select('*')
+    .select('id, project_id, submittal_number, title, status, due_at, submitted_by, submitted_at, created_at, updated_at')
     .eq('id', subId)
     .eq('project_id', id)
     .single();

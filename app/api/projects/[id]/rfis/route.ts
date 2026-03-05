@@ -22,7 +22,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
   const supabase = await createUserClient();
   let query = supabase
     .from('rfi_items')
-    .select('*', { count: 'exact' })
+    .select('id, project_id, rfi_number, title, question_text, status, due_at, requester_user_id, responder_user_id, closed_at, created_at, updated_at', { count: 'exact' })
     .eq('project_id', id)
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);

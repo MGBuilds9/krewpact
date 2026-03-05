@@ -19,7 +19,7 @@ export async function GET(req: NextRequest, context: RouteContext): Promise<Next
   const supabase = await createUserClient();
   const { data, error } = await supabase
     .from('sequences')
-    .select('*, sequence_steps(*)')
+    .select('id, name, description, trigger_type, trigger_conditions, division_id, is_active, created_at, updated_at, sequence_steps(*)')
     .eq('id', id)
     .single();
 

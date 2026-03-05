@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
   const supabase = await createUserClient();
   const { data, error, count } = await supabase
     .from('notes')
-    .select('*', { count: 'exact' })
+    .select('id, entity_type, entity_id, content, is_pinned, created_by, created_at, updated_at', { count: 'exact' })
     .eq('entity_type', entity_type)
     .eq('entity_id', entity_id)
     .order('is_pinned', { ascending: false })

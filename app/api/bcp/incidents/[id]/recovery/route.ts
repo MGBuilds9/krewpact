@@ -11,7 +11,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const supabase = await createUserClient();
   const { data, error } = await supabase
     .from('bcp_recovery_events')
-    .select('*')
+    /* excluded from list: event_payload */
+    .select('id, incident_id, event_type, created_by, created_at')
     .eq('incident_id', id)
     .order('created_at', { ascending: true });
 
@@ -38,7 +39,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const { data, error } = await supabase
     .from('bcp_recovery_events')
     .insert({ ...parsed.data, incident_id: id, created_by: userId })
-    .select()
+    .select('id, incident_id, event_type, event_payload, created_by, created_at')
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

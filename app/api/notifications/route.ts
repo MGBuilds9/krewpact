@@ -25,7 +25,8 @@ export async function GET(req: NextRequest) {
   const supabase = await createUserClient();
   let query = supabase
     .from('notifications')
-    .select('*', { count: 'exact' })
+    /* excluded from list: payload */
+    .select('id, user_id, portal_account_id, channel, title, message, state, read_at, send_at, sent_at, created_at, updated_at', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 

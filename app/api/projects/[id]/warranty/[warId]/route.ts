@@ -17,7 +17,7 @@ export async function GET(
   const supabase = await createUserClient();
   const { data, error } = await supabase
     .from('warranty_items')
-    .select('*')
+    .select('id, project_id, deficiency_id, title, provider_name, warranty_start, warranty_end, terms, created_at, updated_at')
     .eq('id', warId)
     .eq('project_id', projectId)
     .single();

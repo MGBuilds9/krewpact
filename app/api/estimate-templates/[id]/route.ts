@@ -13,7 +13,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const supabase = await createUserClient();
   const { data, error } = await supabase
     .from('estimate_templates')
-    .select('*')
+    .select('id, template_name, project_type, division_id, is_default, payload, created_by, created_at, updated_at')
     .eq('id', id)
     .single();
 

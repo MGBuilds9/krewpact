@@ -13,7 +13,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const supabase = await createUserClient();
   const { data, error } = await supabase
     .from('cost_catalog_items')
-    .select('*')
+    .select('id, item_code, item_name, item_type, unit, base_cost, vendor_name, division_id, effective_from, effective_to, metadata, created_at, updated_at')
     .eq('id', id)
     .single();
 

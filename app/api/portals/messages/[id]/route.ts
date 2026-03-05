@@ -8,7 +8,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
   const { id } = await params;
   const supabase = await createUserClient();
-  const { data, error } = await supabase.from('portal_messages').select('*').eq('id', id).single();
+  const { data, error } = await supabase.from('portal_messages').select('id, project_id, portal_account_id, sender_user_id, direction, subject, body, read_at, created_at, updated_at').eq('id', id).single();
   if (error) return NextResponse.json({ error: error.message }, { status: 404 });
   return NextResponse.json(data);
 }

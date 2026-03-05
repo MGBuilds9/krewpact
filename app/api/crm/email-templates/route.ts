@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
   const supabase = await createUserClient();
   let query = supabase
     .from('email_templates')
-    .select('*', { count: 'exact' })
+    .select('id, name, subject, body_html, body_text, category, variables, division_id, is_active, created_at, updated_at', { count: 'exact' })
     .order('updated_at', { ascending: false });
 
   if (parsed.data.category) {

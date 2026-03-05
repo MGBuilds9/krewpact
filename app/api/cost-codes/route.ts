@@ -25,7 +25,8 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from('cost_code_dictionary')
-    .select('*', { count: 'exact' })
+    /* excluded from list: metadata */
+    .select('id, division_id, cost_code, cost_code_name, parent_cost_code_id, is_active, created_at, updated_at', { count: 'exact' })
     .order('cost_code', { ascending: true })
     .range(offset, offset + limit - 1);
 

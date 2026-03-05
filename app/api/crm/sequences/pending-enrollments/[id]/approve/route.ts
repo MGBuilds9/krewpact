@@ -31,7 +31,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
 
   const { data: enrollment, error: fetchError } = await supabase
     .from('sequence_enrollments')
-    .select('*')
+    .select('id, sequence_id, lead_id, contact_id, status, current_step, started_at, completed_at, paused_at, created_at, updated_at')
     .eq('id', id)
     .single();
 

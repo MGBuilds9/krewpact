@@ -11,7 +11,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const { id } = await params;
   const supabase = await createUserClient();
-  const { data, error } = await supabase.from('contract_terms').select('*').eq('id', id).single();
+  const { data, error } = await supabase.from('contract_terms').select('id, proposal_id, contract_status, legal_text_version, terms_payload, signed_at, supersedes_contract_id, created_at, updated_at').eq('id', id).single();
 
   if (error) {
     return NextResponse.json(

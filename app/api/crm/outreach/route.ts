@@ -31,7 +31,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   const { data, error, count } = await supabase
     .from('outreach')
-    .select('*', { count: 'exact' })
+    .select('id, channel, direction, subject, message_preview, notes, outcome, outcome_detail, activity_type, is_automated, lead_id, contact_id, sequence_id, sequence_step, created_by, occurred_at', { count: 'exact' })
     .eq('lead_id', lead_id)
     .order('occurred_at', { ascending: false })
     .range(offset, offset + limit - 1);

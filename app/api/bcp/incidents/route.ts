@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from('bcp_incidents')
-    .select('*', { count: 'exact' })
+    .select('id, incident_number, severity, status, title, summary, started_at, resolved_at, owner_user_id, created_at, updated_at', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
   const { data, error } = await supabase
     .from('bcp_incidents')
     .insert({ ...parsed.data, status: 'open', declared_by: userId })
-    .select()
+    .select('id, incident_number, severity, status, title, summary, started_at, resolved_at, owner_user_id, created_at, updated_at')
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

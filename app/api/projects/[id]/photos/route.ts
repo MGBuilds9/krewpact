@@ -22,7 +22,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
   const supabase = await createUserClient();
   let query = supabase
     .from('photo_assets')
-    .select('*', { count: 'exact' })
+    .select('id, project_id, file_id, category, taken_at, location_point, created_by, created_at', { count: 'exact' })
     .eq('project_id', id)
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);

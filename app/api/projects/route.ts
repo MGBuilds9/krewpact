@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const supabase = await createUserClient();
 
-  let query = supabase.from('projects').select('*', { count: 'exact' }).order('created_at', { ascending: false });
+  let query = supabase.from('projects').select('id, project_name, project_number, status, division_id, account_id, contact_id, contract_id, baseline_budget, current_budget, start_date, target_completion_date, actual_completion_date, site_address, created_by, created_at, updated_at' /* excluded from list: metadata, baseline_schedule */, { count: 'exact' }).order('created_at', { ascending: false });
 
   if (division_id) {
     query = query.eq('division_id', division_id);

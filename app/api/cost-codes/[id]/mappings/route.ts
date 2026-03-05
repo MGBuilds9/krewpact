@@ -32,7 +32,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const { data, error, count } = await supabase
     .from('cost_code_mappings')
-    .select('*', { count: 'exact' })
+    .select('id, division_id, local_cost_code, erp_cost_code, adp_labor_code, is_active, created_at, updated_at', { count: 'exact' })
     .eq('local_cost_code', costCode.cost_code)
     .eq('division_id', costCode.division_id)
     .range(offset, offset + limit - 1);

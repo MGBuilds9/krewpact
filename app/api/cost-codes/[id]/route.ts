@@ -11,7 +11,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const supabase = await createUserClient();
   const { data, error } = await supabase
     .from('cost_code_dictionary')
-    .select('*')
+    .select('id, division_id, cost_code, cost_code_name, parent_cost_code_id, is_active, metadata, created_at, updated_at')
     .eq('id', id)
     .single();
 

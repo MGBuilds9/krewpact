@@ -18,7 +18,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
   const { data, error, count } = await supabase
     .from('file_shares')
-    .select('*', { count: 'exact' })
+    .select('id, file_id, shared_with_user_id, shared_with_portal_actor_id, permission_level, is_active, expires_at, shared_by, created_at', { count: 'exact' })
     .eq('file_id', fileId)
     .eq('is_active', true)
     .order('created_at', { ascending: false });

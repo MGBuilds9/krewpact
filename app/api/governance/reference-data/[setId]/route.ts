@@ -11,7 +11,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ set
   const supabase = await createUserClient();
   const { data, error } = await supabase
     .from('reference_data_sets')
-    .select('*')
+    .select('id, set_key, set_name, status, created_at, updated_at')
     .eq('id', setId)
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 404 });

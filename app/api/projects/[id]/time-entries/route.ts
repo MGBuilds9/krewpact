@@ -22,7 +22,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
   const supabase = await createUserClient();
   let query = supabase
     .from('time_entries')
-    .select('*', { count: 'exact' })
+    .select('id, project_id, task_id, user_id, work_date, hours_regular, hours_overtime, cost_code, notes, source, created_at, updated_at', { count: 'exact' })
     .eq('project_id', id)
     .order('work_date', { ascending: false });
 

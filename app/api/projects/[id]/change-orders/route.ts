@@ -22,7 +22,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
   const supabase = await createUserClient();
   let query = supabase
     .from('change_orders')
-    .select('*', { count: 'exact' })
+    .select('id, project_id, change_request_id, co_number, status, reason, amount_delta, days_delta, approved_at, approved_by, signed_contract_id, created_at, updated_at', { count: 'exact' })
     .eq('project_id', id)
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);

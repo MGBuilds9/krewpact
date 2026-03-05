@@ -10,7 +10,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const supabase = await createUserClient();
   const { data, error } = await supabase
     .from('job_cost_snapshots')
-    .select('*')
+    .select('id, project_id, snapshot_date, baseline_budget, revised_budget, committed_cost, actual_cost, forecast_cost, forecast_margin_pct, payload, created_at')
     .eq('id', id)
     .single();
 

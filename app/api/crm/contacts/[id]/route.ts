@@ -17,7 +17,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
   const { id } = await context.params;
   const supabase = await createUserClient();
-  const { data, error } = await supabase.from('contacts').select('*').eq('id', id).single();
+  const { data, error } = await supabase.from('contacts').select('id, first_name, last_name, full_name, email, phone, mobile, title, role, linkedin_url, is_primary, is_decision_maker, lead_id, preferred_channel, email_opted_in, phone_opted_in, last_contacted_at, total_touches, created_at, updated_at').eq('id', id).single();
 
   if (error) {
     const status = error.code === 'PGRST116' ? 404 : 500;

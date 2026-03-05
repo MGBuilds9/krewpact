@@ -28,7 +28,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
   const supabase = await createUserClient();
   const { data, error, count } = await supabase
     .from('project_daily_logs')
-    .select('*', { count: 'exact' })
+    .select('id, project_id, log_date, work_summary, crew_count, delays, safety_notes, is_offline_origin, sync_client_id, submitted_at, submitted_by, created_at, updated_at' /* excluded from list: weather */, { count: 'exact' })
     .eq('project_id', id)
     .order('log_date', { ascending: false })
     .range(offset, offset + limit - 1);

@@ -28,7 +28,8 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from('proposals')
-    .select('*', { count: 'exact' })
+    /* excluded from list: proposal_payload */
+    .select('id, proposal_number, status, estimate_id, sent_at, accepted_at, rejected_at, expires_on, created_by, created_at, updated_at', { count: 'exact' })
     .order('created_at', { ascending: false });
 
   if (estimate_id) query = query.eq('estimate_id', estimate_id);

@@ -18,7 +18,7 @@ export async function GET(
   const supabase = await createUserClient();
   const { data, error } = await supabase
     .from('closeout_packages')
-    .select('*')
+    .select('id, project_id, status, checklist_payload, accepted_at, created_by, created_at, updated_at')
     .eq('id', pkgId)
     .eq('project_id', projectId)
     .single();

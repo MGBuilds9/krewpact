@@ -23,7 +23,8 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from('divisions')
-    .select('*', { count: 'exact' })
+    /* excluded from list: settings */
+    .select('id, name, code, description, is_active, created_at, updated_at', { count: 'exact' })
     .order('division_name', { ascending: true })
     .range(offset, offset + limit - 1);
 

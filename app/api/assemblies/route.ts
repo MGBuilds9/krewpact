@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from('assemblies')
-    .select('*', { count: 'exact' })
+    .select('id, assembly_code, assembly_name, description, unit, division_id, is_active, version_no, created_by, created_at, updated_at', { count: 'exact' })
     .order('assembly_name', { ascending: true });
 
   if (division_id) query = query.eq('division_id', division_id);

@@ -28,7 +28,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
   const supabase = await createUserClient();
   const { data, error, count } = await supabase
     .from('site_diary_entries')
-    .select('*', { count: 'exact' })
+    .select('id, project_id, entry_at, entry_type, entry_text, created_by, created_at, updated_at', { count: 'exact' })
     .eq('project_id', id)
     .eq('entry_type', 'meeting')
     .order('entry_at', { ascending: false })

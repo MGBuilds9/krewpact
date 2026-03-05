@@ -40,7 +40,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
   // Fetch lead
   const { data: lead, error: leadError } = await supabase
     .from('leads')
-    .select('*')
+    .select('id, company_name, status, lead_score, fit_score, intent_score, engagement_score, source_channel, source_detail, assigned_to, division_id, created_at, updated_at, city, province, address, postal_code, industry, project_type, project_description, estimated_value, estimated_sqft, timeline_urgency, decision_date, next_followup_at, last_touch_at, nurture_status, is_qualified, qualified_at, qualified_by, disqualified_reason, lost_reason, current_sequence_id, sequence_step, automation_paused, last_automation_at, external_id, domain, enrichment_status, enrichment_data, deleted_at, utm_campaign, utm_medium, utm_source, domain_hash')
     .eq('id', id)
     .single();
 
@@ -62,13 +62,13 @@ export async function POST(req: NextRequest, context: RouteContext) {
   const result = validateConversion({
     lead: {
       id: lead.id as string,
-      stage: lead.stage as string,
-      lead_name: lead.lead_name as string,
+      stage: lead.status as string,
+      lead_name: lead.company_name as string,
       division_id: lead.division_id as string | null,
       estimated_value: lead.estimated_value as number | null,
       company_name: lead.company_name as string | null,
-      email: lead.email as string | null,
-      phone: lead.phone as string | null,
+      email: null,
+      phone: null,
       source_channel: (lead.source_channel as string | null) ?? null,
     },
     existingOpportunityForLead,

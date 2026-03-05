@@ -13,7 +13,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
 
   const { data, error } = await supabase
     .from('timesheet_batches')
-    .select('*')
+    .select('id, division_id, period_start, period_end, status, submitted_by, approved_by, exported_at, adp_export_reference, created_at, updated_at')
     .eq('id', batchId)
     .single();
 

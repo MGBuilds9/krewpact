@@ -30,7 +30,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const { id } = await params;
   const supabase = await createUserClient();
 
-  const { data, error } = await supabase.from('crm_saved_views').select('*').eq('id', id).single();
+  const { data, error } = await supabase.from('crm_saved_views').select('id, name, entity_type, filters, sort_by, sort_dir, columns, is_default, created_by, created_at, updated_at').eq('id', id).single();
 
   if (error) return errorResponse(dbError(error.message));
 

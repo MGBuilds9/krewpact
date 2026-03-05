@@ -20,7 +20,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
   const { data, error, count } = await supabase
     .from('file_versions')
-    .select('*', { count: 'exact' })
+    .select('id, file_id, version_no, file_path, storage_bucket, checksum_sha256, change_note, uploaded_by, created_at', { count: 'exact' })
     .eq('file_id', fileId)
     .order('version_no', { ascending: false })
     .range(offset, offset + limit - 1);

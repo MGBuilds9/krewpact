@@ -29,7 +29,8 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from('job_cost_snapshots')
-    .select('*', { count: 'exact' })
+    /* excluded from list: payload */
+    .select('id, project_id, snapshot_date, baseline_budget, revised_budget, committed_cost, actual_cost, forecast_cost, forecast_margin_pct, created_at', { count: 'exact' })
     .order('snapshot_date', { ascending: false })
     .range(offset, offset + limit - 1);
 

@@ -11,7 +11,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const supabase = await createUserClient();
   const { data, error } = await supabase
     .from('migration_batches')
-    .select('*')
+    .select('id, source_system, batch_name, status, started_at, completed_at, summary, created_by, created_at, updated_at')
     .eq('id', id)
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 404 });
@@ -38,7 +38,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     .from('migration_batches')
     .update({ ...parsed.data, updated_at: new Date().toISOString() })
     .eq('id', id)
-    .select()
+    .select('id, source_system, batch_name, status, started_at, completed_at, summary, created_by, created_at, updated_at')
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

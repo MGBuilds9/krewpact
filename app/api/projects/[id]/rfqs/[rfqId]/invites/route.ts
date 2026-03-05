@@ -30,7 +30,7 @@ export async function GET(
   const supabase = await createUserClient();
   const { data, error, count } = await supabase
     .from('rfq_invites')
-    .select('*', { count: 'exact' })
+    .select('id, rfq_id, portal_account_id, invited_email, invited_at, status', { count: 'exact' })
     .eq('rfq_id', rfqId)
     .range(offset, offset + limit - 1);
 

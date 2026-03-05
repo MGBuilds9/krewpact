@@ -24,7 +24,8 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from('migration_batches')
-    .select('*', { count: 'exact' })
+    /* excluded from list: summary */
+    .select('id, source_system, batch_name, status, started_at, completed_at, created_by, created_at, updated_at', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 
@@ -56,7 +57,7 @@ export async function POST(req: NextRequest) {
   const { data, error } = await supabase
     .from('migration_batches')
     .insert({ ...parsed.data, status: 'queued', created_by: userId })
-    .select()
+    .select('id, source_system, batch_name, status, started_at, completed_at, summary, created_by, created_at, updated_at')
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

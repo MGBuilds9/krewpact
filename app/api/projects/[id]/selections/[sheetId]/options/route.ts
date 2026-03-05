@@ -20,7 +20,7 @@ export async function GET(
   const supabase = await createUserClient();
   const { data, error, count } = await supabase
     .from('selection_options')
-    .select('*', { count: 'exact' })
+    .select('id, selection_sheet_id, option_group, option_name, allowance_amount, upgrade_amount, sort_order, created_at, updated_at', { count: 'exact' })
     .eq('selection_sheet_id', sheetId)
     .order('sort_order', { ascending: true })
     .range(offset, offset + limit - 1);

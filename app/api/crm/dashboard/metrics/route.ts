@@ -64,7 +64,7 @@ export async function GET(req: NextRequest) {
   const supabase = await createUserClient();
 
   // Fetch opportunities (all for pipeline, filtered by period for velocity)
-  let oppQuery = supabase.from('opportunities').select('*, opportunity_stage_history(*)');
+  let oppQuery = supabase.from('opportunities').select('id, opportunity_name, stage, estimated_revenue, probability_pct, target_close_date, account_id, contact_id, lead_id, division_id, owner_user_id, notes, created_at, updated_at, opportunity_stage_history(*)');
 
   if (division_id) {
     oppQuery = oppQuery.eq('division_id', division_id);
@@ -77,7 +77,7 @@ export async function GET(req: NextRequest) {
   }
 
   // Fetch leads filtered by period
-  let leadQuery = supabase.from('leads').select('*').gte('created_at', periodStart);
+  let leadQuery = supabase.from('leads').select('id, company_name, status, lead_score, fit_score, intent_score, engagement_score, source_channel, source_detail, assigned_to, division_id, created_at, updated_at, city, province, address, postal_code, industry, project_type, project_description, estimated_value, estimated_sqft, timeline_urgency, decision_date, next_followup_at, last_touch_at, nurture_status, is_qualified, qualified_at, qualified_by, disqualified_reason, lost_reason, current_sequence_id, sequence_step, automation_paused, last_automation_at, external_id, domain, enrichment_status, enrichment_data, deleted_at, utm_campaign, utm_medium, utm_source, domain_hash').gte('created_at', periodStart);
 
   if (division_id) {
     leadQuery = leadQuery.eq('division_id', division_id);

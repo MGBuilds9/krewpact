@@ -28,7 +28,8 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from('estimate_templates')
-    .select('*', { count: 'exact' })
+    /* excluded from list: payload */
+    .select('id, template_name, project_type, division_id, is_default, created_by, created_at, updated_at', { count: 'exact' })
     .order('template_name', { ascending: true });
 
   if (division_id) query = query.eq('division_id', division_id);

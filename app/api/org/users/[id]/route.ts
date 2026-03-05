@@ -8,7 +8,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
   const { id } = await params;
   const supabase = await createUserClient();
-  const { data, error } = await supabase.from('users').select('*').eq('id', id).single();
+  const { data, error } = await supabase.from('users').select('id, clerk_user_id, first_name, last_name, email, phone, avatar_url, locale, timezone, status, created_at, updated_at').eq('id', id).single();
   if (error) return NextResponse.json({ error: error.message }, { status: 404 });
   return NextResponse.json(data);
 }

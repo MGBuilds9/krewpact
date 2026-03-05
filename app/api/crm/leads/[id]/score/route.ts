@@ -38,7 +38,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
   // Fetch score history
   const { data: history, error: historyError } = await supabase
     .from('lead_score_history')
-    .select('*')
+    .select('id, lead_id, score, previous_score, rule_results, created_at')
     .eq('lead_id', id)
     .order('created_at', { ascending: false })
     .limit(50);
@@ -73,7 +73,7 @@ export async function POST(_req: NextRequest, context: RouteContext) {
   // Fetch the lead
   const { data: lead, error: leadError } = await supabase
     .from('leads')
-    .select('*')
+    .select('id, company_name, status, lead_score, fit_score, intent_score, engagement_score, source_channel, source_detail, assigned_to, division_id, created_at, updated_at, city, province, address, postal_code, industry, project_type, project_description, estimated_value, estimated_sqft, timeline_urgency, decision_date, next_followup_at, last_touch_at, nurture_status, is_qualified, qualified_at, qualified_by, disqualified_reason, lost_reason, current_sequence_id, sequence_step, automation_paused, last_automation_at, external_id, domain, enrichment_status, enrichment_data, deleted_at, utm_campaign, utm_medium, utm_source, domain_hash')
     .eq('id', id)
     .single();
 
@@ -83,7 +83,7 @@ export async function POST(_req: NextRequest, context: RouteContext) {
   }
 
   // Fetch active scoring rules (filtered by division if applicable)
-  let rulesQuery = supabase.from('scoring_rules').select('*').eq('is_active', true);
+  let rulesQuery = supabase.from('scoring_rules').select('id, name, category, field_name, operator, value, score_impact, priority, division_id, is_active, created_at, updated_at').eq('is_active', true);
 
   if (lead.division_id) {
     rulesQuery = rulesQuery.or(`division_id.eq.${lead.division_id},division_id.is.null`);

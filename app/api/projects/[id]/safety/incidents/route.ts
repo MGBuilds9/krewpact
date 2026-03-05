@@ -20,7 +20,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
   const { data, error, count } = await supabase
     .from('safety_incidents')
-    .select('*', { count: 'exact' })
+    .select('id, project_id, incident_date, severity, summary, reported_by, closed_at, created_at, updated_at' /* excluded from list: details, corrective_actions */, { count: 'exact' })
     .eq('project_id', id)
     .order('incident_date', { ascending: false })
     .range(offset, offset + limit - 1);

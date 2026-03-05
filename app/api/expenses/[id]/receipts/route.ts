@@ -16,7 +16,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
   const { data, error, count } = await supabase
     .from('expense_receipts')
-    .select('*', { count: 'exact' })
+    .select('id, expense_id, file_id, ocr_payload, created_at', { count: 'exact' })
     .eq('expense_id', id)
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);

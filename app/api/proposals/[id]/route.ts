@@ -11,7 +11,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const { id } = await params;
   const supabase = await createUserClient();
-  const { data, error } = await supabase.from('proposals').select('*').eq('id', id).single();
+  const { data, error } = await supabase.from('proposals').select('id, proposal_number, status, estimate_id, proposal_payload, sent_at, accepted_at, rejected_at, expires_on, created_by, created_at, updated_at').eq('id', id).single();
 
   if (error) {
     return NextResponse.json(

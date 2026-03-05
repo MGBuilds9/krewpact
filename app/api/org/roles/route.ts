@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from('roles')
-    .select('*', { count: 'exact' })
+    .select('id, role_key, role_name, scope, is_system, created_at, updated_at', { count: 'exact' })
     .eq('is_active', true)
     .order('role_name', { ascending: true })
     .range(offset, offset + limit - 1);

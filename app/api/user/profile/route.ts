@@ -10,7 +10,7 @@ export async function GET() {
   const supabase = await createUserClient();
   const { data, error } = await supabase
     .from('users')
-    .select('*')
+    .select('id, clerk_user_id, first_name, last_name, email, phone, avatar_url, locale, timezone, status, created_at, updated_at')
     .eq('clerk_user_id', userId)
     .single();
 

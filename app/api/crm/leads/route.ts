@@ -55,7 +55,7 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from('leads')
-    .select('*', { count: 'exact' })
+    .select('id, company_name, status, lead_score, fit_score, intent_score, engagement_score, source_channel, source_detail, assigned_to, division_id, created_at, updated_at, city, province, address, postal_code, industry, project_type, project_description, estimated_value, estimated_sqft, timeline_urgency, decision_date, next_followup_at, last_touch_at, nurture_status, is_qualified, qualified_at, qualified_by, disqualified_reason, lost_reason, current_sequence_id, sequence_step, automation_paused, last_automation_at, external_id, domain, enrichment_status, deleted_at', { count: 'exact' })
     .is('deleted_at', null)
     .order(sort_by ?? 'lead_score', { ascending: sort_dir === 'asc', nullsFirst: false });
 
@@ -135,7 +135,7 @@ export async function POST(req: NextRequest) {
 
   // Auto-score the new lead (non-blocking)
   try {
-    let rulesQuery = supabase.from('scoring_rules').select('*').eq('is_active', true);
+    let rulesQuery = supabase.from('scoring_rules').select('id, name, category, field_name, operator, value, score_impact, priority, division_id, is_active, created_at, updated_at').eq('is_active', true);
 
     if (data.division_id) {
       rulesQuery = rulesQuery.or(`division_id.eq.${data.division_id},division_id.is.null`);

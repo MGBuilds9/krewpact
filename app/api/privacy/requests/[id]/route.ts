@@ -9,7 +9,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
   const { id } = await params;
   const supabase = await createUserClient();
-  const { data, error } = await supabase.from('privacy_requests').select('*').eq('id', id).single();
+  const { data, error } = await supabase.from('privacy_requests').select('id, requester_email, requester_name, request_type, status, legal_basis, due_at, completed_at, handled_by, notes, created_at, updated_at').eq('id', id).single();
   if (error) return NextResponse.json({ error: error.message }, { status: 404 });
   return NextResponse.json(data);
 }

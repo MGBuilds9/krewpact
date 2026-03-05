@@ -19,7 +19,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const supabase = await createUserClient();
   const { data, error, count } = await supabase
     .from('estimate_allowances')
-    .select('*', { count: 'exact' })
+    .select('id, estimate_id, allowance_name, allowance_amount, notes, created_at, updated_at', { count: 'exact' })
     .eq('estimate_id', id)
     .order('created_at', { ascending: true })
     .range(offset, offset + limit - 1);

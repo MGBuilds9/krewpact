@@ -26,7 +26,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
   const supabase = await createUserClient();
   const { data, error } = await supabase
     .from('expense_claims')
-    .select('*, user:users(first_name, last_name, avatar_url), project:projects(project_name)')
+    .select('id, user_id, project_id, division_id, amount, tax_amount, currency_code, category, description, expense_date, status, submitted_at, posted_at, erp_document_id, erp_document_type, created_at, updated_at, user:users(first_name, last_name, avatar_url), project:projects(project_name)')
     .eq('id', id)
     .single();
 

@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
 
   const supabase = await createUserClient();
-  let query = supabase.from('tasks').select('*', { count: 'exact' }).order('created_at', { ascending: false });
+  let query = supabase.from('tasks').select('id, project_id, title, description, status, priority, assigned_user_id, created_by, milestone_id, due_at, start_at, completed_at, blocked_reason, created_at, updated_at' /* excluded from list: metadata */, { count: 'exact' }).order('created_at', { ascending: false });
 
   if (project_id) query = query.eq('project_id', project_id);
   if (status) query = query.eq('status', status);

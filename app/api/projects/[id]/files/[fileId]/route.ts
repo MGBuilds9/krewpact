@@ -17,7 +17,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
   const supabase = await createUserClient();
   const { data, error } = await supabase
     .from('file_metadata')
-    .select('*')
+    .select('id, filename, original_filename, file_path, file_size_bytes, mime_type, folder_id, project_id, storage_bucket, tags, visibility, version_no, is_deleted, deleted_at, checksum_sha256, source_system, source_identifier, uploaded_by, created_at, updated_at')
     .eq('id', fileId)
     .eq('project_id', id)
     .single();

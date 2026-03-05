@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from('privacy_requests')
-    .select('*', { count: 'exact' })
+    .select('id, requester_email, requester_name, request_type, status, legal_basis, due_at, completed_at, handled_by, notes, created_at, updated_at', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 

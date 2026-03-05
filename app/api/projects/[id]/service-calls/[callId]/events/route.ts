@@ -20,7 +20,7 @@ export async function GET(
   const supabase = await createUserClient();
   const { data, error, count } = await supabase
     .from('service_call_events')
-    .select('*', { count: 'exact' })
+    .select('id, service_call_id, event_type, actor_user_id, actor_portal_id, created_at' /* excluded from list: event_payload */, { count: 'exact' })
     .eq('service_call_id', callId)
     .order('created_at', { ascending: true })
     .range(offset, offset + limit - 1);

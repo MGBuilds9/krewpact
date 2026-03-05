@@ -27,7 +27,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const supabase = await createUserClient();
   const { data, error, count } = await supabase
     .from('warranty_items')
-    .select('*', { count: 'exact' })
+    .select('id, project_id, deficiency_id, title, provider_name, warranty_start, warranty_end, terms, created_at, updated_at', { count: 'exact' })
     .eq('project_id', projectId)
     .order('warranty_end', { ascending: true })
     .range(offset, offset + limit - 1);

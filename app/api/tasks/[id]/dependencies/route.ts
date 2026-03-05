@@ -19,7 +19,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
   const { data, error, count } = await supabase
     .from('task_dependencies')
-    .select('*', { count: 'exact' })
+    .select('id, task_id, depends_on_task_id, dependency_type, created_at', { count: 'exact' })
     .eq('task_id', id)
     .order('created_at', { ascending: true })
     .range(offset, offset + limit - 1);

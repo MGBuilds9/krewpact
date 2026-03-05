@@ -13,7 +13,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const supabase = await createUserClient();
   const { data, error } = await supabase
     .from('assemblies')
-    .select('*, assembly_items(*)')
+    .select('id, assembly_code, assembly_name, description, unit, division_id, is_active, version_no, created_by, created_at, updated_at, assembly_items(id, assembly_id, catalog_item_id, line_type, description, quantity, unit_cost, sort_order, metadata, created_at, updated_at)')
     .eq('id', id)
     .single();
 

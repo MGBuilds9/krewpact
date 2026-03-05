@@ -30,7 +30,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   let query = supabase
     .from('selection_sheets')
-    .select('*', { count: 'exact' })
+    .select('id, project_id, sheet_name, status, issued_at, locked_at, created_by, created_at, updated_at', { count: 'exact' })
     .eq('project_id', projectId)
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);

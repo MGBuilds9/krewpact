@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from('reference_data_sets')
-    .select('*', { count: 'exact' })
+    .select('id, set_key, set_name, status, created_at, updated_at', { count: 'exact' })
     .order('set_name', { ascending: true })
     .range(offset, offset + limit - 1);
 

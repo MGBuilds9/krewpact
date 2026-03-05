@@ -24,7 +24,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ setI
 
   let query = supabase
     .from('reference_data_values')
-    .select('*', { count: 'exact' })
+    /* excluded from list: metadata */
+    .select('id, data_set_id, value_key, value_name, sort_order, is_active, created_at, updated_at', { count: 'exact' })
     .eq('data_set_id', setId)
     .order('sort_order', { ascending: true })
     .range(offset, offset + limit - 1);

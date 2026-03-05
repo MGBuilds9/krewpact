@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from('accounts')
-    .select('*', { count: 'exact' })
+    .select('id, account_name, account_type, division_id, billing_address, shipping_address, notes, created_by, created_at, updated_at', { count: 'exact' })
     .order(sort_by ?? 'created_at', { ascending: sort_dir === 'asc' });
 
   if (division_id) {

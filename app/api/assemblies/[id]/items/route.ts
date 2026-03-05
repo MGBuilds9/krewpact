@@ -15,7 +15,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const supabase = await createUserClient();
   const { data, error, count } = await supabase
     .from('assembly_items')
-    .select('*, cost_catalog_items(*)', { count: 'exact' })
+    .select('id, assembly_id, catalog_item_id, line_type, description, quantity, unit_cost, sort_order, metadata, created_at, updated_at, cost_catalog_items(id, item_code, item_name, item_type, unit, base_cost, vendor_name, division_id, effective_from, effective_to, metadata, created_at, updated_at)', { count: 'exact' })
     .eq('assembly_id', id)
     .order('sort_order', { ascending: true })
     .range(offset, offset + limit - 1);

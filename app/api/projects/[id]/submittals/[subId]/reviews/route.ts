@@ -20,7 +20,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
   const { data, error, count } = await supabase
     .from('submittal_reviews')
-    .select('*', { count: 'exact' })
+    .select('id, submittal_id, reviewer_user_id, outcome, review_notes, reviewed_at', { count: 'exact' })
     .eq('submittal_id', subId)
     .order('reviewed_at', { ascending: false })
     .range(offset, offset + limit - 1);

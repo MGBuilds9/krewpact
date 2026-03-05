@@ -16,7 +16,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
   const supabase = await createUserClient();
   const { data, error } = await supabase
     .from('photo_assets')
-    .select('*')
+    .select('id, project_id, file_id, category, taken_at, location_point, created_by, created_at')
     .eq('id', photoId)
     .eq('project_id', id)
     .single();

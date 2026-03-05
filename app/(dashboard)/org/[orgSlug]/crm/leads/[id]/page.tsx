@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useParams } from 'next/navigation';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,8 +30,6 @@ import {
 } from '@/hooks/useCRM';
 import { StageProgressBar } from '@/components/CRM/StageProgressBar';
 import { ActivityTimeline } from '@/components/CRM/ActivityTimeline';
-import { LeadForm } from '@/components/CRM/LeadForm';
-import { EnrichmentIntelCard } from '@/components/CRM/EnrichmentIntelCard';
 import { ActivityLogDialog } from '@/components/CRM/ActivityLogDialog';
 import { NotesPanel } from '@/components/CRM/NotesPanel';
 import { LeadScoreCard } from '@/components/CRM/LeadScoreCard';
@@ -39,6 +38,15 @@ import { EmailComposeDialog } from '@/components/CRM/EmailComposeDialog';
 import { ALLOWED_TRANSITIONS } from '@/lib/crm/lead-stages';
 import type { LeadStage } from '@/lib/crm/lead-stages';
 import { cn } from '@/lib/utils';
+
+const LeadForm = dynamic(
+  () => import('@/components/CRM/LeadForm').then((m) => m.LeadForm),
+  { loading: () => <Skeleton className="h-48 w-full rounded-xl" /> },
+);
+const EnrichmentIntelCard = dynamic(
+  () => import('@/components/CRM/EnrichmentIntelCard').then((m) => m.EnrichmentIntelCard),
+  { loading: () => <Skeleton className="h-32 w-full rounded-xl" /> },
+);
 
 export default function LeadDetailPage() {
   const params = useParams();

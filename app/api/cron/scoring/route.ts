@@ -20,7 +20,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // Fetch enriched leads that haven't been scored yet
   const { data: leads, error: leadsError } = await supabase
     .from('leads')
-    .select('*')
+    .select('id, company_name, domain, enrichment_status, enrichment_data, lead_score, fit_score, intent_score, engagement_score, source_channel, industry, project_type, estimated_value, estimated_sqft, city, province, postal_code, timeline_urgency, decision_date, status, division_id, created_at, updated_at')
     .eq('enrichment_status', 'complete')
     .or('lead_score.is.null,lead_score.eq.0')
     .is('deleted_at', null)
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // Fetch all active scoring rules
   const { data: rules, error: rulesError } = await supabase
     .from('scoring_rules')
-    .select('*')
+    .select('id, name, category, field_name, operator, value, score_impact, priority, division_id, is_active, created_at, updated_at')
     .eq('is_active', true);
 
   if (rulesError) {

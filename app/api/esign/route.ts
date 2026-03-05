@@ -29,7 +29,8 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from('esign_envelopes')
-    .select('*', { count: 'exact' })
+    /* excluded from list: payload */
+    .select('id, contract_id, provider, provider_envelope_id, status, signer_count, webhook_last_event_at, created_at, updated_at', { count: 'exact' })
     .order('created_at', { ascending: false });
 
   if (contract_id) query = query.eq('contract_id', contract_id);
@@ -132,7 +133,7 @@ async function handleProposalSend(
   // 2. Get or create contract_terms for this proposal
   let { data: contract } = await supabase
     .from('contract_terms')
-    .select('*')
+    .select('id, proposal_id, contract_status, legal_text_version, terms_payload, signed_at, supersedes_contract_id, created_at, updated_at')
     .eq('proposal_id', params.proposal_id)
     .eq('contract_status', 'draft')
     .order('created_at', { ascending: false })
@@ -165,6 +166,9 @@ async function handleProposalSend(
       .update({ contract_status: 'pending_signature' })
       .eq('id', contract.id);
   }
+
+  // After the if/else above, contract is guaranteed non-null (early return on failure)
+  const contractId = contract!.id;
 
   // 3. Gather signer info from contacts
   const estimate = proposal.estimate as Record<string, unknown> | null;
@@ -212,7 +216,7 @@ async function handleProposalSend(
       .insert({
         provider: 'boldsign',
         provider_envelope_id: documentId,
-        contract_id: contract.id,
+        contract_id: contractId,
         status: boldSign.isMockMode() ? 'mock_sent' : 'sent',
         signer_count: signers.length,
         payload: {
@@ -246,7 +250,7 @@ async function handleProposalSend(
       envelopeId: envelope.id,
       documentId,
       proposalId: params.proposal_id,
-      contractId: contract.id,
+      contractId,
       signerCount: signers.length,
       mockMode: boldSign.isMockMode(),
     });
@@ -255,7 +259,7 @@ async function handleProposalSend(
       {
         envelope_id: envelope.id,
         document_id: documentId,
-        contract_id: contract.id,
+        contract_id: contractId,
         status: envelope.status,
         signer_count: signers.length,
         mock_mode: boldSign.isMockMode(),

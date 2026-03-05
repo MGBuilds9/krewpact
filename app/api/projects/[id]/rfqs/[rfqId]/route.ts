@@ -18,7 +18,7 @@ export async function GET(
   const supabase = await createUserClient();
   const { data, error } = await supabase
     .from('rfq_packages')
-    .select('*')
+    .select('id, project_id, rfq_number, title, scope_summary, due_at, status, created_by, created_at, updated_at')
     .eq('id', rfqId)
     .eq('project_id', projectId)
     .single();

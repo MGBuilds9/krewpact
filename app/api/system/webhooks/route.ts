@@ -23,7 +23,8 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from('webhook_events')
-    .select('*', { count: 'exact' })
+    /* excluded from list: payload */
+    .select('id, provider, event_id, event_type, received_at, processed_at, processing_status, processing_error', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 

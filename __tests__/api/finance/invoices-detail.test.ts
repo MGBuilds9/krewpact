@@ -1,0 +1,136 @@
+/**
+ * Tests for GET/PATCH /api/finance/invoices/[id]
+ *
+ * Covers: auth, GET by id, PATCH update, 404, validation errors, DB errors.
+ */
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+
+import { auth } from '@clerk/nextjs/server';
+import { createUserClient } from '@/lib/supabase/server';
+import { GET, PATCH } from '@/app/api/finance/invoices/[id]/route';
+import {
+  mockSupabaseClient,
+  mockClerkAuth,
+  mockClerkUnauth,
+  makeRequest,
+  makeJsonRequest,
+} from '@/__tests__/helpers';
+
+const mockAuth = vi.mocked(auth);
+const mockCreateUserClient = vi.mocked(createUserClient);
+
+function makeContext(id: string) {
+  return { params: Promise.resolve({ id }) };
+}
+
+const sampleInvoice = {
+  id: 'inv-1',
+  project_id: 'proj-1',
+  invoice_number: 'INV-001',
+  customer_name: 'Acme Construction',
+  invoice_date: '2026-03-01',
+  due_date: '2026-04-01',
+  status: 'submitted',
+  subtotal_amount: 10000,
+  tax_amount: 1300,
+  total_amount: 11300,
+  amount_paid: 0,
+  payment_link_url: null,
+  erp_docname: 'SINV-001',
+  snapshot_payload: { lines: [] },
+  created_at: '2026-03-01T00:00:00Z',
+  updated_at: '2026-03-01T00:00:00Z',
+};
+
+describe('GET /api/finance/invoices/[id]', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('returns 401 without auth', async () => {
+    mockClerkUnauth(mockAuth);
+    const res = await GET(makeRequest('/api/finance/invoices/inv-1'), makeContext('inv-1'));
+    expect(res.status).toBe(401);
+  });
+
+  it('returns invoice by id', async () => {
+    mockClerkAuth(mockAuth);
+    mockCreateUserClient.mockResolvedValue(
+      mockSupabaseClient({ tables: { invoice_snapshots: { data: sampleInvoice, error: null } } }),
+    );
+
+    const res = await GET(makeRequest('/api/finance/invoices/inv-1'), makeContext('inv-1'));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.id).toBe('inv-1');
+    expect(body.invoice_number).toBe('INV-001');
+    expect(body.snapshot_payload).toBeDefined();
+  });
+
+  it('returns 404 when not found', async () => {
+    mockClerkAuth(mockAuth);
+    mockCreateUserClient.mockResolvedValue(
+      mockSupabaseClient({
+        tables: { invoice_snapshots: { data: null, error: { message: 'Not found', code: 'PGRST116' } } },
+      }),
+    );
+
+    const res = await GET(makeRequest('/api/finance/invoices/missing'), makeContext('missing'));
+    expect(res.status).toBe(404);
+  });
+});
+
+describe('PATCH /api/finance/invoices/[id]', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('returns 401 without auth', async () => {
+    mockClerkUnauth(mockAuth);
+    const res = await PATCH(
+      makeJsonRequest('/api/finance/invoices/inv-1', { status: 'paid' }, 'PATCH'),
+      makeContext('inv-1'),
+    );
+    expect(res.status).toBe(401);
+  });
+
+  it('updates invoice fields', async () => {
+    mockClerkAuth(mockAuth);
+    const updated = { ...sampleInvoice, status: 'paid', amount_paid: 11300 };
+    mockCreateUserClient.mockResolvedValue(
+      mockSupabaseClient({ tables: { invoice_snapshots: { data: updated, error: null } } }),
+    );
+
+    const res = await PATCH(
+      makeJsonRequest('/api/finance/invoices/inv-1', { status: 'paid', amount_paid: 11300 }, 'PATCH'),
+      makeContext('inv-1'),
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.status).toBe('paid');
+    expect(body.amount_paid).toBe(11300);
+  });
+
+  it('returns 400 for invalid data', async () => {
+    mockClerkAuth(mockAuth);
+    const res = await PATCH(
+      makeJsonRequest('/api/finance/invoices/inv-1', { status: 'invalid_status' }, 'PATCH'),
+      makeContext('inv-1'),
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 500 on DB error', async () => {
+    mockClerkAuth(mockAuth);
+    mockCreateUserClient.mockResolvedValue(
+      mockSupabaseClient({
+        tables: { invoice_snapshots: { data: null, error: { message: 'DB error', code: '42000' } } },
+      }),
+    );
+
+    const res = await PATCH(
+      makeJsonRequest('/api/finance/invoices/inv-1', { customer_name: 'Updated' }, 'PATCH'),
+      makeContext('inv-1'),
+    );
+    expect(res.status).toBe(500);
+  });
+});

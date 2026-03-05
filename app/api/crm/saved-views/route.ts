@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
   const supabase = await createUserClient();
   let query = supabase
     .from('crm_saved_views')
-    .select('*', { count: 'exact' })
+    .select('id, name, entity_type, filters, sort_by, sort_dir, columns, is_default, created_by, created_at, updated_at', { count: 'exact' })
     .order('is_default', { ascending: false })
     .order('name', { ascending: true });
 

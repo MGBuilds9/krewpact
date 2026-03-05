@@ -47,7 +47,7 @@ describe('POST /api/crm/leads/[id]/convert', () => {
   });
 
   it('converts a won lead to opportunity', async () => {
-    const lead = makeLead({ id: 'lead-1', stage: 'won', lead_name: 'Big Project' });
+    const lead = makeLead({ id: 'lead-1', status: 'won', company_name: 'Big Project' });
     const createdOpp = makeOpportunity({ lead_id: 'lead-1', opportunity_name: 'Big Project' });
     mockClerkAuth(mockAuth);
 
@@ -70,7 +70,7 @@ describe('POST /api/crm/leads/[id]/convert', () => {
   });
 
   it('rejects conversion of non-won lead', async () => {
-    const lead = makeLead({ id: 'lead-1', stage: 'new' });
+    const lead = makeLead({ id: 'lead-1', status: 'new' });
     mockClerkAuth(mockAuth);
 
     const client = mockSupabaseClient({
@@ -91,7 +91,7 @@ describe('POST /api/crm/leads/[id]/convert', () => {
   });
 
   it('allows custom opportunity name', async () => {
-    const lead = makeLead({ id: 'lead-1', stage: 'won', lead_name: 'Old Name' });
+    const lead = makeLead({ id: 'lead-1', status: 'won', company_name: 'Old Name' });
     const createdOpp = makeOpportunity({ lead_id: 'lead-1', opportunity_name: 'Custom Name' });
     mockClerkAuth(mockAuth);
 
@@ -133,7 +133,7 @@ describe('POST /api/crm/leads/[id]/convert', () => {
   });
 
   it('accepts empty body (no JSON)', async () => {
-    const lead = makeLead({ id: 'lead-1', stage: 'won' });
+    const lead = makeLead({ id: 'lead-1', status: 'won' });
     const createdOpp = makeOpportunity({ lead_id: 'lead-1' });
     mockClerkAuth(mockAuth);
 

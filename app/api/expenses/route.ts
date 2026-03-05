@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
   const supabase = await createUserClient();
   let query = supabase
     .from('expense_claims')
-    .select('*, user:users(first_name, last_name, avatar_url), project:projects(project_name)', { count: 'exact' })
+    .select('id, user_id, project_id, division_id, amount, tax_amount, currency_code, category, description, expense_date, status, submitted_at, posted_at, erp_document_id, erp_document_type, created_at, updated_at, user:users(first_name, last_name, avatar_url), project:projects(project_name)', { count: 'exact' })
     .order('expense_date', { ascending: false });
 
   if (project_id) query = query.eq('project_id', project_id);

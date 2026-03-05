@@ -35,7 +35,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
   // Fetch current opportunity to get current stage
   const { data: currentOpportunity, error: fetchError } = await supabase
     .from('opportunities')
-    .select('*')
+    .select('id, opportunity_name, stage, estimated_revenue, probability_pct, target_close_date, account_id, contact_id, lead_id, division_id, owner_user_id, notes, created_at, updated_at')
     .eq('id', id)
     .single();
 

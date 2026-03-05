@@ -21,7 +21,7 @@ export async function GET(req: NextRequest, context: RouteContext): Promise<Next
   const supabase = await createUserClient();
   const { data, error, count } = await supabase
     .from('sequence_steps')
-    .select('*', { count: 'exact' })
+    .select('id, sequence_id, step_number, step_type, delay_days, delay_hours, template_id, subject, body_html, body_text, config, created_at, updated_at', { count: 'exact' })
     .eq('sequence_id', id)
     .order('step_number', { ascending: true })
     .range(offset, offset + limit - 1);

@@ -11,7 +11,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const { id } = await params;
   const supabase = await createUserClient();
-  const { data, error } = await supabase.from('esign_envelopes').select('*').eq('id', id).single();
+  const { data, error } = await supabase.from('esign_envelopes').select('id, contract_id, provider, provider_envelope_id, status, signer_count, payload, webhook_last_event_at, created_at, updated_at').eq('id', id).single();
 
   if (error) {
     return NextResponse.json(

@@ -20,7 +20,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
   const { data, error, count } = await supabase
     .from('rfi_threads')
-    .select('*', { count: 'exact' })
+    .select('id, rfi_id, author_user_id, message_text, is_official_response, created_at', { count: 'exact' })
     .eq('rfi_id', rfiId)
     .order('created_at')
     .range(offset, offset + limit - 1);

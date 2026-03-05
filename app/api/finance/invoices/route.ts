@@ -30,7 +30,8 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from('invoice_snapshots')
-    .select('*', { count: 'exact' })
+    /* excluded from list: snapshot_payload */
+    .select('id, project_id, invoice_number, customer_name, invoice_date, due_date, status, subtotal_amount, tax_amount, total_amount, amount_paid, payment_link_url, erp_docname, created_at, updated_at', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 

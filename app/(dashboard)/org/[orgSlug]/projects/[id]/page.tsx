@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useParams } from 'next/navigation';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { Badge } from '@/components/ui/badge';
@@ -19,13 +20,37 @@ import {
 } from 'lucide-react';
 import { useProject } from '@/hooks/useProjects';
 import { ProjectOverviewTab } from '@/components/Projects/Tabs/ProjectOverviewTab';
-import { ProjectTasksTab } from '@/components/Projects/Tabs/ProjectTasksTab';
-import { ProjectTeamTab } from '@/components/Projects/Tabs/ProjectTeamTab';
-import { ProjectBudgetTab } from '@/components/Projects/Tabs/ProjectBudgetTab';
-import { ProjectTimelineTab } from '@/components/Projects/Tabs/ProjectTimelineTab';
-import { ProjectFilesTab } from '@/components/Projects/Tabs/ProjectFilesTab';
-import { ProjectExpensesTab } from '@/components/Projects/Tabs/ProjectExpensesTab';
-import { ProjectReportsTab } from '@/components/Projects/Tabs/ProjectReportsTab';
+
+const TabSkeleton = () => <Skeleton className="h-64 w-full rounded-xl" />;
+
+const ProjectTasksTab = dynamic(
+  () => import('@/components/Projects/Tabs/ProjectTasksTab').then((m) => m.ProjectTasksTab),
+  { loading: TabSkeleton },
+);
+const ProjectTeamTab = dynamic(
+  () => import('@/components/Projects/Tabs/ProjectTeamTab').then((m) => m.ProjectTeamTab),
+  { loading: TabSkeleton },
+);
+const ProjectBudgetTab = dynamic(
+  () => import('@/components/Projects/Tabs/ProjectBudgetTab').then((m) => m.ProjectBudgetTab),
+  { loading: TabSkeleton },
+);
+const ProjectTimelineTab = dynamic(
+  () => import('@/components/Projects/Tabs/ProjectTimelineTab').then((m) => m.ProjectTimelineTab),
+  { loading: TabSkeleton },
+);
+const ProjectFilesTab = dynamic(
+  () => import('@/components/Projects/Tabs/ProjectFilesTab').then((m) => m.ProjectFilesTab),
+  { loading: TabSkeleton },
+);
+const ProjectExpensesTab = dynamic(
+  () => import('@/components/Projects/Tabs/ProjectExpensesTab').then((m) => m.ProjectExpensesTab),
+  { loading: TabSkeleton },
+);
+const ProjectReportsTab = dynamic(
+  () => import('@/components/Projects/Tabs/ProjectReportsTab').then((m) => m.ProjectReportsTab),
+  { loading: TabSkeleton },
+);
 
 export default function ProjectDetailPage() {
   const params = useParams();
