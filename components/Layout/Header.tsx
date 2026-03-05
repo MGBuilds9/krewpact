@@ -24,6 +24,7 @@ import { usePathname } from 'next/navigation';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useUserRBAC } from '@/hooks/useRBAC';
+import { ImpersonationSelector } from './ImpersonationSelector';
 import { toast } from 'sonner';
 
 export function Header() {
@@ -33,6 +34,7 @@ export function Header() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = React.useState(false);
+  const [isImpersonationOpen, setIsImpersonationOpen] = React.useState(false);
 
   const { isImpersonating, stopImpersonation } = useImpersonation();
   const { isAdmin, primaryRole } = useUserRBAC();
@@ -151,9 +153,7 @@ export function Header() {
                   {isAdmin && (
                     <DropdownMenuItem
                       className="cursor-pointer touch-target text-indigo-600 focus:text-indigo-700 focus:bg-indigo-50 transition-colors duration-200"
-                      onClick={() => {
-                        // TODO: Wire up impersonation selector dialog
-                      }}
+                      onClick={() => setIsImpersonationOpen(true)}
                     >
                       <Eye className="mr-2 h-4 w-4" />
                       <span>View As...</span>
@@ -255,6 +255,14 @@ export function Header() {
         isOpen={isCommandPaletteOpen}
         onClose={() => setIsCommandPaletteOpen(false)}
       />
+
+      {/* Impersonation Selector */}
+      {isAdmin && (
+        <ImpersonationSelector
+          open={isImpersonationOpen}
+          onOpenChange={setIsImpersonationOpen}
+        />
+      )}
     </>
   );
 }

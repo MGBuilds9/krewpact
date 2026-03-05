@@ -1,8 +1,9 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -14,6 +15,8 @@ export async function GET() {
   }
 
   const supabase = await createUserClient();
+
+  // Ensure the calling user exists in our DB
   const { data, error } = await supabase.rpc('ensure_clerk_user', {
     p_clerk_id: clerkUser.id,
     p_email: clerkUser.primaryEmailAddress?.emailAddress || '',
@@ -26,11 +29,43 @@ export async function GET() {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // RPC returns array — extract single user record
-  const user = Array.isArray(data) ? data[0] : data;
-  if (!user) {
+  const callerUser = Array.isArray(data) ? data[0] : data;
+  if (!callerUser) {
     return NextResponse.json({ error: 'User record not created' }, { status: 500 });
   }
 
-  return NextResponse.json(user);
+  // Handle impersonation: ?impersonate=<userId>
+  const impersonateId = req.nextUrl.searchParams.get('impersonate');
+  if (impersonateId) {
+    // Verify caller has system.admin permission
+    const { data: perms } = await supabase.rpc('get_user_permissions', {
+      p_user_id: callerUser.id,
+    });
+    const permNames = (perms || []).map((p: { permission_name: string }) => p.permission_name);
+    const isAdmin = permNames.includes('system.admin') || callerUser.role === 'admin';
+
+    if (!isAdmin) {
+      return NextResponse.json({ error: 'Impersonation requires admin privileges' }, { status: 403 });
+    }
+
+    // Fetch the impersonated user
+    const { data: impersonated, error: impErr } = await supabase
+      .from('users')
+      .select('id, clerk_user_id, first_name, last_name, email, phone, avatar_url, locale, timezone, status, created_at, updated_at')
+      .eq('id', impersonateId)
+      .single();
+
+    if (impErr || !impersonated) {
+      return NextResponse.json({ error: 'Impersonated user not found' }, { status: 404 });
+    }
+
+    logger.info('Admin impersonation active', {
+      adminId: callerUser.id,
+      impersonatedId: impersonateId,
+    });
+
+    return NextResponse.json({ ...impersonated, _impersonated_by: callerUser.id });
+  }
+
+  return NextResponse.json(callerUser);
 }
