@@ -114,7 +114,7 @@ export function Navigation({ isMobile = false }: NavigationProps) {
 
   return (
     <TooltipProvider delayDuration={300}>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center justify-start gap-1 w-full relative">
         {filteredItems.map((item) => {
           const href = orgPath(item.path);
           const isActive = pathname.includes(item.path);
@@ -124,15 +124,15 @@ export function Navigation({ isMobile = false }: NavigationProps) {
                 <Link
                   href={href}
                   className={cn(
-                    'flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
+                    'flex items-center gap-2 px-3 lg:px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 shrink-0 whitespace-nowrap',
                     'hover:scale-105 active:scale-95',
                     isActive
                       ? 'bg-primary text-primary-foreground shadow-md font-bold'
                       : 'text-foreground hover:bg-accent hover:text-accent-foreground',
                   )}
                 >
-                  <item.icon className="h-4 w-4" />
-                  {item.label}
+                  <item.icon className="h-4 w-4 shrink-0" />
+                  <span>{item.label}</span>
                 </Link>
               </TooltipTrigger>
               <TooltipContent>

@@ -85,21 +85,21 @@ export function Header() {
 
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/50 shadow-sm transition-colors duration-200">
         <div className="container mx-auto px-4 md:px-6 py-3 md:py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4">
             {/* Logo and Desktop Navigation */}
-            <div className="flex items-center gap-4 md:gap-6">
-              <div className="flex items-center gap-3 group cursor-pointer hover:opacity-80 transition-opacity">
+            <div className="flex items-center gap-4 md:gap-6 flex-1 min-w-0">
+              <div className="flex items-center gap-3 shrink-0 group cursor-pointer hover:opacity-80 transition-opacity">
                 <MDMLogo size="md" showText={true} />
               </div>
 
               {/* Desktop Navigation - Hidden on mobile */}
-              <nav className="hidden md:flex items-center gap-2">
+              <nav className="hidden md:flex items-center flex-1 min-w-0 overflow-x-auto custom-scrollbar pb-1 -mb-1">
                 <Navigation />
               </nav>
             </div>
 
             {/* Right Side - User Info and Actions */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 md:gap-4 shrink-0">
               {/* Division Selector */}
               <DivisionSelector className="hidden md:flex" />
 
