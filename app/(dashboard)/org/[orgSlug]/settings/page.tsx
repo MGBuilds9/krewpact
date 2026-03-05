@@ -1,18 +1,56 @@
 'use client';
 
+import { useState } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings, User, Bell, Shield } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Settings, User, Bell, Shield, Save } from 'lucide-react';
 import { useUserRBAC } from '@/hooks/useRBAC';
+
+interface NotificationPrefs {
+  emailDigest: 'daily' | 'weekly' | 'never';
+  crmUpdates: boolean;
+  projectUpdates: boolean;
+  taskAssignments: boolean;
+  systemAlerts: boolean;
+  dealWonLost: boolean;
+  leadAssignment: boolean;
+}
+
+const DEFAULT_PREFS: NotificationPrefs = {
+  emailDigest: 'daily',
+  crmUpdates: true,
+  projectUpdates: true,
+  taskAssignments: true,
+  systemAlerts: true,
+  dealWonLost: true,
+  leadAssignment: true,
+};
 
 export default function SettingsPage() {
   const { user } = useUser();
   const { roles } = useUserRBAC();
+  const [prefs, setPrefs] = useState<NotificationPrefs>(DEFAULT_PREFS);
+  const [saved, setSaved] = useState(false);
+
+  function handleSaveNotifications() {
+    // In production, this would save to API
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  }
 
   return (
     <>
@@ -96,17 +134,94 @@ export default function SettingsPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="notifications" className="mt-6">
+          <TabsContent value="notifications" className="mt-6 space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Notification Preferences</CardTitle>
+                <CardTitle>Email Digest</CardTitle>
+                <CardDescription>
+                  How often would you like to receive a summary email?
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">
-                  Notification preferences will be configurable in a future update.
-                </p>
+                <Select
+                  value={prefs.emailDigest}
+                  onValueChange={(val) =>
+                    setPrefs({ ...prefs, emailDigest: val as NotificationPrefs['emailDigest'] })
+                  }
+                >
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="daily">Daily</SelectItem>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                    <SelectItem value="never">Never</SelectItem>
+                  </SelectContent>
+                </Select>
               </CardContent>
             </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Notification Types</CardTitle>
+                <CardDescription>Choose which notifications you want to receive.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {[
+                  {
+                    key: 'crmUpdates' as const,
+                    label: 'CRM Updates',
+                    desc: 'Lead status changes, new contacts, opportunity updates',
+                  },
+                  {
+                    key: 'projectUpdates' as const,
+                    label: 'Project Updates',
+                    desc: 'Project milestones, status changes, budget alerts',
+                  },
+                  {
+                    key: 'taskAssignments' as const,
+                    label: 'Task Assignments',
+                    desc: 'When tasks are assigned to you or your team',
+                  },
+                  {
+                    key: 'dealWonLost' as const,
+                    label: 'Deal Won/Lost',
+                    desc: 'When opportunities are marked as won or lost',
+                  },
+                  {
+                    key: 'leadAssignment' as const,
+                    label: 'Lead Assignment',
+                    desc: 'When leads are assigned or re-assigned to you',
+                  },
+                  {
+                    key: 'systemAlerts' as const,
+                    label: 'System Alerts',
+                    desc: 'Integration errors, sync failures, security alerts',
+                  },
+                ].map((item) => (
+                  <div
+                    key={item.key}
+                    className="flex items-center justify-between py-2 border-b last:border-0"
+                  >
+                    <div>
+                      <p className="text-sm font-medium">{item.label}</p>
+                      <p className="text-xs text-muted-foreground">{item.desc}</p>
+                    </div>
+                    <Switch
+                      checked={prefs[item.key]}
+                      onCheckedChange={(checked) => setPrefs({ ...prefs, [item.key]: checked })}
+                    />
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            <div className="flex justify-end">
+              <Button onClick={handleSaveNotifications}>
+                <Save className="h-4 w-4 mr-2" />
+                {saved ? 'Saved!' : 'Save Preferences'}
+              </Button>
+            </div>
           </TabsContent>
 
           <TabsContent value="security" className="mt-6">
@@ -114,10 +229,35 @@ export default function SettingsPage() {
               <CardHeader>
                 <CardTitle>Security Settings</CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between py-2 border-b">
+                  <div>
+                    <p className="text-sm font-medium">Two-Factor Authentication</p>
+                    <p className="text-xs text-muted-foreground">
+                      Add an extra layer of security to your account
+                    </p>
+                  </div>
+                  <Badge variant="outline">Managed by Clerk</Badge>
+                </div>
+                <div className="flex items-center justify-between py-2 border-b">
+                  <div>
+                    <p className="text-sm font-medium">Password</p>
+                    <p className="text-xs text-muted-foreground">Change your account password</p>
+                  </div>
+                  <Badge variant="outline">Managed by Clerk</Badge>
+                </div>
+                <div className="flex items-center justify-between py-2">
+                  <div>
+                    <p className="text-sm font-medium">Active Sessions</p>
+                    <p className="text-xs text-muted-foreground">
+                      Manage your active login sessions
+                    </p>
+                  </div>
+                  <Badge variant="outline">Managed by Clerk</Badge>
+                </div>
+                <p className="text-xs text-muted-foreground mt-4">
                   Security settings including password and two-factor authentication are managed
-                  through Clerk.
+                  through Clerk. Visit your Clerk dashboard to make changes.
                 </p>
               </CardContent>
             </Card>

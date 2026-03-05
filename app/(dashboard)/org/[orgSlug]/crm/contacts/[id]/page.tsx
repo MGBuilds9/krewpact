@@ -8,10 +8,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Mail, Phone, Pencil, Building2 } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, Pencil, Building2, MessageSquarePlus, Send } from 'lucide-react';
 import { useContact, useAccount, useActivities } from '@/hooks/useCRM';
 import { ActivityTimeline } from '@/components/CRM/ActivityTimeline';
 import { ContactForm } from '@/components/CRM/ContactForm';
+import { ActivityLogDialog } from '@/components/CRM/ActivityLogDialog';
+import { EmailComposeDialog } from '@/components/CRM/EmailComposeDialog';
+import { NotesPanel } from '@/components/CRM/NotesPanel';
 
 export default function ContactDetailPage() {
   const params = useParams();
@@ -21,6 +24,8 @@ export default function ContactDetailPage() {
   const { data: account } = useAccount(contact?.account_id ?? '');
   const { data: activitiesResponse } = useActivities({ contactId });
   const [isEditing, setIsEditing] = useState(false);
+  const [activityDialogOpen, setActivityDialogOpen] = useState(false);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
 
   const activities = activitiesResponse?.data ?? [];
 
@@ -76,12 +81,24 @@ export default function ContactDetailPage() {
             )}
           </div>
         </div>
-        {!isEditing && (
-          <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
-            <Pencil className="h-4 w-4 mr-1" />
-            Edit
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {contact.email && (
+            <Button variant="outline" size="sm" onClick={() => setEmailDialogOpen(true)}>
+              <Send className="h-4 w-4 mr-1" />
+              Email
+            </Button>
+          )}
+          <Button variant="outline" size="sm" onClick={() => setActivityDialogOpen(true)}>
+            <MessageSquarePlus className="h-4 w-4 mr-1" />
+            Log Activity
           </Button>
-        )}
+          {!isEditing && (
+            <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+              <Pencil className="h-4 w-4 mr-1" />
+              Edit
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Tabs */}
@@ -89,6 +106,7 @@ export default function ContactDetailPage() {
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="account">Account</TabsTrigger>
+          <TabsTrigger value="notes">Notes</TabsTrigger>
           <TabsTrigger value="activities">Activities ({activities.length})</TabsTrigger>
         </TabsList>
 
@@ -200,14 +218,40 @@ export default function ContactDetailPage() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="notes">
+          <NotesPanel entityType="contact" entityId={contactId} />
+        </TabsContent>
+
         <TabsContent value="activities">
           <Card>
-            <CardContent className="pt-6">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Activities</CardTitle>
+              <Button size="sm" variant="outline" onClick={() => setActivityDialogOpen(true)}>
+                <MessageSquarePlus className="h-4 w-4 mr-1" />
+                Log Activity
+              </Button>
+            </CardHeader>
+            <CardContent>
               <ActivityTimeline activities={activities} />
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Dialogs */}
+      <ActivityLogDialog
+        open={activityDialogOpen}
+        onOpenChange={setActivityDialogOpen}
+        entityType="contact"
+        entityId={contactId}
+      />
+      <EmailComposeDialog
+        open={emailDialogOpen}
+        onOpenChange={setEmailDialogOpen}
+        recipientEmail={contact.email ?? undefined}
+        recipientName={`${contact.first_name} ${contact.last_name}`}
+        contactId={contactId}
+      />
     </div>
   );
 }

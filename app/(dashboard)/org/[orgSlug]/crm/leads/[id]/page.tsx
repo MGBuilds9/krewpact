@@ -7,18 +7,35 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, ArrowRight, XCircle, Zap, Pencil, Mail, Phone, Plus, User } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  XCircle,
+  Zap,
+  Pencil,
+  Mail,
+  Phone,
+  Plus,
+  User,
+  MessageSquarePlus,
+  Send,
+} from 'lucide-react';
 import {
   useLead,
   useActivities,
   useContacts,
   useLeadStageTransition,
-  useCreateOpportunity,
+  useRecalculateLeadScore,
 } from '@/hooks/useCRM';
 import { StageProgressBar } from '@/components/CRM/StageProgressBar';
 import { ActivityTimeline } from '@/components/CRM/ActivityTimeline';
 import { LeadForm } from '@/components/CRM/LeadForm';
 import { EnrichmentIntelCard } from '@/components/CRM/EnrichmentIntelCard';
+import { ActivityLogDialog } from '@/components/CRM/ActivityLogDialog';
+import { NotesPanel } from '@/components/CRM/NotesPanel';
+import { LeadScoreCard } from '@/components/CRM/LeadScoreCard';
+import { ConvertLeadDialog } from '@/components/CRM/ConvertLeadDialog';
+import { EmailComposeDialog } from '@/components/CRM/EmailComposeDialog';
 import { ALLOWED_TRANSITIONS } from '@/lib/crm/lead-stages';
 import type { LeadStage } from '@/lib/crm/lead-stages';
 import { cn } from '@/lib/utils';
@@ -33,8 +50,11 @@ export default function LeadDetailPage() {
   const activities = activitiesResponse?.data ?? [];
   const leadContacts = contactsResponse?.data ?? [];
   const stageTransition = useLeadStageTransition();
-  const createOpportunity = useCreateOpportunity();
+  const recalculateScore = useRecalculateLeadScore();
   const [isEditing, setIsEditing] = useState(false);
+  const [activityDialogOpen, setActivityDialogOpen] = useState(false);
+  const [convertDialogOpen, setConvertDialogOpen] = useState(false);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -61,7 +81,6 @@ export default function LeadDetailPage() {
     );
   }
 
-  // Map status to stage for the progress bar (best effort)
   const statusToStage: Record<string, LeadStage> = {
     new: 'new',
     contacted: 'new',
@@ -77,6 +96,8 @@ export default function LeadDetailPage() {
   const nextRegularStage = nextStages.find((s) => s !== 'lost');
   const canMarkLost = nextStages.includes('lost');
 
+  const primaryContact = leadContacts.find((c) => c.is_primary) || leadContacts[0];
+
   function handleNextStage() {
     if (!nextRegularStage) return;
     stageTransition.mutate({ id: leadId, stage: nextRegularStage });
@@ -87,24 +108,6 @@ export default function LeadDetailPage() {
     if (reason) {
       stageTransition.mutate({ id: leadId, stage: 'lost', lost_reason: reason });
     }
-  }
-
-  function handleConvertToOpportunity() {
-    if (!lead) return;
-    createOpportunity.mutate(
-      {
-        opportunity_name: lead.company_name,
-        lead_id: lead.id,
-        division_id: lead.division_id,
-      },
-      {
-        onSuccess: (data) => {
-          if (data && typeof data === 'object' && 'id' in data) {
-            orgPush(`/crm/opportunities`);
-          }
-        },
-      },
-    );
   }
 
   return (
@@ -126,32 +129,27 @@ export default function LeadDetailPage() {
                 {lead.province ? `, ${lead.province}` : ''}
               </span>
             )}
-            {lead.lead_score != null && lead.lead_score > 0 && (
-              <Badge
-                variant="outline"
-                className={cn(
-                  'text-xs',
-                  lead.lead_score >= 80
-                    ? 'border-green-500 text-green-600'
-                    : lead.lead_score >= 50
-                      ? 'border-yellow-500 text-yellow-600'
-                      : 'border-red-500 text-red-600',
-                )}
-              >
-                Score: {lead.lead_score}
-              </Badge>
-            )}
             {lead.is_qualified && (
               <Badge className="text-xs bg-green-500 text-white">Qualified</Badge>
             )}
           </div>
         </div>
-        {!isEditing && (
-          <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
-            <Pencil className="h-4 w-4 mr-1" />
-            Edit
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Button variant="outline" size="sm" onClick={() => setEmailDialogOpen(true)}>
+            <Send className="h-4 w-4 mr-1" />
+            Email
           </Button>
-        )}
+          <Button variant="outline" size="sm" onClick={() => setActivityDialogOpen(true)}>
+            <MessageSquarePlus className="h-4 w-4 mr-1" />
+            Log Activity
+          </Button>
+          {!isEditing && (
+            <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+              <Pencil className="h-4 w-4 mr-1" />
+              Edit
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Stage Progress */}
@@ -180,11 +178,7 @@ export default function LeadDetailPage() {
               </Button>
             )}
             {currentStage === 'won' && (
-              <Button
-                size="sm"
-                onClick={handleConvertToOpportunity}
-                disabled={createOpportunity.isPending}
-              >
+              <Button size="sm" onClick={() => setConvertDialogOpen(true)}>
                 <Zap className="h-4 w-4 mr-1" />
                 Convert to Opportunity
               </Button>
@@ -193,164 +187,259 @@ export default function LeadDetailPage() {
         </CardContent>
       </Card>
 
-      {/* Info Card / Edit Form */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{isEditing ? 'Edit Lead' : 'Lead Information'}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isEditing ? (
-            <LeadForm
-              lead={lead}
-              onSuccess={() => setIsEditing(false)}
-              onCancel={() => setIsEditing(false)}
-            />
-          ) : (
-            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <dt className="text-sm font-medium text-muted-foreground">Status</dt>
-                <dd className="text-sm capitalize">{lead.status.replace(/_/g, ' ')}</dd>
-              </div>
-              <div>
-                <dt className="text-sm font-medium text-muted-foreground">Industry</dt>
-                <dd className="text-sm">{lead.industry || '-'}</dd>
-              </div>
-              <div>
-                <dt className="text-sm font-medium text-muted-foreground">Source</dt>
-                <dd className="text-sm capitalize">
-                  {lead.source_channel?.replace(/_/g, ' ') || '-'}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-sm font-medium text-muted-foreground">Location</dt>
-                <dd className="text-sm">
-                  {lead.city ? `${lead.city}${lead.province ? `, ${lead.province}` : ''}` : '-'}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-sm font-medium text-muted-foreground">Lead Score</dt>
-                <dd className="text-sm">
-                  {lead.lead_score != null && lead.lead_score > 0 ? (
-                    <span
-                      className={cn(
-                        'font-medium',
-                        lead.lead_score >= 80
-                          ? 'text-green-600'
-                          : lead.lead_score >= 50
-                            ? 'text-yellow-600'
-                            : 'text-red-600',
-                      )}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main content */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Info Card / Edit Form */}
+          <Card>
+            <CardHeader>
+              <CardTitle>{isEditing ? 'Edit Lead' : 'Lead Information'}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isEditing ? (
+                <LeadForm
+                  lead={lead}
+                  onSuccess={() => setIsEditing(false)}
+                  onCancel={() => setIsEditing(false)}
+                />
+              ) : (
+                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <dt className="text-sm font-medium text-muted-foreground">Status</dt>
+                    <dd className="text-sm capitalize">{lead.status.replace(/_/g, ' ')}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm font-medium text-muted-foreground">Industry</dt>
+                    <dd className="text-sm">{lead.industry || '-'}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm font-medium text-muted-foreground">Source</dt>
+                    <dd className="text-sm capitalize">
+                      {lead.source_channel?.replace(/_/g, ' ') || '-'}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm font-medium text-muted-foreground">Location</dt>
+                    <dd className="text-sm">
+                      {lead.city ? `${lead.city}${lead.province ? `, ${lead.province}` : ''}` : '-'}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm font-medium text-muted-foreground">Created</dt>
+                    <dd className="text-sm">
+                      {new Date(lead.created_at).toLocaleDateString('en-CA', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm font-medium text-muted-foreground">Last Activity</dt>
+                    <dd className="text-sm">
+                      {lead.last_activity_at
+                        ? new Date(lead.last_activity_at).toLocaleDateString('en-CA', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })
+                        : '-'}
+                    </dd>
+                  </div>
+                  {lead.notes && (
+                    <div className="sm:col-span-2">
+                      <dt className="text-sm font-medium text-muted-foreground">Notes</dt>
+                      <dd className="text-sm whitespace-pre-wrap">{lead.notes}</dd>
+                    </div>
+                  )}
+                </dl>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Contacts */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Contacts</CardTitle>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => orgPush(`/crm/contacts/new?lead_id=${leadId}`)}
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Add Contact
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {leadContacts.length === 0 ? (
+                <div className="text-center py-6 text-muted-foreground">
+                  <User className="mx-auto h-8 w-8 mb-2 opacity-50" />
+                  <p>No contacts linked to this lead</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {leadContacts.map((contact) => (
+                    <div
+                      key={contact.id}
+                      className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 cursor-pointer"
+                      onClick={() => orgPush(`/crm/contacts/${contact.id}`)}
                     >
-                      {lead.lead_score}
-                    </span>
-                  ) : (
-                    '-'
-                  )}
-                  {lead.fit_score != null && lead.fit_score > 0 && (
-                    <span className="text-muted-foreground text-xs ml-2">
-                      (Fit: {lead.fit_score} / Intent: {lead.intent_score} / Engage:{' '}
-                      {lead.engagement_score})
-                    </span>
-                  )}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-sm font-medium text-muted-foreground">Created</dt>
-                <dd className="text-sm">
-                  {new Date(lead.created_at).toLocaleDateString('en-CA', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}
-                </dd>
-              </div>
-              {lead.notes && (
-                <div className="sm:col-span-2">
-                  <dt className="text-sm font-medium text-muted-foreground">Notes</dt>
-                  <dd className="text-sm whitespace-pre-wrap">{lead.notes}</dd>
+                      <div>
+                        <div className="font-medium text-sm">
+                          {contact.first_name} {contact.last_name}
+                          {contact.is_primary && (
+                            <span className="ml-2 text-xs text-primary">(Primary)</span>
+                          )}
+                        </div>
+                        {contact.role_title && (
+                          <div className="text-xs text-muted-foreground">{contact.role_title}</div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        {contact.email && (
+                          <span className="flex items-center gap-1">
+                            <Mail className="h-3 w-3" />
+                            {contact.email}
+                          </span>
+                        )}
+                        {contact.phone && (
+                          <span className="flex items-center gap-1">
+                            <Phone className="h-3 w-3" />
+                            {contact.phone}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
-            </dl>
-          )}
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
 
-      {/* Contacts */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Contacts</CardTitle>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => orgPush(`/crm/contacts/new?lead_id=${leadId}`)}
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Add Contact
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {leadContacts.length === 0 ? (
-            <div className="text-center py-6 text-muted-foreground">
-              <User className="mx-auto h-8 w-8 mb-2 opacity-50" />
-              <p>No contacts linked to this lead</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {leadContacts.map((contact) => (
-                <div
-                  key={contact.id}
-                  className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 cursor-pointer"
-                  onClick={() => orgPush(`/crm/contacts/${contact.id}`)}
-                >
-                  <div>
-                    <div className="font-medium text-sm">
-                      {contact.first_name} {contact.last_name}
-                      {contact.is_primary && (
-                        <span className="ml-2 text-xs text-primary">(Primary)</span>
-                      )}
-                    </div>
-                    {contact.role_title && (
-                      <div className="text-xs text-muted-foreground">{contact.role_title}</div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                    {contact.email && (
-                      <span className="flex items-center gap-1">
-                        <Mail className="h-3 w-3" />
-                        {contact.email}
-                      </span>
-                    )}
-                    {contact.phone && (
-                      <span className="flex items-center gap-1">
-                        <Phone className="h-3 w-3" />
-                        {contact.phone}
-                      </span>
-                    )}
-                  </div>
+          {/* Notes Panel */}
+          <NotesPanel entityType="lead" entityId={leadId} />
+
+          {/* Enrichment Intel */}
+          <EnrichmentIntelCard
+            enrichmentData={lead.enrichment_data as Record<string, unknown> | null}
+            enrichmentStatus={lead.enrichment_status as string | null}
+            leadId={leadId}
+            onResearchComplete={() => refetchLead()}
+          />
+
+          {/* Activity Timeline */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Activity Timeline</CardTitle>
+              <Button size="sm" variant="outline" onClick={() => setActivityDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-1" />
+                Log Activity
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <ActivityTimeline activities={activities} />
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Sidebar */}
+        <div className="space-y-6">
+          <LeadScoreCard
+            score={lead.lead_score ?? 0}
+            fitScore={lead.fit_score ?? 0}
+            intentScore={lead.intent_score ?? 0}
+            engagementScore={lead.engagement_score ?? 0}
+            onRecalculate={() => recalculateScore.mutate(leadId)}
+            isRecalculating={recalculateScore.isPending}
+          />
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Quick Info</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              {lead.source_channel && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Source</span>
+                  <span className="capitalize">{lead.source_channel.replace(/_/g, ' ')}</span>
                 </div>
-              ))}
-            </div>
+              )}
+              {lead.company_size && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Company Size</span>
+                  <span>{lead.company_size}</span>
+                </div>
+              )}
+              {lead.revenue_range && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Revenue Range</span>
+                  <span>{lead.revenue_range}</span>
+                </div>
+              )}
+              {lead.next_followup_at && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Next Follow-up</span>
+                  <span
+                    className={cn(
+                      new Date(lead.next_followup_at) < new Date()
+                        ? 'text-red-600 font-medium'
+                        : '',
+                    )}
+                  >
+                    {new Date(lead.next_followup_at).toLocaleDateString('en-CA', {
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+                  </span>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Contacts</span>
+                <span>{leadContacts.length}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Activities</span>
+                <span>{activities.length}</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {lead.tags && lead.tags.length > 0 && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Tags</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-1.5">
+                  {lead.tags.map((tag) => (
+                    <Badge key={tag} variant="secondary" className="text-xs">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* Enrichment Intel */}
-      <EnrichmentIntelCard
-        enrichmentData={lead.enrichment_data as Record<string, unknown> | null}
-        enrichmentStatus={lead.enrichment_status as string | null}
-        leadId={leadId}
-        onResearchComplete={() => refetchLead()}
+      {/* Dialogs */}
+      <ActivityLogDialog
+        open={activityDialogOpen}
+        onOpenChange={setActivityDialogOpen}
+        entityType="lead"
+        entityId={leadId}
       />
-
-      {/* Activity Timeline */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Activity Timeline</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ActivityTimeline activities={activities} />
-        </CardContent>
-      </Card>
+      <ConvertLeadDialog lead={lead} open={convertDialogOpen} onOpenChange={setConvertDialogOpen} />
+      <EmailComposeDialog
+        open={emailDialogOpen}
+        onOpenChange={setEmailDialogOpen}
+        recipientEmail={primaryContact?.email ?? undefined}
+        recipientName={
+          primaryContact ? `${primaryContact.first_name} ${primaryContact.last_name}` : undefined
+        }
+        leadId={leadId}
+      />
     </div>
   );
 }
