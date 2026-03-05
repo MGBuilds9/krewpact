@@ -78,12 +78,12 @@ describe('OrgContext', () => {
     expect(mockApiFetch).toHaveBeenCalledWith('/api/org/mdm-group');
   });
 
-  it('defaults to "default" slug when param is missing', () => {
+  it('defaults to "mdm-group" slug when param is missing', () => {
     mockUseParams.mockReturnValue({});
-    mockApiFetch.mockResolvedValue({ id: 'default-org', slug: 'default' });
+    mockApiFetch.mockResolvedValue({ id: 'mdm-group-org', slug: 'mdm-group' });
 
     const { result } = renderHook(() => useOrg(), { wrapper: createWrapper() });
-    expect(result.current.orgSlug).toBe('default');
+    expect(result.current.orgSlug).toBe('mdm-group');
   });
 
   it('throws when used outside provider', () => {

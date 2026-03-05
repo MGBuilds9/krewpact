@@ -25,14 +25,6 @@ export async function getOrgIdFromAuth(): Promise<string> {
 
   if (orgId) return orgId;
 
-  // Fallback: resolve default org from DB
-  const { createServiceClient } = await import('@/lib/supabase/server');
-  const supabase = createServiceClient();
-  const { data } = await supabase.from('organizations').select('id').eq('slug', 'default').single();
-
-  if (!data) {
-    throw new ApiError('ORG_REQUIRED', 'No default organization found', 500);
-  }
-
-  return data.id;
+  // Single-org: MDM Group is the only org
+  return 'mdm-group';
 }

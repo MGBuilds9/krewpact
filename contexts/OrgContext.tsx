@@ -35,7 +35,7 @@ const OrgContext = createContext<OrgContextType | undefined>(undefined);
 
 export function OrgProvider({ children }: { children: ReactNode }) {
   const params = useParams();
-  const orgSlug = (params?.orgSlug as string) || 'default';
+  const orgSlug = (params?.orgSlug as string) || 'mdm-group';
 
   const {
     data: currentOrg = null,

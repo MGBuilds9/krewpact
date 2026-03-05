@@ -4,17 +4,11 @@ vi.mock('@clerk/nextjs/server', () => ({
   auth: vi.fn(),
 }));
 
-vi.mock('@/lib/supabase/server', () => ({
-  createServiceClient: vi.fn(),
-}));
-
 import { auth } from '@clerk/nextjs/server';
-import { createServiceClient } from '@/lib/supabase/server';
 import { getOrgIdFromAuth, getOrgFromHeaders } from '@/lib/api/org';
 import { NextRequest } from 'next/server';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateServiceClient = vi.mocked(createServiceClient);
 
 describe('getOrgIdFromAuth', () => {
   beforeEach(() => {
@@ -31,36 +25,14 @@ describe('getOrgIdFromAuth', () => {
     expect(result).toBe('org-uuid-123');
   });
 
-  it('falls back to default org when no claim present', async () => {
+  it('falls back to mdm-group when no claim present', async () => {
     mockAuth.mockResolvedValue({
       userId: 'user_123',
       sessionClaims: {},
     } as never);
-
-    const mockSingle = vi.fn().mockResolvedValue({ data: { id: 'default-org-id' }, error: null });
-    const mockEq = vi.fn().mockReturnValue({ single: mockSingle });
-    const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
-    const mockFrom = vi.fn().mockReturnValue({ select: mockSelect });
-    mockCreateServiceClient.mockReturnValue({ from: mockFrom } as never);
 
     const result = await getOrgIdFromAuth();
-    expect(result).toBe('default-org-id');
-    expect(mockFrom).toHaveBeenCalledWith('organizations');
-  });
-
-  it('throws when no claim and no default org', async () => {
-    mockAuth.mockResolvedValue({
-      userId: 'user_123',
-      sessionClaims: {},
-    } as never);
-
-    const mockSingle = vi.fn().mockResolvedValue({ data: null, error: { message: 'not found' } });
-    const mockEq = vi.fn().mockReturnValue({ single: mockSingle });
-    const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
-    const mockFrom = vi.fn().mockReturnValue({ select: mockSelect });
-    mockCreateServiceClient.mockReturnValue({ from: mockFrom } as never);
-
-    await expect(getOrgIdFromAuth()).rejects.toThrow('No default organization found');
+    expect(result).toBe('mdm-group');
   });
 });
 
