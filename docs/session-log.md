@@ -1,5 +1,12 @@
 # Session Log
 
+### Mar 5, 2026 — Phase 2: P0 Hardening — A11y, Responsive, Impersonation
+
+- **Changes:** Fixed impersonation selector wireup (ImpersonationSelector dialog + `/api/user/current?impersonate=` backend with admin RBAC). Ran axe-core-style accessibility audit, fixing ARIA labels/roles/keyboard nav across 6 components (NotificationBell, BulkActionBar, GlobalSearch, CommandPalette, LineItemEditor, DataTable). Mobile responsive QA across all P0 pages — fixed 33 components: form grids `grid-cols-2 → grid-cols-1 sm:grid-cols-2`, fixed-width containers (DivisionSelector, MobileNavDrawer, StepConfigPanel), hardcoded multi-col grids (EmailAnalytics, SalesVelocity, Dashboard), DataTable overflow-x-auto.
+- **Commits:** `294b723` (impersonation), `110c4f4` (a11y), `f17232b` (responsive)
+- **Tests:** 2448/2448 passing (210 files). Typecheck clean.
+- **Remaining:** Production deployment prep BLOCKED on D1-D4 credentials.
+
 ### Mar 2, 2026 — Team-Ready Development Environment
 
 - **Changes:** Restructured CLAUDE.md from 287→97 lines, moving architecture/session history to `docs/`. Created domain-scoped CLAUDE.md files (`app/api/CLAUDE.md`, `lib/CLAUDE.md`). Added Prettier + Husky + lint-staged pre-commit hooks. Created `.nvmrc` (Node 20), `.editorconfig`, `.prettierrc`. Built CONTRIBUTING.md with security checklist, PR template, domain ownership map (`docs/domains.md`), security best practices (`docs/security.md`). Fixed 6 pre-existing lint errors (5x `no-explicit-any` in portal routes, 1x setState-in-effect in PortalMessageThread). Hardened CI with format check + separate security audit job (`npm audit --omit=dev`). Ran Prettier across entire codebase. PR #37 merged.
