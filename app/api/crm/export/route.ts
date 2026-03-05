@@ -1,5 +1,4 @@
 import { auth } from '@clerk/nextjs/server';
-import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { createUserClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
@@ -10,11 +9,11 @@ type EntityType = (typeof ALLOWED_ENTITIES)[number];
 export async function GET(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
   const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
   if (!rl.success) return rateLimitResponse(rl);
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
 
   const url = new URL(req.url);
   const entity = url.searchParams.get('entity') as EntityType | null;

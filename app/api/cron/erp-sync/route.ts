@@ -14,16 +14,8 @@ import { verifyCronAuth } from '@/lib/api/cron-auth';
  *       QStash signature verification via Upstash-Signature header.
  */
 export async function GET(request: NextRequest) {
-  // 1. Verify cron authorization
-  const cronSecret = process.env.CRON_SECRET;
-  const authHeader = request.headers.get('authorization');
-  const qstashSignature = request.headers.get('upstash-signature');
-
-  // Accept either Bearer token or QStash signature
-  const isAuthorized =
-    (cronSecret && authHeader === `Bearer ${cronSecret}`) || !!qstashSignature;
-
-  if (!isAuthorized) {
+  const { authorized } = await verifyCronAuth(request);
+  if (!authorized) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

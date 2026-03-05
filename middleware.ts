@@ -6,6 +6,7 @@ const isPublicRoute = createRouteMatcher([
   '/api/webhooks(.*)',
   '/api/web/leads',
   '/api/cron(.*)',
+  '/api/health',
 ]);
 
 const ALLOWED_DOMAINS = (process.env.ALLOWED_DOMAINS || 'mdmgroupinc.ca,mdmcontracting.ca').split(

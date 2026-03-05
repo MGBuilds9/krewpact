@@ -15,11 +15,11 @@ const checkSchema = z.object({
 export async function POST(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
   const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
   if (!rl.success) return rateLimitResponse(rl);
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
 
   let body: unknown;
   try {

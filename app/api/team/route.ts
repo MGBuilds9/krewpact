@@ -1,5 +1,4 @@
 import { auth } from '@clerk/nextjs/server';
-import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { createUserClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
@@ -27,7 +26,8 @@ export async function GET(req: NextRequest) {
     .from('users')
     .select('*, user_divisions!inner(division_id, is_primary, left_at)')
     .is('user_divisions.left_at', null)
-    .order('first_name');
+    .order('first_name')
+    .limit(300);
 
   if (parsed.data.division_id) {
     query = query.eq('user_divisions.division_id', parsed.data.division_id);

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { timingSafeEqual } from 'crypto';
 import { logger } from '@/lib/logger';
 import { SyncService } from '@/lib/erp/sync-service';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
@@ -27,8 +28,12 @@ export async function POST(request: NextRequest) {
   }
 
   const providedSecret = request.headers.get('x-webhook-secret');
-  if (!providedSecret || providedSecret !== secret) {
-    console.warn('[erpnext-webhook] Invalid or missing webhook secret');
+  if (
+    !providedSecret ||
+    providedSecret.length !== secret.length ||
+    !timingSafeEqual(Buffer.from(providedSecret), Buffer.from(secret))
+  ) {
+    logger.warn('[erpnext-webhook] Invalid or missing webhook secret');
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

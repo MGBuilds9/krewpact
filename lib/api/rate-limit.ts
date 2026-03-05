@@ -1,5 +1,6 @@
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
+import { NextResponse } from 'next/server';
 
 let redis: Redis | null = null;
 function getRedis(): Redis | null {
@@ -52,7 +53,6 @@ export async function rateLimit(
 }
 
 export function rateLimitResponse(result: RateLimitResult) {
-  const { NextResponse } = require('next/server') as typeof import('next/server');
   return NextResponse.json(
     { error: { code: 'RATE_LIMITED', message: 'Too many requests' } },
     {

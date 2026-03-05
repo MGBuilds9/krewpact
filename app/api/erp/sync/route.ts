@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { SyncService } from '@/lib/erp/sync-service';
+import { ErpClient } from '@/lib/erp/client';
+import { logger } from '@/lib/logger';
 
 const ENTITY_TYPES = [
   'account',
@@ -48,6 +50,16 @@ export async function POST(request: NextRequest) {
   }
 
   const { entity_type, entity_id } = parsed.data;
+
+  const erpClient = new ErpClient();
+  if (erpClient.isMockMode()) {
+    return NextResponse.json({
+      warning: 'ERPNext mock mode — no data synced',
+      entity_type,
+      entity_id,
+    });
+  }
+
   const service = new SyncService();
 
   try {
@@ -88,7 +100,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(result);
   } catch (err) {
-    console.error('ERP sync failed:', err);
+    logger.error('ERP sync failed:', err);
     return NextResponse.json({ error: 'Sync failed' }, { status: 500 });
   }
 }

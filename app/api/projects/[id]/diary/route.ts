@@ -16,11 +16,11 @@ const querySchema = z.object({
 export async function GET(req: NextRequest, context: RouteContext) {
   const { userId } = await auth();
   if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
   const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
   if (!rl.success) return rateLimitResponse(rl);
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
 
   const { id } = await context.params;
   const params = Object.fromEntries(req.nextUrl.searchParams);
