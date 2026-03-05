@@ -15,8 +15,10 @@ const atkinson = Atkinson_Hyperlegible({
   variable: '--font-atkinson',
 });
 
+const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.krewpact.com';
+
 export const metadata: Metadata = {
-  metadataBase: new URL('https://app.krewpact.com'),
+  metadataBase: new URL(appUrl),
   title: {
     default: 'KrewPact | Construction Operations Platform',
     template: '%s — KrewPact',
@@ -43,8 +45,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         'https://hub.mdmgroupinc.ca',
         'https://dashboard.mdmgroupinc.ca',
         'https://portal.mdmgroupinc.ca',
-        'https://mdm-dashboard.pages.dev',
-        'https://mdm-portal.pages.dev',
+        ...(appUrl !== 'https://app.krewpact.com' ? [appUrl] : []),
+        ...(process.env.NODE_ENV !== 'production'
+          ? ['https://mdm-dashboard.pages.dev', 'https://mdm-portal.pages.dev']
+          : []),
       ]}
     >
       <html lang="en" suppressHydrationWarning>
