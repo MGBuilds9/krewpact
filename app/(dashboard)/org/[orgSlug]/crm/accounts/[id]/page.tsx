@@ -7,10 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Mail, Phone, User, Pencil, Plus } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, User, Pencil, Plus, MessageSquarePlus } from 'lucide-react';
 import { useAccount, useContacts, useActivities, useOpportunities } from '@/hooks/useCRM';
 import { ActivityTimeline } from '@/components/CRM/ActivityTimeline';
 import { AccountForm } from '@/components/CRM/AccountForm';
+import { ActivityLogDialog } from '@/components/CRM/ActivityLogDialog';
+import { NotesPanel } from '@/components/CRM/NotesPanel';
 
 function formatCurrency(value: number | null): string {
   if (value == null) return '-';
@@ -26,6 +28,7 @@ export default function AccountDetailPage() {
   const { data: activitiesResponse } = useActivities({ accountId });
   const { data: opportunities } = useOpportunities({ accountId });
   const [isEditing, setIsEditing] = useState(false);
+  const [activityDialogOpen, setActivityDialogOpen] = useState(false);
 
   const accountContacts = contactsResponse?.data ?? [];
   const accountActivities = activitiesResponse?.data ?? [];
@@ -56,6 +59,12 @@ export default function AccountDetailPage() {
     );
   }
 
+  // Calculate total pipeline value for this account
+  const totalPipelineValue = accountOpportunities.reduce(
+    (sum, opp) => sum + (opp.estimated_revenue ?? 0),
+    0,
+  );
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -70,16 +79,27 @@ export default function AccountDetailPage() {
         </Button>
         <div className="flex-1 min-w-0">
           <h1 className="text-2xl font-bold tracking-tight truncate">{account.account_name}</h1>
-          {account.account_type && (
-            <p className="text-muted-foreground capitalize">{account.account_type}</p>
+          <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
+            {account.account_type && <span className="capitalize">{account.account_type}</span>}
+            {totalPipelineValue > 0 && (
+              <span className="text-green-600 font-medium">
+                {formatCurrency(totalPipelineValue)} pipeline
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Button variant="outline" size="sm" onClick={() => setActivityDialogOpen(true)}>
+            <MessageSquarePlus className="h-4 w-4 mr-1" />
+            Log Activity
+          </Button>
+          {!isEditing && (
+            <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+              <Pencil className="h-4 w-4 mr-1" />
+              Edit
+            </Button>
           )}
         </div>
-        {!isEditing && (
-          <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
-            <Pencil className="h-4 w-4 mr-1" />
-            Edit
-          </Button>
-        )}
       </div>
 
       {/* Tabs */}
@@ -87,6 +107,7 @@ export default function AccountDetailPage() {
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="contacts">Contacts ({accountContacts.length})</TabsTrigger>
+          <TabsTrigger value="notes">Notes</TabsTrigger>
           <TabsTrigger value="activities">Activities</TabsTrigger>
           <TabsTrigger value="opportunities">
             Opportunities ({accountOpportunities.length})
@@ -120,6 +141,14 @@ export default function AccountDetailPage() {
                         year: 'numeric',
                       })}
                     </dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm font-medium text-muted-foreground">Contacts</dt>
+                    <dd className="text-sm">{accountContacts.length}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm font-medium text-muted-foreground">Opportunities</dt>
+                    <dd className="text-sm">{accountOpportunities.length}</dd>
                   </div>
                   {account.notes && (
                     <div className="sm:col-span-2">
@@ -193,9 +222,20 @@ export default function AccountDetailPage() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="notes">
+          <NotesPanel entityType="account" entityId={accountId} />
+        </TabsContent>
+
         <TabsContent value="activities">
           <Card>
-            <CardContent className="pt-6">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Activities</CardTitle>
+              <Button size="sm" variant="outline" onClick={() => setActivityDialogOpen(true)}>
+                <MessageSquarePlus className="h-4 w-4 mr-1" />
+                Log Activity
+              </Button>
+            </CardHeader>
+            <CardContent>
               <ActivityTimeline activities={accountActivities} />
             </CardContent>
           </Card>
@@ -233,6 +273,14 @@ export default function AccountDetailPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Dialogs */}
+      <ActivityLogDialog
+        open={activityDialogOpen}
+        onOpenChange={setActivityDialogOpen}
+        entityType="account"
+        entityId={accountId}
+      />
     </div>
   );
 }

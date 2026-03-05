@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -20,8 +21,10 @@ import { useDivision } from '@/contexts/DivisionContext';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { DataTable, type SortState } from '@/components/CRM/DataTable';
 import { ViewToggle, useViewMode } from '@/components/CRM/ViewToggle';
+import { BulkActionBar } from '@/components/CRM/BulkActionBar';
 import { cn } from '@/lib/utils';
 import type { ColumnDef } from '@tanstack/react-table';
+import { useQueryClient } from '@tanstack/react-query';
 
 const STATUS_BADGE_COLORS: Record<string, string> = {
   new: 'bg-gray-100 text-gray-700 border-gray-200',
@@ -116,6 +119,7 @@ const leadColumns: ColumnDef<Lead, unknown>[] = [
 export default function LeadsPage() {
   const { push: orgPush } = useOrgRouter();
   const { activeDivision } = useDivision();
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebouncedValue(search);
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -123,6 +127,7 @@ export default function LeadsPage() {
   const [pageSize, setPageSize] = useState(25);
   const [sort, setSort] = useState<SortState | null>(null);
   const [viewMode, setViewMode] = useViewMode();
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const { data: response, isLoading } = useLeads({
     divisionId: activeDivision?.id,
@@ -136,6 +141,22 @@ export default function LeadsPage() {
 
   const leads = response?.data ?? [];
   const total = response?.total ?? 0;
+
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  }, []);
+
+  const toggleSelectAll = useCallback(() => {
+    if (selectedIds.length === leads.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(leads.map((l) => l.id));
+    }
+  }, [selectedIds.length, leads]);
+
+  function handleBulkComplete() {
+    queryClient.invalidateQueries({ queryKey: ['leads'] });
+  }
 
   if (isLoading && !response) {
     return (
@@ -238,38 +259,66 @@ export default function LeadsPage() {
           />
         ) : (
           <>
+            {/* Select All for card view */}
+            {leads.length > 0 && (
+              <div className="flex items-center gap-2 px-1">
+                <Checkbox
+                  checked={selectedIds.length === leads.length && leads.length > 0}
+                  onCheckedChange={toggleSelectAll}
+                />
+                <span className="text-sm text-muted-foreground">
+                  {selectedIds.length > 0 ? `${selectedIds.length} selected` : 'Select all'}
+                </span>
+              </div>
+            )}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-max">
               {leads.map((lead) => (
                 <Card
                   key={lead.id}
-                  className="group cursor-pointer bg-white dark:bg-card border-0 shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all duration-300 rounded-3xl overflow-hidden relative flex flex-col h-full"
-                  onClick={() => orgPush(`/crm/leads/${lead.id}`)}
+                  className={cn(
+                    'group cursor-pointer bg-white dark:bg-card border-0 shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all duration-300 rounded-3xl overflow-hidden relative flex flex-col h-full',
+                    selectedIds.includes(lead.id) && 'ring-2 ring-primary',
+                  )}
                 >
                   <CardContent className="p-6 flex-1 flex flex-col">
                     <div className="flex flex-col gap-4 flex-1">
                       <div className="flex justify-between items-start gap-3">
-                        <div className="min-w-0">
+                        <div
+                          className="min-w-0 flex-1"
+                          onClick={() => orgPush(`/crm/leads/${lead.id}`)}
+                        >
                           <h3 className="font-bold text-xl tracking-tight text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-tight">
                             {lead.company_name || 'Unnamed Lead'}
                           </h3>
-                          <Badge
-                            variant="outline"
-                            className={cn(
-                              'text-xs flex-shrink-0 border',
-                              STATUS_BADGE_COLORS[lead.status] || '',
-                            )}
-                          >
-                            {formatStage(lead.status)}
-                          </Badge>
-                          {lead.is_qualified && (
-                            <Badge className="text-[10px] font-bold tracking-wider uppercase bg-green-500 text-white flex-shrink-0 animate-pulse">
-                              Qualified
+                          <div className="flex items-center gap-1.5 mt-1.5">
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                'text-xs flex-shrink-0 border',
+                                STATUS_BADGE_COLORS[lead.status] || '',
+                              )}
+                            >
+                              {formatStage(lead.status)}
                             </Badge>
-                          )}
+                            {lead.is_qualified && (
+                              <Badge className="text-[10px] font-bold tracking-wider uppercase bg-green-500 text-white flex-shrink-0">
+                                Qualified
+                              </Badge>
+                            )}
+                          </div>
                         </div>
+                        <Checkbox
+                          checked={selectedIds.includes(lead.id)}
+                          onCheckedChange={() => toggleSelect(lead.id)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex-shrink-0 mt-1"
+                        />
                       </div>
 
-                      <div className="mt-auto space-y-4 pt-4 border-t border-border/40">
+                      <div
+                        className="mt-auto space-y-4 pt-4 border-t border-border/40"
+                        onClick={() => orgPush(`/crm/leads/${lead.id}`)}
+                      >
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-muted-foreground">
                           {lead.industry && (
                             <span className="flex items-center gap-1.5 text-foreground">
@@ -344,6 +393,14 @@ export default function LeadsPage() {
             </div>
           </>
         )}
+
+        {/* Bulk Action Bar */}
+        <BulkActionBar
+          selectedIds={selectedIds}
+          entityType="lead"
+          onClearSelection={() => setSelectedIds([])}
+          onActionComplete={handleBulkComplete}
+        />
       </div>
     </>
   );

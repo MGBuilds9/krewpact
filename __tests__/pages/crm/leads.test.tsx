@@ -3,6 +3,7 @@
 import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Mock next/navigation
 vi.mock('next/navigation', () => ({
@@ -45,6 +46,13 @@ vi.mock('@/hooks/use-mobile', () => ({
 }));
 
 import LeadsPage from '@/app/(dashboard)/org/[orgSlug]/crm/leads/page';
+
+function renderWithProviders(ui: React.ReactElement) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+}
 
 describe('Leads List Page', () => {
   beforeAll(() => {
@@ -91,7 +99,7 @@ describe('Leads List Page', () => {
       isError: false,
     });
 
-    render(<LeadsPage />);
+    renderWithProviders(<LeadsPage />);
     expect(screen.getByText('Acme Reno Project')).toBeDefined();
   });
 
@@ -102,18 +110,18 @@ describe('Leads List Page', () => {
       isError: false,
     });
 
-    render(<LeadsPage />);
+    renderWithProviders(<LeadsPage />);
     expect(screen.getByText(/no leads/i)).toBeDefined();
   });
 
   it('has search input for filtering', () => {
-    render(<LeadsPage />);
+    renderWithProviders(<LeadsPage />);
     const searchInput = screen.getByPlaceholderText(/search/i);
     expect(searchInput).toBeDefined();
   });
 
   it('has New Lead button', () => {
-    render(<LeadsPage />);
+    renderWithProviders(<LeadsPage />);
     expect(screen.getByText(/new lead/i)).toBeDefined();
   });
 
@@ -124,7 +132,7 @@ describe('Leads List Page', () => {
       isError: false,
     });
 
-    const { container } = render(<LeadsPage />);
+    const { container } = renderWithProviders(<LeadsPage />);
     // Should show skeleton loading elements
     const skeletons = container.querySelectorAll(
       '[class*="animate-pulse"], [data-testid="skeleton"]',
@@ -155,7 +163,7 @@ describe('Leads List Page', () => {
       isError: false,
     });
 
-    render(<LeadsPage />);
+    renderWithProviders(<LeadsPage />);
     expect(screen.getByText('Qualified')).toBeDefined();
   });
 });

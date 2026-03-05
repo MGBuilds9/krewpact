@@ -27,6 +27,8 @@ vi.mock('@/hooks/useCRM', () => ({
   useActivities: (...args: unknown[]) => mockUseActivities(...args),
   useCreateContact: () => ({ mutate: mockUseCreateContact, isPending: false }),
   useUpdateContact: () => ({ mutate: mockUseUpdateContact, isPending: false }),
+  useSendEmail: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useCreateActivity: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
 vi.mock('@/contexts/DivisionContext', () => ({

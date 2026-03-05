@@ -3,13 +3,16 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { GlobalSearch } from '@/components/CRM/GlobalSearch';
 
 const crmTabs = [
+  { label: 'Dashboard', href: '/crm/dashboard' },
   { label: 'Leads', href: '/crm/leads' },
   { label: 'Accounts', href: '/crm/accounts' },
   { label: 'Contacts', href: '/crm/contacts' },
   { label: 'Opportunities', href: '/crm/opportunities' },
   { label: 'Sequences', href: '/crm/sequences' },
+  { label: 'Settings', href: '/crm/settings' },
 ];
 
 export default function CRMLayout({ children }: { children: React.ReactNode }) {
@@ -17,12 +20,17 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">CRM</h1>
-        <p className="text-muted-foreground">Manage leads, accounts, contacts, and opportunities</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">CRM</h1>
+          <p className="text-muted-foreground">
+            Manage leads, accounts, contacts, and opportunities
+          </p>
+        </div>
+        <GlobalSearch />
       </div>
 
-      <nav className="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground">
+      <nav className="inline-flex h-auto items-center justify-start rounded-md bg-muted p-1 text-muted-foreground flex-wrap gap-0.5">
         {crmTabs.map((tab) => {
           const isActive = pathname === tab.href || pathname.startsWith(tab.href + '/');
           return (
