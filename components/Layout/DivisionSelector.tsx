@@ -69,7 +69,7 @@ export function DivisionSelector({ className }: DivisionSelectorProps) {
         </Button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="w-80">
+      <DropdownMenuContent align="end" className="w-80 max-w-[calc(100vw-2rem)]">
         <DropdownMenuLabel className="text-xs text-muted-foreground uppercase tracking-wide">
           Switch Division
         </DropdownMenuLabel>

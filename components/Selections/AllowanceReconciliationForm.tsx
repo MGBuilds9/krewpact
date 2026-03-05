@@ -55,7 +55,7 @@ export function AllowanceReconciliationForm({
           {...form.register('category_name', { required: true })}
         />
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="text-sm font-medium">Allowance Budget (CAD)</label>
           <Input

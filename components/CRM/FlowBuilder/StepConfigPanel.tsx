@@ -40,7 +40,7 @@ export function StepConfigPanel({ step, onUpdate, onClose }: StepConfigPanelProp
   };
 
   return (
-    <div className="flex h-full w-72 shrink-0 flex-col rounded-lg border bg-background shadow-sm">
+    <div className="flex h-full w-full sm:w-72 shrink-0 flex-col rounded-lg border bg-background shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between border-b px-4 py-3">
         <p className="text-sm font-semibold capitalize">Configure {step.action_type}</p>

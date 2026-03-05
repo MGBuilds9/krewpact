@@ -44,7 +44,7 @@ export function ServiceCallForm({ projectId, onSuccess, onCancel }: ServiceCallF
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="text-sm font-medium">Call Number</label>
           <Input placeholder="SC-001" {...form.register('call_number', { required: true })} />

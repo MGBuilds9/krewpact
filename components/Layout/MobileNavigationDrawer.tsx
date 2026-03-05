@@ -77,7 +77,7 @@ export function MobileNavigationDrawer({ isOpen, onClose }: MobileNavigationDraw
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent side="left" className="w-80 p-0 flex flex-col">
+      <SheetContent side="left" className="w-80 max-w-[85vw] p-0 flex flex-col">
         <SheetHeader className="p-6 pb-4">
           <div className="flex items-center justify-between">
             <SheetTitle className="text-xl font-bold bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent">

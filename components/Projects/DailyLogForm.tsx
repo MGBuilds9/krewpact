@@ -110,7 +110,7 @@ export function DailyLogForm({ projectId, initialData, onSuccess, onCancel }: Da
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField
             control={form.control}
             name="log_date"
@@ -140,7 +140,7 @@ export function DailyLogForm({ projectId, initialData, onSuccess, onCancel }: Da
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField
             control={form.control}
             name="weather_condition"

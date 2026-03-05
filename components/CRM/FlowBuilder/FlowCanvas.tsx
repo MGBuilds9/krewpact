@@ -124,7 +124,7 @@ export function FlowCanvas({
     <div className="flex flex-col gap-3">
       <FlowToolbar onAddStep={addStep} onSave={handleSave} saving={saving} />
 
-      <div className="flex gap-4">
+      <div className="flex flex-col lg:flex-row gap-4">
         {/* Main canvas */}
         <div className="relative min-h-[400px] flex-1 rounded-lg border bg-muted/30 p-4">
           {sorted.length === 0 ? (

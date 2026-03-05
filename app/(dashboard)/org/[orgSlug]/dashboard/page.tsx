@@ -85,7 +85,7 @@ export default function DashboardPage() {
           <Card className="col-span-1 md:col-span-4 lg:col-span-4 row-span-2 bg-gradient-to-br from-primary/10 via-background to-secondary/10 border-0 shadow-sm rounded-3xl overflow-hidden relative">
             <CardContent className="p-8 h-full flex flex-col justify-center">
               <div className="relative z-10">
-                <h1 className="text-4xl font-bold tracking-tight text-foreground mb-2">
+                <h1 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground mb-2">
                   {getTimeGreeting()}, {userName}
                 </h1>
                 <p className="text-muted-foreground text-lg mb-6 max-w-lg">
@@ -116,7 +116,7 @@ export default function DashboardPage() {
           </Card>
 
           {/* Quick Stats Column (Stacked) */}
-          <div className="col-span-1 md:col-span-4 lg:col-span-2 grid grid-cols-2 md:grid-cols-2 lg:grid-cols-1 gap-6">
+          <div className="col-span-1 md:col-span-4 lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-6">
             <Card
               className="group cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-300 rounded-3xl overflow-hidden border-0 bg-white dark:bg-card relative"
               onClick={() => orgPush('/projects')}

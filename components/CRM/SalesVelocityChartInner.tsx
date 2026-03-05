@@ -50,7 +50,7 @@ export function SalesVelocityChartInner({ metrics }: SalesVelocityChartInnerProp
         <CardTitle>Sales Velocity</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-3 gap-4 text-center mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center mb-6">
           <div className="rounded-lg bg-muted/50 p-3">
             <p className="text-2xl font-bold">{metrics.averageDaysToClose}</p>
             <p className="text-xs text-muted-foreground">Avg Days to Close</p>

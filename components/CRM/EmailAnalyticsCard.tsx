@@ -40,7 +40,7 @@ export function EmailAnalyticsCard({ templateId, sequenceId }: EmailAnalyticsCar
 
   if (isLoading || !data) {
     return (
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[1, 2, 3, 4].map((i) => (
           <Card key={i} className="animate-pulse">
             <CardContent className="p-4">
@@ -85,7 +85,7 @@ export function EmailAnalyticsCard({ templateId, sequenceId }: EmailAnalyticsCar
   ];
 
   return (
-    <div className="grid grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
       {metrics.map((m) => (
         <Card key={m.label}>
           <CardContent className="p-4">

@@ -60,7 +60,7 @@ export function WarrantyItemForm({ projectId, onSuccess, onCancel }: WarrantyIte
         <label className="text-sm font-medium">Provider</label>
         <Input placeholder="Provider company name" {...form.register('provider_name')} />
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="text-sm font-medium">Start Date</label>
           <Input type="date" {...form.register('warranty_start', { required: true })} />
