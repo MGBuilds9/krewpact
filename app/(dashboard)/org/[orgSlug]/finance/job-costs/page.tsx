@@ -41,8 +41,8 @@ export default function JobCostsPage() {
           {data?.total ?? 0} budget vs actuals snapshots
         </p>
       </div>
-      <div className="border rounded-lg overflow-hidden">
-        <Table>
+      <div className="bg-white dark:bg-card border shadow-sm rounded-2xl overflow-x-auto w-full">
+        <Table className="min-w-[800px]">
           <TableHeader>
             <TableRow>
               <TableHead>Snapshot Date</TableHead>

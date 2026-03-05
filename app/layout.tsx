@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter, Outfit } from 'next/font/google';
+import { Atkinson_Hyperlegible } from 'next/font/google';
 import { ClerkProvider } from '@clerk/nextjs';
 import { ThemeProvider } from '@/components/theme-provider';
 import { QueryProvider } from '@/lib/query-client';
@@ -9,14 +9,10 @@ import './globals.css';
 // Clerk requires valid keys at render time — force dynamic rendering
 export const dynamic = 'force-dynamic';
 
-const inter = Inter({
+const atkinson = Atkinson_Hyperlegible({
   subsets: ['latin'],
-  variable: '--font-inter',
-});
-
-const outfit = Outfit({
-  subsets: ['latin'],
-  variable: '--font-outfit',
+  weight: ['400', '700'],
+  variable: '--font-atkinson',
 });
 
 export const metadata: Metadata = {
@@ -52,7 +48,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       ]}
     >
       <html lang="en" suppressHydrationWarning>
-        <body className={`${inter.variable} ${outfit.variable} font-sans antialiased`}>
+        <body className={`${atkinson.variable} font-sans antialiased`}>
           <ThemeProvider
             attribute="class"
             defaultTheme="system"

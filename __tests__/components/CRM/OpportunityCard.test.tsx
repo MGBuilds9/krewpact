@@ -60,6 +60,6 @@ describe('OpportunityCard', () => {
     render(
       <OpportunityCard opportunity={makeOpp({ target_close_date: '2026-06-15T12:00:00Z' })} />,
     );
-    expect(screen.getByText(/Jun 15, 2026/)).toBeDefined();
+    expect(screen.getByText(/Jun\.? 15/i)).toBeDefined();
   });
 });

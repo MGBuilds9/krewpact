@@ -138,66 +138,89 @@ export default function ProjectsPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-max">
             {filteredProjects.map((project) => (
               <Card
                 key={project.id}
-                className="cursor-pointer hover:shadow-md transition-shadow"
+                className="group cursor-pointer bg-white dark:bg-card border-0 shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all duration-300 rounded-3xl overflow-hidden relative flex flex-col h-full"
                 onClick={() => router.push(`/projects/${project.id}`)}
               >
-                <CardContent className="p-5">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-3 flex-1 min-w-0">
-                      <div
-                        className={cn(
-                          'w-3 h-3 rounded-full flex-shrink-0 mt-1.5',
-                          getStatusColor(project.status || ''),
+                <div
+                  className={cn(
+                    'absolute top-0 left-0 w-full h-1.5',
+                    getStatusColor(project.status || ''),
+                  )}
+                />
+                <CardContent className="p-6 flex-1 flex flex-col pt-8">
+                  <div className="flex flex-col gap-4 flex-1">
+                    <div className="flex justify-between items-start gap-3">
+                      <div className="min-w-0">
+                        <h3 className="font-bold text-xl tracking-tight text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-tight">
+                          {project.project_name}
+                        </h3>
+                        {project.project_number && (
+                          <p className="text-xs font-semibold text-muted-foreground mt-1 uppercase tracking-wider">
+                            #{project.project_number}
+                          </p>
                         )}
-                      />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold text-lg truncate">{project.project_name}</h3>
-                          {project.project_number && (
-                            <Badge variant="outline" className="text-xs flex-shrink-0">
-                              {project.project_number}
-                            </Badge>
-                          )}
+                      </div>
+                      <Badge
+                        variant="secondary"
+                        className={cn(
+                          'capitalize flex-shrink-0 text-xs font-semibold px-2.5 py-0.5 rounded-full',
+                          project.status === 'active'
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                            : project.status === 'planning'
+                              ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                              : project.status === 'on_hold'
+                                ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-500'
+                                : project.status === 'cancelled'
+                                  ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                  : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
+                        )}
+                      >
+                        {project.status?.replace('_', ' ') || 'planning'}
+                      </Badge>
+                    </div>
+
+                    <div className="mt-auto space-y-3 pt-4 border-t border-border/40">
+                      {project.site_address && (
+                        <div className="flex items-start gap-2.5 text-sm text-muted-foreground">
+                          <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0 text-foreground/40" />
+                          <span className="line-clamp-2">
+                            {typeof project.site_address === 'object'
+                              ? (project.site_address as Record<string, string>)?.street || ''
+                              : ''}
+                          </span>
                         </div>
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                          {project.site_address && (
-                            <span className="flex items-center gap-1">
-                              <MapPin className="h-3 w-3" />
-                              {typeof project.site_address === 'object'
-                                ? (project.site_address as Record<string, string>)?.street || ''
-                                : ''}
-                            </span>
-                          )}
-                          {project.baseline_budget != null && (
-                            <span className="flex items-center gap-1">
-                              <DollarSign className="h-3 w-3" />
-                              {new Intl.NumberFormat('en-CA', {
-                                style: 'currency',
-                                currency: 'CAD',
-                                maximumFractionDigits: 0,
-                              }).format(project.baseline_budget)}
-                            </span>
-                          )}
-                          {project.start_date && (
-                            <span className="flex items-center gap-1">
-                              <Calendar className="h-3 w-3" />
-                              {new Date(project.start_date).toLocaleDateString('en-CA', {
-                                month: 'short',
-                                day: 'numeric',
-                                year: 'numeric',
-                              })}
-                            </span>
-                          )}
-                        </div>
+                      )}
+
+                      <div className="flex flex-wrap items-center gap-4 text-sm font-medium">
+                        {project.baseline_budget != null && (
+                          <div className="flex items-center gap-1.5 text-foreground">
+                            <div className="p-1 rounded-md bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400">
+                              <DollarSign className="h-3.5 w-3.5" />
+                            </div>
+                            {new Intl.NumberFormat('en-CA', {
+                              style: 'currency',
+                              currency: 'CAD',
+                              maximumFractionDigits: 0,
+                            }).format(project.baseline_budget)}
+                          </div>
+                        )}
+                        {project.start_date && (
+                          <div className="flex items-center gap-1.5 text-foreground">
+                            <div className="p-1 rounded-md bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">
+                              <Calendar className="h-3.5 w-3.5" />
+                            </div>
+                            {new Date(project.start_date).toLocaleDateString('en-CA', {
+                              month: 'short',
+                              day: 'numeric',
+                            })}
+                          </div>
+                        )}
                       </div>
                     </div>
-                    <Badge variant="outline" className="capitalize flex-shrink-0">
-                      {project.status?.replace('_', ' ') || 'planning'}
-                    </Badge>
                   </div>
                 </CardContent>
               </Card>

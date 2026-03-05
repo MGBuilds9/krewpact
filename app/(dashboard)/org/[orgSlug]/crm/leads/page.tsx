@@ -238,18 +238,18 @@ export default function LeadsPage() {
           />
         ) : (
           <>
-            <div className="grid gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-max">
               {leads.map((lead) => (
                 <Card
                   key={lead.id}
-                  className="cursor-pointer hover:shadow-md transition-shadow"
+                  className="group cursor-pointer bg-white dark:bg-card border-0 shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all duration-300 rounded-3xl overflow-hidden relative flex flex-col h-full"
                   onClick={() => orgPush(`/crm/leads/${lead.id}`)}
                 >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold truncate">
+                  <CardContent className="p-6 flex-1 flex flex-col">
+                    <div className="flex flex-col gap-4 flex-1">
+                      <div className="flex justify-between items-start gap-3">
+                        <div className="min-w-0">
+                          <h3 className="font-bold text-xl tracking-tight text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-tight">
                             {lead.company_name || 'Unnamed Lead'}
                           </h3>
                           <Badge
@@ -262,22 +262,29 @@ export default function LeadsPage() {
                             {formatStage(lead.status)}
                           </Badge>
                           {lead.is_qualified && (
-                            <Badge className="text-xs bg-green-500 text-white flex-shrink-0">
+                            <Badge className="text-[10px] font-bold tracking-wider uppercase bg-green-500 text-white flex-shrink-0 animate-pulse">
                               Qualified
                             </Badge>
                           )}
                         </div>
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                          {lead.industry && <span>{lead.industry}</span>}
+                      </div>
+
+                      <div className="mt-auto space-y-4 pt-4 border-t border-border/40">
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-muted-foreground">
+                          {lead.industry && (
+                            <span className="flex items-center gap-1.5 text-foreground">
+                              {lead.industry}
+                            </span>
+                          )}
                           {lead.city && (
-                            <span>
+                            <span className="flex items-center gap-1.5 text-foreground">
                               {lead.city}, {lead.province}
                             </span>
                           )}
                           {lead.lead_score != null && lead.lead_score > 0 && (
                             <span
                               className={cn(
-                                'font-medium',
+                                'font-bold flex items-center gap-1.5',
                                 lead.lead_score >= 80
                                   ? 'text-green-600'
                                   : lead.lead_score >= 50
@@ -288,12 +295,15 @@ export default function LeadsPage() {
                               Score: {lead.lead_score}
                             </span>
                           )}
-                          <span>
-                            {new Date(lead.created_at).toLocaleDateString('en-CA', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
-                            })}
+                          <span className="text-muted-foreground/80 flex w-full justify-between items-center text-xs pt-1">
+                            Added:
+                            <span className="font-semibold text-foreground">
+                              {new Date(lead.created_at).toLocaleDateString('en-CA', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                              })}
+                            </span>
                           </span>
                         </div>
                       </div>

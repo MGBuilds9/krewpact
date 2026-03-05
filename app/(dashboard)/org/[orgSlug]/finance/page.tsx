@@ -34,10 +34,14 @@ export default function FinancePage() {
         <div className="grid gap-4 md:grid-cols-3">
           {sections.map((s) => (
             <Link key={s.href} href={s.href}>
-              <Card className="hover:border-primary transition-colors cursor-pointer h-full">
-                <CardHeader>
-                  <CardTitle className="text-lg">{s.title}</CardTitle>
-                  <CardDescription>{s.description}</CardDescription>
+              <Card className="group cursor-pointer bg-white dark:bg-card border shadow-sm hover:shadow-xl hover:scale-[1.02] hover:border-primary/20 transition-all duration-300 rounded-3xl overflow-hidden relative h-full flex flex-col p-2">
+                <CardHeader className="flex-1">
+                  <CardTitle className="text-xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">
+                    {s.title}
+                  </CardTitle>
+                  <CardDescription className="text-sm font-medium mt-2">
+                    {s.description}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent />
               </Card>

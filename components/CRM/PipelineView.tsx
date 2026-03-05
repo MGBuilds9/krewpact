@@ -80,7 +80,10 @@ export function PipelineView({ data }: PipelineViewProps) {
           if (!stageData) return null;
 
           return (
-            <div key={stage} className="flex-shrink-0 w-64 bg-muted/30 rounded-lg p-3">
+            <div
+              key={stage}
+              className="flex-shrink-0 w-72 bg-gray-50/50 dark:bg-card/30 rounded-2xl p-4 border border-border/40 flex flex-col h-full max-h-[80vh]"
+            >
               {/* Column Header */}
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-medium text-sm">{formatStage(stage)}</h3>
@@ -100,7 +103,7 @@ export function PipelineView({ data }: PipelineViewProps) {
               )}
 
               {/* Opportunity Cards */}
-              <div className="space-y-2">
+              <div className="space-y-3 overflow-y-auto pr-1 pb-2 custom-scrollbar flex-1">
                 {stageData.opportunities.map((opp) => (
                   <OpportunityCard
                     key={opp.id}

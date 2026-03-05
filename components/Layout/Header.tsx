@@ -236,17 +236,6 @@ export function Header() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-
-              {/* Mobile Menu */}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="md:hidden hover:bg-muted rounded-lg transition-colors duration-200"
-                onClick={() => setIsMobileMenuOpen(true)}
-                aria-label="Open main menu"
-              >
-                <Menu className="h-5 w-5" />
-              </Button>
             </div>
           </div>
         </div>
