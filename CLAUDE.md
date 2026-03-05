@@ -38,16 +38,16 @@ ERPNext Host → BullMQ Workers → Upstash Redis (dequeue jobs)
                                → Supabase Cloud (direct HTTPS)
 ```
 
-| Layer | Technology | Responsibility |
-|-------|-----------|----------------|
-| Web App | Next.js + React + TypeScript | Internal UI (online-only for MVP, offline deferred to P2) |
-| API/BFF | Next.js API routes (Vercel serverless) | Domain APIs, orchestration, validation, rate limits |
-| Sync Workers | Node.js on ERPNext host | BullMQ workers for ERPNext sync, retries, dead-letter |
-| Operational DB | Supabase Postgres (managed cloud) | Workflows, field ops, audit trails, denormalized reporting |
-| ERP Core | ERPNext (any Linux + cloudflared) | Accounting, inventory, procurement, invoicing, payments |
-| Object Storage | Supabase Storage + CDN | Documents, photos, signed contracts |
-| Identity | Clerk → Supabase JWT bridge | Auth, SSO, session claims. JWT claims drive RLS. |
-| Observability | Vercel Analytics + Sentry + BetterStack | Errors, uptime. Full Prometheus/Grafana deferred. |
+| Layer          | Technology                              | Responsibility                                             |
+| -------------- | --------------------------------------- | ---------------------------------------------------------- |
+| Web App        | Next.js + React + TypeScript            | Internal UI (online-only for MVP, offline deferred to P2)  |
+| API/BFF        | Next.js API routes (Vercel serverless)  | Domain APIs, orchestration, validation, rate limits        |
+| Sync Workers   | Node.js on ERPNext host                 | BullMQ workers for ERPNext sync, retries, dead-letter      |
+| Operational DB | Supabase Postgres (managed cloud)       | Workflows, field ops, audit trails, denormalized reporting |
+| ERP Core       | ERPNext (any Linux + cloudflared)       | Accounting, inventory, procurement, invoicing, payments    |
+| Object Storage | Supabase Storage + CDN                  | Documents, photos, signed contracts                        |
+| Identity       | Clerk → Supabase JWT bridge             | Auth, SSO, session claims. JWT claims drive RLS.           |
+| Observability  | Vercel Analytics + Sentry + BetterStack | Errors, uptime. Full Prometheus/Grafana deferred.          |
 
 ## Unified Architecture (MDM Growth Intelligence System)
 
@@ -64,14 +64,14 @@ KrewPact is the **nucleus** of MDM Group's unified platform. All services conver
 
 ### MDM Group Divisions
 
-| Code | Name | Description |
-|------|------|-------------|
-| `contracting` | MDM Contracting | General contracting |
-| `homes` | MDM Homes | Residential construction |
-| `wood` | MDM Wood | Wood/lumber |
-| `telecom` | MDM Telecom | Telecommunications |
-| `group-inc` | MDM Group Inc. | Parent company / corporate |
-| `management` | MDM Management | Property management |
+| Code          | Name            | Description                |
+| ------------- | --------------- | -------------------------- |
+| `contracting` | MDM Contracting | General contracting        |
+| `homes`       | MDM Homes       | Residential construction   |
+| `wood`        | MDM Wood        | Wood/lumber                |
+| `telecom`     | MDM Telecom     | Telecommunications         |
+| `group-inc`   | MDM Group Inc.  | Parent company / corporate |
+| `management`  | MDM Management  | Property management        |
 
 ## Data Authority Rules
 
@@ -84,6 +84,7 @@ KrewPact is the **nucleus** of MDM Group's unified platform. All services conver
 ## Clerk → Supabase JWT Bridge
 
 Clerk JWTs drive Supabase RLS. Configured via Clerk JWT template:
+
 ```json
 {
   "sub": "{{user.id}}",
@@ -93,6 +94,7 @@ Clerk JWTs drive Supabase RLS. Configured via Clerk JWT template:
   "krewpact_roles": "{{user.public_metadata.role_keys}}"
 }
 ```
+
 - RLS policies use `auth.jwt() ->> 'krewpact_user_id'` (not `auth.uid()`)
 - Division filtering: `auth.jwt() -> 'krewpact_divisions'` (JSONB array in JWT)
 - No per-row subqueries — claims evaluated once per request from JWT
@@ -167,6 +169,7 @@ src/
 ## Required Environment Variables (MVP)
 
 Five services for MVP (full template in `KrewPact-Access-and-Workflow-Plan.md` §1):
+
 - **ERPNext:** `ERPNEXT_BASE_URL` (Cloudflare Tunnel URL), `ERPNEXT_API_KEY`, `ERPNEXT_API_SECRET`
 - **Supabase:** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_DB_URL`
 - **Clerk:** `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SECRET`
@@ -194,12 +197,12 @@ Lint → Type Check → Unit Test → Build → Integration Test → Deploy
 
 **Goal: Replace fragmented manual workflows with a unified platform. Nothing more.**
 
-| Phase | Weeks | Features |
-|-------|-------|----------|
-| Foundation | 1-2 | Auth, RBAC, Supabase schema, ERPNext client, Cloudflare Tunnel, app shell, CI/CD |
-| CRM + Estimating | 3-6 | Leads, opportunities, accounts, contacts, estimate builder, ERPNext sync (Customer, Quotation) |
-| Contracting + Projects | 7-9 | Proposals, BoldSign e-sign, project creation, members, milestones, ERPNext sync (Sales Order, Project) |
-| Execution + Go-Live | 10-12 | Tasks, daily logs, document upload, invoice snapshots, dashboard, UAT, deploy |
+| Phase                  | Weeks | Features                                                                                               |
+| ---------------------- | ----- | ------------------------------------------------------------------------------------------------------ |
+| Foundation             | 1-2   | Auth, RBAC, Supabase schema, ERPNext client, Cloudflare Tunnel, app shell, CI/CD                       |
+| CRM + Estimating       | 3-6   | Leads, opportunities, accounts, contacts, estimate builder, ERPNext sync (Customer, Quotation)         |
+| Contracting + Projects | 7-9   | Proposals, BoldSign e-sign, project creation, members, milestones, ERPNext sync (Sales Order, Project) |
+| Execution + Go-Live    | 10-12 | Tasks, daily logs, document upload, invoice snapshots, dashboard, UAT, deploy                          |
 
 **~25 features | ~40 endpoints | ~30 forms | ~12 ERPNext mappings**
 
@@ -209,6 +212,7 @@ P2 (future): Trade portal, procurement, offline, ADP, closeout, migration, M365,
 ## Planning Documents
 
 Key reference order:
+
 1. `KrewPact-Architecture-Resolution.md` — **START HERE.** All contradictions resolved, MVP scope, locked decisions.
 2. `KrewPact-Master-Plan.md` — locked decisions, architecture, scope (updated with P0/P1/P2)
 3. `KrewPact-Technology-Stack-ADRs.md` — 25 ADRs for every tech choice
@@ -252,26 +256,26 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
+### Mar 4, 2026 — Framer Webhook: Website Contact Form → CRM Integration
+
+- **Changes:** Created `supabase/functions/framer-webhook/index.ts` edge function. Receives Framer form submissions (First Name, Last Name, Email, Service, Message) and creates leads + contacts in KrewPact CRM. Service-to-division mapping (General/Electrical→contracting, Telecom→telecom, Wood→wood). Excluded `supabase/functions/` from tsconfig (Deno runtime). Deployed v5 to Supabase. Set `FRAMER_WEBHOOK_SECRET`.
+- **Decisions:** Custom `x-webhook-secret` header auth (JWT disabled). Manual XOR constant-time comparison (`crypto.subtle.timingSafeEqual` unavailable in Supabase Edge Runtime). `company_name` = "Website Inquiry - {name}" (website leads lack company info). `contacts.full_name` required — constructed from first+last. Contact insert non-blocking.
+- **Tests:** 2061/2061 passing (168 files). Typecheck clean. Build clean. Webhook curl-tested: 200/401/division mapping verified.
+- **Next steps:** Configure Framer form webhook URL + secret header. Add Phone field to Framer form later.
+
+- Mar 4: Fix /org/mdm-group 404 and missing org API data. 2061 tests.
+- Mar 4: Fix infinite redirect loop on hub.mdmgroupinc.ca.
+
 ### Mar 1, 2026 — CRM HubSpot Parity: 10 Pipeline Gaps Closed
+
 - **Changes:** Implemented 10 CRM gaps vs HubSpot across 4 sprints. Added `contacted` lead stage. Carried `source_channel` through lead→opportunity conversion. Consolidated two sequence processors into one with DLQ/branching/real email sending via injected `EmailSender`/`TemplateResolver`. Created round-robin lead assignment (`lib/crm/lead-assignment.ts`). Added auto follow-up task creation on activity outcomes (no_answer/voicemail/callback_requested). Expanded sequence step types (call/linkedin/meeting/site_visit as manual task reminders). Built email open/click tracking endpoints with tracking pixel injection and link wrapping in template renderer. Added `calculateForecastMetrics()` for time-based revenue projections. Added dashboard ownership data (open leads, converted count, recently converted). Built saved views CRUD API. Migration for all schema changes.
 - **Decisions:** Sequence processor uses dependency injection (EmailSender/TemplateResolver interfaces) so the lib stays pure and testable while the cron route wires real Resend sending. Manual action types (call/linkedin/meeting/site_visit) create task reminders rather than trying to automate external platforms. Click tracking validates URL protocol to prevent open redirect.
 - **Tests:** 2048/2048 passing (165 files, +2 new tests for contacted stage). Typecheck clean. Build clean.
 - **Next steps:** Apply migration to Supabase. Wire forecast and ownership data into dashboard UI components. Add tests for new files (lead-assignment, tracking endpoints, saved views). Clerk production keys.
 
-### Feb 27, 2026 — Production Readiness: Queue Wiring, Finance Dialogs, E2E, ERPNext Verified
-- **Changes:** Wired 8 queue processor stubs to real SyncService methods. Added row-click detail dialogs to 3 finance pages (invoices, POs, job-costs). Fixed 2 E2E test selectors. Fixed 3 type errors in portal/supabase-types tests. Verified ERPNext connectivity at erp.mdmgroupinc.ca (HTTP 200, 330ms via Cloudflare Tunnel).
-- **Decisions:** Finance forms are read-only review dialogs (ERPNext-authoritative), no mutation wiring needed. ERPNext is a fresh instance (0 customers, 0 invoices) — ready for data migration.
-- **Tests:** 2046/2046 passing (165 files). 16/16 E2E specs passing. All gates: typecheck clean, build clean.
-- **Next steps:** Clerk production keys. Real data migration to ERPNext. Client/trade portal E2E coverage.
-
+- Feb 27: Production readiness — queue wiring, finance dialogs, E2E, ERPNext verified. 2046 tests.
 - Feb 27: CRM A-to-Z Completion (Sprints 5-8) — Flow builder, email templates, bulk ops, DLQ, SLA. 1990 tests.
 - Feb 26: Seed real MDM data from Excel — 382 leads, 14 accounts, 231 contacts. 1020 tests.
 - Feb 26: CRM Sprint 1+2 — DataTable, pagination, ContactForm, AccountForm. 1020 tests.
 - Feb 25: Demo mode, DB schema alignment, UI polish. 904 tests.
 - Feb 24: CRM lead lifecycle (8 phases) + Cross-Subdomain SSO. 904 tests.
-- Feb 24: Full Service Connection + Microsoft Graph. 650 tests.
-- Feb 23: LeadForge Pipeline (Phases A-F) + Clerk Auth Unification. 597 tests.
-- Feb 15: Tier 3 Zod validation — all 32 mutating routes. 554 tests.
-- Feb 13: CRM + Estimating Phase 1 (Ralph Loop). 549 tests.
-- Feb 12: MDM Unified Growth Intelligence System (Phase 0) — Sales AGI + pgvector schema.
-
