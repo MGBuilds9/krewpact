@@ -7,12 +7,14 @@ const corsHeaders = {
 };
 
 const SERVICE_TO_DIVISION: Record<string, string> = {
-  general: 'contracting',
+  'mdm contracting': 'contracting',
+  'general contracting': 'contracting',
   'electrical contracting': 'contracting',
-  telecom: 'telecom',
+  'telecom contracting': 'telecom',
   'telecom infrastructure': 'telecom',
-  wood: 'wood',
+  telecom: 'telecom',
   'wood industries': 'wood',
+  wood: 'wood',
 };
 
 function timingSafeEqual(a: string, b: string): boolean {
@@ -27,20 +29,15 @@ function timingSafeEqual(a: string, b: string): boolean {
   return result === 0;
 }
 
-function mapDivision(service: string | undefined): string {
-  if (!service) return 'contracting';
-  return SERVICE_TO_DIVISION[service.toLowerCase().trim()] ?? 'contracting';
-}
-
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   if (req.method !== 'POST') {
-    return new Response('Method not allowed', {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
-      headers: corsHeaders,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 
@@ -54,7 +51,7 @@ Deno.serve(async (req) => {
     });
   }
 
-  let body: Record<string, string>;
+  let body: Record<string, unknown>;
   try {
     body = await req.json();
   } catch {
@@ -64,13 +61,33 @@ Deno.serve(async (req) => {
     });
   }
 
-  // Framer sends field labels as keys
-  const firstName = body['First name'] ?? body['first_name'] ?? '';
-  const lastName = body['Last name'] ?? body['last_name'] ?? '';
-  const email = body['Email'] ?? body['email'] ?? '';
-  const service = body['Service'] ?? body['service'] ?? '';
-  const message = body['Message'] ?? body['message'] ?? '';
-  const phone = body['Phone'] ?? body['phone'] ?? '';
+  // Framer sends field labels as keys — handle multiple naming conventions
+  const firstName =
+    (body['First name'] as string) ??
+    (body['firstName'] as string) ??
+    (body['first_name'] as string) ??
+    '';
+  const lastName =
+    (body['Last name'] as string) ??
+    (body['lastName'] as string) ??
+    (body['last_name'] as string) ??
+    '';
+  const email =
+    (body['Email'] as string) ??
+    (body['email'] as string) ??
+    '';
+  const service =
+    (body['Service'] as string) ??
+    (body['service'] as string) ??
+    '';
+  const message =
+    (body['Message'] as string) ??
+    (body['message'] as string) ??
+    '';
+  const phone =
+    (body['Phone'] as string) ??
+    (body['phone'] as string) ??
+    '';
 
   if (!email) {
     return new Response(JSON.stringify({ error: 'Email is required' }), {
@@ -84,21 +101,33 @@ Deno.serve(async (req) => {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
   );
 
-  const divisionId = mapDivision(service);
+  // Map service to division code, then look up UUID
+  const divisionCode = service
+    ? SERVICE_TO_DIVISION[service.toLowerCase().trim()] ?? 'contracting'
+    : 'contracting';
+
+  let divisionId: string | null = null;
+  const { data: division } = await supabase
+    .from('divisions')
+    .select('id')
+    .eq('code', divisionCode)
+    .single();
+  divisionId = division?.id ?? null;
 
   // Build company name from contact name (website leads don't have company info)
   const contactName = [firstName, lastName].filter(Boolean).join(' ') || 'Unknown';
-  const companyName = `Website Inquiry - ${contactName}`;
 
   // Insert lead
   const { data: lead, error: leadError } = await supabase
     .from('leads')
     .insert({
-      company_name: companyName,
+      company_name: `Website Inquiry - ${contactName}`,
       source_channel: 'website',
+      source_detail: 'framer-contact-form',
       status: 'new',
+      project_type: service || null,
+      project_description: message || null,
       division_id: divisionId,
-      notes: message || null,
     })
     .select('id')
     .single();
@@ -127,10 +156,7 @@ Deno.serve(async (req) => {
   }
 
   return new Response(
-    JSON.stringify({
-      success: true,
-      lead_id: lead.id,
-    }),
+    JSON.stringify({ success: true, lead_id: lead.id }),
     {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
