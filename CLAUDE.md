@@ -256,37 +256,28 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
+### Mar 5, 2026 — Performance Optimizations + D4 UAT Prep
+
+- **P1 Pagination (63 routes):** Adopted `parsePagination`/`paginatedResponse` across all GET list handlers — CRM (13), Projects (35+), Estimates (5), Finance (3), Portals (8+). All return `{ data, total, hasMore }` with `.select('*', { count: 'exact' })` and `.range()`. 16 test files updated for new response shape.
+- **P3 N+1 fixes:** Batched DB writes in `sla-alerts` (collect notifications → single insert), `apollo-pump` (batch dedup with `.in()` + bulk insert leads/contacts), `scoring` (batch score history inserts).
+- **P4 Bundle analyzer:** Installed `@next/bundle-analyzer`, wired into `next.config.ts` with `ANALYZE=true` flag.
+- **P5 Cache headers:** Added `Cache-Control: private, s-maxage=300, stale-while-revalidate=600` to 5 static-ish routes (divisions, cost-codes, cost-catalog, assemblies, role permissions).
+- **D4 UAT prep:** Created `scripts/seed-test-users.ts` (13 Clerk test users, one per role, with Supabase records + JWT metadata). Created `docs/UAT-TEST-SCRIPT.md` (60+ scenarios across 12 sections). Created 4 training quickstarts (`docs/training/` — PM, field supervisor, estimator, accounting).
+- **Tests:** 2363/2363 passing (199 files, +9 new). Build clean.
+- **Next steps:** D4.1 seed production Supabase (needs prod keys). D4.2 Clerk production instance. D4.4 DNS config. P2 SELECT * → explicit columns (deferred).
+
 ### Mar 5, 2026 — Phases B+C+D: Integration → Domain Hardening → Production Readiness
 
 - **Phase B (merged):** ERPNext sync (10 entity types), cron inbound sync, ERPNext webhooks, notification dispatcher (6 event types), BoldSign e-sign client + webhooks. 72 tests added.
 - **Phase C (6 workstreams):** C1 CRM rate limiting on 70+ routes (`@upstash/ratelimit`), cron-auth module, pagination helper, sanitize module. C2 Estimating assembly items + proposal tests (24). C3 Projects task/member/file tests (43) + task status enum bug fix. C4 Portal scoping/approval/trade tests (21). C5 Finance route tests (9). C6 Change order/RFI/Submittal tests (10).
 - **Phase D (security + CI/CD):** Fixed ERPNext webhook timing attack (timingSafeEqual). Fixed rate limit placement in 46 CRM routes. Added security headers (CSP, HSTS, X-Frame-Options). Demo mode production guard. CI pipeline: push trigger, E2E smoke tests, coverage. erp-sync cron every 30min. Complete .env.example.
-- **Bug fixes:** Task status enum mismatch, rate-limit test mock, sla-alerts cron auth, sanitize test, research route Json type, erp-sync inline auth → verifyCronAuth, CRM route brace placement (46 files).
-- **Security audit:** CSRF ✅, webhook signatures ✅ (3/3), SQL injection ✅, security headers ✅. Remaining: email tracking endpoints have no auth (by design, but UUID enumeration risk).
-- **Performance audit:** 30+ files use SELECT *, only 6 routes use pagination helper, no bundle analyzer, no dynamic imports, no API caching. N+1 patterns in cron routes. These are optimization items, not blockers.
 - **Tests:** 2354/2354 passing (198 files). Build clean.
-- **Known gaps:** Missing milestones API, daily log submit workflow, project file delete endpoint. Pre-existing Supabase type mismatches (8 files). Performance optimizations identified but deferred.
 
-### Mar 4, 2026 — Framer Webhook: Website Contact Form → CRM Integration
-
-- **Changes:** Created `supabase/functions/framer-webhook/index.ts` edge function. Receives Framer form submissions (First Name, Last Name, Email, Service, Message) and creates leads + contacts in KrewPact CRM. Service-to-division mapping (General/Electrical→contracting, Telecom→telecom, Wood→wood). Excluded `supabase/functions/` from tsconfig (Deno runtime). Deployed v5 to Supabase. Set `FRAMER_WEBHOOK_SECRET`.
-- **Decisions:** Custom `x-webhook-secret` header auth (JWT disabled). Manual XOR constant-time comparison (`crypto.subtle.timingSafeEqual` unavailable in Supabase Edge Runtime). `company_name` = "Website Inquiry - {name}" (website leads lack company info). `contacts.full_name` required — constructed from first+last. Contact insert non-blocking.
-- **Tests:** 2061/2061 passing (168 files). Typecheck clean. Build clean. Webhook curl-tested: 200/401/division mapping verified.
-- **Next steps:** Configure Framer form webhook URL + secret header. Add Phone field to Framer form later.
-
+- Mar 4: Framer webhook edge function for website Contact Us → CRM. 2061 tests.
 - Mar 4: Fix /org/mdm-group 404 and missing org API data. 2061 tests.
 - Mar 4: Fix infinite redirect loop on hub.mdmgroupinc.ca.
-
-### Mar 1, 2026 — CRM HubSpot Parity: 10 Pipeline Gaps Closed
-
-- **Changes:** Implemented 10 CRM gaps vs HubSpot across 4 sprints. Added `contacted` lead stage. Carried `source_channel` through lead→opportunity conversion. Consolidated two sequence processors into one with DLQ/branching/real email sending via injected `EmailSender`/`TemplateResolver`. Created round-robin lead assignment (`lib/crm/lead-assignment.ts`). Added auto follow-up task creation on activity outcomes (no_answer/voicemail/callback_requested). Expanded sequence step types (call/linkedin/meeting/site_visit as manual task reminders). Built email open/click tracking endpoints with tracking pixel injection and link wrapping in template renderer. Added `calculateForecastMetrics()` for time-based revenue projections. Added dashboard ownership data (open leads, converted count, recently converted). Built saved views CRUD API. Migration for all schema changes.
-- **Decisions:** Sequence processor uses dependency injection (EmailSender/TemplateResolver interfaces) so the lib stays pure and testable while the cron route wires real Resend sending. Manual action types (call/linkedin/meeting/site_visit) create task reminders rather than trying to automate external platforms. Click tracking validates URL protocol to prevent open redirect.
-- **Tests:** 2048/2048 passing (165 files, +2 new tests for contacted stage). Typecheck clean. Build clean.
-- **Next steps:** Apply migration to Supabase. Wire forecast and ownership data into dashboard UI components. Add tests for new files (lead-assignment, tracking endpoints, saved views). Clerk production keys.
-
+- Mar 1: CRM HubSpot Parity — 10 pipeline gaps closed, round-robin assignment, email tracking. 2048 tests.
 - Feb 27: Production readiness — queue wiring, finance dialogs, E2E, ERPNext verified. 2046 tests.
 - Feb 27: CRM A-to-Z Completion (Sprints 5-8) — Flow builder, email templates, bulk ops, DLQ, SLA. 1990 tests.
 - Feb 26: Seed real MDM data from Excel — 382 leads, 14 accounts, 231 contacts. 1020 tests.
-- Feb 26: CRM Sprint 1+2 — DataTable, pagination, ContactForm, AccountForm. 1020 tests.
 - Feb 25: Demo mode, DB schema alignment, UI polish. 904 tests.
-- Feb 24: CRM lead lifecycle (8 phases) + Cross-Subdomain SSO. 904 tests.
