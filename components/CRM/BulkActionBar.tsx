@@ -107,6 +107,7 @@ export function BulkActionBar({
         <button
           onClick={onClearSelection}
           className="ml-2 p-1 text-muted-foreground hover:text-foreground"
+          aria-label="Clear selection"
         >
           <X className="h-4 w-4" />
         </button>

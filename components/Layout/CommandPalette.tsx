@@ -155,6 +155,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
               autoFocus
+              aria-label="Search navigation"
             />
           </div>
           <div className="mt-2 text-xs text-muted-foreground flex items-center gap-2">

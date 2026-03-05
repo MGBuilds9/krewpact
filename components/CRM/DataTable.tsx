@@ -110,6 +110,15 @@ export function DataTable<T>({
                       key={header.id}
                       className={cn(canSort && 'cursor-pointer select-none')}
                       onClick={() => canSort && handleHeaderClick(header.column.id)}
+                      aria-sort={
+                        currentSort?.field === header.column.id
+                          ? currentSort.direction === 'asc'
+                            ? 'ascending'
+                            : 'descending'
+                          : canSort
+                            ? 'none'
+                            : undefined
+                      }
                     >
                       <div className="flex items-center gap-1">
                         {header.isPlaceholder
@@ -130,6 +139,9 @@ export function DataTable<T>({
                   key={row.id}
                   className={cn(onRowClick && 'cursor-pointer')}
                   onClick={() => onRowClick?.(row.original)}
+                  role={onRowClick ? 'button' : undefined}
+                  tabIndex={onRowClick ? 0 : undefined}
+                  onKeyDown={onRowClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onRowClick(row.original); } } : undefined}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
@@ -180,6 +192,7 @@ export function DataTable<T>({
             size="sm"
             onClick={() => onPageChange(page - 1)}
             disabled={page === 0}
+            aria-label="Previous page"
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
@@ -188,6 +201,7 @@ export function DataTable<T>({
             size="sm"
             onClick={() => onPageChange(page + 1)}
             disabled={page >= totalPages - 1}
+            aria-label="Next page"
           >
             <ChevronRight className="h-4 w-4" />
           </Button>

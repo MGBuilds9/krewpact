@@ -59,6 +59,7 @@ export function LineItemEditor({
                         defaultValue={line.description}
                         onBlur={(e) => onUpdateLine(line.id, 'description', e.target.value)}
                         className="h-8 text-sm"
+                        aria-label="Description"
                       />
                     )}
                     {line.is_optional && (
@@ -77,6 +78,7 @@ export function LineItemEditor({
                       defaultValue={line.quantity}
                       onBlur={(e) => onUpdateLine(line.id, 'quantity', Number(e.target.value))}
                       className="h-8 text-sm text-right"
+                      aria-label="Quantity"
                     />
                   )}
                 </td>
@@ -89,6 +91,7 @@ export function LineItemEditor({
                       defaultValue={line.unit_cost}
                       onBlur={(e) => onUpdateLine(line.id, 'unit_cost', Number(e.target.value))}
                       className="h-8 text-sm text-right"
+                      aria-label="Unit cost"
                     />
                   )}
                 </td>
@@ -101,6 +104,7 @@ export function LineItemEditor({
                       defaultValue={line.markup_pct}
                       onBlur={(e) => onUpdateLine(line.id, 'markup_pct', Number(e.target.value))}
                       className="h-8 text-sm text-right"
+                      aria-label="Markup percentage"
                     />
                   )}
                 </td>

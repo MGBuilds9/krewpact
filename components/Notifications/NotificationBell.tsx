@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 export function NotificationBell() {
   // Placeholder — will be replaced with real notification logic in Phase 2
   return (
-    <Button variant="ghost" size="icon" className="relative hover:bg-muted rounded-lg">
+    <Button variant="ghost" size="icon" className="relative hover:bg-muted rounded-lg" aria-label="Notifications">
       <Bell className="h-5 w-5" />
       <Badge
         variant="destructive"

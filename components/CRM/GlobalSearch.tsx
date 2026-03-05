@@ -116,11 +116,11 @@ export function GlobalSearch() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh]">
-      <div className="fixed inset-0 bg-black/50" onClick={handleClose} />
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh]" role="dialog" aria-label="CRM Search">
+      <div className="fixed inset-0 bg-black/50" onClick={handleClose} aria-hidden="true" />
       <div className="relative z-10 w-full max-w-lg rounded-lg border bg-background shadow-xl">
         <div className="flex items-center border-b px-4">
-          <Search className="h-4 w-4 text-muted-foreground" />
+          <Search className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
           <input
             ref={inputRef}
             type="text"
@@ -129,8 +129,9 @@ export function GlobalSearch() {
             value={query}
             onChange={(e) => handleQueryChange(e.target.value)}
             onKeyDown={handleKeyDown}
+            aria-label="Search CRM"
           />
-          <button onClick={handleClose} className="p-1">
+          <button onClick={handleClose} className="p-1" aria-label="Close search">
             <X className="h-4 w-4 text-muted-foreground" />
           </button>
         </div>
