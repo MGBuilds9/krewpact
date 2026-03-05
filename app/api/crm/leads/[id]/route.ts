@@ -4,6 +4,7 @@ import { leadUpdateSchema } from '@/lib/validators/crm';
 import { NextRequest, NextResponse } from 'next/server';
 import { scoreLead } from '@/lib/crm/scoring-engine';
 import type { ScoringRule } from '@/lib/crm/scoring-engine';
+import { dispatchNotification } from '@/lib/notifications/dispatcher';
 import {
   UNAUTHORIZED,
   INVALID_JSON,
@@ -56,6 +57,18 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 
   if (error) {
     return errorResponse(error.code === 'PGRST116' ? notFound('Lead') : dbError(error.message));
+  }
+
+  // Fire-and-forget: notify assignee if owner changed
+  if (parsed.data.owner_id && data.owner_id) {
+    dispatchNotification({
+      type: 'lead_assigned',
+      assignee_email: (data as Record<string, unknown>).owner_email as string ?? '',
+      assignee_name: (data as Record<string, unknown>).owner_name as string ?? 'Team Member',
+      lead_company: data.company_name ?? 'Unknown',
+      lead_id: id,
+      assigned_by_name: 'A team member',
+    }).catch((err) => console.error('Lead assignment notification failed:', err));
   }
 
   // Auto-score on update (non-blocking)

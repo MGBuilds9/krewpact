@@ -3,6 +3,7 @@ import { createUserClient } from '@/lib/supabase/server';
 import { estimateUpdateSchema } from '@/lib/validators/estimating';
 import { validateStatusTransition } from '@/lib/estimating/estimate-status';
 import type { EstimateStatus } from '@/lib/estimating/estimate-status';
+import { dispatchNotification } from '@/lib/notifications/dispatcher';
 import { NextRequest, NextResponse } from 'next/server';
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -85,6 +86,20 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
   if (error) {
     const status = error.code === 'PGRST116' ? 404 : 500;
     return NextResponse.json({ error: error.message }, { status });
+  }
+
+  // Fire-and-forget: notify owner when estimate is approved
+  if (statusField === 'approved' && data) {
+    const record = data as Record<string, unknown>;
+    dispatchNotification({
+      type: 'estimate_approved',
+      owner_email: (record.owner_email as string) ?? '',
+      owner_name: (record.owner_name as string) ?? 'Team Member',
+      estimate_number: (record.estimate_number as string) ?? id,
+      estimate_id: id,
+      opportunity_name: (record.opportunity_name as string) ?? 'Opportunity',
+      approved_by_name: 'A team member',
+    }).catch((err) => console.error('Estimate approval notification failed:', err));
   }
 
   return NextResponse.json(data);

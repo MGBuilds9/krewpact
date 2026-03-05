@@ -3,13 +3,27 @@ import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import { SyncService } from '@/lib/erp/sync-service';
 
+const ENTITY_TYPES = [
+  'account',
+  'contact',
+  'opportunity',
+  'estimate',
+  'contract',
+  'project',
+  'task',
+  'supplier',
+  'expense',
+  'timesheet',
+] as const;
+
 const syncRequestSchema = z.object({
-  entity_type: z.enum(['account', 'estimate']),
+  entity_type: z.enum(ENTITY_TYPES),
   entity_id: z.string().uuid(),
 });
 
 /**
  * POST /api/erp/sync — Trigger an ERP sync for a given entity.
+ * Supports all 10 outbound entity types (12 MVP mappings including read-only invoices).
  * Returns the sync job result (status, erp_docname, etc.)
  */
 export async function POST(request: NextRequest) {
@@ -36,12 +50,45 @@ export async function POST(request: NextRequest) {
   const { entity_type, entity_id } = parsed.data;
   const service = new SyncService();
 
-  let result;
-  if (entity_type === 'account') {
-    result = await service.syncAccount(entity_id, userId);
-  } else {
-    result = await service.syncEstimate(entity_id, userId);
-  }
+  try {
+    let result;
+    switch (entity_type) {
+      case 'account':
+        result = await service.syncAccount(entity_id, userId);
+        break;
+      case 'contact':
+        result = await service.syncContact(entity_id, userId);
+        break;
+      case 'opportunity':
+        result = await service.syncOpportunity(entity_id, userId);
+        break;
+      case 'estimate':
+        result = await service.syncEstimate(entity_id, userId);
+        break;
+      case 'contract':
+        // Contract maps to Sales Order via won deal flow
+        result = await service.syncWonDeal(entity_id, userId, new Date().toISOString().slice(0, 10));
+        break;
+      case 'project':
+        result = await service.syncProject(entity_id, userId);
+        break;
+      case 'task':
+        result = await service.syncTask(entity_id, userId);
+        break;
+      case 'supplier':
+        result = await service.syncSupplier(entity_id, userId);
+        break;
+      case 'expense':
+        result = await service.syncExpenseClaim(entity_id, userId);
+        break;
+      case 'timesheet':
+        result = await service.syncTimesheet(entity_id, userId);
+        break;
+    }
 
-  return NextResponse.json(result);
+    return NextResponse.json(result);
+  } catch (err) {
+    console.error('ERP sync failed:', err);
+    return NextResponse.json({ error: 'Sync failed' }, { status: 500 });
+  }
 }
