@@ -3,12 +3,16 @@ import { createUserClient } from '@/lib/supabase/server';
 import { leadStageTransitionSchema } from '@/lib/validators/crm';
 import { validateTransition, type LeadStage } from '@/lib/crm/lead-stages';
 import { NextRequest, NextResponse } from 'next/server';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
 export async function POST(req: NextRequest, context: RouteContext) {
   const { userId } = await auth();
   if (!userId) {
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

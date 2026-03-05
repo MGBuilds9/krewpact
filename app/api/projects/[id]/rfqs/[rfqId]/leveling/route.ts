@@ -3,6 +3,7 @@ import { createUserClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { bidLevelingSessionSchema, bidLevelingEntrySchema } from '@/lib/validators/procurement';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 const querySchema = z.object({
   limit: z.coerce.number().int().positive().max(50).default(10),
@@ -19,6 +20,9 @@ export async function GET(
 ) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   const { rfqId } = await params;
   const qp = Object.fromEntries(req.nextUrl.searchParams);

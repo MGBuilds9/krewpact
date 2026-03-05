@@ -1,16 +1,14 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { runPortalReminderJob } from '@/lib/jobs/portalReminders';
+import { verifyCronAuth } from '@/lib/api/cron-auth';
 
 /**
  * GET /api/cron/portal-reminders
  * Vercel Cron endpoint — triggered daily.
- * Protected by CRON_SECRET env variable.
  */
-export async function GET(req: Request) {
-  const authHeader = req.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+export async function GET(req: NextRequest) {
+  const { authorized } = await verifyCronAuth(req);
+  if (!authorized) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

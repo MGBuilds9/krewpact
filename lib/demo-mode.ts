@@ -6,6 +6,15 @@
 
 export const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
+// Runtime check: log Sentry error if demo mode is active in production
+if (DEMO_MODE && typeof window === 'undefined' && process.env.NODE_ENV === 'production') {
+  import('@sentry/nextjs').then((Sentry) => {
+    Sentry.captureMessage('CRITICAL: Demo mode active in production — Clerk auth bypassed', {
+      level: 'fatal',
+    });
+  });
+}
+
 export const DEMO_USER = {
   id: 'demo_clerk_user',
   firstName: 'Michael',

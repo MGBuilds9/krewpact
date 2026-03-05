@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { routeToDivision, resolveDivisionId } from '@/lib/crm/division-router';
 import { assignLead } from '@/lib/crm/lead-assignment';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 // Schema for incoming lead data
 const leadSchema = z.object({
@@ -20,6 +22,10 @@ const leadSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  // Rate limit: public route — stricter limits
+  const rl = await rateLimit(req, { limit: 10, window: '1 m' });
+  if (!rl.success) return rateLimitResponse(rl);
+
   try {
     // 1. Security Check
     const signature = req.headers.get('x-webhook-secret');
@@ -50,7 +56,7 @@ export async function POST(req: NextRequest) {
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !supabaseServiceKey) {
-      console.error('Missing Supabase credentials');
+      logger.error('Missing Supabase credentials');
       return NextResponse.json({ error: 'Server Configuration Error' }, { status: 500 });
     }
 
@@ -81,7 +87,7 @@ export async function POST(req: NextRequest) {
         ownerId = assignment.owner_id;
       }
     } catch (e) {
-      console.error('Auto-assign on web lead failed:', e);
+      logger.error('Auto-assign on web lead failed:', { error: e });
     }
 
     // A. Insert Lead
@@ -103,7 +109,7 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (leadError) {
-      console.error('Lead Insert Error:', leadError);
+      logger.error('Lead Insert Error:', { error: leadError });
       return NextResponse.json(
         { error: 'Failed to create lead', details: leadError.message },
         { status: 500 },
@@ -128,7 +134,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (contactError) {
-      console.error('Contact Insert Error:', contactError);
+      logger.error('Contact Insert Error:', { error: contactError });
       // Non-fatal, return success with warning or just log
     }
 
@@ -138,7 +144,7 @@ export async function POST(req: NextRequest) {
       message: 'Lead captured successfully',
     });
   } catch (err: unknown) {
-    console.error('API Error:', err);
+    logger.error('API Error:', { error: err });
     const message = err instanceof Error ? err.message : 'Unknown error';
     return NextResponse.json({ error: 'Internal Server Error', details: message }, { status: 500 });
   }

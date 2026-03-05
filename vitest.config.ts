@@ -7,6 +7,14 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./__tests__/setup.ts'],
     include: ['__tests__/**/*.test.{ts,tsx}'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'lcov'],
+      thresholds: {
+        lines: 60,
+        branches: 50,
+      },
+    },
   },
   resolve: {
     alias: {

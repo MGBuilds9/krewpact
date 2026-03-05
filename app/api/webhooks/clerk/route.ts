@@ -1,7 +1,9 @@
 import { Webhook } from 'svix';
+import { logger } from '@/lib/logger';
 import { headers } from 'next/headers';
 import { createServiceClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 type ClerkWebhookEvent = {
   type: string;
@@ -16,6 +18,9 @@ type ClerkWebhookEvent = {
 };
 
 export async function POST(req: Request) {
+  const rl = await rateLimit(req, { limit: 100, window: '1 m', identifier: 'webhook:clerk' });
+  if (!rl.success) return rateLimitResponse(rl);
+
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
   if (!WEBHOOK_SECRET) {
     return NextResponse.json({ error: 'CLERK_WEBHOOK_SECRET not configured' }, { status: 500 });
@@ -58,7 +63,7 @@ export async function POST(req: Request) {
     });
 
     if (error) {
-      console.error(`Clerk webhook ${type} failed:`, error.message);
+      logger.error(`Clerk webhook ${type} failed:`, { error: error.message });
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
@@ -74,7 +79,7 @@ export async function POST(req: Request) {
 
         if (portalError) {
           // Non-fatal — log and continue. The account can be linked manually later.
-          console.error('Failed to link clerk_user_id to portal_account:', portalError.message);
+          logger.error('Failed to link clerk_user_id to portal_account:', { error: portalError.message });
         }
       }
     }
@@ -87,7 +92,7 @@ export async function POST(req: Request) {
       .eq('clerk_user_id', data.id);
 
     if (error) {
-      console.error('Clerk webhook user.deleted failed:', error.message);
+      logger.error('Clerk webhook user.deleted failed:', { error: error.message });
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
   }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { SyncService } from '@/lib/erp/sync-service';
 import { ErpClient } from '@/lib/erp/client';
 import { isMockMode } from '@/lib/erp/sync-service';
+import { verifyCronAuth } from '@/lib/api/cron-auth';
 
 /**
  * GET /api/cron/erp-sync — Periodic inbound sync of Sales Invoices and Purchase Invoices.

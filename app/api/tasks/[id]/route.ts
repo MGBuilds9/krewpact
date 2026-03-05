@@ -6,10 +6,10 @@ import { NextRequest, NextResponse } from 'next/server';
 const updateSchema = z.object({
   title: z.string().min(1).max(255).optional(),
   description: z.string().optional(),
-  status: z.enum(['pending', 'todo', 'in_progress', 'done', 'completed']).optional(),
+  status: z.enum(['todo', 'in_progress', 'blocked', 'done', 'cancelled']).optional(),
   priority: z.enum(['low', 'medium', 'high']).optional(),
-  assigned_to: z.string().uuid().nullable().optional(),
-  due_date: z.string().nullable().optional(),
+  assigned_user_id: z.string().uuid().nullable().optional(),
+  due_at: z.string().nullable().optional(),
 });
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

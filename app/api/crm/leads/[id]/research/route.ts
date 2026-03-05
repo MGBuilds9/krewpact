@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { deepResearchLead } from '@/lib/integrations/deep-research';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 export async function POST(
   _req: NextRequest,
@@ -9,6 +10,9 @@ export async function POST(
 ): Promise<NextResponse> {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const rl = await rateLimit(_req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   const { id } = await params;
   const supabase = createServiceClient();
@@ -47,7 +51,7 @@ export async function POST(
 
     const { error: updateError } = await supabase
       .from('leads')
-      .update({ enrichment_data: updatedEnrichment })
+      .update({ enrichment_data: JSON.parse(JSON.stringify(updatedEnrichment)) })
       .eq('id', id);
 
     if (updateError) {

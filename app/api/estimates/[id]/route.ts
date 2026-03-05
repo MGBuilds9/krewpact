@@ -5,12 +5,16 @@ import { validateStatusTransition } from '@/lib/estimating/estimate-status';
 import type { EstimateStatus } from '@/lib/estimating/estimate-status';
 import { dispatchNotification } from '@/lib/notifications/dispatcher';
 import { NextRequest, NextResponse } from 'next/server';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
 export async function GET(req: NextRequest, context: RouteContext) {
   const { userId } = await auth();
   if (!userId) {
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

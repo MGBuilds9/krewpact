@@ -12,6 +12,7 @@
  */
 
 import { createUserClient } from '@/lib/supabase/server';
+import { logger } from '@/lib/logger';
 import {
   mockCustomerResponse,
   mockQuotationResponse,
@@ -40,7 +41,11 @@ import { fromErpSalesInvoice } from './sales-invoice-mapper';
 
 /** Check if we're running in mock mode (no real ERPNext) */
 export function isMockMode(): boolean {
-  return !process.env.ERPNEXT_BASE_URL || process.env.ERPNEXT_BASE_URL === 'mock';
+  const mock = !process.env.ERPNEXT_BASE_URL || process.env.ERPNEXT_BASE_URL === 'mock';
+  if (mock) {
+    logger.warn('ERPNext mock mode active — no data will be synced to ERPNext');
+  }
+  return mock;
 }
 
 interface SyncResult {

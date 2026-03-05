@@ -3,6 +3,7 @@ import { createUserClient } from '@/lib/supabase/server';
 import { activityCreateSchema } from '@/lib/validators/crm';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 const activityTypes = ['call', 'email', 'meeting', 'note', 'task'] as const;
 
@@ -21,6 +22,9 @@ const querySchema = z.object({
 export async function GET(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) {
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

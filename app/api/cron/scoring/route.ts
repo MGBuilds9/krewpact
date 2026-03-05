@@ -1,19 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 import { createServiceClient } from '@/lib/supabase/server';
 import { scoreLead } from '@/lib/crm/scoring-engine';
 import type { ScoringRule } from '@/lib/crm/scoring-engine';
 import { deepResearchLead } from '@/lib/integrations/deep-research';
+import { verifyCronAuth } from '@/lib/api/cron-auth';
 
 const BATCH_SIZE = 50;
 
-function isAuthorized(req: NextRequest): boolean {
-  const authHeader = req.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET || process.env.WEBHOOK_SIGNING_SECRET;
-  return !!cronSecret && authHeader === `Bearer ${cronSecret}`;
-}
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  if (!isAuthorized(req)) {
+  const { authorized } = await verifyCronAuth(req);
+  if (!authorized) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -73,7 +71,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
       if (updateError) {
         errors++;
-        console.error(`Score update error for ${lead.id}:`, updateError.message);
+        logger.error(`Score update error for ${lead.id}:`, { error: updateError.message });
         continue;
       }
 
@@ -99,7 +97,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
             })
             .eq('id', lead.id);
         } catch (researchErr) {
-          console.error(`Deep research error for ${lead.id}:`, researchErr);
+          logger.error(`Deep research error for ${lead.id}:`, { error: researchErr });
           // Non-critical — scoring still succeeds
         }
       }
@@ -107,7 +105,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       processed++;
     } catch (err) {
       errors++;
-      console.error(`Scoring error for ${lead.id}:`, err);
+      logger.error(`Scoring error for ${lead.id}:`, { error: err });
     }
   }
 

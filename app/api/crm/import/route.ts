@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 const importRowSchema = z.object({
   company_name: z.string().min(1),
@@ -22,6 +23,9 @@ const importSchema = z.object({
 export async function POST(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) {
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

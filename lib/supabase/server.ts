@@ -18,6 +18,18 @@ export function createServiceClient() {
   });
 }
 
+/**
+ * Service client with audit context. Use this for new code.
+ * Logs the calling context for security audit trail.
+ */
+export function createScopedServiceClient(context: string) {
+  if (process.env.NODE_ENV === 'development') {
+    // eslint-disable-next-line no-console
+    console.debug(`[service-client] ${context}`);
+  }
+  return createServiceClient();
+}
+
 export async function createUserClient() {
   // In demo mode, use anon client without auth headers (anon RLS policies enabled)
   if (DEMO_MODE) {

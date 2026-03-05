@@ -6,6 +6,47 @@
  */
 import { logger } from '@/lib/logger';
 
+const TIMEOUT_MS = 10_000;
+const MAX_RETRIES = 3;
+const CIRCUIT_THRESHOLD = 5;
+const CIRCUIT_RESET_MS = 30_000;
+
+let consecutiveFailures = 0;
+let circuitOpenUntil = 0;
+
+function isCircuitOpen(): boolean {
+  if (consecutiveFailures < CIRCUIT_THRESHOLD) return false;
+  if (Date.now() > circuitOpenUntil) {
+    // Half-open: allow one request through
+    consecutiveFailures = CIRCUIT_THRESHOLD - 1;
+    return false;
+  }
+  return true;
+}
+
+function recordSuccess(): void {
+  consecutiveFailures = 0;
+}
+
+function recordFailure(): void {
+  consecutiveFailures++;
+  if (consecutiveFailures >= CIRCUIT_THRESHOLD) {
+    circuitOpenUntil = Date.now() + CIRCUIT_RESET_MS;
+    logger.warn('ERPNext circuit breaker OPEN', {
+      failures: consecutiveFailures,
+      resetAt: new Date(circuitOpenUntil).toISOString(),
+    });
+  }
+}
+
+function isRetryable(status: number): boolean {
+  return status >= 500 || status === 408 || status === 429;
+}
+
+async function sleep(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
 export class ErpClient {
   private baseUrl: string;
   private apiKey: string;
@@ -37,16 +78,65 @@ export class ErpClient {
     return base;
   }
 
+  private async _fetch(url: string, init?: RequestInit): Promise<Response> {
+    if (isCircuitOpen()) {
+      throw new Error('ERPNext circuit breaker is open — skipping request');
+    }
+
+    let lastError: Error | null = null;
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      try {
+        const response = await fetch(url, {
+          ...init,
+          signal: AbortSignal.timeout(TIMEOUT_MS),
+        });
+
+        if (response.ok) {
+          recordSuccess();
+          return response;
+        }
+
+        if (isRetryable(response.status) && attempt < MAX_RETRIES - 1) {
+          const backoff = 1000 * Math.pow(2, attempt);
+          logger.warn('ERPNext retrying', { url, status: response.status, attempt, backoff });
+          await sleep(backoff);
+          continue;
+        }
+
+        // Non-retryable error or final attempt
+        recordFailure();
+        throw new Error(`ERPNext API error: ${response.status} ${response.statusText}`);
+      } catch (err) {
+        lastError = err instanceof Error ? err : new Error(String(err));
+        if (lastError.name === 'TimeoutError' || lastError.name === 'AbortError') {
+          logger.warn('ERPNext request timed out', { url, attempt });
+          if (attempt < MAX_RETRIES - 1) {
+            await sleep(1000 * Math.pow(2, attempt));
+            continue;
+          }
+        }
+        if (
+          lastError.message.includes('circuit breaker') ||
+          (!lastError.name?.includes('Timeout') && !lastError.message.includes('fetch'))
+        ) {
+          throw lastError;
+        }
+        if (attempt < MAX_RETRIES - 1) {
+          await sleep(1000 * Math.pow(2, attempt));
+          continue;
+        }
+      }
+    }
+
+    recordFailure();
+    throw lastError || new Error('ERPNext request failed after retries');
+  }
+
   async get<T>(doctype: string, name: string): Promise<T> {
     const url = this.getResourceUrl(doctype, name);
-    const response = await fetch(url, {
+    const response = await this._fetch(url, {
       headers: this.getAuthHeaders(),
     });
-
-    if (!response.ok) {
-      logger.error('ERPNext GET failed', { doctype, name, status: response.status });
-      throw new Error(`ERPNext API error: ${response.status} ${response.statusText}`);
-    }
 
     const json = await response.json();
     return json.data as T;
@@ -64,13 +154,9 @@ export class ErpClient {
     if (limit) params.set('limit_page_length', String(limit));
 
     const url = `${this.getResourceUrl(doctype)}?${params.toString()}`;
-    const response = await fetch(url, {
+    const response = await this._fetch(url, {
       headers: this.getAuthHeaders(),
     });
-
-    if (!response.ok) {
-      throw new Error(`ERPNext API error: ${response.status} ${response.statusText}`);
-    }
 
     const json = await response.json();
     return json.data as T[];
@@ -78,15 +164,11 @@ export class ErpClient {
 
   async create<T>(doctype: string, data: Record<string, unknown>): Promise<T> {
     const url = this.getResourceUrl(doctype);
-    const response = await fetch(url, {
+    const response = await this._fetch(url, {
       method: 'POST',
       headers: this.getAuthHeaders(),
       body: JSON.stringify({ data }),
     });
-
-    if (!response.ok) {
-      throw new Error(`ERPNext API error: ${response.status} ${response.statusText}`);
-    }
 
     const json = await response.json();
     return json.data as T;
@@ -94,15 +176,11 @@ export class ErpClient {
 
   async update<T>(doctype: string, name: string, data: Record<string, unknown>): Promise<T> {
     const url = this.getResourceUrl(doctype, name);
-    const response = await fetch(url, {
+    const response = await this._fetch(url, {
       method: 'PUT',
       headers: this.getAuthHeaders(),
       body: JSON.stringify({ data }),
     });
-
-    if (!response.ok) {
-      throw new Error(`ERPNext API error: ${response.status} ${response.statusText}`);
-    }
 
     const json = await response.json();
     return json.data as T;
@@ -110,13 +188,9 @@ export class ErpClient {
 
   async delete(doctype: string, name: string): Promise<void> {
     const url = this.getResourceUrl(doctype, name);
-    const response = await fetch(url, {
+    await this._fetch(url, {
       method: 'DELETE',
       headers: this.getAuthHeaders(),
     });
-
-    if (!response.ok) {
-      throw new Error(`ERPNext API error: ${response.status} ${response.statusText}`);
-    }
   }
 }

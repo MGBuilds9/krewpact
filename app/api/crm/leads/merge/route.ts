@@ -3,6 +3,7 @@ import { createUserClient } from '@/lib/supabase/server';
 import { computeLeadMerge } from '@/lib/crm/duplicate-detector';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 const mergeSchema = z.object({
   primary_id: z.string().uuid(),
@@ -12,6 +13,9 @@ const mergeSchema = z.object({
 export async function POST(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) {
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

@@ -3,10 +3,14 @@ import { createUserClient } from '@/lib/supabase/server';
 import { autoLogSchema } from '@/lib/validators/crm';
 import { matchEmailToEntities } from '@/lib/crm/email-activity-matcher';
 import { NextRequest, NextResponse } from 'next/server';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 export async function POST(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) {
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

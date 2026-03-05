@@ -1,4 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
+import { logger } from '@/lib/logger';
 import { createUserClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
@@ -44,7 +45,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Notification PATCH error:', error);
+    logger.error('Notification PATCH error:', { error: error });
     return NextResponse.json({ error: 'Failed to update notification' }, { status: 500 });
   }
 }
@@ -67,7 +68,7 @@ export async function DELETE(_req: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Notification DELETE error:', error);
+    logger.error('Notification DELETE error:', { error: error });
     return NextResponse.json({ error: 'Failed to delete notification' }, { status: 500 });
   }
 }

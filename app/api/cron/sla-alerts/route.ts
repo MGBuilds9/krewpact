@@ -1,13 +1,11 @@
 import { createUserClient } from '@/lib/supabase/server';
 import { LEAD_SLA_CONFIG, OPPORTUNITY_SLA_CONFIG, isOverdue } from '@/lib/crm/sla-config';
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyCronAuth } from '@/lib/api/cron-auth';
 
 export async function POST(req: NextRequest) {
-  // Verify cron secret
-  const authHeader = req.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  const { authorized } = await verifyCronAuth(req);
+  if (!authorized) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

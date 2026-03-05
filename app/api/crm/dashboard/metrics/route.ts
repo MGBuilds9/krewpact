@@ -9,6 +9,7 @@ import {
   calculateSourceMetrics,
   calculateForecastMetrics,
 } from '@/lib/crm/metrics';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 const querySchema = z.object({
   division_id: z.string().min(1).optional(),
@@ -46,6 +47,9 @@ function getPeriodStart(period: string): string {
 export async function GET(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) {
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

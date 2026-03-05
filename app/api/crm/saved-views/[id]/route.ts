@@ -9,6 +9,7 @@ import {
   dbError,
   errorResponse,
 } from '@/lib/api/errors';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 const savedViewUpdateSchema = z.object({
   name: z.string().min(1).max(100).optional(),
@@ -22,6 +23,9 @@ const savedViewUpdateSchema = z.object({
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth();
   if (!userId) return errorResponse(UNAUTHORIZED);
+
+  const rl = await rateLimit(_req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   const { id } = await params;
   const supabase = await createUserClient();

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { createUserClient, createServiceClient } from '@/lib/supabase/server';
 import { processSequences } from '@/lib/crm/sequence-processor';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 /**
  * POST /api/crm/sequences/process
@@ -26,6 +27,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // Fall back to user auth
   const { userId } = await auth();
   if (!userId) {
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

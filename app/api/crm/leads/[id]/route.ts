@@ -13,12 +13,16 @@ import {
   dbError,
   errorResponse,
 } from '@/lib/api/errors';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
 export async function GET(req: NextRequest, context: RouteContext) {
   const { userId } = await auth();
   if (!userId) return errorResponse(UNAUTHORIZED);
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   const { id } = await context.params;
   const supabase = await createUserClient();

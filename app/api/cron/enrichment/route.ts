@@ -2,17 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { enrichLead, mergeEnrichmentData } from '@/lib/integrations/enrichment';
 import { summarizeEnrichment } from '@/lib/integrations/enrichment-summarizer';
+import { verifyCronAuth } from '@/lib/api/cron-auth';
 
 const BATCH_SIZE = 20;
 
-function isAuthorized(req: NextRequest): boolean {
-  const authHeader = req.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET || process.env.WEBHOOK_SIGNING_SECRET;
-  return !!cronSecret && authHeader === `Bearer ${cronSecret}`;
-}
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  if (!isAuthorized(req)) {
+  const { authorized } = await verifyCronAuth(req);
+  if (!authorized) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

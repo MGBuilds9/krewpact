@@ -4,15 +4,12 @@ import { sendEmail } from '@/lib/email/resend';
 import { renderEmailTemplate } from '@/lib/email/template-renderer';
 import { processSequences } from '@/lib/crm/sequence-processor';
 import type { EmailSender, TemplateResolver } from '@/lib/crm/sequence-processor';
+import { verifyCronAuth } from '@/lib/api/cron-auth';
 
-function isAuthorized(req: NextRequest): boolean {
-  const cronSecret = process.env.CRON_SECRET ?? process.env.WEBHOOK_SIGNING_SECRET;
-  if (!cronSecret) return false;
-  return req.headers.get('authorization') === `Bearer ${cronSecret}`;
-}
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  if (!isAuthorized(req)) {
+  const { authorized } = await verifyCronAuth(req);
+  if (!authorized) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

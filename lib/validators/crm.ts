@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { safeString, optionalSafeString, nullableSafeString } from '@/lib/sanitize';
 
 // --- Lead stages (from DB enum lead_stage) ---
 const leadStages = [
@@ -30,21 +31,21 @@ const activityTypes = ['call', 'email', 'meeting', 'note', 'task'] as const;
 // ============================================================
 
 export const accountCreateSchema = z.object({
-  account_name: z.string().min(1).max(200),
+  account_name: safeString().pipe(z.string().min(1).max(200)),
   account_type: z.string(),
   division_id: z.string().uuid().optional(),
   billing_address: z.record(z.string(), z.any()).optional(),
   shipping_address: z.record(z.string(), z.any()).optional(),
-  notes: z.string().optional(),
+  notes: optionalSafeString(),
 });
 
 export const accountUpdateSchema = z.object({
-  account_name: z.string().min(1).max(200).optional(),
+  account_name: safeString().pipe(z.string().min(1).max(200)).optional(),
   account_type: z.string().optional(),
   division_id: z.string().uuid().optional(),
   billing_address: z.record(z.string(), z.any()).optional().nullable(),
   shipping_address: z.record(z.string(), z.any()).optional().nullable(),
-  notes: z.string().optional().nullable(),
+  notes: nullableSafeString(),
 });
 
 // ============================================================
@@ -52,24 +53,24 @@ export const accountUpdateSchema = z.object({
 // ============================================================
 
 export const contactCreateSchema = z.object({
-  first_name: z.string().min(1).max(100),
-  last_name: z.string().min(1).max(100),
+  first_name: safeString().pipe(z.string().min(1).max(100)),
+  last_name: safeString().pipe(z.string().min(1).max(100)),
   account_id: z.string().uuid().optional(),
   lead_id: z.string().uuid().optional(),
   email: z.string().email().optional(),
   phone: z.string().optional(),
-  role_title: z.string().optional(),
+  role_title: optionalSafeString(),
   is_primary: z.boolean().optional(),
 });
 
 export const contactUpdateSchema = z.object({
-  first_name: z.string().min(1).max(100).optional(),
-  last_name: z.string().min(1).max(100).optional(),
+  first_name: safeString().pipe(z.string().min(1).max(100)).optional(),
+  last_name: safeString().pipe(z.string().min(1).max(100)).optional(),
   account_id: z.string().uuid().optional().nullable(),
   lead_id: z.string().uuid().optional().nullable(),
   email: z.string().email().optional(),
   phone: z.string().optional().nullable(),
-  role_title: z.string().optional().nullable(),
+  role_title: nullableSafeString(),
   is_primary: z.boolean().optional(),
 });
 
@@ -78,24 +79,24 @@ export const contactUpdateSchema = z.object({
 // ============================================================
 
 export const leadCreateSchema = z.object({
-  company_name: z.string().min(1).max(200),
+  company_name: safeString().pipe(z.string().min(1).max(200)),
   division_id: z.string().min(1).optional(),
   source_channel: z.string().optional(),
-  industry: z.string().optional(),
-  city: z.string().optional(),
-  province: z.string().optional(),
-  notes: z.string().optional(),
+  industry: optionalSafeString(),
+  city: optionalSafeString(),
+  province: optionalSafeString(),
+  notes: optionalSafeString(),
   owner_id: z.string().uuid().optional(),
 });
 
 export const leadUpdateSchema = z.object({
-  company_name: z.string().min(1).max(200).optional(),
+  company_name: safeString().pipe(z.string().min(1).max(200)).optional(),
   division_id: z.string().min(1).optional(),
-  source_channel: z.string().optional().nullable(),
-  industry: z.string().optional().nullable(),
-  city: z.string().optional().nullable(),
-  province: z.string().optional().nullable(),
-  notes: z.string().optional().nullable(),
+  source_channel: nullableSafeString(),
+  industry: nullableSafeString(),
+  city: nullableSafeString(),
+  province: nullableSafeString(),
+  notes: nullableSafeString(),
   owner_id: z.string().uuid().optional().nullable(),
   status: z.string().optional(),
 });
@@ -116,7 +117,7 @@ export const leadStageTransitionSchema = z
 // ============================================================
 
 export const opportunityCreateSchema = z.object({
-  opportunity_name: z.string().min(1).max(200),
+  opportunity_name: safeString().pipe(z.string().min(1).max(200)),
   lead_id: z.string().uuid().optional(),
   account_id: z.string().uuid().optional(),
   contact_id: z.string().uuid().optional(),
@@ -130,7 +131,7 @@ export const opportunityCreateSchema = z.object({
 });
 
 export const opportunityUpdateSchema = z.object({
-  opportunity_name: z.string().min(1).max(200).optional(),
+  opportunity_name: safeString().pipe(z.string().min(1).max(200)).optional(),
   lead_id: z.string().uuid().optional().nullable(),
   account_id: z.string().uuid().optional().nullable(),
   contact_id: z.string().uuid().optional().nullable(),
@@ -140,7 +141,7 @@ export const opportunityUpdateSchema = z.object({
   estimated_revenue: z.number().min(0).optional(),
   probability_pct: z.number().min(0).max(100).optional(),
   owner_user_id: z.string().uuid().optional().nullable(),
-  notes: z.string().optional().nullable(),
+  notes: nullableSafeString(),
 });
 
 export const opportunityStageTransitionSchema = z
@@ -162,12 +163,12 @@ export const opportunityStageTransitionSchema = z
 export const activityCreateSchema = z
   .object({
     activity_type: z.enum(activityTypes),
-    title: z.string().min(1).max(200),
+    title: safeString().pipe(z.string().min(1).max(200)),
     opportunity_id: z.string().uuid().optional(),
     lead_id: z.string().uuid().optional(),
     account_id: z.string().uuid().optional(),
     contact_id: z.string().uuid().optional(),
-    details: z.string().optional(),
+    details: optionalSafeString(),
     due_at: z.string().optional(),
     owner_user_id: z.string().uuid().optional(),
     outcome: z
@@ -187,8 +188,8 @@ export const activityCreateSchema = z
   );
 
 export const activityUpdateSchema = z.object({
-  title: z.string().min(1).max(200).optional(),
-  details: z.string().optional().nullable(),
+  title: safeString().pipe(z.string().min(1).max(200)).optional(),
+  details: nullableSafeString(),
   due_at: z.string().optional().nullable(),
   completed_at: z.string().optional().nullable(),
   owner_user_id: z.string().uuid().optional().nullable(),
@@ -209,8 +210,8 @@ const outreachChannels = [
 ] as const;
 
 export const sequenceCreateSchema = z.object({
-  name: z.string().min(1).max(200),
-  description: z.string().optional(),
+  name: safeString().pipe(z.string().min(1).max(200)),
+  description: optionalSafeString(),
   trigger_type: z.string().min(1),
   trigger_conditions: z.object({}).passthrough().optional(),
   is_active: z.boolean().optional(),
@@ -218,8 +219,8 @@ export const sequenceCreateSchema = z.object({
 });
 
 export const sequenceUpdateSchema = z.object({
-  name: z.string().min(1).max(200).optional(),
-  description: z.string().optional().nullable(),
+  name: safeString().pipe(z.string().min(1).max(200)).optional(),
+  description: nullableSafeString(),
   trigger_type: z.string().min(1).optional(),
   trigger_conditions: z.object({}).passthrough().optional().nullable(),
   is_active: z.boolean().optional(),
@@ -280,9 +281,9 @@ export const outreachCreateSchema = z.object({
   activity_type: z.string().optional(),
   outcome: z.string().optional(),
   outcome_detail: z.string().optional(),
-  subject: z.string().optional(),
-  message_preview: z.string().optional(),
-  notes: z.string().optional(),
+  subject: optionalSafeString(),
+  message_preview: optionalSafeString(),
+  notes: optionalSafeString(),
   sequence_id: z.string().uuid().optional(),
   sequence_step: z.number().int().optional(),
   is_automated: z.boolean().optional(),
@@ -358,13 +359,13 @@ export type EntityTag = z.infer<typeof entityTagSchema>;
 export const noteCreateSchema = z.object({
   entity_type: z.enum(entityTypes),
   entity_id: z.string().uuid(),
-  content: z.string().min(1).max(10000),
+  content: safeString().pipe(z.string().min(1).max(10000)),
   is_pinned: z.boolean().optional(),
 });
 export type NoteCreate = z.infer<typeof noteCreateSchema>;
 
 export const noteUpdateSchema = z.object({
-  content: z.string().min(1).max(10000).optional(),
+  content: safeString().pipe(z.string().min(1).max(10000)).optional(),
   is_pinned: z.boolean().optional(),
 });
 export type NoteUpdate = z.infer<typeof noteUpdateSchema>;

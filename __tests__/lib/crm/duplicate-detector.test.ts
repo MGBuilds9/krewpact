@@ -191,6 +191,24 @@ describe('findLeadDuplicates', () => {
     const result = findLeadDuplicates({ company_name: 'Test' }, []);
     expect(result.hasDuplicates).toBe(false);
   });
+
+  it('does not match leads from different divisions when filtered by caller', () => {
+    // Cross-division isolation is the caller's responsibility:
+    // the function checks whatever existingLeads array is passed in.
+    // When caller filters existingLeads to division A, a lead in division B won't appear.
+    const divisionALeads = [
+      { id: 'lead-a1', company_name: 'MDM Contracting', domain: null, division_id: 'div-a' },
+    ];
+    const divisionBCandidate = { company_name: 'MDM Contracting' };
+
+    // Same company name, but division B leads array is empty (caller filtered)
+    const result = findLeadDuplicates(divisionBCandidate, []);
+    expect(result.hasDuplicates).toBe(false);
+
+    // When caller passes division A leads, it DOES match (no built-in division filter)
+    const resultWithAll = findLeadDuplicates(divisionBCandidate, divisionALeads);
+    expect(resultWithAll.hasDuplicates).toBe(true);
+  });
 });
 
 // =====================================================

@@ -4,8 +4,10 @@ import {
   calculateConversionMetrics,
   calculateVelocityMetrics,
   calculateSourceMetrics,
+  calculateForecastMetrics,
   type OpportunityData,
   type LeadData,
+  type ForecastOpportunityData,
 } from '@/lib/crm/metrics';
 
 function makeOpp(overrides: Partial<OpportunityData> = {}): OpportunityData {
@@ -195,5 +197,101 @@ describe('calculateSourceMetrics', () => {
     const leads = [makeLead({ source_channel: null })];
     const result = calculateSourceMetrics(leads);
     expect(result.sources[0].source).toBe('Unknown');
+  });
+});
+
+// =====================================================
+// Forecast Metrics
+// =====================================================
+
+function makeForecastOpp(overrides: Partial<ForecastOpportunityData> = {}): ForecastOpportunityData {
+  return {
+    id: `opp-${Math.random().toString(36).slice(2, 8)}`,
+    stage: 'proposal',
+    estimated_revenue: 100000,
+    probability_pct: 50,
+    target_close_date: '2026-04-15',
+    ...overrides,
+  };
+}
+
+describe('calculateForecastMetrics', () => {
+  // Use mid-month to avoid timezone edge cases
+  const now = new Date(2026, 2, 15); // March 15, 2026 in local time
+
+  it('returns empty buckets for empty input', () => {
+    const result = calculateForecastMetrics([], now);
+    expect(result.totalForecastedRevenue).toBe(0);
+    expect(result.totalWeightedRevenue).toBe(0);
+    expect(result.buckets).toHaveLength(6);
+    expect(result.buckets[0].month).toBe('2026-03');
+    expect(result.buckets[5].month).toBe('2026-08');
+  });
+
+  it('places opportunities into correct month bucket', () => {
+    const opps = [
+      makeForecastOpp({ target_close_date: '2026-03-20', estimated_revenue: 50000, probability_pct: 80 }),
+      makeForecastOpp({ target_close_date: '2026-05-10', estimated_revenue: 100000, probability_pct: 40 }),
+    ];
+    const result = calculateForecastMetrics(opps, now);
+
+    const mar = result.buckets.find((b) => b.month === '2026-03');
+    expect(mar?.dealCount).toBe(1);
+    expect(mar?.totalRevenue).toBe(50000);
+    expect(mar?.weightedRevenue).toBe(40000); // 50000 * 0.8
+
+    const may = result.buckets.find((b) => b.month === '2026-05');
+    expect(may?.dealCount).toBe(1);
+    expect(may?.totalRevenue).toBe(100000);
+    expect(may?.weightedRevenue).toBe(40000); // 100000 * 0.4
+  });
+
+  it('excludes terminal stages (contracted, closed_lost)', () => {
+    const opps = [
+      makeForecastOpp({ stage: 'contracted', target_close_date: '2026-04-01', estimated_revenue: 200000 }),
+      makeForecastOpp({ stage: 'closed_lost', target_close_date: '2026-04-01', estimated_revenue: 100000 }),
+      makeForecastOpp({ stage: 'proposal', target_close_date: '2026-04-01', estimated_revenue: 50000 }),
+    ];
+    const result = calculateForecastMetrics(opps, now);
+    expect(result.totalForecastedRevenue).toBe(50000);
+  });
+
+  it('excludes opportunities without target_close_date', () => {
+    const opps = [
+      makeForecastOpp({ target_close_date: null, estimated_revenue: 999999 }),
+      makeForecastOpp({ target_close_date: '2026-03-15', estimated_revenue: 10000 }),
+    ];
+    const result = calculateForecastMetrics(opps, now);
+    expect(result.totalForecastedRevenue).toBe(10000);
+  });
+
+  it('ignores opportunities outside the forecast window', () => {
+    const opps = [
+      makeForecastOpp({ target_close_date: '2027-01-01', estimated_revenue: 500000 }),
+    ];
+    const result = calculateForecastMetrics(opps, now, 6);
+    // Falls outside the 6-month window (Mar-Aug 2026), not in any bucket
+    const bucketWithDeal = result.buckets.find((b) => b.dealCount > 0);
+    expect(bucketWithDeal).toBeUndefined();
+    // But still counted in totals (this is current behavior)
+    expect(result.totalForecastedRevenue).toBe(500000);
+  });
+
+  it('handles null revenue and probability gracefully', () => {
+    const opps = [
+      makeForecastOpp({ target_close_date: '2026-04-15', estimated_revenue: null, probability_pct: null }),
+    ];
+    const result = calculateForecastMetrics(opps, now);
+    const apr = result.buckets.find((b) => b.month === '2026-04');
+    expect(apr?.dealCount).toBe(1);
+    expect(apr?.totalRevenue).toBe(0);
+    expect(apr?.weightedRevenue).toBe(0);
+  });
+
+  it('respects custom monthsAhead parameter', () => {
+    const result = calculateForecastMetrics([], now, 3);
+    expect(result.buckets).toHaveLength(3);
+    expect(result.buckets[0].month).toBe('2026-03');
+    expect(result.buckets[2].month).toBe('2026-05');
   });
 });

@@ -1,4 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
+import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from 'next/server';
 import { dispatchNotification } from '@/lib/notifications/dispatcher';
 import type { NotificationEvent } from '@/lib/notifications/dispatcher';
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
     await dispatchNotification(body as NotificationEvent);
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
-    console.error('Notification dispatch failed:', err);
+    logger.error('Notification dispatch failed:', { error: err });
     const message = err instanceof Error ? err.message : 'Dispatch failed';
     return NextResponse.json({ error: message }, { status: 500 });
   }

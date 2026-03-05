@@ -3,6 +3,7 @@ import { createUserClient } from '@/lib/supabase/server';
 import { findLeadDuplicates } from '@/lib/crm/duplicate-detector';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 const checkSchema = z.object({
   company_name: z.string().min(1),
@@ -14,6 +15,9 @@ const checkSchema = z.object({
 export async function POST(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) {
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

@@ -16,6 +16,7 @@ import { BoldSignClient } from '@/lib/esign/boldsign-client';
 import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from 'next/server';
 import { createHmac, timingSafeEqual } from 'crypto';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 // ============================================================
 // Types
@@ -273,6 +274,9 @@ async function handleGenericEvent(
 // ============================================================
 
 export async function POST(req: NextRequest) {
+  const rl = await rateLimit(req, { limit: 100, window: '1 m', identifier: 'webhook:boldsign' });
+  if (!rl.success) return rateLimitResponse(rl);
+
   const webhookSecret = process.env.BOLDSIGN_WEBHOOK_SECRET;
   if (!webhookSecret) {
     logger.error('BOLDSIGN_WEBHOOK_SECRET is not set');

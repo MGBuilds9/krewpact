@@ -1,4 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
+import { logger } from '@/lib/logger';
 import { createUserClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -71,7 +72,7 @@ export async function POST(req: NextRequest) {
       permission_set: {},
     }));
     const { error: permError } = await supabase.from('portal_permissions').insert(permissions);
-    if (permError) console.error('Failed to link projects:', permError);
+    if (permError) logger.error('Failed to link projects:', { error: permError });
   }
 
   // 2. Invite via Clerk
@@ -89,7 +90,7 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (err: unknown) {
-    console.error('Failed to invite via Clerk:', err);
+    logger.error('Failed to invite via Clerk:', { error: err });
     return NextResponse.json({ ...account, _warning: 'Clerk invite failed' }, { status: 201 });
   }
 

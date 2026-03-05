@@ -1,4 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
+import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { createUserClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 

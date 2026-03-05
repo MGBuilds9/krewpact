@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 import { SyncService } from '@/lib/erp/sync-service';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 /**
  * POST /api/webhooks/erpnext — Receives ERPNext document event webhooks.
@@ -14,10 +16,13 @@ import { SyncService } from '@/lib/erp/sync-service';
  *   - Project: logs event (future: bidirectional project sync)
  */
 export async function POST(request: NextRequest) {
+  const rl = await rateLimit(request, { limit: 100, window: '1 m', identifier: 'webhook:erpnext' });
+  if (!rl.success) return rateLimitResponse(rl);
+
   // 1. Verify webhook secret
   const secret = process.env.ERPNEXT_WEBHOOK_SECRET;
   if (!secret) {
-    console.error('[erpnext-webhook] ERPNEXT_WEBHOOK_SECRET not configured');
+    logger.error('[erpnext-webhook] ERPNEXT_WEBHOOK_SECRET not configured');
     return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 });
   }
 
@@ -89,7 +94,7 @@ export async function POST(request: NextRequest) {
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error(`[erpnext-webhook] Error processing ${doctype}/${docname}:`, message);
+    logger.error(`[erpnext-webhook] Error processing ${doctype}/${docname}:`, { error: message });
     errors.push(message);
   }
 
