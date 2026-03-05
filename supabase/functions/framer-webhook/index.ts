@@ -72,22 +72,10 @@ Deno.serve(async (req) => {
     (body['lastName'] as string) ??
     (body['last_name'] as string) ??
     '';
-  const email =
-    (body['Email'] as string) ??
-    (body['email'] as string) ??
-    '';
-  const service =
-    (body['Service'] as string) ??
-    (body['service'] as string) ??
-    '';
-  const message =
-    (body['Message'] as string) ??
-    (body['message'] as string) ??
-    '';
-  const phone =
-    (body['Phone'] as string) ??
-    (body['phone'] as string) ??
-    '';
+  const email = (body['Email'] as string) ?? (body['email'] as string) ?? '';
+  const service = (body['Service'] as string) ?? (body['service'] as string) ?? '';
+  const message = (body['Message'] as string) ?? (body['message'] as string) ?? '';
+  const phone = (body['Phone'] as string) ?? (body['phone'] as string) ?? '';
 
   if (!email) {
     return new Response(JSON.stringify({ error: 'Email is required' }), {
@@ -101,21 +89,17 @@ Deno.serve(async (req) => {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
   );
 
-  // Map service to division code, then look up UUID
-  const divisionCode = service
-    ? SERVICE_TO_DIVISION[service.toLowerCase().trim()] ?? 'contracting'
+  // Map service to division ID (divisions.id is text, e.g. 'contracting', 'telecom', 'wood')
+  const divisionId = service
+    ? (SERVICE_TO_DIVISION[service.toLowerCase().trim()] ?? 'contracting')
     : 'contracting';
-
-  let divisionId: string | null = null;
-  const { data: division } = await supabase
-    .from('divisions')
-    .select('id')
-    .eq('code', divisionCode)
-    .single();
-  divisionId = division?.id ?? null;
 
   // Build company name from contact name (website leads don't have company info)
   const contactName = [firstName, lastName].filter(Boolean).join(' ') || 'Unknown';
+
+  // Build notes with service context
+  const notes =
+    [service ? `Service: ${service}` : null, message || null].filter(Boolean).join('\n') || null;
 
   // Insert lead
   const { data: lead, error: leadError } = await supabase
@@ -123,11 +107,9 @@ Deno.serve(async (req) => {
     .insert({
       company_name: `Website Inquiry - ${contactName}`,
       source_channel: 'website',
-      source_detail: 'framer-contact-form',
       status: 'new',
-      project_type: service || null,
-      project_description: message || null,
       division_id: divisionId,
+      notes,
     })
     .select('id')
     .single();
@@ -155,11 +137,8 @@ Deno.serve(async (req) => {
     console.error('Contact insert error (non-blocking):', contactError);
   }
 
-  return new Response(
-    JSON.stringify({ success: true, lead_id: lead.id }),
-    {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    },
-  );
+  return new Response(JSON.stringify({ success: true, lead_id: lead.id }), {
+    status: 200,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
 });
