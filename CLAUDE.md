@@ -256,15 +256,16 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
-### Mar 5, 2026 — Phase B+C: Integration Layer + Domain Hardening
+### Mar 5, 2026 — Phases B+C+D: Integration → Domain Hardening → Production Readiness
 
 - **Phase B (merged):** ERPNext sync (10 entity types), cron inbound sync, ERPNext webhooks, notification dispatcher (6 event types), BoldSign e-sign client + webhooks. 72 tests added.
 - **Phase C (6 workstreams):** C1 CRM rate limiting on 70+ routes (`@upstash/ratelimit`), cron-auth module, pagination helper, sanitize module. C2 Estimating assembly items + proposal tests (24). C3 Projects task/member/file tests (43) + task status enum bug fix. C4 Portal scoping/approval/trade tests (21). C5 Finance route tests (9). C6 Change order/RFI/Submittal tests (10).
-- **Infrastructure:** Health endpoint, `vercel.json` cron config, Vitest setup file, `lib/api/rate-limit.ts`, `lib/api/cron-auth.ts`, `lib/api/pagination.ts`, `lib/sanitize.ts`.
-- **Bug fixes:** Task status enum mismatch (create vs update schemas), rate-limit test mock (class vs arrow fn), sla-alerts test (mock verifyCronAuth), sanitize test expectation, research route Json type.
-- **Tests:** 2340/2340 passing (195 files). Build clean.
-- **Known gaps:** Missing milestones API route, daily log submit workflow, project file delete endpoint. Pre-existing Supabase type mismatches (8 files).
-- **Next:** Phase D (Production Readiness) — security hardening, performance, CI/CD, UAT.
+- **Phase D (security + CI/CD):** Fixed ERPNext webhook timing attack (timingSafeEqual). Fixed rate limit placement in 46 CRM routes. Added security headers (CSP, HSTS, X-Frame-Options). Demo mode production guard. CI pipeline: push trigger, E2E smoke tests, coverage. erp-sync cron every 30min. Complete .env.example.
+- **Bug fixes:** Task status enum mismatch, rate-limit test mock, sla-alerts cron auth, sanitize test, research route Json type, erp-sync inline auth → verifyCronAuth, CRM route brace placement (46 files).
+- **Security audit:** CSRF ✅, webhook signatures ✅ (3/3), SQL injection ✅, security headers ✅. Remaining: email tracking endpoints have no auth (by design, but UUID enumeration risk).
+- **Performance audit:** 30+ files use SELECT *, only 6 routes use pagination helper, no bundle analyzer, no dynamic imports, no API caching. N+1 patterns in cron routes. These are optimization items, not blockers.
+- **Tests:** 2354/2354 passing (198 files). Build clean.
+- **Known gaps:** Missing milestones API, daily log submit workflow, project file delete endpoint. Pre-existing Supabase type mismatches (8 files). Performance optimizations identified but deferred.
 
 ### Mar 4, 2026 — Framer Webhook: Website Contact Form → CRM Integration
 
