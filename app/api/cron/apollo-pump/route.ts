@@ -6,6 +6,7 @@ import {
   mapApolloToLead,
   mapApolloToContact,
 } from '@/lib/integrations/apollo';
+import { getProfileById } from '@/lib/integrations/apollo-profiles';
 import { verifyCronAuth } from '@/lib/api/cron-auth';
 
 
@@ -19,13 +20,44 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   let totalImported = 0;
   let totalDupes = 0;
 
+  // Check for profile-based search
+  const profileId = req.nextUrl.searchParams.get('profileId');
+  const profile = profileId ? getProfileById(profileId) : null;
+
+  if (profileId && !profile) {
+    return NextResponse.json({ error: `Profile not found: ${profileId}` }, { status: 400 });
+  }
+
+  const searchConfig = profile
+    ? {
+        titles: profile.searchParams.person_titles ?? MDM_APOLLO_CONFIG.titles,
+        locations: profile.searchParams.organization_locations ?? MDM_APOLLO_CONFIG.locations,
+        employeeRanges:
+          profile.searchParams.organization_num_employees_ranges ??
+          MDM_APOLLO_CONFIG.employeeRanges,
+        industryTagIds: profile.searchParams.organization_industry_tag_ids,
+        perPage: MDM_APOLLO_CONFIG.perPage,
+        maxPagesPerRun: MDM_APOLLO_CONFIG.maxPagesPerRun,
+        sourceDetail: profile.id,
+      }
+    : {
+        titles: MDM_APOLLO_CONFIG.titles,
+        locations: MDM_APOLLO_CONFIG.locations,
+        employeeRanges: MDM_APOLLO_CONFIG.employeeRanges,
+        industryTagIds: undefined as string[] | undefined,
+        perPage: MDM_APOLLO_CONFIG.perPage,
+        maxPagesPerRun: MDM_APOLLO_CONFIG.maxPagesPerRun,
+        sourceDetail: undefined as string | undefined,
+      };
+
   try {
-    for (let page = 1; page <= MDM_APOLLO_CONFIG.maxPagesPerRun; page++) {
+    for (let page = 1; page <= searchConfig.maxPagesPerRun; page++) {
       const people = await searchPeople({
-        person_titles: MDM_APOLLO_CONFIG.titles,
-        organization_locations: MDM_APOLLO_CONFIG.locations,
-        organization_num_employees_ranges: MDM_APOLLO_CONFIG.employeeRanges,
-        per_page: MDM_APOLLO_CONFIG.perPage,
+        person_titles: searchConfig.titles,
+        organization_locations: searchConfig.locations,
+        organization_num_employees_ranges: searchConfig.employeeRanges,
+        organization_industry_tag_ids: searchConfig.industryTagIds,
+        per_page: searchConfig.perPage,
         page,
       });
 
@@ -44,7 +76,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
       if (newPeople.length > 0) {
         // Batch insert all new leads in a single call
-        const leadsToInsert = newPeople.map(p => ({ ...mapApolloToLead(p), external_id: p.id }));
+        const leadsToInsert = newPeople.map(p => ({
+          ...mapApolloToLead(p),
+          external_id: p.id,
+          ...(searchConfig.sourceDetail ? { source_detail: searchConfig.sourceDetail } : {}),
+        }));
         const { data: insertedLeads, error: leadError } = await supabase
           .from('leads')
           .insert(leadsToInsert)
@@ -74,6 +110,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       success: true,
       imported: totalImported,
       duplicates: totalDupes,
+      profileId: profileId ?? null,
       timestamp: new Date().toISOString(),
     });
   } catch (err) {

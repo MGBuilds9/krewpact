@@ -307,6 +307,42 @@ export function makeDailyLog(overrides: Record<string, unknown> = {}) {
   };
 }
 
+export function makeBiddingOpportunity(overrides: Record<string, unknown> = {}) {
+  return {
+    id: nextId(),
+    org_id: TEST_ORG_ID,
+    division_id: TEST_DIVISION_ID,
+    title: 'Municipal Building Renovation Bid',
+    source: 'merx' as const,
+    url: 'https://merx.com/bid/12345',
+    deadline: '2026-06-15T17:00:00Z',
+    estimated_value: 500000,
+    status: 'new' as const,
+    assigned_to: TEST_USER_ID,
+    opportunity_id: null,
+    notes: null,
+    metadata: {},
+    created_by: TEST_USER_ID,
+    created_at: '2026-01-01T00:00:00Z',
+    updated_at: '2026-01-01T00:00:00Z',
+    ...overrides,
+  };
+}
+
+export function makeEnrichmentJob(overrides: Record<string, unknown> = {}) {
+  return {
+    id: nextId(),
+    lead_id: TEST_LEAD_ID,
+    status: 'completed' as const,
+    source: 'apollo',
+    result: { company_size: '50-200' },
+    error_message: null,
+    created_at: '2026-01-01T00:00:00Z',
+    updated_at: '2026-01-01T00:00:00Z',
+    ...overrides,
+  };
+}
+
 /** Well-known test IDs for cross-referencing in tests */
 export const TEST_IDS = {
   ORG_ID: TEST_ORG_ID,

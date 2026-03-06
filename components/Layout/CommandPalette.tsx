@@ -20,6 +20,8 @@ import {
   ListTodo,
   Plus,
   Loader2,
+  Gavel,
+  BarChart3,
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -61,6 +63,9 @@ const navigationSections: NavSection[] = [
       { icon: User, label: 'Contacts', href: '/crm/contacts' },
       { icon: TrendingUp, label: 'Pipeline', href: '/crm/opportunities' },
       { icon: Building2, label: 'Sequences', href: '/crm/sequences' },
+      { icon: Gavel, label: 'Bidding', href: '/crm/bidding' },
+      { icon: Building2, label: 'Enrichment', href: '/crm/enrichment' },
+      { icon: BarChart3, label: 'CRM Report', href: '/reports/crm-overview' },
     ],
   },
   {
@@ -82,6 +87,7 @@ const navigationSections: NavSection[] = [
       { icon: Plus, label: 'New Account', href: '/crm/accounts/new' },
       { icon: Plus, label: 'New Contact', href: '/crm/contacts/new' },
       { icon: Plus, label: 'New Opportunity', href: '/crm/opportunities/new' },
+      { icon: Plus, label: 'New Bid', href: '/crm/bidding/new' },
     ],
   },
   {

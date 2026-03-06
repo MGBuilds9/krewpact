@@ -1200,3 +1200,227 @@ export function useMarkOpportunityLost() {
     },
   });
 }
+
+// --- Bidding Opportunities ---
+
+export interface BiddingOpportunity {
+  id: string;
+  org_id: string;
+  division_id: string | null;
+  title: string;
+  source: 'merx' | 'bids_tenders' | 'manual' | 'referral';
+  url: string | null;
+  deadline: string | null;
+  estimated_value: number | null;
+  status: 'new' | 'reviewing' | 'bidding' | 'submitted' | 'won' | 'lost' | 'expired';
+  assigned_to: string | null;
+  opportunity_id: string | null;
+  notes: string | null;
+  metadata: Record<string, unknown>;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export function useBiddingOpportunities(params?: Record<string, string>) {
+  const searchParams = new URLSearchParams(params);
+  return useQuery({
+    queryKey: ['bidding', params],
+    queryFn: () =>
+      apiFetch<PaginatedResponse<BiddingOpportunity>>(`/api/crm/bidding?${searchParams.toString()}`),
+  });
+}
+
+export function useBiddingOpportunity(id: string) {
+  return useQuery({
+    queryKey: ['bidding', id],
+    queryFn: () => apiFetch<BiddingOpportunity>(`/api/crm/bidding/${id}`),
+    enabled: !!id,
+  });
+}
+
+export function useCreateBidding() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Partial<BiddingOpportunity>) =>
+      apiFetch<BiddingOpportunity>('/api/crm/bidding', { method: 'POST', body: data }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bidding'] });
+    },
+  });
+}
+
+export function useUpdateBidding() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...data }: { id: string } & Partial<BiddingOpportunity>) =>
+      apiFetch<BiddingOpportunity>(`/api/crm/bidding/${id}`, { method: 'PATCH', body: data }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['bidding'] });
+      queryClient.invalidateQueries({ queryKey: ['bidding', variables.id] });
+    },
+  });
+}
+
+export function useDeleteBidding() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      apiFetch<{ success: boolean }>(`/api/crm/bidding/${id}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bidding'] });
+    },
+  });
+}
+
+export function useLinkBiddingToOpportunity() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, opportunity_id }: { id: string; opportunity_id: string }) =>
+      apiFetch<BiddingOpportunity>(`/api/crm/bidding/${id}/link`, {
+        method: 'POST',
+        body: { opportunity_id },
+      }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['bidding'] });
+      queryClient.invalidateQueries({ queryKey: ['bidding', variables.id] });
+    },
+  });
+}
+
+export function useImportBidding() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { items: Array<{ title: string; source?: string; url?: string; deadline?: string; estimated_value?: number; notes?: string }> }) =>
+      apiFetch<{ imported: number; items: BiddingOpportunity[] }>('/api/crm/bidding/import', {
+        method: 'POST',
+        body: data,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bidding'] });
+    },
+  });
+}
+
+// --- Enrichment ---
+
+export interface EnrichmentJob {
+  id: string;
+  lead_id: string;
+  status: string;
+  source: string;
+  result: Record<string, unknown> | null;
+  error_message: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EnrichmentStats {
+  total: number;
+  pending: number;
+  completed: number;
+  failed: number;
+  lastRunAt: string | null;
+}
+
+export interface EnrichmentConfig {
+  sources: Array<{ name: string; enabled: boolean; order: number }>;
+}
+
+export function useEnrichmentJobs(params?: Record<string, string>) {
+  const searchParams = new URLSearchParams(params);
+  return useQuery({
+    queryKey: ['enrichment-jobs', params],
+    queryFn: () =>
+      apiFetch<PaginatedResponse<EnrichmentJob>>(`/api/crm/enrichment?${searchParams.toString()}`),
+  });
+}
+
+export function useEnrichmentStats() {
+  return useQuery({
+    queryKey: ['enrichment-stats'],
+    queryFn: () => apiFetch<EnrichmentStats>('/api/crm/enrichment/stats'),
+    staleTime: 30_000,
+  });
+}
+
+export function useEnrichmentConfig() {
+  return useQuery({
+    queryKey: ['enrichment-config'],
+    queryFn: () => apiFetch<EnrichmentConfig>('/api/crm/enrichment/config'),
+  });
+}
+
+export function useRetryEnrichment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      apiFetch<EnrichmentJob>(`/api/crm/enrichment/${id}`, { method: 'POST' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['enrichment-jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['enrichment-stats'] });
+    },
+  });
+}
+
+export function useUpdateEnrichmentConfig() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: EnrichmentConfig) =>
+      apiFetch<EnrichmentConfig>('/api/crm/enrichment/config', { method: 'PATCH', body: data }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['enrichment-config'] });
+    },
+  });
+}
+
+// --- CRM Settings ---
+
+export interface SLASettings {
+  lead_stages: Array<{ stage: string; maxHours: number }>;
+  opportunity_stages: Array<{ stage: string; maxHours: number }>;
+}
+
+export interface SequenceDefaults {
+  max_enrollments_per_day: number;
+  send_window_start: string;
+  send_window_end: string;
+  throttle_per_hour: number;
+  auto_unenroll_on_reply: boolean;
+}
+
+export function useSLASettings() {
+  return useQuery({
+    queryKey: ['crm-settings', 'sla'],
+    queryFn: () => apiFetch<SLASettings>('/api/crm/settings/sla'),
+  });
+}
+
+export function useUpdateSLASettings() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: SLASettings) =>
+      apiFetch<SLASettings>('/api/crm/settings/sla', { method: 'PATCH', body: data }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['crm-settings', 'sla'] });
+    },
+  });
+}
+
+export function useSequenceDefaults() {
+  return useQuery({
+    queryKey: ['crm-settings', 'sequences'],
+    queryFn: () => apiFetch<SequenceDefaults>('/api/crm/settings/sequences'),
+  });
+}
+
+export function useUpdateSequenceDefaults() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: SequenceDefaults) =>
+      apiFetch<SequenceDefaults>('/api/crm/settings/sequences', { method: 'PATCH', body: data }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['crm-settings', 'sequences'] });
+    },
+  });
+}

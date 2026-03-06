@@ -256,6 +256,18 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
+### Mar 6, 2026 — Lead Generation Features (Division Targeting + Cron Tests)
+
+- **Phase 1 — Apollo Search Profiles:** `lib/integrations/apollo-profiles.ts` — 6 MDM search profiles (pharmacy, franchise, dental, property mgmt, telecom, Loblaw/SDM). `getProfileById()`, `getActiveProfiles()`, `getProfilesByDivision()`.
+- **Phase 1b — Apollo Pump Profile Override:** `app/api/cron/apollo-pump/route.ts` — accepts `?profileId=` query param, uses profile's searchParams, tags leads with `source_detail = profileId`.
+- **Phase 1c — Manual Apollo Search API:** `app/api/crm/leads/apollo-search/route.ts` — POST preview/import mode, GET returns active profiles. Auth-gated.
+- **Phase 2 — Vertical Templates & Sequences:** 2 SQL migrations seeding 7 email templates (medical, franchise, dental, property mgr, telecom, follow-up, final) and 5 outreach sequences (4 steps each: cold → case study → phone → final).
+- **Phase 3 — Lead Gen Dashboard UI:** Profile selector dropdown, Apollo search preview/import with auto-enrollment checkbox, leads-by-vertical stats, responsive.
+- **Phase 4 — Cron Tests:** `apollo-pump.test.ts` (7 tests), `enrichment.test.ts` (9 tests), `sequence-processor.test.ts` (7 tests). API test: `apollo-search.test.ts` (9 tests). Profile tests (22). Webhook tests (9).
+- **Phase 5 — Edge Function:** `supabase/functions/apollo-webhook/index.ts` — signature validation, lead lookup, enrichment upsert, contact update.
+- **E2E:** `lead-gen-pipeline.spec.ts` (7 tests), enhanced `lead-lifecycle.spec.ts` (+2 tests).
+- **Tests:** 2649/2649 passing (235 files). Build clean. +63 new tests across 6 new test files.
+
 ### Mar 6, 2026 — CRM Premium Phase 3 Completion + Quality Gate Fix
 
 - **Sprint 5-6 completion (continued):** Sequence monitoring (`/api/crm/sequences/analytics`, `/api/crm/sequences/enrollments/[enrollmentId]` PATCH), construction intelligence (`lib/crm/construction-intelligence.ts`, `/api/crm/dashboard/division-comparison`), entity merge (`/api/crm/accounts/merge`, `/api/crm/contacts/merge`), bulk email (`/api/crm/leads/bulk-email`).

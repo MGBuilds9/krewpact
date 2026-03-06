@@ -17,6 +17,9 @@ export function CRMKeyboardShortcuts({ onOpenFollowUp }: CRMKeyboardShortcutsPro
     { key: 'p', handler: () => orgPush('/crm/opportunities') },
     { key: 't', handler: () => orgPush('/crm/tasks') },
     { key: 'd', handler: () => orgPush('/crm/dashboard') },
+    { key: 'b', handler: () => orgPush('/crm/bidding') },
+    { key: 's', handler: () => orgPush('/crm/sequences') },
+    { key: 'e', handler: () => orgPush('/crm/enrichment') },
     ...(onOpenFollowUp
       ? [{ key: 'f', handler: onOpenFollowUp }]
       : []),

@@ -12,6 +12,7 @@ const crmTabs = [
   { label: 'Accounts', href: '/crm/accounts' },
   { label: 'Contacts', href: '/crm/contacts' },
   { label: 'Opportunities', href: '/crm/opportunities' },
+  { label: 'Bidding', href: '/crm/bidding' },
   { label: 'Sequences', href: '/crm/sequences' },
   { label: 'Settings', href: '/crm/settings' },
 ];

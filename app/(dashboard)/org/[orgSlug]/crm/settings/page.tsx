@@ -2,7 +2,7 @@
 
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { Card, CardContent } from '@/components/ui/card';
-import { Settings, Target, Mail } from 'lucide-react';
+import { Settings, Target, Mail, Clock, Zap, Database } from 'lucide-react';
 
 const settingsItems = [
   {
@@ -17,6 +17,27 @@ const settingsItems = [
     description: 'Create and manage branded email templates for outreach sequences and campaigns.',
     icon: Mail,
     href: '/crm/settings/templates',
+  },
+  {
+    title: 'SLA Configuration',
+    description:
+      'Set maximum time allowed in each pipeline stage before overdue alerts trigger.',
+    icon: Clock,
+    href: '/crm/settings/sla',
+  },
+  {
+    title: 'Sequence Defaults',
+    description:
+      'Configure global defaults for enrollment limits, send windows, and throttling.',
+    icon: Zap,
+    href: '/crm/settings/sequences',
+  },
+  {
+    title: 'Enrichment Sources',
+    description:
+      'Manage data enrichment providers and configure the waterfall enrichment pipeline.',
+    icon: Database,
+    href: '/crm/settings/enrichment',
   },
 ];
 

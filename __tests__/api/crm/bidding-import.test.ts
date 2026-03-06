@@ -1,0 +1,104 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/api/org', () => ({ getOrgIdFromAuth: vi.fn() }));
+vi.mock('@/lib/api/rate-limit', () => ({
+  rateLimit: vi.fn().mockResolvedValue({ success: true }),
+  rateLimitResponse: vi.fn(),
+}));
+
+import { auth } from '@clerk/nextjs/server';
+import { createUserClient } from '@/lib/supabase/server';
+import { getOrgIdFromAuth } from '@/lib/api/org';
+import { POST } from '@/app/api/crm/bidding/import/route';
+import { mockClerkAuth, mockClerkUnauth, makeJsonRequest, makeRequest, makeBiddingOpportunity } from '@/__tests__/helpers';
+
+const mockAuth = vi.mocked(auth);
+const mockCreateUserClient = vi.mocked(createUserClient);
+const mockGetOrgId = vi.mocked(getOrgIdFromAuth);
+
+function mockSupabase(resp: { data: unknown; error: unknown }) {
+  const chain: Record<string, unknown> = {};
+  const methods = ['select', 'insert', 'update', 'delete', 'eq', 'order', 'range', 'limit'];
+  for (const m of methods) {
+    chain[m] = vi.fn().mockReturnValue(chain);
+  }
+  chain.then = (resolve: (v: unknown) => void) => resolve(resp);
+
+  const client = {
+    from: vi.fn().mockReturnValue(chain),
+  };
+  mockCreateUserClient.mockResolvedValue(client as never);
+  return client;
+}
+
+describe('POST /api/crm/bidding/import', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockClerkAuth(mockAuth);
+    mockGetOrgId.mockResolvedValue('org_test');
+  });
+
+  it('returns 401 when unauthenticated', async () => {
+    mockClerkUnauth(mockAuth);
+    const res = await POST(
+      makeJsonRequest('/api/crm/bidding/import', {
+        items: [{ title: 'Test' }],
+      }),
+    );
+    expect(res.status).toBe(401);
+  });
+
+  it('imports bidding opportunities', async () => {
+    const bids = [makeBiddingOpportunity(), makeBiddingOpportunity({ title: 'Second' })];
+    mockSupabase({ data: bids, error: null });
+    const res = await POST(
+      makeJsonRequest('/api/crm/bidding/import', {
+        items: [
+          { title: 'Bid 1', source: 'merx' },
+          { title: 'Bid 2', source: 'merx' },
+        ],
+      }),
+    );
+    expect(res.status).toBe(201);
+    const json = await res.json();
+    expect(json.imported).toBe(2);
+  });
+
+  it('validates items array is required', async () => {
+    mockSupabase({ data: null, error: null });
+    const res = await POST(makeJsonRequest('/api/crm/bidding/import', {}));
+    expect(res.status).toBe(400);
+  });
+
+  it('validates items must have title', async () => {
+    mockSupabase({ data: null, error: null });
+    const res = await POST(
+      makeJsonRequest('/api/crm/bidding/import', {
+        items: [{ source: 'merx' }],
+      }),
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it('handles database errors', async () => {
+    mockSupabase({ data: null, error: { message: 'Insert failed' } });
+    const res = await POST(
+      makeJsonRequest('/api/crm/bidding/import', {
+        items: [{ title: 'Test' }],
+      }),
+    );
+    expect(res.status).toBe(500);
+  });
+
+  it('rejects invalid JSON', async () => {
+    const req = makeRequest('/api/crm/bidding/import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: 'bad',
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+  });
+});

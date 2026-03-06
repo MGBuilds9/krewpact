@@ -14,6 +14,8 @@ export {
   makeExpenseClaim,
   makeNotification,
   makeDailyLog,
+  makeBiddingOpportunity,
+  makeEnrichmentJob,
   resetFixtureCounter,
   TEST_IDS,
 } from './fixtures';

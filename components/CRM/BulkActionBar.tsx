@@ -3,13 +3,14 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { X, Tag, Trash2, ArrowRight, Users } from 'lucide-react';
+import { X, Tag, Trash2, ArrowRight, Users, Merge } from 'lucide-react';
 
 interface BulkActionBarProps {
   selectedIds: string[];
-  entityType: 'lead' | 'contact';
+  entityType: 'lead' | 'contact' | 'account';
   onClearSelection: () => void;
   onActionComplete: () => void;
+  onMerge?: () => void;
 }
 
 export function BulkActionBar({
@@ -17,6 +18,7 @@ export function BulkActionBar({
   entityType,
   onClearSelection,
   onActionComplete,
+  onMerge,
 }: BulkActionBarProps) {
   const [loading, setLoading] = useState(false);
 
@@ -96,6 +98,13 @@ export function BulkActionBar({
           >
             <Users className="mr-1.5 h-3.5 w-3.5" />
             Assign
+          </Button>
+        )}
+
+        {selectedIds.length === 2 && (entityType === 'account' || entityType === 'contact') && onMerge && (
+          <Button variant="outline" size="sm" onClick={onMerge} disabled={loading}>
+            <Merge className="mr-1.5 h-3.5 w-3.5" />
+            Merge
           </Button>
         )}
 

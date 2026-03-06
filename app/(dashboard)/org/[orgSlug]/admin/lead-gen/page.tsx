@@ -5,9 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Activity, Zap, Clock, Users, ListChecks, Play, RefreshCw } from 'lucide-react';
+import { Activity, Zap, Clock, Users, ListChecks, Play, RefreshCw, Search, Download } from 'lucide-react';
 import { useLeads } from '@/hooks/useCRM';
 import { useSequences } from '@/hooks/useCRM';
+import { MDM_SEARCH_PROFILES } from '@/lib/integrations/apollo-profiles';
+import type { ApolloSearchProfile } from '@/lib/integrations/apollo-profiles';
 
 const STAGE_BADGE_COLORS: Record<string, string> = {
   new: 'bg-gray-100 text-gray-700 border-gray-200',
@@ -77,11 +79,69 @@ function ActionButton({ label, endpoint, icon, variant = 'outline' }: ActionButt
   );
 }
 
+interface ApolloPreviewResult {
+  id: string;
+  name: string;
+  email: string | null;
+  title: string;
+  company: string | null;
+  industry: string | null;
+  city: string | null;
+}
+
 export default function LeadGenDashboardPage() {
   const { data: leadsResponse, isLoading: leadsLoading } = useLeads({ limit: 10 });
   const { data: sequences, isLoading: seqLoading } = useSequences({ isActive: true });
 
+  const [selectedProfile, setSelectedProfile] = useState<ApolloSearchProfile | null>(null);
+  const [searchStatus, setSearchStatus] = useState<'idle' | 'searching' | 'previewing' | 'importing'>('idle');
+  const [previewResults, setPreviewResults] = useState<ApolloPreviewResult[]>([]);
+  const [autoEnroll, setAutoEnroll] = useState(true);
+
   const isLoading = leadsLoading || seqLoading;
+
+  async function handleSearch() {
+    if (!selectedProfile) return;
+    setSearchStatus('searching');
+    try {
+      const res = await fetch('/api/crm/leads/apollo-search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ profileId: selectedProfile.id }),
+      });
+      if (!res.ok) {
+        setSearchStatus('idle');
+        return;
+      }
+      const data = await res.json();
+      setPreviewResults(data.results ?? []);
+      setSearchStatus('previewing');
+    } catch {
+      setSearchStatus('idle');
+    }
+  }
+
+  async function handleImport() {
+    if (!selectedProfile) return;
+    setSearchStatus('importing');
+    try {
+      const res = await fetch('/api/crm/leads/apollo-search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ profileId: selectedProfile.id, import: true }),
+      });
+      if (res.ok) {
+        setPreviewResults([]);
+        setSearchStatus('idle');
+      } else {
+        setSearchStatus('previewing');
+      }
+    } catch {
+      setSearchStatus('previewing');
+    }
+  }
 
   if (isLoading) {
     return (
@@ -103,6 +163,18 @@ export default function LeadGenDashboardPage() {
 
   const newLeads = allLeads.filter((l) => l.status === 'new');
   const activeSequenceCount = allSequences.length;
+
+  // Stats by vertical (based on source_channel for Apollo-imported leads)
+  const verticalStats = MDM_SEARCH_PROFILES.reduce(
+    (acc, profile) => {
+      const count = allLeads.filter(
+        (l) => l.source_channel === 'apollo' && (l as unknown as Record<string, unknown>).source_detail === profile.id,
+      ).length;
+      if (count > 0) acc[profile.name] = count;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
 
   return (
     <div className="space-y-6">
@@ -153,6 +225,133 @@ export default function LeadGenDashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Apollo Profile Search */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Search className="h-4 w-4" />
+            Apollo Profile Search
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="flex-1 min-w-[200px]">
+              <label htmlFor="profile-select" className="text-sm font-medium text-muted-foreground mb-1 block">
+                Search Profile
+              </label>
+              <select
+                id="profile-select"
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                value={selectedProfile?.id ?? ''}
+                onChange={(e) => {
+                  const profile = MDM_SEARCH_PROFILES.find((p) => p.id === e.target.value);
+                  setSelectedProfile(profile ?? null);
+                  setPreviewResults([]);
+                  setSearchStatus('idle');
+                }}
+              >
+                <option value="">Select a profile...</option>
+                {MDM_SEARCH_PROFILES.filter((p) => p.isActive).map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} ({p.division} / {p.vertical})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <Button
+              size="sm"
+              onClick={handleSearch}
+              disabled={!selectedProfile || searchStatus === 'searching'}
+              className="gap-2"
+            >
+              {searchStatus === 'searching' ? (
+                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Search className="h-3.5 w-3.5" />
+              )}
+              {searchStatus === 'searching' ? 'Searching...' : 'Run Search'}
+            </Button>
+          </div>
+
+          {/* Preview Results */}
+          {(searchStatus === 'previewing' || searchStatus === 'importing') && previewResults.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium">{previewResults.length} results found</p>
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={autoEnroll}
+                      onChange={(e) => setAutoEnroll(e.target.checked)}
+                      className="rounded border-gray-300"
+                    />
+                    Auto-enroll in sequence
+                  </label>
+                  <Button
+                    size="sm"
+                    onClick={handleImport}
+                    disabled={searchStatus === 'importing'}
+                    className="gap-2"
+                  >
+                    {searchStatus === 'importing' ? (
+                      <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Download className="h-3.5 w-3.5" />
+                    )}
+                    Import {previewResults.length} Leads
+                  </Button>
+                </div>
+              </div>
+              <div className="overflow-x-auto max-h-64 overflow-y-auto">
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-background">
+                    <tr className="border-b">
+                      <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Name</th>
+                      <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Title</th>
+                      <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Company</th>
+                      <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Email</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {previewResults.map((r) => (
+                      <tr key={r.id} className="border-b last:border-0">
+                        <td className="py-2 pr-4 font-medium">{r.name}</td>
+                        <td className="py-2 pr-4 text-muted-foreground">{r.title}</td>
+                        <td className="py-2 pr-4">{r.company ?? '—'}</td>
+                        <td className="py-2 pr-4 text-muted-foreground">{r.email ?? '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {searchStatus === 'previewing' && previewResults.length === 0 && (
+            <p className="text-sm text-muted-foreground">No results found for this profile.</p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Vertical Stats */}
+      {Object.keys(verticalStats).length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Leads by Vertical</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-3">
+              {Object.entries(verticalStats).map(([name, count]) => (
+                <Badge key={name} variant="secondary" className="text-sm py-1 px-3">
+                  {name}: {count}
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Quick Actions */}
       <Card>
