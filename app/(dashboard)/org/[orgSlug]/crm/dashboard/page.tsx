@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useDashboardMetrics, usePipelineIntelligence } from '@/hooks/useCRM';
+import { useDashboardMetrics, usePipelineIntelligence, useDivisionComparison } from '@/hooks/useCRM';
 import { PipelineValueChart } from '@/components/CRM/PipelineValueChart';
 import { ConversionFunnel } from '@/components/CRM/ConversionFunnel';
 import { SalesVelocityCard } from '@/components/CRM/SalesVelocityCard';
@@ -13,6 +13,8 @@ import { MyTasksWidget } from '@/components/CRM/MyTasksWidget';
 import { RepPerformanceCard } from '@/components/CRM/RepPerformanceCard';
 import { PipelineAgingCard } from '@/components/CRM/PipelineAgingCard';
 import { WinLossAnalysis } from '@/components/CRM/WinLossAnalysis';
+import { DivisionComparisonCard } from '@/components/CRM/DivisionComparisonCard';
+import { SeasonalAnalysisCard } from '@/components/CRM/SeasonalAnalysisCard';
 
 const PERIODS = ['week', 'month', 'quarter', 'year'] as const;
 
@@ -38,6 +40,7 @@ export default function CRMDashboardPage() {
   const [period, setPeriod] = useState<string>('month');
   const { data, isLoading } = useDashboardMetrics(undefined, period);
   const { data: intelligence, isLoading: intelLoading } = usePipelineIntelligence();
+  const { data: divComparison } = useDivisionComparison();
 
   return (
     <>
@@ -135,6 +138,15 @@ export default function CRMDashboardPage() {
             title="Win/Loss by Division"
             data={intelligence?.win_loss_by_division ?? []}
             isLoading={intelLoading}
+          />
+        </div>
+        {/* Row 6: Construction Intelligence */}
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <DivisionComparisonCard
+            divisions={divComparison?.division_comparison ?? []}
+          />
+          <SeasonalAnalysisCard
+            quarters={divComparison?.seasonal_analysis ?? []}
           />
         </div>
       </div>

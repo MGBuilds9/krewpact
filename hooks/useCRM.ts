@@ -864,6 +864,22 @@ export function useProcessSequences() {
   });
 }
 
+export function useSequenceAnalytics(divisionId?: string) {
+  return useQuery({
+    queryKey: ['sequence-analytics', divisionId],
+    queryFn: () =>
+      apiFetch<{ data: Array<{
+        sequence_id: string;
+        sequence_name: string;
+        is_active: boolean;
+        total_steps: number;
+        enrollments: { active: number; completed: number; paused: number; failed: number; total: number };
+      }> }>('/api/crm/sequences/analytics', {
+        params: { divisionId },
+      }),
+  });
+}
+
 export function useCreateOutreach() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -1090,6 +1106,36 @@ export function usePipelineIntelligence(divisionId?: string) {
       apiFetch<PipelineIntelligenceResponse>('/api/crm/dashboard/intelligence', {
         params: { division_id: divisionId },
       }),
+    staleTime: 60_000,
+  });
+}
+
+export interface DivisionComparisonResponse {
+  division_comparison: Array<{
+    division_id: string;
+    total_opportunities: number;
+    total_pipeline_value: number;
+    won_count: number;
+    won_revenue: number;
+    lost_count: number;
+    active_count: number;
+    win_rate: number;
+    avg_deal_size: number;
+  }>;
+  seasonal_analysis: Array<{
+    quarter: string;
+    created: number;
+    won: number;
+    lost: number;
+    revenue: number;
+  }>;
+}
+
+export function useDivisionComparison() {
+  return useQuery({
+    queryKey: ['division-comparison'],
+    queryFn: () =>
+      apiFetch<DivisionComparisonResponse>('/api/crm/dashboard/division-comparison'),
     staleTime: 60_000,
   });
 }
