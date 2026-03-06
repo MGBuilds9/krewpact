@@ -256,37 +256,28 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
-### Mar 6, 2026 — Lead Generation Features (Division Targeting + Cron Tests)
+### Mar 6, 2026 — CRM Full Completion (7 Sprints — Feature Complete)
 
-- **Phase 1 — Apollo Search Profiles:** `lib/integrations/apollo-profiles.ts` — 6 MDM search profiles (pharmacy, franchise, dental, property mgmt, telecom, Loblaw/SDM). `getProfileById()`, `getActiveProfiles()`, `getProfilesByDivision()`.
-- **Phase 1b — Apollo Pump Profile Override:** `app/api/cron/apollo-pump/route.ts` — accepts `?profileId=` query param, uses profile's searchParams, tags leads with `source_detail = profileId`.
-- **Phase 1c — Manual Apollo Search API:** `app/api/crm/leads/apollo-search/route.ts` — POST preview/import mode, GET returns active profiles. Auth-gated.
-- **Phase 2 — Vertical Templates & Sequences:** 2 SQL migrations seeding 7 email templates (medical, franchise, dental, property mgr, telecom, follow-up, final) and 5 outreach sequences (4 steps each: cold → case study → phone → final).
-- **Phase 3 — Lead Gen Dashboard UI:** Profile selector dropdown, Apollo search preview/import with auto-enrollment checkbox, leads-by-vertical stats, responsive.
-- **Phase 4 — Cron Tests:** `apollo-pump.test.ts` (7 tests), `enrichment.test.ts` (9 tests), `sequence-processor.test.ts` (7 tests). API test: `apollo-search.test.ts` (9 tests). Profile tests (22). Webhook tests (9).
-- **Phase 5 — Edge Function:** `supabase/functions/apollo-webhook/index.ts` — signature validation, lead lookup, enrichment upsert, contact update.
-- **E2E:** `lead-gen-pipeline.spec.ts` (7 tests), enhanced `lead-lifecycle.spec.ts` (+2 tests).
-- **Tests:** 2649/2649 passing (235 files). Build clean. +63 new tests across 6 new test files.
+- **Sprint 1:** Merge UI dialogs — `MergeDialog.tsx` (account + contact), `BulkActionBar.tsx` updated with merge action. 10 tests.
+- **Sprint 2:** Bulk email compose UI — `BulkEmailDialog.tsx` (4-step: review → compose → confirm → sent), template selector. 10 tests.
+- **Sprint 3:** Bidding opportunities — full CRUD (4 API routes), MERX import, link-to-opportunity, `bidding_opportunities` migration, 3 components, 3 pages. 48 tests.
+- **Sprint 4:** Enrichment management dashboard — jobs list, stats, config panel, retry. 4 API routes, 4 components, 2 pages. 23 tests.
+- **Sprint 5:** CRM settings expansion — SLA config, sequence defaults, enrichment config. Settings hub updated with 3 new cards. 15 tests.
+- **Sprint 6:** Contact communication preferences + opportunity file attachments (Supabase Storage). 19 tests.
+- **Sprint 7:** CRM overview report, nav updates (Bidding tab, 4 Cmd+K entries, 3 keyboard shortcuts). 6 tests.
+- **React Compiler fix:** Replaced `useEffect`/`useRef` patterns with single-state-object `_syncKey` pattern to satisfy "Cannot access refs during render" and "setState in effect" lint rules.
+- **Tests:** 2780/2780 passing (250 files). Build clean. +131 new tests, +15 new test files.
+- **CRM status:** FEATURE COMPLETE per PRD. Phase 4 (Documents & Approvals, Mobile & Field) remains NICE TO HAVE.
 
-### Mar 6, 2026 — CRM Premium Phase 3 Completion + Quality Gate Fix
+### Mar 6, 2026 — Lead Generation Features + CRM Premium Phase 3 Completion
 
-- **Sprint 5-6 completion (continued):** Sequence monitoring (`/api/crm/sequences/analytics`, `/api/crm/sequences/enrollments/[enrollmentId]` PATCH), construction intelligence (`lib/crm/construction-intelligence.ts`, `/api/crm/dashboard/division-comparison`), entity merge (`/api/crm/accounts/merge`, `/api/crm/contacts/merge`), bulk email (`/api/crm/leads/bulk-email`).
-- **Bug fix:** TS2322 in sequences analytics — `Record<string, number>` countMap lost specific key types on spread. Fixed with explicitly typed countMap and individual field assignment.
-- **New components:** `SequenceMonitorCard`, `DivisionComparisonCard`, `SeasonalAnalysisCard`, `PipelineKanban`, enhanced `CommandPalette`, `CRMKeyboardShortcuts`.
-- **Tests:** 2649/2649 passing (235 files). Build clean.
-- **CRM Premium Plan status:** Phases 1-3 COMPLETE. Phase 4 (Documents & Approvals, Mobile & Field) is NICE TO HAVE.
+- Lead gen: 6 Apollo search profiles, apollo-pump override, manual search API, 7 vertical templates, 5 sequences, dashboard UI, Apollo webhook edge function.
+- CRM Premium Phase 3: Sequence monitoring, construction intelligence, entity merge, bulk email APIs, TS2322 fix.
+- Tests: 2649/2649 passing (235 files).
 
-### Mar 5, 2026 — CRM Premium: Phases 1-3 (Follow-Ups → Pipeline Intel → Power UX)
-
-- Phase 1: Task/follow-up system (my-tasks, overdue, cron reminders), unified timeline.
-- Phase 2: Client lifecycle & health scoring, pipeline intelligence (rep performance, aging, win/loss).
-- Phase 3: DnD Kanban, Cmd+K palette, keyboard shortcuts, sequence monitoring, division comparison, seasonal analysis.
-- Tests: 2571+ passing (226+ files).
-
+- Mar 5: CRM Premium Phases 1-3 (follow-ups, timeline, health, pipeline intel, Kanban, Cmd+K). 2571 tests.
 - Mar 5: Performance optimizations, pagination (63 routes), UAT prep. 2363 tests.
 - Mar 5: Phases B+C+D — ERPNext sync, domain hardening, security, CI/CD. 2354 tests.
 - Mar 4: Framer webhook, org route fixes. 2061 tests.
 - Mar 1: CRM HubSpot Parity — 10 pipeline gaps. 2048 tests.
 - Feb 27: Production readiness + CRM A-to-Z completion. 1990-2046 tests.
-- Feb 26: Seed real MDM data from Excel. 1020 tests.
-- Feb 25: Demo mode, DB schema alignment. 904 tests.
