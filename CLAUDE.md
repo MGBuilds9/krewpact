@@ -256,40 +256,25 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
-### Mar 5, 2026 — CRM Premium: Phases 1-3 Complete (Follow-Ups → Pipeline Intel → Power UX)
+### Mar 6, 2026 — CRM Premium Phase 3 Completion + Quality Gate Fix
 
-- **Phase 1 Sprint 1 — Task/Follow-Up System:** `/api/crm/activities/my-tasks`, `/api/crm/activities/overdue`, `/api/cron/followup-reminders`. My Tasks page, `MyTasksWidget`, `QuickFollowUpDialog`.
-- **Phase 1 Sprint 2 — Unified Timeline:** `/api/crm/activities/timeline` merges activities + outreach_events. `UnifiedTimeline` with source badges.
-- **Phase 2 Sprint 3 — Client Lifecycle & Health:** `lib/crm/account-health.ts` (recency/engagement/revenue/win-rate scoring), `/api/crm/accounts/[id]/health`, `/api/crm/accounts/[id]/revenue`. `AccountHealthCard`.
-- **Phase 2 Sprint 4 — Pipeline Intelligence:** `lib/crm/pipeline-intelligence.ts`, `/api/crm/dashboard/intelligence`. `RepPerformanceCard`, `PipelineAgingCard`, `WinLossAnalysis`.
-- **Phase 3 Sprint 5 — Power UX:** `PipelineKanban` with @dnd-kit drag-and-drop stage transitions. Enhanced `CommandPalette` with CRM entity search + arrow key navigation. `CRMKeyboardShortcuts` (n/l/a/p/t/d/f hotkeys).
-- **Phase 3 Sprint 5 — Sequence Monitoring:** `/api/crm/sequences/analytics` (enrollment status aggregation), `/api/crm/sequences/enrollments/[enrollmentId]` PATCH (pause/resume). `SequenceMonitorCard` with expandable enrollment list. Enhanced sequences page with Monitor/List tabs and summary cards.
-- **Phase 3 Sprint 6 — Construction Intelligence:** `lib/crm/construction-intelligence.ts` (division comparison, seasonal analysis). `/api/crm/dashboard/division-comparison`. `DivisionComparisonCard`, `SeasonalAnalysisCard` on CRM dashboard.
-- **Phase 3 Sprint 6 — Entity Merge & Bulk Email:** `/api/crm/accounts/merge`, `/api/crm/contacts/merge` (field conflict resolution, relation reassignment, soft-delete). `/api/crm/leads/bulk-email` (max 50, merge fields, outreach logging, rate limited to 10/min).
-- **Tests:** 2571+ passing (226+ files). Build clean.
+- **Sprint 5-6 completion (continued):** Sequence monitoring (`/api/crm/sequences/analytics`, `/api/crm/sequences/enrollments/[enrollmentId]` PATCH), construction intelligence (`lib/crm/construction-intelligence.ts`, `/api/crm/dashboard/division-comparison`), entity merge (`/api/crm/accounts/merge`, `/api/crm/contacts/merge`), bulk email (`/api/crm/leads/bulk-email`).
+- **Bug fix:** TS2322 in sequences analytics — `Record<string, number>` countMap lost specific key types on spread. Fixed with explicitly typed countMap and individual field assignment.
+- **New components:** `SequenceMonitorCard`, `DivisionComparisonCard`, `SeasonalAnalysisCard`, `PipelineKanban`, enhanced `CommandPalette`, `CRMKeyboardShortcuts`.
+- **Tests:** 2649/2649 passing (235 files). Build clean.
+- **CRM Premium Plan status:** Phases 1-3 COMPLETE. Phase 4 (Documents & Approvals, Mobile & Field) is NICE TO HAVE.
 
-### Mar 5, 2026 — Performance Optimizations + D4 UAT Prep
+### Mar 5, 2026 — CRM Premium: Phases 1-3 (Follow-Ups → Pipeline Intel → Power UX)
 
-- **P1 Pagination (63 routes):** Adopted `parsePagination`/`paginatedResponse` across all GET list handlers — CRM (13), Projects (35+), Estimates (5), Finance (3), Portals (8+). All return `{ data, total, hasMore }` with `.select('*', { count: 'exact' })` and `.range()`. 16 test files updated for new response shape.
-- **P3 N+1 fixes:** Batched DB writes in `sla-alerts` (collect notifications → single insert), `apollo-pump` (batch dedup with `.in()` + bulk insert leads/contacts), `scoring` (batch score history inserts).
-- **P4 Bundle analyzer:** Installed `@next/bundle-analyzer`, wired into `next.config.ts` with `ANALYZE=true` flag.
-- **P5 Cache headers:** Added `Cache-Control: private, s-maxage=300, stale-while-revalidate=600` to 5 static-ish routes (divisions, cost-codes, cost-catalog, assemblies, role permissions).
-- **D4 UAT prep:** Created `scripts/seed-test-users.ts` (13 Clerk test users, one per role, with Supabase records + JWT metadata). Created `docs/UAT-TEST-SCRIPT.md` (60+ scenarios across 12 sections). Created 4 training quickstarts (`docs/training/` — PM, field supervisor, estimator, accounting).
-- **Tests:** 2363/2363 passing (199 files, +9 new). Build clean.
-- **Next steps:** D4.1 seed production Supabase (needs prod keys). D4.2 Clerk production instance. D4.4 DNS config. P2 SELECT * → explicit columns (deferred).
+- Phase 1: Task/follow-up system (my-tasks, overdue, cron reminders), unified timeline.
+- Phase 2: Client lifecycle & health scoring, pipeline intelligence (rep performance, aging, win/loss).
+- Phase 3: DnD Kanban, Cmd+K palette, keyboard shortcuts, sequence monitoring, division comparison, seasonal analysis.
+- Tests: 2571+ passing (226+ files).
 
-### Mar 5, 2026 — Phases B+C+D: Integration → Domain Hardening → Production Readiness
-
-- **Phase B (merged):** ERPNext sync (10 entity types), cron inbound sync, ERPNext webhooks, notification dispatcher (6 event types), BoldSign e-sign client + webhooks. 72 tests added.
-- **Phase C (6 workstreams):** C1 CRM rate limiting on 70+ routes (`@upstash/ratelimit`), cron-auth module, pagination helper, sanitize module. C2 Estimating assembly items + proposal tests (24). C3 Projects task/member/file tests (43) + task status enum bug fix. C4 Portal scoping/approval/trade tests (21). C5 Finance route tests (9). C6 Change order/RFI/Submittal tests (10).
-- **Phase D (security + CI/CD):** Fixed ERPNext webhook timing attack (timingSafeEqual). Fixed rate limit placement in 46 CRM routes. Added security headers (CSP, HSTS, X-Frame-Options). Demo mode production guard. CI pipeline: push trigger, E2E smoke tests, coverage. erp-sync cron every 30min. Complete .env.example.
-- **Tests:** 2354/2354 passing (198 files). Build clean.
-
-- Mar 4: Framer webhook edge function for website Contact Us → CRM. 2061 tests.
-- Mar 4: Fix /org/mdm-group 404 and missing org API data. 2061 tests.
-- Mar 4: Fix infinite redirect loop on hub.mdmgroupinc.ca.
-- Mar 1: CRM HubSpot Parity — 10 pipeline gaps closed, round-robin assignment, email tracking. 2048 tests.
-- Feb 27: Production readiness — queue wiring, finance dialogs, E2E, ERPNext verified. 2046 tests.
-- Feb 27: CRM A-to-Z Completion (Sprints 5-8) — Flow builder, email templates, bulk ops, DLQ, SLA. 1990 tests.
-- Feb 26: Seed real MDM data from Excel — 382 leads, 14 accounts, 231 contacts. 1020 tests.
-- Feb 25: Demo mode, DB schema alignment, UI polish. 904 tests.
+- Mar 5: Performance optimizations, pagination (63 routes), UAT prep. 2363 tests.
+- Mar 5: Phases B+C+D — ERPNext sync, domain hardening, security, CI/CD. 2354 tests.
+- Mar 4: Framer webhook, org route fixes. 2061 tests.
+- Mar 1: CRM HubSpot Parity — 10 pipeline gaps. 2048 tests.
+- Feb 27: Production readiness + CRM A-to-Z completion. 1990-2046 tests.
+- Feb 26: Seed real MDM data from Excel. 1020 tests.
+- Feb 25: Demo mode, DB schema alignment. 904 tests.
