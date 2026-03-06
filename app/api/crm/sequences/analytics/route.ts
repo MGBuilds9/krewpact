@@ -61,13 +61,13 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   }
 
   // Aggregate enrollment counts per sequence
-  const countMap: Record<string, Record<string, number>> = {};
+  const countMap: Record<string, { active: number; completed: number; paused: number; failed: number }> = {};
   for (const e of enrollments ?? []) {
     if (!countMap[e.sequence_id]) {
       countMap[e.sequence_id] = { active: 0, completed: 0, paused: 0, failed: 0 };
     }
     const status = e.status as string;
-    if (status in countMap[e.sequence_id]) {
+    if (status === 'active' || status === 'completed' || status === 'paused' || status === 'failed') {
       countMap[e.sequence_id][status]++;
     }
   }
@@ -80,7 +80,10 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       is_active: seq.is_active,
       total_steps: Array.isArray(seq.sequence_steps) ? seq.sequence_steps.length : 0,
       enrollments: {
-        ...counts,
+        active: counts.active,
+        completed: counts.completed,
+        paused: counts.paused,
+        failed: counts.failed,
         total: counts.active + counts.completed + counts.paused + counts.failed,
       },
     };
