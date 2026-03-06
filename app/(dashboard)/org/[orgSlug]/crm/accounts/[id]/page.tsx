@@ -7,12 +7,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Mail, Phone, User, Pencil, Plus, MessageSquarePlus } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, User, Pencil, Plus, MessageSquarePlus, CalendarPlus } from 'lucide-react';
 import { useAccount, useContacts, useActivities, useOpportunities } from '@/hooks/useCRM';
 import { ActivityTimeline } from '@/components/CRM/ActivityTimeline';
 import { AccountForm } from '@/components/CRM/AccountForm';
 import { ActivityLogDialog } from '@/components/CRM/ActivityLogDialog';
 import { NotesPanel } from '@/components/CRM/NotesPanel';
+import { AccountHealthCard } from '@/components/CRM/AccountHealthCard';
+import { UnifiedTimeline } from '@/components/CRM/UnifiedTimeline';
+import { QuickFollowUpDialog } from '@/components/CRM/QuickFollowUpDialog';
 
 function formatCurrency(value: number | null): string {
   if (value == null) return '-';
@@ -29,6 +32,7 @@ export default function AccountDetailPage() {
   const { data: opportunities } = useOpportunities({ accountId });
   const [isEditing, setIsEditing] = useState(false);
   const [activityDialogOpen, setActivityDialogOpen] = useState(false);
+  const [followUpOpen, setFollowUpOpen] = useState(false);
 
   const accountContacts = contactsResponse?.data ?? [];
   const accountActivities = activitiesResponse?.data ?? [];
@@ -89,6 +93,10 @@ export default function AccountDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
+          <Button variant="outline" size="sm" onClick={() => setFollowUpOpen(true)}>
+            <CalendarPlus className="h-4 w-4 mr-1" />
+            Follow-Up
+          </Button>
           <Button variant="outline" size="sm" onClick={() => setActivityDialogOpen(true)}>
             <MessageSquarePlus className="h-4 w-4 mr-1" />
             Log Activity
@@ -106,9 +114,10 @@ export default function AccountDetailPage() {
       <Tabs defaultValue="overview">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="health">Health</TabsTrigger>
           <TabsTrigger value="contacts">Contacts ({accountContacts.length})</TabsTrigger>
           <TabsTrigger value="notes">Notes</TabsTrigger>
-          <TabsTrigger value="activities">Activities</TabsTrigger>
+          <TabsTrigger value="timeline">Timeline</TabsTrigger>
           <TabsTrigger value="opportunities">
             Opportunities ({accountOpportunities.length})
           </TabsTrigger>
@@ -226,17 +235,21 @@ export default function AccountDetailPage() {
           <NotesPanel entityType="account" entityId={accountId} />
         </TabsContent>
 
-        <TabsContent value="activities">
+        <TabsContent value="health">
+          <AccountHealthCard accountId={accountId} />
+        </TabsContent>
+
+        <TabsContent value="timeline">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Activities</CardTitle>
+              <CardTitle>Timeline</CardTitle>
               <Button size="sm" variant="outline" onClick={() => setActivityDialogOpen(true)}>
                 <MessageSquarePlus className="h-4 w-4 mr-1" />
                 Log Activity
               </Button>
             </CardHeader>
             <CardContent>
-              <ActivityTimeline activities={accountActivities} />
+              <UnifiedTimeline accountId={accountId} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -280,6 +293,13 @@ export default function AccountDetailPage() {
         onOpenChange={setActivityDialogOpen}
         entityType="account"
         entityId={accountId}
+      />
+      <QuickFollowUpDialog
+        open={followUpOpen}
+        onOpenChange={setFollowUpOpen}
+        entityType="account"
+        entityId={accountId}
+        entityName={account.account_name}
       />
     </div>
   );

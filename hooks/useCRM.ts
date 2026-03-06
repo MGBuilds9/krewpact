@@ -3,6 +3,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api-client';
 import type { DashboardMetrics } from '@/lib/crm/metrics';
+import type { AccountHealthScore, LifecycleStage } from '@/lib/crm/account-health';
+import type { RepPerformance, PipelineAgingEntry, WinLossEntry } from '@/lib/crm/pipeline-intelligence';
+import type { TimelineEntry } from '@/app/api/crm/activities/timeline/route';
 
 // --- Paginated Response ---
 
@@ -942,6 +945,152 @@ export function useMarkOpportunityWon() {
       queryClient.invalidateQueries({ queryKey: ['opportunity', variables.id] });
       queryClient.invalidateQueries({ queryKey: ['pipeline'] });
     },
+  });
+}
+
+// --- My Tasks / Follow-ups ---
+
+interface MyTasksFilters {
+  filter?: 'overdue' | 'today' | 'upcoming' | 'completed' | 'all';
+  entityType?: 'lead' | 'opportunity' | 'account' | 'contact';
+  limit?: number;
+  offset?: number;
+}
+
+export function useMyTasks(filters?: MyTasksFilters) {
+  return useQuery({
+    queryKey: ['my-tasks', filters],
+    queryFn: () =>
+      apiFetch<PaginatedResponse<Activity>>('/api/crm/activities/my-tasks', {
+        params: {
+          filter: filters?.filter,
+          entity_type: filters?.entityType,
+          limit: filters?.limit,
+          offset: filters?.offset,
+        },
+      }),
+    staleTime: 15_000,
+  });
+}
+
+export function useOverdueTasks() {
+  return useQuery({
+    queryKey: ['overdue-tasks'],
+    queryFn: () =>
+      apiFetch<{ data: Activity[]; count: number }>('/api/crm/activities/overdue'),
+    staleTime: 30_000,
+  });
+}
+
+export function useCompleteTask() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id }: { id: string }) =>
+      apiFetch<Activity>(`/api/crm/activities/${id}`, {
+        method: 'PATCH',
+        body: { completed_at: new Date().toISOString() },
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['overdue-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['activities'] });
+    },
+  });
+}
+
+// --- Unified Timeline ---
+
+interface TimelineFilters {
+  leadId?: string;
+  accountId?: string;
+  contactId?: string;
+  opportunityId?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export function useTimeline(filters: TimelineFilters) {
+  return useQuery({
+    queryKey: ['timeline', filters],
+    queryFn: () =>
+      apiFetch<PaginatedResponse<TimelineEntry>>('/api/crm/activities/timeline', {
+        params: {
+          lead_id: filters.leadId,
+          account_id: filters.accountId,
+          contact_id: filters.contactId,
+          opportunity_id: filters.opportunityId,
+          limit: filters.limit,
+          offset: filters.offset,
+        },
+      }),
+    enabled: !!(filters.leadId || filters.accountId || filters.contactId || filters.opportunityId),
+    staleTime: 30_000,
+  });
+}
+
+// --- Account Health & Revenue ---
+
+export interface AccountHealthResponse {
+  account_id: string;
+  account_name: string;
+  health: AccountHealthScore;
+  lifecycle_stage: LifecycleStage;
+  stats: {
+    total_opportunities: number;
+    won_opportunities: number;
+    active_opportunities: number;
+    total_revenue: number;
+    last_activity_at: string | null;
+  };
+}
+
+export interface AccountRevenueResponse {
+  account_id: string;
+  account_name: string;
+  lifetime_value: number;
+  total_won_deals: number;
+  revenue_by_year: Record<string, number>;
+  project_count: number;
+  recent_deals: { id: string; name: string; revenue: number | null; closed_at: string }[];
+}
+
+export function useAccountHealth(accountId: string) {
+  return useQuery({
+    queryKey: ['account-health', accountId],
+    queryFn: () =>
+      apiFetch<AccountHealthResponse>(`/api/crm/accounts/${accountId}/health`),
+    enabled: !!accountId,
+    staleTime: 60_000,
+  });
+}
+
+export function useAccountRevenue(accountId: string) {
+  return useQuery({
+    queryKey: ['account-revenue', accountId],
+    queryFn: () =>
+      apiFetch<AccountRevenueResponse>(`/api/crm/accounts/${accountId}/revenue`),
+    enabled: !!accountId,
+    staleTime: 60_000,
+  });
+}
+
+// --- Pipeline Intelligence ---
+
+export interface PipelineIntelligenceResponse {
+  rep_performance: RepPerformance[];
+  pipeline_aging: PipelineAgingEntry[];
+  win_loss_by_rep: WinLossEntry[];
+  win_loss_by_division: WinLossEntry[];
+}
+
+export function usePipelineIntelligence(divisionId?: string) {
+  return useQuery({
+    queryKey: ['pipeline-intelligence', divisionId],
+    queryFn: () =>
+      apiFetch<PipelineIntelligenceResponse>('/api/crm/dashboard/intelligence', {
+        params: { division_id: divisionId },
+      }),
+    staleTime: 60_000,
   });
 }
 

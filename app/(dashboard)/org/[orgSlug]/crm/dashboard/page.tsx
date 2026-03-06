@@ -1,13 +1,18 @@
 'use client';
 
 import { useState } from 'react';
+import { useParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useDashboardMetrics } from '@/hooks/useCRM';
+import { useDashboardMetrics, usePipelineIntelligence } from '@/hooks/useCRM';
 import { PipelineValueChart } from '@/components/CRM/PipelineValueChart';
 import { ConversionFunnel } from '@/components/CRM/ConversionFunnel';
 import { SalesVelocityCard } from '@/components/CRM/SalesVelocityCard';
 import { LeadSourceBreakdown } from '@/components/CRM/LeadSourceBreakdown';
+import { MyTasksWidget } from '@/components/CRM/MyTasksWidget';
+import { RepPerformanceCard } from '@/components/CRM/RepPerformanceCard';
+import { PipelineAgingCard } from '@/components/CRM/PipelineAgingCard';
+import { WinLossAnalysis } from '@/components/CRM/WinLossAnalysis';
 
 const PERIODS = ['week', 'month', 'quarter', 'year'] as const;
 
@@ -28,14 +33,17 @@ function formatCurrency(value: number): string {
 }
 
 export default function CRMDashboardPage() {
+  const params = useParams();
+  const orgSlug = params.orgSlug as string;
   const [period, setPeriod] = useState<string>('month');
   const { data, isLoading } = useDashboardMetrics(undefined, period);
+  const { data: intelligence, isLoading: intelLoading } = usePipelineIntelligence();
 
   return (
     <>
       <title>CRM Dashboard — KrewPact</title>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-2xl font-bold">CRM Dashboard</h1>
           <div className="flex gap-1 rounded-lg border p-1">
             {PERIODS.map((p) => (
@@ -87,20 +95,47 @@ export default function CRMDashboardPage() {
           </Card>
         </div>
 
-        {/* Row 2: Pipeline Chart + Conversion Funnel */}
+        {/* Row 2: My Tasks + Pipeline Chart */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <div>
+            <MyTasksWidget orgSlug={orgSlug} />
+          </div>
           <div className="lg:col-span-2">
             <PipelineValueChart metrics={data?.pipeline} isLoading={isLoading} />
           </div>
-          <div>
-            <ConversionFunnel metrics={data?.conversion} isLoading={isLoading} />
-          </div>
         </div>
 
-        {/* Row 3: Velocity + Lead Sources */}
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {/* Row 3: Conversion + Velocity + Sources */}
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <ConversionFunnel metrics={data?.conversion} isLoading={isLoading} />
           <SalesVelocityCard metrics={data?.velocity} isLoading={isLoading} />
           <LeadSourceBreakdown metrics={data?.sources} isLoading={isLoading} />
+        </div>
+
+        {/* Row 4: Pipeline Intelligence */}
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <RepPerformanceCard
+            data={intelligence?.rep_performance ?? []}
+            isLoading={intelLoading}
+          />
+          <PipelineAgingCard
+            data={intelligence?.pipeline_aging ?? []}
+            isLoading={intelLoading}
+          />
+        </div>
+
+        {/* Row 5: Win/Loss Analysis */}
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <WinLossAnalysis
+            title="Win/Loss by Rep"
+            data={intelligence?.win_loss_by_rep ?? []}
+            isLoading={intelLoading}
+          />
+          <WinLossAnalysis
+            title="Win/Loss by Division"
+            data={intelligence?.win_loss_by_division ?? []}
+            isLoading={intelLoading}
+          />
         </div>
       </div>
     </>

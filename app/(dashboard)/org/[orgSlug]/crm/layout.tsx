@@ -7,6 +7,7 @@ import { GlobalSearch } from '@/components/CRM/GlobalSearch';
 
 const crmTabs = [
   { label: 'Dashboard', href: '/crm/dashboard' },
+  { label: 'Tasks', href: '/crm/tasks' },
   { label: 'Leads', href: '/crm/leads' },
   { label: 'Accounts', href: '/crm/accounts' },
   { label: 'Contacts', href: '/crm/contacts' },

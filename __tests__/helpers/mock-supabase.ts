@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 
-type MockResponse = { data: unknown; error: unknown };
+type MockResponse = { data: unknown; error: unknown; count?: number | null };
 
 interface MockSupabaseConfig {
   /** Default response for queries. Override per-table with `tables` */

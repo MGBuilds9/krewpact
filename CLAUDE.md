@@ -256,6 +256,14 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
+### Mar 5, 2026 — CRM Premium: Follow-Up Command Center + Pipeline Intelligence
+
+- **Phase 1 Sprint 1 — Task/Follow-Up System:** New `/api/crm/activities/my-tasks` (filter: overdue/today/upcoming/completed, entity_type filter, pagination), `/api/crm/activities/overdue` (current user's overdue tasks), `/api/cron/followup-reminders` (daily cron, group-by-user notifications). My Tasks page (`crm/tasks/`), `MyTasksWidget` dashboard card, `QuickFollowUpDialog` with date presets (tomorrow/3 days/week/2 weeks). Tasks tab added to CRM nav.
+- **Phase 1 Sprint 2 — Unified Communication Timeline:** `/api/crm/activities/timeline` merges activities + outreach_events into chronological feed. `UnifiedTimeline` component shows source type badges, automation markers, direction arrows. Replaced Activities tab on account detail with Timeline + integrated `QuickFollowUpDialog`.
+- **Phase 2 Sprint 3 — Client Lifecycle & Health:** `lib/crm/account-health.ts` (pure functions: recency 40%, engagement 20%, revenue 20%, win-rate 20% → score 0-100 with grade). `determineLifecycleStage()` (lead → prospect → active_client → repeat_client → churned). API routes: `/api/crm/accounts/[id]/health`, `/api/crm/accounts/[id]/revenue` (LTV, revenue-by-year, project count). `AccountHealthCard` component added to account detail page.
+- **Phase 2 Sprint 4 — Pipeline Intelligence Dashboard:** `lib/crm/pipeline-intelligence.ts` (rep performance leaderboard, pipeline aging with stalled deal detection, win/loss analysis by dimension). `/api/crm/dashboard/intelligence` route. Dashboard enhanced with `RepPerformanceCard`, `PipelineAgingCard`, `WinLossAnalysis` (by rep + by division).
+- **Tests:** 2529/2529 passing (219 files, +166 new). Build clean. 9 new test files covering all routes + pure functions.
+
 ### Mar 5, 2026 — Performance Optimizations + D4 UAT Prep
 
 - **P1 Pagination (63 routes):** Adopted `parsePagination`/`paginatedResponse` across all GET list handlers — CRM (13), Projects (35+), Estimates (5), Finance (3), Portals (8+). All return `{ data, total, hasMore }` with `.select('*', { count: 'exact' })` and `.range()`. 16 test files updated for new response shape.
