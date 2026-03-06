@@ -256,13 +256,17 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
-### Mar 5, 2026 — CRM Premium: Follow-Up Command Center + Pipeline Intelligence
+### Mar 5, 2026 — CRM Premium: Phases 1-3 Complete (Follow-Ups → Pipeline Intel → Power UX)
 
-- **Phase 1 Sprint 1 — Task/Follow-Up System:** New `/api/crm/activities/my-tasks` (filter: overdue/today/upcoming/completed, entity_type filter, pagination), `/api/crm/activities/overdue` (current user's overdue tasks), `/api/cron/followup-reminders` (daily cron, group-by-user notifications). My Tasks page (`crm/tasks/`), `MyTasksWidget` dashboard card, `QuickFollowUpDialog` with date presets (tomorrow/3 days/week/2 weeks). Tasks tab added to CRM nav.
-- **Phase 1 Sprint 2 — Unified Communication Timeline:** `/api/crm/activities/timeline` merges activities + outreach_events into chronological feed. `UnifiedTimeline` component shows source type badges, automation markers, direction arrows. Replaced Activities tab on account detail with Timeline + integrated `QuickFollowUpDialog`.
-- **Phase 2 Sprint 3 — Client Lifecycle & Health:** `lib/crm/account-health.ts` (pure functions: recency 40%, engagement 20%, revenue 20%, win-rate 20% → score 0-100 with grade). `determineLifecycleStage()` (lead → prospect → active_client → repeat_client → churned). API routes: `/api/crm/accounts/[id]/health`, `/api/crm/accounts/[id]/revenue` (LTV, revenue-by-year, project count). `AccountHealthCard` component added to account detail page.
-- **Phase 2 Sprint 4 — Pipeline Intelligence Dashboard:** `lib/crm/pipeline-intelligence.ts` (rep performance leaderboard, pipeline aging with stalled deal detection, win/loss analysis by dimension). `/api/crm/dashboard/intelligence` route. Dashboard enhanced with `RepPerformanceCard`, `PipelineAgingCard`, `WinLossAnalysis` (by rep + by division).
-- **Tests:** 2529/2529 passing (219 files, +166 new). Build clean. 9 new test files covering all routes + pure functions.
+- **Phase 1 Sprint 1 — Task/Follow-Up System:** `/api/crm/activities/my-tasks`, `/api/crm/activities/overdue`, `/api/cron/followup-reminders`. My Tasks page, `MyTasksWidget`, `QuickFollowUpDialog`.
+- **Phase 1 Sprint 2 — Unified Timeline:** `/api/crm/activities/timeline` merges activities + outreach_events. `UnifiedTimeline` with source badges.
+- **Phase 2 Sprint 3 — Client Lifecycle & Health:** `lib/crm/account-health.ts` (recency/engagement/revenue/win-rate scoring), `/api/crm/accounts/[id]/health`, `/api/crm/accounts/[id]/revenue`. `AccountHealthCard`.
+- **Phase 2 Sprint 4 — Pipeline Intelligence:** `lib/crm/pipeline-intelligence.ts`, `/api/crm/dashboard/intelligence`. `RepPerformanceCard`, `PipelineAgingCard`, `WinLossAnalysis`.
+- **Phase 3 Sprint 5 — Power UX:** `PipelineKanban` with @dnd-kit drag-and-drop stage transitions. Enhanced `CommandPalette` with CRM entity search + arrow key navigation. `CRMKeyboardShortcuts` (n/l/a/p/t/d/f hotkeys).
+- **Phase 3 Sprint 5 — Sequence Monitoring:** `/api/crm/sequences/analytics` (enrollment status aggregation), `/api/crm/sequences/enrollments/[enrollmentId]` PATCH (pause/resume). `SequenceMonitorCard` with expandable enrollment list. Enhanced sequences page with Monitor/List tabs and summary cards.
+- **Phase 3 Sprint 6 — Construction Intelligence:** `lib/crm/construction-intelligence.ts` (division comparison, seasonal analysis). `/api/crm/dashboard/division-comparison`. `DivisionComparisonCard`, `SeasonalAnalysisCard` on CRM dashboard.
+- **Phase 3 Sprint 6 — Entity Merge & Bulk Email:** `/api/crm/accounts/merge`, `/api/crm/contacts/merge` (field conflict resolution, relation reassignment, soft-delete). `/api/crm/leads/bulk-email` (max 50, merge fields, outreach logging, rate limited to 10/min).
+- **Tests:** 2571+ passing (226+ files). Build clean.
 
 ### Mar 5, 2026 — Performance Optimizations + D4 UAT Prep
 

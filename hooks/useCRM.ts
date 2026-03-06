@@ -1140,6 +1140,44 @@ export function useDivisionComparison() {
   });
 }
 
+export function useMergeAccounts() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { primary_id: string; secondary_id: string }) =>
+      apiFetch<{ primaryId: string; secondaryId: string; mergedFields: string[]; reassignedRelations: string[] }>(
+        '/api/crm/accounts/merge',
+        { method: 'POST', body: data },
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+    },
+  });
+}
+
+export function useMergeContacts() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { primary_id: string; secondary_id: string }) =>
+      apiFetch<{ primaryId: string; secondaryId: string; mergedFields: string[]; reassignedRelations: string[] }>(
+        '/api/crm/contacts/merge',
+        { method: 'POST', body: data },
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contacts'] });
+    },
+  });
+}
+
+export function useBulkEmail() {
+  return useMutation({
+    mutationFn: (data: { lead_ids: string[]; subject: string; html: string; text?: string; template_id?: string }) =>
+      apiFetch<{ sent: number; failed: number; total: number }>(
+        '/api/crm/leads/bulk-email',
+        { method: 'POST', body: data },
+      ),
+  });
+}
+
 export function useMarkOpportunityLost() {
   const queryClient = useQueryClient();
   return useMutation({
