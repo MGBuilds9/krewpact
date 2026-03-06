@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { usePipeline } from '@/hooks/useCRM';
 import { useDivision } from '@/contexts/DivisionContext';
-import { PipelineView } from '@/components/CRM/PipelineView';
+import { PipelineKanban } from '@/components/CRM/PipelineKanban';
 import { WeightedPipelineHeader } from '@/components/CRM/WeightedPipelineHeader';
 import { TrendingUp, Plus } from 'lucide-react';
 
@@ -80,7 +80,7 @@ export default function OpportunitiesPage() {
           opportunityCount={totalOpps}
         />
 
-        <PipelineView data={pipelineData ?? { stages: {} }} />
+        <PipelineKanban data={pipelineData ?? { stages: {} }} />
       </div>
     </>
   );

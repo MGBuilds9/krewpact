@@ -19,6 +19,7 @@ const mockUsePipeline = vi.fn();
 
 vi.mock('@/hooks/useCRM', () => ({
   usePipeline: (...args: unknown[]) => mockUsePipeline(...args),
+  useOpportunityStageTransition: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
 vi.mock('@/contexts/DivisionContext', () => ({
