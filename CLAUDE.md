@@ -256,24 +256,22 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
+### Mar 7, 2026 — Developer Collaboration & Build Efficiency
+
+- **Husky fix:** Fixed pre-commit hook executable bit (644 → 755) so lint-staged actually runs on commit. Required `git update-index --chmod=+x` since `core.fileMode=false`.
+- **Issue templates:** Added `.github/ISSUE_TEMPLATE/` with bug report (YAML form), feature request (YAML form), and config (disables blank issues, points security to SECURITY.md).
+- **Dependabot auto-merge:** New workflow auto-merges patch/minor updates after CI passes (squash merge). Majors still require manual review.
+- **PR auto-labeling:** New workflow + labeler config applies domain labels (crm, projects, estimates, erp-integration, ui, tests, ci/cd, documentation) by file path.
+- **Dependabot grouping:** Added groups for radix-ui, ai-sdk, eslint, testing to reduce PR noise from 11+ individual PRs to ~4-5 grouped PRs.
+- **Labels:** Created 7 new GitHub labels for auto-labeling.
+- **Tests:** 2780/2780 passing (250 files). No code changes, config/docs only.
+
 ### Mar 7, 2026 — First Production Deploy (KrewPact LIVE)
 
-- **Deploy fix:** Removed `NEXT_PUBLIC_DEMO_MODE=true` from Vercel env vars — was the sole blocker for every deploy since Mar 5.
-- **Env vars:** Set all production env vars in Vercel (Supabase, Clerk, ERPNext, QStash, CRON_SECRET). Updated `.env.local` with Supabase URL/keys, Clerk live keys, CRON_SECRET.
-- **Middleware fix:** Added `VERCEL_URL` to Clerk `authorizedParties` so the default Vercel domain works before custom domain DNS propagates.
-- **Clerk JWT:** Updated template name from `'supabase'` to `'comet'` in `lib/supabase/server.ts` to match Clerk dashboard config.
-- **Production audit:** Verified no hardcoded localhost in production paths, health endpoint works, middleware domain restrictions correct, cron auth in place.
-- **Production status:** Deploy READY at `krewpact.vercel.app` + `hub.mdmgroupinc.ca`. Health endpoint returns `{ status: "ok", supabase: "ok" }`.
-- **Note:** Service role key in `.env.local` references different Supabase project ref (`owfjnfdqpzpvzvdobpxa` vs `wmeaabrchkysogmeroye`) — may need correction for local dev.
-- **Tests:** 2780/2780 passing (250 files). Build clean.
+- Fixed NEXT_PUBLIC_DEMO_MODE blocker, set all Vercel env vars, added VERCEL_URL to authorizedParties, updated Clerk JWT template to 'comet'. Live at krewpact.vercel.app + hub.mdmgroupinc.ca. 2780 tests.
 
-### Mar 6, 2026 — CRM Full Completion (7 Sprints — Feature Complete)
-
-- 7 sprints: merge UI, bulk email, bidding, enrichment, settings, prefs, attachments, reporting. +131 tests.
-- CRM FEATURE COMPLETE per PRD. 2780 tests.
-
-- Mar 6: Lead gen features + CRM Premium Phase 3. 2649 tests.
+- Mar 7: Collaboration readiness — CODEOWNERS, SECURITY.md, local-dev.md, runbook.md.
+- Mar 6: CRM FEATURE COMPLETE (7 sprints, +131 tests). 2780 tests.
 - Mar 5: CRM Premium Phases 1-3, perf, pagination, ERPNext sync, security, CI/CD. 2354-2571 tests.
 - Mar 4: Framer webhook, org route fixes. 2061 tests.
 - Mar 1: CRM HubSpot Parity. 2048 tests.
-- Feb 27: Production readiness + CRM A-to-Z. 1990-2046 tests.
