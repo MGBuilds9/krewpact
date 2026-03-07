@@ -3,6 +3,20 @@
 > Unified operations hub for construction lifecycle management.
 > Domain: **krewpact.com** | Built by MDM Group Inc., Mississauga, Ontario, Canada.
 
+## Quickstart (Developers)
+
+```bash
+npm ci
+cp .env.example .env.local
+# Fill in keys (see docs/local-dev.md)
+npm run dev
+```
+
+- **Full setup:** [docs/local-dev.md](docs/local-dev.md)
+- **Operations:** [docs/runbook.md](docs/runbook.md)
+- **Contributing:** [CONTRIBUTING.md](CONTRIBUTING.md)
+- **Env vars:** [.env.example](.env.example)
+
 ---
 
 ## Planning Pack Overview

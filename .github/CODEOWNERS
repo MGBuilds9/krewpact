@@ -1,0 +1,6 @@
+* @mkgbuilds
+/app/ @mkgbuilds
+/components/ @mkgbuilds
+/lib/ @mkgbuilds
+/supabase/ @mkgbuilds
+/docs/ @mkgbuilds
