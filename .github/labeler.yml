@@ -1,0 +1,31 @@
+crm:
+  - changed-files:
+      - any-glob-to-any-file: 'src/app/(dashboard)/crm/**'
+
+projects:
+  - changed-files:
+      - any-glob-to-any-file: 'src/app/(dashboard)/projects/**'
+
+estimates:
+  - changed-files:
+      - any-glob-to-any-file: 'src/app/(dashboard)/estimates/**'
+
+erp-integration:
+  - changed-files:
+      - any-glob-to-any-file: 'src/lib/erp/**'
+
+ui:
+  - changed-files:
+      - any-glob-to-any-file: 'src/components/**'
+
+documentation:
+  - changed-files:
+      - any-glob-to-any-file: 'docs/**'
+
+tests:
+  - changed-files:
+      - any-glob-to-any-file: 'src/**/__tests__/**'
+
+ci/cd:
+  - changed-files:
+      - any-glob-to-any-file: '.github/**'
