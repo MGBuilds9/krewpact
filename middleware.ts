@@ -69,6 +69,7 @@ export default clerkMiddleware(
       'https://dashboard.mdmgroupinc.ca',
       'https://portal.mdmgroupinc.ca',
       ...(process.env.NEXT_PUBLIC_APP_URL ? [process.env.NEXT_PUBLIC_APP_URL] : []),
+      ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
       ...(process.env.NODE_ENV !== 'production' ? ['http://localhost:3000'] : []),
     ],
   },
