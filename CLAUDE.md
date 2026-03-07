@@ -256,28 +256,24 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
+### Mar 7, 2026 — First Production Deploy (KrewPact LIVE)
+
+- **Deploy fix:** Removed `NEXT_PUBLIC_DEMO_MODE=true` from Vercel env vars — was the sole blocker for every deploy since Mar 5.
+- **Env vars:** Set all production env vars in Vercel (Supabase, Clerk, ERPNext, QStash, CRON_SECRET). Updated `.env.local` with Supabase URL/keys, Clerk live keys, CRON_SECRET.
+- **Middleware fix:** Added `VERCEL_URL` to Clerk `authorizedParties` so the default Vercel domain works before custom domain DNS propagates.
+- **Clerk JWT:** Updated template name from `'supabase'` to `'comet'` in `lib/supabase/server.ts` to match Clerk dashboard config.
+- **Production audit:** Verified no hardcoded localhost in production paths, health endpoint works, middleware domain restrictions correct, cron auth in place.
+- **Production status:** Deploy READY at `krewpact.vercel.app` + `hub.mdmgroupinc.ca`. Health endpoint returns `{ status: "ok", supabase: "ok" }`.
+- **Note:** Service role key in `.env.local` references different Supabase project ref (`owfjnfdqpzpvzvdobpxa` vs `wmeaabrchkysogmeroye`) — may need correction for local dev.
+- **Tests:** 2780/2780 passing (250 files). Build clean.
+
 ### Mar 6, 2026 — CRM Full Completion (7 Sprints — Feature Complete)
 
-- **Sprint 1:** Merge UI dialogs — `MergeDialog.tsx` (account + contact), `BulkActionBar.tsx` updated with merge action. 10 tests.
-- **Sprint 2:** Bulk email compose UI — `BulkEmailDialog.tsx` (4-step: review → compose → confirm → sent), template selector. 10 tests.
-- **Sprint 3:** Bidding opportunities — full CRUD (4 API routes), MERX import, link-to-opportunity, `bidding_opportunities` migration, 3 components, 3 pages. 48 tests.
-- **Sprint 4:** Enrichment management dashboard — jobs list, stats, config panel, retry. 4 API routes, 4 components, 2 pages. 23 tests.
-- **Sprint 5:** CRM settings expansion — SLA config, sequence defaults, enrichment config. Settings hub updated with 3 new cards. 15 tests.
-- **Sprint 6:** Contact communication preferences + opportunity file attachments (Supabase Storage). 19 tests.
-- **Sprint 7:** CRM overview report, nav updates (Bidding tab, 4 Cmd+K entries, 3 keyboard shortcuts). 6 tests.
-- **React Compiler fix:** Replaced `useEffect`/`useRef` patterns with single-state-object `_syncKey` pattern to satisfy "Cannot access refs during render" and "setState in effect" lint rules.
-- **Tests:** 2780/2780 passing (250 files). Build clean. +131 new tests, +15 new test files.
-- **CRM status:** FEATURE COMPLETE per PRD. Phase 4 (Documents & Approvals, Mobile & Field) remains NICE TO HAVE.
+- 7 sprints: merge UI, bulk email, bidding, enrichment, settings, prefs, attachments, reporting. +131 tests.
+- CRM FEATURE COMPLETE per PRD. 2780 tests.
 
-### Mar 6, 2026 — Lead Generation Features + CRM Premium Phase 3 Completion
-
-- Lead gen: 6 Apollo search profiles, apollo-pump override, manual search API, 7 vertical templates, 5 sequences, dashboard UI, Apollo webhook edge function.
-- CRM Premium Phase 3: Sequence monitoring, construction intelligence, entity merge, bulk email APIs, TS2322 fix.
-- Tests: 2649/2649 passing (235 files).
-
-- Mar 5: CRM Premium Phases 1-3 (follow-ups, timeline, health, pipeline intel, Kanban, Cmd+K). 2571 tests.
-- Mar 5: Performance optimizations, pagination (63 routes), UAT prep. 2363 tests.
-- Mar 5: Phases B+C+D — ERPNext sync, domain hardening, security, CI/CD. 2354 tests.
+- Mar 6: Lead gen features + CRM Premium Phase 3. 2649 tests.
+- Mar 5: CRM Premium Phases 1-3, perf, pagination, ERPNext sync, security, CI/CD. 2354-2571 tests.
 - Mar 4: Framer webhook, org route fixes. 2061 tests.
-- Mar 1: CRM HubSpot Parity — 10 pipeline gaps. 2048 tests.
-- Feb 27: Production readiness + CRM A-to-Z completion. 1990-2046 tests.
+- Mar 1: CRM HubSpot Parity. 2048 tests.
+- Feb 27: Production readiness + CRM A-to-Z. 1990-2046 tests.
