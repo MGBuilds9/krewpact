@@ -268,7 +268,15 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ### Mar 7, 2026 — First Production Deploy (KrewPact LIVE)
 
-- Fixed NEXT_PUBLIC_DEMO_MODE blocker, set all Vercel env vars, added VERCEL_URL to authorizedParties, updated Clerk JWT template to 'comet'. Live at krewpact.vercel.app + hub.mdmgroupinc.ca. 2780 tests.
+- Fixed NEXT_PUBLIC_DEMO_MODE blocker, set all Vercel env vars, added VERCEL_URL to authorizedParties. Live at krewpact.vercel.app + hub.mdmgroupinc.ca. 2780 tests.
+
+### Mar 8, 2026 — CRM Fully Functional (Data + Auth + Integrations)
+
+- **Supabase env fix:** URL and anon key corrected to `owfjnfdqpzpvzvdobpxa` (was mismatched with `wmeaabrchkysogmeroye`).
+- **JWT template fix:** Code referenced `'comet'` but Clerk template is named `'supabase'` — fixed in `lib/supabase/server.ts`.
+- **Clerk metadata:** Set `publicMetadata` on both users (Michael=platform_admin, David=operations_manager) with `krewpact_user_id`, `division_ids`, `role_keys`.
+- **Data seeded:** 27 leads, 15 contacts, 15 accounts, 19 opportunities ($16.3M pipeline), 29 activities, 11 projects, 36 scoring rules, 7 email templates, 3 sequences.
+- **RLS verified:** Policies use `krewpact_divisions()` and `is_platform_admin()` from JWT claims — now working with correct metadata.
 
 - Mar 7: Collaboration readiness — CODEOWNERS, SECURITY.md, local-dev.md, runbook.md.
 - Mar 6: CRM FEATURE COMPLETE (7 sprints, +131 tests). 2780 tests.

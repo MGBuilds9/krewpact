@@ -99,6 +99,71 @@ export const meetingMinutesSchema = z.object({
 });
 
 // ============================================================
+// Milestone schemas
+// ============================================================
+
+const milestoneStatuses = [
+  'draft',
+  'submitted',
+  'in_review',
+  'approved',
+  'rejected',
+  'void',
+] as const;
+
+export const milestoneCreateSchema = z.object({
+  milestone_name: z.string().min(1).max(200),
+  milestone_order: z.number().int().min(0).optional(),
+  planned_date: z.string().nullable().optional(),
+  actual_date: z.string().nullable().optional(),
+  owner_user_id: z.string().uuid().nullable().optional(),
+  status: z.enum(milestoneStatuses).optional(),
+});
+
+export const milestoneUpdateSchema = z.object({
+  milestone_name: z.string().min(1).max(200).optional(),
+  milestone_order: z.number().int().min(0).optional(),
+  planned_date: z.string().nullable().optional(),
+  actual_date: z.string().nullable().optional(),
+  owner_user_id: z.string().uuid().nullable().optional(),
+  status: z.enum(milestoneStatuses).optional(),
+});
+
+// ============================================================
+// Task schemas
+// ============================================================
+
+const taskStatuses = ['todo', 'in_progress', 'blocked', 'done', 'cancelled'] as const;
+const taskPriorities = ['low', 'medium', 'high', 'urgent'] as const;
+
+export const taskCreateSchema = z.object({
+  title: z.string().min(1).max(300),
+  description: z.string().max(5000).nullable().optional(),
+  status: z.enum(taskStatuses).optional(),
+  priority: z.enum(taskPriorities).optional(),
+  assigned_user_id: z.string().uuid().nullable().optional(),
+  milestone_id: z.string().uuid().nullable().optional(),
+  start_at: z.string().nullable().optional(),
+  due_at: z.string().nullable().optional(),
+  blocked_reason: z.string().max(1000).nullable().optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+
+export const taskUpdateSchema = z.object({
+  title: z.string().min(1).max(300).optional(),
+  description: z.string().max(5000).nullable().optional(),
+  status: z.enum(taskStatuses).optional(),
+  priority: z.enum(taskPriorities).optional(),
+  assigned_user_id: z.string().uuid().nullable().optional(),
+  milestone_id: z.string().uuid().nullable().optional(),
+  start_at: z.string().nullable().optional(),
+  due_at: z.string().nullable().optional(),
+  completed_at: z.string().nullable().optional(),
+  blocked_reason: z.string().max(1000).nullable().optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+
+// ============================================================
 // Inferred types
 // ============================================================
 
@@ -109,3 +174,7 @@ export type TaskCommentCreate = z.infer<typeof taskCommentCreateSchema>;
 export type DailyLogCreate = z.infer<typeof dailyLogCreateSchema>;
 export type DailyLogUpdate = z.infer<typeof dailyLogUpdateSchema>;
 export type MeetingMinutes = z.infer<typeof meetingMinutesSchema>;
+export type MilestoneCreate = z.infer<typeof milestoneCreateSchema>;
+export type MilestoneUpdate = z.infer<typeof milestoneUpdateSchema>;
+export type TaskCreate = z.infer<typeof taskCreateSchema>;
+export type TaskUpdate = z.infer<typeof taskUpdateSchema>;

@@ -868,31 +868,28 @@ async function seed() {
   // Scoring rules
   const scoringRules = [
     {
-      name: 'GTA location',
+      rule_name: 'GTA location',
       category: 'fit',
       field_name: 'city',
       operator: 'in',
       value: 'Mississauga,Toronto,Brampton,Vaughan,Oakville',
-      score_impact: 15,
-      priority: 1,
+      points: 15,
     },
     {
-      name: 'Inbound lead',
+      rule_name: 'Inbound lead',
       category: 'intent',
       field_name: 'source_channel',
       operator: 'equals',
       value: 'inbound',
-      score_impact: 20,
-      priority: 1,
+      points: 20,
     },
     {
-      name: 'Healthcare industry',
+      rule_name: 'Healthcare industry',
       category: 'fit',
       field_name: 'industry',
       operator: 'equals',
       value: 'healthcare',
-      score_impact: 10,
-      priority: 2,
+      points: 10,
     },
   ];
 
