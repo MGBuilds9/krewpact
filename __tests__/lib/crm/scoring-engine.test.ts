@@ -199,9 +199,8 @@ describe('scoreLead', () => {
       value: 'referral',
       score_impact: 20,
       category: 'fit',
-      is_active: true,
-      division_id: null,
-      priority: null,
+      active: true,
+      description: null,
       ...overrides,
     };
   }
@@ -229,7 +228,7 @@ describe('scoreLead', () => {
   });
 
   it('skips inactive rules', () => {
-    const rules = [makeRule({ is_active: false })];
+    const rules = [makeRule({ active: false })];
     const result = scoreLead({ source: 'referral' }, rules);
     expect(result.total_score).toBe(0);
     expect(result.rule_results).toHaveLength(0);

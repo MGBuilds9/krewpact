@@ -1,13 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
-
-const taskStatusSchema = z.object({
-  status: z.enum(['todo', 'in_progress', 'blocked', 'done']),
-  blocked_reason: z.string().optional(),
-});
 
 async function resolveActiveTradePartner(
   userId: string,

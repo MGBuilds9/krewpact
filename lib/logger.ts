@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /**
  * Structured logger for KrewPact.
  *
@@ -13,7 +14,11 @@ type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
-function formatJsonLine(level: LogLevel, message: string, context?: Record<string, unknown>): string {
+function formatJsonLine(
+  level: LogLevel,
+  message: string,
+  context?: Record<string, unknown>,
+): string {
   return JSON.stringify({
     level,
     message,

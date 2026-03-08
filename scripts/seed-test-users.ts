@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /**
  * Seed test users for UAT — one per role (13 total).
  *

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { createClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
 import fs from 'fs/promises';
@@ -53,7 +54,6 @@ async function main() {
 
   // 3. Scan & Process
   let totalDocs = 0;
-  let skippedDocs = 0;
   let sensitiveDocs = 0;
 
   const manifest = {
@@ -90,7 +90,6 @@ async function main() {
       // Check Ignore (e.g. if file starts with .)
       if (path.basename(filePath).startsWith('.')) {
         manifest.skipped_other.push(relPath);
-        skippedDocs++;
         continue;
       }
 

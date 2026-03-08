@@ -70,7 +70,6 @@ function warnMissingOptional(env: Record<string, string | undefined>): void {
   }
 
   if (warnings.length > 0 && process.env.NODE_ENV === 'production') {
-    // eslint-disable-next-line no-console
     console.warn(`[env] Production warnings:\n${warnings.map((w) => `  ⚠ ${w}`).join('\n')}`);
   }
 }
@@ -87,7 +86,6 @@ function validateEnv(): Env {
       .map((issue) => `  ${issue.path.join('.')}: ${issue.message}`)
       .join('\n');
 
-    // eslint-disable-next-line no-console
     console.error(`[env] Validation failed:\n${formatted}`);
 
     // Both dev and production throw on critical var failures.

@@ -2,16 +2,10 @@ import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { dailyLogCreateSchema } from '@/lib/validators/projects';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
-import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 type RouteContext = { params: Promise<{ id: string }> };
-
-const querySchema = z.object({
-  limit: z.coerce.number().int().positive().max(100).optional(),
-  offset: z.coerce.number().int().min(0).optional(),
-});
 
 export async function GET(req: NextRequest, context: RouteContext) {
   const { userId } = await auth();
@@ -28,7 +22,10 @@ export async function GET(req: NextRequest, context: RouteContext) {
   const supabase = await createUserClient();
   const { data, error, count } = await supabase
     .from('project_daily_logs')
-    .select('id, project_id, log_date, work_summary, crew_count, delays, safety_notes, is_offline_origin, sync_client_id, submitted_at, submitted_by, created_at, updated_at' /* excluded from list: weather */, { count: 'exact' })
+    .select(
+      'id, project_id, log_date, work_summary, crew_count, delays, safety_notes, is_offline_origin, sync_client_id, submitted_at, submitted_by, created_at, updated_at' /* excluded from list: weather */,
+      { count: 'exact' },
+    )
     .eq('project_id', id)
     .order('log_date', { ascending: false })
     .range(offset, offset + limit - 1);

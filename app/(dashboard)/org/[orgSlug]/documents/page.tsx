@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -21,15 +21,8 @@ import {
   Folder,
   Plus,
 } from 'lucide-react';
-import { useProjects, type Project } from '@/hooks/useProjects';
-import {
-  useFolders,
-  useFiles,
-  useCreateFolder,
-  useDeleteFile,
-  type FileMetadata,
-  type FileFolder,
-} from '@/hooks/useDocuments';
+import { useProjects } from '@/hooks/useProjects';
+import { useFolders, useFiles, useCreateFolder, useDeleteFile } from '@/hooks/useDocuments';
 import { useDivision } from '@/contexts/DivisionContext';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 

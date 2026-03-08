@@ -27,7 +27,6 @@ export interface LeadData {
   id: string;
   status: string;
   source_channel: string | null;
-  estimated_value: number | null;
   created_at: string;
 }
 
@@ -261,12 +260,12 @@ export function calculateSourceMetrics(leads: LeadData[]): SourceMetrics {
 
     if (existing) {
       existing.count += 1;
-      existing.value += lead.estimated_value ?? 0;
+      existing.value += 0;
       if (isConverted) existing.converted += 1;
     } else {
       sourceMap.set(source, {
         count: 1,
-        value: lead.estimated_value ?? 0,
+        value: 0,
         converted: isConverted ? 1 : 0,
       });
     }
@@ -279,7 +278,7 @@ export function calculateSourceMetrics(leads: LeadData[]): SourceMetrics {
       value: data.value,
       conversionRate: data.count > 0 ? data.converted / data.count : 0,
     }))
-    .sort((a, b) => b.value - a.value);
+    .sort((a, b) => b.count - a.count);
 
   return { sources };
 }

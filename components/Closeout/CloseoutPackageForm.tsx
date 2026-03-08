@@ -1,30 +1,9 @@
 'use client';
 
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 import { useCreateCloseoutPackage, useUpdateCloseoutPackage } from '@/hooks/useCloseout';
-import {
-  closeoutPackageCreateSchema,
-  closeoutPackageUpdateSchema,
-} from '@/lib/validators/closeout';
 import { toast } from 'sonner';
 
 interface CloseoutPackageFormProps {

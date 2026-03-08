@@ -35,7 +35,7 @@ import { mapTaskToErp } from './task-mapper';
 import { mapSupplierToErp } from './supplier-mapper';
 import { mapExpenseToErp } from './expense-mapper';
 import { mapTimesheetToErp } from './timesheet-mapper';
-import { toErpCustomer, fromErpCustomer } from './customer-mapper';
+import { toErpCustomer } from './customer-mapper';
 import { toErpQuotation } from './quotation-mapper';
 import { fromErpSalesInvoice } from './sales-invoice-mapper';
 

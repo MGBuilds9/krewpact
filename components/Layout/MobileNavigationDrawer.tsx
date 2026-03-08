@@ -49,7 +49,7 @@ const navigationItems = [
 
 export function MobileNavigationDrawer({ isOpen, onClose }: MobileNavigationDrawerProps) {
   const pathname = usePathname();
-  const { push: orgPush, orgPath } = useOrgRouter();
+  const { push: orgPush } = useOrgRouter();
   const { data: currentUser } = useCurrentUser();
   const { user } = useUser();
   const { signOut } = useClerk();

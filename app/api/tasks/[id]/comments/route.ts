@@ -2,15 +2,9 @@ import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { taskCommentCreateSchema } from '@/lib/validators/projects';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
-import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 
 type RouteContext = { params: Promise<{ id: string }> };
-
-const querySchema = z.object({
-  limit: z.coerce.number().int().positive().max(100).optional(),
-  offset: z.coerce.number().int().min(0).optional(),
-});
 
 export async function GET(req: NextRequest, context: RouteContext) {
   const { userId } = await auth();

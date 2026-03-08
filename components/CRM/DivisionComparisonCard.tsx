@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Building2, TrendingUp, Trophy } from 'lucide-react';
+import { Building2, Trophy } from 'lucide-react';
 import type { DivisionComparison } from '@/lib/crm/construction-intelligence';
 
 const DIVISION_LABELS: Record<string, string> = {
@@ -64,9 +64,7 @@ export function DivisionComparisonCard({ divisions }: DivisionComparisonCardProp
                 </span>
               </div>
               <div className="flex items-center gap-3 text-sm">
-                <span className="text-muted-foreground">
-                  {div.total_opportunities} opps
-                </span>
+                <span className="text-muted-foreground">{div.total_opportunities} opps</span>
                 <Badge
                   variant="outline"
                   className={

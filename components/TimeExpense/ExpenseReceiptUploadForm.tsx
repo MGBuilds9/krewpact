@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -27,8 +26,6 @@ interface ExpenseReceiptUploadFormProps {
 }
 
 export function ExpenseReceiptUploadForm({ onSubmit, isLoading }: ExpenseReceiptUploadFormProps) {
-  const [fileName, setFileName] = useState<string>('');
-
   const form = useForm<FormValues>({
     resolver: zodResolver(receiptFormSchema),
     defaultValues: { file_id: '' },
@@ -41,12 +38,7 @@ export function ExpenseReceiptUploadForm({ onSubmit, isLoading }: ExpenseReceipt
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-2">
           <FormLabel>Receipt File</FormLabel>
-          <Input
-            type="file"
-            accept="image/*,application/pdf"
-            disabled
-            onChange={(e) => setFileName(e.target.files?.[0]?.name ?? '')}
-          />
+          <Input type="file" accept="image/*,application/pdf" disabled />
           <p className="text-xs text-muted-foreground">
             File upload wired to Supabase Storage in Phase 2. Supply a file_id directly for now.
           </p>

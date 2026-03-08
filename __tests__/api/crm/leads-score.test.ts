@@ -118,9 +118,8 @@ describe('POST /api/crm/leads/[id]/score', () => {
         value: 'referral',
         score_impact: 20,
         category: 'fit',
-        is_active: true,
-        division_id: null,
-        priority: 1,
+        active: true,
+        description: null,
       },
     ];
     mockClerkAuth(mockAuth);
@@ -167,9 +166,8 @@ describe('POST /api/crm/leads/[id]/score', () => {
         value: 'referral',
         score_impact: 20,
         category: 'fit',
-        is_active: true,
-        division_id: null,
-        priority: 1,
+        active: true,
+        description: null,
       },
     ];
     mockClerkAuth(mockAuth);

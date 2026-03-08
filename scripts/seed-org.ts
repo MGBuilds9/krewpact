@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /**
  * Seed an organization (org + settings + divisions + roles)
  * Usage: npx tsx scripts/seed-org.ts --file supabase/seed/seed-org-mdm.json

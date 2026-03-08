@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { File, Upload, FolderOpen } from 'lucide-react';
+import { Upload, FolderOpen } from 'lucide-react';
 
 interface ProjectFilesTabProps {
   projectId: string;

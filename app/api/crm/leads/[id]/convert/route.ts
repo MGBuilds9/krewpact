@@ -40,7 +40,9 @@ export async function POST(req: NextRequest, context: RouteContext) {
   // Fetch lead
   const { data: lead, error: leadError } = await supabase
     .from('leads')
-    .select('id, company_name, status, lead_score, fit_score, intent_score, engagement_score, source_channel, source_detail, assigned_to, division_id, created_at, updated_at, city, province, address, postal_code, industry, project_type, project_description, estimated_value, estimated_sqft, timeline_urgency, decision_date, next_followup_at, last_touch_at, nurture_status, is_qualified, qualified_at, qualified_by, disqualified_reason, lost_reason, current_sequence_id, sequence_step, automation_paused, last_automation_at, external_id, domain, enrichment_status, enrichment_data, deleted_at, utm_campaign, utm_medium, utm_source, domain_hash')
+    .select(
+      'id, company_name, status, substatus, lifecycle_stage, lead_score, fit_score, intent_score, engagement_score, source_channel, source_campaign, attribution_source, attribution_detail, assigned_to:owner_id, division_id, created_at, updated_at, city, province, address, postal_code, country, industry, company_size, revenue_range, next_followup_at, last_activity_at, last_contacted_at, is_qualified, in_sequence, sequence_paused, notes, tags, custom_fields, domain, enrichment_status, enrichment_data, deleted_at, stage_entered_at',
+    )
     .eq('id', id)
     .single();
 
@@ -65,7 +67,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
       stage: lead.status as string,
       lead_name: lead.company_name as string,
       division_id: lead.division_id as string | null,
-      estimated_value: lead.estimated_value as number | null,
+      estimated_value: null,
       company_name: lead.company_name as string | null,
       email: null,
       phone: null,

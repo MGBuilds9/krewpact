@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /**
  * KrewPact Real Data Seed Script
  *

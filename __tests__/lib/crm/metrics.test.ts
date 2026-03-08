@@ -27,7 +27,6 @@ function makeLead(overrides: Partial<LeadData> = {}): LeadData {
     id: `lead-${Math.random().toString(36).slice(2, 8)}`,
     status: 'new',
     source_channel: 'Website',
-    estimated_value: 25000,
     created_at: '2026-01-15T00:00:00Z',
     ...overrides,
   };
@@ -166,16 +165,16 @@ describe('calculateSourceMetrics', () => {
 
   it('groups leads by source and calculates conversion rates', () => {
     const leads = [
-      makeLead({ source_channel: 'Website', status: 'new', estimated_value: 10000 }),
-      makeLead({ source_channel: 'Website', status: 'converted', estimated_value: 20000 }),
-      makeLead({ source_channel: 'Referral', status: 'qualified', estimated_value: 50000 }),
+      makeLead({ source_channel: 'Website', status: 'new' }),
+      makeLead({ source_channel: 'Website', status: 'converted' }),
+      makeLead({ source_channel: 'Referral', status: 'qualified' }),
     ];
     const result = calculateSourceMetrics(leads);
     expect(result.sources).toHaveLength(2);
 
     const website = result.sources.find((s) => s.source === 'Website');
     expect(website?.count).toBe(2);
-    expect(website?.value).toBe(30000);
+    expect(website?.value).toBe(0);
     expect(website?.conversionRate).toBe(0.5);
 
     const referral = result.sources.find((s) => s.source === 'Referral');
@@ -183,10 +182,11 @@ describe('calculateSourceMetrics', () => {
     expect(referral?.conversionRate).toBe(0);
   });
 
-  it('sorts sources by value descending', () => {
+  it('sorts sources by count descending', () => {
     const leads = [
-      makeLead({ source_channel: 'Low', estimated_value: 1000 }),
-      makeLead({ source_channel: 'High', estimated_value: 100000 }),
+      makeLead({ source_channel: 'Low' }),
+      makeLead({ source_channel: 'High' }),
+      makeLead({ source_channel: 'High' }),
     ];
     const result = calculateSourceMetrics(leads);
     expect(result.sources[0].source).toBe('High');
@@ -204,7 +204,9 @@ describe('calculateSourceMetrics', () => {
 // Forecast Metrics
 // =====================================================
 
-function makeForecastOpp(overrides: Partial<ForecastOpportunityData> = {}): ForecastOpportunityData {
+function makeForecastOpp(
+  overrides: Partial<ForecastOpportunityData> = {},
+): ForecastOpportunityData {
   return {
     id: `opp-${Math.random().toString(36).slice(2, 8)}`,
     stage: 'proposal',
@@ -230,8 +232,16 @@ describe('calculateForecastMetrics', () => {
 
   it('places opportunities into correct month bucket', () => {
     const opps = [
-      makeForecastOpp({ target_close_date: '2026-03-20', estimated_revenue: 50000, probability_pct: 80 }),
-      makeForecastOpp({ target_close_date: '2026-05-10', estimated_revenue: 100000, probability_pct: 40 }),
+      makeForecastOpp({
+        target_close_date: '2026-03-20',
+        estimated_revenue: 50000,
+        probability_pct: 80,
+      }),
+      makeForecastOpp({
+        target_close_date: '2026-05-10',
+        estimated_revenue: 100000,
+        probability_pct: 40,
+      }),
     ];
     const result = calculateForecastMetrics(opps, now);
 
@@ -248,9 +258,21 @@ describe('calculateForecastMetrics', () => {
 
   it('excludes terminal stages (contracted, closed_lost)', () => {
     const opps = [
-      makeForecastOpp({ stage: 'contracted', target_close_date: '2026-04-01', estimated_revenue: 200000 }),
-      makeForecastOpp({ stage: 'closed_lost', target_close_date: '2026-04-01', estimated_revenue: 100000 }),
-      makeForecastOpp({ stage: 'proposal', target_close_date: '2026-04-01', estimated_revenue: 50000 }),
+      makeForecastOpp({
+        stage: 'contracted',
+        target_close_date: '2026-04-01',
+        estimated_revenue: 200000,
+      }),
+      makeForecastOpp({
+        stage: 'closed_lost',
+        target_close_date: '2026-04-01',
+        estimated_revenue: 100000,
+      }),
+      makeForecastOpp({
+        stage: 'proposal',
+        target_close_date: '2026-04-01',
+        estimated_revenue: 50000,
+      }),
     ];
     const result = calculateForecastMetrics(opps, now);
     expect(result.totalForecastedRevenue).toBe(50000);
@@ -266,9 +288,7 @@ describe('calculateForecastMetrics', () => {
   });
 
   it('ignores opportunities outside the forecast window', () => {
-    const opps = [
-      makeForecastOpp({ target_close_date: '2027-01-01', estimated_revenue: 500000 }),
-    ];
+    const opps = [makeForecastOpp({ target_close_date: '2027-01-01', estimated_revenue: 500000 })];
     const result = calculateForecastMetrics(opps, now, 6);
     // Falls outside the 6-month window (Mar-Aug 2026), not in any bucket
     const bucketWithDeal = result.buckets.find((b) => b.dealCount > 0);
@@ -279,7 +299,11 @@ describe('calculateForecastMetrics', () => {
 
   it('handles null revenue and probability gracefully', () => {
     const opps = [
-      makeForecastOpp({ target_close_date: '2026-04-15', estimated_revenue: null, probability_pct: null }),
+      makeForecastOpp({
+        target_close_date: '2026-04-15',
+        estimated_revenue: null,
+        probability_pct: null,
+      }),
     ];
     const result = calculateForecastMetrics(opps, now);
     const apr = result.buckets.find((b) => b.month === '2026-04');

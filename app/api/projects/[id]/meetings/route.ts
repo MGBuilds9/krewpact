@@ -2,16 +2,10 @@ import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { meetingMinutesSchema } from '@/lib/validators/projects';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
-import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 type RouteContext = { params: Promise<{ id: string }> };
-
-const querySchema = z.object({
-  limit: z.coerce.number().int().positive().max(100).optional(),
-  offset: z.coerce.number().int().min(0).optional(),
-});
 
 export async function GET(req: NextRequest, context: RouteContext) {
   const { userId } = await auth();
@@ -28,7 +22,10 @@ export async function GET(req: NextRequest, context: RouteContext) {
   const supabase = await createUserClient();
   const { data, error, count } = await supabase
     .from('site_diary_entries')
-    .select('id, project_id, entry_at, entry_type, entry_text, created_by, created_at, updated_at', { count: 'exact' })
+    .select(
+      'id, project_id, entry_at, entry_type, entry_text, created_by, created_at, updated_at',
+      { count: 'exact' },
+    )
     .eq('project_id', id)
     .eq('entry_type', 'meeting')
     .order('entry_at', { ascending: false })

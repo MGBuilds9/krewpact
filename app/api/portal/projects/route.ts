@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
  * Gate: user must have a clerk_user_id matching a portal_accounts row
  * with at least one portal_permissions entry.
  */
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 

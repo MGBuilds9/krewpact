@@ -8,11 +8,8 @@ import { Shield, Users, Briefcase, Settings } from 'lucide-react';
 import { useTeamMembers } from '@/hooks/useTeam';
 import { useProjects } from '@/hooks/useProjects';
 import { useDivision } from '@/contexts/DivisionContext';
-import { useUserRBAC } from '@/hooks/useRBAC';
-
 export default function AdminPage() {
   const { activeDivision } = useDivision();
-  const { roles } = useUserRBAC();
   const { data: members, isLoading: membersLoading } = useTeamMembers();
   const { data: projects, isLoading: projectsLoading } = useProjects({
     divisionId: activeDivision?.id,

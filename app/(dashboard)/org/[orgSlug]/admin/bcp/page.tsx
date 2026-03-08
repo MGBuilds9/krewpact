@@ -12,7 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { AlertTriangle, Plus } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { useBCPIncidents, useUpdateBCPIncident } from '@/hooks/useGovernance';
 import { BCPIncidentForm } from '@/components/BCP/BCPIncidentForm';
 import { BCPRecoveryEventForm } from '@/components/BCP/BCPRecoveryEventForm';
@@ -28,7 +28,6 @@ export default function BCPPage() {
   const { data, isLoading } = useBCPIncidents();
   const update = useUpdateBCPIncident();
   const [open, setOpen] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const incidents = data?.data ?? [];
 

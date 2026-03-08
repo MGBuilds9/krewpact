@@ -11,12 +11,10 @@ import {
   useMarkAllNotificationsRead,
   useDeleteNotification,
 } from '@/hooks/useNotifications';
-import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 export default function NotificationsPage() {
-  const router = useRouter();
   const { data: notifications, isLoading } = useNotifications();
   const markRead = useMarkNotificationRead();
   const markAllRead = useMarkAllNotificationsRead();

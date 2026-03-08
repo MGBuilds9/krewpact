@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Settings, User, Menu, LogOut, Bell, MoreHorizontal, Eye, X } from 'lucide-react';
+import { Settings, User, LogOut, Bell, MoreHorizontal, Eye, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -30,7 +30,7 @@ import { toast } from 'sonner';
 export function Header() {
   const { user } = useUser();
   const { signOut } = useClerk();
-  const { push: orgPush, orgPath } = useOrgRouter();
+  const { push: orgPush } = useOrgRouter();
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = React.useState(false);
@@ -258,10 +258,7 @@ export function Header() {
 
       {/* Impersonation Selector */}
       {isAdmin && (
-        <ImpersonationSelector
-          open={isImpersonationOpen}
-          onOpenChange={setIsImpersonationOpen}
-        />
+        <ImpersonationSelector open={isImpersonationOpen} onOpenChange={setIsImpersonationOpen} />
       )}
     </>
   );

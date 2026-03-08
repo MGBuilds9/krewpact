@@ -14,7 +14,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Loader2 } from 'lucide-react';
-import { useRolePermissions, useSetRolePermission } from '@/hooks/useOrg';
+import { useSetRolePermission } from '@/hooks/useOrg';
 import { rolePermissionEditorSchema } from '@/lib/validators/org';
 import { toast } from 'sonner';
 

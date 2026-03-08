@@ -7,9 +7,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Mail, Phone, User, Pencil, Plus, MessageSquarePlus, CalendarPlus } from 'lucide-react';
-import { useAccount, useContacts, useActivities, useOpportunities } from '@/hooks/useCRM';
-import { ActivityTimeline } from '@/components/CRM/ActivityTimeline';
+import {
+  ArrowLeft,
+  Mail,
+  Phone,
+  User,
+  Pencil,
+  Plus,
+  MessageSquarePlus,
+  CalendarPlus,
+} from 'lucide-react';
+import { useAccount, useContacts, useOpportunities } from '@/hooks/useCRM';
 import { AccountForm } from '@/components/CRM/AccountForm';
 import { ActivityLogDialog } from '@/components/CRM/ActivityLogDialog';
 import { NotesPanel } from '@/components/CRM/NotesPanel';
@@ -28,14 +36,12 @@ export default function AccountDetailPage() {
   const accountId = params.id as string;
   const { data: account, isLoading } = useAccount(accountId);
   const { data: contactsResponse } = useContacts({ accountId });
-  const { data: activitiesResponse } = useActivities({ accountId });
   const { data: opportunities } = useOpportunities({ accountId });
   const [isEditing, setIsEditing] = useState(false);
   const [activityDialogOpen, setActivityDialogOpen] = useState(false);
   const [followUpOpen, setFollowUpOpen] = useState(false);
 
   const accountContacts = contactsResponse?.data ?? [];
-  const accountActivities = activitiesResponse?.data ?? [];
   const accountOpportunities = opportunities ?? [];
 
   if (isLoading) {

@@ -1,0 +1,210 @@
+{
+  "project": "krewpact",
+  "created": "2026-03-08",
+  "baseline_tests": 2780,
+  "current_tests": 2780,
+  "tasks": [
+    {
+      "id": "A1",
+      "title": "Queue → Upstash QStash",
+      "phase": "A",
+      "status": "done",
+      "blocked_by": [],
+      "files": [
+        "lib/queue/client.ts",
+        "lib/queue/processor.ts",
+        "lib/queue/types.ts",
+        "lib/queue/verify.ts",
+        "app/api/queue/process/route.ts"
+      ],
+      "tests": "npm run test -- --reporter=verbose",
+      "acceptance": "QStash client installed, enqueue publishes via HTTP, process route verifies signature and runs job"
+    },
+    {
+      "id": "A2",
+      "title": "ERPNext Connectivity",
+      "phase": "A",
+      "status": "done",
+      "blocked_by": [],
+      "files": ["lib/erp/client.ts", ".env.local"],
+      "tests": "npm run test -- --reporter=verbose",
+      "acceptance": "ERPNext base URL, API key, API secret in .env.local. Client supports mock mode."
+    },
+    {
+      "id": "A3",
+      "title": "Missing ERPNext Mappers (customer, quotation, sales-invoice)",
+      "phase": "A",
+      "status": "done",
+      "blocked_by": [],
+      "files": [
+        "lib/erp/customer-mapper.ts",
+        "lib/erp/quotation-mapper.ts",
+        "lib/erp/sales-invoice-mapper.ts",
+        "lib/erp/sync-service.ts"
+      ],
+      "tests": "npm run test -- --reporter=verbose",
+      "acceptance": "All 11 mappers exist and registered in sync-service.ts"
+    },
+    {
+      "id": "A4",
+      "title": "Sentry + structured logger + console.log migration",
+      "phase": "A",
+      "status": "in_progress",
+      "blocked_by": [],
+      "files": [
+        "sentry.client.config.ts",
+        "sentry.server.config.ts",
+        "sentry.edge.config.ts",
+        "lib/logger.ts"
+      ],
+      "tests": "npm run lint && npm run test",
+      "acceptance": "Sentry configs done. Logger done. Remaining: migrate 247 console.log/warn/error calls to logger, add SENTRY_DSN to .env.local",
+      "notes": "Sentry configs and logger already exist. 247 lint warnings remain (mostly no-console)."
+    },
+    {
+      "id": "A5",
+      "title": "Accessibility pipeline (@axe-core/playwright)",
+      "phase": "A",
+      "status": "done",
+      "blocked_by": [],
+      "files": ["e2e/accessibility.spec.ts", "e2e/helpers/a11y.ts"],
+      "tests": "npx playwright test --grep @a11y",
+      "acceptance": "@axe-core/playwright installed, 8 a11y tests in accessibility.spec.ts covering desktop + mobile"
+    },
+    {
+      "id": "B1",
+      "title": "ERPNext Sync — End-to-End wiring",
+      "phase": "B",
+      "status": "in_progress",
+      "blocked_by": [],
+      "files": [
+        "lib/erp/sync-service.ts",
+        "app/api/webhooks/erpnext/route.ts",
+        "app/api/cron/erp-sync/route.ts"
+      ],
+      "tests": "npm run test -- --reporter=verbose",
+      "acceptance": "All 12 entity sync methods in sync-service. Webhook handler receives ERPNext events. Cron syncs snapshots. Need: DLQ review UI, sync dashboard, migrate webhook console.logs to logger",
+      "notes": "Core sync service complete with all entity types. Webhook handler and cron route exist. Missing DLQ UI and sync dashboard page."
+    },
+    {
+      "id": "B2",
+      "title": "Email & notification triggers",
+      "phase": "B",
+      "status": "pending",
+      "blocked_by": [],
+      "files": ["lib/email/resend.ts", "lib/email/notifications.ts", "app/api/notifications/"],
+      "tests": "npm run test -- --reporter=verbose",
+      "acceptance": "Notification triggers fire on: lead assigned, estimate approved, contract signed, task overdue, daily log submitted, portal message received"
+    },
+    {
+      "id": "B3",
+      "title": "BoldSign e-sign client (code layer only)",
+      "phase": "B",
+      "status": "done",
+      "blocked_by": [],
+      "files": ["lib/esign/boldsign-client.ts", "app/api/webhooks/boldsign/route.ts"],
+      "tests": "npm run test -- --reporter=verbose",
+      "acceptance": "BoldSignClient with mock mode, createEnvelope, getStatus, downloadDocument. Webhook handler exists. Blocked for live test (no API key)."
+    },
+    {
+      "id": "C1",
+      "title": "CRM polish & conversion chain",
+      "phase": "C",
+      "status": "pending",
+      "blocked_by": [],
+      "files": ["lib/crm/", "app/(dashboard)/org/[orgSlug]/crm/"],
+      "tests": "npm run test -- --reporter=verbose",
+      "acceptance": "End-to-end conversion chain verified. Round-robin tested. Scoring verified. Duplicate detection tested."
+    },
+    {
+      "id": "C2",
+      "title": "Estimating depth (line items, assemblies, versioning)",
+      "phase": "C",
+      "status": "pending",
+      "blocked_by": [],
+      "files": ["lib/estimating/", "app/(dashboard)/org/[orgSlug]/estimates/"],
+      "tests": "npm run test -- --reporter=verbose",
+      "acceptance": "Line item CRUD, assemblies, cost catalog, versioning, markup engine all verified"
+    },
+    {
+      "id": "C3",
+      "title": "Project execution (milestones, tasks, daily logs, docs)",
+      "phase": "C",
+      "status": "pending",
+      "blocked_by": [],
+      "files": ["app/(dashboard)/org/[orgSlug]/projects/", "app/api/projects/"],
+      "tests": "npm run test -- --reporter=verbose",
+      "acceptance": "Project creation from contract, milestones, tasks with dependencies, daily logs, document management"
+    },
+    {
+      "id": "C4",
+      "title": "Portal readiness (client + trade portals)",
+      "phase": "C",
+      "status": "pending",
+      "blocked_by": [],
+      "files": ["app/(portal)/", "app/api/portal/"],
+      "tests": "npm run test -- --reporter=verbose",
+      "acceptance": "Client portal project scoping, CO approval, document access. Trade portal onboarding, compliance, bid submission."
+    },
+    {
+      "id": "C5",
+      "title": "Finance bridge (invoice/PO/job-cost snapshots)",
+      "phase": "C",
+      "status": "pending",
+      "blocked_by": ["B1"],
+      "files": ["app/(dashboard)/org/[orgSlug]/finance/", "app/api/finance/"],
+      "tests": "npm run test -- --reporter=verbose",
+      "acceptance": "Invoice and PO snapshots accurate. Job cost calculations verified. Finance dashboard charts work."
+    },
+    {
+      "id": "C6",
+      "title": "Change management (RFI, CO, submittal workflows)",
+      "phase": "C",
+      "status": "pending",
+      "blocked_by": [],
+      "files": ["app/(dashboard)/org/[orgSlug]/projects/[id]/changes/", "app/api/projects/"],
+      "tests": "npm run test -- --reporter=verbose",
+      "acceptance": "RFI create→respond→close. CO create→approve→sync. Submittal create→review→approve."
+    },
+    {
+      "id": "D1",
+      "title": "Security hardening",
+      "phase": "D",
+      "status": "pending",
+      "blocked_by": [],
+      "files": ["lib/api/rate-limit.ts", "app/api/webhooks/"],
+      "tests": "npm run test -- --reporter=verbose",
+      "acceptance": "Rate limits on all public endpoints, CSRF verified, webhook signatures verified, XSS audit, field-level encryption for SIN/banking"
+    },
+    {
+      "id": "D2",
+      "title": "Performance & scale audit",
+      "phase": "D",
+      "status": "pending",
+      "blocked_by": [],
+      "files": ["lib/supabase/server.ts"],
+      "tests": "npm run build && npm run test",
+      "acceptance": "Query audit done, indexes verified, pooler port verified, API <500ms p95, bundle audit done"
+    },
+    {
+      "id": "D3",
+      "title": "CI/CD finalization",
+      "phase": "D",
+      "status": "pending",
+      "blocked_by": [],
+      "files": [".github/workflows/"],
+      "tests": "npm run lint && npm run typecheck && npm run test && npm run build",
+      "acceptance": "Full pipeline: lint→typecheck→test→build→e2e→deploy. Preview deploys on PR. Env validation at build."
+    },
+    {
+      "id": "D4",
+      "title": "UAT prep (seed data, test users, training docs)",
+      "phase": "D",
+      "status": "pending",
+      "blocked_by": ["D1", "D2", "D3"],
+      "files": ["scripts/seed-*.ts"],
+      "tests": "npm run test",
+      "acceptance": "Production seed data, test users per role, UAT scripts, training docs"
+    }
+  ]
+}

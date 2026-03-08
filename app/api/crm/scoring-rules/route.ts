@@ -2,19 +2,17 @@ import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 
 const scoringRuleSchema = z.object({
-  name: z.string().min(1).max(200),
+  rule_name: z.string().min(1).max(200),
   category: z.enum(['fit', 'intent', 'engagement']),
   field_name: z.string().min(1),
   operator: z.string().min(1),
   value: z.string().min(1),
-  score_impact: z.number().int(),
-  is_active: z.boolean().optional(),
-  priority: z.number().int().optional(),
-  division_id: z.string().min(1).optional(),
+  points: z.number().int(),
+  active: z.boolean().optional(),
+  description: z.string().optional(),
 });
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
@@ -27,9 +25,12 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const supabase = await createUserClient();
   const { data, error, count } = await supabase
     .from('scoring_rules')
-    .select('id, name, category, field_name, operator, value, score_impact, priority, division_id, is_active, created_at, updated_at', { count: 'exact' })
+    .select(
+      'id, name:rule_name, category, field_name, operator, value, score_impact:points, active, description, created_at, updated_at',
+      { count: 'exact' },
+    )
     .order('category')
-    .order('priority', { ascending: false })
+    .order('points', { ascending: false })
     .range(offset, offset + limit - 1);
 
   if (error) {

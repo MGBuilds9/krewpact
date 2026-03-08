@@ -124,9 +124,8 @@ describe('scoreLead enrichment edge cases', () => {
       value: 'construction',
       score_impact: 15,
       category: 'fit',
-      is_active: true,
-      division_id: null,
-      priority: null,
+      active: true,
+      description: null,
       ...overrides,
     };
   }
@@ -361,11 +360,11 @@ describe('scoreLead enrichment edge cases', () => {
 
   it('handles mixed active and inactive rules', () => {
     const rules: ScoringRule[] = [
-      makeRule({ id: 'r1', is_active: true, score_impact: 15 }),
-      makeRule({ id: 'r2', is_active: false, score_impact: 100 }),
+      makeRule({ id: 'r1', active: true, score_impact: 15 }),
+      makeRule({ id: 'r2', active: false, score_impact: 100 }),
       makeRule({
         id: 'r3',
-        is_active: true,
+        active: true,
         field_name: 'province',
         operator: 'equals',
         value: 'Ontario',

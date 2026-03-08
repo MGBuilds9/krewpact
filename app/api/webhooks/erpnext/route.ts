@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
   const docname = (payload.name as string) || '';
   const event = (payload.event as string) || 'unknown';
 
-  console.log(`[erpnext-webhook] Received: doctype=${doctype} name=${docname} event=${event}`);
+  logger.info('ERPNext webhook received', { doctype, docname, event });
 
   // 3. Handle by doctype
   const service = new SyncService();
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Missing document name' }, { status: 400 });
         }
         const result = await service.readSalesInvoice(docname);
-        console.log(`[erpnext-webhook] Sales Invoice sync: ${result.status} (${docname})`);
+        logger.info('Sales Invoice sync complete', { status: result.status, docname });
         break;
       }
 
@@ -72,28 +72,24 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Missing document name' }, { status: 400 });
         }
         const result = await service.readPurchaseInvoice(docname);
-        console.log(`[erpnext-webhook] Purchase Invoice sync: ${result.status} (${docname})`);
+        logger.info('Purchase Invoice sync complete', { status: result.status, docname });
         break;
       }
 
       case 'Customer': {
         // Future: bidirectional account sync
-        console.log(
-          `[erpnext-webhook] Customer event received: ${docname} (${event}) — logged, no action`,
-        );
+        logger.info('Customer event received, no action', { docname, event });
         break;
       }
 
       case 'Project': {
         // Future: bidirectional project sync
-        console.log(
-          `[erpnext-webhook] Project event received: ${docname} (${event}) — logged, no action`,
-        );
+        logger.info('Project event received, no action', { docname, event });
         break;
       }
 
       default: {
-        console.log(`[erpnext-webhook] Unhandled doctype: ${doctype} (${docname}, ${event})`);
+        logger.warn('Unhandled ERPNext doctype', { doctype, docname, event });
         break;
       }
     }

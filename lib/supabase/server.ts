@@ -42,7 +42,7 @@ export async function createUserClient() {
   }
 
   const { getToken } = await auth();
-  const token = await getToken({ template: 'comet' });
+  const token = await getToken({ template: 'supabase' });
 
   if (!token) {
     throw new Error('No Clerk session — user must be authenticated');

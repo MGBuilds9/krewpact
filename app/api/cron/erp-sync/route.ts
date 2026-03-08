@@ -3,6 +3,7 @@ import { SyncService } from '@/lib/erp/sync-service';
 import { ErpClient } from '@/lib/erp/client';
 import { isMockMode } from '@/lib/erp/sync-service';
 import { verifyCronAuth } from '@/lib/api/cron-auth';
+import { logger } from '@/lib/logger';
 
 /**
  * GET /api/cron/erp-sync — Periodic inbound sync of Sales Invoices and Purchase Invoices.
@@ -63,13 +64,13 @@ export async function GET(request: NextRequest) {
           summary.invoices_synced++;
         } catch (err) {
           const msg = `Sales Invoice ${invoice.name}: ${err instanceof Error ? err.message : String(err)}`;
-          console.error(`[erp-cron] ${msg}`);
+          logger.error('Sales Invoice sync failed', { invoice: invoice.name, error: msg });
           summary.errors.push(msg);
         }
       }
     } catch (err) {
       const msg = `Failed to list Sales Invoices: ${err instanceof Error ? err.message : String(err)}`;
-      console.error(`[erp-cron] ${msg}`);
+      logger.error('Failed to list Sales Invoices', { error: msg });
       summary.errors.push(msg);
     }
 
@@ -96,26 +97,28 @@ export async function GET(request: NextRequest) {
           summary.pos_synced++;
         } catch (err) {
           const msg = `Purchase Invoice ${invoice.name}: ${err instanceof Error ? err.message : String(err)}`;
-          console.error(`[erp-cron] ${msg}`);
+          logger.error('Purchase Invoice sync failed', { invoice: invoice.name, error: msg });
           summary.errors.push(msg);
         }
       }
     } catch (err) {
       const msg = `Failed to list Purchase Invoices: ${err instanceof Error ? err.message : String(err)}`;
-      console.error(`[erp-cron] ${msg}`);
+      logger.error('Failed to list Purchase Invoices', { error: msg });
       summary.errors.push(msg);
     }
   } catch (err) {
     const msg = `Cron sync failed: ${err instanceof Error ? err.message : String(err)}`;
-    console.error(`[erp-cron] ${msg}`);
+    logger.error('ERP cron sync failed', { error: msg });
     summary.errors.push(msg);
   }
 
   summary.completed_at = new Date().toISOString();
 
-  console.log(
-    `[erp-cron] Completed: ${summary.invoices_synced} invoices, ${summary.pos_synced} POs, ${summary.errors.length} errors`,
-  );
+  logger.info('ERP cron sync completed', {
+    invoices_synced: summary.invoices_synced,
+    pos_synced: summary.pos_synced,
+    error_count: summary.errors.length,
+  });
 
   return NextResponse.json(summary);
 }
