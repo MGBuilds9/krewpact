@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 const updateSchema = z.object({
   title: z.string().min(1).max(255).optional(),
@@ -12,17 +13,26 @@ const updateSchema = z.object({
   due_at: z.string().nullable().optional(),
 });
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
+
   const { id } = await params;
 
   try {
     const supabase = await createUserClient();
-    const { data, error } = await supabase.from('tasks').select('id, project_id, title, description, status, priority, assigned_user_id, created_by, milestone_id, due_at, start_at, completed_at, blocked_reason, metadata, created_at, updated_at').eq('id', id).single();
+    const { data, error } = await supabase
+      .from('tasks')
+      .select(
+        'id, project_id, title, description, status, priority, assigned_user_id, created_by, milestone_id, due_at, start_at, completed_at, blocked_reason, metadata, created_at, updated_at',
+      )
+      .eq('id', id)
+      .single();
 
     if (error) {
       if (error.code === 'PGRST116') {
@@ -43,6 +53,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   const { id } = await params;
 
@@ -81,11 +94,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   const { id } = await params;
 

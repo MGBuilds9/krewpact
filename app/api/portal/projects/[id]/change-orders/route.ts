@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 async function resolvePortalPermission(
   supabase: Awaited<ReturnType<typeof createUserClient>>,
@@ -40,6 +41,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
   const { id: projectId } = await params;
   const supabase = await createUserClient();
 
@@ -49,7 +52,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
 
   // Fetch change orders visible to portal users
-  const { data: changeOrders, error, count } = await supabase
+  const {
+    data: changeOrders,
+    error,
+    count,
+  } = await supabase
     .from('change_orders')
     .select(
       'id, co_number, title, description, status, total_amount, submitted_at, approved_at, rejected_at',

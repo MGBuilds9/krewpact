@@ -2,12 +2,16 @@ import { auth, currentUser } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 export async function GET(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   const clerkUser = await currentUser();
   if (!clerkUser) {
@@ -45,13 +49,18 @@ export async function GET(req: NextRequest) {
     const isAdmin = permNames.includes('system.admin') || callerUser.role === 'admin';
 
     if (!isAdmin) {
-      return NextResponse.json({ error: 'Impersonation requires admin privileges' }, { status: 403 });
+      return NextResponse.json(
+        { error: 'Impersonation requires admin privileges' },
+        { status: 403 },
+      );
     }
 
     // Fetch the impersonated user
     const { data: impersonated, error: impErr } = await supabase
       .from('users')
-      .select('id, clerk_user_id, first_name, last_name, email, phone, avatar_url, locale, timezone, status, created_at, updated_at')
+      .select(
+        'id, clerk_user_id, first_name, last_name, email, phone, avatar_url, locale, timezone, status, created_at, updated_at',
+      )
       .eq('id', impersonateId)
       .single();
 

@@ -3,6 +3,7 @@ import { createUserClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { divisionSetupCreateSchema } from '@/lib/validators/org';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 const querySchema = z.object({
   search: z.string().optional(),
@@ -14,6 +15,8 @@ export async function GET(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
   const params = Object.fromEntries(req.nextUrl.searchParams);
   const parsed = querySchema.safeParse(params);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
@@ -44,6 +47,8 @@ export async function POST(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
   let body: unknown;
   try {
     body = await req.json();

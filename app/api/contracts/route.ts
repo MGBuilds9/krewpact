@@ -3,6 +3,7 @@ import { createUserClient } from '@/lib/supabase/server';
 import { contractTermsCreateSchema } from '@/lib/validators/contracting';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 const querySchema = z.object({
   proposal_id: z.string().uuid().optional(),
@@ -17,6 +18,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
+
   const params = Object.fromEntries(req.nextUrl.searchParams);
   const parsed = querySchema.safeParse(params);
   if (!parsed.success) {
@@ -28,7 +32,10 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from('contract_terms')
-    .select('id, proposal_id, contract_status, legal_text_version, signed_at, supersedes_contract_id, created_at, updated_at' /* excluded from list: terms_payload */, { count: 'exact' })
+    .select(
+      'id, proposal_id, contract_status, legal_text_version, signed_at, supersedes_contract_id, created_at, updated_at' /* excluded from list: terms_payload */,
+      { count: 'exact' },
+    )
     .order('created_at', { ascending: false });
 
   if (proposal_id) query = query.eq('proposal_id', proposal_id);
@@ -56,6 +63,9 @@ export async function POST(req: NextRequest) {
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   let body: unknown;
   try {

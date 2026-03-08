@@ -3,6 +3,7 @@ import { logger } from '@/lib/logger';
 import { createUserClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 const updateSchema = z.object({
   read: z.boolean().optional(),
@@ -15,6 +16,9 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   const { id } = await context.params;
 
@@ -50,11 +54,14 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
   }
 }
 
-export async function DELETE(_req: NextRequest, context: RouteContext) {
+export async function DELETE(req: NextRequest, context: RouteContext) {
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   const { id } = await context.params;
 

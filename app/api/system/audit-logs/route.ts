@@ -2,11 +2,14 @@ import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { auditLogQuerySchema } from '@/lib/validators/system';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 export async function GET(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
   const params = Object.fromEntries(req.nextUrl.searchParams);
   const parsed = auditLogQuerySchema.safeParse(params);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
@@ -26,7 +29,10 @@ export async function GET(req: NextRequest) {
   let query = supabase
     .from('audit_logs')
     /* excluded from list: old_data, new_data, context */
-    .select('id, entity_type, entity_id, action, actor_user_id, actor_portal_id, ip_address, user_agent, created_at', { count: 'exact' })
+    .select(
+      'id, entity_type, entity_id, action, actor_user_id, actor_portal_id, ip_address, user_agent, created_at',
+      { count: 'exact' },
+    )
     .order('created_at', { ascending: false })
     .range(offset, offset + (limit ?? 50) - 1);
 

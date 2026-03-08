@@ -4,12 +4,16 @@ import { sendEmailSchema } from '@/lib/validators/email';
 import { getMicrosoftToken, graphFetch, buildGraphUrl } from '@/lib/microsoft/graph';
 import { createUserClient } from '@/lib/supabase/server';
 import type { SendMessagePayload } from '@/lib/microsoft/types';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   let body: unknown;
   try {

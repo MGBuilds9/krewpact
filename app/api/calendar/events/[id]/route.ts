@@ -2,19 +2,23 @@ import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { getMicrosoftToken, graphFetch, buildGraphUrl } from '@/lib/microsoft/graph';
 import type { GraphEvent } from '@/lib/microsoft/types';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
 }
 
-export async function GET(_req: NextRequest, context: RouteContext): Promise<NextResponse> {
+export async function GET(req: NextRequest, context: RouteContext): Promise<NextResponse> {
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
+
   const { id } = await context.params;
-  const mailbox = _req.nextUrl.searchParams.get('mailbox') ?? undefined;
+  const mailbox = req.nextUrl.searchParams.get('mailbox') ?? undefined;
 
   const token = await getMicrosoftToken(userId);
   const url = buildGraphUrl(`/events/${id}`, mailbox);

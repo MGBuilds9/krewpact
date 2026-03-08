@@ -4,6 +4,7 @@ import { taskDependencyCreateSchema } from '@/lib/validators/projects';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -12,6 +13,9 @@ export async function GET(req: NextRequest, context: RouteContext) {
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   const { id } = await context.params;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
@@ -36,6 +40,9 @@ export async function POST(req: NextRequest, context: RouteContext) {
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   const { id } = await context.params;
 
@@ -74,6 +81,9 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   const { id } = await context.params;
   const params = Object.fromEntries(req.nextUrl.searchParams);

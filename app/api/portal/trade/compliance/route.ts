@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 /**
  * GET /api/portal/trade/compliance
@@ -11,6 +12,8 @@ export async function GET(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
   const supabase = await createUserClient();
 
   // Resolve portal account — must be actor_type = 'trade_partner'
@@ -30,9 +33,15 @@ export async function GET(req: NextRequest) {
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
 
   // Fetch compliance docs from portal_view_logs / file_metadata tagged as compliance
-  const { data: complianceDocs, error: docError, count } = await supabase
+  const {
+    data: complianceDocs,
+    error: docError,
+    count,
+  } = await supabase
     .from('file_metadata')
-    .select('id, file_name, file_type, file_size_bytes, meta, created_at, updated_at', { count: 'exact' })
+    .select('id, file_name, file_type, file_size_bytes, meta, created_at, updated_at', {
+      count: 'exact',
+    })
     .contains('meta', { trade_portal_id: pa.id, doc_category: 'compliance' })
     .order('updated_at', { ascending: false })
     .range(offset, offset + limit - 1);

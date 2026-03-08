@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { searchPeople, mapApolloToLead, mapApolloToContact } from '@/lib/integrations/apollo';
 import { getProfileById, getActiveProfiles } from '@/lib/integrations/apollo-profiles';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 const searchSchema = z.object({
   profileId: z.string().min(1),
@@ -16,6 +17,9 @@ export async function POST(req: NextRequest) {
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   let body: unknown;
   try {
@@ -48,7 +52,12 @@ export async function POST(req: NextRequest) {
 
     if (!shouldImport) {
       return NextResponse.json({
-        profile: { id: profile.id, name: profile.name, division: profile.division, vertical: profile.vertical },
+        profile: {
+          id: profile.id,
+          name: profile.name,
+          division: profile.division,
+          vertical: profile.vertical,
+        },
         results: people.map((p) => ({
           id: p.id,
           name: p.name,
@@ -95,7 +104,10 @@ export async function POST(req: NextRequest) {
       .select('id, external_id');
 
     if (leadError) {
-      return NextResponse.json({ error: 'Failed to insert leads', details: leadError.message }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Failed to insert leads', details: leadError.message },
+        { status: 500 },
+      );
     }
 
     // Insert contacts
@@ -123,11 +135,14 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   return NextResponse.json({ profiles: getActiveProfiles() });
 }

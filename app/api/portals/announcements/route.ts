@@ -3,6 +3,7 @@ import { createUserClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 const announcementSchema = z.object({
   project_id: z.string().uuid(),
@@ -19,6 +20,8 @@ export async function GET(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
   const projectId = req.nextUrl.searchParams.get('project_id');
   if (!projectId) return NextResponse.json({ error: 'project_id is required' }, { status: 400 });
 
@@ -48,6 +51,8 @@ export async function POST(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
   let body: unknown;
   try {
     body = await req.json();

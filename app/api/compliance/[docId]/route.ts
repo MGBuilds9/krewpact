@@ -2,16 +2,21 @@ import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { complianceDocUpdateSchema } from '@/lib/validators/procurement';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ docId: string }> }) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
   const { docId } = await params;
   const supabase = await createUserClient();
   const { data, error } = await supabase
     .from('trade_partner_compliance_docs')
-    .select('id, portal_account_id, compliance_type, file_id, doc_number, issued_on, expires_on, status, verified_by, verified_at, created_at, updated_at')
+    .select(
+      'id, portal_account_id, compliance_type, file_id, doc_number, issued_on, expires_on, status, verified_by, verified_at, created_at, updated_at',
+    )
     .eq('id', docId)
     .single();
 
@@ -23,6 +28,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ do
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
   const { docId } = await params;
   const body = await req.json();
   const parsed = complianceDocUpdateSchema.safeParse(body);

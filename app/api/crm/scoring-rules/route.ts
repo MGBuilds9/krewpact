@@ -3,6 +3,7 @@ import { createUserClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 const scoringRuleSchema = z.object({
   rule_name: z.string().min(1).max(200),
@@ -20,6 +21,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const supabase = await createUserClient();
@@ -45,6 +49,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   let body: unknown;
   try {

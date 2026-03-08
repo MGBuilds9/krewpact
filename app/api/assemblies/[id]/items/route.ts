@@ -3,6 +3,7 @@ import { createUserClient } from '@/lib/supabase/server';
 import { assemblyItemCreateSchema, assemblyItemUpdateSchema } from '@/lib/validators/estimating';
 import { NextRequest, NextResponse } from 'next/server';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth();
@@ -10,12 +11,18 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
+
   const { id } = await params;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const supabase = await createUserClient();
   const { data, error, count } = await supabase
     .from('assembly_items')
-    .select('id, assembly_id, catalog_item_id, line_type, description, quantity, unit_cost, sort_order, metadata, created_at, updated_at, cost_catalog_items(id, item_code, item_name, item_type, unit, base_cost, vendor_name, division_id, effective_from, effective_to, metadata, created_at, updated_at)', { count: 'exact' })
+    .select(
+      'id, assembly_id, catalog_item_id, line_type, description, quantity, unit_cost, sort_order, metadata, created_at, updated_at, cost_catalog_items(id, item_code, item_name, item_type, unit, base_cost, vendor_name, division_id, effective_from, effective_to, metadata, created_at, updated_at)',
+      { count: 'exact' },
+    )
     .eq('assembly_id', id)
     .order('sort_order', { ascending: true })
     .range(offset, offset + limit - 1);
@@ -32,6 +39,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   const { id } = await params;
 
@@ -66,6 +76,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   const { id } = await params;
   const itemId = req.nextUrl.searchParams.get('item_id');
@@ -109,6 +122,9 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   const { id } = await params;
   const itemId = req.nextUrl.searchParams.get('item_id');

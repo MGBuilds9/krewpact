@@ -3,6 +3,7 @@ import { createUserClient } from '@/lib/supabase/server';
 import { assemblyCreateSchema } from '@/lib/validators/estimating';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 const querySchema = z.object({
   division_id: z.string().min(1).optional(),
@@ -18,6 +19,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
+
   const params = Object.fromEntries(req.nextUrl.searchParams);
   const parsed = querySchema.safeParse(params);
   if (!parsed.success) {
@@ -29,7 +33,10 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from('assemblies')
-    .select('id, assembly_code, assembly_name, description, unit, division_id, is_active, version_no, created_by, created_at, updated_at', { count: 'exact' })
+    .select(
+      'id, assembly_code, assembly_name, description, unit, division_id, is_active, version_no, created_by, created_at, updated_at',
+      { count: 'exact' },
+    )
     .order('assembly_name', { ascending: true });
 
   if (division_id) query = query.eq('division_id', division_id);
@@ -61,6 +68,9 @@ export async function POST(req: NextRequest) {
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   let body: unknown;
   try {

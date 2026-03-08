@@ -3,6 +3,7 @@ import { createUserClient } from '@/lib/supabase/server';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { NextRequest, NextResponse } from 'next/server';
 import { expenseReceiptCreateSchema } from '@/lib/validators/time-expense';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -10,6 +11,8 @@ export async function GET(req: NextRequest, context: RouteContext) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
   const { id } = await context.params;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const supabase = await createUserClient();
@@ -30,6 +33,8 @@ export async function POST(req: NextRequest, context: RouteContext) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
   const { id } = await context.params;
 
   let body: unknown;

@@ -3,6 +3,7 @@ import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from 'next/server';
 import { dispatchNotification } from '@/lib/notifications/dispatcher';
 import type { NotificationEvent } from '@/lib/notifications/dispatcher';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 /**
  * POST /api/notifications/dispatch
@@ -18,6 +19,9 @@ export async function POST(req: NextRequest) {
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   let body: unknown;
   try {

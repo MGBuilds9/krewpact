@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 /**
  * GET /api/portal/projects
@@ -8,10 +9,12 @@ import { NextRequest, NextResponse } from 'next/server';
  * Gate: user must have a clerk_user_id matching a portal_accounts row
  * with at least one portal_permissions entry.
  */
-export async function GET(_req: NextRequest) {
+export async function GET(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
   const supabase = await createUserClient();
 
   // 1. Resolve the portal_account for this Clerk user

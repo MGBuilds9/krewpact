@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { estimateTemplateUpdateSchema } from '@/lib/validators/estimating';
 import { NextRequest, NextResponse } from 'next/server';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth();
@@ -9,11 +10,16 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
+
   const { id } = await params;
   const supabase = await createUserClient();
   const { data, error } = await supabase
     .from('estimate_templates')
-    .select('id, template_name, project_type, division_id, is_default, payload, created_by, created_at, updated_at')
+    .select(
+      'id, template_name, project_type, division_id, is_default, payload, created_by, created_at, updated_at',
+    )
     .eq('id', id)
     .single();
 
@@ -32,6 +38,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   const { id } = await params;
 
@@ -70,6 +79,9 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   const { id } = await params;
   const supabase = await createUserClient();

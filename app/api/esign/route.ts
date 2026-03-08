@@ -5,6 +5,7 @@ import { esignEnvelopeCreateSchema } from '@/lib/validators/contracting';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 const querySchema = z.object({
   contract_id: z.string().uuid().optional(),
@@ -18,6 +19,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
+
   const params = Object.fromEntries(req.nextUrl.searchParams);
   const parsed = querySchema.safeParse(params);
   if (!parsed.success) {
@@ -30,7 +34,10 @@ export async function GET(req: NextRequest) {
   let query = supabase
     .from('esign_envelopes')
     /* excluded from list: payload */
-    .select('id, contract_id, provider, provider_envelope_id, status, signer_count, webhook_last_event_at, created_at, updated_at', { count: 'exact' })
+    .select(
+      'id, contract_id, provider, provider_envelope_id, status, signer_count, webhook_last_event_at, created_at, updated_at',
+      { count: 'exact' },
+    )
     .order('created_at', { ascending: false });
 
   if (contract_id) query = query.eq('contract_id', contract_id);
@@ -71,6 +78,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
+
   let body: unknown;
   try {
     body = await req.json();
@@ -110,10 +120,7 @@ export async function POST(req: NextRequest) {
 // Proposal-based e-sign flow
 // ============================================================
 
-async function handleProposalSend(
-  params: z.infer<typeof sendForSigningSchema>,
-  userId: string,
-) {
+async function handleProposalSend(params: z.infer<typeof sendForSigningSchema>, userId: string) {
   const supabase = await createUserClient();
 
   // 1. Look up the proposal
@@ -133,7 +140,9 @@ async function handleProposalSend(
   // 2. Get or create contract_terms for this proposal
   let { data: contract } = await supabase
     .from('contract_terms')
-    .select('id, proposal_id, contract_status, legal_text_version, terms_payload, signed_at, supersedes_contract_id, created_at, updated_at')
+    .select(
+      'id, proposal_id, contract_status, legal_text_version, terms_payload, signed_at, supersedes_contract_id, created_at, updated_at',
+    )
     .eq('proposal_id', params.proposal_id)
     .eq('contract_status', 'draft')
     .order('created_at', { ascending: false })
@@ -203,8 +212,7 @@ async function handleProposalSend(
     const { documentId } = await boldSign.createEnvelope({
       title: `Contract - ${proposalNumber} - ${accountName}`,
       message:
-        params.message ??
-        `Please review and sign the contract for proposal ${proposalNumber}.`,
+        params.message ?? `Please review and sign the contract for proposal ${proposalNumber}.`,
       signers,
       expiryDays: params.expiry_days ?? 30,
       enableSigningOrder: false,
@@ -234,10 +242,7 @@ async function handleProposalSend(
         error: envelopeError.message,
         documentId,
       });
-      return NextResponse.json(
-        { error: envelopeError.message },
-        { status: 500 },
-      );
+      return NextResponse.json({ error: envelopeError.message }, { status: 500 });
     }
 
     // 6. Update proposal status to 'sent'
@@ -271,9 +276,6 @@ async function handleProposalSend(
       error: err instanceof Error ? err.message : String(err),
       proposalId: params.proposal_id,
     });
-    return NextResponse.json(
-      { error: 'Failed to create e-sign envelope' },
-      { status: 502 },
-    );
+    return NextResponse.json({ error: 'Failed to create e-sign envelope' }, { status: 502 });
   }
 }

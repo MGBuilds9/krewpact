@@ -3,11 +3,14 @@ import { createUserClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { timesheetBatchCreateSchema } from '@/lib/validators/time-expense';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 export async function GET(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
   const status = req.nextUrl.searchParams.get('status');
   const divisionId = req.nextUrl.searchParams.get('division_id');
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
@@ -15,7 +18,10 @@ export async function GET(req: NextRequest) {
   const supabase = await createUserClient();
   let query = supabase
     .from('timesheet_batches')
-    .select('id, division_id, period_start, period_end, status, submitted_by, approved_by, exported_at, adp_export_reference, created_at, updated_at', { count: 'exact' })
+    .select(
+      'id, division_id, period_start, period_end, status, submitted_by, approved_by, exported_at, adp_export_reference, created_at, updated_at',
+      { count: 'exact' },
+    )
     .order('period_start', { ascending: false })
     .range(offset, offset + limit - 1);
 
@@ -32,6 +38,8 @@ export async function POST(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
   let body: unknown;
   try {
     body = await req.json();

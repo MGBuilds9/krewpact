@@ -3,6 +3,7 @@ import { createUserClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 const bidSchema = z.object({
   project_id: z.string().uuid(),
@@ -33,6 +34,8 @@ export async function GET(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
   const supabase = await createUserClient();
   const pa = await resolveTradePortalAccount(userId, supabase);
   if (!pa) return NextResponse.json({ error: 'Trade partner access only' }, { status: 403 });
@@ -40,9 +43,15 @@ export async function GET(req: NextRequest) {
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
 
   // Bids stored in proposals table with source_portal_id = portal account
-  const { data: bids, error, count } = await supabase
+  const {
+    data: bids,
+    error,
+    count,
+  } = await supabase
     .from('proposals')
-    .select('id, opportunity_id, status, total_amount, notes, created_at, updated_at', { count: 'exact' })
+    .select('id, opportunity_id, status, total_amount, notes, created_at, updated_at', {
+      count: 'exact',
+    })
     .contains('metadata', { source_portal_id: pa.id })
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
@@ -59,6 +68,8 @@ export async function POST(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
   let body: unknown;
   try {
     body = await req.json();

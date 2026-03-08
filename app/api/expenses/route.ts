@@ -3,6 +3,7 @@ import { createUserClient } from '@/lib/supabase/server';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 const querySchema = z.object({
   project_id: z.string().uuid().optional(),
@@ -28,6 +29,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
+
   const parsed = querySchema.safeParse(Object.fromEntries(req.nextUrl.searchParams));
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
@@ -39,7 +43,10 @@ export async function GET(req: NextRequest) {
   const supabase = await createUserClient();
   let query = supabase
     .from('expense_claims')
-    .select('id, user_id, project_id, division_id, amount, tax_amount, currency_code, category, description, expense_date, status, submitted_at, posted_at, erp_document_id, erp_document_type, created_at, updated_at, user:users(first_name, last_name, avatar_url), project:projects(project_name)', { count: 'exact' })
+    .select(
+      'id, user_id, project_id, division_id, amount, tax_amount, currency_code, category, description, expense_date, status, submitted_at, posted_at, erp_document_id, erp_document_type, created_at, updated_at, user:users(first_name, last_name, avatar_url), project:projects(project_name)',
+      { count: 'exact' },
+    )
     .order('expense_date', { ascending: false });
 
   if (project_id) query = query.eq('project_id', project_id);
@@ -60,6 +67,9 @@ export async function POST(req: NextRequest) {
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   let body: unknown;
   try {

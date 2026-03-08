@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 /**
  * GET /api/portal/projects/[id]/invoices
@@ -12,6 +13,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
   const { id: projectId } = await params;
   const supabase = await createUserClient();
 
@@ -45,7 +48,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
 
   // 3. Fetch job cost snapshots (invoice-level summaries)
-  const { data: snapshots, error, count } = await supabase
+  const {
+    data: snapshots,
+    error,
+    count,
+  } = await supabase
     .from('job_cost_snapshots')
     .select(
       'id, snapshot_date, period_label, labour_cost, material_cost, subcontract_cost, overhead_cost, total_cost, budget_total, variance, margin_pct, created_at',

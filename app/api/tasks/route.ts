@@ -3,6 +3,7 @@ import { createUserClient } from '@/lib/supabase/server';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 const getQuerySchema = z.object({
   project_id: z.string().uuid().optional(),
@@ -29,6 +30,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
+
   const parsed = getQuerySchema.safeParse(Object.fromEntries(req.nextUrl.searchParams));
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
@@ -38,7 +42,13 @@ export async function GET(req: NextRequest) {
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
 
   const supabase = await createUserClient();
-  let query = supabase.from('tasks').select('id, project_id, title, description, status, priority, assigned_user_id, created_by, milestone_id, due_at, start_at, completed_at, blocked_reason, created_at, updated_at' /* excluded from list: metadata */, { count: 'exact' }).order('created_at', { ascending: false });
+  let query = supabase
+    .from('tasks')
+    .select(
+      'id, project_id, title, description, status, priority, assigned_user_id, created_by, milestone_id, due_at, start_at, completed_at, blocked_reason, created_at, updated_at' /* excluded from list: metadata */,
+      { count: 'exact' },
+    )
+    .order('created_at', { ascending: false });
 
   if (project_id) query = query.eq('project_id', project_id);
   if (status) query = query.eq('status', status);
@@ -59,6 +69,9 @@ export async function POST(req: NextRequest) {
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   let body: unknown;
   try {

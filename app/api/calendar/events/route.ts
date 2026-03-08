@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getMicrosoftToken, graphFetch, buildGraphUrl } from '@/lib/microsoft/graph';
 import { calendarQuerySchema, createEventSchema } from '@/lib/validators/calendar';
 import type { GraphEvent, GraphListResponse, CreateEventPayload } from '@/lib/microsoft/types';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 const EVENT_SELECT = [
   'id',
@@ -23,6 +24,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   const params = Object.fromEntries(req.nextUrl.searchParams);
   const parsed = calendarQuerySchema.safeParse(params);
@@ -61,6 +65,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   let body: unknown;
   try {

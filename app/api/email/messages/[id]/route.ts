@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { getMicrosoftToken, graphFetch, buildGraphUrl } from '@/lib/microsoft/graph';
 import type { GraphMessage } from '@/lib/microsoft/types';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -10,6 +11,9 @@ export async function GET(req: NextRequest, context: RouteContext): Promise<Next
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   const { id } = await context.params;
   const mailbox = req.nextUrl.searchParams.get('mailbox') || undefined;

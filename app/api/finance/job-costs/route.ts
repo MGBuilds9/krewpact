@@ -4,6 +4,7 @@ import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { jobCostSnapshotSchema } from '@/lib/validators/finance';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 const querySchema = z.object({
   project_id: z.string().uuid().optional(),
@@ -19,6 +20,8 @@ export async function GET(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
   const params = Object.fromEntries(req.nextUrl.searchParams);
   const parsed = querySchema.safeParse(params);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
@@ -30,7 +33,10 @@ export async function GET(req: NextRequest) {
   let query = supabase
     .from('job_cost_snapshots')
     /* excluded from list: payload */
-    .select('id, project_id, snapshot_date, baseline_budget, revised_budget, committed_cost, actual_cost, forecast_cost, forecast_margin_pct, created_at', { count: 'exact' })
+    .select(
+      'id, project_id, snapshot_date, baseline_budget, revised_budget, committed_cost, actual_cost, forecast_cost, forecast_margin_pct, created_at',
+      { count: 'exact' },
+    )
     .order('snapshot_date', { ascending: false })
     .range(offset, offset + limit - 1);
 
@@ -46,6 +52,8 @@ export async function POST(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
   const body = await req.json();
   const parsed = createSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });

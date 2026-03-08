@@ -3,6 +3,7 @@ import { createUserClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { referenceDataValueSchema } from '@/lib/validators/governance';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 const querySchema = z.object({
   is_active: z.coerce.boolean().optional(),
@@ -14,6 +15,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ setI
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
   const { setId } = await params;
   const qp = Object.fromEntries(req.nextUrl.searchParams);
   const parsed = querySchema.safeParse(qp);
@@ -25,7 +28,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ setI
   let query = supabase
     .from('reference_data_values')
     /* excluded from list: metadata */
-    .select('id, data_set_id, value_key, value_name, sort_order, is_active, created_at, updated_at', { count: 'exact' })
+    .select(
+      'id, data_set_id, value_key, value_name, sort_order, is_active, created_at, updated_at',
+      { count: 'exact' },
+    )
     .eq('data_set_id', setId)
     .order('sort_order', { ascending: true })
     .range(offset, offset + limit - 1);
@@ -43,6 +49,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ set
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
   const { setId } = await params;
   let body: unknown;
   try {

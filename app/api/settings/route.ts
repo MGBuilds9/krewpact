@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 const updateSchema = z.object({
   first_name: z.string().min(1).max(100).optional(),
@@ -10,17 +11,22 @@ const updateSchema = z.object({
   notification_preferences: z.record(z.string(), z.boolean()).optional(),
 });
 
-export async function GET(_req: NextRequest) {
+export async function GET(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
+
   try {
     const supabase = await createUserClient();
     const { data, error } = await supabase
       .from('users')
-      .select('id, email, first_name, last_name, avatar_url, clerk_user_id, phone, locale, timezone, status, created_at, updated_at')
+      .select(
+        'id, email, first_name, last_name, avatar_url, clerk_user_id, phone, locale, timezone, status, created_at, updated_at',
+      )
       .eq('clerk_id', userId)
       .single();
 
@@ -40,6 +46,9 @@ export async function PATCH(req: NextRequest) {
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   let body: unknown;
   try {

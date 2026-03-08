@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { SyncService } from '@/lib/erp/sync-service';
 import { ErpClient } from '@/lib/erp/client';
 import { logger } from '@/lib/logger';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 const ENTITY_TYPES = [
   'account',
@@ -33,6 +34,9 @@ export async function POST(request: NextRequest) {
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const rl = await rateLimit(request, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   let body: unknown;
   try {
@@ -79,7 +83,11 @@ export async function POST(request: NextRequest) {
         break;
       case 'contract':
         // Contract maps to Sales Order via won deal flow
-        result = await service.syncWonDeal(entity_id, userId, new Date().toISOString().slice(0, 10));
+        result = await service.syncWonDeal(
+          entity_id,
+          userId,
+          new Date().toISOString().slice(0, 10),
+        );
         break;
       case 'project':
         result = await service.syncProject(entity_id, userId);

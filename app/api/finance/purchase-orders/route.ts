@@ -4,6 +4,7 @@ import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { poSnapshotSchema } from '@/lib/validators/finance';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 const querySchema = z.object({
   project_id: z.string().uuid().optional(),
@@ -20,6 +21,8 @@ export async function GET(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
   const params = Object.fromEntries(req.nextUrl.searchParams);
   const parsed = querySchema.safeParse(params);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
@@ -31,7 +34,10 @@ export async function GET(req: NextRequest) {
   let query = supabase
     .from('po_snapshots')
     /* excluded from list: snapshot_payload */
-    .select('id, project_id, po_number, supplier_name, po_date, status, subtotal_amount, tax_amount, total_amount, erp_docname, created_at, updated_at', { count: 'exact' })
+    .select(
+      'id, project_id, po_number, supplier_name, po_date, status, subtotal_amount, tax_amount, total_amount, erp_docname, created_at, updated_at',
+      { count: 'exact' },
+    )
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 
@@ -48,6 +54,8 @@ export async function POST(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
   const body = await req.json();
   const parsed = createSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });

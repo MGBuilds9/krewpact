@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { UNAUTHORIZED, errorResponse, notFound } from '@/lib/api/errors';
 import { DEMO_MODE } from '@/lib/demo-mode';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 // Hardcoded org data — used when the organizations table doesn't exist yet
 const SEED_ORGS: Record<string, object> = {
@@ -27,6 +28,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
     const { userId } = await auth();
     if (!userId) return errorResponse(UNAUTHORIZED);
   }
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m' });
+  if (!rl.success) return rateLimitResponse(rl);
 
   const { slug } = await params;
 

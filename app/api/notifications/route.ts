@@ -3,6 +3,7 @@ import { createUserClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 const querySchema = z.object({
   unread_only: z.enum(['true', 'false']).optional(),
@@ -13,6 +14,9 @@ export async function GET(req: NextRequest) {
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   const parsed = querySchema.safeParse(Object.fromEntries(req.nextUrl.searchParams));
   if (!parsed.success) {
@@ -26,7 +30,10 @@ export async function GET(req: NextRequest) {
   let query = supabase
     .from('notifications')
     /* excluded from list: payload */
-    .select('id, user_id, portal_account_id, channel, title, message, state, read_at, send_at, sent_at, created_at, updated_at', { count: 'exact' })
+    .select(
+      'id, user_id, portal_account_id, channel, title, message, state, read_at, send_at, sent_at, created_at, updated_at',
+      { count: 'exact' },
+    )
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 
@@ -47,6 +54,9 @@ export async function POST(req: NextRequest) {
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   let body: unknown;
   try {

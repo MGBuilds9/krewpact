@@ -270,13 +270,17 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 - Fixed NEXT_PUBLIC_DEMO_MODE blocker, set all Vercel env vars, added VERCEL_URL to authorizedParties. Live at krewpact.vercel.app + hub.mdmgroupinc.ca. 2780 tests.
 
-### Mar 8, 2026 — CRM Fully Functional (Data + Auth + Integrations)
+### Mar 8, 2026 — CRM Fully Functional (Schema Alignment + Auth + Data)
 
-- **Supabase env fix:** URL and anon key corrected to `owfjnfdqpzpvzvdobpxa` (was mismatched with `wmeaabrchkysogmeroye`).
-- **JWT template fix:** Code referenced `'comet'` but Clerk template is named `'supabase'` — fixed in `lib/supabase/server.ts`.
-- **Clerk metadata:** Set `publicMetadata` on both users (Michael=platform_admin, David=operations_manager) with `krewpact_user_id`, `division_ids`, `role_keys`.
-- **Data seeded:** 27 leads, 15 contacts, 15 accounts, 19 opportunities ($16.3M pipeline), 29 activities, 11 projects, 36 scoring rules, 7 email templates, 3 sequences.
-- **RLS verified:** Policies use `krewpact_divisions()` and `is_platform_admin()` from JWT claims — now working with correct metadata.
+- **Schema alignment:** Fixed 10+ API routes with wrong column names vs deployed Supabase schema. `scoring_rules`: `is_active`→`active`, `name`→`rule_name`, `score_impact`→`points`, removed phantom `division_id`/`priority`. `leads`: replaced 40+ non-existent columns in 6 routes (merge, convert, stage, score, cron) with actual schema + PostgREST aliases (`assigned_to:owner_id`). Fixed `outreach`→`outreach_log` table name.
+- **Type alignment:** Updated `ScoringRule` interface, `LeadData` interface, 6 test files to match actual DB schema.
+- **Auth fixes:** JWT template `'comet'`→`'supabase'` in `lib/supabase/server.ts`. Supabase URL/anon key corrected to `owfjnfdqpzpvzvdobpxa`. Clerk `publicMetadata` set on both users with `krewpact_user_id`, `division_ids`, `role_keys`.
+- **Syntax fixes:** Rate limit code inside function signatures in email tracking routes. Missing `req` param in 3 GET handlers (SLA overdue, notification prefs, user profile).
+- **Lint cleanup:** 204 warnings resolved (structured logging migration, unused vars). Notification triggers wired (contract_signed, daily_log_submitted).
+- **Project routes:** Added milestones + tasks CRUD with validators and 58 new tests.
+- **Data verified:** 27 leads, 15 accounts, 15 contacts, 19 opps, 36 scoring rules already seeded.
+- **Stashed:** 102 API routes with rate-limit additions ready for next session.
+- **Tests:** 2838/2838 passing (255 files). Build clean.
 
 - Mar 7: Collaboration readiness — CODEOWNERS, SECURITY.md, local-dev.md, runbook.md.
 - Mar 6: CRM FEATURE COMPLETE (7 sprints, +131 tests). 2780 tests.
