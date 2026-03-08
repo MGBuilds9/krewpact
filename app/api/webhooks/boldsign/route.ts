@@ -13,6 +13,7 @@
 
 import { createServiceClient } from '@/lib/supabase/server';
 import { BoldSignClient } from '@/lib/esign/boldsign-client';
+import { dispatchNotification } from '@/lib/notifications/dispatcher';
 import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from 'next/server';
 import { createHmac, timingSafeEqual } from 'crypto';
@@ -39,20 +40,13 @@ interface BoldSignWebhookEvent {
 // Signature verification
 // ============================================================
 
-function verifyBoldSignSignature(
-  payload: string,
-  signature: string,
-  secret: string,
-): boolean {
+function verifyBoldSignSignature(payload: string, signature: string, secret: string): boolean {
   if (!signature) return false;
   const hmac = createHmac('sha256', secret);
   hmac.update(payload);
   const expected = hmac.digest('hex');
   try {
-    return timingSafeEqual(
-      Buffer.from(expected, 'hex'),
-      Buffer.from(signature, 'hex'),
-    );
+    return timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(signature, 'hex'));
   } catch {
     return false;
   }
@@ -138,9 +132,7 @@ async function handleCompleted(
       docInsert.file_id = storagePath;
     }
 
-    const { error: docError } = await supabase
-      .from('esign_documents')
-      .insert(docInsert);
+    const { error: docError } = await supabase.from('esign_documents').insert(docInsert);
 
     if (docError) {
       logger.error('BoldSign webhook: failed to create esign_document', {
@@ -165,6 +157,62 @@ async function handleCompleted(
         error: contractError.message,
       });
     }
+
+    // Fire-and-forget: notify PM and accounting that contract was signed
+    try {
+      const { data: project } = await supabase
+        .from('projects')
+        .select('id, project_name, account_id')
+        .eq('contract_id', envelope.contract_id)
+        .single();
+
+      if (project) {
+        const [accountResult, membersResult] = await Promise.all([
+          project.account_id
+            ? supabase.from('accounts').select('account_name').eq('id', project.account_id).single()
+            : Promise.resolve({ data: null }),
+          supabase
+            .from('project_members')
+            .select('user_id, member_role')
+            .eq('project_id', project.id)
+            .in('member_role', ['project_manager', 'accounting']),
+        ]);
+
+        const memberUserIds = (membersResult.data ?? []).map((m) => m.user_id);
+
+        if (memberUserIds.length > 0) {
+          const { data: users } = await supabase
+            .from('users')
+            .select('email, first_name, last_name')
+            .in('id', memberUserIds);
+
+          const recipients = (users ?? []).map((u) => ({
+            email: u.email,
+            name: `${u.first_name} ${u.last_name}`.trim(),
+          }));
+
+          if (recipients.length > 0) {
+            dispatchNotification({
+              type: 'contract_signed',
+              recipients,
+              contract_id: envelope.contract_id,
+              project_name: project.project_name,
+              client_name: accountResult.data?.account_name ?? 'Client',
+              signed_at: new Date().toISOString(),
+            }).catch((err) =>
+              logger.error('Contract signed notification failed', {
+                error: err instanceof Error ? err.message : String(err),
+              }),
+            );
+          }
+        }
+      }
+    } catch (notifErr) {
+      logger.error('BoldSign webhook: notification lookup failed', {
+        documentId,
+        error: notifErr instanceof Error ? notifErr.message : String(notifErr),
+      });
+    }
   }
 
   logger.info('BoldSign webhook: envelope completed', {
@@ -179,9 +227,7 @@ async function handleDeclined(
   event: BoldSignWebhookEvent,
   supabase: ReturnType<typeof createServiceClient>,
 ): Promise<void> {
-  const declineReason = event.signerDetails?.find(
-    (s) => s.status === 'Declined',
-  )?.declineReason;
+  const declineReason = event.signerDetails?.find((s) => s.status === 'Declined')?.declineReason;
 
   const { error } = await supabase
     .from('esign_envelopes')
@@ -236,9 +282,7 @@ async function handleGenericEvent(
   event: BoldSignWebhookEvent,
   supabase: ReturnType<typeof createServiceClient>,
 ): Promise<void> {
-  const mappedStatus = event.status
-    ? BoldSignClient.mapEventStatus(event.status)
-    : undefined;
+  const mappedStatus = event.status ? BoldSignClient.mapEventStatus(event.status) : undefined;
 
   const updatePayload: Record<string, unknown> = {
     webhook_last_event_at: new Date().toISOString(),
@@ -280,10 +324,7 @@ export async function POST(req: NextRequest) {
   const webhookSecret = process.env.BOLDSIGN_WEBHOOK_SECRET;
   if (!webhookSecret) {
     logger.error('BOLDSIGN_WEBHOOK_SECRET is not set');
-    return NextResponse.json(
-      { error: 'Webhook secret not configured' },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
   }
 
   const rawBody = await req.text();

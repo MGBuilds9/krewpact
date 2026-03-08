@@ -15,6 +15,11 @@ vi.mock('@/lib/esign/boldsign-client', () => ({
   })),
 }));
 
+// Mock notification dispatcher
+vi.mock('@/lib/notifications/dispatcher', () => ({
+  dispatchNotification: vi.fn().mockResolvedValue(undefined),
+}));
+
 // Mock logger
 vi.mock('@/lib/logger', () => ({
   logger: {
@@ -44,23 +49,17 @@ function makeSignature(body: string, secret: string = WEBHOOK_SECRET): string {
   return hmac.digest('hex');
 }
 
-function makeWebhookRequest(
-  body: Record<string, unknown>,
-  secret?: string,
-): NextRequest {
+function makeWebhookRequest(body: Record<string, unknown>, secret?: string): NextRequest {
   const rawBody = JSON.stringify(body);
   const signature = makeSignature(rawBody, secret ?? WEBHOOK_SECRET);
-  return new NextRequest(
-    new URL('http://localhost/api/webhooks/boldsign'),
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-boldsign-signature': signature,
-      },
-      body: rawBody,
+  return new NextRequest(new URL('http://localhost/api/webhooks/boldsign'), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-boldsign-signature': signature,
     },
-  );
+    body: rawBody,
+  });
 }
 
 function makeMockSupabase() {
@@ -71,13 +70,12 @@ function makeMockSupabase() {
       data: { id: 'env-1', contract_id: 'contract-1' },
       error: null,
     }),
-    then: vi.fn((resolve: (v: unknown) => void) =>
-      resolve({ data: null, error: null }),
-    ),
+    then: vi.fn((resolve: (v: unknown) => void) => resolve({ data: null, error: null })),
   };
 
   const selectChain = {
     eq: vi.fn().mockReturnThis(),
+    in: vi.fn().mockReturnThis(),
     single: vi.fn().mockResolvedValue({
       data: { id: 'env-1', contract_id: 'contract-1' },
       error: null,
@@ -90,9 +88,7 @@ function makeMockSupabase() {
   const insertChain = {
     select: vi.fn().mockReturnThis(),
     single: vi.fn().mockResolvedValue({ data: { id: 'doc-1' }, error: null }),
-    then: vi.fn((resolve: (v: unknown) => void) =>
-      resolve({ data: null, error: null }),
-    ),
+    then: vi.fn((resolve: (v: unknown) => void) => resolve({ data: null, error: null })),
   };
 
   const client = {
@@ -162,14 +158,11 @@ describe('POST /api/webhooks/boldsign', () => {
 
   it('returns 401 when signature is missing', async () => {
     const body = JSON.stringify({ event: 'Completed', documentId: 'doc-1' });
-    const req = new NextRequest(
-      new URL('http://localhost/api/webhooks/boldsign'),
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body,
-      },
-    );
+    const req = new NextRequest(new URL('http://localhost/api/webhooks/boldsign'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+    });
 
     const res = await POST(req);
     expect(res.status).toBe(401);
@@ -182,17 +175,14 @@ describe('POST /api/webhooks/boldsign', () => {
     const rawBody = JSON.stringify(body);
     const wrongSig = makeSignature(rawBody, 'wrong-secret');
 
-    const req2 = new NextRequest(
-      new URL('http://localhost/api/webhooks/boldsign'),
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-boldsign-signature': wrongSig,
-        },
-        body: rawBody,
+    const req2 = new NextRequest(new URL('http://localhost/api/webhooks/boldsign'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-boldsign-signature': wrongSig,
       },
-    );
+      body: rawBody,
+    });
 
     const res = await POST(req2);
     expect(res.status).toBe(401);

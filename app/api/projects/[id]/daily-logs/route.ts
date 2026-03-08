@@ -1,6 +1,8 @@
 import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { dailyLogCreateSchema } from '@/lib/validators/projects';
+import { dispatchNotification } from '@/lib/notifications/dispatcher';
+import { logger } from '@/lib/logger';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
@@ -66,6 +68,44 @@ export async function POST(req: NextRequest, context: RouteContext) {
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  // Fire-and-forget: notify PM that a daily log was submitted
+  try {
+    const [projectResult, authorResult] = await Promise.all([
+      supabase.from('projects').select('project_name, created_by').eq('id', id).single(),
+      supabase.from('users').select('first_name, last_name').eq('clerk_user_id', userId).single(),
+    ]);
+
+    if (projectResult.data?.created_by) {
+      const { data: pmUser } = await supabase
+        .from('users')
+        .select('email, first_name, last_name')
+        .eq('id', projectResult.data.created_by)
+        .single();
+
+      if (pmUser) {
+        const authorName = authorResult.data
+          ? `${authorResult.data.first_name} ${authorResult.data.last_name}`.trim()
+          : 'A team member';
+
+        dispatchNotification({
+          type: 'daily_log_submitted',
+          pm_email: pmUser.email,
+          pm_name: `${pmUser.first_name} ${pmUser.last_name}`.trim(),
+          supervisor_name: authorName,
+          project_name: projectResult.data.project_name,
+          log_date: data.log_date,
+          log_id: data.id,
+        }).catch((err) =>
+          logger.error('Daily log notification failed', {
+            error: err instanceof Error ? err.message : String(err),
+          }),
+        );
+      }
+    }
+  } catch {
+    // Notification lookup failed — don't break the response
   }
 
   return NextResponse.json(data, { status: 201 });

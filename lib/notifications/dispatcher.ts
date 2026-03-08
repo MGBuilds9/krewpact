@@ -12,6 +12,7 @@
  */
 
 import { sendEmail } from '@/lib/email/resend';
+import { logger } from '@/lib/logger';
 
 // ---------------------------------------------------------------------------
 // Event types — discriminated union
@@ -88,11 +89,22 @@ export type NotificationEvent =
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.krewpact.com';
 
-function notificationHtml(heading: string, bodyLines: string[], ctaUrl?: string, ctaText?: string): string {
-  const bodyHtml = bodyLines.map((line) => `<p style="margin:0 0 12px 0;font-size:15px;color:#444;line-height:1.6;">${line}</p>`).join('\n');
-  const ctaHtml = ctaUrl && ctaText
-    ? `<p style="margin:24px 0 0 0;"><a href="${ctaUrl}" style="display:inline-block;padding:12px 24px;background-color:#1E3A5F;color:#fff;text-decoration:none;border-radius:4px;font-weight:600;font-size:14px;">${ctaText}</a></p>`
-    : '';
+function notificationHtml(
+  heading: string,
+  bodyLines: string[],
+  ctaUrl?: string,
+  ctaText?: string,
+): string {
+  const bodyHtml = bodyLines
+    .map(
+      (line) =>
+        `<p style="margin:0 0 12px 0;font-size:15px;color:#444;line-height:1.6;">${line}</p>`,
+    )
+    .join('\n');
+  const ctaHtml =
+    ctaUrl && ctaText
+      ? `<p style="margin:24px 0 0 0;"><a href="${ctaUrl}" style="display:inline-block;padding:12px 24px;background-color:#1E3A5F;color:#fff;text-decoration:none;border-radius:4px;font-weight:600;font-size:14px;">${ctaText}</a></p>`
+      : '';
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -129,37 +141,41 @@ interface EmailPayload {
 }
 
 function buildLeadAssigned(event: LeadAssignedEvent): EmailPayload[] {
-  return [{
-    to: event.assignee_email,
-    subject: `New lead assigned to you: ${event.lead_company}`,
-    html: notificationHtml(
-      'Lead Assigned to You',
-      [
-        `Hi ${event.assignee_name},`,
-        `<strong>${event.assigned_by_name}</strong> assigned the lead <strong>${event.lead_company}</strong> to you.`,
-        'Please review and follow up at your earliest convenience.',
-      ],
-      `${APP_URL}/crm/leads/${event.lead_id}`,
-      'View Lead',
-    ),
-  }];
+  return [
+    {
+      to: event.assignee_email,
+      subject: `New lead assigned to you: ${event.lead_company}`,
+      html: notificationHtml(
+        'Lead Assigned to You',
+        [
+          `Hi ${event.assignee_name},`,
+          `<strong>${event.assigned_by_name}</strong> assigned the lead <strong>${event.lead_company}</strong> to you.`,
+          'Please review and follow up at your earliest convenience.',
+        ],
+        `${APP_URL}/crm/leads/${event.lead_id}`,
+        'View Lead',
+      ),
+    },
+  ];
 }
 
 function buildEstimateApproved(event: EstimateApprovedEvent): EmailPayload[] {
-  return [{
-    to: event.owner_email,
-    subject: `Estimate ${event.estimate_number} approved`,
-    html: notificationHtml(
-      'Estimate Approved',
-      [
-        `Hi ${event.owner_name},`,
-        `Estimate <strong>${event.estimate_number}</strong> for <strong>${event.opportunity_name}</strong> has been approved by <strong>${event.approved_by_name}</strong>.`,
-        'You can now proceed with the proposal.',
-      ],
-      `${APP_URL}/estimates/${event.estimate_id}`,
-      'View Estimate',
-    ),
-  }];
+  return [
+    {
+      to: event.owner_email,
+      subject: `Estimate ${event.estimate_number} approved`,
+      html: notificationHtml(
+        'Estimate Approved',
+        [
+          `Hi ${event.owner_name},`,
+          `Estimate <strong>${event.estimate_number}</strong> for <strong>${event.opportunity_name}</strong> has been approved by <strong>${event.approved_by_name}</strong>.`,
+          'You can now proceed with the proposal.',
+        ],
+        `${APP_URL}/estimates/${event.estimate_id}`,
+        'View Estimate',
+      ),
+    },
+  ];
 }
 
 function buildContractSigned(event: ContractSignedEvent): EmailPayload[] {
@@ -197,41 +213,46 @@ function buildTaskOverdue(event: TaskOverdueEvent): EmailPayload[] {
 }
 
 function buildDailyLogSubmitted(event: DailyLogSubmittedEvent): EmailPayload[] {
-  return [{
-    to: event.pm_email,
-    subject: `Daily log submitted: ${event.project_name} (${event.log_date})`,
-    html: notificationHtml(
-      'Daily Log Submitted',
-      [
-        `Hi ${event.pm_name},`,
-        `<strong>${event.supervisor_name}</strong> submitted a daily log for <strong>${event.project_name}</strong> on ${event.log_date}.`,
-        'Review the log for any issues or updates.',
-      ],
-      `${APP_URL}/projects/daily-logs/${event.log_id}`,
-      'View Daily Log',
-    ),
-  }];
+  return [
+    {
+      to: event.pm_email,
+      subject: `Daily log submitted: ${event.project_name} (${event.log_date})`,
+      html: notificationHtml(
+        'Daily Log Submitted',
+        [
+          `Hi ${event.pm_name},`,
+          `<strong>${event.supervisor_name}</strong> submitted a daily log for <strong>${event.project_name}</strong> on ${event.log_date}.`,
+          'Review the log for any issues or updates.',
+        ],
+        `${APP_URL}/projects/daily-logs/${event.log_id}`,
+        'View Daily Log',
+      ),
+    },
+  ];
 }
 
 function buildPortalMessageReceived(event: PortalMessageReceivedEvent): EmailPayload[] {
-  const preview = event.message_preview.length > 120
-    ? event.message_preview.slice(0, 120) + '...'
-    : event.message_preview;
+  const preview =
+    event.message_preview.length > 120
+      ? event.message_preview.slice(0, 120) + '...'
+      : event.message_preview;
 
-  return [{
-    to: event.recipient_email,
-    subject: `New message from ${event.sender_name} (${event.sender_company})`,
-    html: notificationHtml(
-      'New Portal Message',
-      [
-        `Hi ${event.recipient_name},`,
-        `<strong>${event.sender_name}</strong> from <strong>${event.sender_company}</strong> sent you a message:`,
-        `<blockquote style="margin:12px 0;padding:12px 16px;background:#F5F5F5;border-left:4px solid #1E3A5F;border-radius:2px;font-style:italic;color:#555;">${preview}</blockquote>`,
-      ],
-      `${APP_URL}/portal/messages/${event.thread_id}`,
-      'View Message',
-    ),
-  }];
+  return [
+    {
+      to: event.recipient_email,
+      subject: `New message from ${event.sender_name} (${event.sender_company})`,
+      html: notificationHtml(
+        'New Portal Message',
+        [
+          `Hi ${event.recipient_name},`,
+          `<strong>${event.sender_name}</strong> from <strong>${event.sender_company}</strong> sent you a message:`,
+          `<blockquote style="margin:12px 0;padding:12px 16px;background:#F5F5F5;border-left:4px solid #1E3A5F;border-radius:2px;font-style:italic;color:#555;">${preview}</blockquote>`,
+        ],
+        `${APP_URL}/portal/messages/${event.thread_id}`,
+        'View Message',
+      ),
+    },
+  ];
 }
 
 // ---------------------------------------------------------------------------
@@ -254,7 +275,9 @@ export function buildNotificationEmails(event: NotificationEvent): EmailPayload[
       return buildPortalMessageReceived(event);
     default: {
       const _exhaustive: never = event;
-      throw new Error(`Unknown notification event type: ${(_exhaustive as NotificationEvent).type}`);
+      throw new Error(
+        `Unknown notification event type: ${(_exhaustive as NotificationEvent).type}`,
+      );
     }
   }
 }
@@ -268,9 +291,12 @@ export async function dispatchNotification(event: NotificationEvent): Promise<vo
 
   for (const result of results) {
     if (result.status === 'rejected') {
-      console.error('Notification email send failed:', result.reason);
+      logger.error('Notification email send failed', {
+        error: result.reason instanceof Error ? result.reason : undefined,
+        reason: String(result.reason),
+      });
     } else if (!result.value.success) {
-      console.error('Notification email send error:', result.value.error);
+      logger.error('Notification email send error', { errorMessage: result.value.error });
     }
   }
 }
