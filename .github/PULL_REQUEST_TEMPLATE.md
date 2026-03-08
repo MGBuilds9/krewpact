@@ -26,7 +26,13 @@
 
 ## Test Plan
 
-- [ ] Unit tests added/updated
-- [ ] Existing tests still pass (`npm run test`)
+- [ ] Lint passes (`npm run lint`)
 - [ ] Typecheck passes (`npm run typecheck`)
+- [ ] Unit tests added/updated (`npm run test`)
+- [ ] E2E tests pass (`npm run test:e2e`)
 - [ ] Build succeeds (`npm run build`)
+
+## Docs / Config
+
+- [ ] Docs updated (if needed)
+- [ ] Env vars documented (if changed)

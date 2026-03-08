@@ -1,4 +1,7 @@
+# Default code owners
 * @mkgbuilds
+
+# App and core
 /app/ @mkgbuilds
 /components/ @mkgbuilds
 /lib/ @mkgbuilds

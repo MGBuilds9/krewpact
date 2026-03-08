@@ -55,3 +55,9 @@ KrewPact follows defense-in-depth principles:
 - **Compliance:** PIPEDA-aware, AODA/WCAG AA accessibility
 
 See [docs/architecture/KrewPact-Security-and-Compliance-Framework.md](docs/architecture/KrewPact-Security-and-Compliance-Framework.md) for the full security framework.
+
+## Notes
+- No secrets in git — use `.env.local`
+- RLS enforced in Supabase for all tenant data
+- Use Clerk JWT claims for org scoping
+- Webhooks must verify signatures

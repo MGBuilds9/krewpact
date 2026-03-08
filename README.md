@@ -19,6 +19,19 @@ npm run dev
 
 ---
 
+## Quickstart (Developers)
+
+```bash
+npm ci
+cp .env.example .env.local
+npm run dev
+```
+
+- Full setup: `docs/local-dev.md`
+- Env vars: `.env.example`
+
+---
+
 ## Planning Pack Overview
 
 This folder contains **15 core planning documents** + **1 reference document** forming the complete, production-ready planning set for KrewPact — a modern, ERP-integrated construction operations platform for MDM Group Inc.
