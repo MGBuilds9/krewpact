@@ -20,7 +20,9 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
   const { data, error } = await supabase
     .from('milestones')
-    .select('*')
+    .select(
+      'id, project_id, milestone_name, milestone_order, planned_date, actual_date, owner_user_id, status, created_at, updated_at',
+    )
     .eq('id', msId)
     .eq('project_id', id)
     .single();

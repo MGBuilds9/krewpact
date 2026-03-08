@@ -22,7 +22,10 @@ export async function GET(req: NextRequest, context: RouteContext) {
   const supabase = await createUserClient();
   const { data, error, count } = await supabase
     .from('milestones')
-    .select('*', { count: 'exact' })
+    .select(
+      'id, project_id, milestone_name, milestone_order, planned_date, actual_date, owner_user_id, status, created_at, updated_at',
+      { count: 'exact' },
+    )
     .eq('project_id', id)
     .order('milestone_order', { ascending: true })
     .range(offset, offset + limit - 1);

@@ -20,7 +20,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
   const { data, error } = await supabase
     .from('task_dependencies')
-    .select('*')
+    .select('id, task_id, depends_on_task_id, dependency_type, created_at')
     .eq('task_id', taskId);
 
   if (error) {
