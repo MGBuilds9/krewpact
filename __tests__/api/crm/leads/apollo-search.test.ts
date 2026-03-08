@@ -7,18 +7,25 @@ vi.mock('@clerk/nextjs/server', () => ({
 const mockSearchPeople = vi.fn();
 vi.mock('@/lib/integrations/apollo', () => ({
   searchPeople: (...args: unknown[]) => mockSearchPeople(...args),
-  mapApolloToLead: vi.fn((person: { id: string; first_name: string; last_name: string; organization?: { name?: string } }) => ({
-    company_name: person.organization?.name ?? `${person.first_name} ${person.last_name}`,
-    domain: null,
-    industry: null,
-    source_channel: 'apollo',
-    source_detail: person.id,
-    status: 'new',
-    project_type: null,
-    city: null,
-    province: 'Ontario',
-    estimated_value: null,
-  })),
+  mapApolloToLead: vi.fn(
+    (person: {
+      id: string;
+      first_name: string;
+      last_name: string;
+      organization?: { name?: string };
+    }) => ({
+      company_name: person.organization?.name ?? `${person.first_name} ${person.last_name}`,
+      domain: null,
+      industry: null,
+      source_channel: 'apollo',
+      source_detail: person.id,
+      status: 'new',
+      project_type: null,
+      city: null,
+      province: 'Ontario',
+      estimated_value: null,
+    }),
+  ),
   mapApolloToContact: vi.fn((_person: unknown, leadId: string) => ({
     lead_id: leadId,
     full_name: 'Test Person',
@@ -53,7 +60,15 @@ function makePerson(id: string) {
     name: 'Test Person',
     email: `${id}@test.com`,
     title: 'Owner',
-    organization: { id: `org-${id}`, name: `Company ${id}`, website_url: null, industry: 'healthcare', estimated_num_employees: 10, city: 'Toronto', state: 'Ontario' },
+    organization: {
+      id: `org-${id}`,
+      name: `Company ${id}`,
+      website_url: null,
+      industry: 'healthcare',
+      estimated_num_employees: 10,
+      city: 'Toronto',
+      state: 'Ontario',
+    },
     linkedin_url: null,
     phone_numbers: [],
   };
@@ -68,7 +83,9 @@ describe('POST /api/crm/leads/apollo-search', () => {
   it('returns 401 without auth', async () => {
     mockAuth.mockResolvedValue({ userId: null } as never);
 
-    const req = makeJsonRequest('/api/crm/leads/apollo-search', { profileId: 'pharmacy-owners-gta' });
+    const req = makeJsonRequest('/api/crm/leads/apollo-search', {
+      profileId: 'pharmacy-owners-gta',
+    });
     const res = await POST(req);
     expect(res.status).toBe(401);
   });
@@ -161,11 +178,38 @@ describe('POST /api/crm/leads/apollo-search', () => {
       // First from('leads') is dedup select, returns existing
       if (callCount === 1) {
         const chain: Record<string, unknown> = {};
-        const methods = ['select', 'in', 'eq', 'order', 'limit', 'insert', 'update', 'delete', 'or', 'is', 'ilike', 'not', 'contains', 'containedBy', 'filter', 'match', 'range', 'gt', 'gte', 'lt', 'lte', 'neq', 'upsert'];
+        const methods = [
+          'select',
+          'in',
+          'eq',
+          'order',
+          'limit',
+          'insert',
+          'update',
+          'delete',
+          'or',
+          'is',
+          'ilike',
+          'not',
+          'contains',
+          'containedBy',
+          'filter',
+          'match',
+          'range',
+          'gt',
+          'gte',
+          'lt',
+          'lte',
+          'neq',
+          'upsert',
+        ];
         for (const m of methods) chain[m] = vi.fn().mockReturnValue(chain);
-        chain.single = vi.fn().mockResolvedValue({ data: [{ external_id: 'existing-1' }], error: null });
+        chain.single = vi
+          .fn()
+          .mockResolvedValue({ data: [{ external_id: 'existing-1' }], error: null });
         chain.maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
-        chain.then = (resolve: (v: unknown) => void) => resolve({ data: [{ external_id: 'existing-1' }], error: null });
+        chain.then = (resolve: (v: unknown) => void) =>
+          resolve({ data: [{ external_id: 'existing-1' }], error: null });
         return chain;
       }
       return mockSupabaseClient({}).from('leads');
@@ -195,12 +239,12 @@ describe('GET /api/crm/leads/apollo-search', () => {
     mockAuth.mockResolvedValue({ userId: null } as never);
 
     const req = makeRequest('/api/crm/leads/apollo-search');
-    const res = await GET();
+    const res = await GET(req);
     expect(res.status).toBe(401);
   });
 
   it('returns active profiles', async () => {
-    const res = await GET();
+    const res = await GET(makeRequest('/api/crm/leads/apollo-search'));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.profiles).toBeDefined();

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 /**
  * Email click tracking redirect.
@@ -10,6 +11,8 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
+  const rl = await rateLimit(req, { limit: 30, window: '1 m' });
+  if (!rl.success) return rateLimitResponse(rl);
   const { id } = await params;
   const destinationUrl = req.nextUrl.searchParams.get('url');
 

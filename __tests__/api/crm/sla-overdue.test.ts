@@ -34,7 +34,7 @@ describe('GET /api/crm/sla/overdue', () => {
 
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
-    const res = await GET();
+    const res = await GET(new Request('http://localhost/api/crm/sla/overdue') as never);
     expect(res.status).toBe(401);
     const body = await res.json();
     expect(body.error).toBe('Unauthorized');
@@ -60,7 +60,7 @@ describe('GET /api/crm/sla/overdue', () => {
       }),
     );
 
-    const res = await GET();
+    const res = await GET(new Request('http://localhost/api/crm/sla/overdue') as never);
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.overdue).toHaveLength(0);
@@ -86,7 +86,7 @@ describe('GET /api/crm/sla/overdue', () => {
       }),
     );
 
-    const res = await GET();
+    const res = await GET(new Request('http://localhost/api/crm/sla/overdue') as never);
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.counts.leads).toBe(1);
@@ -113,7 +113,7 @@ describe('GET /api/crm/sla/overdue', () => {
       }),
     );
 
-    const res = await GET();
+    const res = await GET(new Request('http://localhost/api/crm/sla/overdue') as never);
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.counts.opportunities).toBe(1);
@@ -134,7 +134,7 @@ describe('GET /api/crm/sla/overdue', () => {
       }),
     );
 
-    const res = await GET();
+    const res = await GET(new Request('http://localhost/api/crm/sla/overdue') as never);
     expect(res.status).toBe(500);
     const body = await res.json();
     expect(body.error).toBe('DB connection failed');
@@ -157,7 +157,7 @@ describe('GET /api/crm/sla/overdue', () => {
       }),
     );
 
-    const res = await GET();
+    const res = await GET(new Request('http://localhost/api/crm/sla/overdue') as never);
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.counts.total).toBe(2);

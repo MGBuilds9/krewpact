@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 // 1x1 transparent GIF
 const TRACKING_PIXEL = Buffer.from(
@@ -16,6 +17,8 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
+  const rl = await rateLimit(_req, { limit: 30, window: '1 m' });
+  if (!rl.success) return rateLimitResponse(rl);
   const { id } = await params;
 
   // Fire-and-forget: update opened_at (don't block the pixel response)

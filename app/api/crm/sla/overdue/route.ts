@@ -1,13 +1,17 @@
 import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { LEAD_SLA_CONFIG, OPPORTUNITY_SLA_CONFIG, calculateSLAStatus } from '@/lib/crm/sla-config';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   const supabase = await createUserClient();
   const now = new Date();

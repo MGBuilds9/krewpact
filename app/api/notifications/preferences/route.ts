@@ -2,15 +2,21 @@ import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { notificationPreferenceUpdateSchema } from '@/lib/validators/org';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   const supabase = await createUserClient();
   const { data, error } = await supabase
     .from('notification_preferences')
-    .select('id, user_id, in_app_enabled, email_enabled, push_enabled, quiet_hours, created_at, updated_at')
+    .select(
+      'id, user_id, in_app_enabled, email_enabled, push_enabled, quiet_hours, created_at, updated_at',
+    )
     .eq('clerk_user_id', userId)
     .single();
 
@@ -30,6 +36,9 @@ export async function GET() {
 export async function PATCH(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   let body: unknown;
   try {
