@@ -7,6 +7,24 @@ updates:
     labels:
       - 'auto-merge'
     open-pull-requests-limit: 10
+    groups:
+      radix-ui:
+        patterns:
+          - '@radix-ui/*'
+      ai-sdk:
+        patterns:
+          - '@ai-sdk/*'
+          - 'ai'
+          - 'openai'
+      eslint:
+        patterns:
+          - 'eslint*'
+          - '@eslint/*'
+      testing:
+        patterns:
+          - 'vitest'
+          - '@vitest/*'
+          - '@testing-library/*'
 
   - package-ecosystem: 'github-actions'
     directory: '/'
