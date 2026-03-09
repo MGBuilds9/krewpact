@@ -4,6 +4,7 @@ import { opportunityStageTransitionSchema } from '@/lib/validators/crm';
 import { validateTransition, type OpportunityStage } from '@/lib/crm/opportunity-stages';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { logger } from '@/lib/logger';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -35,7 +36,9 @@ export async function POST(req: NextRequest, context: RouteContext) {
   // Fetch current opportunity to get current stage
   const { data: currentOpportunity, error: fetchError } = await supabase
     .from('opportunities')
-    .select('id, opportunity_name, stage, estimated_revenue, probability_pct, target_close_date, account_id, contact_id, lead_id, division_id, owner_user_id, notes, created_at, updated_at')
+    .select(
+      'id, opportunity_name, stage, estimated_revenue, probability_pct, target_close_date, account_id, contact_id, lead_id, division_id, owner_user_id, notes, created_at, updated_at',
+    )
     .eq('id', id)
     .single();
 
@@ -79,7 +82,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
       to_stage: newStage,
     });
   } catch {
-    console.error('Failed to record opportunity stage history');
+    logger.error('Failed to record opportunity stage history', { opportunityId: id });
   }
 
   return NextResponse.json(updated);

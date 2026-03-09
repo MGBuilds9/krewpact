@@ -4,6 +4,7 @@ import { getOrgIdFromAuth } from '@/lib/api/org';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { logger } from '@/lib/logger';
 
 const stageSchema = z.object({
   stage: z.string().min(1),
@@ -58,7 +59,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const slaConfig = data?.workflow?.sla_config ?? DEFAULT_SLA_SETTINGS;
     return NextResponse.json(slaConfig);
   } catch (err: unknown) {
-    console.error('Failed to fetch SLA settings:', err);
+    logger.error('Failed to fetch SLA settings', { error: err });
     return NextResponse.json({ error: 'Failed to fetch SLA settings' }, { status: 500 });
   }
 }
@@ -97,10 +98,7 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
 
     const { data, error } = await supabase
       .from('org_settings')
-      .upsert(
-        { org_id: orgId, workflow: updatedWorkflow },
-        { onConflict: 'org_id' },
-      )
+      .upsert({ org_id: orgId, workflow: updatedWorkflow }, { onConflict: 'org_id' })
       .select('workflow')
       .single();
 
@@ -110,7 +108,7 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
 
     return NextResponse.json(data?.workflow?.sla_config ?? parsed.data);
   } catch (err: unknown) {
-    console.error('Failed to update SLA settings:', err);
+    logger.error('Failed to update SLA settings', { error: err });
     return NextResponse.json({ error: 'Failed to update SLA settings' }, { status: 500 });
   }
 }

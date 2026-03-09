@@ -370,6 +370,43 @@ export function mockPurchaseInvoiceResponse(docname: string): {
   };
 }
 
+/**
+ * Generate a mock ERPNext Payment Entry response (inbound read).
+ */
+export function mockPaymentEntryResponse(docname: string): {
+  doctype: string;
+  name: string;
+  data: Record<string, unknown>;
+} {
+  return {
+    doctype: 'Payment Entry',
+    name: docname,
+    data: {
+      name: docname,
+      doctype: 'Payment Entry',
+      payment_type: 'Receive',
+      party_type: 'Customer',
+      party: 'MOCK-CUSTOMER',
+      posting_date: new Date().toISOString().split('T')[0],
+      paid_amount: 5000,
+      received_amount: 5000,
+      currency: 'CAD',
+      status: 'Submitted',
+      references: [
+        {
+          reference_doctype: 'Sales Invoice',
+          reference_name: 'SINV-001',
+          total_amount: 10000,
+          allocated_amount: 5000,
+        },
+      ],
+      creation: new Date().toISOString(),
+      modified: new Date().toISOString(),
+      docstatus: 1,
+    },
+  };
+}
+
 export function mockQuotationResponse(
   estimate: EstimateData,
   lines: EstimateLineData[],

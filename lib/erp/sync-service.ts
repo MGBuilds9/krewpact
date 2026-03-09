@@ -26,6 +26,7 @@ import {
   mockTimesheetResponse,
   mockSalesInvoiceResponse,
   mockPurchaseInvoiceResponse,
+  mockPaymentEntryResponse,
 } from './mock-responses';
 import { mapOpportunityToErp } from './opportunity-mapper';
 import { mapWonDealToSalesOrder } from './sales-order-mapper';
@@ -38,6 +39,8 @@ import { mapTimesheetToErp } from './timesheet-mapper';
 import { toErpCustomer } from './customer-mapper';
 import { toErpQuotation } from './quotation-mapper';
 import { fromErpSalesInvoice } from './sales-invoice-mapper';
+import { fromErpPurchaseInvoice } from './purchase-invoice-mapper';
+import { fromErpPaymentEntry } from './payment-entry-mapper';
 
 /** Check if we're running in mock mode (no real ERPNext) */
 export function isMockMode(): boolean {
@@ -935,12 +938,13 @@ export class SyncService {
         invoiceData = await client.get<Record<string, unknown>>('Purchase Invoice', erpDocname);
       }
 
-      // Store snapshot in po_snapshots
+      // Transform via mapper and store snapshot in po_snapshots
+      const mapped = fromErpPurchaseInvoice(invoiceData);
       await supabase.from('po_snapshots').upsert({
         erp_docname: erpDocname,
         doctype: 'Purchase Invoice',
-        snapshot: invoiceData,
-        synced_at: new Date().toISOString(),
+        snapshot: { ...mapped, raw: invoiceData },
+        synced_at: mapped.synced_at as string,
       });
 
       await this.logEvent(supabase, job.id, 'sync_completed', {
@@ -960,6 +964,55 @@ export class SyncService {
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       return this.failJob(supabase, job.id, 'purchase_invoice', erpDocname, message);
+    }
+  }
+
+  /**
+   * Read a Payment Entry from ERPNext and store in erp_sync_events.
+   * Inbound read-only — no data written to ERPNext.
+   */
+  async readPaymentEntry(erpDocname: string): Promise<SyncResult> {
+    const supabase = await createUserClient();
+    const job = await this.createSyncJob(supabase, 'payment_entry', erpDocname);
+
+    try {
+      let paymentData: Record<string, unknown>;
+
+      if (isMockMode()) {
+        const mockResp = mockPaymentEntryResponse(erpDocname);
+        paymentData = mockResp.data;
+      } else {
+        const { ErpClient } = await import('./client');
+        const client = new ErpClient();
+        paymentData = await client.get<Record<string, unknown>>('Payment Entry', erpDocname);
+      }
+
+      const mapped = fromErpPaymentEntry(paymentData);
+
+      // Store in sync events for downstream consumers
+      await supabase.from('erp_sync_events').insert({
+        job_id: job.id,
+        event_type: 'payment_entry_read',
+        event_payload: mapped,
+      });
+
+      await this.logEvent(supabase, job.id, 'sync_completed', {
+        entity_type: 'payment_entry',
+        erp_docname: erpDocname,
+      });
+      await this.updateJobStatus(supabase, job.id, 'succeeded');
+
+      return {
+        id: job.id,
+        status: 'succeeded',
+        entity_type: 'payment_entry',
+        entity_id: erpDocname,
+        erp_docname: erpDocname,
+        attempt_count: 1,
+      };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return this.failJob(supabase, job.id, 'payment_entry', erpDocname, message);
     }
   }
 

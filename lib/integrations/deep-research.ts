@@ -1,5 +1,6 @@
 import { generateText } from 'ai';
 import { google } from '@ai-sdk/google';
+import { logger } from '@/lib/logger';
 
 interface DeepResearchResult {
   research_report: string;
@@ -51,7 +52,7 @@ export async function deepResearchLead(
           }
         }
       } catch (err) {
-        console.error('Tavily Extract error:', err);
+        logger.error('Tavily Extract error', { error: err });
       }
     }
   }

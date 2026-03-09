@@ -4,6 +4,7 @@ import { getOrgIdFromAuth } from '@/lib/api/org';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { logger } from '@/lib/logger';
 
 const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/;
 
@@ -49,7 +50,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const sequenceDefaults = data?.workflow?.sequence_defaults ?? DEFAULT_SEQUENCE_DEFAULTS;
     return NextResponse.json(sequenceDefaults);
   } catch (err: unknown) {
-    console.error('Failed to fetch sequence defaults:', err);
+    logger.error('Failed to fetch sequence defaults', { error: err });
     return NextResponse.json({ error: 'Failed to fetch sequence defaults' }, { status: 500 });
   }
 }
@@ -88,10 +89,7 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
 
     const { data, error } = await supabase
       .from('org_settings')
-      .upsert(
-        { org_id: orgId, workflow: updatedWorkflow },
-        { onConflict: 'org_id' },
-      )
+      .upsert({ org_id: orgId, workflow: updatedWorkflow }, { onConflict: 'org_id' })
       .select('workflow')
       .single();
 
@@ -101,7 +99,7 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
 
     return NextResponse.json(data?.workflow?.sequence_defaults ?? parsed.data);
   } catch (err: unknown) {
-    console.error('Failed to update sequence defaults:', err);
+    logger.error('Failed to update sequence defaults', { error: err });
     return NextResponse.json({ error: 'Failed to update sequence defaults' }, { status: 500 });
   }
 }

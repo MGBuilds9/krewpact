@@ -4,6 +4,7 @@ import { leadStageTransitionSchema } from '@/lib/validators/crm';
 import { validateTransition, type LeadStage } from '@/lib/crm/lead-stages';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { logger } from '@/lib/logger';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -83,7 +84,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
     });
   } catch {
     // History write failure should not block the stage transition
-    console.error('Failed to record lead stage history');
+    logger.error('Failed to record lead stage history', { leadId: id });
   }
 
   return NextResponse.json(updated);

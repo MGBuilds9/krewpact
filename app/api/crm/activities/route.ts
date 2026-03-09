@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
+import { logger } from '@/lib/logger';
 
 const activityTypes = ['call', 'email', 'meeting', 'note', 'task'] as const;
 
@@ -33,21 +34,17 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const {
-    opportunity_id,
-    lead_id,
-    account_id,
-    contact_id,
-    activity_type,
-    sort_by,
-    sort_dir,
-  } = parsed.data;
+  const { opportunity_id, lead_id, account_id, contact_id, activity_type, sort_by, sort_dir } =
+    parsed.data;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const supabase = await createUserClient();
 
   let query = supabase
     .from('activities')
-    .select('id, activity_type, title, details, due_at, completed_at, lead_id, contact_id, account_id, opportunity_id, owner_user_id, created_at, updated_at', { count: 'exact' })
+    .select(
+      'id, activity_type, title, details, due_at, completed_at, lead_id, contact_id, account_id, opportunity_id, owner_user_id, created_at, updated_at',
+      { count: 'exact' },
+    )
     .order(sort_by ?? 'created_at', { ascending: sort_dir === 'asc' });
 
   if (opportunity_id) {
@@ -138,7 +135,7 @@ export async function POST(req: NextRequest) {
       });
     } catch (e) {
       // Follow-up creation failure should not block activity creation
-      console.error('Auto follow-up creation failed:', e);
+      logger.error('Auto follow-up creation failed', { error: e });
     }
   }
 

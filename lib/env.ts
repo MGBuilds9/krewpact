@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 // ---------------------------------------------------------------------------
 // Schema: Critical vars (required in production) vs optional (graceful degradation)
@@ -70,7 +71,7 @@ function warnMissingOptional(env: Record<string, string | undefined>): void {
   }
 
   if (warnings.length > 0 && process.env.NODE_ENV === 'production') {
-    console.warn(`[env] Production warnings:\n${warnings.map((w) => `  ⚠ ${w}`).join('\n')}`);
+    logger.warn('[env] Production warnings', { warnings });
   }
 }
 
@@ -86,7 +87,7 @@ function validateEnv(): Env {
       .map((issue) => `  ${issue.path.join('.')}: ${issue.message}`)
       .join('\n');
 
-    console.error(`[env] Validation failed:\n${formatted}`);
+    logger.error('[env] Validation failed', { formatted });
 
     // Both dev and production throw on critical var failures.
     // The schema marks truly optional vars as .optional() so this only fires

@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { summarizeEnrichment } from '@/lib/integrations/enrichment-summarizer';
 import { verifyCronAuth } from '@/lib/api/cron-auth';
+import { logger } from '@/lib/logger';
 
 const BATCH_SIZE = 15; // Process 15 per call (Gemini rate limit)
 const FETCH_LIMIT = 200; // Fetch enough to find all pending leads
-
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const { authorized } = await verifyCronAuth(req);
@@ -69,14 +69,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
       if (updateError) {
         errors++;
-        console.error(`Summary update error for ${lead.id}:`, updateError.message);
+        logger.error(`Summary update error for ${lead.id}`, { error: updateError.message });
         continue;
       }
 
       processed++;
     } catch (err) {
       errors++;
-      console.error(`Summarization error for ${lead.id}:`, err);
+      logger.error(`Summarization error for ${lead.id}`, { error: err });
     }
   }
 

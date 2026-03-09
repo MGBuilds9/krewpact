@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { deepResearchLead } from '@/lib/integrations/deep-research';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { logger } from '@/lib/logger';
 
 export async function POST(
   _req: NextRequest,
@@ -60,7 +61,7 @@ export async function POST(
 
     return NextResponse.json({ success: true, research: result });
   } catch (err) {
-    console.error(`Deep research error for ${id}:`, err);
+    logger.error(`Deep research error for ${id}`, { error: err });
     return NextResponse.json({ error: 'Deep research failed' }, { status: 500 });
   }
 }

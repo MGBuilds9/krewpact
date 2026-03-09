@@ -14,6 +14,7 @@ import {
   errorResponse,
 } from '@/lib/api/errors';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { logger } from '@/lib/logger';
 
 const leadStatuses = [
   'new',
@@ -121,7 +122,7 @@ export async function POST(req: NextRequest) {
       }
     } catch (e) {
       // Assignment failure should not block lead creation
-      console.error('Auto-assign on create failed:', e);
+      logger.error('Auto-assign on create failed', { error: e });
     }
   }
 
@@ -158,7 +159,7 @@ export async function POST(req: NextRequest) {
     }
   } catch (e) {
     // Scoring failure should not block lead creation
-    console.error('Auto-score on create failed:', e);
+    logger.error('Auto-score on create failed', { error: e });
   }
 
   return NextResponse.json(data, { status: 201 });

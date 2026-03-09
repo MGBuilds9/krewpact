@@ -14,6 +14,7 @@ import {
   errorResponse,
 } from '@/lib/api/errors';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { logger } from '@/lib/logger';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -78,7 +79,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       lead_company: data.company_name ?? 'Unknown',
       lead_id: id,
       assigned_by_name: 'A team member',
-    }).catch((err) => console.error('Lead assignment notification failed:', err));
+    }).catch((err) => logger.error('Lead assignment notification failed', { error: err }));
   }
 
   // Auto-score on update (non-blocking)
@@ -107,7 +108,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     }
   } catch (e) {
     // Scoring failure should not block lead update
-    console.error('Auto-score on update failed:', e);
+    logger.error('Auto-score on update failed', { error: e });
   }
 
   return NextResponse.json(data);
