@@ -39,8 +39,8 @@
         "All existing tests still pass"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Fixed PATCH route schema mismatch (read→state). 9 tests."
     },
     {
       "id": "US-003",
