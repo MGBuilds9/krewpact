@@ -76,8 +76,8 @@
         "All existing tests still pass"
       ],
       "priority": 4,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "8 tests. ExportPdfButton with loading/error states, toast on failure, blob download with correct filename."
     },
     {
       "id": "US-005",

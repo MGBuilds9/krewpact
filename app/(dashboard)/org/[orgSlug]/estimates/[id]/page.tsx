@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ArrowLeft, Send, Save, CheckCircle, XCircle, Plus, FileText } from 'lucide-react';
+import { ExportPdfButton } from '@/components/Estimates/ExportPdfButton';
+import type { EstimatePdfData } from '@/lib/pdf/types';
 import {
   useEstimate,
   useEstimateLines,
@@ -30,14 +32,14 @@ const VersionHistory = dynamic(
   () => import('@/components/Estimates/VersionHistory').then((m) => m.VersionHistory),
   { loading: () => <Skeleton className="h-32 w-full rounded-xl" /> },
 );
-const AllowanceForm = dynamic(
-  () => import('@/components/Estimates/AllowanceForm').then((m) => m.AllowanceForm),
+const AllowanceForm = dynamic(() =>
+  import('@/components/Estimates/AllowanceForm').then((m) => m.AllowanceForm),
 );
-const AlternateForm = dynamic(
-  () => import('@/components/Estimates/AlternateForm').then((m) => m.AlternateForm),
+const AlternateForm = dynamic(() =>
+  import('@/components/Estimates/AlternateForm').then((m) => m.AlternateForm),
 );
-const ProposalGenerationForm = dynamic(
-  () => import('@/components/Estimates/ProposalGenerationForm').then((m) => m.ProposalGenerationForm),
+const ProposalGenerationForm = dynamic(() =>
+  import('@/components/Estimates/ProposalGenerationForm').then((m) => m.ProposalGenerationForm),
 );
 
 const STATUS_BADGE_COLORS: Record<string, string> = {
@@ -195,6 +197,26 @@ export default function EstimateBuilderPage() {
             <Save className="h-4 w-4 mr-1" />
             Save Version
           </Button>
+          <ExportPdfButton
+            estimateNumber={estimate.estimate_number}
+            estimateData={
+              {
+                companyName: 'MDM Group Inc.',
+                estimateNumber: estimate.estimate_number,
+                date: new Date().toISOString().split('T')[0],
+                lineItems: (lines ?? []).map((l) => ({
+                  description: l.description,
+                  quantity: l.quantity,
+                  unit: l.unit || undefined,
+                  unitCost: l.unit_cost,
+                  markup: l.markup_pct || undefined,
+                })),
+                subtotal: estimate.subtotal_amount,
+                taxAmount: estimate.tax_amount,
+                total: estimate.total_amount,
+              } satisfies EstimatePdfData
+            }
+          />
           <Button size="sm" variant="outline" onClick={() => setProposalDialogOpen(true)}>
             <FileText className="h-4 w-4 mr-1" />
             Generate Proposal

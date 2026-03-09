@@ -34,6 +34,8 @@ Branch: ralph/enterprise-phase2
 - **date-fns available:** `formatDistanceToNow` from `date-fns` for relative timestamps.
 - **@react-pdf/renderer:** Use `renderToBuffer()` server-side. Templates use `React.createElement` (no JSX in .ts files). Pass `new Uint8Array(buffer)` to `NextResponse` (Buffer type incompatible with BodyInit).
 - **PDF generator pattern:** `lib/pdf/generator.ts` → `generatePdf(template, data)`. Templates in `lib/pdf/templates/`. Types in `lib/pdf/types.ts`.
+- **Toast system:** `hooks/use-toast.ts` exports `toast()` and `useToast()`. Use `variant: 'destructive'` for errors. Also `components/ui/toast.tsx` exists.
+- **Blob download pattern:** Use `fetch → blob() → URL.createObjectURL → anchor.click → revokeObjectURL`. Don't spy on `document.createElement` globally in tests — intercept only the 'a' tag to avoid breaking React rendering.
 
 ---
 
@@ -83,5 +85,19 @@ Branch: ralph/enterprise-phase2
   - Use `React.createElement` instead of JSX for server-side PDF rendering in .ts files
   - PDF type must be `Record<string, unknown>` at API boundary, cast inside generator
   - `eslint-disable @typescript-eslint/no-explicit-any` needed for `React.ReactElement<any>` with @react-pdf Document type
+
+---
+
+## 2026-03-09 - US-004: Estimate PDF export button on estimate detail page
+- **Implemented:** ExportPdfButton component with loading/error states, wired into estimate detail page header
+- **Features:** Calls /api/pdf/generate with estimate data, downloads as `Estimate-{number}-{date}.pdf`, loading spinner, error toast on failure
+- **Files changed:**
+  - `components/Estimates/ExportPdfButton.tsx` (new)
+  - `__tests__/components/Estimates/ExportPdfButton.test.tsx` (new, 8 tests)
+  - `app/(dashboard)/org/[orgSlug]/estimates/[id]/page.tsx` (added ExportPdfButton to header actions)
+- **Tests:** 8 new, 3,128 total (279 files)
+- **Learnings for future iterations:**
+  - Never spy on `document.createElement` globally — it breaks React rendering in jsdom. Use a conditional mock that only intercepts the specific tag you need (e.g., 'a') and delegates to the real implementation for everything else.
+  - `satisfies` keyword works well for inline type checking of props objects without losing inference
 
 ---
