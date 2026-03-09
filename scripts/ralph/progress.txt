@@ -32,6 +32,8 @@ Branch: ralph/enterprise-phase2
 - **PATCH /api/notifications/[id] schema bug:** The route validated `{ read: boolean }` but the hook sends `{ state: 'read' }`. Always check that Zod schema matches the client-side mutation payload.
 - **Popover component:** Use `@/components/ui/popover` (Popover, PopoverContent, PopoverTrigger) for dropdown panels.
 - **date-fns available:** `formatDistanceToNow` from `date-fns` for relative timestamps.
+- **@react-pdf/renderer:** Use `renderToBuffer()` server-side. Templates use `React.createElement` (no JSX in .ts files). Pass `new Uint8Array(buffer)` to `NextResponse` (Buffer type incompatible with BodyInit).
+- **PDF generator pattern:** `lib/pdf/generator.ts` → `generatePdf(template, data)`. Templates in `lib/pdf/templates/`. Types in `lib/pdf/types.ts`.
 
 ---
 
@@ -62,5 +64,24 @@ Branch: ralph/enterprise-phase2
   - Always verify Zod schema matches the client-side hook payload before assuming API works
   - Popover from shadcn/ui is the right choice for dropdown panels (not DropdownMenu for complex content)
   - `formatDistanceToNow` from date-fns handles relative timestamps elegantly
+
+---
+
+## 2026-03-09 - US-003: PDF generation service with @react-pdf/renderer
+- **Implemented:** PDF generation service with `generatePdf(template, data)`, EstimatePDF and ProjectStatusPDF templates, POST `/api/pdf/generate` API route (30 req/min rate limit)
+- **Files changed:**
+  - `lib/pdf/generator.ts` (new — core generatePdf function)
+  - `lib/pdf/types.ts` (new — EstimatePdfData, ProjectStatusPdfData)
+  - `lib/pdf/templates/EstimatePdf.tsx` (new — estimate PDF template)
+  - `lib/pdf/templates/ProjectStatusPdf.tsx` (new — project status PDF template)
+  - `app/api/pdf/generate/route.ts` (new — POST route)
+  - `__tests__/lib/pdf/generator.test.ts` (new, 3 tests)
+  - `__tests__/api/pdf/generate.test.ts` (new, 6 tests)
+- **Tests:** 9 new, 3,120 total (278 files)
+- **Learnings for future iterations:**
+  - `renderToBuffer` from @react-pdf/renderer returns a buffer that must be wrapped in `new Uint8Array()` for NextResponse
+  - Use `React.createElement` instead of JSX for server-side PDF rendering in .ts files
+  - PDF type must be `Record<string, unknown>` at API boundary, cast inside generator
+  - `eslint-disable @typescript-eslint/no-explicit-any` needed for `React.ReactElement<any>` with @react-pdf Document type
 
 ---

@@ -20,7 +20,7 @@
       ],
       "priority": 1,
       "passes": true,
-      "notes": "Foundation for all live features. Keep it generic — table name + filter as params."
+      "notes": "Foundation for all live features. Keep it generic \u2014 table name + filter as params."
     },
     {
       "id": "US-002",
@@ -40,7 +40,7 @@
       ],
       "priority": 2,
       "passes": true,
-      "notes": "Fixed PATCH route schema mismatch (read→state). 9 tests."
+      "notes": "Fixed PATCH route schema mismatch (read\u2192state). 9 tests."
     },
     {
       "id": "US-003",
@@ -58,8 +58,8 @@
         "All existing tests still pass"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": "Use @react-pdf/renderer for server-side PDF. Don't use puppeteer."
+      "passes": true,
+      "notes": "9 tests. renderToBuffer returns Uint8Array. Use React.createElement for server-side."
     },
     {
       "id": "US-004",
@@ -138,7 +138,7 @@
     },
     {
       "id": "US-008",
-      "title": "Global search expansion — all entities in CommandPalette",
+      "title": "Global search expansion \u2014 all entities in CommandPalette",
       "description": "Expand CommandPalette to search across ALL entity types: leads, accounts, contacts, opportunities, estimates, projects, tasks. Add entity type icons and keyboard navigation.",
       "acceptanceCriteria": [
         "CommandPalette searches: leads, accounts, contacts, opportunities, estimates, projects, tasks",
@@ -155,7 +155,7 @@
       ],
       "priority": 8,
       "passes": false,
-      "notes": "Keep it simple — text search with ILIKE, not full-text search."
+      "notes": "Keep it simple \u2014 text search with ILIKE, not full-text search."
     },
     {
       "id": "US-009",
@@ -272,7 +272,7 @@
       ],
       "priority": 14,
       "passes": false,
-      "notes": "Wire the UI and form validation — don't actually perform invites."
+      "notes": "Wire the UI and form validation \u2014 don't actually perform invites."
     },
     {
       "id": "US-015",
@@ -307,7 +307,7 @@
       ],
       "priority": 16,
       "passes": false,
-      "notes": "Don't rewrite hooks — add query key factory and update existing hooks."
+      "notes": "Don't rewrite hooks \u2014 add query key factory and update existing hooks."
     },
     {
       "id": "US-017",
