@@ -67,6 +67,36 @@ export const notificationPreferenceUpdateSchema = z.object({
 });
 
 // ============================================================
+// Onboarding schemas
+// ============================================================
+
+export const DIVISION_CODES = [
+  'contracting',
+  'homes',
+  'wood',
+  'telecom',
+  'group-inc',
+  'management',
+] as const;
+
+export type DivisionCode = (typeof DIVISION_CODES)[number];
+
+export const companyProfileSchema = z.object({
+  name: z.string().min(1, 'Company name is required').max(200),
+  address: z.string().min(1, 'Address is required').max(500),
+  phone: z.string().min(1, 'Phone number is required').max(30),
+});
+
+export const divisionSelectionSchema = z.object({
+  divisions: z.array(z.enum(DIVISION_CODES)).min(1, 'Select at least one division'),
+});
+
+export const teamInviteSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  role: z.string().min(1, 'Role is required'),
+});
+
+// ============================================================
 // Inferred types
 // ============================================================
 
@@ -77,3 +107,6 @@ export type UserProvisioning = z.infer<typeof userProvisioningSchema>;
 export type RolePermissionEditor = z.infer<typeof rolePermissionEditorSchema>;
 export type PolicyOverrideCreate = z.infer<typeof policyOverrideCreateSchema>;
 export type NotificationPreferenceUpdate = z.infer<typeof notificationPreferenceUpdateSchema>;
+export type CompanyProfile = z.infer<typeof companyProfileSchema>;
+export type DivisionSelection = z.infer<typeof divisionSelectionSchema>;
+export type TeamInvite = z.infer<typeof teamInviteSchema>;

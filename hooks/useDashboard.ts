@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api-client';
 import { useDivision } from '@/contexts/DivisionContext';
+import { queryKeys } from '@/lib/query-keys';
 
 interface AtAGlance {
   activeProjects: number;
@@ -32,7 +33,7 @@ export function useDashboard() {
   const { activeDivision } = useDivision();
 
   return useQuery({
-    queryKey: ['dashboard', activeDivision?.id],
+    queryKey: [...queryKeys.dashboard.all, activeDivision?.id],
     queryFn: () =>
       apiFetch<DashboardData>('/api/dashboard', {
         params: activeDivision?.id ? { division_id: activeDivision.id } : undefined,

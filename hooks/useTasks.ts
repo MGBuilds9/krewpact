@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api-client';
+import { queryKeys } from '@/lib/query-keys';
 
 export interface Task {
   id: string;
@@ -47,19 +48,21 @@ export interface TaskUpdate {
 
 export function useTasks(projectId?: string) {
   return useQuery({
-    queryKey: ['tasks', projectId],
+    queryKey: queryKeys.tasks.list({ projectId }),
     queryFn: () =>
       apiFetch<Task[]>('/api/tasks', {
         params: projectId ? { project_id: projectId } : undefined,
       }),
+    staleTime: 30_000,
   });
 }
 
 export function useTask(id: string) {
   return useQuery({
-    queryKey: ['task', id],
+    queryKey: queryKeys.tasks.detail(id),
     queryFn: () => apiFetch<Task>(`/api/tasks/${id}`),
     enabled: !!id,
+    staleTime: 60_000,
   });
 }
 
@@ -73,7 +76,7 @@ export function useCreateTask() {
         body: task,
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tasks.all });
     },
   });
 }
@@ -88,7 +91,7 @@ export function useUpdateTask() {
         body: updates,
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tasks.all });
     },
   });
 }
@@ -99,7 +102,7 @@ export function useDeleteTask() {
   return useMutation({
     mutationFn: (id: string) => apiFetch(`/api/tasks/${id}`, { method: 'DELETE' }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tasks.all });
     },
   });
 }

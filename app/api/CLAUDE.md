@@ -32,10 +32,12 @@ if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 }
 ## Error Handling
 
 ```typescript
+import { logger } from '@/lib/logger';
+
 try {
   // ... operation
 } catch (err: unknown) {
-  console.error('Operation failed:', err);
+  logger.error('Operation failed:', err);
   return NextResponse.json({ error: 'Operation failed' }, { status: 500 });
 }
 ```

@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api-client';
+import { queryKeys } from '@/lib/query-keys';
 
 export interface Project {
   id: string;
@@ -34,7 +35,7 @@ export function useProjects(options?: UseProjectsOptions) {
   const { divisionId, limit } = options ?? {};
 
   return useQuery({
-    queryKey: ['projects', divisionId, limit],
+    queryKey: queryKeys.projects.list({ divisionId, limit }),
     queryFn: () =>
       apiFetch<Project[]>('/api/projects', {
         params: {
@@ -42,14 +43,16 @@ export function useProjects(options?: UseProjectsOptions) {
           limit,
         },
       }),
+    staleTime: 30_000,
   });
 }
 
 export function useProject(id: string) {
   return useQuery({
-    queryKey: ['project', id],
+    queryKey: queryKeys.projects.detail(id),
     queryFn: () => apiFetch<Project>(`/api/projects/${id}`),
     enabled: !!id,
+    staleTime: 60_000,
   });
 }
 
@@ -60,7 +63,7 @@ export function useCreateProject() {
     mutationFn: (data: Partial<Project>) =>
       apiFetch<Project>('/api/projects', { method: 'POST', body: data }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
     },
   });
 }
@@ -72,8 +75,8 @@ export function useUpdateProject() {
     mutationFn: ({ id, ...data }: Partial<Project> & { id: string }) =>
       apiFetch<Project>(`/api/projects/${id}`, { method: 'PATCH', body: data }),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
-      queryClient.invalidateQueries({ queryKey: ['project', variables.id] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.detail(variables.id) });
     },
   });
 }
@@ -84,7 +87,7 @@ export function useDeleteProject() {
   return useMutation({
     mutationFn: (id: string) => apiFetch(`/api/projects/${id}`, { method: 'DELETE' }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
     },
   });
 }

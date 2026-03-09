@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api-client';
+import { queryKeys } from '@/lib/query-keys';
 
 export interface Notification {
   id: string;
@@ -16,11 +17,12 @@ export interface Notification {
 
 export function useNotifications(options?: { unreadOnly?: boolean }) {
   return useQuery({
-    queryKey: ['notifications', options?.unreadOnly],
+    queryKey: queryKeys.notifications.list({ unreadOnly: options?.unreadOnly }),
     queryFn: () =>
       apiFetch<Notification[]>('/api/notifications', {
         params: options?.unreadOnly ? { unread_only: 'true' } : undefined,
       }),
+    staleTime: 30_000,
   });
 }
 
@@ -31,8 +33,8 @@ export function useMarkNotificationRead() {
     mutationFn: (id: string) =>
       apiFetch(`/api/notifications/${id}`, { method: 'PATCH', body: { state: 'read' } }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
     },
   });
 }
@@ -44,8 +46,8 @@ export function useMarkAllNotificationsRead() {
     mutationFn: () =>
       apiFetch('/api/notifications', { method: 'POST', body: { action: 'mark_all_read' } }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
     },
   });
 }
@@ -56,7 +58,7 @@ export function useDeleteNotification() {
   return useMutation({
     mutationFn: (id: string) => apiFetch(`/api/notifications/${id}`, { method: 'DELETE' }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
     },
   });
 }

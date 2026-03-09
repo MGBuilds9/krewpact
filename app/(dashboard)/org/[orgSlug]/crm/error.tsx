@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import * as Sentry from '@sentry/nextjs';
 import { ErrorCard } from '@/components/ui/error-card';
 
 export default function CRMError({
@@ -11,7 +12,7 @@ export default function CRMError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error('CRM error:', error);
+    Sentry.captureException(error);
   }, [error]);
 
   return (

@@ -100,6 +100,10 @@ Branch: ralph/enterprise-phase2
   - Never spy on `document.createElement` globally — it breaks React rendering in jsdom. Use a conditional mock that only intercepts the specific tag you need (e.g., 'a') and delegates to the real implementation for everything else.
   - `satisfies` keyword works well for inline type checking of props objects without losing inference
 - **Integration test pattern:** For cross-feature integration tests, define mock variables (mockOn, mockChannel, etc.) BEFORE `vi.mock()` calls. Don't use `require()` to access mock internals — use module-scoped variables instead.
+- **Role gating pattern:** Use `const { userId, sessionClaims } = await auth()` then `(sessionClaims as Record<string, unknown>)?.krewpact_roles` to get roles array. Check against allowed roles. Return 403 for unauthorized.
+- **Mock auth with sessionClaims:** Cast through `unknown`: `{ userId, sessionClaims: { krewpact_roles } } as unknown as Awaited<ReturnType<typeof auth>>`
+- **KPICard component:** Reusable at `components/Dashboard/KPICard.tsx`. Props: label, value (string), trend (up/down/flat), changePercent, icon.
+- **PipelineChart component:** Reusable at `components/Dashboard/PipelineChart.tsx`. Props: data (PipelineStage[]).
 
 ---
 
@@ -120,5 +124,24 @@ Branch: ralph/enterprise-phase2
 - **Learnings for future iterations:**
   - For integration tests that need mock internals, define mock objects at module scope before `vi.mock()` — don't use `require()` which fails with ESM
   - Checkpoint stories are quick when individual stories have thorough tests — just consolidate and gate
+
+---
+
+## 2026-03-09 - US-006: Executive dashboard with KPI cards and charts
+- **Implemented:** Executive dashboard API + page + KPICard + PipelineChart components
+- **Features:** Role-gated (executive/platform_admin only via sessionClaims), 4 KPI cards (pipeline value, active projects, win rate, avg deal size), pipeline bar chart by stage
+- **Files changed:**
+  - `app/api/dashboard/executive/route.ts` (new — GET route with role gating + aggregation)
+  - `app/(dashboard)/org/[orgSlug]/dashboard/executive/page.tsx` (new — client page)
+  - `components/Dashboard/KPICard.tsx` (new — reusable KPI card)
+  - `components/Dashboard/PipelineChart.tsx` (new — pipeline bar chart)
+  - `__tests__/api/dashboard/executive.test.ts` (new, 6 tests)
+  - `__tests__/components/Dashboard/KPICard.test.tsx` (new, 5 tests)
+  - `__tests__/components/Dashboard/PipelineChart.test.tsx` (new, 4 tests)
+- **Tests:** 15 new, 3,147 total (283 files)
+- **Learnings for future iterations:**
+  - Role gating: `(sessionClaims as Record<string, unknown>)?.krewpact_roles` — clean pattern for API routes
+  - Mock auth with sessionClaims: always cast through `unknown` first to avoid TS2352
+  - KPICard and PipelineChart are reusable — PM dashboard (US-007) can reuse them
 
 ---

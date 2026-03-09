@@ -20,7 +20,7 @@
       ],
       "priority": 1,
       "passes": true,
-      "notes": "Foundation for all live features. Keep it generic \u2014 table name + filter as params."
+      "notes": "Foundation for all live features. Keep it generic — table name + filter as params."
     },
     {
       "id": "US-002",
@@ -40,7 +40,7 @@
       ],
       "priority": 2,
       "passes": true,
-      "notes": "Fixed PATCH route schema mismatch (read\u2192state). 9 tests."
+      "notes": "Fixed PATCH route schema mismatch (read→state). 9 tests."
     },
     {
       "id": "US-003",
@@ -113,8 +113,8 @@
         "All existing tests still pass"
       ],
       "priority": 6,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "15 tests (6 API + 5 KPICard + 4 PipelineChart). Role gating via sessionClaims.krewpact_roles. Pipeline aggregation from opportunities table."
     },
     {
       "id": "US-007",
@@ -133,12 +133,12 @@
         "All existing tests still pass"
       ],
       "priority": 7,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
       "id": "US-008",
-      "title": "Global search expansion \u2014 all entities in CommandPalette",
+      "title": "Global search expansion — all entities in CommandPalette",
       "description": "Expand CommandPalette to search across ALL entity types: leads, accounts, contacts, opportunities, estimates, projects, tasks. Add entity type icons and keyboard navigation.",
       "acceptanceCriteria": [
         "CommandPalette searches: leads, accounts, contacts, opportunities, estimates, projects, tasks",
@@ -154,8 +154,8 @@
         "All existing tests still pass"
       ],
       "priority": 8,
-      "passes": false,
-      "notes": "Keep it simple \u2014 text search with ILIKE, not full-text search."
+      "passes": true,
+      "notes": "Keep it simple — text search with ILIKE, not full-text search."
     },
     {
       "id": "US-009",
@@ -174,7 +174,7 @@
         "All existing tests still pass"
       ],
       "priority": 9,
-      "passes": false,
+      "passes": true,
       "notes": "If audit_log table doesn't exist, create the API route assuming it will. Mock in tests."
     },
     {
@@ -193,7 +193,7 @@
         "Typecheck passes"
       ],
       "priority": 10,
-      "passes": false,
+      "passes": true,
       "notes": "CHECKPOINT - Gate before proceeding to UX features"
     },
     {
@@ -214,7 +214,7 @@
         "All existing tests still pass"
       ],
       "priority": 11,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
@@ -231,7 +231,7 @@
         "All existing tests still pass"
       ],
       "priority": 12,
-      "passes": false,
+      "passes": true,
       "notes": "Build on existing useKeyboardShortcuts hook."
     },
     {
@@ -250,7 +250,7 @@
         "All existing tests still pass"
       ],
       "priority": 13,
-      "passes": false,
+      "passes": true,
       "notes": "Install sonner if not present."
     },
     {
@@ -271,8 +271,8 @@
         "All existing tests still pass"
       ],
       "priority": 14,
-      "passes": false,
-      "notes": "Wire the UI and form validation \u2014 don't actually perform invites."
+      "passes": true,
+      "notes": "Wire the UI and form validation — don't actually perform invites."
     },
     {
       "id": "US-015",
@@ -290,7 +290,7 @@
         "Typecheck passes"
       ],
       "priority": 15,
-      "passes": false,
+      "passes": true,
       "notes": "CHECKPOINT"
     },
     {
@@ -306,8 +306,8 @@
         "All existing tests still pass"
       ],
       "priority": 16,
-      "passes": false,
-      "notes": "Don't rewrite hooks \u2014 add query key factory and update existing hooks."
+      "passes": true,
+      "notes": "Don't rewrite hooks — add query key factory and update existing hooks."
     },
     {
       "id": "US-017",
@@ -322,7 +322,7 @@
         "All existing tests still pass"
       ],
       "priority": 17,
-      "passes": false,
+      "passes": true,
       "notes": "Simple find-and-replace. Don't change error boundary UI."
     },
     {
@@ -337,7 +337,7 @@
         "No regressions from baseline (3092 tests)"
       ],
       "priority": 18,
-      "passes": false,
+      "passes": true,
       "notes": "Final verification story. Fix any failures before marking passes: true."
     }
   ]
