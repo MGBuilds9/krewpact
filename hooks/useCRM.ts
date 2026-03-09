@@ -2,9 +2,14 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api-client';
+import { queryKeys } from '@/lib/query-keys';
 import type { DashboardMetrics } from '@/lib/crm/metrics';
 import type { AccountHealthScore, LifecycleStage } from '@/lib/crm/account-health';
-import type { RepPerformance, PipelineAgingEntry, WinLossEntry } from '@/lib/crm/pipeline-intelligence';
+import type {
+  RepPerformance,
+  PipelineAgingEntry,
+  WinLossEntry,
+} from '@/lib/crm/pipeline-intelligence';
 import type { TimelineEntry } from '@/app/api/crm/activities/timeline/route';
 
 // --- Paginated Response ---
@@ -194,7 +199,7 @@ interface PipelineFilters {
 
 export function useAccounts(filters?: AccountFilters) {
   return useQuery({
-    queryKey: ['accounts', filters],
+    queryKey: queryKeys.accounts.list(filters ?? {}),
     queryFn: () =>
       apiFetch<PaginatedResponse<Account>>('/api/crm/accounts', {
         params: {
@@ -214,9 +219,10 @@ export function useAccounts(filters?: AccountFilters) {
 
 export function useAccount(id: string) {
   return useQuery({
-    queryKey: ['account', id],
+    queryKey: queryKeys.accounts.detail(id),
     queryFn: () => apiFetch<Account>(`/api/crm/accounts/${id}`),
     enabled: !!id,
+    staleTime: 60_000,
   });
 }
 
@@ -226,7 +232,7 @@ export function useCreateAccount() {
     mutationFn: (data: Partial<Account>) =>
       apiFetch<Account>('/api/crm/accounts', { method: 'POST', body: data }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.accounts.all });
     },
   });
 }
@@ -237,8 +243,8 @@ export function useUpdateAccount() {
     mutationFn: ({ id, ...data }: Partial<Account> & { id: string }) =>
       apiFetch<Account>(`/api/crm/accounts/${id}`, { method: 'PATCH', body: data }),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['accounts'] });
-      queryClient.invalidateQueries({ queryKey: ['account', variables.id] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.accounts.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.accounts.detail(variables.id) });
     },
   });
 }
@@ -248,7 +254,7 @@ export function useDeleteAccount() {
   return useMutation({
     mutationFn: (id: string) => apiFetch(`/api/crm/accounts/${id}`, { method: 'DELETE' }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.accounts.all });
     },
   });
 }
@@ -257,7 +263,7 @@ export function useDeleteAccount() {
 
 export function useContacts(filters?: ContactFilters) {
   return useQuery({
-    queryKey: ['contacts', filters],
+    queryKey: queryKeys.contacts.list(filters ?? {}),
     queryFn: () =>
       apiFetch<PaginatedResponse<Contact>>('/api/crm/contacts', {
         params: {
@@ -277,9 +283,10 @@ export function useContacts(filters?: ContactFilters) {
 
 export function useContact(id: string) {
   return useQuery({
-    queryKey: ['contact', id],
+    queryKey: queryKeys.contacts.detail(id),
     queryFn: () => apiFetch<Contact>(`/api/crm/contacts/${id}`),
     enabled: !!id,
+    staleTime: 60_000,
   });
 }
 
@@ -289,7 +296,7 @@ export function useCreateContact() {
     mutationFn: (data: Partial<Contact>) =>
       apiFetch<Contact>('/api/crm/contacts', { method: 'POST', body: data }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contacts'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.contacts.all });
     },
   });
 }
@@ -300,8 +307,8 @@ export function useUpdateContact() {
     mutationFn: ({ id, ...data }: Partial<Contact> & { id: string }) =>
       apiFetch<Contact>(`/api/crm/contacts/${id}`, { method: 'PATCH', body: data }),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['contacts'] });
-      queryClient.invalidateQueries({ queryKey: ['contact', variables.id] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.contacts.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.contacts.detail(variables.id) });
     },
   });
 }
@@ -311,7 +318,7 @@ export function useDeleteContact() {
   return useMutation({
     mutationFn: (id: string) => apiFetch(`/api/crm/contacts/${id}`, { method: 'DELETE' }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contacts'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.contacts.all });
     },
   });
 }
@@ -320,7 +327,7 @@ export function useDeleteContact() {
 
 export function useLeads(filters?: LeadFilters) {
   return useQuery({
-    queryKey: ['leads', filters],
+    queryKey: queryKeys.leads.list(filters ?? {}),
     queryFn: () =>
       apiFetch<PaginatedResponse<Lead>>('/api/crm/leads', {
         params: {
@@ -341,9 +348,10 @@ export function useLeads(filters?: LeadFilters) {
 
 export function useLead(id: string) {
   return useQuery({
-    queryKey: ['lead', id],
+    queryKey: queryKeys.leads.detail(id),
     queryFn: () => apiFetch<Lead>(`/api/crm/leads/${id}`),
     enabled: !!id,
+    staleTime: 60_000,
   });
 }
 
@@ -353,7 +361,7 @@ export function useCreateLead() {
     mutationFn: (data: Partial<Lead>) =>
       apiFetch<Lead>('/api/crm/leads', { method: 'POST', body: data }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['leads'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.leads.all });
     },
   });
 }
@@ -364,8 +372,8 @@ export function useUpdateLead() {
     mutationFn: ({ id, ...data }: Partial<Lead> & { id: string }) =>
       apiFetch<Lead>(`/api/crm/leads/${id}`, { method: 'PATCH', body: data }),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['leads'] });
-      queryClient.invalidateQueries({ queryKey: ['lead', variables.id] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.leads.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.leads.detail(variables.id) });
     },
   });
 }
@@ -375,7 +383,7 @@ export function useDeleteLead() {
   return useMutation({
     mutationFn: (id: string) => apiFetch(`/api/crm/leads/${id}`, { method: 'DELETE' }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['leads'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.leads.all });
     },
   });
 }
@@ -386,8 +394,8 @@ export function useLeadStageTransition() {
     mutationFn: ({ id, ...body }: { id: string; stage: string; lost_reason?: string }) =>
       apiFetch<Lead>(`/api/crm/leads/${id}/stage`, { method: 'POST', body }),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['leads'] });
-      queryClient.invalidateQueries({ queryKey: ['lead', variables.id] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.leads.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.leads.detail(variables.id) });
     },
   });
 }
@@ -405,9 +413,9 @@ export function useConvertLead() {
       opportunity_name?: string;
     }) => apiFetch<Opportunity>(`/api/crm/leads/${leadId}/convert`, { method: 'POST', body: data }),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['leads'] });
-      queryClient.invalidateQueries({ queryKey: ['lead', variables.leadId] });
-      queryClient.invalidateQueries({ queryKey: ['opportunities'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.leads.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.leads.detail(variables.leadId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.opportunities.all });
       queryClient.invalidateQueries({ queryKey: ['pipeline'] });
     },
   });
@@ -417,7 +425,8 @@ export function useConvertLead() {
 
 export function useOpportunities(filters?: OpportunityFilters) {
   return useQuery({
-    queryKey: ['opportunities', filters],
+    queryKey: queryKeys.opportunities.list(filters ?? {}),
+    staleTime: 30_000,
     queryFn: () =>
       apiFetch<Opportunity[]>('/api/crm/opportunities', {
         params: {
@@ -434,9 +443,10 @@ export function useOpportunities(filters?: OpportunityFilters) {
 
 export function useOpportunity(id: string) {
   return useQuery({
-    queryKey: ['opportunity', id],
+    queryKey: queryKeys.opportunities.detail(id),
     queryFn: () => apiFetch<Opportunity>(`/api/crm/opportunities/${id}`),
     enabled: !!id,
+    staleTime: 60_000,
   });
 }
 
@@ -446,7 +456,7 @@ export function useCreateOpportunity() {
     mutationFn: (data: Partial<Opportunity>) =>
       apiFetch<Opportunity>('/api/crm/opportunities', { method: 'POST', body: data }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['opportunities'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.opportunities.all });
       queryClient.invalidateQueries({ queryKey: ['pipeline'] });
     },
   });
@@ -458,8 +468,8 @@ export function useUpdateOpportunity() {
     mutationFn: ({ id, ...data }: Partial<Opportunity> & { id: string }) =>
       apiFetch<Opportunity>(`/api/crm/opportunities/${id}`, { method: 'PATCH', body: data }),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['opportunities'] });
-      queryClient.invalidateQueries({ queryKey: ['opportunity', variables.id] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.opportunities.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.opportunities.detail(variables.id) });
       queryClient.invalidateQueries({ queryKey: ['pipeline'] });
     },
   });
@@ -471,8 +481,8 @@ export function useOpportunityStageTransition() {
     mutationFn: ({ id, ...body }: { id: string; stage: string; lost_reason?: string }) =>
       apiFetch<Opportunity>(`/api/crm/opportunities/${id}/stage`, { method: 'POST', body }),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['opportunities'] });
-      queryClient.invalidateQueries({ queryKey: ['opportunity', variables.id] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.opportunities.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.opportunities.detail(variables.id) });
       queryClient.invalidateQueries({ queryKey: ['pipeline'] });
     },
   });
@@ -685,7 +695,7 @@ export function useEnrollInSequence() {
       }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['sequence-enrollments', variables.sequenceId] });
-      queryClient.invalidateQueries({ queryKey: ['leads'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.leads.all });
     },
   });
 }
@@ -796,7 +806,7 @@ export function useRecalculateLeadScore() {
       apiFetch<{ score: number }>(`/api/crm/leads/${leadId}/score`, { method: 'POST' }),
     onSuccess: (_, leadId) => {
       queryClient.invalidateQueries({ queryKey: ['lead-score', leadId] });
-      queryClient.invalidateQueries({ queryKey: ['lead', leadId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.leads.detail(leadId) });
     },
   });
 }
@@ -868,13 +878,21 @@ export function useSequenceAnalytics(divisionId?: string) {
   return useQuery({
     queryKey: ['sequence-analytics', divisionId],
     queryFn: () =>
-      apiFetch<{ data: Array<{
-        sequence_id: string;
-        sequence_name: string;
-        is_active: boolean;
-        total_steps: number;
-        enrollments: { active: number; completed: number; paused: number; failed: number; total: number };
-      }> }>('/api/crm/sequences/analytics', {
+      apiFetch<{
+        data: Array<{
+          sequence_id: string;
+          sequence_name: string;
+          is_active: boolean;
+          total_steps: number;
+          enrollments: {
+            active: number;
+            completed: number;
+            paused: number;
+            failed: number;
+            total: number;
+          };
+        }>;
+      }>('/api/crm/sequences/analytics', {
         params: { divisionId },
       }),
   });
@@ -957,8 +975,8 @@ export function useMarkOpportunityWon() {
       sync_to_erp?: boolean;
     }) => apiFetch<Opportunity>(`/api/crm/opportunities/${id}/won`, { method: 'POST', body: data }),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['opportunities'] });
-      queryClient.invalidateQueries({ queryKey: ['opportunity', variables.id] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.opportunities.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.opportunities.detail(variables.id) });
       queryClient.invalidateQueries({ queryKey: ['pipeline'] });
     },
   });
@@ -992,8 +1010,7 @@ export function useMyTasks(filters?: MyTasksFilters) {
 export function useOverdueTasks() {
   return useQuery({
     queryKey: ['overdue-tasks'],
-    queryFn: () =>
-      apiFetch<{ data: Activity[]; count: number }>('/api/crm/activities/overdue'),
+    queryFn: () => apiFetch<{ data: Activity[]; count: number }>('/api/crm/activities/overdue'),
     staleTime: 30_000,
   });
 }
@@ -1073,8 +1090,7 @@ export interface AccountRevenueResponse {
 export function useAccountHealth(accountId: string) {
   return useQuery({
     queryKey: ['account-health', accountId],
-    queryFn: () =>
-      apiFetch<AccountHealthResponse>(`/api/crm/accounts/${accountId}/health`),
+    queryFn: () => apiFetch<AccountHealthResponse>(`/api/crm/accounts/${accountId}/health`),
     enabled: !!accountId,
     staleTime: 60_000,
   });
@@ -1083,8 +1099,7 @@ export function useAccountHealth(accountId: string) {
 export function useAccountRevenue(accountId: string) {
   return useQuery({
     queryKey: ['account-revenue', accountId],
-    queryFn: () =>
-      apiFetch<AccountRevenueResponse>(`/api/crm/accounts/${accountId}/revenue`),
+    queryFn: () => apiFetch<AccountRevenueResponse>(`/api/crm/accounts/${accountId}/revenue`),
     enabled: !!accountId,
     staleTime: 60_000,
   });
@@ -1134,8 +1149,7 @@ export interface DivisionComparisonResponse {
 export function useDivisionComparison() {
   return useQuery({
     queryKey: ['division-comparison'],
-    queryFn: () =>
-      apiFetch<DivisionComparisonResponse>('/api/crm/dashboard/division-comparison'),
+    queryFn: () => apiFetch<DivisionComparisonResponse>('/api/crm/dashboard/division-comparison'),
     staleTime: 60_000,
   });
 }
@@ -1144,12 +1158,14 @@ export function useMergeAccounts() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: { primary_id: string; secondary_id: string }) =>
-      apiFetch<{ primaryId: string; secondaryId: string; mergedFields: string[]; reassignedRelations: string[] }>(
-        '/api/crm/accounts/merge',
-        { method: 'POST', body: data },
-      ),
+      apiFetch<{
+        primaryId: string;
+        secondaryId: string;
+        mergedFields: string[];
+        reassignedRelations: string[];
+      }>('/api/crm/accounts/merge', { method: 'POST', body: data }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.accounts.all });
     },
   });
 }
@@ -1158,23 +1174,31 @@ export function useMergeContacts() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: { primary_id: string; secondary_id: string }) =>
-      apiFetch<{ primaryId: string; secondaryId: string; mergedFields: string[]; reassignedRelations: string[] }>(
-        '/api/crm/contacts/merge',
-        { method: 'POST', body: data },
-      ),
+      apiFetch<{
+        primaryId: string;
+        secondaryId: string;
+        mergedFields: string[];
+        reassignedRelations: string[];
+      }>('/api/crm/contacts/merge', { method: 'POST', body: data }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contacts'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.contacts.all });
     },
   });
 }
 
 export function useBulkEmail() {
   return useMutation({
-    mutationFn: (data: { lead_ids: string[]; subject: string; html: string; text?: string; template_id?: string }) =>
-      apiFetch<{ sent: number; failed: number; total: number }>(
-        '/api/crm/leads/bulk-email',
-        { method: 'POST', body: data },
-      ),
+    mutationFn: (data: {
+      lead_ids: string[];
+      subject: string;
+      html: string;
+      text?: string;
+      template_id?: string;
+    }) =>
+      apiFetch<{ sent: number; failed: number; total: number }>('/api/crm/leads/bulk-email', {
+        method: 'POST',
+        body: data,
+      }),
   });
 }
 
@@ -1193,10 +1217,10 @@ export function useMarkOpportunityLost() {
     }) =>
       apiFetch<Opportunity>(`/api/crm/opportunities/${id}/lost`, { method: 'POST', body: data }),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['opportunities'] });
-      queryClient.invalidateQueries({ queryKey: ['opportunity', variables.id] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.opportunities.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.opportunities.detail(variables.id) });
       queryClient.invalidateQueries({ queryKey: ['pipeline'] });
-      queryClient.invalidateQueries({ queryKey: ['leads'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.leads.all });
     },
   });
 }
@@ -1227,7 +1251,9 @@ export function useBiddingOpportunities(params?: Record<string, string>) {
   return useQuery({
     queryKey: ['bidding', params],
     queryFn: () =>
-      apiFetch<PaginatedResponse<BiddingOpportunity>>(`/api/crm/bidding?${searchParams.toString()}`),
+      apiFetch<PaginatedResponse<BiddingOpportunity>>(
+        `/api/crm/bidding?${searchParams.toString()}`,
+      ),
   });
 }
 
@@ -1291,7 +1317,16 @@ export function useLinkBiddingToOpportunity() {
 export function useImportBidding() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: { items: Array<{ title: string; source?: string; url?: string; deadline?: string; estimated_value?: number; notes?: string }> }) =>
+    mutationFn: (data: {
+      items: Array<{
+        title: string;
+        source?: string;
+        url?: string;
+        deadline?: string;
+        estimated_value?: number;
+        notes?: string;
+      }>;
+    }) =>
       apiFetch<{ imported: number; items: BiddingOpportunity[] }>('/api/crm/bidding/import', {
         method: 'POST',
         body: data,

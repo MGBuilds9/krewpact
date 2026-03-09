@@ -19,6 +19,8 @@ import { QuickAccessToolbar } from './QuickAccessToolbar';
 import { NotificationBell } from '@/components/Notifications';
 import { MDMLogo } from '@/components/ui/MDMLogo';
 import { CommandPalette } from './CommandPalette';
+import { ShortcutsHelpOverlay } from './ShortcutsHelpOverlay';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useUser, useClerk } from '@clerk/nextjs';
 import { usePathname } from 'next/navigation';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
@@ -34,6 +36,7 @@ export function Header() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = React.useState(false);
+  const [isShortcutsHelpOpen, setIsShortcutsHelpOpen] = React.useState(false);
   const [isImpersonationOpen, setIsImpersonationOpen] = React.useState(false);
 
   const { isImpersonating, stopImpersonation } = useImpersonation();
@@ -52,18 +55,36 @@ export function Header() {
     }
   };
 
-  // Keyboard shortcut for command palette
-  React.useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        setIsCommandPaletteOpen(true);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  // Global keyboard shortcuts (single-key + chord sequences)
+  useKeyboardShortcuts(
+    [
+      {
+        key: 'k',
+        metaKey: true,
+        handler: () => setIsCommandPaletteOpen((prev) => !prev),
+      },
+      {
+        key: '/',
+        metaKey: true,
+        handler: () => setIsShortcutsHelpOpen((prev) => !prev),
+        ignoreInputs: false,
+      },
+      {
+        key: 'n',
+        handler: () => orgPush('/crm/leads/new'),
+      },
+    ],
+    [
+      // Chord: G then L → Leads
+      { firstKey: 'g', secondKey: 'l', handler: () => orgPush('/crm/leads') },
+      // Chord: G then P → Projects
+      { firstKey: 'g', secondKey: 'p', handler: () => orgPush('/projects') },
+      // Chord: G then E → Estimates
+      { firstKey: 'g', secondKey: 'e', handler: () => orgPush('/estimates') },
+      // Chord: G then D → Dashboard
+      { firstKey: 'g', secondKey: 'd', handler: () => orgPush('/dashboard') },
+    ],
+  );
 
   return (
     <>
@@ -254,6 +275,12 @@ export function Header() {
       <CommandPalette
         isOpen={isCommandPaletteOpen}
         onClose={() => setIsCommandPaletteOpen(false)}
+      />
+
+      {/* Shortcuts Help Overlay */}
+      <ShortcutsHelpOverlay
+        isOpen={isShortcutsHelpOpen}
+        onClose={() => setIsShortcutsHelpOpen(false)}
       />
 
       {/* Impersonation Selector */}

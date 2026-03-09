@@ -3,9 +3,9 @@ import { createServiceClient } from '@/lib/supabase/server';
 import { enrichLead, mergeEnrichmentData } from '@/lib/integrations/enrichment';
 import { summarizeEnrichment } from '@/lib/integrations/enrichment-summarizer';
 import { verifyCronAuth } from '@/lib/api/cron-auth';
+import { logger } from '@/lib/logger';
 
 const BATCH_SIZE = 20;
-
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const { authorized } = await verifyCronAuth(req);
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
             (enrichmentData as Record<string, unknown>).ai_summary = summary;
           }
         } catch (summaryErr) {
-          console.error(`AI summary error for ${lead.id}:`, summaryErr);
+          logger.error(`AI summary error for ${lead.id}`, { error: summaryErr });
           // Non-critical — enrichment still succeeds without summary
         }
       }
@@ -106,7 +106,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
       if (updateError) {
         errors++;
-        console.error(`Enrichment update error for ${lead.id}:`, updateError.message);
+        logger.error(`Enrichment update error for ${lead.id}`, { error: updateError.message });
         continue;
       }
 
@@ -129,7 +129,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       processed++;
     } catch (err) {
       errors++;
-      console.error(`Enrichment error for ${lead.id}:`, err);
+      logger.error(`Enrichment error for ${lead.id}`, { error: err });
 
       // Mark as failed
       await supabase.from('leads').update({ enrichment_status: 'failed' }).eq('id', lead.id);

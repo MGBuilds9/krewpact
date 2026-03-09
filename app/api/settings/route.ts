@@ -3,6 +3,7 @@ import { createUserClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { logger } from '@/lib/logger';
 
 const updateSchema = z.object({
   first_name: z.string().min(1).max(100).optional(),
@@ -36,7 +37,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Settings GET error:', error);
+    logger.error('Settings GET error', { error });
     return NextResponse.json({ error: 'Failed to fetch settings' }, { status: 500 });
   }
 }
@@ -77,7 +78,7 @@ export async function PATCH(req: NextRequest) {
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Settings PATCH error:', error);
+    logger.error('Settings PATCH error', { error });
     return NextResponse.json({ error: 'Failed to update settings' }, { status: 500 });
   }
 }

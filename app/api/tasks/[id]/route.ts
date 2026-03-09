@@ -3,6 +3,7 @@ import { createUserClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { logger } from '@/lib/logger';
 
 const updateSchema = z.object({
   title: z.string().min(1).max(255).optional(),
@@ -43,7 +44,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Task GET error:', error);
+    logger.error('Task GET error', { error });
     return NextResponse.json({ error: 'Failed to fetch task' }, { status: 500 });
   }
 }
@@ -89,7 +90,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Task PATCH error:', error);
+    logger.error('Task PATCH error', { error });
     return NextResponse.json({ error: 'Failed to update task' }, { status: 500 });
   }
 }
@@ -115,7 +116,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Task DELETE error:', error);
+    logger.error('Task DELETE error', { error });
     return NextResponse.json({ error: 'Failed to delete task' }, { status: 500 });
   }
 }

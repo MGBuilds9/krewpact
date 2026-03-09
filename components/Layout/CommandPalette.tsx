@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 import {
@@ -22,6 +22,10 @@ import {
   Loader2,
   Gavel,
   BarChart3,
+  Phone,
+  Target,
+  Calculator,
+  CheckSquare,
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -31,7 +35,6 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { apiFetch } from '@/lib/api-client';
-import type { PaginatedResponse } from '@/hooks/useCRM';
 
 interface NavItem {
   icon: React.ElementType;
@@ -45,11 +48,34 @@ interface NavSection {
   items: NavItem[];
 }
 
-interface CRMResult {
+interface EntityResult {
   id: string;
-  type: 'lead' | 'account' | 'contact' | 'opportunity';
   name: string;
-  subtitle?: string;
+  subtitle: string | null;
+}
+
+type EntityType =
+  | 'leads'
+  | 'accounts'
+  | 'contacts'
+  | 'opportunities'
+  | 'estimates'
+  | 'projects'
+  | 'tasks';
+
+interface GlobalSearchResults {
+  leads: EntityResult[];
+  accounts: EntityResult[];
+  contacts: EntityResult[];
+  opportunities: EntityResult[];
+  estimates: EntityResult[];
+  projects: EntityResult[];
+  tasks: EntityResult[];
+}
+
+interface FlatSearchResult {
+  entityType: EntityType;
+  result: EntityResult;
 }
 
 const navigationSections: NavSection[] = [
@@ -100,12 +126,28 @@ const navigationSections: NavSection[] = [
   },
 ];
 
-const typeIcons: Record<string, React.ElementType> = {
-  lead: Building2,
-  account: Building2,
-  contact: User,
-  opportunity: TrendingUp,
+const entityTypeConfig: Record<
+  EntityType,
+  { icon: React.ElementType; label: string; pathPrefix: string }
+> = {
+  leads: { icon: User, label: 'Leads', pathPrefix: '/crm/leads' },
+  accounts: { icon: Building2, label: 'Accounts', pathPrefix: '/crm/accounts' },
+  contacts: { icon: Phone, label: 'Contacts', pathPrefix: '/crm/contacts' },
+  opportunities: { icon: Target, label: 'Opportunities', pathPrefix: '/crm/opportunities' },
+  estimates: { icon: Calculator, label: 'Estimates', pathPrefix: '/estimates' },
+  projects: { icon: FolderKanban, label: 'Projects', pathPrefix: '/projects' },
+  tasks: { icon: CheckSquare, label: 'Tasks', pathPrefix: '/tasks' },
 };
+
+const ENTITY_TYPE_ORDER: EntityType[] = [
+  'leads',
+  'accounts',
+  'contacts',
+  'opportunities',
+  'estimates',
+  'projects',
+  'tasks',
+];
 
 interface CommandPaletteProps {
   isOpen: boolean;
@@ -117,9 +159,10 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   const pathname = usePathname();
   const { data: currentUser } = useCurrentUser();
   const [searchQuery, setSearchQuery] = useState('');
-  const [crmResults, setCrmResults] = useState<CRMResult[]>([]);
+  const [searchResults, setSearchResults] = useState<GlobalSearchResults | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const [recentPages, setRecentPages] = useState<string[]>(() => {
     if (typeof window === 'undefined') return [];
     const stored = localStorage.getItem('recentPages');
@@ -151,34 +194,34 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
     }
   }, [pathname]);
 
-  // Search CRM entities with debounce
+  // Flatten search results into ordered list for keyboard navigation
+  const flatResults: FlatSearchResult[] = [];
+  if (searchResults) {
+    for (const entityType of ENTITY_TYPE_ORDER) {
+      for (const result of searchResults[entityType]) {
+        flatResults.push({ entityType, result });
+      }
+    }
+  }
+
+  const hasSearchResults = flatResults.length > 0;
+
+  // Search all entities with debounce (300ms)
   useEffect(() => {
     if (searchQuery.length < 2) {
-      setCrmResults([]);
+      setSearchResults(null);
       return;
     }
 
     const timeout = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const res = await apiFetch<PaginatedResponse<{
-          id: string;
-          entity_type: string;
-          display_name: string;
-          subtitle?: string;
-        }>>('/api/crm/search', {
-          params: { q: searchQuery, limit: 8 },
+        const res = await apiFetch<{ results: GlobalSearchResults }>('/api/search/global', {
+          params: { q: searchQuery },
         });
-        setCrmResults(
-          (res.data ?? []).map((r) => ({
-            id: r.id,
-            type: r.entity_type as CRMResult['type'],
-            name: r.display_name,
-            subtitle: r.subtitle,
-          })),
-        );
+        setSearchResults(res.results);
       } catch {
-        setCrmResults([]);
+        setSearchResults(null);
       } finally {
         setIsSearching(false);
       }
@@ -190,7 +233,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   useEffect(() => {
     if (!isOpen) {
       setSearchQuery('');
-      setCrmResults([]);
+      setSearchResults(null);
       setSelectedIndex(0);
     }
   }, [isOpen]);
@@ -203,15 +246,10 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
     [orgPush, onClose],
   );
 
-  const handleCrmNavigation = useCallback(
-    (result: CRMResult) => {
-      const pathMap: Record<string, string> = {
-        lead: '/crm/leads',
-        account: '/crm/accounts',
-        contact: '/crm/contacts',
-        opportunity: '/crm/opportunities',
-      };
-      orgPush(`${pathMap[result.type]}/${result.id}`);
+  const handleEntityNavigation = useCallback(
+    (entityType: EntityType, id: string) => {
+      const config = entityTypeConfig[entityType];
+      orgPush(`${config.pathPrefix}/${id}`);
       onClose();
     },
     [orgPush, onClose],
@@ -234,19 +272,35 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
       }
 
       // Navigate results with arrow keys
-      const totalItems = crmResults.length + filteredNavItems.length;
+      const totalItems = flatResults.length + filteredNavItems.length;
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setSelectedIndex((prev) => Math.min(prev + 1, totalItems - 1));
+        setSelectedIndex((prev) => {
+          const next = Math.min(prev + 1, totalItems - 1);
+          // Scroll selected item into view
+          queueMicrotask(() => {
+            const el = scrollAreaRef.current?.querySelector(`[data-index="${next}"]`);
+            el?.scrollIntoView({ block: 'nearest' });
+          });
+          return next;
+        });
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        setSelectedIndex((prev) => Math.max(prev - 1, 0));
+        setSelectedIndex((prev) => {
+          const next = Math.max(prev - 1, 0);
+          queueMicrotask(() => {
+            const el = scrollAreaRef.current?.querySelector(`[data-index="${next}"]`);
+            el?.scrollIntoView({ block: 'nearest' });
+          });
+          return next;
+        });
       } else if (e.key === 'Enter') {
         e.preventDefault();
-        if (selectedIndex < crmResults.length) {
-          handleCrmNavigation(crmResults[selectedIndex]);
+        if (selectedIndex < flatResults.length) {
+          const item = flatResults[selectedIndex];
+          handleEntityNavigation(item.entityType, item.result.id);
         } else {
-          const navIndex = selectedIndex - crmResults.length;
+          const navIndex = selectedIndex - flatResults.length;
           if (filteredNavItems[navIndex]) {
             handleNavigation(filteredNavItems[navIndex].href);
           }
@@ -285,6 +339,14 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
     .map((path) => getRecentPageLabel(path))
     .filter(Boolean) as NavItem[];
 
+  // Group search results by entity type for display
+  const groupedEntityTypes = searchResults
+    ? ENTITY_TYPE_ORDER.filter((type) => searchResults[type].length > 0)
+    : [];
+
+  // Track running index for keyboard navigation across groups
+  let runningIndex = 0;
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl p-0 gap-0 overflow-hidden">
@@ -296,7 +358,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search leads, accounts, contacts, pages..."
+              placeholder="Search leads, accounts, contacts, projects, tasks..."
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
@@ -324,40 +386,59 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
         </div>
 
         <ScrollArea className="max-h-[60vh]">
-          <div className="p-4 space-y-4">
-            {/* CRM Search Results */}
-            {crmResults.length > 0 && (
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground px-2">
-                  <Search className="h-4 w-4" />
-                  CRM Results
-                </div>
-                {crmResults.map((result, index) => {
-                  const Icon = typeIcons[result.type] || Building2;
-                  return (
-                    <button
-                      key={`${result.type}-${result.id}`}
-                      onClick={() => handleCrmNavigation(result)}
-                      className={cn(
-                        'w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left',
-                        index === selectedIndex ? 'bg-accent' : 'hover:bg-accent',
-                      )}
-                    >
-                      <Icon className="h-4 w-4 text-muted-foreground" />
-                      <div className="flex-1 min-w-0">
-                        <span className="text-sm">{result.name}</span>
-                        {result.subtitle && (
-                          <span className="text-xs text-muted-foreground ml-2">
-                            {result.subtitle}
-                          </span>
-                        )}
-                      </div>
-                      <Badge variant="outline" className="text-xs capitalize">
-                        {result.type}
-                      </Badge>
-                    </button>
-                  );
-                })}
+          <div className="p-4 space-y-4" ref={scrollAreaRef}>
+            {/* Global Search Results — grouped by entity type */}
+            {hasSearchResults &&
+              groupedEntityTypes.map((entityType) => {
+                const config = entityTypeConfig[entityType];
+                const Icon = config.icon;
+                const results = searchResults![entityType];
+                const startIndex = runningIndex;
+                runningIndex += results.length;
+
+                return (
+                  <div key={entityType} className="space-y-1">
+                    <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground px-2">
+                      <Icon className="h-4 w-4" />
+                      {config.label}
+                    </div>
+                    {results.map((result, idx) => {
+                      const globalIdx = startIndex + idx;
+                      return (
+                        <button
+                          key={`${entityType}-${result.id}`}
+                          data-index={globalIdx}
+                          onClick={() => handleEntityNavigation(entityType, result.id)}
+                          className={cn(
+                            'w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left',
+                            globalIdx === selectedIndex ? 'bg-accent' : 'hover:bg-accent',
+                          )}
+                        >
+                          <Icon className="h-4 w-4 text-muted-foreground" />
+                          <div className="flex-1 min-w-0">
+                            <span className="text-sm">{result.name}</span>
+                            {result.subtitle && (
+                              <span className="text-xs text-muted-foreground ml-2">
+                                {result.subtitle}
+                              </span>
+                            )}
+                          </div>
+                          <Badge variant="outline" className="text-xs capitalize">
+                            {entityType === 'opportunities'
+                              ? 'opportunity'
+                              : entityType.replace(/s$/, '')}
+                          </Badge>
+                        </button>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+
+            {/* No results message */}
+            {searchQuery.length >= 2 && !isSearching && !hasSearchResults && (
+              <div className="text-center py-8 text-sm text-muted-foreground">
+                No results found for &quot;{searchQuery}&quot;
               </div>
             )}
 
@@ -407,7 +488,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
                   <CollapsibleContent className="space-y-1 pt-2">
                     {section.items.map((item, idx) => {
                       const globalIndex =
-                        crmResults.length +
+                        flatResults.length +
                         filteredSections
                           .slice(
                             0,
@@ -419,6 +500,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
                       return (
                         <button
                           key={item.href}
+                          data-index={globalIndex}
                           onClick={() => handleNavigation(item.href)}
                           className={cn(
                             'w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors',

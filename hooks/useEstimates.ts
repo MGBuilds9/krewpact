@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api-client';
+import { queryKeys } from '@/lib/query-keys';
 
 // --- Types ---
 
@@ -65,7 +66,7 @@ interface EstimateFilters {
 
 export function useEstimates(filters?: EstimateFilters) {
   return useQuery({
-    queryKey: ['estimates', filters],
+    queryKey: queryKeys.estimates.list(filters ?? {}),
     queryFn: () =>
       apiFetch<Estimate[]>('/api/estimates', {
         params: {
@@ -76,14 +77,16 @@ export function useEstimates(filters?: EstimateFilters) {
           offset: filters?.offset,
         },
       }),
+    staleTime: 30_000,
   });
 }
 
 export function useEstimate(id: string) {
   return useQuery({
-    queryKey: ['estimate', id],
+    queryKey: queryKeys.estimates.detail(id),
     queryFn: () => apiFetch<Estimate>(`/api/estimates/${id}`),
     enabled: !!id,
+    staleTime: 60_000,
   });
 }
 
@@ -93,7 +96,7 @@ export function useCreateEstimate() {
     mutationFn: (data: Partial<Estimate>) =>
       apiFetch<Estimate>('/api/estimates', { method: 'POST', body: data }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['estimates'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.estimates.all });
     },
   });
 }
@@ -104,8 +107,8 @@ export function useUpdateEstimate() {
     mutationFn: ({ id, ...data }: Partial<Estimate> & { id: string }) =>
       apiFetch<Estimate>(`/api/estimates/${id}`, { method: 'PATCH', body: data }),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['estimates'] });
-      queryClient.invalidateQueries({ queryKey: ['estimate', variables.id] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.estimates.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.estimates.detail(variables.id) });
     },
   });
 }
@@ -115,7 +118,7 @@ export function useDeleteEstimate() {
   return useMutation({
     mutationFn: (id: string) => apiFetch(`/api/estimates/${id}`, { method: 'DELETE' }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['estimates'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.estimates.all });
     },
   });
 }
@@ -124,9 +127,10 @@ export function useDeleteEstimate() {
 
 export function useEstimateLines(estimateId: string) {
   return useQuery({
-    queryKey: ['estimateLines', estimateId],
+    queryKey: queryKeys.estimates.lines(estimateId),
     queryFn: () => apiFetch<EstimateLine[]>(`/api/estimates/${estimateId}/lines`),
     enabled: !!estimateId,
+    staleTime: 30_000,
   });
 }
 
@@ -139,8 +143,8 @@ export function useAddEstimateLine() {
         body: data,
       }),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['estimateLines', variables.estimateId] });
-      queryClient.invalidateQueries({ queryKey: ['estimate', variables.estimateId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.estimates.lines(variables.estimateId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.estimates.detail(variables.estimateId) });
     },
   });
 }
@@ -154,8 +158,8 @@ export function useBatchUpdateLines() {
         body: lines,
       }),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['estimateLines', variables.estimateId] });
-      queryClient.invalidateQueries({ queryKey: ['estimate', variables.estimateId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.estimates.lines(variables.estimateId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.estimates.detail(variables.estimateId) });
     },
   });
 }
@@ -166,8 +170,8 @@ export function useDeleteEstimateLine() {
     mutationFn: ({ estimateId, lineId }: { estimateId: string; lineId: string }) =>
       apiFetch(`/api/estimates/${estimateId}/lines/${lineId}`, { method: 'DELETE' }),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['estimateLines', variables.estimateId] });
-      queryClient.invalidateQueries({ queryKey: ['estimate', variables.estimateId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.estimates.lines(variables.estimateId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.estimates.detail(variables.estimateId) });
     },
   });
 }
@@ -176,9 +180,10 @@ export function useDeleteEstimateLine() {
 
 export function useEstimateVersions(estimateId: string) {
   return useQuery({
-    queryKey: ['estimateVersions', estimateId],
+    queryKey: queryKeys.estimates.versions(estimateId),
     queryFn: () => apiFetch<EstimateVersion[]>(`/api/estimates/${estimateId}/versions`),
     enabled: !!estimateId,
+    staleTime: 30_000,
   });
 }
 
@@ -191,8 +196,10 @@ export function useCreateEstimateVersion() {
         body: { reason },
       }),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['estimateVersions', variables.estimateId] });
-      queryClient.invalidateQueries({ queryKey: ['estimate', variables.estimateId] });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.estimates.versions(variables.estimateId),
+      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.estimates.detail(variables.estimateId) });
     },
   });
 }

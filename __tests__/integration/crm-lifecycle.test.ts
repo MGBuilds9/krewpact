@@ -113,22 +113,22 @@ describe('CRM Lifecycle: Lead → Contact → Opportunity', () => {
 describe('CRM Lifecycle: Bulk Operations', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('bulk tags multiple leads', async () => {
+  it('bulk assign updates owner for multiple leads', async () => {
     mockClerkAuth(mockAuth);
     const client = mockSupabaseClient({
-      tables: { entity_tags: { data: null, error: null } },
+      tables: { leads: { data: null, error: null } },
     });
     mockCreateUserClient.mockResolvedValue(client);
 
     const req = makeJsonRequest('/api/crm/leads/bulk', {
-      action: 'tag',
+      action: 'assign',
       ids: [UUID1, UUID2],
-      params: { tag_id: '550e8400-e29b-41d4-a716-446655440099' },
+      value: '550e8400-e29b-41d4-a716-446655440099',
     });
     const res = await bulkLeads(req);
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.data.success).toBe(2);
+    expect(body.data.updated).toBe(2);
   });
 
   it('bulk stage change moves leads forward', async () => {
@@ -141,12 +141,12 @@ describe('CRM Lifecycle: Bulk Operations', () => {
     const req = makeJsonRequest('/api/crm/leads/bulk', {
       action: 'stage',
       ids: [UUID1],
-      params: { stage: 'qualified' },
+      value: 'qualified',
     });
     const res = await bulkLeads(req);
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.data.success).toBe(1);
+    expect(body.data.updated).toBe(1);
   });
 });
 

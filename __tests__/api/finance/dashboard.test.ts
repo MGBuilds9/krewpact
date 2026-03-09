@@ -1,0 +1,167 @@
+/**
+ * Tests for GET /api/finance/dashboard
+ *
+ * Verifies:
+ * - 401 when unauthenticated
+ * - Aggregated dashboard metrics (AR, PO, job costs)
+ * - Handles DB errors gracefully (500)
+ * - Returns zero values when no data exists
+ */
+
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/api/rate-limit', () => ({
+  rateLimit: vi.fn().mockResolvedValue({ success: true }),
+  rateLimitResponse: vi.fn(),
+}));
+
+import { auth } from '@clerk/nextjs/server';
+import { createUserClient } from '@/lib/supabase/server';
+import {
+  mockClerkAuth,
+  mockClerkUnauth,
+  makeRequest,
+  mockSupabaseClient,
+} from '@/__tests__/helpers';
+
+const mockAuth = vi.mocked(auth);
+const mockCreateUserClient = vi.mocked(createUserClient);
+
+describe('GET /api/finance/dashboard', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns 401 when unauthenticated', async () => {
+    mockClerkUnauth(mockAuth);
+
+    const { GET } = await import('@/app/api/finance/dashboard/route');
+    const res = await GET(makeRequest('/api/finance/dashboard'));
+    expect(res.status).toBe(401);
+    const body = await res.json();
+    expect(body.error).toBe('Unauthorized');
+  });
+
+  it('returns aggregated dashboard metrics', async () => {
+    mockClerkAuth(mockAuth);
+
+    const client = mockSupabaseClient({
+      tables: {
+        invoice_snapshots: {
+          data: [
+            { id: 'inv-1', total_amount: 10000, amount_paid: 3000, status: 'submitted' },
+            { id: 'inv-2', total_amount: 25000, amount_paid: 25000, status: 'paid' },
+            { id: 'inv-3', total_amount: 15000, amount_paid: 0, status: 'overdue' },
+          ],
+          error: null,
+        },
+        po_snapshots: {
+          data: [
+            { id: 'po-1', total_amount: 30000 },
+            { id: 'po-2', total_amount: 45000 },
+          ],
+          error: null,
+        },
+        job_cost_snapshots: {
+          data: [{ id: 'jc-1' }, { id: 'jc-2' }, { id: 'jc-3' }],
+          error: null,
+        },
+      },
+    });
+    mockCreateUserClient.mockResolvedValue(client);
+
+    const { GET } = await import('@/app/api/finance/dashboard/route');
+    const res = await GET(makeRequest('/api/finance/dashboard'));
+    expect(res.status).toBe(200);
+
+    const body = await res.json();
+    // AR: (10000-3000) + (25000-25000) + (15000-0) = 7000 + 0 + 15000 = 22000
+    expect(body.accounts_receivable.total_outstanding).toBe(22000);
+    expect(body.accounts_receivable.invoice_count).toBe(3);
+    // PO: 30000 + 45000 = 75000
+    expect(body.purchase_orders.total_value).toBe(75000);
+    expect(body.purchase_orders.po_count).toBe(2);
+    // Job costs: 3 snapshots
+    expect(body.job_costs.snapshot_count).toBe(3);
+  });
+
+  it('returns zero values when no data exists', async () => {
+    mockClerkAuth(mockAuth);
+
+    const client = mockSupabaseClient({
+      tables: {
+        invoice_snapshots: { data: [], error: null },
+        po_snapshots: { data: [], error: null },
+        job_cost_snapshots: { data: [], error: null },
+      },
+    });
+    mockCreateUserClient.mockResolvedValue(client);
+
+    const { GET } = await import('@/app/api/finance/dashboard/route');
+    const res = await GET(makeRequest('/api/finance/dashboard'));
+    expect(res.status).toBe(200);
+
+    const body = await res.json();
+    expect(body.accounts_receivable.total_outstanding).toBe(0);
+    expect(body.accounts_receivable.invoice_count).toBe(0);
+    expect(body.purchase_orders.total_value).toBe(0);
+    expect(body.purchase_orders.po_count).toBe(0);
+    expect(body.job_costs.snapshot_count).toBe(0);
+  });
+
+  it('returns 500 when invoice query fails', async () => {
+    mockClerkAuth(mockAuth);
+
+    const client = mockSupabaseClient({
+      tables: {
+        invoice_snapshots: { data: null, error: { message: 'DB error' } },
+        po_snapshots: { data: [], error: null },
+        job_cost_snapshots: { data: [], error: null },
+      },
+    });
+    mockCreateUserClient.mockResolvedValue(client);
+
+    const { GET } = await import('@/app/api/finance/dashboard/route');
+    const res = await GET(makeRequest('/api/finance/dashboard'));
+    expect(res.status).toBe(500);
+
+    const body = await res.json();
+    expect(body.error).toBe('Failed to fetch finance data');
+  });
+
+  it('returns 500 when PO query fails', async () => {
+    mockClerkAuth(mockAuth);
+
+    const client = mockSupabaseClient({
+      tables: {
+        invoice_snapshots: { data: [], error: null },
+        po_snapshots: { data: null, error: { message: 'Connection lost' } },
+        job_cost_snapshots: { data: [], error: null },
+      },
+    });
+    mockCreateUserClient.mockResolvedValue(client);
+
+    const { GET } = await import('@/app/api/finance/dashboard/route');
+    const res = await GET(makeRequest('/api/finance/dashboard'));
+    expect(res.status).toBe(500);
+  });
+
+  it('returns 500 when job cost query fails', async () => {
+    mockClerkAuth(mockAuth);
+
+    const client = mockSupabaseClient({
+      tables: {
+        invoice_snapshots: { data: [], error: null },
+        po_snapshots: { data: [], error: null },
+        job_cost_snapshots: { data: null, error: { message: 'Timeout' } },
+      },
+    });
+    mockCreateUserClient.mockResolvedValue(client);
+
+    const { GET } = await import('@/app/api/finance/dashboard/route');
+    const res = await GET(makeRequest('/api/finance/dashboard'));
+    expect(res.status).toBe(500);
+  });
+});
