@@ -25,5 +25,24 @@ Branch: ralph/enterprise-phase2
 - **Rate limiting:** All 259 non-cron/webhook routes have Upstash rate limiting
 - **Sentry:** sentry.client.config.ts, sentry.server.config.ts, sentry.edge.config.ts all exist
 - **Logger:** lib/logger.ts with structured logging (info, warn, error, debug)
+- **Supabase Realtime:** `hooks/useRealtimeSubscription.ts` — generic hook for postgres_changes subscription. Accepts table, filter, onEvent, queryKeys, enabled.
+- **React Compiler lint:** Self-referencing in `useCallback` is banned. For recursive patterns (reconnect), define function inside `useEffect` and store ref.
+- **jsdom FormData bug:** `Request.formData()` hangs on streamed FormData bodies in jsdom. Fix: `vi.spyOn(req, 'formData').mockResolvedValue(formData)`.
+- **Supabase JS v2.98.0** — full Realtime support via `.channel().on('postgres_changes', ...).subscribe()`
+
+---
+
+## 2026-03-09 - US-001: Supabase Realtime hook for live table subscriptions
+- **Implemented:** `hooks/useRealtimeSubscription.ts` — generic Realtime subscription hook
+- **Features:** table/filter params, INSERT/UPDATE/DELETE callbacks, React Query invalidation, auto-reconnect with backoff (max 5 attempts), enabled toggle, isSubscribed status
+- **Files changed:**
+  - `hooks/useRealtimeSubscription.ts` (new)
+  - `__tests__/hooks/useRealtimeSubscription.test.ts` (new, 10 tests)
+  - `__tests__/api/crm/opportunity-attachments.test.ts` (fixed pre-existing timeout)
+- **Tests:** 10 new, 3,102 total (275 files)
+- **Learnings for future iterations:**
+  - React Compiler lint bans self-referencing `useCallback`. Use function-inside-effect + ref pattern instead.
+  - jsdom `Request.formData()` hangs on streamed bodies — always mock it with `vi.spyOn`
+  - Keep Realtime hook refs (`onEventRef`, `queryKeysRef`) separate from effect deps to prevent re-subscription loops
 
 ---
