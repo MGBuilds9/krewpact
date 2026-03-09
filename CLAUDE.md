@@ -256,6 +256,16 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
+### Mar 8, 2026 — P1 Completion Sprint (6 Sprints, Production-Ready)
+
+- **Sprint 1 (ERPNext Sync):** Created `purchase-invoice-mapper.ts` + `payment-entry-mapper.ts` (13/13 mappers complete). Registered in sync-service. Built sync dashboard page + `/api/admin/sync/status` API route.
+- **Sprint 2 (Finance Dashboard):** Enhanced finance page from nav stub → real metrics dashboard (AR outstanding, PO value, job cost count in CAD). Built `/api/finance/dashboard` aggregation route.
+- **Sprint 3 (Portal Messaging):** Built portal messaging system — `GET/POST /api/portal/projects/[id]/messages` + `GET/PATCH /api/portal/projects/[id]/messages/[msgId]`. Portal access scoping. Messages page with compose form + read tracking. Fire-and-forget notifications.
+- **Sprint 4 (Route Tests):** Added 18 new test files (~250 tests) covering time-entries, diary, photos, folders, timesheet-batches, cost-codes, notifications, compliance, privacy, governance, selections, allowances, portal-messages, sync-status, finance-dashboard, purchase-invoice-mapper, payment-entry-mapper.
+- **Sprint 5 (Console.log Migration):** Migrated all 26 console.log/warn/error calls in 16 API + lib files to structured logger. 0 console.log remaining in app/api/ or lib/ (except logger.ts itself).
+- **Sprint 6 (Verification):** 3,092 tests passing (274 files). Lint: 44 warnings (all e2e, 0 errors). Typecheck clean. Build clean.
+- **Summary:** P1 fully production-ready. 13/13 ERPNext mappers, sync dashboard, finance metrics, portal messaging, comprehensive test coverage, structured logging throughout.
+
 ### Mar 8, 2026 — Autonomous Build Loop: ALL 18 PRD TASKS COMPLETE (Phases A-D)
 
 - **Phase C3 (Project Execution):** Built 5 API routes for milestones + tasks + task dependencies (GET/POST/PATCH/DELETE). Added `milestoneCreate/Update` and `taskCreate/Update` Zod validators. 58 new tests (5 test files).
