@@ -99,5 +99,26 @@ Branch: ralph/enterprise-phase2
 - **Learnings for future iterations:**
   - Never spy on `document.createElement` globally — it breaks React rendering in jsdom. Use a conditional mock that only intercepts the specific tag you need (e.g., 'a') and delegates to the real implementation for everything else.
   - `satisfies` keyword works well for inline type checking of props objects without losing inference
+- **Integration test pattern:** For cross-feature integration tests, define mock variables (mockOn, mockChannel, etc.) BEFORE `vi.mock()` calls. Don't use `require()` to access mock internals — use module-scoped variables instead.
+
+---
+
+## 2026-03-09 - US-005: E2E CHECKPOINT: Realtime + PDF features verified
+- **CHECKPOINT PASSED** — all acceptance criteria verified
+- **Integration test:** `__tests__/integration/checkpoint-realtime-pdf.test.ts` (4 tests)
+  - Full Realtime lifecycle: subscribe → event → cache invalidation → unsubscribe
+  - PDF estimate generation → 200 + PDF buffer
+  - PDF project-status generation → 200 + PDF buffer
+  - Invalid PDF type → 400
+- **Quality gate:**
+  - Lint: 0 errors
+  - Typecheck: 0 errors
+  - Tests: 3,132 passed (280 files)
+  - Build: clean
+- **Files changed:**
+  - `__tests__/integration/checkpoint-realtime-pdf.test.ts` (new, 4 tests)
+- **Learnings for future iterations:**
+  - For integration tests that need mock internals, define mock objects at module scope before `vi.mock()` — don't use `require()` which fails with ESM
+  - Checkpoint stories are quick when individual stories have thorough tests — just consolidate and gate
 
 ---
