@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 const updateSchema = z.object({
-  read: z.boolean().optional(),
+  state: z.enum(['read']).optional(),
 });
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -36,9 +36,13 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 
   try {
     const supabase = await createUserClient();
+    const updateData: Record<string, unknown> = { ...parsed.data };
+    if (parsed.data.state === 'read') {
+      updateData.read_at = new Date().toISOString();
+    }
     const { data, error } = await supabase
       .from('notifications')
-      .update(parsed.data)
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();
