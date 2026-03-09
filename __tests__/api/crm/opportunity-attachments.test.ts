@@ -147,13 +147,16 @@ describe('POST /api/crm/opportunities/[id]/attachments', () => {
     const { client } = createStorageMock();
     mockCreateUserClient.mockResolvedValue(client as never);
 
+    const file = new File(['test content'], 'test.pdf', { type: 'application/pdf' });
     const formData = new FormData();
-    formData.append('file', new File(['test content'], 'test.pdf', { type: 'application/pdf' }));
+    formData.append('file', file);
 
+    // Mock formData() because jsdom Request.formData() hangs on streamed bodies
     const req = new Request(`http://localhost:3000/api/crm/opportunities/${OPP_ID}/attachments`, {
       method: 'POST',
-      body: formData,
     });
+    vi.spyOn(req, 'formData').mockResolvedValue(formData);
+
     const res = await POST(req as never, makeContext(OPP_ID));
     expect(res.status).toBe(201);
     const body = await res.json();
