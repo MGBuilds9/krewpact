@@ -45,3 +45,9 @@ next-env.d.ts
 
 # API keys
 frappe_api_keys.csv
+
+# Syncthing conflict files
+*.sync-conflict-*
+
+# Ralph loop archives (historical PRDs/progress)
+scripts/ralph/archive/
