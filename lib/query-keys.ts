@@ -79,8 +79,12 @@ export const queryKeys = {
   },
   executive: {
     all: ['executive'] as const,
+    _base: () => queryKeys.executive.all,
     overview: () => [...queryKeys.executive.all, 'overview'] as const,
+    overviewByDivision: (division: string) =>
+      [...queryKeys.executive.all, 'overview', 'division', division] as const,
     alerts: () => [...queryKeys.executive.all, 'alerts'] as const,
+    forecast: () => [...queryKeys.executive.all, 'forecast'] as const,
     staging: {
       all: [...['executive'], 'staging'] as const,
       lists: () => [...queryKeys.executive.staging.all, 'list'] as const,
