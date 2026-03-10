@@ -72,7 +72,7 @@ describe('DataTable', () => {
   it('disables previous page button on first page', () => {
     renderTable({ page: 0 });
     const buttons = screen.getAllByRole('button');
-    const prevButton = buttons.find(
+    const _prevButton = buttons.find(
       (btn) => btn.querySelector('svg') && btn.getAttribute('disabled') !== null,
     );
     // page 0: previous button should be disabled

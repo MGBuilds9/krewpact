@@ -397,7 +397,7 @@ describe('computeLeadMerge', () => {
       lead_score: 40,
     };
 
-    const { updates, mergedFields } = computeLeadMerge(primary, secondary);
+    const { updates: _updates, mergedFields } = computeLeadMerge(primary, secondary);
 
     // Only notes should be merged (appended), no other fields overwritten
     const nonNoteFields = mergedFields.filter((f) => f !== 'notes');

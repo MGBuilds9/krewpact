@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Admin Reference Data', () => {
   test('navigate to admin governance page', async ({ page }) => {
     await page.goto('/admin/governance');
-    const response = await page.waitForLoadState('domcontentloaded');
+    const _response = await page.waitForLoadState('domcontentloaded');
     // Page should load (may show empty state or data)
     const body = page.locator('body');
     await expect(body).toContainText(/governance|reference|admin|data/i);

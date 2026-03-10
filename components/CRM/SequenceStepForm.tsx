@@ -82,6 +82,7 @@ export function SequenceStepForm({
     defaultValues: extractFormDefaults(initialData),
   });
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const actionType = form.watch('action_type');
 
   function buildActionConfig(values: StepFormValues): Record<string, unknown> {

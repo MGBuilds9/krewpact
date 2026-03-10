@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -139,7 +139,7 @@ export default function LeadsPage() {
     sortDir: sort?.direction,
   });
 
-  const leads = response?.data ?? [];
+  const leads = useMemo(() => response?.data ?? [], [response?.data]);
   const total = response?.total ?? 0;
 
   const toggleSelect = useCallback((id: string) => {

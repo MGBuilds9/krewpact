@@ -21,7 +21,7 @@ function makeRequest(params: Record<string, string> = {}) {
   return new NextRequest(url);
 }
 
-function mockSupabaseSelect(
+function _mockSupabaseSelect(
   data: unknown[] | null,
   count: number | null = null,
   error: unknown = null,

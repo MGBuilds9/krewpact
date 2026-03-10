@@ -17,7 +17,6 @@ import {
   mockSupabaseClient,
   mockClerkAuth,
   mockClerkUnauth,
-  makeRequest,
   makeLead,
   makeOpportunity,
   resetFixtureCounter,

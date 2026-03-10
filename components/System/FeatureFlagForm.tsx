@@ -41,6 +41,7 @@ export function FeatureFlagForm({ onQuery }: FeatureFlagFormProps) {
       </div>
       <div className="flex items-center gap-2 pb-1">
         <Switch
+          // eslint-disable-next-line react-hooks/incompatible-library
           checked={form.watch('is_enabled')}
           onCheckedChange={(v) => form.setValue('is_enabled', v)}
         />

@@ -20,4 +20,24 @@ describe('Demo mode production guard', () => {
     const { DEMO_MODE } = await import('@/lib/demo-mode');
     expect(DEMO_MODE).toBe(true);
   });
+
+  it('demo client getToken returns null (never leaks real tokens)', async () => {
+    const { useAuth } = await import('@/lib/clerk-demo-client');
+    const auth = useAuth();
+    const token = await auth.getToken();
+    expect(token).toBeNull();
+  });
+
+  it('demo server getToken returns null (never leaks real tokens)', async () => {
+    const { auth } = await import('@/lib/clerk-demo-server');
+    const session = await auth();
+    const token = await session.getToken();
+    expect(token).toBeNull();
+  });
+
+  it('demo user has static IDs (not real user data)', async () => {
+    const { DEMO_USER } = await import('@/lib/demo-mode');
+    expect(DEMO_USER.id).toBe('demo_clerk_user');
+    expect(DEMO_USER.clerkUserId).toMatch(/^user_/);
+  });
 });

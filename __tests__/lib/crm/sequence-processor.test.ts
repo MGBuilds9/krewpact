@@ -41,7 +41,7 @@ describe('processSequences', () => {
     // The mock supabase client resolves per-table, so sequence_enrollments returns enrollments,
     // then sequence_steps returns no data (step not found).
 
-    const mockChain = () => {
+    const _mockChain = () => {
       const chain: Record<string, unknown> = {};
       const methods = [
         'select',
@@ -89,7 +89,7 @@ describe('processSequences', () => {
     const mockClient = {
       from: vi.fn().mockImplementation((table: string) => {
         fromCalls.push(table);
-        const chain: Record<string, unknown> = {};
+        const _chain: Record<string, unknown> = {};
         const createChain = (): Record<string, unknown> => {
           const c: Record<string, unknown> = {};
           const methods = [

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Pin, Trash2, Pencil, Plus, ChevronDown, ChevronRight } from 'lucide-react';
@@ -27,7 +27,7 @@ export function NotesPanel({ entityType, entityId }: NotesPanelProps) {
   const [editContent, setEditContent] = useState('');
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
-  async function fetchNotes() {
+  const fetchNotes = useCallback(async () => {
     try {
       const res = await fetch(`/api/crm/notes?entity_type=${entityType}&entity_id=${entityId}`);
       const data = await res.json();
@@ -36,11 +36,11 @@ export function NotesPanel({ entityType, entityId }: NotesPanelProps) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [entityType, entityId]);
 
   useEffect(() => {
     fetchNotes();
-  }, [entityType, entityId]);
+  }, [fetchNotes]);
 
   async function addNote() {
     if (!newContent.trim()) return;
@@ -97,7 +97,11 @@ export function NotesPanel({ entityType, entityId }: NotesPanelProps) {
   function toggleExpand(id: string) {
     setExpandedIds((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
       return next;
     });
   }

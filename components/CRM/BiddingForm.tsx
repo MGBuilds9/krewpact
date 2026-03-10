@@ -90,6 +90,7 @@ export function BiddingForm({
         <div className="space-y-2">
           <Label htmlFor="source">Source</Label>
           <Select
+            // eslint-disable-next-line react-hooks/incompatible-library
             value={watch('source')}
             onValueChange={(v) => setValue('source', v as FormData['source'])}
           >
@@ -99,7 +100,11 @@ export function BiddingForm({
             <SelectContent>
               {BIDDING_SOURCES.map((s) => (
                 <SelectItem key={s} value={s}>
-                  {s === 'merx' ? 'MERX' : s === 'bids_tenders' ? 'Bids & Tenders' : s.charAt(0).toUpperCase() + s.slice(1)}
+                  {s === 'merx'
+                    ? 'MERX'
+                    : s === 'bids_tenders'
+                      ? 'Bids & Tenders'
+                      : s.charAt(0).toUpperCase() + s.slice(1)}
                 </SelectItem>
               ))}
             </SelectContent>

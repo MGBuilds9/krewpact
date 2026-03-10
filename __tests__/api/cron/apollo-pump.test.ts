@@ -16,30 +16,50 @@ vi.mock('@/lib/integrations/apollo', () => ({
     perPage: 25,
     maxPagesPerRun: 2,
   },
-  mapApolloToLead: vi.fn((person: { id: string; first_name: string; last_name: string; organization?: { name?: string; industry?: string; city?: string; state?: string } }) => ({
-    company_name: person.organization?.name ?? `${person.first_name} ${person.last_name}`,
-    domain: null,
-    industry: person.organization?.industry ?? null,
-    source_channel: 'apollo',
-    source_detail: person.id,
-    status: 'new',
-    project_type: null,
-    city: person.organization?.city ?? null,
-    province: person.organization?.state ?? 'Ontario',
-    estimated_value: null,
-  })),
-  mapApolloToContact: vi.fn((person: { name: string; first_name: string; last_name: string; email: string | null; title: string; linkedin_url: string | null; phone_numbers?: { raw_number: string }[] }, leadId: string) => ({
-    lead_id: leadId,
-    full_name: person.name,
-    first_name: person.first_name,
-    last_name: person.last_name,
-    email: person.email,
-    phone: null,
-    title: person.title,
-    linkedin_url: person.linkedin_url,
-    is_primary: true,
-    is_decision_maker: true,
-  })),
+  mapApolloToLead: vi.fn(
+    (person: {
+      id: string;
+      first_name: string;
+      last_name: string;
+      organization?: { name?: string; industry?: string; city?: string; state?: string };
+    }) => ({
+      company_name: person.organization?.name ?? `${person.first_name} ${person.last_name}`,
+      domain: null,
+      industry: person.organization?.industry ?? null,
+      source_channel: 'apollo',
+      source_detail: person.id,
+      status: 'new',
+      project_type: null,
+      city: person.organization?.city ?? null,
+      province: person.organization?.state ?? 'Ontario',
+      estimated_value: null,
+    }),
+  ),
+  mapApolloToContact: vi.fn(
+    (
+      person: {
+        name: string;
+        first_name: string;
+        last_name: string;
+        email: string | null;
+        title: string;
+        linkedin_url: string | null;
+        phone_numbers?: { raw_number: string }[];
+      },
+      leadId: string,
+    ) => ({
+      lead_id: leadId,
+      full_name: person.name,
+      first_name: person.first_name,
+      last_name: person.last_name,
+      email: person.email,
+      phone: null,
+      title: person.title,
+      linkedin_url: person.linkedin_url,
+      is_primary: true,
+      is_decision_maker: true,
+    }),
+  ),
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
@@ -60,16 +80,22 @@ function makePerson(id: string, name: string = 'Test Person') {
     name,
     email: `${id}@test.com`,
     title: 'Owner',
-    organization: { id: `org-${id}`, name: `Company ${id}`, website_url: null, industry: 'construction', estimated_num_employees: 20, city: 'Toronto', state: 'Ontario' },
+    organization: {
+      id: `org-${id}`,
+      name: `Company ${id}`,
+      website_url: null,
+      industry: 'construction',
+      estimated_num_employees: 20,
+      city: 'Toronto',
+      state: 'Ontario',
+    },
     linkedin_url: null,
     phone_numbers: [],
   };
 }
 
 function makeCronRequest(profileId?: string) {
-  const path = profileId
-    ? `/api/cron/apollo-pump?profileId=${profileId}`
-    : '/api/cron/apollo-pump';
+  const path = profileId ? `/api/cron/apollo-pump?profileId=${profileId}` : '/api/cron/apollo-pump';
   return makeRequest(path, { method: 'POST' });
 }
 
@@ -92,7 +118,13 @@ describe('POST /api/cron/apollo-pump', () => {
 
     const supabase = mockSupabaseClient({
       tables: {
-        leads: { data: [{ id: 'lead-1', external_id: 'p1' }, { id: 'lead-2', external_id: 'p2' }], error: null },
+        leads: {
+          data: [
+            { id: 'lead-1', external_id: 'p1' },
+            { id: 'lead-2', external_id: 'p2' },
+          ],
+          error: null,
+        },
         contacts: { data: null, error: null },
       },
     });
@@ -140,7 +172,7 @@ describe('POST /api/cron/apollo-pump', () => {
     const people = [makePerson('existing-1'), makePerson('new-1')];
     mockSearchPeople.mockResolvedValueOnce(people).mockResolvedValueOnce([]);
 
-    const supabase = mockSupabaseClient({
+    const _supabase = mockSupabaseClient({
       tables: {
         leads: { data: [{ id: 'lead-new', external_id: 'new-1' }], error: null },
         contacts: { data: null, error: null },

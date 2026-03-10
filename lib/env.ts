@@ -41,6 +41,9 @@ const envSchema = z.object({
   // ── Sentry (optional — error tracking disabled when missing) ──
   SENTRY_DSN: z.string().url().optional(),
   NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional(),
+  SENTRY_ORG: z.string().min(1).optional(),
+  SENTRY_PROJECT: z.string().min(1).optional(),
+  SENTRY_AUTH_TOKEN: z.string().min(1).optional(),
 
   // ── App ──
   NEXT_PUBLIC_APP_URL: z.string().url().optional(),
@@ -65,6 +68,9 @@ function warnMissingOptional(env: Record<string, string | undefined>): void {
   }
   if (!env.SENTRY_DSN && !env.NEXT_PUBLIC_SENTRY_DSN) {
     warnings.push('SENTRY_DSN not set — error tracking is DISABLED');
+  }
+  if ((env.SENTRY_DSN || env.NEXT_PUBLIC_SENTRY_DSN) && (!env.SENTRY_ORG || !env.SENTRY_PROJECT)) {
+    warnings.push('SENTRY_ORG/SENTRY_PROJECT not set — source map uploads will be skipped');
   }
   if (!env.RESEND_API_KEY) {
     warnings.push('RESEND_API_KEY not set — email sending will fail');

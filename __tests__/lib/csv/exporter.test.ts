@@ -51,7 +51,7 @@ describe('exportToCSV', () => {
   it('wraps values containing newlines in quotes', () => {
     const data = [{ notes: 'Line 1\nLine 2', email: 'a@b.com' }];
     const csv = exportToCSV(data, ['notes', 'email']);
-    const lines = csv.split('\n');
+    const _lines = csv.split('\n');
     // The value with newline should be wrapped in quotes
     expect(csv).toContain('"Line 1\nLine 2"');
   });

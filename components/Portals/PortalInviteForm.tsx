@@ -47,6 +47,7 @@ export function PortalInviteForm({ onSuccess, onCancel }: PortalInviteFormProps)
     },
   });
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const actorType = form.watch('actor_type');
 
   async function onSubmit(values: FormValues) {

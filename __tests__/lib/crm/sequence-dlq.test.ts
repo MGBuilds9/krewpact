@@ -5,7 +5,7 @@ import {
   retryDLQEntry,
   MAX_RETRIES,
 } from '@/lib/crm/sequence-dlq';
-import { vi as vitestVi } from 'vitest';
+import { vi as _vitestVi } from 'vitest';
 
 // ---------------------------------------------------------------------------
 // Helpers

@@ -8,10 +8,10 @@ import { createUserClient } from '@/lib/supabase/server';
 import { GET as getTasks } from '@/app/api/portal/trade/tasks/route';
 import { PATCH as patchTaskStatus } from '@/app/api/portal/trade/tasks/[id]/status/route';
 import {
-  GET as getSubmittals,
+  GET as _getSubmittals,
   POST as postSubmittal,
 } from '@/app/api/portal/trade/submittals/route';
-import { GET as getSiteLogs, POST as postSiteLog } from '@/app/api/portal/trade/site-logs/route';
+import { GET as _getSiteLogs, POST as postSiteLog } from '@/app/api/portal/trade/site-logs/route';
 import {
   mockClerkAuth,
   mockClerkUnauth,

@@ -188,7 +188,7 @@ describe('CRM RLS: Service client bypass', () => {
     const client = mockCreateServiceClient();
 
     // Simulate a service-level query (as a cron job would do)
-    const chain = client.from('leads').select('*');
+    const _chain = client.from('leads').select('*');
 
     // The mock resolves with all 3 leads across divisions
     expect(client.from).toHaveBeenCalledWith('leads');

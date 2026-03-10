@@ -24,5 +24,16 @@ describe('Security headers', () => {
     expect(headerMap['X-Frame-Options']).toBe('DENY');
     expect(headerMap['Referrer-Policy']).toBe('strict-origin-when-cross-origin');
     expect(headerMap['Permissions-Policy']).toContain('camera=()');
+    expect(headerMap['X-DNS-Prefetch-Control']).toBe('off');
+    expect(headerMap['X-Permitted-Cross-Domain-Policies']).toBe('none');
+  });
+
+  it('CSP includes clerk.mdmgroupinc.ca in connect-src', async () => {
+    const config = (await import('@/next.config')).default;
+    const headers = await config.headers!();
+    const csp = headers[0].headers.find(
+      (h: { key: string }) => h.key === 'Content-Security-Policy',
+    )?.value;
+    expect(csp).toContain('https://clerk.mdmgroupinc.ca');
   });
 });

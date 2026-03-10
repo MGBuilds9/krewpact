@@ -19,22 +19,38 @@ import { makeRequest } from '@/__tests__/helpers';
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClient = vi.mocked(createUserClient);
 
-function makeStatsClient(counts: { total: number; pending: number; completed: number; failed: number }, lastUpdatedAt: string | null = '2026-03-06T12:00:00Z') {
+function makeStatsClient(
+  counts: { total: number; pending: number; completed: number; failed: number },
+  lastUpdatedAt: string | null = '2026-03-06T12:00:00Z',
+) {
   // The stats route calls supabase.from() 5 times via Promise.all
   // Each call returns a chainable mock
   let callCount = 0;
   const responses = [
-    { data: null, error: null, count: counts.total },       // total
-    { data: null, error: null, count: counts.pending },      // pending
-    { data: null, error: null, count: counts.completed },    // completed
-    { data: null, error: null, count: counts.failed },       // failed
+    { data: null, error: null, count: counts.total }, // total
+    { data: null, error: null, count: counts.pending }, // pending
+    { data: null, error: null, count: counts.completed }, // completed
+    { data: null, error: null, count: counts.failed }, // failed
     { data: lastUpdatedAt ? [{ updated_at: lastUpdatedAt }] : [], error: null, count: null }, // lastRun
   ];
 
   function createChain(responseIdx: number) {
     const resp = responses[responseIdx] ?? { data: [], error: null, count: null };
     const chain: Record<string, unknown> = {};
-    ['select', 'eq', 'neq', 'order', 'limit', 'range', 'ilike', 'in', 'gte', 'lte', 'gt', 'lt'].forEach((m) => {
+    [
+      'select',
+      'eq',
+      'neq',
+      'order',
+      'limit',
+      'range',
+      'ilike',
+      'in',
+      'gte',
+      'lte',
+      'gt',
+      'lt',
+    ].forEach((m) => {
       chain[m] = vi.fn().mockReturnValue(chain);
     });
     chain.single = vi.fn().mockResolvedValue(resp);
@@ -94,13 +110,14 @@ describe('GET /api/crm/enrichment/stats', () => {
   });
 
   it('returns 500 on supabase error', async () => {
-    let callCount = 0;
     const errorResp = { data: null, error: { message: 'DB error' }, count: null };
     function createErrorChain() {
       const chain: Record<string, unknown> = {};
-      ['select', 'eq', 'neq', 'order', 'limit', 'range', 'ilike', 'in', 'gte', 'lte'].forEach((m) => {
-        chain[m] = vi.fn().mockReturnValue(chain);
-      });
+      ['select', 'eq', 'neq', 'order', 'limit', 'range', 'ilike', 'in', 'gte', 'lte'].forEach(
+        (m) => {
+          chain[m] = vi.fn().mockReturnValue(chain);
+        },
+      );
       chain.single = vi.fn().mockResolvedValue(errorResp);
       chain.maybeSingle = vi.fn().mockResolvedValue(errorResp);
       chain.then = (resolve: (v: unknown) => void) => resolve(errorResp);
@@ -109,7 +126,6 @@ describe('GET /api/crm/enrichment/stats', () => {
 
     const client = {
       from: vi.fn().mockImplementation(() => {
-        callCount++;
         return createErrorChain();
       }),
     };

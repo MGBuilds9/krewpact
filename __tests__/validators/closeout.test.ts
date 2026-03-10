@@ -10,7 +10,7 @@ import {
   serviceEventCreateSchema,
 } from '@/lib/validators/closeout';
 
-const VALID_UUID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+const _VALID_UUID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 
 // ============================================================
 // closeoutPackageCreateSchema

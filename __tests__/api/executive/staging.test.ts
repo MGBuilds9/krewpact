@@ -31,20 +31,18 @@ function makeRequest(params: Record<string, string> = {}, body?: unknown) {
   return new NextRequest(url);
 }
 
-function mockSupabaseChain(data: unknown[], count: number, error: unknown = null) {
+function _mockSupabaseChain(data: unknown[], count: number, error: unknown = null) {
   const rangeFn = vi.fn().mockReturnValue({ data, count, error });
   const orderFn = vi.fn().mockReturnValue({ range: rangeFn, data, count, error });
   const eqFn = vi
     .fn()
     .mockReturnValue({ order: orderFn, eq: vi.fn().mockReturnValue({ order: orderFn }) });
   const selectFn = vi.fn().mockReturnValue({ eq: eqFn, order: orderFn });
-  const insertFn = vi
-    .fn()
-    .mockReturnValue({
-      select: vi
-        .fn()
-        .mockReturnValue({ single: vi.fn().mockReturnValue({ data: data[0] ?? null, error }) }),
-    });
+  const insertFn = vi.fn().mockReturnValue({
+    select: vi
+      .fn()
+      .mockReturnValue({ single: vi.fn().mockReturnValue({ data: data[0] ?? null, error }) }),
+  });
 
   return {
     from: vi.fn().mockReturnValue({

@@ -131,6 +131,7 @@ export function SubscriptionForm({ subscription, onClose }: SubscriptionFormProp
     mutation.mutate(data);
   });
 
+  // eslint-disable-next-line react-hooks/incompatible-library -- form.watch() is intentional for reactive form values
   const categoryValue = watch('category') as string | undefined;
   const currencyValue = watch('currency') as string | undefined;
   const billingCycleValue = watch('billing_cycle') as string | undefined;

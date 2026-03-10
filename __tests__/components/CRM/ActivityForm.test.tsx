@@ -17,8 +17,8 @@ vi.mock('@/hooks/useCRM', () => ({
 vi.mock('@/components/ui/select', () => ({
   Select: ({
     children,
-    onValueChange,
-    defaultValue,
+    onValueChange: _onValueChange,
+    defaultValue: _defaultValue,
   }: {
     children: React.ReactNode;
     onValueChange: (v: string) => void;

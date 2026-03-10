@@ -7,8 +7,8 @@ import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { GET as getProjects } from '@/app/api/portal/projects/route';
 import { GET as getProject } from '@/app/api/portal/projects/[id]/route';
-import { GET as getDocs } from '@/app/api/portal/projects/[id]/documents/route';
-import { GET as getCOs } from '@/app/api/portal/projects/[id]/change-orders/route';
+import { GET as _getDocs } from '@/app/api/portal/projects/[id]/documents/route';
+import { GET as _getCOs } from '@/app/api/portal/projects/[id]/change-orders/route';
 import { POST as approveCO } from '@/app/api/portal/projects/[id]/change-orders/[coId]/approve/route';
 import { GET as getInvoices } from '@/app/api/portal/projects/[id]/invoices/route';
 import {
@@ -76,7 +76,7 @@ function buildPortalMock(
     baseline_budget: 500000,
     current_budget: 490000,
   };
-  const documents = overrides.documents ?? [
+  const _documents = overrides.documents ?? [
     {
       id: 'doc-1',
       file_name: 'Plans.pdf',
@@ -135,7 +135,7 @@ function buildPortalMock(
     return Promise.resolve({ data: project, error: project ? null : { message: 'Not found' } });
   });
 
-  const from = vi.fn().mockImplementation((table: string) => ({
+  const from = vi.fn().mockImplementation((_table: string) => ({
     select,
     eq,
     in: in_,

@@ -18,7 +18,7 @@ import {
 } from '@/app/api/tasks/[id]/dependencies/route';
 import { GET as getDiary, POST as postDiary } from '@/app/api/projects/[id]/diary/route';
 import {
-  GET as getDiaryEntry,
+  GET as _getDiaryEntry,
   PATCH as patchDiaryEntry,
   DELETE as deleteDiaryEntry,
 } from '@/app/api/projects/[id]/diary/[entryId]/route';

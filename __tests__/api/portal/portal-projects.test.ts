@@ -25,7 +25,7 @@ const mockAuth = vi.mocked(auth);
 
 function chainMock(response: { data: unknown; error: unknown }) {
   const chain: Record<string, unknown> = {};
-  const self = () => chain;
+  const _self = () => chain;
   chain.select = vi.fn().mockReturnValue(chain);
   chain.eq = vi.fn().mockReturnValue(chain);
   chain.in = vi.fn().mockReturnValue(chain);
@@ -66,7 +66,13 @@ describe('GET /api/portal/projects', () => {
       if (callCount === 1) {
         // portal_accounts query
         return chainMock({
-          data: { id: 'pa-1', actor_type: 'client', status: 'pending', company_name: 'TestCo', contact_name: 'John' },
+          data: {
+            id: 'pa-1',
+            actor_type: 'client',
+            status: 'pending',
+            company_name: 'TestCo',
+            contact_name: 'John',
+          },
           error: null,
         });
       }
@@ -88,7 +94,13 @@ describe('GET /api/portal/projects', () => {
       if (callCount === 1) {
         // portal_accounts query
         return chainMock({
-          data: { id: 'pa-1', actor_type: 'client', status: 'active', company_name: 'TestCo', contact_name: 'John' },
+          data: {
+            id: 'pa-1',
+            actor_type: 'client',
+            status: 'active',
+            company_name: 'TestCo',
+            contact_name: 'John',
+          },
           error: null,
         });
       }
@@ -131,10 +143,9 @@ describe('GET /api/portal/projects/[id]', () => {
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
     const { GET: getDetail } = await import('@/app/api/portal/projects/[id]/route');
-    const res = await getDetail(
-      makeRequest('/api/portal/projects/proj-1'),
-      { params: Promise.resolve({ id: 'proj-1' }) },
-    );
+    const res = await getDetail(makeRequest('/api/portal/projects/proj-1'), {
+      params: Promise.resolve({ id: 'proj-1' }),
+    });
     expect(res.status).toBe(401);
   });
 
@@ -178,10 +189,9 @@ describe('GET /api/portal/projects/[id]', () => {
     });
 
     const { GET: getDetail } = await import('@/app/api/portal/projects/[id]/route');
-    const res = await getDetail(
-      makeRequest('/api/portal/projects/proj-1'),
-      { params: Promise.resolve({ id: 'proj-1' }) },
-    );
+    const res = await getDetail(makeRequest('/api/portal/projects/proj-1'), {
+      params: Promise.resolve({ id: 'proj-1' }),
+    });
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.baseline_budget).toBeUndefined();

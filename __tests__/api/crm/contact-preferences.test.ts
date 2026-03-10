@@ -124,7 +124,7 @@ describe('PATCH /api/crm/contacts/[id]/preferences', () => {
 
   it('updates communication prefs', async () => {
     const existingPrefs = { email_opt_in: false, frequency: 'monthly' };
-    const updatedPrefs = { email_opt_in: true, frequency: 'monthly' };
+    const _updatedPrefs = { email_opt_in: true, frequency: 'monthly' };
     mockClerkAuth(mockAuth);
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({

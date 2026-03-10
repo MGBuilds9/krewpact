@@ -75,7 +75,7 @@ describe('POST /api/crm/leads/merge', () => {
       secondary_id: '22222222-2222-2222-2222-222222222222',
     });
     const res = await POST(req);
-    const data = await res.json();
+    const _data = await res.json();
     // Verify the route accepts valid merge requests
     // Status may vary based on mock setup — verify no auth error
     expect(res.status).not.toBe(401);

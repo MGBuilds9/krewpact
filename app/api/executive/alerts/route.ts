@@ -16,7 +16,7 @@ interface Alert {
 
 const SEVERITY_ORDER = { high: 0, medium: 1, low: 2 };
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   const { userId, sessionClaims } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 

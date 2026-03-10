@@ -232,6 +232,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   className="flex cursor-pointer items-center gap-3 rounded-lg border p-3 hover:bg-accent"
                 >
                   <Checkbox
+                    // eslint-disable-next-line react-hooks/incompatible-library
                     checked={divisionForm.watch('divisions').includes(code)}
                     onCheckedChange={(checked) => handleDivisionToggle(code, checked === true)}
                   />

@@ -21,7 +21,6 @@ import {
   mockClerkUnauth,
   makeRequest,
   makeJsonRequest,
-  TEST_IDS,
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);

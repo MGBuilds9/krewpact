@@ -25,12 +25,7 @@ vi.mock('@/lib/logger', () => ({
 import { auth } from '@clerk/nextjs/server';
 import { createUserClient } from '@/lib/supabase/server';
 import { GET } from '@/app/api/admin/audit-log/route';
-import {
-  mockSupabaseClient,
-  mockClerkAuth,
-  mockClerkUnauth,
-  makeRequest,
-} from '@/__tests__/helpers';
+import { mockSupabaseClient, mockClerkUnauth, makeRequest } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClient = vi.mocked(createUserClient);

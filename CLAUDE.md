@@ -256,31 +256,23 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
+### Mar 9, 2026 — Executive Nucleus: Full 4-Phase Build (PR #60 Merged)
+
+- **Executive Nucleus** — restricted C-suite module (`executive`, `platform_admin` roles) for MDM Group operational intelligence. 53 new files, 8,387 lines, 19 commits across 4 phases.
+- **Phase 1 (Foundation):** Role-gated layout with `ExecutiveNav`, 3 Supabase migrations (`knowledge_staging`, `executive_subscriptions`, `executive_metrics_cache`, `ai_chat_sessions`, `ai_chat_messages`), RLS policies, Zod validators.
+- **Phase 2 (Knowledge):** Document staging pipeline with bulk vault import, review UI. pgvector semantic search (`match_knowledge` RPC, OpenAI ada-002 embeddings). RAG-powered AI chat (GPT-4o-mini with conversation history + source citations).
+- **Phase 3 (Command Center):** Alerts API (stalled deals, SaaS renewals, stale projects). Metrics computation + cache with QStash cron. Overview API serving cached KPIs. Subscription CRUD with full table + form. Command center page with AlertsRibbon, MetricsGrid, DivisionScorecard, SubscriptionWidget.
+- **Phase 4 (Polish):** Division comparison view (6-division selector with A/B compare mode, on-the-fly filtered metrics). Revenue forecast chart (Recharts stacked area, stage-weighted pipeline). Mobile-responsive layout (stacked widgets, edge-to-edge nav scroll).
+- **Decisions:** Used `createServiceClient()` for chat (cross-user session access), `createUserClient()` for RLS-scoped reads. Division-filtered metrics computed on-the-fly (not cached). Forecast uses stage weights: won=100%, negotiation=75%, proposal=50%, qualified=25%, lead=10%.
+- **Tests:** 3,478 passing (307 files), 115 new executive tests. 0 type errors in our code.
+
 ### Mar 9, 2026 — Enterprise Phase 2: Ralph Loop (18 Stories, PR #59 Merged)
 
-- **Realtime:** `useRealtimeSubscription` hook — generic Supabase postgres_changes subscription with auto-reconnect, React Query invalidation. NotificationBell with live unread count badge.
-- **PDF Generation:** `@react-pdf/renderer` service — `generatePdf(template, data)`, EstimatePDF + ProjectStatusPDF templates, POST `/api/pdf/generate`, ExportPdfButton with blob download.
-- **Executive Dashboard:** KPICard + PipelineChart components. `/api/dashboard/executive` with role gating (executive/platform_admin). Pipeline value, active projects, win rate, avg deal size.
-- **PM Dashboard:** ProjectHealthCard with health score (milestone 50%, overdue 30%, daily log recency 20%). `/api/dashboard/pm` filters by current user's projects.
-- **Global Search:** `/api/search/global` — parallel ILIKE across 7 tables with division isolation. CommandPalette rewritten for all entity types with icons + grouping.
-- **Audit Log:** `/api/admin/audit-log` with pagination, filtering (entity_type, action, user_id, date range), role gating. Graceful fallback if table missing.
-- **Bulk Ops:** `/api/crm/leads/bulk` + `/api/crm/contacts/bulk` — assign, stage, delete, CSV export. Max 100 items. `lib/csv/exporter.ts`.
-- **Keyboard Shortcuts:** Chord support (G→L leads, G→P projects, etc.) + ShortcutsHelpOverlay (Cmd+/).
-- **Toast System:** Sonner wrapper (`lib/toast.ts`) — success/error/info/undo with 5s countdown.
-- **Onboarding Wizard:** 4-step wizard (company profile, divisions, invite team, success).
-- **Query Key Factory:** `lib/query-keys.ts` — centralized keys for all 8 entities + dashboard.
-- **Sentry Migration:** All 11 error.tsx files → `Sentry.captureException` instead of `console.error`.
-- **ESLint Fix:** Downgraded ESLint 10.0.3 → 9.39.2 (eslint-plugin-react incompatibility from Dependabot).
-- **Tests:** 3,363 passing (294 files, +271 new). Build clean. PR #59 merged to main.
+- Realtime subscriptions, PDF generation, executive/PM dashboards, global search, audit log, bulk ops, keyboard chords, toast system, onboarding wizard, query key factory, Sentry migration. ESLint 10→9 downgrade. 3,363 tests (294 files). PR #59 merged.
 
-### Mar 8, 2026 — P1 Completion Sprint + Autonomous Build Loop (ALL 18 PRD TASKS)
-
-- P1: 13/13 ERPNext mappers, sync dashboard, finance metrics, portal messaging, 18 new test files, console.log migration. 3,092 tests.
-- Autonomous loop: milestones/tasks APIs, rate limiting on 99 routes, performance audit, notifications wiring, lint cleanup. All 18 PRD tasks (A1-A5, B1-B3, C1-C6, D1-D4) complete. 2,838 tests.
-
-- Mar 8: CRM schema alignment + auth fixes. 2838 tests.
-- Mar 7: Collaboration readiness, first production deploy. 2780 tests.
-- Mar 6: CRM FEATURE COMPLETE. 2780 tests.
-- Mar 5: CRM Premium Phases 1-3. 2354-2571 tests.
-- Mar 4: Framer webhook, org route fixes. 2061 tests.
-- Mar 1: CRM HubSpot Parity. 2048 tests.
+- Mar 8: P1 completion + autonomous loop (all 18 PRD tasks). 2,838-3,092 tests.
+- Mar 7: Collaboration readiness, first production deploy. 2,780 tests.
+- Mar 6: CRM FEATURE COMPLETE. 2,780 tests.
+- Mar 5: CRM Premium Phases 1-3. 2,354-2,571 tests.
+- Mar 4: Framer webhook, org route fixes. 2,061 tests.
+- Mar 1: CRM HubSpot Parity. 2,048 tests.

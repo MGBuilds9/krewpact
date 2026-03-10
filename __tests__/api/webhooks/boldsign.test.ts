@@ -170,7 +170,7 @@ describe('POST /api/webhooks/boldsign', () => {
 
   it('returns 401 when signature is wrong', async () => {
     const body = { event: 'Completed', documentId: 'doc-1' };
-    const req = makeWebhookRequest(body, 'wrong-secret');
+    const _req = makeWebhookRequest(body, 'wrong-secret');
     // Override the signature with one computed using the wrong secret
     const rawBody = JSON.stringify(body);
     const wrongSig = makeSignature(rawBody, 'wrong-secret');

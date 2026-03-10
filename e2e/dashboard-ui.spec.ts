@@ -19,11 +19,11 @@ test.describe('Dashboard UI & Navigation - Desktop', () => {
     // Assuming these tests run against a mock or logged-in state as per other tests.
 
     // Check for core dashboard elements
-    const body = page.locator('body');
+    const _body = page.locator('body');
     // If it redirects to login due to Clerk, the test might fail if not handled,
     // but looking at `admin-reference-data.spec.ts`, it just expects response < 500 or basic text.
     // Let's check for the header or title instead of strict text if redirected.
-    const title = await page.title();
+    const _title = await page.title();
 
     // Just a surface level check to ensure page doesn't crash 500
     const response = await page.request.get('/org/demo/dashboard');

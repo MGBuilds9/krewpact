@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -23,18 +23,18 @@ vi.mock('@/lib/toast', () => ({
 }));
 
 // Mock Select components (Radix portals don't work in jsdom)
-let selectOnValueChange: ((v: string) => void) | undefined;
+let _selectOnValueChange: ((v: string) => void) | undefined;
 vi.mock('@/components/ui/select', () => ({
   Select: ({
     children,
     onValueChange,
-    value,
+    value: _value,
   }: {
     children: React.ReactNode;
     onValueChange: (v: string) => void;
     value?: string;
   }) => {
-    selectOnValueChange = onValueChange;
+    _selectOnValueChange = onValueChange;
     return <div data-testid="select-root">{children}</div>;
   },
   SelectTrigger: ({ children, id }: { children: React.ReactNode; id?: string }) => (
@@ -59,7 +59,7 @@ describe('OnboardingWizard', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    selectOnValueChange = undefined;
+    _selectOnValueChange = undefined;
   });
 
   // ─── Step Indicator ───

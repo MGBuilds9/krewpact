@@ -7,11 +7,11 @@ vi.mock('@clerk/nextjs/server', () => ({
   auth: () => mockAuth(),
 }));
 
-const mockSelect = vi.fn();
-const mockEq = vi.fn();
-const mockSingle = vi.fn();
-const mockInsert = vi.fn();
-const mockOrder = vi.fn();
+const _mockSelect = vi.fn();
+const _mockEq = vi.fn();
+const _mockSingle = vi.fn();
+const _mockInsert = vi.fn();
+const _mockOrder = vi.fn();
 
 const mockFrom = vi.fn();
 vi.mock('@/lib/supabase/server', () => ({
