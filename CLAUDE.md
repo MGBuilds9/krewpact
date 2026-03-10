@@ -256,34 +256,31 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
-### Mar 8, 2026 — P1 Completion Sprint (6 Sprints, Production-Ready)
+### Mar 9, 2026 — Enterprise Phase 2: Ralph Loop (18 Stories, PR #59 Merged)
 
-- **Sprint 1 (ERPNext Sync):** Created `purchase-invoice-mapper.ts` + `payment-entry-mapper.ts` (13/13 mappers complete). Registered in sync-service. Built sync dashboard page + `/api/admin/sync/status` API route.
-- **Sprint 2 (Finance Dashboard):** Enhanced finance page from nav stub → real metrics dashboard (AR outstanding, PO value, job cost count in CAD). Built `/api/finance/dashboard` aggregation route.
-- **Sprint 3 (Portal Messaging):** Built portal messaging system — `GET/POST /api/portal/projects/[id]/messages` + `GET/PATCH /api/portal/projects/[id]/messages/[msgId]`. Portal access scoping. Messages page with compose form + read tracking. Fire-and-forget notifications.
-- **Sprint 4 (Route Tests):** Added 18 new test files (~250 tests) covering time-entries, diary, photos, folders, timesheet-batches, cost-codes, notifications, compliance, privacy, governance, selections, allowances, portal-messages, sync-status, finance-dashboard, purchase-invoice-mapper, payment-entry-mapper.
-- **Sprint 5 (Console.log Migration):** Migrated all 26 console.log/warn/error calls in 16 API + lib files to structured logger. 0 console.log remaining in app/api/ or lib/ (except logger.ts itself).
-- **Sprint 6 (Verification):** 3,092 tests passing (274 files). Lint: 44 warnings (all e2e, 0 errors). Typecheck clean. Build clean.
-- **Summary:** P1 fully production-ready. 13/13 ERPNext mappers, sync dashboard, finance metrics, portal messaging, comprehensive test coverage, structured logging throughout.
+- **Realtime:** `useRealtimeSubscription` hook — generic Supabase postgres_changes subscription with auto-reconnect, React Query invalidation. NotificationBell with live unread count badge.
+- **PDF Generation:** `@react-pdf/renderer` service — `generatePdf(template, data)`, EstimatePDF + ProjectStatusPDF templates, POST `/api/pdf/generate`, ExportPdfButton with blob download.
+- **Executive Dashboard:** KPICard + PipelineChart components. `/api/dashboard/executive` with role gating (executive/platform_admin). Pipeline value, active projects, win rate, avg deal size.
+- **PM Dashboard:** ProjectHealthCard with health score (milestone 50%, overdue 30%, daily log recency 20%). `/api/dashboard/pm` filters by current user's projects.
+- **Global Search:** `/api/search/global` — parallel ILIKE across 7 tables with division isolation. CommandPalette rewritten for all entity types with icons + grouping.
+- **Audit Log:** `/api/admin/audit-log` with pagination, filtering (entity_type, action, user_id, date range), role gating. Graceful fallback if table missing.
+- **Bulk Ops:** `/api/crm/leads/bulk` + `/api/crm/contacts/bulk` — assign, stage, delete, CSV export. Max 100 items. `lib/csv/exporter.ts`.
+- **Keyboard Shortcuts:** Chord support (G→L leads, G→P projects, etc.) + ShortcutsHelpOverlay (Cmd+/).
+- **Toast System:** Sonner wrapper (`lib/toast.ts`) — success/error/info/undo with 5s countdown.
+- **Onboarding Wizard:** 4-step wizard (company profile, divisions, invite team, success).
+- **Query Key Factory:** `lib/query-keys.ts` — centralized keys for all 8 entities + dashboard.
+- **Sentry Migration:** All 11 error.tsx files → `Sentry.captureException` instead of `console.error`.
+- **ESLint Fix:** Downgraded ESLint 10.0.3 → 9.39.2 (eslint-plugin-react incompatibility from Dependabot).
+- **Tests:** 3,363 passing (294 files, +271 new). Build clean. PR #59 merged to main.
 
-### Mar 8, 2026 — Autonomous Build Loop: ALL 18 PRD TASKS COMPLETE (Phases A-D)
+### Mar 8, 2026 — P1 Completion Sprint + Autonomous Build Loop (ALL 18 PRD TASKS)
 
-- **Phase C3 (Project Execution):** Built 5 API routes for milestones + tasks + task dependencies (GET/POST/PATCH/DELETE). Added `milestoneCreate/Update` and `taskCreate/Update` Zod validators. 58 new tests (5 test files).
-- **Phase D1 (Security):** Added Upstash rate limiting to all 99 unprotected API routes. Standard: 60 req/min/user, write-heavy: 30 req/min/user, public: 30 req/min/IP. Only cron/webhook/queue/health correctly excluded.
-- **Phase D2 (Performance):** Replaced `SELECT *` with explicit columns in new routes. Verified pooler port usage via URL-based Supabase JS client.
-- **Lint cleanup:** 204 warnings → 42 warnings. Structured logger migration, unused vars, eslint config `argsIgnorePattern: '^_'`.
-- **Notifications:** Wired contract_signed + daily_log_submitted triggers (fire-and-forget pattern).
-- **PRD complete:** All 18 tasks (A1-A5, B1-B3, C1-C6, D1-D4) marked done in prd.json. C1/C2/C4/C5/C6 were already built — verified via routes + tests.
-- **Tests:** 2838/2838 passing (255 files). Build clean. 6 commits pushed.
+- P1: 13/13 ERPNext mappers, sync dashboard, finance metrics, portal messaging, 18 new test files, console.log migration. 3,092 tests.
+- Autonomous loop: milestones/tasks APIs, rate limiting on 99 routes, performance audit, notifications wiring, lint cleanup. All 18 PRD tasks (A1-A5, B1-B3, C1-C6, D1-D4) complete. 2,838 tests.
 
-### Mar 8, 2026 — CRM Fully Functional (Schema Alignment + Auth + Data)
-
-- Schema alignment (10+ routes), auth fixes (JWT template, Supabase URL), syntax fixes, data verified (27 leads, 15 accounts, 15 contacts). 2838 tests.
-
-- Mar 7: Collaboration readiness — CODEOWNERS, SECURITY.md, local-dev.md, runbook.md.
-- Mar 7: Developer Collaboration & Build Efficiency — Husky fix, issue templates, dependabot auto-merge, PR labeling. 2780 tests.
-- Mar 7: First Production Deploy — Live at krewpact.vercel.app + hub.mdmgroupinc.ca. 2780 tests.
-- Mar 6: CRM FEATURE COMPLETE (7 sprints, +131 tests). 2780 tests.
-- Mar 5: CRM Premium Phases 1-3, perf, pagination, ERPNext sync, security, CI/CD. 2354-2571 tests.
+- Mar 8: CRM schema alignment + auth fixes. 2838 tests.
+- Mar 7: Collaboration readiness, first production deploy. 2780 tests.
+- Mar 6: CRM FEATURE COMPLETE. 2780 tests.
+- Mar 5: CRM Premium Phases 1-3. 2354-2571 tests.
 - Mar 4: Framer webhook, org route fixes. 2061 tests.
 - Mar 1: CRM HubSpot Parity. 2048 tests.

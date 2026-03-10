@@ -77,4 +77,30 @@ export const queryKeys = {
     executive: () => [...queryKeys.dashboard.all, 'executive'] as const,
     pm: () => [...queryKeys.dashboard.all, 'pm'] as const,
   },
+  executive: {
+    all: ['executive'] as const,
+    _base: () => queryKeys.executive.all,
+    overview: () => [...queryKeys.executive.all, 'overview'] as const,
+    overviewByDivision: (division: string) =>
+      [...queryKeys.executive.all, 'overview', 'division', division] as const,
+    alerts: () => [...queryKeys.executive.all, 'alerts'] as const,
+    forecast: () => [...queryKeys.executive.all, 'forecast'] as const,
+    staging: {
+      all: [...['executive'], 'staging'] as const,
+      lists: () => [...queryKeys.executive.staging.all, 'list'] as const,
+      list: (filters: object) => [...queryKeys.executive.staging.lists(), filters] as const,
+      detail: (id: string) => [...queryKeys.executive.staging.all, 'detail', id] as const,
+    },
+    subscriptions: {
+      all: [...['executive'], 'subscriptions'] as const,
+      lists: () => [...queryKeys.executive.subscriptions.all, 'list'] as const,
+      list: (filters: object) => [...queryKeys.executive.subscriptions.lists(), filters] as const,
+    },
+    knowledge: {
+      all: [...['executive'], 'knowledge'] as const,
+      search: (query: string) => [...queryKeys.executive.knowledge.all, 'search', query] as const,
+      chat: (sessionId: string) =>
+        [...queryKeys.executive.knowledge.all, 'chat', sessionId] as const,
+    },
+  },
 } as const;
