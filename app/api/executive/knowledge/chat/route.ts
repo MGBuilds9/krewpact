@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
   }
 
   const trimmedMessage = message.trim();
-  const supabase = createServiceClient();
+  const supabase = await createServiceClient();
 
   try {
     // Resolve or create chat session
