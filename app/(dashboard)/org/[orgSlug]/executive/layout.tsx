@@ -12,7 +12,7 @@ export default function ExecutiveLayout({ children }: { children: React.ReactNod
 
   if (isLoading) {
     return (
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-6">
         <Skeleton className="h-10 w-64" />
         <Skeleton className="h-12 w-full" />
         <Skeleton className="h-96 w-full" />
@@ -35,7 +35,7 @@ export default function ExecutiveLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Executive Nucleus</h1>
         <p className="text-sm text-muted-foreground mt-1">MDM Group operational intelligence</p>

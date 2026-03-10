@@ -10,15 +10,15 @@ export default function KnowledgeLibraryPage() {
   return (
     <>
       <title>Knowledge Base — KrewPact</title>
-      <div className="flex h-[calc(100vh-8rem)] gap-4 p-4">
+      <div className="flex flex-col md:flex-row h-auto md:h-[calc(100vh-8rem)] gap-4 p-4">
         {/* Left pane: Search */}
-        <div className="w-1/3 min-w-0 flex flex-col">
+        <div className="w-full md:w-1/3 min-w-0 flex flex-col">
           <h2 className="text-lg font-semibold mb-3">Knowledge Library</h2>
           <KnowledgeSearch onSelect={setSelectedDoc} />
         </div>
 
         {/* Right pane: Document Viewer or empty state */}
-        <div className="w-2/3 min-w-0">
+        <div className="w-full md:w-2/3 min-w-0">
           {selectedDoc ? (
             <DocumentViewer
               title={selectedDoc.title}

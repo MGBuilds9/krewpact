@@ -20,7 +20,10 @@ export function ExecutiveNav() {
   const basePath = `/org/${orgSlug}/executive`;
 
   return (
-    <nav className="flex gap-1 overflow-x-auto pb-2" aria-label="Executive navigation">
+    <nav
+      className="-mx-4 px-4 sm:mx-0 sm:px-0 flex gap-1 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+      aria-label="Executive navigation"
+    >
       {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
         const fullHref = `${basePath}${href}`;
         const isActive =
@@ -39,7 +42,9 @@ export function ExecutiveNav() {
                 : 'text-muted-foreground hover:bg-muted hover:text-foreground',
             )}
           >
-            <Icon className="h-4 w-4" />
+            <span className="hidden sm:inline-flex">
+              <Icon className="h-4 w-4" />
+            </span>
             {label}
           </Link>
         );
