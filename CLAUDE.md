@@ -266,6 +266,17 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 - **Decisions:** Used `createServiceClient()` for chat (cross-user session access), `createUserClient()` for RLS-scoped reads. Division-filtered metrics computed on-the-fly (not cached). Forecast uses stage weights: won=100%, negotiation=75%, proposal=50%, qualified=25%, lead=10%.
 - **Tests:** 3,478 passing (307 files), 115 new executive tests. 0 type errors in our code.
 
+### Mar 10, 2026 — Production Readiness (14 Stories, Commit 6140711)
+
+- **Security headers:** Added `X-DNS-Prefetch-Control: off`, `X-Permitted-Cross-Domain-Policies: none`, `clerk.mdmgroupinc.ca` to CSP `connect-src`
+- **Sentry env validation:** Added `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN` to env schema with production warnings. New `sentry-config.test.ts` + `env-validation.test.ts`.
+- **Demo mode audit:** Verified production guard. Added 3 data-leak tests (client token, server token, static IDs).
+- **ESLint zero warnings:** Fixed all 53 warnings (40+ unused vars, 7 React Compiler, exhaustive-deps, unused-expressions). Down from 53 → 0.
+- **E2E smoke suite:** 3 new Playwright specs (`auth-smoke`, `crm-smoke`, `project-smoke`) — 7 tests total.
+- **Error boundary UX:** `global-error.tsx` enhanced with "Go to Dashboard" link + error digest. All 11 `error.tsx` already had consistent UX.
+- **Bundle analysis:** Largest client chunks ~316KB pre-gzip. Recharts auto-code-split per route. @react-pdf server-only. No action needed.
+- **Tests:** 3,488 passing (309 files, +125 new). Lint 0/0. Typecheck clean. Build clean.
+
 ### Mar 9, 2026 — Enterprise Phase 2: Ralph Loop (18 Stories, PR #59 Merged)
 
 - Realtime subscriptions, PDF generation, executive/PM dashboards, global search, audit log, bulk ops, keyboard chords, toast system, onboarding wizard, query key factory, Sentry migration. ESLint 10→9 downgrade. 3,363 tests (294 files). PR #59 merged.
@@ -273,6 +284,3 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 - Mar 8: P1 completion + autonomous loop (all 18 PRD tasks). 2,838-3,092 tests.
 - Mar 7: Collaboration readiness, first production deploy. 2,780 tests.
 - Mar 6: CRM FEATURE COMPLETE. 2,780 tests.
-- Mar 5: CRM Premium Phases 1-3. 2,354-2,571 tests.
-- Mar 4: Framer webhook, org route fixes. 2,061 tests.
-- Mar 1: CRM HubSpot Parity. 2,048 tests.
