@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (rpcError) {
-      logger.error('match_knowledge RPC failed:', rpcError);
+      logger.error('match_knowledge RPC failed:', { message: rpcError.message });
       return NextResponse.json({ error: 'Search failed' }, { status: 500 });
     }
 
@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
       .in('id', docIds);
 
     if (docsError) {
-      logger.error('knowledge_docs fetch failed:', docsError);
+      logger.error('knowledge_docs fetch failed:', { message: docsError.message });
       return NextResponse.json({ error: 'Failed to fetch document metadata' }, { status: 500 });
     }
 
@@ -105,7 +105,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ results });
   } catch (err: unknown) {
-    logger.error('Knowledge search failed:', err);
+    logger.error('Knowledge search failed:', {
+      message: err instanceof Error ? err.message : String(err),
+    });
     return NextResponse.json({ error: 'Search failed' }, { status: 500 });
   }
 }
