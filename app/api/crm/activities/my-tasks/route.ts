@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
+import { getKrewpactUserId } from '@/lib/api/org';
 
 const querySchema = z.object({
   filter: z.enum(['overdue', 'today', 'upcoming', 'completed', 'all']).optional(),
@@ -27,6 +28,12 @@ export async function GET(req: NextRequest) {
 
   const { filter = 'all', entity_type } = parsed.data;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
+
+  const krewpactUserId = await getKrewpactUserId();
+  if (!krewpactUserId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   const supabase = await createUserClient();
   const now = new Date().toISOString();
   const todayStart = new Date();
@@ -36,8 +43,11 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from('activities')
-    .select('id, activity_type, title, details, due_at, completed_at, lead_id, contact_id, account_id, opportunity_id, owner_user_id, created_at, updated_at', { count: 'exact' })
-    .eq('owner_user_id', userId)
+    .select(
+      'id, activity_type, title, details, due_at, completed_at, lead_id, contact_id, account_id, opportunity_id, owner_user_id, created_at, updated_at',
+      { count: 'exact' },
+    )
+    .eq('owner_user_id', krewpactUserId)
     .in('activity_type', ['task', 'call', 'meeting']);
 
   // Apply filter
@@ -69,7 +79,9 @@ export async function GET(req: NextRequest) {
     query = query.not(entityKey, 'is', null);
   }
 
-  query = query.order('due_at', { ascending: true, nullsFirst: false }).range(offset, offset + limit - 1);
+  query = query
+    .order('due_at', { ascending: true, nullsFirst: false })
+    .range(offset, offset + limit - 1);
 
   const { data, error, count } = await query;
 

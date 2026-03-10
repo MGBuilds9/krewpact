@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
         source_channel: data.source,
       });
       if (assignment.assigned) {
-        ownerId = assignment.owner_id;
+        ownerId = assignment.assigned_to;
       }
     } catch (e) {
       logger.error('Auto-assign on web lead failed:', { error: e });
@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
         project_description: data.message,
         project_type: data.projectType,
         division_id: divisionId,
-        owner_id: ownerId,
+        assigned_to: ownerId,
         utm_source: data.utm_source,
         utm_medium: data.utm_medium,
         utm_campaign: data.utm_campaign,

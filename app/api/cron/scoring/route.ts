@@ -20,7 +20,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const { data: leads, error: leadsError } = await supabase
     .from('leads')
     .select(
-      'id, company_name, domain, enrichment_status, enrichment_data, lead_score, fit_score, intent_score, engagement_score, source_channel, industry, company_size, revenue_range, city, province, postal_code, status, division_id, created_at, updated_at',
+      'id, company_name, domain, enrichment_status, enrichment_data, lead_score, fit_score, intent_score, engagement_score, source_channel, industry, city, province, postal_code, status, division_id, created_at, updated_at',
     )
     .eq('enrichment_status', 'complete')
     .or('lead_score.is.null,lead_score.eq.0')

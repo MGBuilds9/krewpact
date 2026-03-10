@@ -39,10 +39,9 @@ import { ALLOWED_TRANSITIONS } from '@/lib/crm/lead-stages';
 import type { LeadStage } from '@/lib/crm/lead-stages';
 import { cn } from '@/lib/utils';
 
-const LeadForm = dynamic(
-  () => import('@/components/CRM/LeadForm').then((m) => m.LeadForm),
-  { loading: () => <Skeleton className="h-48 w-full rounded-xl" /> },
-);
+const LeadForm = dynamic(() => import('@/components/CRM/LeadForm').then((m) => m.LeadForm), {
+  loading: () => <Skeleton className="h-48 w-full rounded-xl" />,
+});
 const EnrichmentIntelCard = dynamic(
   () => import('@/components/CRM/EnrichmentIntelCard').then((m) => m.EnrichmentIntelCard),
   { loading: () => <Skeleton className="h-32 w-full rounded-xl" /> },
@@ -370,18 +369,6 @@ export default function LeadDetailPage() {
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Source</span>
                   <span className="capitalize">{lead.source_channel.replace(/_/g, ' ')}</span>
-                </div>
-              )}
-              {lead.company_size && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Company Size</span>
-                  <span>{lead.company_size}</span>
-                </div>
-              )}
-              {lead.revenue_range && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Revenue Range</span>
-                  <span>{lead.revenue_range}</span>
                 </div>
               )}
               {lead.next_followup_at && (

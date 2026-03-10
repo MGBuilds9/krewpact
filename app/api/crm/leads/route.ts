@@ -56,7 +56,7 @@ export async function GET(req: NextRequest) {
   let query = supabase
     .from('leads')
     .select(
-      'id, company_name, status, substatus, lead_score, fit_score, intent_score, engagement_score, source_channel, source_campaign, attribution_detail, assigned_to:owner_id, division_id, created_at, updated_at, city, province, address, postal_code, country, industry, next_followup_at, last_contacted_at, is_qualified, in_sequence, sequence_paused, domain, enrichment_status, deleted_at',
+      'id, company_name, status, lead_score, fit_score, intent_score, engagement_score, source_channel, utm_campaign, source_detail, assigned_to, division_id, created_at, updated_at, city, province, address, postal_code, industry, next_followup_at, last_touch_at, is_qualified, automation_paused, current_sequence_id, domain, enrichment_status, deleted_at',
       { count: 'exact' },
     )
     .is('deleted_at', null)
@@ -71,7 +71,7 @@ export async function GET(req: NextRequest) {
   }
 
   if (assigned_to) {
-    query = query.eq('owner_id', assigned_to);
+    query = query.eq('assigned_to', assigned_to);
   }
 
   if (search) {
@@ -110,15 +110,15 @@ export async function POST(req: NextRequest) {
   const supabase = await createUserClient();
 
   // Auto-assign owner if not explicitly set
-  let ownerId: string | undefined = parsed.data.owner_id;
+  let ownerId: string | undefined = parsed.data.assigned_to;
   if (!ownerId) {
     try {
       const assignment = await assignLead(supabase, {
         division_id: parsed.data.division_id ?? null,
         source_channel: parsed.data.source_channel ?? null,
       });
-      if (assignment.assigned && assignment.owner_id) {
-        ownerId = assignment.owner_id;
+      if (assignment.assigned && assignment.assigned_to) {
+        ownerId = assignment.assigned_to;
       }
     } catch (e) {
       // Assignment failure should not block lead creation
@@ -128,7 +128,7 @@ export async function POST(req: NextRequest) {
 
   const { data, error } = await supabase
     .from('leads')
-    .insert({ ...parsed.data, status: 'new', owner_id: ownerId })
+    .insert({ ...parsed.data, status: 'new', assigned_to: ownerId })
     .select()
     .single();
 

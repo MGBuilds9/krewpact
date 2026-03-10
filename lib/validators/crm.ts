@@ -86,7 +86,7 @@ export const leadCreateSchema = z.object({
   city: optionalSafeString(),
   province: optionalSafeString(),
   notes: optionalSafeString(),
-  owner_id: z.string().uuid().optional(),
+  assigned_to: z.string().uuid().optional(),
 });
 
 export const leadUpdateSchema = z.object({
@@ -97,7 +97,7 @@ export const leadUpdateSchema = z.object({
   city: nullableSafeString(),
   province: nullableSafeString(),
   notes: nullableSafeString(),
-  owner_id: z.string().uuid().optional().nullable(),
+  assigned_to: z.string().uuid().optional().nullable(),
   status: z.string().optional(),
 });
 
@@ -306,7 +306,15 @@ export type AutoLog = z.infer<typeof autoLogSchema>;
 // ============================================================
 
 const biddingSources = ['merx', 'bids_tenders', 'manual', 'referral'] as const;
-const biddingStatuses = ['new', 'reviewing', 'bidding', 'submitted', 'won', 'lost', 'expired'] as const;
+const biddingStatuses = [
+  'new',
+  'reviewing',
+  'bidding',
+  'submitted',
+  'won',
+  'lost',
+  'expired',
+] as const;
 
 export const biddingCreateSchema = z.object({
   title: safeString().pipe(z.string().min(1).max(300)),
@@ -335,14 +343,19 @@ export const biddingUpdateSchema = z.object({
 });
 
 export const biddingImportSchema = z.object({
-  items: z.array(z.object({
-    title: z.string().min(1).max(300),
-    source: z.enum(biddingSources).optional(),
-    url: z.string().url().optional(),
-    deadline: z.string().optional(),
-    estimated_value: z.number().min(0).optional(),
-    notes: z.string().optional(),
-  })).min(1).max(100),
+  items: z
+    .array(
+      z.object({
+        title: z.string().min(1).max(300),
+        source: z.enum(biddingSources).optional(),
+        url: z.string().url().optional(),
+        deadline: z.string().optional(),
+        estimated_value: z.number().min(0).optional(),
+        notes: z.string().optional(),
+      }),
+    )
+    .min(1)
+    .max(100),
 });
 
 export { biddingSources, biddingStatuses };

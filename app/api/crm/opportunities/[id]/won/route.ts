@@ -4,6 +4,7 @@ import { wonDealSchema } from '@/lib/validators/crm';
 import { SyncService } from '@/lib/erp/sync-service';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { getKrewpactUserId } from '@/lib/api/org';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -31,10 +32,17 @@ export async function POST(req: NextRequest, context: RouteContext) {
   const { id } = await context.params;
   const supabase = await createUserClient();
 
+  const krewpactUserId = await getKrewpactUserId();
+  if (!krewpactUserId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   // Fetch opportunity and verify it's in 'contracted' stage
   const { data: opportunity, error: fetchError } = await supabase
     .from('opportunities')
-    .select('id, opportunity_name, stage, estimated_revenue, probability_pct, target_close_date, account_id, contact_id, lead_id, division_id, owner_user_id, notes, created_at, updated_at')
+    .select(
+      'id, opportunity_name, stage, estimated_revenue, probability_pct, target_close_date, account_id, contact_id, lead_id, division_id, owner_user_id, notes, created_at, updated_at',
+    )
     .eq('id', id)
     .single();
 
@@ -90,7 +98,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
     title: 'Deal Won',
     details: parsed.data.won_notes || `Opportunity marked as won on ${wonDate}`,
     opportunity_id: id,
-    owner_user_id: userId,
+    owner_user_id: krewpactUserId,
   });
 
   return NextResponse.json({

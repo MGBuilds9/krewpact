@@ -24,7 +24,7 @@ describe('assignLead', () => {
     });
 
     expect(result.assigned).toBe(true);
-    expect(result.owner_id).toBe('user-rule-1');
+    expect(result.assigned_to).toBe('user-rule-1');
     expect(result.method).toBe('rule');
   });
 
@@ -52,7 +52,7 @@ describe('assignLead', () => {
     expect(result.assigned).toBe(true);
     expect(result.method).toBe('round_robin');
     // With 0 leads each, picks alphabetically first
-    expect(result.owner_id).toBe('user-a');
+    expect(result.assigned_to).toBe('user-a');
   });
 
   it('returns none when division has no users in user_divisions', async () => {
@@ -69,7 +69,7 @@ describe('assignLead', () => {
     });
 
     expect(result.assigned).toBe(false);
-    expect(result.owner_id).toBeNull();
+    expect(result.assigned_to).toBeNull();
     expect(result.method).toBe('none');
   });
 
@@ -88,7 +88,7 @@ describe('assignLead', () => {
     });
 
     expect(result.assigned).toBe(false);
-    expect(result.owner_id).toBeNull();
+    expect(result.assigned_to).toBeNull();
     expect(result.method).toBe('none');
   });
 
@@ -107,7 +107,7 @@ describe('assignLead', () => {
     });
 
     expect(result.assigned).toBe(false);
-    expect(result.owner_id).toBeNull();
+    expect(result.assigned_to).toBeNull();
     expect(result.method).toBe('none');
   });
 
@@ -125,7 +125,7 @@ describe('assignLead', () => {
         },
         // user-a has 2 open leads, user-b has 0
         leads: {
-          data: [{ owner_id: 'user-a' }, { owner_id: 'user-a' }],
+          data: [{ assigned_to: 'user-a' }, { assigned_to: 'user-a' }],
           error: null,
         },
       },
@@ -137,7 +137,7 @@ describe('assignLead', () => {
     });
 
     expect(result.assigned).toBe(true);
-    expect(result.owner_id).toBe('user-b');
+    expect(result.assigned_to).toBe('user-b');
     expect(result.method).toBe('round_robin');
   });
 
@@ -163,7 +163,7 @@ describe('assignLead', () => {
     });
 
     expect(result.assigned).toBe(true);
-    expect(result.owner_id).toBe('user-a');
+    expect(result.assigned_to).toBe('user-a');
   });
 
   it('handles null source_channel in rule matching (queries is.null)', async () => {

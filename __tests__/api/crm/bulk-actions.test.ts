@@ -93,7 +93,7 @@ describe('POST /api/crm/leads/bulk', () => {
   });
 
   // --- assign ---
-  it('assign: updates owner_id for all IDs', async () => {
+  it('assign: updates assigned_to for all IDs', async () => {
     mockClerkAuth(mockAuth);
     const client = mockSupabaseClient({
       tables: { leads: { data: null, error: null } },
@@ -394,7 +394,7 @@ describe('POST /api/crm/contacts/bulk', () => {
   });
 
   // --- assign ---
-  it('assign: updates owner_id for all contact IDs', async () => {
+  it('assign: updates assigned_to for all contact IDs', async () => {
     mockClerkAuth(mockAuth);
     const client = mockSupabaseClient({
       tables: { contacts: { data: null, error: null } },

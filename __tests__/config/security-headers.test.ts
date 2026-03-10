@@ -28,12 +28,14 @@ describe('Security headers', () => {
     expect(headerMap['X-Permitted-Cross-Domain-Policies']).toBe('none');
   });
 
-  it('CSP includes clerk.mdmgroupinc.ca in connect-src', async () => {
+  it('CSP includes clerk and supabase realtime domains', async () => {
     const config = (await import('@/next.config')).default;
     const headers = await config.headers!();
     const csp = headers[0].headers.find(
       (h: { key: string }) => h.key === 'Content-Security-Policy',
     )?.value;
     expect(csp).toContain('https://clerk.mdmgroupinc.ca');
+    expect(csp).toContain('https://clerk.hub.mdmgroupinc.ca');
+    expect(csp).toContain('wss://*.supabase.co');
   });
 });

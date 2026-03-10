@@ -3,6 +3,7 @@ import { createUserClient } from '@/lib/supabase/server';
 import { lostDealSchema } from '@/lib/validators/crm';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { getKrewpactUserId } from '@/lib/api/org';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -30,10 +31,17 @@ export async function POST(req: NextRequest, context: RouteContext) {
   const { id } = await context.params;
   const supabase = await createUserClient();
 
+  const krewpactUserId = await getKrewpactUserId();
+  if (!krewpactUserId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   // Fetch opportunity and verify it's not already closed_lost
   const { data: opportunity, error: fetchError } = await supabase
     .from('opportunities')
-    .select('id, opportunity_name, stage, estimated_revenue, probability_pct, target_close_date, account_id, contact_id, lead_id, division_id, owner_user_id, notes, created_at, updated_at')
+    .select(
+      'id, opportunity_name, stage, estimated_revenue, probability_pct, target_close_date, account_id, contact_id, lead_id, division_id, owner_user_id, notes, created_at, updated_at',
+    )
     .eq('id', id)
     .single();
 
@@ -80,7 +88,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
     opportunity_id: id,
     from_stage: previousStage,
     to_stage: 'closed_lost',
-    changed_by: userId,
+    changed_by: krewpactUserId,
   });
 
   // Create activity record for the loss
@@ -89,7 +97,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
     title: 'Deal Lost',
     details: `Lost reason: ${parsed.data.lost_reason}${parsed.data.competitor ? `. Competitor: ${parsed.data.competitor}` : ''}${parsed.data.lost_notes ? `. ${parsed.data.lost_notes}` : ''}`,
     opportunity_id: id,
-    owner_user_id: userId,
+    owner_user_id: krewpactUserId,
   });
 
   // If reopen_as_lead, create a new lead from the opportunity

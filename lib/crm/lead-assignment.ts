@@ -11,7 +11,7 @@ export interface AssignmentRule {
 
 export interface AssignmentResult {
   assigned: boolean;
-  owner_id: string | null;
+  assigned_to: string | null;
   method: 'rule' | 'round_robin' | 'none';
 }
 
@@ -32,16 +32,16 @@ export async function assignLead(
   // 1. Try rule-based assignment
   const ruleResult = await tryRuleBasedAssignment(supabase, lead);
   if (ruleResult) {
-    return { assigned: true, owner_id: ruleResult, method: 'rule' };
+    return { assigned: true, assigned_to: ruleResult, method: 'rule' };
   }
 
   // 2. Fall back to round-robin within division
   const rrResult = await roundRobinAssignment(supabase, lead.division_id);
   if (rrResult) {
-    return { assigned: true, owner_id: rrResult, method: 'round_robin' };
+    return { assigned: true, assigned_to: rrResult, method: 'round_robin' };
   }
 
-  return { assigned: false, owner_id: null, method: 'none' };
+  return { assigned: false, assigned_to: null, method: 'none' };
 }
 
 /**
@@ -119,8 +119,8 @@ async function roundRobinAssignment(
 
   const { data: leadCounts } = await supabase
     .from('leads')
-    .select('owner_id')
-    .in('owner_id', userIds)
+    .select('assigned_to')
+    .in('assigned_to', userIds)
     .is('deleted_at', null)
     .not('status', 'in', '("won","lost","disqualified")');
 
@@ -131,7 +131,7 @@ async function roundRobinAssignment(
   }
   if (leadCounts) {
     for (const row of leadCounts) {
-      const oid = row.owner_id as string;
+      const oid = row.assigned_to as string;
       if (countMap.has(oid)) {
         countMap.set(oid, (countMap.get(oid) ?? 0) + 1);
       }

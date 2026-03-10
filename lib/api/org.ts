@@ -3,6 +3,21 @@ import { auth } from '@clerk/nextjs/server';
 import { ApiError } from './errors';
 
 /**
+ * Extract the KrewPact internal UUID from Clerk session claims.
+ *
+ * Clerk's `userId` is a Clerk ID string (e.g. `user_39Bb...`). DB columns
+ * like `owner_user_id`, `changed_by`, etc. reference `users.id` which is a
+ * UUID stored in the `krewpact_user_id` JWT claim.
+ *
+ * Returns null when there is no active session or the claim is absent —
+ * callers should respond with 401 in that case.
+ */
+export async function getKrewpactUserId(): Promise<string | null> {
+  const { sessionClaims } = await auth();
+  return ((sessionClaims as Record<string, unknown>)?.krewpact_user_id as string | null) ?? null;
+}
+
+/**
  * Extract org context from request headers (set by middleware for page routes).
  */
 export function getOrgFromHeaders(req: NextRequest): { orgId: string; orgSlug: string } {

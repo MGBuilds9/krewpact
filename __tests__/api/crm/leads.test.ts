@@ -176,7 +176,7 @@ describe('POST /api/crm/leads', () => {
         city: 'Toronto',
         province: 'ON',
         notes: 'Key prospect',
-        owner_id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+        assigned_to: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
       }),
     );
     expect(res.status).toBe(201);

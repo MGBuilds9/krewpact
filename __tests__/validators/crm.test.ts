@@ -179,7 +179,7 @@ describe('leadCreateSchema', () => {
       city: 'Toronto',
       province: 'ON',
       notes: 'Key prospect',
-      owner_id: VALID_UUID_2,
+      assigned_to: VALID_UUID_2,
     });
     expect(result.success).toBe(true);
   });
@@ -203,15 +203,15 @@ describe('leadCreateSchema', () => {
     expect(result.success).toBe(false);
   });
 
-  it('fails when owner_id is not a valid UUID', () => {
+  it('fails when assigned_to is not a valid UUID', () => {
     const result = leadCreateSchema.safeParse({
       company_name: 'Test Lead',
-      owner_id: 'not-a-uuid',
+      assigned_to: 'not-a-uuid',
     });
     expect(result.success).toBe(false);
   });
 
-  it('passes when owner_id is omitted', () => {
+  it('passes when assigned_to is omitted', () => {
     const result = leadCreateSchema.safeParse({
       company_name: 'Test Lead',
     });

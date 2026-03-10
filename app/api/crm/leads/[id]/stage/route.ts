@@ -37,7 +37,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
   const { data: currentLead, error: fetchError } = await supabase
     .from('leads')
     .select(
-      'id, company_name, status, substatus, lifecycle_stage, lead_score, fit_score, intent_score, engagement_score, source_channel, source_campaign, attribution_source, attribution_detail, assigned_to:owner_id, division_id, created_at, updated_at, city, province, address, postal_code, country, industry, company_size, revenue_range, next_followup_at, last_activity_at, last_contacted_at, is_qualified, in_sequence, sequence_paused, notes, tags, custom_fields, domain, enrichment_status, enrichment_data, deleted_at, stage_entered_at',
+      'id, company_name, status, lost_reason, lead_score, fit_score, intent_score, engagement_score, source_channel, utm_campaign, source_detail, assigned_to, division_id, created_at, updated_at, city, province, address, postal_code, industry, next_followup_at, last_touch_at, is_qualified, automation_paused, current_sequence_id, domain, enrichment_status, enrichment_data, deleted_at',
     )
     .eq('id', id)
     .single();
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
   // Build update payload
   const updateData: Record<string, unknown> = { status: newStage };
   if (parsed.data.lost_reason) {
-    updateData.substatus = parsed.data.lost_reason;
+    updateData.lost_reason = parsed.data.lost_reason;
   }
 
   // Update the lead

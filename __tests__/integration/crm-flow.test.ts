@@ -602,7 +602,7 @@ describe('CRM Integration: Lead stage progression', () => {
   });
 
   it('lost lead cannot transition to any other stage', async () => {
-    const lostLead = makeLead({ status: 'lost', substatus: 'Budget constraints' });
+    const lostLead = makeLead({ status: 'lost', lost_reason: 'Budget constraints' });
     mockClerkAuth(mockAuth);
     mockCreateUserClient.mockResolvedValue(
       mockSupabaseClient({ tables: { leads: { data: lostLead, error: null } } }),

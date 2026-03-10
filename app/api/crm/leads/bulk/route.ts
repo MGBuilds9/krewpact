@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
       if (!value) {
         return NextResponse.json({ error: 'value is required for assign action' }, { status: 400 });
       }
-      const { error } = await supabase.from('leads').update({ owner_id: value }).in('id', ids);
+      const { error } = await supabase.from('leads').update({ assigned_to: value }).in('id', ids);
       if (error) {
         logger.error('Bulk lead assign failed', { error: error.message });
         return NextResponse.json({ error: error.message }, { status: 500 });

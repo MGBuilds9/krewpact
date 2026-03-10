@@ -84,7 +84,7 @@ export async function GET(req: NextRequest) {
   let leadQuery = supabase
     .from('leads')
     .select(
-      'id, company_name, status, substatus, lead_score, fit_score, intent_score, engagement_score, source_channel, source_campaign, attribution_detail, assigned_to:owner_id, division_id, created_at, updated_at, city, province, industry, next_followup_at, last_contacted_at, is_qualified, domain, enrichment_status, deleted_at',
+      'id, company_name, status, lead_score, fit_score, intent_score, engagement_score, source_channel, utm_campaign, source_detail, assigned_to, division_id, created_at, updated_at, city, province, industry, next_followup_at, last_touch_at, is_qualified, domain, enrichment_status, deleted_at',
     )
     .gte('created_at', periodStart);
 
