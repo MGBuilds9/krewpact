@@ -20,11 +20,11 @@ const leadStatuses = [
   'new',
   'contacted',
   'qualified',
-  'unqualified',
-  'nurturing',
+  'proposal',
+  'negotiation',
+  'nurture',
   'won',
   'lost',
-  'disqualified',
 ] as const;
 
 const querySchema = z.object({

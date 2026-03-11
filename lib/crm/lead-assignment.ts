@@ -122,7 +122,7 @@ async function roundRobinAssignment(
     .select('assigned_to')
     .in('assigned_to', userIds)
     .is('deleted_at', null)
-    .not('status', 'in', '("won","lost","disqualified")');
+    .not('status', 'in', '("won","lost")');
 
   // Build count map
   const countMap = new Map<string, number>();

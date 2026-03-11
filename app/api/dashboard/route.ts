@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
         let q = supabase
           .from('leads')
           .select('*', { count: 'exact', head: true })
-          .not('status', 'in', '(won,lost,disqualified)');
+          .not('status', 'in', '(won,lost)');
         if (division_id) q = q.eq('division_id', division_id);
         return q;
       })(),

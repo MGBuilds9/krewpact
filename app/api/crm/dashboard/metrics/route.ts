@@ -107,7 +107,7 @@ export async function GET(req: NextRequest) {
 
   // Compute "My Leads" vs "My Accounts" summary for dashboard split
   const allLeads = leads ?? [];
-  const openLeads = allLeads.filter((l) => !['won', 'lost', 'disqualified'].includes(l.status));
+  const openLeads = allLeads.filter((l) => !['won', 'lost'].includes(l.status));
   const convertedLeads = allLeads.filter((l) => ['won', 'converted'].includes(l.status));
   const recentlyConverted = convertedLeads
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())

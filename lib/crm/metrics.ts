@@ -165,7 +165,7 @@ export function calculateConversionMetrics(leads: LeadData[]): ConversionMetrics
   // Qualified = any stage beyond 'new' and 'contacted'
   const qualifiedStages = ['qualified', 'converted', 'won', 'proposal', 'negotiation'];
   const convertedStages = ['converted', 'won'];
-  const lostStages = ['lost', 'disqualified'];
+  const lostStages = ['lost'];
 
   const qualified = leads.filter(
     (l) => qualifiedStages.includes(l.status) || convertedStages.includes(l.status),
