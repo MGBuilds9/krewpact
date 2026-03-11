@@ -10,45 +10,52 @@ const querySchema = z.object({
 });
 
 export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+    if (!rl.success) return rateLimitResponse(rl);
+
+    const parsed = querySchema.safeParse(Object.fromEntries(req.nextUrl.searchParams));
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    }
+
+    const { unread_only } = parsed.data;
+    const { limit, offset } = parsePagination(req.nextUrl.searchParams);
+
+    const { client: supabase, error: authError } = await createUserClientSafe();
+
+    if (authError) return authError;
+    let query = supabase
+      .from('notifications')
+      /* excluded from list: payload */
+      .select(
+        'id, user_id, portal_account_id, channel, title, message, state, read_at, send_at, sent_at, created_at, updated_at',
+        { count: 'exact' },
+      )
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (unread_only === 'true') {
+      query = query.neq('state', 'read');
+    }
+
+    const { data, error, count } = await query;
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(paginatedResponse(data, count, limit, offset));
+  } catch (err: unknown) {
+    console.error('[DIAG] /api/notifications crashed:', err);
+    const message = err instanceof Error ? err.message : String(err);
+    const stack = err instanceof Error ? err.stack : undefined;
+    return NextResponse.json({ error: message, stack }, { status: 500 });
   }
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const parsed = querySchema.safeParse(Object.fromEntries(req.nextUrl.searchParams));
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
-  const { unread_only } = parsed.data;
-  const { limit, offset } = parsePagination(req.nextUrl.searchParams);
-
-  const { client: supabase, error: authError } = await createUserClientSafe();
-
-  if (authError) return authError;
-  let query = supabase
-    .from('notifications')
-    /* excluded from list: payload */
-    .select(
-      'id, user_id, portal_account_id, channel, title, message, state, read_at, send_at, sent_at, created_at, updated_at',
-      { count: 'exact' },
-    )
-    .order('created_at', { ascending: false })
-    .range(offset, offset + limit - 1);
-
-  if (unread_only === 'true') {
-    query = query.neq('state', 'read');
-  }
-
-  const { data, error, count } = await query;
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  return NextResponse.json(paginatedResponse(data, count, limit, offset));
 }
 
 export async function POST(req: NextRequest) {
