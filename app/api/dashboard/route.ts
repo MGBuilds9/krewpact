@@ -79,12 +79,12 @@ export async function GET(req: NextRequest) {
     ]);
 
   // Log any RLS/query errors that would silently zero out counts
-  const errors: Record<string, string> = {};
-  if (projectsResult.error) errors.projects = projectsResult.error.message;
-  if (expensesResult.error) errors.expenses = expensesResult.error.message;
-  if (leadsResult.error) errors.leads = leadsResult.error.message;
-  if (notificationsResult.error) errors.notifications = notificationsResult.error.message;
-  if (recentProjectsResult.error) errors.recentProjects = recentProjectsResult.error.message;
+  const errors: Record<string, unknown> = {};
+  if (projectsResult.error) errors.projects = projectsResult.error;
+  if (expensesResult.error) errors.expenses = expensesResult.error;
+  if (leadsResult.error) errors.leads = leadsResult.error;
+  if (notificationsResult.error) errors.notifications = notificationsResult.error;
+  if (recentProjectsResult.error) errors.recentProjects = recentProjectsResult.error;
 
   return NextResponse.json({
     atAGlance: {
