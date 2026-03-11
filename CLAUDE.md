@@ -268,6 +268,18 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 - **Tests:** 3,488 passing (309 files). 0 lint errors/warnings. 0 type errors. Build clean.
 - **Enrichment status:** 358/621 leads pending. At 20/batch Mon+Thu = ~9 weeks. Consider increasing batch size.
 
+### Mar 11, 2026 — Fix 500 Errors Round 3: Sentry + RLS + Middleware (Commit b32082c)
+
+- **Root cause #1 (500s):** `withSentryConfig` wrapping all route handlers conflicted with Next.js 16 proxy middleware model — routes returned 200 internally but Vercel reported 500 to clients. Disabled Sentry wrapping; zero 500s since.
+- **Root cause #2 (empty data):** `leads` and `activities` tables had ONLY RESTRICTIVE `org_restrict` RLS policies with no PERMISSIVE policies. PostgreSQL requires at least one PERMISSIVE to pass for rows to be visible → zero rows returned for all authenticated users.
+- **RLS fix:** Added full CRUD PERMISSIVE policies for both tables — leads (division-based, matching accounts/opportunities pattern), activities (org-scoped with owner_user_id for writes).
+- **Data fix:** 253 orphaned leads (NULL division_id) assigned to MDM Contracting division.
+- **Middleware fix:** `.trim()` on `NEXT_PUBLIC_APP_URL` and `VERCEL_URL` in authorizedParties — trailing newline caused Clerk allowedRedirectOrigins mismatch.
+- **Cleanup:** Removed `/api/diag` endpoint, stack trace exposure from error handlers, deleted `diag/500-errors` branch.
+- **Scoring status:** 17 high, 19 medium, 241 low, 358 unscored (pending enrichment). 15 active rules. Score history populated.
+- **Tests:** 3,488 passing (309 files). 0 lint errors/warnings. 0 type errors. Build clean.
+- **Deployed:** Vercel production READY. `hub.mdmgroupinc.ca` — 0 runtime errors post-deploy.
+
 ### Mar 11, 2026 — Eliminate All 500 Errors Round 2 (Commit 2445f31)
 
 - **Root cause:** `createUserClient()` throws when Clerk JWT template fails — zero routes caught it → every API route returned 500.
