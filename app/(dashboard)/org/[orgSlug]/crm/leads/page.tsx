@@ -30,11 +30,11 @@ const STATUS_BADGE_COLORS: Record<string, string> = {
   new: 'bg-gray-100 text-gray-700 border-gray-200',
   contacted: 'bg-blue-100 text-blue-700 border-blue-200',
   qualified: 'bg-green-100 text-green-700 border-green-200',
-  unqualified: 'bg-red-100 text-red-700 border-red-200',
-  nurturing: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+  proposal: 'bg-purple-100 text-purple-700 border-purple-200',
+  negotiation: 'bg-orange-100 text-orange-700 border-orange-200',
+  nurture: 'bg-yellow-100 text-yellow-700 border-yellow-200',
   won: 'bg-emerald-100 text-emerald-700 border-emerald-200',
   lost: 'bg-red-100 text-red-700 border-red-200',
-  disqualified: 'bg-red-100 text-red-700 border-red-200',
 };
 
 function formatStage(stage: string): string {
@@ -221,7 +221,9 @@ export default function LeadsPage() {
               <SelectItem value="new">New</SelectItem>
               <SelectItem value="contacted">Contacted</SelectItem>
               <SelectItem value="qualified">Qualified</SelectItem>
-              <SelectItem value="nurturing">Nurturing</SelectItem>
+              <SelectItem value="proposal">Proposal</SelectItem>
+              <SelectItem value="negotiation">Negotiation</SelectItem>
+              <SelectItem value="nurture">Nurture</SelectItem>
               <SelectItem value="won">Won</SelectItem>
               <SelectItem value="lost">Lost</SelectItem>
             </SelectContent>

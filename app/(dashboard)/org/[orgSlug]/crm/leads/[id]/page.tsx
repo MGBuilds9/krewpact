@@ -92,11 +92,11 @@ export default function LeadDetailPage() {
     new: 'new',
     contacted: 'new',
     qualified: 'qualified',
-    unqualified: 'new',
-    nurturing: 'qualified',
+    proposal: 'qualified',
+    negotiation: 'qualified',
+    nurture: 'qualified',
     won: 'won',
     lost: 'lost',
-    disqualified: 'lost',
   };
   const currentStage = statusToStage[lead.status] || ('new' as LeadStage);
   const nextStages = ALLOWED_TRANSITIONS[currentStage] || [];

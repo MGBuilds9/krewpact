@@ -255,7 +255,7 @@ async function seed() {
       company_name: 'Peel Region Property Mgmt',
       division_id: divMap['management'],
       source_channel: 'inbound',
-      status: 'nurturing' as string,
+      status: 'nurture' as string,
       industry: 'property_management',
       city: 'Mississauga',
       province: 'Ontario',

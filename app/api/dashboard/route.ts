@@ -78,14 +78,6 @@ export async function GET(req: NextRequest) {
       })(),
     ]);
 
-  // Log any RLS/query errors that would silently zero out counts
-  const errors: Record<string, unknown> = {};
-  if (projectsResult.error) errors.projects = projectsResult.error;
-  if (expensesResult.error) errors.expenses = expensesResult.error;
-  if (leadsResult.error) errors.leads = leadsResult.error;
-  if (notificationsResult.error) errors.notifications = notificationsResult.error;
-  if (recentProjectsResult.error) errors.recentProjects = recentProjectsResult.error;
-
   return NextResponse.json({
     atAGlance: {
       activeProjects: projectsResult.count ?? 0,
@@ -94,6 +86,5 @@ export async function GET(req: NextRequest) {
       unreadNotifications: notificationsResult.count ?? 0,
     },
     recentProjects: recentProjectsResult.data ?? [],
-    ...(Object.keys(errors).length > 0 ? { _errors: errors } : {}),
   });
 }
