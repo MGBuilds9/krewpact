@@ -1,14 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET } from '@/app/api/search/global/route';
 import {
   mockClerkAuth,
@@ -18,7 +18,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function emptyTables() {
   return {
@@ -112,7 +112,7 @@ describe('GET /api/search/global', () => {
         },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(makeRequest('/api/search/global?q=acme'));
     expect(res.status).toBe(200);
@@ -138,7 +138,7 @@ describe('GET /api/search/global', () => {
   it('returns empty arrays when no matches found', async () => {
     mockClerkAuth(mockAuth);
     const client = mockSupabaseClient({ tables: emptyTables() });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(makeRequest('/api/search/global?q=zzzzz'));
     expect(res.status).toBe(200);
@@ -167,7 +167,7 @@ describe('GET /api/search/global', () => {
         },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(makeRequest('/api/search/global?q=test'));
     expect(res.status).toBe(200);
@@ -189,7 +189,7 @@ describe('GET /api/search/global', () => {
         },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(makeRequest('/api/search/global?q=alice'));
     expect(res.status).toBe(200);
@@ -210,7 +210,7 @@ describe('GET /api/search/global', () => {
         tasks: { data: null, error: { message: 'DB error' } },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(makeRequest('/api/search/global?q=test'));
     expect(res.status).toBe(200);
@@ -223,7 +223,7 @@ describe('GET /api/search/global', () => {
   it('calls supabase with correct ilike patterns', async () => {
     mockClerkAuth(mockAuth);
     const client = mockSupabaseClient({ tables: emptyTables() });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     await GET(makeRequest('/api/search/global?q=test'));
 
@@ -240,7 +240,7 @@ describe('GET /api/search/global', () => {
   it('returns correct structure shape', async () => {
     mockClerkAuth(mockAuth);
     const client = mockSupabaseClient({ tables: emptyTables() });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(makeRequest('/api/search/global?q=test'));
     const body = await res.json();
@@ -273,7 +273,7 @@ describe('GET /api/search/global', () => {
         },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(makeRequest('/api/search/global?q=highway'));
     expect(res.status).toBe(200);

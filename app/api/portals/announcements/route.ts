@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
@@ -25,7 +25,9 @@ export async function GET(req: NextRequest) {
   const projectId = req.nextUrl.searchParams.get('project_id');
   if (!projectId) return NextResponse.json({ error: 'project_id is required' }, { status: 400 });
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
 
   // Announcements are portal_messages where portal_account_id IS NULL (broadcast)
@@ -63,7 +65,9 @@ export async function POST(req: NextRequest) {
   const parsed = announcementSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
 
   // Resolve internal user
   const { data: internalUser } = await supabase

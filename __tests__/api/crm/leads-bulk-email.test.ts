@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
@@ -9,7 +9,7 @@ vi.mock('@/lib/api/rate-limit', () => ({
 vi.mock('@/lib/email/resend', () => ({ sendEmail: vi.fn() }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { sendEmail } from '@/lib/email/resend';
 import { POST } from '@/app/api/crm/leads/bulk-email/route';
 
@@ -57,10 +57,11 @@ describe('POST /api/crm/leads/bulk-email', () => {
   });
 
   it('returns 400 if no contacts have email', async () => {
-    const from = vi.fn().mockReturnValue(
-      mockChain({ data: [], error: null }),
-    );
-    (createUserClient as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({ from });
+    const from = vi.fn().mockReturnValue(mockChain({ data: [], error: null }));
+    (createUserClientSafe as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
+      client: { from },
+      error: null,
+    });
 
     const res = await POST(makeRequest({ lead_ids: [leadId1], subject: 'Hi', html: '<p>Hi</p>' }));
     expect(res.status).toBe(400);
@@ -70,7 +71,13 @@ describe('POST /api/crm/leads/bulk-email', () => {
 
   it('sends emails and returns counts', async () => {
     const contacts = [
-      { id: 'c-1', email: 'alice@test.com', first_name: 'Alice', last_name: 'Smith', lead_id: leadId1 },
+      {
+        id: 'c-1',
+        email: 'alice@test.com',
+        first_name: 'Alice',
+        last_name: 'Smith',
+        lead_id: leadId1,
+      },
       { id: 'c-2', email: 'bob@test.com', first_name: 'Bob', last_name: 'Jones', lead_id: leadId2 },
     ];
 
@@ -78,14 +85,22 @@ describe('POST /api/crm/leads/bulk-email', () => {
       if (table === 'contacts') return mockChain({ data: contacts, error: null });
       return mockChain({ data: null, error: null });
     });
-    (createUserClient as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({ from });
-    (sendEmail as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({ id: 'msg-1', success: true });
+    (createUserClientSafe as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
+      client: { from },
+      error: null,
+    });
+    (sendEmail as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
+      id: 'msg-1',
+      success: true,
+    });
 
-    const res = await POST(makeRequest({
-      lead_ids: [leadId1, leadId2],
-      subject: 'Hello {{first_name}}',
-      html: '<p>Hello {{first_name}} {{last_name}}</p>',
-    }));
+    const res = await POST(
+      makeRequest({
+        lead_ids: [leadId1, leadId2],
+        subject: 'Hello {{first_name}}',
+        html: '<p>Hello {{first_name}} {{last_name}}</p>',
+      }),
+    );
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.sent).toBe(2);
@@ -95,7 +110,13 @@ describe('POST /api/crm/leads/bulk-email', () => {
 
   it('handles sendEmail failures gracefully', async () => {
     const contacts = [
-      { id: 'c-1', email: 'alice@test.com', first_name: 'Alice', last_name: 'Smith', lead_id: leadId1 },
+      {
+        id: 'c-1',
+        email: 'alice@test.com',
+        first_name: 'Alice',
+        last_name: 'Smith',
+        lead_id: leadId1,
+      },
       { id: 'c-2', email: 'bob@test.com', first_name: 'Bob', last_name: 'Jones', lead_id: leadId2 },
     ];
 
@@ -103,17 +124,22 @@ describe('POST /api/crm/leads/bulk-email', () => {
       if (table === 'contacts') return mockChain({ data: contacts, error: null });
       return mockChain({ data: null, error: null });
     });
-    (createUserClient as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({ from });
+    (createUserClientSafe as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
+      client: { from },
+      error: null,
+    });
 
     (sendEmail as unknown as ReturnType<typeof vi.fn>)
       .mockResolvedValueOnce({ id: 'msg-1', success: true })
       .mockResolvedValueOnce({ id: '', success: false, error: 'Bounced' });
 
-    const res = await POST(makeRequest({
-      lead_ids: [leadId1, leadId2],
-      subject: 'Hi',
-      html: '<p>Hello</p>',
-    }));
+    const res = await POST(
+      makeRequest({
+        lead_ids: [leadId1, leadId2],
+        subject: 'Hi',
+        html: '<p>Hello</p>',
+      }),
+    );
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.sent).toBe(1);

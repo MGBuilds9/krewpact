@@ -1,4 +1,4 @@
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyCronAuth } from '@/lib/api/cron-auth';
 
@@ -8,7 +8,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const now = new Date().toISOString();
 
   // Find all overdue tasks that haven't been notified yet
@@ -40,7 +42,10 @@ export async function POST(req: NextRequest) {
   const notifications = [];
   for (const [userId, tasks] of byUser) {
     const taskCount = tasks.length;
-    const titles = tasks.slice(0, 3).map((t) => t.title).join(', ');
+    const titles = tasks
+      .slice(0, 3)
+      .map((t) => t.title)
+      .join(', ');
     const suffix = taskCount > 3 ? ` and ${taskCount - 3} more` : '';
 
     notifications.push({

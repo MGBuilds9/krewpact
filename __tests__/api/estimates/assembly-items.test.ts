@@ -7,17 +7,12 @@ vi.mock('@clerk/nextjs/server', () => ({
 
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
-import {
-  GET,
-  POST,
-  PATCH,
-  DELETE,
-} from '@/app/api/assemblies/[id]/items/route';
+import { createUserClientSafe } from '@/lib/supabase/server';
+import { GET, POST, PATCH, DELETE } from '@/app/api/assemblies/[id]/items/route';
 import {
   mockSupabaseClient,
   mockClerkAuth,
@@ -28,7 +23,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 const ASSEMBLY_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 const ITEM_ID = 'b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a22';
@@ -83,7 +78,7 @@ describe('GET /api/assemblies/[id]/items', () => {
     const client = mockSupabaseClient({
       tables: { assembly_items: { data: items, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(
       makeRequest(`/api/assemblies/${ASSEMBLY_ID}/items`),
@@ -97,11 +92,12 @@ describe('GET /api/assemblies/[id]/items', () => {
 
   it('returns empty array for assembly with no items', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { assembly_items: { data: [], error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(
       makeRequest(`/api/assemblies/${ASSEMBLY_ID}/items`),
@@ -118,7 +114,7 @@ describe('GET /api/assemblies/[id]/items', () => {
     const client = mockSupabaseClient({
       tables: { assembly_items: { data: items, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(
       makeRequest(`/api/assemblies/${ASSEMBLY_ID}/items`),
@@ -154,11 +150,12 @@ describe('POST /api/assemblies/[id]/items', () => {
   it('creates assembly item and returns 201', async () => {
     const created = makeAssemblyItem();
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { assembly_items: { data: created, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST(
       makeJsonRequest(`/api/assemblies/${ASSEMBLY_ID}/items`, {
@@ -215,11 +212,12 @@ describe('POST /api/assemblies/[id]/items', () => {
   it('accepts optional catalog_item_id', async () => {
     const created = makeAssemblyItem({ catalog_item_id: CATALOG_ITEM_ID });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { assembly_items: { data: created, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST(
       makeJsonRequest(`/api/assemblies/${ASSEMBLY_ID}/items`, {
@@ -259,11 +257,7 @@ describe('PATCH /api/assemblies/[id]/items', () => {
   it('returns 400 when item_id query param is missing', async () => {
     mockClerkAuth(mockAuth);
     const res = await PATCH(
-      makeJsonRequest(
-        `/api/assemblies/${ASSEMBLY_ID}/items`,
-        { quantity: 200 },
-        'PATCH',
-      ),
+      makeJsonRequest(`/api/assemblies/${ASSEMBLY_ID}/items`, { quantity: 200 }, 'PATCH'),
       makeContext(ASSEMBLY_ID),
     );
     expect(res.status).toBe(400);
@@ -274,11 +268,12 @@ describe('PATCH /api/assemblies/[id]/items', () => {
   it('updates assembly item', async () => {
     const updated = makeAssemblyItem({ quantity: 200 });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { assembly_items: { data: updated, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await PATCH(
       makeJsonRequest(
@@ -295,8 +290,8 @@ describe('PATCH /api/assemblies/[id]/items', () => {
 
   it('returns 404 for non-existent item', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           assembly_items: {
             data: null,
@@ -304,7 +299,8 @@ describe('PATCH /api/assemblies/[id]/items', () => {
           },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await PATCH(
       makeJsonRequest(
@@ -349,11 +345,12 @@ describe('DELETE /api/assemblies/[id]/items', () => {
 
   it('deletes assembly item and returns success', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { assembly_items: { data: null, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await DELETE(
       makeRequest(`/api/assemblies/${ASSEMBLY_ID}/items?item_id=${ITEM_ID}`),
@@ -369,7 +366,7 @@ describe('DELETE /api/assemblies/[id]/items', () => {
     const client = mockSupabaseClient({
       tables: { assembly_items: { data: null, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     await DELETE(
       makeRequest(`/api/assemblies/${ASSEMBLY_ID}/items?item_id=${ITEM_ID}`),

@@ -5,14 +5,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET as GET_LIST, POST } from '@/app/api/compliance/route';
 import { GET as GET_DETAIL, PATCH } from '@/app/api/compliance/[docId]/route';
 import {
@@ -24,7 +24,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 const DOC_ID = '00000000-0000-4000-a000-000000000901';
 
 function docCtx(docId: string = DOC_ID) {
@@ -58,11 +58,12 @@ describe('GET /api/compliance', () => {
 
   it('returns compliance docs list', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { trade_partner_compliance_docs: { data: [sampleDoc], error: null, count: 1 } },
       }),
-    );
+      error: null,
+    });
     const res = await GET_LIST(makeRequest('/api/compliance'));
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -72,13 +73,14 @@ describe('GET /api/compliance', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           trade_partner_compliance_docs: { data: null, error: { message: 'err' }, count: null },
         },
       }),
-    );
+      error: null,
+    });
     const res = await GET_LIST(makeRequest('/api/compliance'));
     expect(res.status).toBe(500);
   });
@@ -101,11 +103,12 @@ describe('POST /api/compliance', () => {
 
   it('returns 201 on valid creation', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { trade_partner_compliance_docs: { data: sampleDoc, error: null } },
       }),
-    );
+      error: null,
+    });
     const res = await POST(
       makeJsonRequest('/api/compliance', {
         portal_account_id: sampleDoc.portal_account_id,
@@ -132,11 +135,12 @@ describe('GET /api/compliance/[docId]', () => {
 
   it('returns compliance doc on success', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { trade_partner_compliance_docs: { data: sampleDoc, error: null } },
       }),
-    );
+      error: null,
+    });
     const res = await GET_DETAIL(makeRequest('/api/compliance/x'), docCtx());
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -145,11 +149,12 @@ describe('GET /api/compliance/[docId]', () => {
 
   it('returns 404 on not found', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { trade_partner_compliance_docs: { data: null, error: { message: 'not found' } } },
       }),
-    );
+      error: null,
+    });
     const res = await GET_DETAIL(makeRequest('/api/compliance/x'), docCtx());
     expect(res.status).toBe(404);
   });
@@ -169,13 +174,14 @@ describe('PATCH /api/compliance/[docId]', () => {
 
   it('returns updated doc on success', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           trade_partner_compliance_docs: { data: { ...sampleDoc, status: 'expired' }, error: null },
         },
       }),
-    );
+      error: null,
+    });
     const res = await PATCH(
       makeJsonRequest('/api/compliance/x', { status: 'expired' }, 'PATCH'),
       docCtx(),
@@ -187,11 +193,12 @@ describe('PATCH /api/compliance/[docId]', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { trade_partner_compliance_docs: { data: null, error: { message: 'err' } } },
       }),
-    );
+      error: null,
+    });
     const res = await PATCH(
       makeJsonRequest('/api/compliance/x', { status: 'expired' }, 'PATCH'),
       docCtx(),

@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
@@ -30,11 +30,14 @@ export async function GET(req: NextRequest) {
 
   const { status, source, search, sort_by, sort_dir } = parsed.data;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   let query = supabase
     .from('enrichment_jobs')
-    .select('id, lead_id, status, source, result, error_message, created_at, updated_at', { count: 'exact' })
+    .select('id, lead_id, status, source, result, error_message, created_at, updated_at', {
+      count: 'exact',
+    })
     .order(sort_by ?? 'created_at', { ascending: sort_dir === 'asc' });
 
   if (status) {

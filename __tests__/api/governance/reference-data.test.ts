@@ -7,14 +7,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET as GET_LIST, POST as POST_CREATE } from '@/app/api/governance/reference-data/route';
 import { GET as GET_DETAIL, PATCH } from '@/app/api/governance/reference-data/[setId]/route';
 import {
@@ -30,7 +30,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 const SET_ID = '00000000-0000-4000-a000-000000000701';
 
 function setCtx(setId: string = SET_ID) {
@@ -69,11 +69,12 @@ describe('GET /api/governance/reference-data', () => {
 
   it('returns reference data sets list', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { reference_data_sets: { data: [sampleSet], error: null, count: 1 } },
       }),
-    );
+      error: null,
+    });
     const res = await GET_LIST(makeRequest('/api/governance/reference-data'));
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -83,11 +84,12 @@ describe('GET /api/governance/reference-data', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { reference_data_sets: { data: null, error: { message: 'err' }, count: null } },
       }),
-    );
+      error: null,
+    });
     const res = await GET_LIST(makeRequest('/api/governance/reference-data'));
     expect(res.status).toBe(500);
   });
@@ -105,11 +107,12 @@ describe('POST /api/governance/reference-data', () => {
 
   it('returns 201 on valid creation', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { reference_data_sets: { data: sampleSet, error: null } },
       }),
-    );
+      error: null,
+    });
     const res = await POST_CREATE(
       makeJsonRequest('/api/governance/reference-data', {
         set_key: 'project_status',
@@ -121,11 +124,12 @@ describe('POST /api/governance/reference-data', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { reference_data_sets: { data: null, error: { message: 'insert err' } } },
       }),
-    );
+      error: null,
+    });
     const res = await POST_CREATE(
       makeJsonRequest('/api/governance/reference-data', {
         set_key: 'project_status',
@@ -148,9 +152,12 @@ describe('GET /api/governance/reference-data/[setId]', () => {
 
   it('returns reference data set on success', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { reference_data_sets: { data: sampleSet, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
+        tables: { reference_data_sets: { data: sampleSet, error: null } },
+      }),
+      error: null,
+    });
     const res = await GET_DETAIL(makeRequest('/api/governance/reference-data/x'), setCtx());
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -159,11 +166,12 @@ describe('GET /api/governance/reference-data/[setId]', () => {
 
   it('returns 404 on not found', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { reference_data_sets: { data: null, error: { message: 'not found' } } },
       }),
-    );
+      error: null,
+    });
     const res = await GET_DETAIL(makeRequest('/api/governance/reference-data/x'), setCtx());
     expect(res.status).toBe(404);
   });
@@ -184,13 +192,14 @@ describe('PATCH /api/governance/reference-data/[setId]', () => {
 
   it('returns updated set on success', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           reference_data_sets: { data: { ...sampleSet, set_name: 'Updated' }, error: null },
         },
       }),
-    );
+      error: null,
+    });
     const res = await PATCH(
       makeJsonRequest('/api/governance/reference-data/x', { set_name: 'Updated' }, 'PATCH'),
       setCtx(),
@@ -202,11 +211,12 @@ describe('PATCH /api/governance/reference-data/[setId]', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { reference_data_sets: { data: null, error: { message: 'err' } } },
       }),
-    );
+      error: null,
+    });
     const res = await PATCH(
       makeJsonRequest('/api/governance/reference-data/x', { set_name: 'Updated' }, 'PATCH'),
       setCtx(),
@@ -227,11 +237,12 @@ describe('GET /api/governance/reference-data/[setId]/values', () => {
 
   it('returns values list', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { reference_data_values: { data: [sampleValue], error: null, count: 1 } },
       }),
-    );
+      error: null,
+    });
     const res = await GET_VALUES(makeRequest('/api/governance/reference-data/x/values'), setCtx());
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -241,11 +252,12 @@ describe('GET /api/governance/reference-data/[setId]/values', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { reference_data_values: { data: null, error: { message: 'err' }, count: null } },
       }),
-    );
+      error: null,
+    });
     const res = await GET_VALUES(makeRequest('/api/governance/reference-data/x/values'), setCtx());
     expect(res.status).toBe(500);
   });
@@ -266,11 +278,12 @@ describe('POST /api/governance/reference-data/[setId]/values', () => {
 
   it('returns 201 on valid value creation', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { reference_data_values: { data: sampleValue, error: null } },
       }),
-    );
+      error: null,
+    });
     const res = await POST_VALUE(
       makeJsonRequest('/api/governance/reference-data/x/values', {
         value_key: 'active',
@@ -284,11 +297,12 @@ describe('POST /api/governance/reference-data/[setId]/values', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { reference_data_values: { data: null, error: { message: 'insert err' } } },
       }),
-    );
+      error: null,
+    });
     const res = await POST_VALUE(
       makeJsonRequest('/api/governance/reference-data/x/values', {
         value_key: 'active',

@@ -1,7 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { accountCreateSchema } from '@/lib/validators/crm';
-import { getOrgIdFromAuth } from '@/lib/api/org';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
@@ -32,11 +31,15 @@ export async function GET(req: NextRequest) {
 
   const { division_id, account_type, search, sort_by, sort_dir } = parsed.data;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   let query = supabase
     .from('accounts')
-    .select('id, account_name, account_type, division_id, billing_address, shipping_address, notes, created_by, created_at, updated_at', { count: 'exact' })
+    .select(
+      'id, account_name, account_type, division_id, billing_address, shipping_address, notes, created_by, created_at, updated_at',
+      { count: 'exact' },
+    )
     .order(sort_by ?? 'created_at', { ascending: sort_dir === 'asc' });
 
   if (division_id) {
@@ -80,11 +83,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const orgId = await getOrgIdFromAuth();
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('accounts')
-    .insert({ ...parsed.data, org_id: orgId })
+    .insert({ ...parsed.data })
     .select()
     .single();
 

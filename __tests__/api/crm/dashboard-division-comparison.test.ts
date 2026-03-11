@@ -1,19 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET } from '@/app/api/crm/dashboard/division-comparison/route';
 import { mockClerkAuth, mockClerkUnauth, mockSupabaseClient, makeRequest } from '../../helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function makeGetRequest() {
   return makeRequest('/api/crm/dashboard/division-comparison');
@@ -37,9 +37,30 @@ describe('GET /api/crm/dashboard/division-comparison', () => {
 
   it('returns division_comparison and seasonal_analysis', async () => {
     const opps = [
-      { id: '1', division_id: 'contracting', stage: 'contracted', estimated_revenue: 200000, created_at: '2026-01-15T00:00:00Z', updated_at: '2026-02-01T00:00:00Z' },
-      { id: '2', division_id: 'contracting', stage: 'closed_lost', estimated_revenue: 50000, created_at: '2026-02-10T00:00:00Z', updated_at: '2026-03-01T00:00:00Z' },
-      { id: '3', division_id: 'homes', stage: 'contracted', estimated_revenue: 750000, created_at: '2026-07-20T00:00:00Z', updated_at: '2026-08-01T00:00:00Z' },
+      {
+        id: '1',
+        division_id: 'contracting',
+        stage: 'contracted',
+        estimated_revenue: 200000,
+        created_at: '2026-01-15T00:00:00Z',
+        updated_at: '2026-02-01T00:00:00Z',
+      },
+      {
+        id: '2',
+        division_id: 'contracting',
+        stage: 'closed_lost',
+        estimated_revenue: 50000,
+        created_at: '2026-02-10T00:00:00Z',
+        updated_at: '2026-03-01T00:00:00Z',
+      },
+      {
+        id: '3',
+        division_id: 'homes',
+        stage: 'contracted',
+        estimated_revenue: 750000,
+        created_at: '2026-07-20T00:00:00Z',
+        updated_at: '2026-08-01T00:00:00Z',
+      },
     ];
 
     const client = mockSupabaseClient({
@@ -47,7 +68,7 @@ describe('GET /api/crm/dashboard/division-comparison', () => {
         opportunities: { data: opps, error: null },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client as never);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
 
     const res = await GET(makeGetRequest());
     expect(res.status).toBe(200);
@@ -66,7 +87,7 @@ describe('GET /api/crm/dashboard/division-comparison', () => {
         opportunities: { data: [], error: null },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client as never);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
 
     const res = await GET(makeGetRequest());
     expect(res.status).toBe(200);
@@ -82,7 +103,7 @@ describe('GET /api/crm/dashboard/division-comparison', () => {
         opportunities: { data: null, error: { message: 'connection refused' } },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client as never);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
 
     const res = await GET(makeGetRequest());
     expect(res.status).toBe(500);
@@ -93,9 +114,30 @@ describe('GET /api/crm/dashboard/division-comparison', () => {
 
   it('calculates correct aggregate values', async () => {
     const opps = [
-      { id: '1', division_id: 'contracting', stage: 'contracted', estimated_revenue: 300000, created_at: '2026-01-10T00:00:00Z', updated_at: '2026-01-20T00:00:00Z' },
-      { id: '2', division_id: 'contracting', stage: 'contracted', estimated_revenue: 200000, created_at: '2026-03-15T00:00:00Z', updated_at: '2026-03-20T00:00:00Z' },
-      { id: '3', division_id: 'contracting', stage: 'closed_lost', estimated_revenue: 100000, created_at: '2026-02-01T00:00:00Z', updated_at: '2026-02-15T00:00:00Z' },
+      {
+        id: '1',
+        division_id: 'contracting',
+        stage: 'contracted',
+        estimated_revenue: 300000,
+        created_at: '2026-01-10T00:00:00Z',
+        updated_at: '2026-01-20T00:00:00Z',
+      },
+      {
+        id: '2',
+        division_id: 'contracting',
+        stage: 'contracted',
+        estimated_revenue: 200000,
+        created_at: '2026-03-15T00:00:00Z',
+        updated_at: '2026-03-20T00:00:00Z',
+      },
+      {
+        id: '3',
+        division_id: 'contracting',
+        stage: 'closed_lost',
+        estimated_revenue: 100000,
+        created_at: '2026-02-01T00:00:00Z',
+        updated_at: '2026-02-15T00:00:00Z',
+      },
     ];
 
     const client = mockSupabaseClient({
@@ -103,7 +145,7 @@ describe('GET /api/crm/dashboard/division-comparison', () => {
         opportunities: { data: opps, error: null },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client as never);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
 
     const res = await GET(makeGetRequest());
     const body = await res.json();

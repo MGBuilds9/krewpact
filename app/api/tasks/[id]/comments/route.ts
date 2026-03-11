@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { taskCommentCreateSchema } from '@/lib/validators/projects';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { NextRequest, NextResponse } from 'next/server';
@@ -19,7 +19,9 @@ export async function GET(req: NextRequest, context: RouteContext) {
   const { id } = await context.params;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error, count } = await supabase
     .from('task_comments')
     .select('id, task_id, author_user_id, comment_text, created_at, updated_at', { count: 'exact' })
@@ -57,7 +59,9 @@ export async function POST(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('task_comments')
     .insert({ ...parsed.data, task_id: id, author_user_id: userId })

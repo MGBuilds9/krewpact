@@ -1,5 +1,5 @@
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
@@ -8,14 +8,14 @@ vi.mock('@/lib/api/org', () => ({ getOrgIdFromAuth: vi.fn() }));
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { getOrgIdFromAuth } from '@/lib/api/org';
 import { mockClerkAuth, mockClerkUnauth, makeRequest, makeJsonRequest } from '@/__tests__/helpers';
 import { mockSupabaseClient } from '@/__tests__/helpers/mock-supabase';
 import { GET, PATCH } from '@/app/api/crm/settings/sequences/route';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateClient = vi.mocked(createUserClient);
+const mockCreateClient = vi.mocked(createUserClientSafe);
 const mockGetOrgId = vi.mocked(getOrgIdFromAuth);
 
 describe('GET /api/crm/settings/sequences', () => {
@@ -37,7 +37,7 @@ describe('GET /api/crm/settings/sequences', () => {
         org_settings: { data: null, error: { code: 'PGRST116', message: 'not found' } },
       },
     });
-    mockCreateClient.mockResolvedValue(client as never);
+    mockCreateClient.mockResolvedValue({ client, error: null } as never);
 
     const res = await GET(makeRequest('/api/crm/settings/sequences'));
     expect(res.status).toBe(200);
@@ -62,7 +62,7 @@ describe('GET /api/crm/settings/sequences', () => {
         org_settings: { data: { workflow: { sequence_defaults: stored } }, error: null },
       },
     });
-    mockCreateClient.mockResolvedValue(client as never);
+    mockCreateClient.mockResolvedValue({ client, error: null } as never);
 
     const res = await GET(makeRequest('/api/crm/settings/sequences'));
     expect(res.status).toBe(200);
@@ -87,7 +87,7 @@ describe('PATCH /api/crm/settings/sequences', () => {
 
   it('returns 400 for invalid time format', async () => {
     const client = mockSupabaseClient();
-    mockCreateClient.mockResolvedValue(client as never);
+    mockCreateClient.mockResolvedValue({ client, error: null } as never);
 
     const res = await PATCH(
       makeJsonRequest(
@@ -109,7 +109,7 @@ describe('PATCH /api/crm/settings/sequences', () => {
 
   it('returns 400 when required fields are missing', async () => {
     const client = mockSupabaseClient();
-    mockCreateClient.mockResolvedValue(client as never);
+    mockCreateClient.mockResolvedValue({ client, error: null } as never);
 
     const res = await PATCH(
       makeJsonRequest('/api/crm/settings/sequences', { max_enrollments_per_day: 50 }, 'PATCH'),
@@ -133,7 +133,7 @@ describe('PATCH /api/crm/settings/sequences', () => {
         },
       },
     });
-    mockCreateClient.mockResolvedValue(client as never);
+    mockCreateClient.mockResolvedValue({ client, error: null } as never);
 
     const res = await PATCH(
       makeJsonRequest(

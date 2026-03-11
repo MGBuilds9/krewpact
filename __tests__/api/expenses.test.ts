@@ -5,11 +5,11 @@ vi.mock('@clerk/nextjs/server', () => ({
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET, POST } from '@/app/api/expenses/route';
 import {
   mockSupabaseClient,
@@ -22,7 +22,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 describe('GET /api/expenses', () => {
   beforeEach(() => {
@@ -40,9 +40,10 @@ describe('GET /api/expenses', () => {
     const expenses = [makeExpenseClaim(), makeExpenseClaim({ category: 'travel' })];
 
     mockClerkAuth(mockAuth, 'user_123');
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { expense_claims: { data: expenses, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { expense_claims: { data: expenses, error: null } } }),
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/expenses'));
     expect(res.status).toBe(200);
@@ -56,7 +57,7 @@ describe('GET /api/expenses', () => {
     const client = mockSupabaseClient({
       tables: { expense_claims: { data: [], error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     await GET(makeRequest('/api/expenses'));
     expect(client.from).toHaveBeenCalledWith('expense_claims');
@@ -67,7 +68,7 @@ describe('GET /api/expenses', () => {
     const client = mockSupabaseClient({
       tables: { expense_claims: { data: [], error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(makeRequest('/api/expenses?status=submitted'));
     expect(res.status).toBe(200);
@@ -97,9 +98,10 @@ describe('POST /api/expenses', () => {
     const created = makeExpenseClaim();
 
     mockClerkAuth(mockAuth, 'user_123');
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { expense_claims: { data: created, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { expense_claims: { data: created, error: null } } }),
+      error: null,
+    });
 
     const res = await POST(
       makeJsonRequest('/api/expenses', {

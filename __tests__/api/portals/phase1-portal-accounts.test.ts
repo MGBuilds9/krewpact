@@ -8,12 +8,12 @@ vi.mock('@clerk/nextjs/server', () => ({
 
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
   createServiceClient: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET, POST } from '@/app/api/portals/accounts/route';
 import {
   mockSupabaseClient,
@@ -25,7 +25,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 // Portal account fixture
 function makePortalAccount(overrides: Record<string, unknown> = {}) {
@@ -60,9 +60,10 @@ describe('GET /api/portals/accounts', () => {
   it('returns paginated portal accounts for internal staff', async () => {
     const accounts = [makePortalAccount(), makePortalAccount({ actor_type: 'trade_partner' })];
     mockClerkAuth(mockAuth, 'user_staff');
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { portal_accounts: { data: accounts, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { portal_accounts: { data: accounts, error: null } } }),
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/portals/accounts'));
     expect(res.status).toBe(200);
@@ -75,13 +76,14 @@ describe('GET /api/portals/accounts', () => {
 
   it('returns 500 when Supabase errors', async () => {
     mockClerkAuth(mockAuth, 'user_staff');
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           portal_accounts: { data: null, error: { message: 'DB error', code: 'PGRST000' } },
         },
       }),
-    );
+      error: null,
+    });
     const res = await GET(makeRequest('/api/portals/accounts'));
     expect(res.status).toBe(500);
   });
@@ -132,14 +134,15 @@ describe('POST /api/portals/accounts', () => {
   it('creates a portal account and returns 201 (or 201 with _warning if Clerk fails in test env)', async () => {
     const created = makePortalAccount();
     mockClerkAuth(mockAuth, 'user_pm');
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           portal_accounts: { data: created, error: null },
           portal_permissions: { data: [], error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST(
       makeJsonRequest('/api/portals/accounts', {

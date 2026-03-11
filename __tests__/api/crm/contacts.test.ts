@@ -7,11 +7,11 @@ vi.mock('@clerk/nextjs/server', () => ({
 
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET, POST } from '@/app/api/crm/contacts/route';
 import { GET as GET_ID, PATCH, DELETE } from '@/app/api/crm/contacts/[id]/route';
 import {
@@ -25,7 +25,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function makeContext(id: string) {
   return { params: Promise.resolve({ id }) };
@@ -40,9 +40,10 @@ describe('GET /api/crm/contacts', () => {
   it('returns contacts list', async () => {
     const contacts = [makeContact(), makeContact({ first_name: 'John' })];
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { contacts: { data: contacts, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { contacts: { data: contacts, error: null } } }),
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/crm/contacts'));
     expect(res.status).toBe(200);
@@ -56,7 +57,7 @@ describe('GET /api/crm/contacts', () => {
     const contacts = [makeContact()];
     mockClerkAuth(mockAuth);
     const client = mockSupabaseClient({ tables: { contacts: { data: contacts, error: null } } });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(
       makeRequest('/api/crm/contacts?account_id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'),
@@ -68,9 +69,10 @@ describe('GET /api/crm/contacts', () => {
   it('filters by search', async () => {
     const contacts = [makeContact({ first_name: 'Jane' })];
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { contacts: { data: contacts, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { contacts: { data: contacts, error: null } } }),
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/crm/contacts?search=Jane'));
     expect(res.status).toBe(200);
@@ -96,9 +98,10 @@ describe('POST /api/crm/contacts', () => {
   it('creates contact', async () => {
     const created = makeContact();
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { contacts: { data: created, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { contacts: { data: created, error: null } } }),
+      error: null,
+    });
 
     const res = await POST(
       makeJsonRequest('/api/crm/contacts', {
@@ -132,9 +135,10 @@ describe('POST /api/crm/contacts', () => {
   it('creates contact with is_primary flag', async () => {
     const created = makeContact({ is_primary: true });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { contacts: { data: created, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { contacts: { data: created, error: null } } }),
+      error: null,
+    });
 
     const res = await POST(
       makeJsonRequest('/api/crm/contacts', {
@@ -158,9 +162,10 @@ describe('GET /api/crm/contacts/[id]', () => {
   it('returns contact by id', async () => {
     const contact = makeContact();
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { contacts: { data: contact, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { contacts: { data: contact, error: null } } }),
+      error: null,
+    });
 
     const res = await GET_ID(makeRequest('/api/crm/contacts/123'), makeContext(contact.id));
     expect(res.status).toBe(200);
@@ -178,9 +183,10 @@ describe('PATCH /api/crm/contacts/[id]', () => {
   it('updates contact', async () => {
     const updated = makeContact({ first_name: 'Updated' });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { contacts: { data: updated, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { contacts: { data: updated, error: null } } }),
+      error: null,
+    });
 
     const res = await PATCH(
       makeJsonRequest('/api/crm/contacts/123', { first_name: 'Updated' }, 'PATCH'),
@@ -200,9 +206,10 @@ describe('DELETE /api/crm/contacts/[id]', () => {
 
   it('deletes contact', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { contacts: { data: null, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { contacts: { data: null, error: null } } }),
+      error: null,
+    });
 
     const res = await DELETE(makeRequest('/api/crm/contacts/123'), makeContext('some-id'));
     expect(res.status).toBe(200);

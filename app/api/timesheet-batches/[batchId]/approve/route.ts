@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { timesheetBatchApprovalSchema } from '@/lib/validators/time-expense';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
@@ -24,7 +24,9 @@ export async function POST(req: NextRequest, context: RouteContext) {
   const parsed = timesheetBatchApprovalSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('timesheet_batches')
     .update({

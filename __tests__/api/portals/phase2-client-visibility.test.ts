@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET as getProjects } from '@/app/api/portal/projects/route';
 import { GET as getProject } from '@/app/api/portal/projects/[id]/route';
 import { GET as _getDocs } from '@/app/api/portal/projects/[id]/documents/route';
@@ -20,7 +21,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 const PROJECT_ID = TEST_IDS.PROJECT_ID;
 const CO_ID = '00000000-0000-4000-a000-000000000099';
@@ -207,9 +208,7 @@ describe('GET /api/portal/projects', () => {
   it('returns 403 when no portal account exists for the user', async () => {
     mockClerkAuth(mockAuth, 'clerk_user_no_portal');
     const mock = buildPortalMock({ portalAccount: null });
-    mockCreateUserClient.mockResolvedValue({ from: mock.from } as unknown as Awaited<
-      ReturnType<typeof createUserClient>
-    >);
+    mockCreateUserClientSafe.mockResolvedValue({ client: { from: mock.from } as any, error: null });
     const res = await getProjects(makeRequest('/api/portal/projects'));
     expect(res.status).toBe(403);
   });
@@ -234,9 +233,7 @@ describe('GET /api/portal/projects/[id]', () => {
     const mock = buildPortalMock({
       portalAccount: { ...ACTIVE_PORTAL_ACCOUNT, status: 'invited' },
     });
-    mockCreateUserClient.mockResolvedValue({ from: mock.from } as unknown as Awaited<
-      ReturnType<typeof createUserClient>
-    >);
+    mockCreateUserClientSafe.mockResolvedValue({ client: { from: mock.from } as any, error: null });
     const res = await getProject(makeRequest(`/api/portal/projects/${PROJECT_ID}`), {
       params: Promise.resolve({ id: PROJECT_ID }),
     });
@@ -261,9 +258,7 @@ describe('GET /api/portal/projects/[id]/invoices', () => {
   it('returns 403 when view_financials is false', async () => {
     mockClerkAuth(mockAuth, 'clerk_without_financials');
     const mock = buildPortalMock({ permSet: { view_documents: true, view_financials: false } });
-    mockCreateUserClient.mockResolvedValue({ from: mock.from } as unknown as Awaited<
-      ReturnType<typeof createUserClient>
-    >);
+    mockCreateUserClientSafe.mockResolvedValue({ client: { from: mock.from } as any, error: null });
     const res = await getInvoices(makeRequest(`/api/portal/projects/${PROJECT_ID}/invoices`), {
       params: Promise.resolve({ id: PROJECT_ID }),
     });
@@ -295,9 +290,7 @@ describe('POST CO approve /api/portal/projects/[id]/change-orders/[coId]/approve
     const mock = buildPortalMock({
       permSet: { view_documents: true, approve_change_orders: false },
     });
-    mockCreateUserClient.mockResolvedValue({ from: mock.from } as unknown as Awaited<
-      ReturnType<typeof createUserClient>
-    >);
+    mockCreateUserClientSafe.mockResolvedValue({ client: { from: mock.from } as any, error: null });
     const res = await approveCO(
       makeJsonRequest(
         `/api/portal/projects/${PROJECT_ID}/change-orders/${CO_ID}/approve`,

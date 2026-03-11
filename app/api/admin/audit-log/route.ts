@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 import { logger } from '@/lib/logger';
@@ -38,7 +38,9 @@ export async function GET(req: NextRequest) {
   const dateFrom = url.searchParams.get('date_from');
   const dateTo = url.searchParams.get('date_to');
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
 
   // Build query with explicit columns
   let query = supabase

@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe, createUserClient } from '@/lib/supabase/server';
 import { estimateLineCreateSchema } from '@/lib/validators/estimating';
 import { calculateLineTotal, calculateEstimateTotals } from '@/lib/estimating/calculations';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
@@ -52,12 +52,16 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
   const { id } = await context.params;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   const { data, error, count } = await supabase
     .from('estimate_lines')
     /* excluded from list: metadata */
-    .select('id, estimate_id, line_type, description, quantity, unit, unit_cost, markup_pct, line_total, sort_order, is_optional, catalog_item_id, assembly_id, parent_line_id, created_at, updated_at', { count: 'exact' })
+    .select(
+      'id, estimate_id, line_type, description, quantity, unit, unit_cost, markup_pct, line_total, sort_order, is_optional, catalog_item_id, assembly_id, parent_line_id, created_at, updated_at',
+      { count: 'exact' },
+    )
     .eq('estimate_id', id)
     .order('sort_order', { ascending: true })
     .range(offset, offset + limit - 1);
@@ -92,7 +96,9 @@ export async function POST(req: NextRequest, context: RouteContext) {
   const { quantity, unit_cost, markup_pct } = parsed.data;
   const line_total = calculateLineTotal(quantity, unit_cost, markup_pct ?? 0);
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
 
   const { data, error } = await supabase
     .from('estimate_lines')
@@ -135,7 +141,9 @@ export async function PUT(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
 
   // Delete all existing lines for this estimate
   await supabase.from('estimate_lines').delete().eq('estimate_id', id);

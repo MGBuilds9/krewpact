@@ -19,13 +19,15 @@ vi.mock('@clerk/nextjs/server', () => ({
 
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 // Mock ErpClient to disable mock mode
 vi.mock('@/lib/erp/client', () => ({
   ErpClient: class MockErpClient {
-    isMockMode() { return false; }
+    isMockMode() {
+      return false;
+    }
   },
 }));
 
@@ -47,7 +49,12 @@ vi.mock('@/lib/erp/sync-service', () => ({
 
 import { auth } from '@clerk/nextjs/server';
 import { POST } from '@/app/api/erp/sync/route';
-import { mockClerkAuth, mockClerkUnauth, makeJsonRequest, resetFixtureCounter } from '@/__tests__/helpers';
+import {
+  mockClerkAuth,
+  mockClerkUnauth,
+  makeJsonRequest,
+  resetFixtureCounter,
+} from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
 

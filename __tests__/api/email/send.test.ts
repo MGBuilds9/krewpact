@@ -14,12 +14,12 @@ vi.mock('@/lib/microsoft/graph', () => ({
 
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
 import { getMicrosoftToken, graphFetch, buildGraphUrl } from '@/lib/microsoft/graph';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { POST } from '@/app/api/email/send/route';
 import {
   mockClerkAuth,
@@ -32,7 +32,7 @@ const mockAuth = vi.mocked(auth);
 const mockGetToken = vi.mocked(getMicrosoftToken);
 const mockGraphFetch = vi.mocked(graphFetch);
 const mockBuildGraphUrl = vi.mocked(buildGraphUrl);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function validSendPayload(overrides: Record<string, unknown> = {}) {
   return {
@@ -132,7 +132,7 @@ describe('POST /api/email/send', () => {
     const supabase = mockSupabaseClient({
       tables: { activities: { data: null, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(supabase);
+    mockCreateUserClientSafe.mockResolvedValue({ client: supabase, error: null });
 
     const leadId = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
     const res = await POST(makeJsonRequest('/api/email/send', validSendPayload({ leadId })));
@@ -145,7 +145,7 @@ describe('POST /api/email/send', () => {
     const supabase = mockSupabaseClient({
       tables: { activities: { data: null, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(supabase);
+    mockCreateUserClientSafe.mockResolvedValue({ client: supabase, error: null });
 
     const contactId = 'b1ffcd00-9c0b-4ef8-bb6d-6bb9bd380a22';
     const res = await POST(makeJsonRequest('/api/email/send', validSendPayload({ contactId })));
@@ -158,7 +158,7 @@ describe('POST /api/email/send', () => {
     const supabase = mockSupabaseClient({
       tables: { activities: { data: null, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(supabase);
+    mockCreateUserClientSafe.mockResolvedValue({ client: supabase, error: null });
 
     const accountId = 'c2aade11-9c0b-4ef8-bb6d-6bb9bd380a33';
     const res = await POST(makeJsonRequest('/api/email/send', validSendPayload({ accountId })));
@@ -171,7 +171,7 @@ describe('POST /api/email/send', () => {
 
     const res = await POST(makeJsonRequest('/api/email/send', validSendPayload()));
     expect(res.status).toBe(200);
-    expect(mockCreateUserClient).not.toHaveBeenCalled();
+    expect(mockCreateUserClientSafe).not.toHaveBeenCalled();
   });
 
   it('supports shared mailbox for sending', async () => {

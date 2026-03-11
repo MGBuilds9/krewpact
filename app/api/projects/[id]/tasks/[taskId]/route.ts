@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { taskUpdateSchema } from '@/lib/validators/projects';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
@@ -16,7 +16,8 @@ export async function GET(req: NextRequest, context: RouteContext) {
   if (!rl.success) return rateLimitResponse(rl);
 
   const { id, taskId } = await context.params;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   const { data, error } = await supabase
     .from('tasks')
@@ -67,7 +68,9 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     updateData.completed_at = null;
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('tasks')
     .update(updateData)
@@ -93,7 +96,8 @@ export async function DELETE(_req: NextRequest, context: RouteContext) {
   }
 
   const { id, taskId } = await context.params;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   const { error } = await supabase.from('tasks').delete().eq('id', taskId).eq('project_id', id);
 

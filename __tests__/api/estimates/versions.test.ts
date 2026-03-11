@@ -7,11 +7,11 @@ vi.mock('@clerk/nextjs/server', () => ({
 
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET as GET_VERSIONS, POST as POST_VERSION } from '@/app/api/estimates/[id]/versions/route';
 import {
   mockSupabaseClient,
@@ -25,7 +25,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 const ESTIMATE_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 const USER_ID = 'b2eebc99-9c0b-4ef8-bb6d-6bb9bd380a33';
@@ -54,11 +54,12 @@ describe('GET /api/estimates/[id]/versions', () => {
 
   it('returns empty array for new estimate', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { estimate_versions: { data: [], error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET_VERSIONS(
       makeRequest(`/api/estimates/${ESTIMATE_ID}/versions`),
@@ -94,7 +95,7 @@ describe('GET /api/estimates/[id]/versions', () => {
     const client = mockSupabaseClient({
       tables: { estimate_versions: { data: versions, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET_VERSIONS(
       makeRequest(`/api/estimates/${ESTIMATE_ID}/versions`),
@@ -149,14 +150,15 @@ describe('POST /api/estimates/[id]/versions', () => {
     };
 
     mockClerkAuth(mockAuth, USER_ID);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           estimates: { data: { ...estimate, estimate_lines: lines }, error: null },
           estimate_versions: { data: version, error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST_VERSION(
       makeJsonRequest(`/api/estimates/${ESTIMATE_ID}/versions`, {}),
@@ -199,14 +201,15 @@ describe('POST /api/estimates/[id]/versions', () => {
     };
 
     mockClerkAuth(mockAuth, USER_ID);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           estimates: { data: { ...estimate, estimate_lines: lines }, error: null },
           estimate_versions: { data: version, error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST_VERSION(
       makeJsonRequest(`/api/estimates/${ESTIMATE_ID}/versions`, {}),
@@ -236,14 +239,15 @@ describe('POST /api/estimates/[id]/versions', () => {
     };
 
     mockClerkAuth(mockAuth, USER_ID);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           estimates: { data: { ...estimate, estimate_lines: lines }, error: null },
           estimate_versions: { data: version, error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST_VERSION(
       makeJsonRequest(`/api/estimates/${ESTIMATE_ID}/versions`, {}),
@@ -274,7 +278,7 @@ describe('POST /api/estimates/[id]/versions', () => {
         estimate_versions: { data: version, error: null },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await POST_VERSION(
       makeJsonRequest(`/api/estimates/${ESTIMATE_ID}/versions`, {}),
@@ -301,14 +305,15 @@ describe('POST /api/estimates/[id]/versions', () => {
     };
 
     mockClerkAuth(mockAuth, USER_ID);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           estimates: { data: { ...estimate, estimate_lines: lines }, error: null },
           estimate_versions: { data: version, error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST_VERSION(
       makeJsonRequest(`/api/estimates/${ESTIMATE_ID}/versions`, {
@@ -323,8 +328,8 @@ describe('POST /api/estimates/[id]/versions', () => {
 
   it('returns 404 when estimate does not exist', async () => {
     mockClerkAuth(mockAuth, USER_ID);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           estimates: {
             data: null,
@@ -332,7 +337,8 @@ describe('POST /api/estimates/[id]/versions', () => {
           },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST_VERSION(
       makeJsonRequest(`/api/estimates/${ESTIMATE_ID}/versions`, {}),

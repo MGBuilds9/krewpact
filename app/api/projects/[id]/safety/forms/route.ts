@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { NextRequest, NextResponse } from 'next/server';
 import { safetyFormCreateSchema } from '@/lib/validators/safety';
@@ -16,11 +16,15 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
   const { id } = await context.params;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   const { data, error, count } = await supabase
     .from('safety_forms')
-    .select('id, project_id, form_type, form_date, state, submitted_by, submitted_at, created_at, updated_at' /* excluded from list: payload */, { count: 'exact' })
+    .select(
+      'id, project_id, form_type, form_date, state, submitted_by, submitted_at, created_at, updated_at' /* excluded from list: payload */,
+      { count: 'exact' },
+    )
     .eq('project_id', id)
     .order('form_date', { ascending: false })
     .range(offset, offset + limit - 1);
@@ -46,7 +50,9 @@ export async function POST(req: NextRequest, context: RouteContext) {
   const parsed = safetyFormCreateSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('safety_forms')
     .insert({ project_id: id, submitted_by: userId, state: 'draft', ...parsed.data })

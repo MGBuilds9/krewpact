@@ -4,7 +4,7 @@ vi.mock('@clerk/nextjs/server', () => ({
   auth: vi.fn(),
 }));
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
@@ -12,12 +12,12 @@ vi.mock('@/lib/api/rate-limit', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET, PATCH } from '@/app/api/crm/enrichment/config/route';
 import { mockSupabaseClient, makeRequest, makeJsonRequest } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 const DEFAULT_CONFIG = {
   sources: [
@@ -45,7 +45,7 @@ describe('GET /api/crm/enrichment/config', () => {
     const client = mockSupabaseClient({
       defaultResponse: { data: null, error: null },
     });
-    mockCreateUserClient.mockResolvedValue(client as never);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
 
     const req = makeRequest('/api/crm/enrichment/config');
     const res = await GET(req);
@@ -64,7 +64,7 @@ describe('GET /api/crm/enrichment/config', () => {
     const client = mockSupabaseClient({
       defaultResponse: { data: { value: storedConfig }, error: null },
     });
-    mockCreateUserClient.mockResolvedValue(client as never);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
 
     const req = makeRequest('/api/crm/enrichment/config');
     const res = await GET(req);
@@ -77,7 +77,7 @@ describe('GET /api/crm/enrichment/config', () => {
     const client = mockSupabaseClient({
       defaultResponse: { data: null, error: { message: 'DB error' } },
     });
-    mockCreateUserClient.mockResolvedValue(client as never);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
 
     const req = makeRequest('/api/crm/enrichment/config');
     const res = await GET(req);
@@ -108,7 +108,7 @@ describe('PATCH /api/crm/enrichment/config', () => {
     const client = mockSupabaseClient({
       defaultResponse: { data: { value: updatedConfig }, error: null },
     });
-    mockCreateUserClient.mockResolvedValue(client as never);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
 
     const req = makeJsonRequest('/api/crm/enrichment/config', updatedConfig, 'PATCH');
     const res = await PATCH(req);
@@ -147,7 +147,7 @@ describe('PATCH /api/crm/enrichment/config', () => {
     const client = mockSupabaseClient({
       defaultResponse: { data: null, error: { message: 'Upsert failed' } },
     });
-    mockCreateUserClient.mockResolvedValue(client as never);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
 
     const req = makeJsonRequest('/api/crm/enrichment/config', DEFAULT_CONFIG, 'PATCH');
     const res = await PATCH(req);

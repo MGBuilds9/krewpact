@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { NextRequest, NextResponse } from 'next/server';
 import { submittalCreateSchema } from '@/lib/validators/field-ops';
@@ -19,10 +19,15 @@ export async function GET(req: NextRequest, context: RouteContext) {
   const status = searchParams.get('status');
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   let query = supabase
     .from('submittals')
-    .select('id, project_id, submittal_number, title, status, due_at, submitted_by, submitted_at, created_at, updated_at', { count: 'exact' })
+    .select(
+      'id, project_id, submittal_number, title, status, due_at, submitted_by, submitted_at, created_at, updated_at',
+      { count: 'exact' },
+    )
     .eq('project_id', id)
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
@@ -53,7 +58,9 @@ export async function POST(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('submittals')
     .insert({ ...parsed.data, project_id: id, submitted_by: userId, status: 'draft' })

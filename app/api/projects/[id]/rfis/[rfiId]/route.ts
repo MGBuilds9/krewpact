@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { rfiUpdateSchema } from '@/lib/validators/field-ops';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
@@ -14,10 +14,13 @@ export async function GET(req: NextRequest, context: RouteContext) {
   if (!rl.success) return rateLimitResponse(rl);
 
   const { id, rfiId } = await context.params;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('rfi_items')
-    .select('id, project_id, rfi_number, title, question_text, status, due_at, requester_user_id, responder_user_id, closed_at, created_at, updated_at')
+    .select(
+      'id, project_id, rfi_number, title, question_text, status, due_at, requester_user_id, responder_user_id, closed_at, created_at, updated_at',
+    )
     .eq('id', rfiId)
     .eq('project_id', id)
     .single();
@@ -48,7 +51,9 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('rfi_items')
     .update(parsed.data)

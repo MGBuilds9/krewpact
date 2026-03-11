@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe, createUserClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
@@ -36,7 +36,8 @@ export async function GET(req: NextRequest) {
 
   const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
   if (!rl.success) return rateLimitResponse(rl);
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
   const pa = await resolveActiveTradePartner(userId, supabase);
   if (!pa) return NextResponse.json({ error: 'Trade partner access only' }, { status: 403 });
 
@@ -81,7 +82,9 @@ export async function POST(req: NextRequest) {
   const parsed = submittalSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const pa = await resolveActiveTradePartner(userId, supabase);
   if (!pa) return NextResponse.json({ error: 'Trade partner access only' }, { status: 403 });
 

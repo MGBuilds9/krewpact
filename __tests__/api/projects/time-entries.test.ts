@@ -4,14 +4,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET, POST } from '@/app/api/projects/[id]/time-entries/route';
 import {
   mockSupabaseClient,
@@ -23,7 +23,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 const PROJECT_ID = TEST_IDS.PROJECT_ID;
 
 function ctx(id: string = PROJECT_ID) {
@@ -56,11 +56,12 @@ describe('GET /api/projects/[id]/time-entries', () => {
 
   it('returns paginated time entries', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { time_entries: { data: [sampleEntry], error: null, count: 1 } },
       }),
-    );
+      error: null,
+    });
     const res = await GET(makeRequest('/api/projects/p/time-entries'), ctx());
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -70,11 +71,12 @@ describe('GET /api/projects/[id]/time-entries', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { time_entries: { data: null, error: { message: 'DB error' }, count: null } },
       }),
-    );
+      error: null,
+    });
     const res = await GET(makeRequest('/api/projects/p/time-entries'), ctx());
     expect(res.status).toBe(500);
   });
@@ -97,9 +99,10 @@ describe('POST /api/projects/[id]/time-entries', () => {
 
   it('returns 201 on valid creation', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { time_entries: { data: sampleEntry, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { time_entries: { data: sampleEntry, error: null } } }),
+      error: null,
+    });
     const res = await POST(
       makeJsonRequest('/api/projects/p/time-entries', {
         user_id: TEST_IDS.USER_ID,
@@ -113,11 +116,12 @@ describe('POST /api/projects/[id]/time-entries', () => {
 
   it('returns 500 on DB insert error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { time_entries: { data: null, error: { message: 'insert error' } } },
       }),
-    );
+      error: null,
+    });
     const res = await POST(
       makeJsonRequest('/api/projects/p/time-entries', {
         user_id: TEST_IDS.USER_ID,

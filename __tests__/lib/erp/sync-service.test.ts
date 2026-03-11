@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
   createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 import { createUserClient } from '@/lib/supabase/server';

@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
@@ -24,11 +24,15 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
   const { id } = await context.params;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   const { data, error, count } = await supabase
     .from('contact_account_links')
-    .select('id, contact_id, account_id, relationship_type, is_primary, created_at, account:accounts(id, account_name, account_type, division_id, billing_address, shipping_address, notes, created_by, created_at, updated_at)', { count: 'exact' })
+    .select(
+      'id, contact_id, account_id, relationship_type, is_primary, created_at, account:accounts(id, account_name, account_type, division_id, billing_address, shipping_address, notes, created_by, created_at, updated_at)',
+      { count: 'exact' },
+    )
     .eq('contact_id', id)
     .range(offset, offset + limit - 1);
 
@@ -59,7 +63,9 @@ export async function POST(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
 
   const { data, error } = await supabase
     .from('contact_account_links')
@@ -93,7 +99,9 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: 'account_id query param required' }, { status: 400 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
 
   const { error } = await supabase
     .from('contact_account_links')

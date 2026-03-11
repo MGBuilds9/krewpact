@@ -7,11 +7,11 @@ vi.mock('@clerk/nextjs/server', () => ({
 
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 // Account routes
 import { DELETE as accountDELETE } from '@/app/api/crm/accounts/[id]/route';
@@ -38,7 +38,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 const ESTIMATE_ID = 'f5ddaa44-4b5a-4fd3-ddbc-baa4ac825f66';
 const USER_ID = 'b2eebc99-9c0b-4ef8-bb6d-6bb9bd380a33';
@@ -59,9 +59,10 @@ describe('Data Integrity: Account cascade to contacts', () => {
   it('deleting an account succeeds and contacts for that account return empty (DB cascade)', async () => {
     // Step 1: Delete the account (DB handles ON DELETE CASCADE for contacts)
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { accounts: { data: null, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { accounts: { data: null, error: null } } }),
+      error: null,
+    });
 
     const deleteRes = await accountDELETE(
       makeRequest('/api/crm/accounts/123'),
@@ -72,9 +73,10 @@ describe('Data Integrity: Account cascade to contacts', () => {
     expect(deleteBody.success).toBe(true);
 
     // Step 2: Query contacts for the deleted account — should be empty
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { contacts: { data: [], error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { contacts: { data: [], error: null } } }),
+      error: null,
+    });
 
     const contactsRes = await contactsGET(
       makeRequest(`/api/crm/contacts?account_id=${TEST_IDS.ACCOUNT_ID}`),
@@ -94,9 +96,10 @@ describe('Data Integrity: Estimate cascade to lines and versions', () => {
   it('deleting an estimate cascades to lines and versions', async () => {
     // Step 1: Delete the estimate
     mockClerkAuth(mockAuth, USER_ID);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { estimates: { data: null, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { estimates: { data: null, error: null } } }),
+      error: null,
+    });
 
     const deleteRes = await estimateDELETE(
       makeRequest(`/api/estimates/${ESTIMATE_ID}`),
@@ -106,9 +109,10 @@ describe('Data Integrity: Estimate cascade to lines and versions', () => {
     expect((await deleteRes.json()).success).toBe(true);
 
     // Step 2: Lines for the deleted estimate should be empty
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { estimate_lines: { data: [], error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { estimate_lines: { data: [], error: null } } }),
+      error: null,
+    });
 
     const linesRes = await linesGET(
       makeRequest(`/api/estimates/${ESTIMATE_ID}/lines`),
@@ -118,9 +122,10 @@ describe('Data Integrity: Estimate cascade to lines and versions', () => {
     expect((await linesRes.json()).data).toHaveLength(0);
 
     // Step 3: Versions for the deleted estimate should be empty
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { estimate_versions: { data: [], error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { estimate_versions: { data: [], error: null } } }),
+      error: null,
+    });
 
     const versionsRes = await versionsGET(
       makeRequest(`/api/estimates/${ESTIMATE_ID}/versions`),
@@ -165,8 +170,8 @@ describe('Data Integrity: Opportunity stage history immutability', () => {
       },
     ];
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           opportunities: {
             data: { ...opp, opportunity_stage_history: stageHistory },
@@ -174,7 +179,8 @@ describe('Data Integrity: Opportunity stage history immutability', () => {
           },
         },
       }),
-    );
+      error: null,
+    });
 
     // Stage history is read-only — accessible via GET opportunity with nested join
     const res = await opportunityGET(
@@ -216,14 +222,15 @@ describe('Data Integrity: Estimate version snapshot immutability', () => {
       created_at: '2026-02-13T00:00:00Z',
     };
     mockClerkAuth(mockAuth, USER_ID);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           estimates: { data: { ...estimate, estimate_lines: lines }, error: null },
           estimate_versions: { data: version, error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const createRes = await versionPOST(
       makeJsonRequest(`/api/estimates/${ESTIMATE_ID}/versions`, {
@@ -237,11 +244,12 @@ describe('Data Integrity: Estimate version snapshot immutability', () => {
     expect(created.snapshot).toBeDefined();
 
     // Step 2: Read back — version is preserved as-is
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { estimate_versions: { data: [version], error: null } },
       }),
-    );
+      error: null,
+    });
 
     const listRes = await versionsGET(
       makeRequest(`/api/estimates/${ESTIMATE_ID}/versions`),

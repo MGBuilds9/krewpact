@@ -6,14 +6,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET, PATCH, DELETE } from '@/app/api/projects/[id]/milestones/[msId]/route';
 import {
   mockSupabaseClient,
@@ -24,7 +24,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function makeContext(id: string, msId: string) {
   return { params: Promise.resolve({ id, msId }) };
@@ -58,11 +58,12 @@ describe('GET /api/projects/[id]/milestones/[msId]', () => {
 
   it('returns milestone by id', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { milestones: { data: sampleMilestone, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(
       makeRequest('/api/projects/proj-1/milestones/ms-1'),
@@ -75,13 +76,14 @@ describe('GET /api/projects/[id]/milestones/[msId]', () => {
 
   it('returns 404 when not found', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           milestones: { data: null, error: { message: 'Not found', code: 'PGRST116' } },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(
       makeRequest('/api/projects/proj-1/milestones/missing'),
@@ -92,11 +94,12 @@ describe('GET /api/projects/[id]/milestones/[msId]', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { milestones: { data: null, error: { message: 'DB error', code: 'OTHER' } } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(
       makeRequest('/api/projects/proj-1/milestones/ms-1'),
@@ -122,9 +125,10 @@ describe('PATCH /api/projects/[id]/milestones/[msId]', () => {
   it('updates milestone', async () => {
     mockClerkAuth(mockAuth);
     const updated = { ...sampleMilestone, status: 'approved' };
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { milestones: { data: updated, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { milestones: { data: updated, error: null } } }),
+      error: null,
+    });
 
     const res = await PATCH(
       makeJsonRequest('/api/projects/proj-1/milestones/ms-1', { status: 'approved' }, 'PATCH'),
@@ -150,13 +154,14 @@ describe('PATCH /api/projects/[id]/milestones/[msId]', () => {
 
   it('returns 404 when not found', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           milestones: { data: null, error: { message: 'Not found', code: 'PGRST116' } },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await PATCH(
       makeJsonRequest(
@@ -185,9 +190,10 @@ describe('DELETE /api/projects/[id]/milestones/[msId]', () => {
 
   it('deletes milestone', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { milestones: { data: null, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { milestones: { data: null, error: null } } }),
+      error: null,
+    });
 
     const res = await DELETE(
       makeRequest('/api/projects/proj-1/milestones/ms-1', { method: 'DELETE' }),
@@ -200,11 +206,12 @@ describe('DELETE /api/projects/[id]/milestones/[msId]', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { milestones: { data: null, error: { message: 'FK constraint' } } },
       }),
-    );
+      error: null,
+    });
 
     const res = await DELETE(
       makeRequest('/api/projects/proj-1/milestones/ms-1', { method: 'DELETE' }),

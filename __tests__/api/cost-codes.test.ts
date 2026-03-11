@@ -7,14 +7,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET as GET_LIST, POST as POST_CREATE } from '@/app/api/cost-codes/route';
 import { GET as GET_DETAIL, PATCH } from '@/app/api/cost-codes/[id]/route';
 import {
@@ -31,7 +31,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 const CODE_ID = '00000000-0000-4000-a000-000000000701';
 
 function detailCtx(id: string = CODE_ID) {
@@ -72,11 +72,12 @@ describe('GET /api/cost-codes', () => {
 
   it('returns cost codes list', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { cost_code_dictionary: { data: [sampleCode], error: null, count: 1 } },
       }),
-    );
+      error: null,
+    });
     const res = await GET_LIST(makeRequest('/api/cost-codes'));
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -86,11 +87,12 @@ describe('GET /api/cost-codes', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { cost_code_dictionary: { data: null, error: { message: 'err' }, count: null } },
       }),
-    );
+      error: null,
+    });
     const res = await GET_LIST(makeRequest('/api/cost-codes'));
     expect(res.status).toBe(500);
   });
@@ -113,9 +115,12 @@ describe('POST /api/cost-codes', () => {
 
   it('returns 201 on valid creation', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { cost_code_dictionary: { data: sampleCode, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
+        tables: { cost_code_dictionary: { data: sampleCode, error: null } },
+      }),
+      error: null,
+    });
     const res = await POST_CREATE(
       makeJsonRequest('/api/cost-codes', {
         division_id: TEST_IDS.DIVISION_ID,
@@ -139,9 +144,12 @@ describe('GET /api/cost-codes/[id]', () => {
 
   it('returns cost code on success', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { cost_code_dictionary: { data: sampleCode, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
+        tables: { cost_code_dictionary: { data: sampleCode, error: null } },
+      }),
+      error: null,
+    });
     const res = await GET_DETAIL(makeRequest('/api/cost-codes/x'), detailCtx());
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -150,11 +158,12 @@ describe('GET /api/cost-codes/[id]', () => {
 
   it('returns 404 on not found', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { cost_code_dictionary: { data: null, error: { message: 'not found' } } },
       }),
-    );
+      error: null,
+    });
     const res = await GET_DETAIL(makeRequest('/api/cost-codes/x'), detailCtx());
     expect(res.status).toBe(404);
   });
@@ -174,13 +183,14 @@ describe('PATCH /api/cost-codes/[id]', () => {
 
   it('returns updated cost code on success', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           cost_code_dictionary: { data: { ...sampleCode, cost_code_name: 'Updated' }, error: null },
         },
       }),
-    );
+      error: null,
+    });
     const res = await PATCH(
       makeJsonRequest('/api/cost-codes/x', { cost_code_name: 'Updated' }, 'PATCH'),
       detailCtx(),
@@ -212,7 +222,7 @@ describe('GET /api/cost-codes/[id]/mappings', () => {
         cost_code_mappings: { data: [sampleMapping], error: null, count: 1 },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
     const res = await GET_MAPPINGS(makeRequest('/api/cost-codes/x/mappings'), detailCtx());
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -240,9 +250,12 @@ describe('POST /api/cost-codes/[id]/mappings', () => {
 
   it('returns 201 on valid creation', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { cost_code_mappings: { data: sampleMapping, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
+        tables: { cost_code_mappings: { data: sampleMapping, error: null } },
+      }),
+      error: null,
+    });
     const res = await POST_MAPPING(
       makeJsonRequest('/api/cost-codes/x/mappings', {
         division_id: TEST_IDS.DIVISION_ID,

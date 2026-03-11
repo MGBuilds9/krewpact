@@ -6,14 +6,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET, POST } from '@/app/api/projects/[id]/rfis/route';
 import { GET as GET_DETAIL, PATCH } from '@/app/api/projects/[id]/rfis/[rfiId]/route';
 import {
@@ -25,7 +25,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function makeProjectContext(id: string) {
   return { params: Promise.resolve({ id }) };
@@ -61,9 +61,10 @@ describe('GET /api/projects/[id]/rfis', () => {
 
   it('returns paginated RFI list', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { rfi_items: { data: [sampleRfi], error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { rfi_items: { data: [sampleRfi], error: null } } }),
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/projects/proj-1/rfis'), makeProjectContext('proj-1'));
     expect(res.status).toBe(200);
@@ -77,7 +78,7 @@ describe('GET /api/projects/[id]/rfis', () => {
     const client = mockSupabaseClient({
       tables: { rfi_items: { data: [], error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(
       makeRequest('/api/projects/proj-1/rfis?status=closed'),
@@ -103,9 +104,10 @@ describe('POST /api/projects/[id]/rfis', () => {
 
   it('creates an RFI with status open', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { rfi_items: { data: sampleRfi, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { rfi_items: { data: sampleRfi, error: null } } }),
+      error: null,
+    });
 
     const res = await POST(
       makeJsonRequest('/api/projects/proj-1/rfis', {
@@ -156,9 +158,10 @@ describe('GET /api/projects/[id]/rfis/[rfiId]', () => {
 
   it('returns RFI by id', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { rfi_items: { data: sampleRfi, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { rfi_items: { data: sampleRfi, error: null } } }),
+      error: null,
+    });
 
     const res = await GET_DETAIL(
       makeRequest('/api/projects/proj-1/rfis/rfi-1'),
@@ -171,11 +174,12 @@ describe('GET /api/projects/[id]/rfis/[rfiId]', () => {
 
   it('returns 404 when not found', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { rfi_items: { data: null, error: { message: 'Not found', code: 'PGRST116' } } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET_DETAIL(
       makeRequest('/api/projects/proj-1/rfis/missing'),
@@ -201,9 +205,10 @@ describe('PATCH /api/projects/[id]/rfis/[rfiId]', () => {
   it('updates RFI', async () => {
     mockClerkAuth(mockAuth);
     const updated = { ...sampleRfi, status: 'closed' };
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { rfi_items: { data: updated, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { rfi_items: { data: updated, error: null } } }),
+      error: null,
+    });
 
     const res = await PATCH(
       makeJsonRequest('/api/projects/proj-1/rfis/rfi-1', { status: 'closed' }, 'PATCH'),
@@ -216,11 +221,12 @@ describe('PATCH /api/projects/[id]/rfis/[rfiId]', () => {
 
   it('returns 404 when not found', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { rfi_items: { data: null, error: { message: 'Not found', code: 'PGRST116' } } },
       }),
-    );
+      error: null,
+    });
 
     const res = await PATCH(
       makeJsonRequest('/api/projects/proj-1/rfis/missing', { status: 'closed' }, 'PATCH'),

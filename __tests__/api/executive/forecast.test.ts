@@ -1,22 +1,23 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
 vi.mock('@clerk/nextjs/server', () => ({
   auth: vi.fn(),
 }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/org', () => ({ getOrgIdFromAuth: vi.fn() }));
 vi.mock('@/lib/logger', () => ({
   logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { getOrgIdFromAuth } from '@/lib/api/org';
 import { GET } from '@/app/api/executive/forecast/route';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 const mockGetOrgIdFromAuth = vi.mocked(getOrgIdFromAuth);
 
 function makeRequest() {
@@ -64,7 +65,7 @@ describe('GET /api/executive/forecast', () => {
     mockAuth.mockResolvedValue({
       userId: null,
       sessionClaims: null,
-    } as unknown as Awaited<ReturnType<typeof auth>>);
+    } as any as Awaited<ReturnType<typeof auth>>);
 
     const res = await GET(makeRequest());
     expect(res.status).toBe(401);
@@ -76,7 +77,7 @@ describe('GET /api/executive/forecast', () => {
     mockAuth.mockResolvedValue({
       userId: 'user_123',
       sessionClaims: { krewpact_roles: ['project_manager'] },
-    } as unknown as Awaited<ReturnType<typeof auth>>);
+    } as any as Awaited<ReturnType<typeof auth>>);
 
     const res = await GET(makeRequest());
     expect(res.status).toBe(403);
@@ -88,11 +89,12 @@ describe('GET /api/executive/forecast', () => {
     mockAuth.mockResolvedValue({
       userId: 'user_exec',
       sessionClaims: { krewpact_roles: ['executive'] },
-    } as unknown as Awaited<ReturnType<typeof auth>>);
+    } as any as Awaited<ReturnType<typeof auth>>);
 
-    mockCreateUserClient.mockResolvedValue(
-      makeSupabaseMock([]) as unknown as Awaited<ReturnType<typeof createUserClient>>,
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: makeSupabaseMock([]) as any,
+      error: null,
+    });
 
     const res = await GET(makeRequest());
     expect(res.status).toBe(200);
@@ -106,11 +108,12 @@ describe('GET /api/executive/forecast', () => {
     mockAuth.mockResolvedValue({
       userId: 'user_exec',
       sessionClaims: { krewpact_roles: ['executive'] },
-    } as unknown as Awaited<ReturnType<typeof auth>>);
+    } as any as Awaited<ReturnType<typeof auth>>);
 
-    mockCreateUserClient.mockResolvedValue(
-      makeSupabaseMock([]) as unknown as Awaited<ReturnType<typeof createUserClient>>,
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: makeSupabaseMock([]) as any,
+      error: null,
+    });
 
     const res = await GET(makeRequest());
     const body = await res.json();
@@ -126,7 +129,7 @@ describe('GET /api/executive/forecast', () => {
     mockAuth.mockResolvedValue({
       userId: 'user_exec',
       sessionClaims: { krewpact_roles: ['executive'] },
-    } as unknown as Awaited<ReturnType<typeof auth>>);
+    } as any as Awaited<ReturnType<typeof auth>>);
 
     const currentYear = new Date().getFullYear();
 
@@ -151,9 +154,10 @@ describe('GET /api/executive/forecast', () => {
       },
     ];
 
-    mockCreateUserClient.mockResolvedValue(
-      makeSupabaseMock(opportunities) as unknown as Awaited<ReturnType<typeof createUserClient>>,
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: makeSupabaseMock(opportunities) as any,
+      error: null,
+    });
 
     const res = await GET(makeRequest());
     const body = await res.json();
@@ -173,11 +177,12 @@ describe('GET /api/executive/forecast', () => {
     mockAuth.mockResolvedValue({
       userId: 'user_admin',
       sessionClaims: { krewpact_roles: ['platform_admin'] },
-    } as unknown as Awaited<ReturnType<typeof auth>>);
+    } as any as Awaited<ReturnType<typeof auth>>);
 
-    mockCreateUserClient.mockResolvedValue(
-      makeSupabaseMock([]) as unknown as Awaited<ReturnType<typeof createUserClient>>,
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: makeSupabaseMock([]) as any,
+      error: null,
+    });
 
     const res = await GET(makeRequest());
     const body = await res.json();
@@ -192,11 +197,12 @@ describe('GET /api/executive/forecast', () => {
     mockAuth.mockResolvedValue({
       userId: 'user_exec',
       sessionClaims: { krewpact_roles: ['executive'] },
-    } as unknown as Awaited<ReturnType<typeof auth>>);
+    } as any as Awaited<ReturnType<typeof auth>>);
 
-    mockCreateUserClient.mockResolvedValue(
-      makeSupabaseMock([]) as unknown as Awaited<ReturnType<typeof createUserClient>>,
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: makeSupabaseMock([]) as any,
+      error: null,
+    });
 
     const res = await GET(makeRequest());
     const body = await res.json();

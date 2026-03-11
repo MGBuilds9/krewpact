@@ -4,11 +4,11 @@ vi.mock('@clerk/nextjs/server', () => ({
   auth: vi.fn(),
 }));
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET, POST, DELETE } from '@/app/api/crm/entity-tags/route';
 import {
   mockSupabaseClient,
@@ -19,7 +19,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 const TAG_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 const ENTITY_ID = 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22';
@@ -57,11 +57,12 @@ describe('GET /api/crm/entity-tags', () => {
   it('returns tags for entity', async () => {
     const entityTags = [makeEntityTag()];
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { entity_tags: { data: entityTags, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(
       makeRequest(`/api/crm/entity-tags?entity_type=lead&entity_id=${ENTITY_ID}`),
@@ -89,11 +90,12 @@ describe('POST /api/crm/entity-tags', () => {
   it('adds tag to entity', async () => {
     const created = makeEntityTag();
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { entity_tags: { data: created, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST(
       makeJsonRequest('http://localhost/api/crm/entity-tags', {
@@ -130,11 +132,12 @@ describe('DELETE /api/crm/entity-tags', () => {
 
   it('removes tag from entity', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { entity_tags: { data: null, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await DELETE(
       makeJsonRequest(

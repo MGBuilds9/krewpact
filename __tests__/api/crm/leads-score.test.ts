@@ -7,11 +7,11 @@ vi.mock('@clerk/nextjs/server', () => ({
 
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET, POST } from '@/app/api/crm/leads/[id]/score/route';
 import {
   mockSupabaseClient,
@@ -23,7 +23,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function makeContext(id: string) {
   return { params: Promise.resolve({ id }) };
@@ -61,14 +61,15 @@ describe('GET /api/crm/leads/[id]/score', () => {
       },
     ];
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           leads: { data: lead, error: null },
           lead_score_history: { data: history, error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/crm/leads/123/score'), makeContext(lead.id));
     expect(res.status).toBe(200);
@@ -79,13 +80,14 @@ describe('GET /api/crm/leads/[id]/score', () => {
 
   it('returns 404 for non-existent lead', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           leads: { data: null, error: { message: 'Row not found', code: 'PGRST116' } },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/crm/leads/nope/score'), makeContext('nope'));
     expect(res.status).toBe(404);
@@ -123,15 +125,16 @@ describe('POST /api/crm/leads/[id]/score', () => {
       },
     ];
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           leads: { data: lead, error: null },
           scoring_rules: { data: rules, error: null },
           lead_score_history: { data: null, error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST(makeRequest('/api/crm/leads/123/score'), makeContext(lead.id));
     expect(res.status).toBe(200);
@@ -143,13 +146,14 @@ describe('POST /api/crm/leads/[id]/score', () => {
 
   it('returns 404 for non-existent lead', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           leads: { data: null, error: { message: 'Row not found', code: 'PGRST116' } },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST(makeRequest('/api/crm/leads/nope/score'), makeContext('nope'));
     expect(res.status).toBe(404);
@@ -171,15 +175,16 @@ describe('POST /api/crm/leads/[id]/score', () => {
       },
     ];
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           leads: { data: lead, error: null },
           scoring_rules: { data: rules, error: null },
           lead_score_history: { data: null, error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST(makeRequest('/api/crm/leads/123/score'), makeContext(lead.id));
     expect(res.status).toBe(200);

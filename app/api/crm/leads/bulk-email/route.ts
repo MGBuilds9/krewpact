@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { sendEmail } from '@/lib/email/resend';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -35,7 +35,8 @@ export async function POST(req: NextRequest) {
   }
 
   const { lead_ids, subject, html, text } = parsed.data;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   // Fetch leads with email contacts
   const { data: contacts, error: contactError } = await supabase
@@ -49,7 +50,10 @@ export async function POST(req: NextRequest) {
   }
 
   if (!contacts || contacts.length === 0) {
-    return NextResponse.json({ error: 'No contacts with email found for selected leads' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'No contacts with email found for selected leads' },
+      { status: 400 },
+    );
   }
 
   // Dedupe by email
@@ -60,7 +64,8 @@ export async function POST(req: NextRequest) {
     return true;
   });
 
-  const results: Array<{ contact_id: string; email: string; success: boolean; error?: string }> = [];
+  const results: Array<{ contact_id: string; email: string; success: boolean; error?: string }> =
+    [];
 
   for (const contact of uniqueContacts) {
     const personalizedHtml = html

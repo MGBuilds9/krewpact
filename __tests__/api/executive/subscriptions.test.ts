@@ -1,21 +1,22 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/org', () => ({ getOrgIdFromAuth: vi.fn() }));
 vi.mock('@/lib/logger', () => ({
   logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { getOrgIdFromAuth } from '@/lib/api/org';
 import { GET, POST } from '@/app/api/executive/subscriptions/route';
 import { GET as GET_DETAIL, PATCH, DELETE } from '@/app/api/executive/subscriptions/[id]/route';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 const mockGetOrgIdFromAuth = vi.mocked(getOrgIdFromAuth);
 
 const PARAMS = Promise.resolve({ id: 'sub-1' });
@@ -65,7 +66,7 @@ describe('GET /api/executive/subscriptions', () => {
     mockAuth.mockResolvedValue({
       userId: null,
       sessionClaims: null,
-    } as unknown as Awaited<ReturnType<typeof auth>>);
+    } as any as Awaited<ReturnType<typeof auth>>);
 
     const res = await GET(makeRequest());
     expect(res.status).toBe(401);
@@ -78,7 +79,7 @@ describe('GET /api/executive/subscriptions', () => {
         krewpact_roles: ['executive'],
         krewpact_org_id: 'org-1',
       },
-    } as unknown as Awaited<ReturnType<typeof auth>>);
+    } as any as Awaited<ReturnType<typeof auth>>);
 
     mockGetOrgIdFromAuth.mockResolvedValue('org-1');
 
@@ -93,9 +94,12 @@ describe('GET /api/executive/subscriptions', () => {
       .mockReturnValue({ order: orderFn, eq: vi.fn().mockReturnValue({ order: orderFn }) });
     const selectFn = vi.fn().mockReturnValue({ eq: eqFn });
 
-    mockCreateUserClient.mockResolvedValue({
-      from: vi.fn().mockReturnValue({ select: selectFn }),
-    } as unknown as Awaited<ReturnType<typeof createUserClient>>);
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: {
+        from: vi.fn().mockReturnValue({ select: selectFn }),
+      } as any,
+      error: null,
+    });
 
     const res = await GET(makeRequest());
     expect(res.status).toBe(200);
@@ -116,7 +120,7 @@ describe('POST /api/executive/subscriptions', () => {
     mockAuth.mockResolvedValue({
       userId: 'user_exec',
       sessionClaims: { krewpact_roles: ['executive'] },
-    } as unknown as Awaited<ReturnType<typeof auth>>);
+    } as any as Awaited<ReturnType<typeof auth>>);
 
     const res = await POST(makeRequest('POST', {}, VALID_SUBSCRIPTION));
     expect(res.status).toBe(403);
@@ -129,7 +133,7 @@ describe('POST /api/executive/subscriptions', () => {
         krewpact_roles: ['platform_admin'],
         krewpact_org_id: 'org-1',
       },
-    } as unknown as Awaited<ReturnType<typeof auth>>);
+    } as any as Awaited<ReturnType<typeof auth>>);
 
     mockGetOrgIdFromAuth.mockResolvedValue('org-1');
 
@@ -138,9 +142,12 @@ describe('POST /api/executive/subscriptions', () => {
     const selectAfterInsert = vi.fn().mockReturnValue({ single: singleFn });
     const insertFn = vi.fn().mockReturnValue({ select: selectAfterInsert });
 
-    mockCreateUserClient.mockResolvedValue({
-      from: vi.fn().mockReturnValue({ insert: insertFn }),
-    } as unknown as Awaited<ReturnType<typeof createUserClient>>);
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: {
+        from: vi.fn().mockReturnValue({ insert: insertFn }),
+      } as any,
+      error: null,
+    });
 
     const res = await POST(makeRequest('POST', {}, VALID_SUBSCRIPTION));
     expect(res.status).toBe(201);
@@ -153,7 +160,7 @@ describe('POST /api/executive/subscriptions', () => {
     mockAuth.mockResolvedValue({
       userId: 'user_admin',
       sessionClaims: { krewpact_roles: ['platform_admin'] },
-    } as unknown as Awaited<ReturnType<typeof auth>>);
+    } as any as Awaited<ReturnType<typeof auth>>);
 
     const res = await POST(makeRequest('POST', {}, { category: 'dev_tools', monthly_cost: 100 }));
     expect(res.status).toBe(400);
@@ -171,7 +178,7 @@ describe('GET /api/executive/subscriptions/[id]', () => {
     mockAuth.mockResolvedValue({
       userId: null,
       sessionClaims: null,
-    } as unknown as Awaited<ReturnType<typeof auth>>);
+    } as any as Awaited<ReturnType<typeof auth>>);
 
     const res = await GET_DETAIL(makeDetailRequest(), { params: PARAMS });
     expect(res.status).toBe(401);
@@ -181,7 +188,7 @@ describe('GET /api/executive/subscriptions/[id]', () => {
     mockAuth.mockResolvedValue({
       userId: 'user_exec',
       sessionClaims: { krewpact_roles: ['executive'] },
-    } as unknown as Awaited<ReturnType<typeof auth>>);
+    } as any as Awaited<ReturnType<typeof auth>>);
 
     mockGetOrgIdFromAuth.mockResolvedValue('org-1');
 
@@ -191,9 +198,12 @@ describe('GET /api/executive/subscriptions/[id]', () => {
     const eqIdFn = vi.fn().mockReturnValue({ eq: eqOrgFn });
     const selectFn = vi.fn().mockReturnValue({ eq: eqIdFn });
 
-    mockCreateUserClient.mockResolvedValue({
-      from: vi.fn().mockReturnValue({ select: selectFn }),
-    } as unknown as Awaited<ReturnType<typeof createUserClient>>);
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: {
+        from: vi.fn().mockReturnValue({ select: selectFn }),
+      } as any,
+      error: null,
+    });
 
     const res = await GET_DETAIL(makeDetailRequest(), { params: PARAMS });
     expect(res.status).toBe(200);
@@ -213,7 +223,7 @@ describe('PATCH /api/executive/subscriptions/[id]', () => {
     mockAuth.mockResolvedValue({
       userId: 'user_admin',
       sessionClaims: { krewpact_roles: ['platform_admin'] },
-    } as unknown as Awaited<ReturnType<typeof auth>>);
+    } as any as Awaited<ReturnType<typeof auth>>);
 
     mockGetOrgIdFromAuth.mockResolvedValue('org-1');
 
@@ -224,9 +234,12 @@ describe('PATCH /api/executive/subscriptions/[id]', () => {
     const eqIdFn = vi.fn().mockReturnValue({ eq: eqOrgFn });
     const updateFn = vi.fn().mockReturnValue({ eq: eqIdFn });
 
-    mockCreateUserClient.mockResolvedValue({
-      from: vi.fn().mockReturnValue({ update: updateFn }),
-    } as unknown as Awaited<ReturnType<typeof createUserClient>>);
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: {
+        from: vi.fn().mockReturnValue({ update: updateFn }),
+      } as any,
+      error: null,
+    });
 
     const res = await PATCH(makeDetailRequest('PATCH', { name: 'GitHub Enterprise Updated' }), {
       params: PARAMS,
@@ -248,7 +261,7 @@ describe('DELETE /api/executive/subscriptions/[id]', () => {
     mockAuth.mockResolvedValue({
       userId: 'user_admin',
       sessionClaims: { krewpact_roles: ['platform_admin'] },
-    } as unknown as Awaited<ReturnType<typeof auth>>);
+    } as any as Awaited<ReturnType<typeof auth>>);
 
     mockGetOrgIdFromAuth.mockResolvedValue('org-1');
 
@@ -264,12 +277,15 @@ describe('DELETE /api/executive/subscriptions/[id]', () => {
     const deleteEqIdFn = vi.fn().mockReturnValue({ eq: deleteEqOrgFn });
     const deleteFn = vi.fn().mockReturnValue({ eq: deleteEqIdFn });
 
-    mockCreateUserClient.mockResolvedValue({
-      from: vi.fn().mockReturnValue({
-        select: existSelectFn,
-        delete: deleteFn,
-      }),
-    } as unknown as Awaited<ReturnType<typeof createUserClient>>);
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: {
+        from: vi.fn().mockReturnValue({
+          select: existSelectFn,
+          delete: deleteFn,
+        }),
+      } as any,
+      error: null,
+    });
 
     const res = await DELETE(makeDetailRequest('DELETE'), { params: PARAMS });
     expect(res.status).toBe(204);

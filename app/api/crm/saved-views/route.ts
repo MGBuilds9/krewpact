@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import {
@@ -40,10 +40,14 @@ export async function GET(req: NextRequest) {
   if (!parsed.success) return errorResponse(validationError(parsed.error.flatten()));
 
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
   let query = supabase
     .from('crm_saved_views')
-    .select('id, name, entity_type, filters, sort_by, sort_dir, columns, is_default, created_by, created_at, updated_at', { count: 'exact' })
+    .select(
+      'id, name, entity_type, filters, sort_by, sort_dir, columns, is_default, created_by, created_at, updated_at',
+      { count: 'exact' },
+    )
     .order('is_default', { ascending: false })
     .order('name', { ascending: true });
 
@@ -74,7 +78,9 @@ export async function POST(req: NextRequest) {
   const parsed = savedViewCreateSchema.safeParse(body);
   if (!parsed.success) return errorResponse(validationError(parsed.error.flatten()));
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
 
   // If is_default, unset other defaults for same entity_type
   if (parsed.data.is_default) {

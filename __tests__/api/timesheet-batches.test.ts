@@ -7,14 +7,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET as GET_LIST, POST as POST_CREATE } from '@/app/api/timesheet-batches/route';
 import { GET as GET_DETAIL, DELETE } from '@/app/api/timesheet-batches/[batchId]/route';
 import { POST as POST_APPROVE } from '@/app/api/timesheet-batches/[batchId]/approve/route';
@@ -28,7 +28,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 const BATCH_ID = '00000000-0000-4000-a000-000000000601';
 
 function batchCtx(batchId: string = BATCH_ID) {
@@ -61,11 +61,12 @@ describe('GET /api/timesheet-batches', () => {
 
   it('returns paginated batches', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { timesheet_batches: { data: [sampleBatch], error: null, count: 1 } },
       }),
-    );
+      error: null,
+    });
     const res = await GET_LIST(makeRequest('/api/timesheet-batches'));
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -74,11 +75,12 @@ describe('GET /api/timesheet-batches', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { timesheet_batches: { data: null, error: { message: 'err' }, count: null } },
       }),
-    );
+      error: null,
+    });
     const res = await GET_LIST(makeRequest('/api/timesheet-batches'));
     expect(res.status).toBe(500);
   });
@@ -101,9 +103,12 @@ describe('POST /api/timesheet-batches', () => {
 
   it('returns 201 on valid creation', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { timesheet_batches: { data: sampleBatch, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
+        tables: { timesheet_batches: { data: sampleBatch, error: null } },
+      }),
+      error: null,
+    });
     const res = await POST_CREATE(
       makeJsonRequest('/api/timesheet-batches', {
         division_id: TEST_IDS.DIVISION_ID,
@@ -127,9 +132,12 @@ describe('GET /api/timesheet-batches/[batchId]', () => {
 
   it('returns batch on success', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { timesheet_batches: { data: sampleBatch, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
+        tables: { timesheet_batches: { data: sampleBatch, error: null } },
+      }),
+      error: null,
+    });
     const res = await GET_DETAIL(makeRequest('/api/timesheet-batches/x'), batchCtx());
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -138,11 +146,12 @@ describe('GET /api/timesheet-batches/[batchId]', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { timesheet_batches: { data: null, error: { message: 'err' } } },
       }),
-    );
+      error: null,
+    });
     const res = await GET_DETAIL(makeRequest('/api/timesheet-batches/x'), batchCtx());
     expect(res.status).toBe(500);
   });
@@ -159,9 +168,10 @@ describe('DELETE /api/timesheet-batches/[batchId]', () => {
 
   it('returns 204 on success', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { timesheet_batches: { data: null, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { timesheet_batches: { data: null, error: null } } }),
+      error: null,
+    });
     const res = await DELETE(makeRequest('/api/timesheet-batches/x'), batchCtx());
     expect(res.status).toBe(204);
   });
@@ -185,13 +195,14 @@ describe('POST /api/timesheet-batches/[batchId]/approve', () => {
 
   it('returns approved batch on success', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           timesheet_batches: { data: { ...sampleBatch, status: 'approved' }, error: null },
         },
       }),
-    );
+      error: null,
+    });
     const res = await POST_APPROVE(
       makeJsonRequest('/api/x/approve', { status: 'approved' }),
       batchCtx(),
@@ -203,11 +214,12 @@ describe('POST /api/timesheet-batches/[batchId]/approve', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { timesheet_batches: { data: null, error: { message: 'err' } } },
       }),
-    );
+      error: null,
+    });
     const res = await POST_APPROVE(
       makeJsonRequest('/api/x/approve', { status: 'approved' }),
       batchCtx(),

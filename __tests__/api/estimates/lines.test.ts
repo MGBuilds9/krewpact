@@ -7,11 +7,11 @@ vi.mock('@clerk/nextjs/server', () => ({
 
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import {
   GET as GET_LINES,
   POST as POST_LINE,
@@ -33,7 +33,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 const ESTIMATE_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 const LINE_ID = 'b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a22';
@@ -74,7 +74,7 @@ describe('GET /api/estimates/[id]/lines', () => {
     const client = mockSupabaseClient({
       tables: { estimate_lines: { data: lines, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET_LINES(
       makeRequest(`/api/estimates/${ESTIMATE_ID}/lines`),
@@ -128,7 +128,7 @@ describe('POST /api/estimates/[id]/lines', () => {
         },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await POST_LINE(
       makeJsonRequest(`/api/estimates/${ESTIMATE_ID}/lines`, {
@@ -153,14 +153,15 @@ describe('POST /api/estimates/[id]/lines', () => {
       line_total: 500,
     });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           estimate_lines: { data: newLine, error: null },
           estimates: { data: makeEstimate(), error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST_LINE(
       makeJsonRequest(`/api/estimates/${ESTIMATE_ID}/lines`, {
@@ -183,14 +184,15 @@ describe('POST /api/estimates/[id]/lines', () => {
       line_total: 1150,
     });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           estimate_lines: { data: newLine, error: null },
           estimates: { data: makeEstimate(), error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST_LINE(
       makeJsonRequest(`/api/estimates/${ESTIMATE_ID}/lines`, {
@@ -238,14 +240,15 @@ describe('POST /api/estimates/[id]/lines', () => {
       line_total: 0,
     });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           estimate_lines: { data: newLine, error: null },
           estimates: { data: makeEstimate(), error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST_LINE(
       makeJsonRequest(`/api/estimates/${ESTIMATE_ID}/lines`, {
@@ -296,7 +299,7 @@ describe('PUT /api/estimates/[id]/lines', () => {
         },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await PUT_BATCH(
       makeJsonRequest(
@@ -366,7 +369,7 @@ describe('PATCH /api/estimates/[id]/lines/[lineId]', () => {
         },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await PATCH_LINE(
       makeJsonRequest(`/api/estimates/${ESTIMATE_ID}/lines/${LINE_ID}`, { quantity: 20 }, 'PATCH'),
@@ -421,7 +424,7 @@ describe('DELETE /api/estimates/[id]/lines/[lineId]', () => {
         },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await DELETE_LINE(
       makeRequest(`/api/estimates/${ESTIMATE_ID}/lines/${LINE_ID}`),
@@ -443,7 +446,7 @@ describe('DELETE /api/estimates/[id]/lines/[lineId]', () => {
         },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await DELETE_LINE(
       makeRequest(`/api/estimates/${ESTIMATE_ID}/lines/${LINE_ID}`),

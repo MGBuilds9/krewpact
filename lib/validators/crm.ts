@@ -85,7 +85,6 @@ export const leadCreateSchema = z.object({
   industry: optionalSafeString(),
   city: optionalSafeString(),
   province: optionalSafeString(),
-  notes: optionalSafeString(),
   assigned_to: z.string().uuid().optional(),
 });
 
@@ -96,7 +95,6 @@ export const leadUpdateSchema = z.object({
   industry: nullableSafeString(),
   city: nullableSafeString(),
   province: nullableSafeString(),
-  notes: nullableSafeString(),
   assigned_to: z.string().uuid().optional().nullable(),
   status: z.string().optional(),
 });
@@ -127,7 +125,6 @@ export const opportunityCreateSchema = z.object({
   estimated_revenue: z.number().min(0).optional(),
   probability_pct: z.number().min(0).max(100).optional(),
   owner_user_id: z.string().uuid().optional(),
-  source_channel: z.string().optional(),
 });
 
 export const opportunityUpdateSchema = z.object({
@@ -171,9 +168,6 @@ export const activityCreateSchema = z
     details: optionalSafeString(),
     due_at: z.string().optional(),
     owner_user_id: z.string().uuid().optional(),
-    outcome: z
-      .enum(['connected', 'no_answer', 'voicemail', 'callback_requested', 'left_message', 'other'])
-      .optional(),
   })
   .refine(
     (data) =>

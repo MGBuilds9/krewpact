@@ -1,7 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { biddingImportSchema } from '@/lib/validators/crm';
-import { getOrgIdFromAuth } from '@/lib/api/org';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
@@ -26,20 +25,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const orgId = await getOrgIdFromAuth();
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   const rows = parsed.data.items.map((item) => ({
     ...item,
     source: item.source ?? 'merx',
-    org_id: orgId,
     created_by: userId,
   }));
 
-  const { data, error } = await supabase
-    .from('bidding_opportunities')
-    .insert(rows)
-    .select();
+  const { data, error } = await supabase.from('bidding_opportunities').insert(rows).select();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { autoLogSchema } from '@/lib/validators/crm';
 import { matchEmailToEntities } from '@/lib/crm/email-activity-matcher';
 import { NextRequest, NextResponse } from 'next/server';
@@ -27,7 +27,8 @@ export async function POST(req: NextRequest) {
   }
 
   const { email_address, subject, direction, message_preview } = parsed.data;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   const matches = await matchEmailToEntities(supabase, email_address);
 

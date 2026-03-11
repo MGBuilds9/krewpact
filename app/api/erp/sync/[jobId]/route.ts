@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 /**
@@ -16,7 +16,8 @@ export async function GET(request: NextRequest, context: { params: Promise<{ job
   if (!rl.success) return rateLimitResponse(rl);
 
   const { jobId } = await context.params;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   const { data: job, error } = await supabase
     .from('erp_sync_jobs')

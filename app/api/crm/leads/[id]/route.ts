@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { leadUpdateSchema } from '@/lib/validators/crm';
 import { NextRequest, NextResponse } from 'next/server';
 import { scoreLead } from '@/lib/crm/scoring-engine';
@@ -26,7 +26,8 @@ export async function GET(req: NextRequest, context: RouteContext) {
   if (!rl.success) return rateLimitResponse(rl);
 
   const { id } = await context.params;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('leads')
     .select(
@@ -58,7 +59,9 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
   const parsed = leadUpdateSchema.safeParse(body);
   if (!parsed.success) return errorResponse(validationError(parsed.error.flatten()));
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('leads')
     .update(parsed.data)
@@ -119,7 +122,8 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
   if (!userId) return errorResponse(UNAUTHORIZED);
 
   const { id } = await context.params;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
   const { error } = await supabase.from('leads').delete().eq('id', id);
 
   if (error) return errorResponse(dbError(error.message));

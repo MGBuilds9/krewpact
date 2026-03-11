@@ -1,15 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET } from '@/app/api/crm/outreach/analytics/route';
 import { mockClerkAuth, mockClerkUnauth, makeRequest } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function createAnalyticsMock(counts: {
   sent: number;
@@ -77,7 +77,7 @@ describe('GET /api/crm/outreach/analytics', () => {
       clicked: 8,
       replied: 3,
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(makeRequest('/api/crm/outreach/analytics'));
     expect(res.status).toBe(200);
@@ -96,7 +96,7 @@ describe('GET /api/crm/outreach/analytics', () => {
       clicked: 0,
       replied: 0,
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(makeRequest('/api/crm/outreach/analytics'));
     expect(res.status).toBe(200);

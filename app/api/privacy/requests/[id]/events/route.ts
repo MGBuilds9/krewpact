@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { privacyEventSchema } from '@/lib/validators/migration';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
@@ -13,7 +13,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!rl.success) return rateLimitResponse(rl);
   const { id } = await params;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
   const { data, error, count } = await supabase
     .from('privacy_request_events')
     .select(
@@ -45,7 +46,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const parsed = privacyEventSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('privacy_request_events')
     .insert({ ...parsed.data, privacy_request_id: id, created_by: userId })

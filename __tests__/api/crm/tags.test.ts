@@ -4,11 +4,11 @@ vi.mock('@clerk/nextjs/server', () => ({
   auth: vi.fn(),
 }));
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET, POST, DELETE } from '@/app/api/crm/tags/route';
 import {
   mockSupabaseClient,
@@ -19,7 +19,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 const TAG_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 const DIVISION_ID = 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22';
@@ -54,11 +54,12 @@ describe('GET /api/crm/tags', () => {
   it('returns tag list with total', async () => {
     const tags = [makeTag(), makeTag({ id: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33', name: 'VIP' })];
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { tags: { data: tags, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/crm/tags'));
     expect(res.status).toBe(200);
@@ -79,11 +80,12 @@ describe('POST /api/crm/tags', () => {
   it('creates tag with valid body', async () => {
     const created = makeTag();
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { tags: { data: created, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST(
       makeJsonRequest('http://localhost/api/crm/tags', {
@@ -116,11 +118,12 @@ describe('DELETE /api/crm/tags', () => {
 
   it('deletes a tag', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { tags: { data: null, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await DELETE(
       makeJsonRequest(`http://localhost/api/crm/tags?id=${TAG_ID}`, {}, 'DELETE'),

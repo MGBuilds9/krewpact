@@ -1,7 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { biddingCreateSchema } from '@/lib/validators/crm';
-import { getOrgIdFromAuth } from '@/lib/api/org';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
@@ -33,9 +32,19 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { status, source, division_id, deadline_before, deadline_after, search, sort_by, sort_dir } = parsed.data;
+  const {
+    status,
+    source,
+    division_id,
+    deadline_before,
+    deadline_after,
+    search,
+    sort_by,
+    sort_dir,
+  } = parsed.data;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   let query = supabase
     .from('bidding_opportunities')
@@ -81,12 +90,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const orgId = await getOrgIdFromAuth();
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   const { data, error } = await supabase
     .from('bidding_opportunities')
-    .insert({ ...parsed.data, org_id: orgId, created_by: userId })
+    .insert({ ...parsed.data, created_by: userId })
     .select()
     .single();
 

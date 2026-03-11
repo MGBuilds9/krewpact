@@ -1,21 +1,29 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET } from '@/app/api/crm/reports/overview/route';
-import { mockClerkAuth, mockClerkUnauth, makeRequest, makeLead, makeOpportunity } from '@/__tests__/helpers';
+import {
+  mockClerkAuth,
+  mockClerkUnauth,
+  makeRequest,
+  makeLead,
+  makeOpportunity,
+} from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
-function mockSupabase(tables: Record<string, { data: unknown; error: unknown; count?: number | null }>) {
+function mockSupabase(
+  tables: Record<string, { data: unknown; error: unknown; count?: number | null }>,
+) {
   const makeChain = (resp: { data: unknown; error: unknown; count?: number | null }) => {
     const chain: Record<string, unknown> = {};
     const methods = ['select', 'eq', 'neq', 'ilike', 'gte', 'lte', 'order', 'range', 'limit', 'in'];
@@ -32,7 +40,7 @@ function mockSupabase(tables: Record<string, { data: unknown; error: unknown; co
       return makeChain(tables[table] ?? { data: [], error: null, count: 0 });
     }),
   };
-  mockCreateUserClient.mockResolvedValue(client as never);
+  mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
   return client;
 }
 

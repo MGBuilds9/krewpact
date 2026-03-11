@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
@@ -14,10 +14,13 @@ export async function GET(
   if (!rl.success) return rateLimitResponse(rl);
 
   const { id: projectId, warId } = await params;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('warranty_items')
-    .select('id, project_id, deficiency_id, title, provider_name, warranty_start, warranty_end, terms, created_at, updated_at')
+    .select(
+      'id, project_id, deficiency_id, title, provider_name, warranty_start, warranty_end, terms, created_at, updated_at',
+    )
     .eq('id', warId)
     .eq('project_id', projectId)
     .single();
@@ -41,7 +44,9 @@ export async function PATCH(
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('warranty_items')
     .update({ ...(body as Record<string, unknown>), updated_at: new Date().toISOString() })

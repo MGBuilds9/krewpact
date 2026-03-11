@@ -7,11 +7,11 @@ vi.mock('@clerk/nextjs/server', () => ({
 
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET as GET_CATALOG, POST as POST_CATALOG } from '@/app/api/cost-catalog/route';
 import {
   GET as GET_CATALOG_ID,
@@ -40,7 +40,7 @@ import {
 const VALID_UUID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function makeContext(id: string) {
   return { params: Promise.resolve({ id }) };
@@ -141,11 +141,12 @@ describe('GET /api/cost-catalog', () => {
   it('returns paginated list of catalog items', async () => {
     const items = [makeCatalogItem(), makeCatalogItem({ item_name: 'Concrete Mix' })];
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { cost_catalog_items: { data: items, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET_CATALOG(makeRequest('/api/cost-catalog'));
     expect(res.status).toBe(200);
@@ -160,7 +161,7 @@ describe('GET /api/cost-catalog', () => {
     const client = mockSupabaseClient({
       tables: { cost_catalog_items: { data: [makeCatalogItem()], error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET_CATALOG(makeRequest(`/api/cost-catalog?division_id=${VALID_UUID}`));
     expect(res.status).toBe(200);
@@ -172,7 +173,7 @@ describe('GET /api/cost-catalog', () => {
     const client = mockSupabaseClient({
       tables: { cost_catalog_items: { data: [makeCatalogItem()], error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET_CATALOG(makeRequest('/api/cost-catalog?item_type=labor'));
     expect(res.status).toBe(200);
@@ -204,11 +205,12 @@ describe('POST /api/cost-catalog', () => {
   it('creates catalog item and returns 201', async () => {
     const created = makeCatalogItem();
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { cost_catalog_items: { data: created, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST_CATALOG(
       makeJsonRequest('/api/cost-catalog', {
@@ -263,11 +265,12 @@ describe('GET /api/cost-catalog/[id]', () => {
   it('returns single catalog item', async () => {
     const item = makeCatalogItem();
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { cost_catalog_items: { data: item, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET_CATALOG_ID(
       makeRequest(`/api/cost-catalog/${VALID_UUID}`),
@@ -280,8 +283,8 @@ describe('GET /api/cost-catalog/[id]', () => {
 
   it('returns 404 for non-existent item', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           cost_catalog_items: {
             data: null,
@@ -289,7 +292,8 @@ describe('GET /api/cost-catalog/[id]', () => {
           },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET_CATALOG_ID(
       makeRequest('/api/cost-catalog/nonexistent'),
@@ -320,11 +324,12 @@ describe('PATCH /api/cost-catalog/[id]', () => {
   it('updates catalog item and returns updated record', async () => {
     const updated = makeCatalogItem({ base_cost: 3.75 });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { cost_catalog_items: { data: updated, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await PATCH_CATALOG_ID(
       makeJsonRequest('/api/cost-catalog/123', { base_cost: 3.75 }, 'PATCH'),
@@ -362,11 +367,12 @@ describe('DELETE /api/cost-catalog/[id]', () => {
 
   it('deletes catalog item and returns success', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { cost_catalog_items: { data: null, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await DELETE_CATALOG_ID(
       makeRequest('/api/cost-catalog/123'),
@@ -382,7 +388,7 @@ describe('DELETE /api/cost-catalog/[id]', () => {
     const client = mockSupabaseClient({
       tables: { cost_catalog_items: { data: null, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     await DELETE_CATALOG_ID(makeRequest('/api/cost-catalog/123'), makeContext(VALID_UUID));
     expect(client.from).toHaveBeenCalledWith('cost_catalog_items');
@@ -407,11 +413,12 @@ describe('GET /api/assemblies', () => {
   it('returns paginated list of assemblies', async () => {
     const assemblies = [makeAssembly(), makeAssembly({ assembly_name: 'Electrical Rough-In' })];
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { assemblies: { data: assemblies, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET_ASSEMBLIES(makeRequest('/api/assemblies'));
     expect(res.status).toBe(200);
@@ -425,7 +432,7 @@ describe('GET /api/assemblies', () => {
     const client = mockSupabaseClient({
       tables: { assemblies: { data: [makeAssembly()], error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET_ASSEMBLIES(makeRequest(`/api/assemblies?division_id=${VALID_UUID}`));
     expect(res.status).toBe(200);
@@ -453,11 +460,12 @@ describe('POST /api/assemblies', () => {
   it('creates assembly and returns 201', async () => {
     const created = makeAssembly();
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { assemblies: { data: created, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST_ASSEMBLIES(
       makeJsonRequest('/api/assemblies', {
@@ -497,11 +505,12 @@ describe('GET /api/estimate-templates', () => {
   it('returns paginated list of templates', async () => {
     const templates = [makeTemplate(), makeTemplate({ template_name: 'Commercial Shell' })];
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { estimate_templates: { data: templates, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET_TEMPLATES(makeRequest('/api/estimate-templates'));
     expect(res.status).toBe(200);
@@ -515,7 +524,7 @@ describe('GET /api/estimate-templates', () => {
     const client = mockSupabaseClient({
       tables: { estimate_templates: { data: [makeTemplate()], error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET_TEMPLATES(
       makeRequest('/api/estimate-templates?project_type=residential'),
@@ -548,11 +557,12 @@ describe('POST /api/estimate-templates', () => {
   it('creates template and returns 201', async () => {
     const created = makeTemplate();
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { estimate_templates: { data: created, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST_TEMPLATES(
       makeJsonRequest('/api/estimate-templates', {
@@ -601,11 +611,12 @@ describe('GET /api/estimates/[id]/alternates', () => {
   it('returns list of alternates for an estimate', async () => {
     const alternates = [makeAlternate(), makeAlternate({ title: 'Upgraded Windows' })];
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { estimate_alternates: { data: alternates, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET_ALTERNATES(
       makeRequest(`/api/estimates/${VALID_UUID}/alternates`),
@@ -619,11 +630,12 @@ describe('GET /api/estimates/[id]/alternates', () => {
 
   it('returns empty array when estimate has no alternates', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { estimate_alternates: { data: [], error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET_ALTERNATES(
       makeRequest(`/api/estimates/${VALID_UUID}/alternates`),
@@ -659,11 +671,12 @@ describe('POST /api/estimates/[id]/alternates', () => {
   it('creates alternate and returns 201', async () => {
     const created = makeAlternate();
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { estimate_alternates: { data: created, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST_ALTERNATES(
       makeJsonRequest(`/api/estimates/${VALID_UUID}/alternates`, {
@@ -689,11 +702,12 @@ describe('POST /api/estimates/[id]/alternates', () => {
   it('accepts negative amount (credit alternate)', async () => {
     const created = makeAlternate({ amount: -2000, title: 'Omit Premium Fixtures' });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { estimate_alternates: { data: created, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST_ALTERNATES(
       makeJsonRequest(`/api/estimates/${VALID_UUID}/alternates`, {
@@ -727,11 +741,12 @@ describe('GET /api/estimates/[id]/allowances', () => {
   it('returns list of allowances for an estimate', async () => {
     const allowances = [makeAllowance(), makeAllowance({ allowance_name: 'Tile Allowance' })];
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { estimate_allowances: { data: allowances, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET_ALLOWANCES(
       makeRequest(`/api/estimates/${VALID_UUID}/allowances`),
@@ -745,11 +760,12 @@ describe('GET /api/estimates/[id]/allowances', () => {
 
   it('returns empty array when estimate has no allowances', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { estimate_allowances: { data: [], error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET_ALLOWANCES(
       makeRequest(`/api/estimates/${VALID_UUID}/allowances`),
@@ -785,11 +801,12 @@ describe('POST /api/estimates/[id]/allowances', () => {
   it('creates allowance and returns 201', async () => {
     const created = makeAllowance();
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { estimate_allowances: { data: created, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST_ALLOWANCES(
       makeJsonRequest(`/api/estimates/${VALID_UUID}/allowances`, {

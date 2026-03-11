@@ -2,14 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mocks BEFORE imports
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET, PATCH } from '@/app/api/crm/contacts/[id]/preferences/route';
 import {
   mockSupabaseClient,
@@ -21,7 +21,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function makeContext(id: string) {
   return { params: Promise.resolve({ id }) };
@@ -44,8 +44,8 @@ describe('GET /api/crm/contacts/[id]/preferences', () => {
   it('returns communication prefs for a contact', async () => {
     const prefs = { email_opt_in: true, preferred_channel: 'email', frequency: 'weekly' };
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           contacts: {
             data: { id: CONTACT_ID, communication_prefs: prefs },
@@ -53,7 +53,8 @@ describe('GET /api/crm/contacts/[id]/preferences', () => {
           },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(
       makeRequest(`/api/crm/contacts/${CONTACT_ID}/preferences`),
@@ -66,8 +67,8 @@ describe('GET /api/crm/contacts/[id]/preferences', () => {
 
   it('returns empty object when prefs are null', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           contacts: {
             data: { id: CONTACT_ID, communication_prefs: null },
@@ -75,7 +76,8 @@ describe('GET /api/crm/contacts/[id]/preferences', () => {
           },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(
       makeRequest(`/api/crm/contacts/${CONTACT_ID}/preferences`),
@@ -88,8 +90,8 @@ describe('GET /api/crm/contacts/[id]/preferences', () => {
 
   it('returns 404 when contact not found', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           contacts: {
             data: null,
@@ -97,7 +99,8 @@ describe('GET /api/crm/contacts/[id]/preferences', () => {
           },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(
       makeRequest(`/api/crm/contacts/${CONTACT_ID}/preferences`),
@@ -126,8 +129,8 @@ describe('PATCH /api/crm/contacts/[id]/preferences', () => {
     const existingPrefs = { email_opt_in: false, frequency: 'monthly' };
     const _updatedPrefs = { email_opt_in: true, frequency: 'monthly' };
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           contacts: {
             data: { id: CONTACT_ID, communication_prefs: existingPrefs },
@@ -135,7 +138,8 @@ describe('PATCH /api/crm/contacts/[id]/preferences', () => {
           },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await PATCH(
       makeJsonRequest(
@@ -150,7 +154,7 @@ describe('PATCH /api/crm/contacts/[id]/preferences', () => {
 
   it('rejects invalid preferred_channel', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(mockSupabaseClient());
+    mockCreateUserClientSafe.mockResolvedValue({ client: mockSupabaseClient(), error: null });
 
     const res = await PATCH(
       makeJsonRequest(
@@ -165,7 +169,7 @@ describe('PATCH /api/crm/contacts/[id]/preferences', () => {
 
   it('rejects invalid frequency', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(mockSupabaseClient());
+    mockCreateUserClientSafe.mockResolvedValue({ client: mockSupabaseClient(), error: null });
 
     const res = await PATCH(
       makeJsonRequest(

@@ -1,19 +1,25 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { POST } from '@/app/api/crm/bidding/[id]/link/route';
-import { mockClerkAuth, mockClerkUnauth, makeJsonRequest, makeRequest, makeBiddingOpportunity } from '@/__tests__/helpers';
+import {
+  mockClerkAuth,
+  mockClerkUnauth,
+  makeJsonRequest,
+  makeRequest,
+  makeBiddingOpportunity,
+} from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 const OPP_ID = '00000000-0000-4000-a000-000000000040';
 const ctx = { params: Promise.resolve({ id: '00000000-0000-4000-a000-000000000001' }) };
@@ -42,7 +48,7 @@ function mockSupabase(oppExists: boolean) {
   const client = {
     from: vi.fn().mockReturnValue(chain),
   };
-  mockCreateUserClient.mockResolvedValue(client as never);
+  mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
   return client;
 }
 

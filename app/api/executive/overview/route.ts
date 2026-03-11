@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import {
@@ -34,7 +34,8 @@ export async function GET(req: NextRequest) {
   const division = searchParams.get('division');
 
   try {
-    const supabase = await createUserClient();
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
     // Division-filtered path: compute metrics on-the-fly for a specific division
     if (division) {

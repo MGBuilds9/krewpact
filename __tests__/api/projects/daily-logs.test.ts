@@ -6,7 +6,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
@@ -23,7 +23,7 @@ vi.mock('@sentry/nextjs', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET, POST } from '@/app/api/projects/[id]/daily-logs/route';
 import {
   mockSupabaseClient,
@@ -34,7 +34,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function makeContext(id: string) {
   return { params: Promise.resolve({ id }) };
@@ -64,11 +64,12 @@ describe('GET /api/projects/[id]/daily-logs', () => {
 
   it('returns paginated daily logs', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { project_daily_logs: { data: [sampleLog], error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/projects/proj-1/daily-logs'), makeContext('proj-1'));
     expect(res.status).toBe(200);
@@ -79,11 +80,12 @@ describe('GET /api/projects/[id]/daily-logs', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { project_daily_logs: { data: null, error: { message: 'DB error' } } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/projects/proj-1/daily-logs'), makeContext('proj-1'));
     expect(res.status).toBe(500);
@@ -104,11 +106,12 @@ describe('POST /api/projects/[id]/daily-logs', () => {
 
   it('creates a daily log', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { project_daily_logs: { data: sampleLog, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST(
       makeJsonRequest('/api/projects/proj-1/daily-logs', {

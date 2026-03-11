@@ -14,7 +14,12 @@ vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 
 const mockFrom = vi.fn();
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn().mockResolvedValue({ from: (...args: unknown[]) => mockFrom(...args) }),
+  createUserClientSafe: vi
+    .fn()
+    .mockResolvedValue({
+      client: { from: (...args: unknown[]) => mockFrom(...args) },
+      error: null,
+    }),
 }));
 
 import { auth } from '@clerk/nextjs/server';

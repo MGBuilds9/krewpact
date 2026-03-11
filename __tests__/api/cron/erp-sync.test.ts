@@ -6,7 +6,7 @@ const mockList = vi.fn();
 
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 // Mock SyncService
@@ -79,10 +79,7 @@ describe('GET /api/cron/erp-sync', () => {
 
   it('syncs Sales Invoices from ERPNext', async () => {
     mockList
-      .mockResolvedValueOnce([
-        { name: 'SINV-001' },
-        { name: 'SINV-002' },
-      ])
+      .mockResolvedValueOnce([{ name: 'SINV-001' }, { name: 'SINV-002' }])
       .mockResolvedValueOnce([]); // Purchase Invoices
 
     mockReadSalesInvoice.mockResolvedValue({ status: 'succeeded' });
@@ -100,9 +97,7 @@ describe('GET /api/cron/erp-sync', () => {
   it('syncs Purchase Invoices from ERPNext', async () => {
     mockList
       .mockResolvedValueOnce([]) // Sales Invoices
-      .mockResolvedValueOnce([
-        { name: 'PINV-001' },
-      ]);
+      .mockResolvedValueOnce([{ name: 'PINV-001' }]);
 
     mockReadPurchaseInvoice.mockResolvedValue({ status: 'succeeded' });
 
@@ -116,10 +111,7 @@ describe('GET /api/cron/erp-sync', () => {
 
   it('continues on individual invoice sync failure', async () => {
     mockList
-      .mockResolvedValueOnce([
-        { name: 'SINV-001' },
-        { name: 'SINV-002' },
-      ])
+      .mockResolvedValueOnce([{ name: 'SINV-001' }, { name: 'SINV-002' }])
       .mockResolvedValueOnce([]);
 
     mockReadSalesInvoice
@@ -136,9 +128,7 @@ describe('GET /api/cron/erp-sync', () => {
   });
 
   it('handles ERPNext list API failure gracefully', async () => {
-    mockList
-      .mockRejectedValueOnce(new Error('ERPNext unavailable'))
-      .mockResolvedValueOnce([]);
+    mockList.mockRejectedValueOnce(new Error('ERPNext unavailable')).mockResolvedValueOnce([]);
 
     const res = await GET(makeCronRequest(`Bearer ${CRON_SECRET}`) as never);
     expect(res.status).toBe(200);

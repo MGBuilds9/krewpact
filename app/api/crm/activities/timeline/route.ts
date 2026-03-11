@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
@@ -48,12 +48,15 @@ export async function GET(req: NextRequest) {
   }
 
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   // Fetch activities
   let activityQuery = supabase
     .from('activities')
-    .select('id, activity_type, title, details, due_at, completed_at, lead_id, contact_id, account_id, opportunity_id, owner_user_id, created_at, updated_at');
+    .select(
+      'id, activity_type, title, details, due_at, completed_at, lead_id, contact_id, account_id, opportunity_id, owner_user_id, created_at, updated_at',
+    );
 
   if (lead_id) activityQuery = activityQuery.eq('lead_id', lead_id);
   if (account_id) activityQuery = activityQuery.eq('account_id', account_id);
@@ -69,7 +72,9 @@ export async function GET(req: NextRequest) {
   // Fetch outreach events
   let outreachQuery = supabase
     .from('outreach_events')
-    .select('id, lead_id, contact_id, channel, direction, activity_type, outcome, outcome_detail, subject, message_preview, notes, sequence_id, sequence_step, is_automated, occurred_at, created_by');
+    .select(
+      'id, lead_id, contact_id, channel, direction, activity_type, outcome, outcome_detail, subject, message_preview, notes, sequence_id, sequence_step, is_automated, occurred_at, created_by',
+    );
 
   if (lead_id) outreachQuery = outreachQuery.eq('lead_id', lead_id);
   if (contact_id) outreachQuery = outreachQuery.eq('contact_id', contact_id);

@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { logger } from '@/lib/logger';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
@@ -35,7 +35,8 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
   }
 
   try {
-    const supabase = await createUserClient();
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
     const updateData: Record<string, unknown> = { ...parsed.data };
     if (parsed.data.state === 'read') {
       updateData.read_at = new Date().toISOString();
@@ -70,7 +71,8 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
   const { id } = await context.params;
 
   try {
-    const supabase = await createUserClient();
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
     const { error } = await supabase.from('notifications').delete().eq('id', id);
 
     if (error) {

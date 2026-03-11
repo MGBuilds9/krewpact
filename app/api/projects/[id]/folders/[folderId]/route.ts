@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { folderUpdateSchema } from '@/lib/validators/documents';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
@@ -27,7 +27,9 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('file_folders')
     .update(parsed.data)
@@ -49,7 +51,8 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { id, folderId } = await context.params;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
   const { error } = await supabase
     .from('file_folders')
     .delete()

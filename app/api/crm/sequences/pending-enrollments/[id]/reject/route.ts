@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { rejectEnrollment } from '@/lib/crm/enrollment-engine';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
@@ -18,7 +18,9 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
     return NextResponse.json({ error: 'Missing enrollment id' }, { status: 400 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
 
   const result = await rejectEnrollment(supabase, id);
 
@@ -31,7 +33,9 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
 
   const { data: enrollment, error: fetchError } = await supabase
     .from('sequence_enrollments')
-    .select('id, sequence_id, lead_id, contact_id, status, current_step, started_at, completed_at, paused_at, created_at, updated_at')
+    .select(
+      'id, sequence_id, lead_id, contact_id, status, current_step, started_at, completed_at, paused_at, created_at, updated_at',
+    )
     .eq('id', id)
     .single();
 

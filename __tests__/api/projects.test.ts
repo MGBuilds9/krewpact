@@ -7,11 +7,11 @@ vi.mock('@clerk/nextjs/server', () => ({
 
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET, POST } from '@/app/api/projects/route';
 import { GET as GET_BY_ID, PATCH, DELETE } from '@/app/api/projects/[id]/route';
 import {
@@ -25,7 +25,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 describe('GET /api/projects', () => {
   beforeEach(() => {
@@ -56,9 +56,10 @@ describe('GET /api/projects', () => {
     ];
 
     mockClerkAuth(mockAuth, 'user_123');
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { projects: { data: mockProjects, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { projects: { data: mockProjects, error: null } } }),
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/projects'));
     expect(res.status).toBe(200);
@@ -74,7 +75,7 @@ describe('GET /api/projects', () => {
     const client = mockSupabaseClient({
       tables: { projects: { data: mockProjects, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(makeRequest(`/api/projects?division_id=${TEST_IDS.DIVISION_ID}`));
     expect(res.status).toBe(200);
@@ -83,13 +84,14 @@ describe('GET /api/projects', () => {
 
   it('returns 500 when Supabase errors', async () => {
     mockClerkAuth(mockAuth, 'user_123');
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           projects: { data: null, error: { message: 'Database error', code: 'PGRST000' } },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/projects'));
     expect(res.status).toBe(500);
@@ -101,7 +103,7 @@ describe('GET /api/projects', () => {
   it('filters by status', async () => {
     mockClerkAuth(mockAuth, 'user_123');
     const client = mockSupabaseClient({ tables: { projects: { data: [], error: null } } });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(makeRequest('/api/projects?status=active'));
     expect(res.status).toBe(200);
@@ -110,7 +112,7 @@ describe('GET /api/projects', () => {
   it('supports search param', async () => {
     mockClerkAuth(mockAuth, 'user_123');
     const client = mockSupabaseClient({ tables: { projects: { data: [], error: null } } });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(makeRequest('/api/projects?search=renovation'));
     expect(res.status).toBe(200);
@@ -163,9 +165,10 @@ describe('POST /api/projects', () => {
     const created = makeProject({ project_name: 'New Project' });
 
     mockClerkAuth(mockAuth, 'user_123');
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { projects: { data: created, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { projects: { data: created, error: null } } }),
+      error: null,
+    });
 
     const res = await POST(
       makeJsonRequest('/api/projects', {
@@ -189,9 +192,10 @@ describe('GET /api/projects/[id]', () => {
   it('returns project by ID', async () => {
     const project = makeProject();
     mockClerkAuth(mockAuth, 'user_123');
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { projects: { data: project, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { projects: { data: project, error: null } } }),
+      error: null,
+    });
 
     const res = await GET_BY_ID(makeRequest('/api/projects/some-id'), {
       params: Promise.resolve({ id: 'some-id' }),
@@ -201,11 +205,12 @@ describe('GET /api/projects/[id]', () => {
 
   it('returns 404 for non-existent project', async () => {
     mockClerkAuth(mockAuth, 'user_123');
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { projects: { data: null, error: { message: 'Not found', code: 'PGRST116' } } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET_BY_ID(makeRequest('/api/projects/missing-id'), {
       params: Promise.resolve({ id: 'missing-id' }),
@@ -222,9 +227,10 @@ describe('PATCH /api/projects/[id]', () => {
   it('updates project with valid data', async () => {
     const updated = makeProject({ project_name: 'Updated' });
     mockClerkAuth(mockAuth, 'user_123');
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { projects: { data: updated, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { projects: { data: updated, error: null } } }),
+      error: null,
+    });
 
     const res = await PATCH(
       makeJsonRequest('/api/projects/some-id', { project_name: 'Updated' }, 'PATCH'),
@@ -243,9 +249,10 @@ describe('DELETE /api/projects/[id]', () => {
 
   it('deletes project', async () => {
     mockClerkAuth(mockAuth, 'user_123');
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { projects: { data: null, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { projects: { data: null, error: null } } }),
+      error: null,
+    });
 
     const res = await DELETE(makeRequest('/api/projects/some-id'), {
       params: Promise.resolve({ id: 'some-id' }),

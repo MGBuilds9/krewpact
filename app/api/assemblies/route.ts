@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { assemblyCreateSchema } from '@/lib/validators/estimating';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
@@ -29,7 +29,8 @@ export async function GET(req: NextRequest) {
   }
 
   const { division_id, is_active, search, limit, offset } = parsed.data;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   let query = supabase
     .from('assemblies')
@@ -84,7 +85,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase.from('assemblies').insert(parsed.data).select().single();
 
   if (error) {

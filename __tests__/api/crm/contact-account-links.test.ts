@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET, POST, DELETE } from '@/app/api/crm/contacts/[id]/accounts/route';
 import {
   mockClerkAuth,
@@ -15,7 +15,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 const CONTACT_ID = '550e8400-e29b-41d4-a716-446655440001';
 const ACCOUNT_ID = '550e8400-e29b-41d4-a716-446655440002';
@@ -49,7 +49,7 @@ describe('GET /api/crm/contacts/[id]/accounts', () => {
     const client = mockSupabaseClient({
       tables: { contact_account_links: { data: links, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeRequest(`/api/crm/contacts/${CONTACT_ID}/accounts`);
     const res = await GET(req, makeContext(CONTACT_ID));
@@ -84,7 +84,7 @@ describe('POST /api/crm/contacts/[id]/accounts', () => {
     const client = mockSupabaseClient({
       tables: { contact_account_links: { data: linkData, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest(`/api/crm/contacts/${CONTACT_ID}/accounts`, {
       account_id: ACCOUNT_ID,
@@ -122,7 +122,7 @@ describe('DELETE /api/crm/contacts/[id]/accounts', () => {
     const client = mockSupabaseClient({
       tables: { contact_account_links: { data: null, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeRequest(`/api/crm/contacts/${CONTACT_ID}/accounts?account_id=${ACCOUNT_ID}`, {
       method: 'DELETE',

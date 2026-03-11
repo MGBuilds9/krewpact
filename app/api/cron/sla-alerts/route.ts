@@ -1,4 +1,4 @@
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { LEAD_SLA_CONFIG, OPPORTUNITY_SLA_CONFIG, isOverdue } from '@/lib/crm/sla-config';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyCronAuth } from '@/lib/api/cron-auth';
@@ -9,7 +9,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
 
   // Fetch leads in active stages
   const { data: leads } = await supabase
@@ -24,7 +26,13 @@ export async function POST(req: NextRequest) {
     .select('id, opportunity_name, stage, stage_entered_at, owner_user_id')
     .not('stage', 'in', '("contracted","closed_lost")');
 
-  const notifications: Array<{user_id: string; title: string; body: string; category: string; link: string}> = [];
+  const notifications: Array<{
+    user_id: string;
+    title: string;
+    body: string;
+    category: string;
+    link: string;
+  }> = [];
 
   // Collect notifications for overdue leads
   for (const lead of leads ?? []) {

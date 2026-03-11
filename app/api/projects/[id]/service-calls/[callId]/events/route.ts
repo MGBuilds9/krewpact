@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { NextRequest, NextResponse } from 'next/server';
 import { serviceEventCreateSchema } from '@/lib/validators/closeout';
@@ -17,10 +17,14 @@ export async function GET(
 
   const { callId } = await params;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
   const { data, error, count } = await supabase
     .from('service_call_events')
-    .select('id, service_call_id, event_type, actor_user_id, actor_portal_id, created_at' /* excluded from list: event_payload */, { count: 'exact' })
+    .select(
+      'id, service_call_id, event_type, actor_user_id, actor_portal_id, created_at' /* excluded from list: event_payload */,
+      { count: 'exact' },
+    )
     .eq('service_call_id', callId)
     .order('created_at', { ascending: true })
     .range(offset, offset + limit - 1);
@@ -47,7 +51,9 @@ export async function POST(
   const parsed = serviceEventCreateSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('service_call_events')
     .insert({ ...parsed.data, service_call_id: callId, created_by: userId })

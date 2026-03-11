@@ -11,14 +11,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import {
   mockClerkAuth,
   mockClerkUnauth,
@@ -27,7 +27,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 describe('GET /api/finance/dashboard', () => {
   beforeEach(() => {
@@ -70,7 +70,7 @@ describe('GET /api/finance/dashboard', () => {
         },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const { GET } = await import('@/app/api/finance/dashboard/route');
     const res = await GET(makeRequest('/api/finance/dashboard'));
@@ -97,7 +97,7 @@ describe('GET /api/finance/dashboard', () => {
         job_cost_snapshots: { data: [], error: null },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const { GET } = await import('@/app/api/finance/dashboard/route');
     const res = await GET(makeRequest('/api/finance/dashboard'));
@@ -121,7 +121,7 @@ describe('GET /api/finance/dashboard', () => {
         job_cost_snapshots: { data: [], error: null },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const { GET } = await import('@/app/api/finance/dashboard/route');
     const res = await GET(makeRequest('/api/finance/dashboard'));
@@ -141,7 +141,7 @@ describe('GET /api/finance/dashboard', () => {
         job_cost_snapshots: { data: [], error: null },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const { GET } = await import('@/app/api/finance/dashboard/route');
     const res = await GET(makeRequest('/api/finance/dashboard'));
@@ -158,7 +158,7 @@ describe('GET /api/finance/dashboard', () => {
         job_cost_snapshots: { data: null, error: { message: 'Timeout' } },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const { GET } = await import('@/app/api/finance/dashboard/route');
     const res = await GET(makeRequest('/api/finance/dashboard'));

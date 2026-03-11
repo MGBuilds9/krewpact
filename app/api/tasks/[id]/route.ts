@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
@@ -26,7 +26,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const { id } = await params;
 
   try {
-    const supabase = await createUserClient();
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
     const { data, error } = await supabase
       .from('tasks')
       .select(
@@ -73,7 +74,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   try {
-    const supabase = await createUserClient();
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
     const { data, error } = await supabase
       .from('tasks')
       .update(parsed.data)
@@ -107,7 +109,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const { id } = await params;
 
   try {
-    const supabase = await createUserClient();
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
     const { error } = await supabase.from('tasks').delete().eq('id', id);
 
     if (error) {

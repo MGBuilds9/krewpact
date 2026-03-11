@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
@@ -27,7 +27,9 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
   const { id } = await context.params;
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('expense_claims')
     .select(
@@ -67,7 +69,9 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('expense_claims')
     .update(parsed.data)
@@ -94,7 +98,9 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
 
   const { id } = await context.params;
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { error } = await supabase.from('expense_claims').delete().eq('id', id);
 
   if (error) {

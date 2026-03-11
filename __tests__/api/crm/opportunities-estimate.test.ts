@@ -15,8 +15,11 @@ const _mockOrder = vi.fn();
 
 const mockFrom = vi.fn();
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: () => ({
-    from: mockFrom,
+  createUserClientSafe: vi.fn().mockResolvedValue({
+    client: {
+      from: mockFrom,
+    },
+    error: null,
   }),
 }));
 

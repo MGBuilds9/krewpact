@@ -5,14 +5,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET, POST } from '@/app/api/projects/[id]/allowances/route';
 import {
   mockSupabaseClient,
@@ -24,7 +24,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function projectCtx() {
   return { params: Promise.resolve({ id: TEST_IDS.PROJECT_ID }) };
@@ -54,11 +54,12 @@ describe('GET /api/projects/[id]/allowances', () => {
 
   it('returns allowances list', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { allowance_reconciliations: { data: [sampleAllowance], error: null, count: 1 } },
       }),
-    );
+      error: null,
+    });
     const res = await GET(makeRequest('/api/projects/x/allowances'), projectCtx());
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -68,13 +69,14 @@ describe('GET /api/projects/[id]/allowances', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           allowance_reconciliations: { data: null, error: { message: 'err' }, count: null },
         },
       }),
-    );
+      error: null,
+    });
     const res = await GET(makeRequest('/api/projects/x/allowances'), projectCtx());
     expect(res.status).toBe(500);
   });
@@ -92,11 +94,12 @@ describe('POST /api/projects/[id]/allowances', () => {
 
   it('returns 201 on valid creation', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { allowance_reconciliations: { data: sampleAllowance, error: null } },
       }),
-    );
+      error: null,
+    });
     const res = await POST(
       makeJsonRequest('/api/projects/x/allowances', {
         category_name: 'Flooring',
@@ -111,11 +114,12 @@ describe('POST /api/projects/[id]/allowances', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { allowance_reconciliations: { data: null, error: { message: 'insert err' } } },
       }),
-    );
+      error: null,
+    });
     const res = await POST(
       makeJsonRequest('/api/projects/x/allowances', {
         category_name: 'Flooring',

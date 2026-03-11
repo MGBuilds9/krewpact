@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
@@ -36,7 +36,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Cannot merge an account with itself' }, { status: 400 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
 
   const [primaryResult, secondaryResult] = await Promise.all([
     supabase.from('accounts').select('*').eq('id', primary_id).single(),
@@ -60,7 +62,11 @@ export async function POST(req: NextRequest) {
 
   for (const [key, val] of Object.entries(secondary)) {
     if (skipFields.includes(key)) continue;
-    if ((primary[key] === null || primary[key] === '' || primary[key] === undefined) && val != null && val !== '') {
+    if (
+      (primary[key] === null || primary[key] === '' || primary[key] === undefined) &&
+      val != null &&
+      val !== ''
+    ) {
       updates[key] = val;
       mergedFields.push(key);
     }

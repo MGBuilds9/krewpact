@@ -5,11 +5,11 @@ vi.mock('@clerk/nextjs/server', () => ({
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { POST } from '@/app/api/crm/leads/check-duplicates/route';
 import {
   mockSupabaseClient,
@@ -43,13 +43,12 @@ const existingLeads = [
 
 beforeEach(() => {
   mockClerkAuth(auth as unknown as ReturnType<typeof vi.fn>);
-  vi.mocked(createUserClient).mockResolvedValue(
-    mockSupabaseClient({
-      tables: {
-        leads: { data: existingLeads, error: null },
-      },
-    }),
-  );
+  const client = mockSupabaseClient({
+    tables: {
+      leads: { data: existingLeads, error: null },
+    },
+  });
+  vi.mocked(createUserClientSafe).mockResolvedValue({ client, error: null });
 });
 
 describe('POST /api/crm/leads/check-duplicates', () => {

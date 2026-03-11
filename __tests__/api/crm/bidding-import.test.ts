@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/org', () => ({ getOrgIdFromAuth: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
@@ -9,13 +9,19 @@ vi.mock('@/lib/api/rate-limit', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { getOrgIdFromAuth } from '@/lib/api/org';
 import { POST } from '@/app/api/crm/bidding/import/route';
-import { mockClerkAuth, mockClerkUnauth, makeJsonRequest, makeRequest, makeBiddingOpportunity } from '@/__tests__/helpers';
+import {
+  mockClerkAuth,
+  mockClerkUnauth,
+  makeJsonRequest,
+  makeRequest,
+  makeBiddingOpportunity,
+} from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 const mockGetOrgId = vi.mocked(getOrgIdFromAuth);
 
 function mockSupabase(resp: { data: unknown; error: unknown }) {
@@ -29,7 +35,7 @@ function mockSupabase(resp: { data: unknown; error: unknown }) {
   const client = {
     from: vi.fn().mockReturnValue(chain),
   };
-  mockCreateUserClient.mockResolvedValue(client as never);
+  mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
   return client;
 }
 

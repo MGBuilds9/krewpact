@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { fileShareCreateSchema } from '@/lib/validators/documents';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
@@ -14,11 +14,15 @@ export async function GET(req: NextRequest, context: RouteContext) {
   if (!rl.success) return rateLimitResponse(rl);
 
   const { fileId } = await context.params;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   const { data, error, count } = await supabase
     .from('file_shares')
-    .select('id, file_id, shared_with_user_id, shared_with_portal_actor_id, permission_level, is_active, expires_at, shared_by, created_at', { count: 'exact' })
+    .select(
+      'id, file_id, shared_with_user_id, shared_with_portal_actor_id, permission_level, is_active, expires_at, shared_by, created_at',
+      { count: 'exact' },
+    )
     .eq('file_id', fileId)
     .eq('is_active', true)
     .order('created_at', { ascending: false });
@@ -47,7 +51,9 @@ export async function POST(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('file_shares')
     .insert({ ...parsed.data, file_id: fileId, shared_by: userId })

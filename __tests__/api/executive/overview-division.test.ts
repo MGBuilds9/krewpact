@@ -1,20 +1,21 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
 vi.mock('@clerk/nextjs/server', () => ({
   auth: vi.fn(),
 }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/logger', () => ({
   logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET } from '@/app/api/executive/overview/route';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function makeRequest(url = 'http://localhost/api/executive/overview') {
   return new NextRequest(new URL(url));
@@ -24,7 +25,7 @@ function makeExecutiveAuth() {
   mockAuth.mockResolvedValue({
     userId: 'user_exec',
     sessionClaims: { krewpact_roles: ['executive'] },
-  } as unknown as Awaited<ReturnType<typeof auth>>);
+  } as any as Awaited<ReturnType<typeof auth>>);
 }
 
 /**
@@ -95,7 +96,7 @@ describe('GET /api/executive/overview', () => {
       mockAuth.mockResolvedValue({
         userId: null,
         sessionClaims: null,
-      } as unknown as Awaited<ReturnType<typeof auth>>);
+      } as any as Awaited<ReturnType<typeof auth>>);
 
       const res = await GET(makeRequest());
       expect(res.status).toBe(401);
@@ -107,7 +108,7 @@ describe('GET /api/executive/overview', () => {
       mockAuth.mockResolvedValue({
         userId: 'user_pm',
         sessionClaims: { krewpact_roles: ['project_manager'] },
-      } as unknown as Awaited<ReturnType<typeof auth>>);
+      } as any as Awaited<ReturnType<typeof auth>>);
 
       const res = await GET(makeRequest());
       expect(res.status).toBe(403);
@@ -136,11 +137,12 @@ describe('GET /api/executive/overview', () => {
         },
       ];
 
-      mockCreateUserClient.mockResolvedValue(
-        makeDivisionSupabaseMock({
+      mockCreateUserClientSafe.mockResolvedValue({
+        client: makeDivisionSupabaseMock({
           executive_metrics_cache: cacheRows,
-        }) as unknown as Awaited<ReturnType<typeof createUserClient>>,
-      );
+        }) as any,
+        error: null,
+      });
 
       const res = await GET(makeRequest());
       expect(res.status).toBe(200);
@@ -154,11 +156,10 @@ describe('GET /api/executive/overview', () => {
     it('returns empty metrics object when cache is empty', async () => {
       makeExecutiveAuth();
 
-      mockCreateUserClient.mockResolvedValue(
-        makeDivisionSupabaseMock({ executive_metrics_cache: [] }) as unknown as Awaited<
-          ReturnType<typeof createUserClient>
-        >,
-      );
+      mockCreateUserClientSafe.mockResolvedValue({
+        client: makeDivisionSupabaseMock({ executive_metrics_cache: [] }) as any,
+        error: null,
+      });
 
       const res = await GET(makeRequest());
       expect(res.status).toBe(200);
@@ -183,14 +184,15 @@ describe('GET /api/executive/overview', () => {
         { id: 'sub-1', monthly_cost: 500, is_active: true, renewal_date: null },
       ];
 
-      mockCreateUserClient.mockResolvedValue(
-        makeDivisionSupabaseMock({
+      mockCreateUserClientSafe.mockResolvedValue({
+        client: makeDivisionSupabaseMock({
           opportunities: divisionOpps,
           projects: divisionProjects,
           executive_subscriptions: divisionSubs,
           estimates: [],
-        }) as unknown as Awaited<ReturnType<typeof createUserClient>>,
-      );
+        }) as any,
+        error: null,
+      });
 
       const res = await GET(
         makeRequest('http://localhost/api/executive/overview?division=contracting'),
@@ -209,9 +211,10 @@ describe('GET /api/executive/overview', () => {
     it('returns empty metrics gracefully for an unknown division', async () => {
       makeExecutiveAuth();
 
-      mockCreateUserClient.mockResolvedValue(
-        makeDivisionSupabaseMock() as unknown as Awaited<ReturnType<typeof createUserClient>>,
-      );
+      mockCreateUserClientSafe.mockResolvedValue({
+        client: makeDivisionSupabaseMock() as any,
+        error: null,
+      });
 
       const res = await GET(
         makeRequest('http://localhost/api/executive/overview?division=unknown-division'),
@@ -228,9 +231,10 @@ describe('GET /api/executive/overview', () => {
         vi.clearAllMocks();
         makeExecutiveAuth();
 
-        mockCreateUserClient.mockResolvedValue(
-          makeDivisionSupabaseMock() as unknown as Awaited<ReturnType<typeof createUserClient>>,
-        );
+        mockCreateUserClientSafe.mockResolvedValue({
+          client: makeDivisionSupabaseMock() as any,
+          error: null,
+        });
 
         const res = await GET(
           makeRequest(`http://localhost/api/executive/overview?division=${div}`),
@@ -250,11 +254,12 @@ describe('GET /api/executive/overview', () => {
         { id: 'est-3', status: 'draft' },
       ];
 
-      mockCreateUserClient.mockResolvedValue(
-        makeDivisionSupabaseMock({
+      mockCreateUserClientSafe.mockResolvedValue({
+        client: makeDivisionSupabaseMock({
           estimates: allEstimates,
-        }) as unknown as Awaited<ReturnType<typeof createUserClient>>,
-      );
+        }) as any,
+        error: null,
+      });
 
       const res = await GET(makeRequest('http://localhost/api/executive/overview?division=homes'));
       expect(res.status).toBe(200);

@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { contactUpdateSchema } from '@/lib/validators/crm';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
@@ -16,8 +16,15 @@ export async function GET(req: NextRequest, context: RouteContext) {
   if (!rl.success) return rateLimitResponse(rl);
 
   const { id } = await context.params;
-  const supabase = await createUserClient();
-  const { data, error } = await supabase.from('contacts').select('id, first_name, last_name, full_name, email, phone, mobile, title, role, linkedin_url, is_primary, is_decision_maker, lead_id, preferred_channel, email_opted_in, phone_opted_in, last_contacted_at, total_touches, created_at, updated_at').eq('id', id).single();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
+  const { data, error } = await supabase
+    .from('contacts')
+    .select(
+      'id, first_name, last_name, full_name, email, phone, mobile, title, role, linkedin_url, is_primary, is_decision_maker, lead_id, preferred_channel, email_opted_in, phone_opted_in, last_contacted_at, total_touches, created_at, updated_at',
+    )
+    .eq('id', id)
+    .single();
 
   if (error) {
     const status = error.code === 'PGRST116' ? 404 : 500;
@@ -47,7 +54,9 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('contacts')
     .update(parsed.data)
@@ -70,7 +79,8 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
   }
 
   const { id } = await context.params;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
   const { error } = await supabase.from('contacts').delete().eq('id', id);
 
   if (error) {

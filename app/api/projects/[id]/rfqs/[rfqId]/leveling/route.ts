@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { bidLevelingSessionSchema, bidLevelingEntrySchema } from '@/lib/validators/procurement';
@@ -30,7 +30,8 @@ export async function GET(
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
   const { limit, offset } = parsed.data;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
   const { data, error, count } = await supabase
     .from('bid_leveling_sessions')
     .select('*, bid_leveling_entries(*)', { count: 'exact' })
@@ -55,7 +56,9 @@ export async function POST(
   const parsed = createSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
 
   // Determine next version number
   const { count } = await supabase

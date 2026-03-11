@@ -8,7 +8,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
@@ -21,7 +21,7 @@ vi.mock('@/lib/notifications/dispatcher', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { dispatchNotification } from '@/lib/notifications/dispatcher';
 import { GET as GET_LIST, POST as POST_ACTION } from '@/app/api/notifications/route';
 import { PATCH, DELETE } from '@/app/api/notifications/[id]/route';
@@ -37,7 +37,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 const mockDispatch = vi.mocked(dispatchNotification);
 const NOTIF_ID = '00000000-0000-4000-a000-000000000801';
 
@@ -83,11 +83,12 @@ describe('GET /api/notifications', () => {
 
   it('returns paginated notifications', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { notifications: { data: [sampleNotification], error: null, count: 1 } },
       }),
-    );
+      error: null,
+    });
     const res = await GET_LIST(makeRequest('/api/notifications'));
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -97,11 +98,12 @@ describe('GET /api/notifications', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { notifications: { data: null, error: { message: 'err' }, count: null } },
       }),
-    );
+      error: null,
+    });
     const res = await GET_LIST(makeRequest('/api/notifications'));
     expect(res.status).toBe(500);
   });
@@ -127,9 +129,10 @@ describe('POST /api/notifications (mark_all_read)', () => {
 
   it('marks all read successfully', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { notifications: { data: null, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { notifications: { data: null, error: null } } }),
+      error: null,
+    });
     const res = await POST_ACTION(
       makeJsonRequest('/api/notifications', { action: 'mark_all_read' }),
     );
@@ -154,8 +157,8 @@ describe('PATCH /api/notifications/[id]', () => {
 
   it('updates notification on success', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           notifications: {
             data: { ...sampleNotification, state: 'read' },
@@ -163,7 +166,8 @@ describe('PATCH /api/notifications/[id]', () => {
           },
         },
       }),
-    );
+      error: null,
+    });
     const res = await PATCH(
       makeJsonRequest('/api/notifications/x', { read: true }, 'PATCH'),
       notifCtx(),
@@ -175,11 +179,12 @@ describe('PATCH /api/notifications/[id]', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { notifications: { data: null, error: { message: 'err' } } },
       }),
-    );
+      error: null,
+    });
     const res = await PATCH(
       makeJsonRequest('/api/notifications/x', { read: true }, 'PATCH'),
       notifCtx(),
@@ -200,9 +205,10 @@ describe('DELETE /api/notifications/[id]', () => {
 
   it('deletes notification on success', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { notifications: { data: null, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { notifications: { data: null, error: null } } }),
+      error: null,
+    });
     const res = await DELETE(makeRequest('/api/notifications/x'), notifCtx());
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -222,11 +228,12 @@ describe('GET /api/notifications/preferences', () => {
 
   it('returns user preferences', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { notification_preferences: { data: samplePrefs, error: null } },
       }),
-    );
+      error: null,
+    });
     const res = await GET_PREFS(makeRequest('/api/notifications/preferences'));
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -236,8 +243,8 @@ describe('GET /api/notifications/preferences', () => {
 
   it('returns defaults when no preferences exist (PGRST116)', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           notification_preferences: {
             data: null,
@@ -245,7 +252,8 @@ describe('GET /api/notifications/preferences', () => {
           },
         },
       }),
-    );
+      error: null,
+    });
     const res = await GET_PREFS(makeRequest('/api/notifications/preferences'));
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -268,8 +276,8 @@ describe('PATCH /api/notifications/preferences', () => {
 
   it('upserts preferences on success', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           notification_preferences: {
             data: { ...samplePrefs, email_enabled: false },
@@ -277,7 +285,8 @@ describe('PATCH /api/notifications/preferences', () => {
           },
         },
       }),
-    );
+      error: null,
+    });
     const res = await PATCH_PREFS(
       makeJsonRequest('/api/notifications/preferences', { email_enabled: false }, 'PATCH'),
     );
@@ -288,11 +297,12 @@ describe('PATCH /api/notifications/preferences', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { notification_preferences: { data: null, error: { message: 'err' } } },
       }),
-    );
+      error: null,
+    });
     const res = await PATCH_PREFS(
       makeJsonRequest('/api/notifications/preferences', { email_enabled: false }, 'PATCH'),
     );

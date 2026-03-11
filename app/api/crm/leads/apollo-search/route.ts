@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { searchPeople, mapApolloToLead, mapApolloToContact } from '@/lib/integrations/apollo';
@@ -73,7 +73,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Import mode
-    const supabase = await createUserClient();
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
     // Dedup check
     const externalIds = people.map((p) => p.id);

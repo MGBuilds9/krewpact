@@ -6,10 +6,10 @@ vi.mock('@/lib/api/cron-auth', () => ({
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { POST } from '@/app/api/cron/followup-reminders/route';
 import {
   mockSupabaseClient,
@@ -18,7 +18,7 @@ import {
   resetFixtureCounter,
 } from '@/__tests__/helpers';
 
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function makeCronRequest() {
   return makeRequest('/api/cron/followup-reminders', { method: 'POST' });
@@ -41,14 +41,15 @@ describe('POST /api/cron/followup-reminders', () => {
   });
 
   it('returns { notified: 0 } when no overdue tasks', async () => {
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           activities: { data: [], error: null },
           notifications: { data: null, error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST(makeCronRequest());
     expect(res.status).toBe(200);
@@ -60,8 +61,8 @@ describe('POST /api/cron/followup-reminders', () => {
     const userA = 'user-aaa';
     const userB = 'user-bbb';
 
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           activities: {
             data: [
@@ -74,7 +75,8 @@ describe('POST /api/cron/followup-reminders', () => {
           notifications: { data: null, error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST(makeCronRequest());
     expect(res.status).toBe(200);
@@ -85,14 +87,15 @@ describe('POST /api/cron/followup-reminders', () => {
   });
 
   it('handles database errors on activities query', async () => {
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           activities: { data: null, error: { message: 'connection refused', code: '500' } },
           notifications: { data: null, error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST(makeCronRequest());
     expect(res.status).toBe(500);
@@ -101,8 +104,8 @@ describe('POST /api/cron/followup-reminders', () => {
   });
 
   it('handles database errors on notification insert', async () => {
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           activities: {
             data: [makeActivity({ owner_user_id: 'user-1', title: 'Overdue task' })],
@@ -111,7 +114,8 @@ describe('POST /api/cron/followup-reminders', () => {
           notifications: { data: null, error: { message: 'insert failed', code: '500' } },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST(makeCronRequest());
     expect(res.status).toBe(500);
@@ -133,7 +137,7 @@ describe('POST /api/cron/followup-reminders', () => {
         notifications: { data: null, error: null },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await POST(makeCronRequest());
     expect(res.status).toBe(200);
@@ -147,8 +151,8 @@ describe('POST /api/cron/followup-reminders', () => {
   it('truncates titles with "and X more" for users with >3 tasks', async () => {
     const userId = 'user-busy';
 
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           activities: {
             data: [
@@ -163,7 +167,8 @@ describe('POST /api/cron/followup-reminders', () => {
           notifications: { data: null, error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST(makeCronRequest());
     expect(res.status).toBe(200);
@@ -173,14 +178,15 @@ describe('POST /api/cron/followup-reminders', () => {
   });
 
   it('returns notified: 0 when activities data is null', async () => {
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           activities: { data: null, error: null },
           notifications: { data: null, error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST(makeCronRequest());
     expect(res.status).toBe(200);

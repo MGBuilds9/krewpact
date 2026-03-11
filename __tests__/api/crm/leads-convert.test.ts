@@ -7,11 +7,11 @@ vi.mock('@clerk/nextjs/server', () => ({
 
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { POST } from '@/app/api/crm/leads/[id]/convert/route';
 import {
   mockSupabaseClient,
@@ -25,7 +25,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function makeContext(id: string) {
   return { params: Promise.resolve({ id }) };
@@ -58,7 +58,7 @@ describe('POST /api/crm/leads/[id]/convert', () => {
         opportunities: { data: createdOpp, error: null },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await POST(
       makeJsonRequest('/api/crm/leads/lead-1/convert', {}),
@@ -79,7 +79,7 @@ describe('POST /api/crm/leads/[id]/convert', () => {
         opportunities: { data: [], error: null },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await POST(
       makeJsonRequest('/api/crm/leads/lead-1/convert', {}),
@@ -101,7 +101,7 @@ describe('POST /api/crm/leads/[id]/convert', () => {
         opportunities: { data: createdOpp, error: null },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await POST(
       makeJsonRequest('/api/crm/leads/lead-1/convert', {
@@ -123,7 +123,7 @@ describe('POST /api/crm/leads/[id]/convert', () => {
         },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await POST(
       makeJsonRequest('/api/crm/leads/nonexistent/convert', {}),
@@ -143,7 +143,7 @@ describe('POST /api/crm/leads/[id]/convert', () => {
         opportunities: { data: createdOpp, error: null },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await POST(
       makeRequest('/api/crm/leads/lead-1/convert', { method: 'POST' }),

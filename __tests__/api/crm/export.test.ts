@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET } from '@/app/api/crm/export/route';
 import {
   mockClerkAuth,
@@ -14,7 +14,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 describe('GET /api/crm/export', () => {
   beforeEach(() => vi.clearAllMocks());
@@ -49,7 +49,7 @@ describe('GET /api/crm/export', () => {
     const client = mockSupabaseClient({
       tables: { leads: { data: rows, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeRequest('/api/crm/export?entity=leads');
     const res = await GET(req);
@@ -70,7 +70,7 @@ describe('GET /api/crm/export', () => {
     const client = mockSupabaseClient({
       tables: { leads: { data: rows, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeRequest('/api/crm/export?entity=leads');
     const res = await GET(req);
@@ -85,7 +85,7 @@ describe('GET /api/crm/export', () => {
     const client = mockSupabaseClient({
       tables: { leads: { data: [], error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeRequest('/api/crm/export?entity=leads');
     const res = await GET(req);
@@ -100,7 +100,7 @@ describe('GET /api/crm/export', () => {
     const client = mockSupabaseClient({
       tables: { contacts: { data: rows, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeRequest('/api/crm/export?entity=contacts');
     const res = await GET(req);

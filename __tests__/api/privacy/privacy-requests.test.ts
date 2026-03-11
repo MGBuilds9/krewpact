@@ -7,14 +7,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET as GET_LIST, POST as POST_CREATE } from '@/app/api/privacy/requests/route';
 import { GET as GET_DETAIL, PATCH } from '@/app/api/privacy/requests/[id]/route';
 import {
@@ -30,7 +30,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 const PR_ID = '00000000-0000-4000-a000-000000000801';
 
 function idCtx(id: string = PR_ID) {
@@ -72,11 +72,12 @@ describe('GET /api/privacy/requests', () => {
 
   it('returns privacy requests list', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { privacy_requests: { data: [sampleRequest], error: null, count: 1 } },
       }),
-    );
+      error: null,
+    });
     const res = await GET_LIST(makeRequest('/api/privacy/requests'));
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -86,11 +87,12 @@ describe('GET /api/privacy/requests', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { privacy_requests: { data: null, error: { message: 'err' }, count: null } },
       }),
-    );
+      error: null,
+    });
     const res = await GET_LIST(makeRequest('/api/privacy/requests'));
     expect(res.status).toBe(500);
   });
@@ -108,11 +110,12 @@ describe('POST /api/privacy/requests', () => {
 
   it('returns 201 on valid creation', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { privacy_requests: { data: sampleRequest, error: null } },
       }),
-    );
+      error: null,
+    });
     const res = await POST_CREATE(
       makeJsonRequest('/api/privacy/requests', {
         requester_email: 'test@example.com',
@@ -127,11 +130,12 @@ describe('POST /api/privacy/requests', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { privacy_requests: { data: null, error: { message: 'insert err' } } },
       }),
-    );
+      error: null,
+    });
     const res = await POST_CREATE(
       makeJsonRequest('/api/privacy/requests', {
         requester_email: 'test@example.com',
@@ -157,9 +161,12 @@ describe('GET /api/privacy/requests/[id]', () => {
 
   it('returns privacy request on success', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { privacy_requests: { data: sampleRequest, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
+        tables: { privacy_requests: { data: sampleRequest, error: null } },
+      }),
+      error: null,
+    });
     const res = await GET_DETAIL(makeRequest('/api/privacy/requests/x'), idCtx());
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -168,11 +175,12 @@ describe('GET /api/privacy/requests/[id]', () => {
 
   it('returns 404 on not found', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { privacy_requests: { data: null, error: { message: 'not found' } } },
       }),
-    );
+      error: null,
+    });
     const res = await GET_DETAIL(makeRequest('/api/privacy/requests/x'), idCtx());
     expect(res.status).toBe(404);
   });
@@ -193,13 +201,14 @@ describe('PATCH /api/privacy/requests/[id]', () => {
 
   it('returns updated request on success', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           privacy_requests: { data: { ...sampleRequest, status: 'in_progress' }, error: null },
         },
       }),
-    );
+      error: null,
+    });
     const res = await PATCH(
       makeJsonRequest('/api/privacy/requests/x', { status: 'in_progress' }, 'PATCH'),
       idCtx(),
@@ -211,11 +220,12 @@ describe('PATCH /api/privacy/requests/[id]', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { privacy_requests: { data: null, error: { message: 'err' } } },
       }),
-    );
+      error: null,
+    });
     const res = await PATCH(
       makeJsonRequest('/api/privacy/requests/x', { status: 'in_progress' }, 'PATCH'),
       idCtx(),
@@ -236,11 +246,12 @@ describe('GET /api/privacy/requests/[id]/events', () => {
 
   it('returns events list', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { privacy_request_events: { data: [sampleEvent], error: null, count: 1 } },
       }),
-    );
+      error: null,
+    });
     const res = await GET_EVENTS(makeRequest('/api/privacy/requests/x/events'), idCtx());
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -250,11 +261,12 @@ describe('GET /api/privacy/requests/[id]/events', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { privacy_request_events: { data: null, error: { message: 'err' }, count: null } },
       }),
-    );
+      error: null,
+    });
     const res = await GET_EVENTS(makeRequest('/api/privacy/requests/x/events'), idCtx());
     expect(res.status).toBe(500);
   });
@@ -272,11 +284,12 @@ describe('POST /api/privacy/requests/[id]/events', () => {
 
   it('returns 201 on valid event creation', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { privacy_request_events: { data: sampleEvent, error: null } },
       }),
-    );
+      error: null,
+    });
     const res = await POST_EVENT(
       makeJsonRequest('/api/privacy/requests/x/events', {
         event_type: 'status_changed',
@@ -289,11 +302,12 @@ describe('POST /api/privacy/requests/[id]/events', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { privacy_request_events: { data: null, error: { message: 'insert err' } } },
       }),
-    );
+      error: null,
+    });
     const res = await POST_EVENT(
       makeJsonRequest('/api/privacy/requests/x/events', {
         event_type: 'status_changed',

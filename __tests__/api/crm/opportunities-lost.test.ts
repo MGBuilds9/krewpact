@@ -7,11 +7,11 @@ vi.mock('@clerk/nextjs/server', () => ({
 
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { POST } from '@/app/api/crm/opportunities/[id]/lost/route';
 import {
   mockSupabaseClient,
@@ -23,7 +23,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function makeContext(id: string) {
   return { params: Promise.resolve({ id }) };
@@ -47,15 +47,16 @@ describe('POST /api/crm/opportunities/[id]/lost', () => {
   it('marks opportunity as lost with reason', async () => {
     const opp = makeOpportunity({ stage: 'proposal' });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           opportunities: { data: opp, error: null },
           opportunity_stage_history: { data: { id: 'hist-1' }, error: null },
           activities: { data: { id: 'act-1' }, error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST(
       makeJsonRequest('/api/crm/opportunities/123/lost', {
@@ -70,11 +71,12 @@ describe('POST /api/crm/opportunities/[id]/lost', () => {
   it('rejects already closed_lost opportunity', async () => {
     const opp = makeOpportunity({ stage: 'closed_lost' });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { opportunities: { data: opp, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST(
       makeJsonRequest('/api/crm/opportunities/123/lost', {
@@ -111,7 +113,7 @@ describe('POST /api/crm/opportunities/[id]/lost', () => {
         leads: { data: { id: 'new-lead-1', lead_name: 'Big Project (Re-nurture)' }, error: null },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await POST(
       makeJsonRequest('/api/crm/opportunities/123/lost', {
@@ -127,13 +129,14 @@ describe('POST /api/crm/opportunities/[id]/lost', () => {
 
   it('returns 404 for non-existent opportunity', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           opportunities: { data: null, error: { message: 'Not found', code: 'PGRST116' } },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST(
       makeJsonRequest('/api/crm/opportunities/123/lost', {

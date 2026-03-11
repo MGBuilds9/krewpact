@@ -4,7 +4,7 @@ import { createHmac } from 'crypto';
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
   createServiceClient: vi.fn(),
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 // Mock BoldSign client

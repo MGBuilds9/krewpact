@@ -7,11 +7,11 @@ vi.mock('@clerk/nextjs/server', () => ({
 
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 // Estimate routes
 import { GET as estimatesGET, POST as estimatesPOST } from '@/app/api/estimates/route';
@@ -43,7 +43,7 @@ import {
 import { calculateLineTotal, calculateEstimateTotals } from '@/lib/estimating/calculations';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 // Valid v4 UUIDs for Zod-validated fields
 const VALID_DIVISION_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
@@ -79,11 +79,12 @@ describe('Estimating Integration: Full happy path', () => {
       status: 'draft',
     });
     mockClerkAuth(mockAuth, USER_ID);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { estimates: { data: estimate, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const createRes = await estimatesPOST(
       makeJsonRequest('/api/estimates', {
@@ -108,14 +109,15 @@ describe('Estimating Integration: Full happy path', () => {
       is_optional: false,
       sort_order: 0,
     });
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           estimate_lines: { data: labourLine, error: null },
           estimates: { data: makeEstimate(), error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const labourRes = await linePOST(
       makeJsonRequest(`/api/estimates/${ESTIMATE_ID}/lines`, {
@@ -139,14 +141,15 @@ describe('Estimating Integration: Full happy path', () => {
       is_optional: false,
       sort_order: 1,
     });
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           estimate_lines: { data: materialLine, error: null },
           estimates: { data: makeEstimate(), error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const materialRes = await linePOST(
       makeJsonRequest(`/api/estimates/${ESTIMATE_ID}/lines`, {
@@ -170,14 +173,15 @@ describe('Estimating Integration: Full happy path', () => {
       is_optional: false,
       sort_order: 2,
     });
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           estimate_lines: { data: equipmentLine, error: null },
           estimates: { data: makeEstimate(), error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const equipmentRes = await linePOST(
       makeJsonRequest(`/api/estimates/${ESTIMATE_ID}/lines`, {
@@ -215,14 +219,15 @@ describe('Estimating Integration: Full happy path', () => {
       created_by: USER_ID,
       created_at: '2026-02-13T00:00:00Z',
     };
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           estimates: { data: { ...estimate, estimate_lines: lines }, error: null },
           estimate_versions: { data: version1, error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const version1Res = await versionPOST(
       makeJsonRequest(`/api/estimates/${ESTIMATE_ID}/versions`, {}),
@@ -236,14 +241,15 @@ describe('Estimating Integration: Full happy path', () => {
       quantity: 160,
       line_total: calculateLineTotal(160, 65, 10),
     };
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           estimate_lines: { data: updatedLabour, error: null },
           estimates: { data: makeEstimate(), error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const updateRes = await linePATCH(
       makeJsonRequest(
@@ -279,8 +285,8 @@ describe('Estimating Integration: Full happy path', () => {
       created_by: USER_ID,
       created_at: '2026-02-13T01:00:00Z',
     };
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           estimates: {
             data: { ...estimate, revision_no: 2, estimate_lines: recalcLines },
@@ -289,7 +295,8 @@ describe('Estimating Integration: Full happy path', () => {
           estimate_versions: { data: version2, error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const version2Res = await versionPOST(
       makeJsonRequest(`/api/estimates/${ESTIMATE_ID}/versions`, { reason: 'Doubled labour hours' }),
@@ -300,11 +307,12 @@ describe('Estimating Integration: Full happy path', () => {
     expect(v2Body.reason).toBe('Doubled labour hours');
 
     // Step 8: List versions (2 returned)
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { estimate_versions: { data: [version2, version1], error: null } },
       }),
-    );
+      error: null,
+    });
 
     const versionsRes = await versionsGET(
       makeRequest(`/api/estimates/${ESTIMATE_ID}/versions`),
@@ -329,12 +337,13 @@ describe('Estimating Integration: Estimate number uniqueness', () => {
     // First estimate: count = 0 → EST-2026-001
     const est1 = makeEstimate({ estimate_number: 'EST-2026-001' });
     mockClerkAuth(mockAuth, USER_ID);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { estimates: { data: est1, error: null } },
         defaultResponse: { data: { count: 0 }, error: null },
       }),
-    );
+      error: null,
+    });
 
     const res1 = await estimatesPOST(
       makeJsonRequest('/api/estimates', { division_id: VALID_DIVISION_ID }),
@@ -345,12 +354,13 @@ describe('Estimating Integration: Estimate number uniqueness', () => {
 
     // Second estimate: count = 1 → EST-2026-002
     const est2 = makeEstimate({ estimate_number: 'EST-2026-002' });
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { estimates: { data: est2, error: null } },
         defaultResponse: { data: { count: 1 }, error: null },
       }),
-    );
+      error: null,
+    });
 
     const res2 = await estimatesPOST(
       makeJsonRequest('/api/estimates', { division_id: VALID_DIVISION_ID }),
@@ -391,8 +401,8 @@ describe('Estimating Integration: Optional lines excluded from totals', () => {
 
     // Verify via API — add optional line and check totals don't include it
     mockClerkAuth(mockAuth, USER_ID);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           estimate_lines: { data: optionalLine, error: null },
           estimates: {
@@ -401,7 +411,8 @@ describe('Estimating Integration: Optional lines excluded from totals', () => {
           },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await linePOST(
       makeJsonRequest(`/api/estimates/${ESTIMATE_ID}/lines`, {
@@ -435,11 +446,12 @@ describe('Estimating Integration: Status transitions', () => {
     for (const { from, to } of transitions) {
       const current = makeEstimate({ id: ESTIMATE_ID, status: from });
       mockClerkAuth(mockAuth, USER_ID);
-      mockCreateUserClient.mockResolvedValue(
-        mockSupabaseClient({
+      mockCreateUserClientSafe.mockResolvedValue({
+        client: mockSupabaseClient({
           tables: { estimates: { data: current, error: null } },
         }),
-      );
+        error: null,
+      });
 
       const res = await estimatePATCH(
         makeJsonRequest(`/api/estimates/${ESTIMATE_ID}`, { status: to }, 'PATCH'),
@@ -452,11 +464,12 @@ describe('Estimating Integration: Status transitions', () => {
   it('draft → approved is rejected', async () => {
     const current = makeEstimate({ id: ESTIMATE_ID, status: 'draft' });
     mockClerkAuth(mockAuth, USER_ID);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { estimates: { data: current, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await estimatePATCH(
       makeJsonRequest(`/api/estimates/${ESTIMATE_ID}`, { status: 'approved' }, 'PATCH'),
@@ -486,8 +499,8 @@ describe('Estimating Integration: Zero quantity line', () => {
       line_total: 0,
     });
     mockClerkAuth(mockAuth, USER_ID);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           estimate_lines: { data: zeroLine, error: null },
           estimates: {
@@ -496,7 +509,8 @@ describe('Estimating Integration: Zero quantity line', () => {
           },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await linePOST(
       makeJsonRequest(`/api/estimates/${ESTIMATE_ID}/lines`, {
@@ -535,14 +549,15 @@ describe('Estimating Integration: Markup calculation', () => {
       line_total: 1150,
     });
     mockClerkAuth(mockAuth, USER_ID);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           estimate_lines: { data: markupLine, error: null },
           estimates: { data: makeEstimate(), error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await linePOST(
       makeJsonRequest(`/api/estimates/${ESTIMATE_ID}/lines`, {
@@ -589,11 +604,12 @@ describe('Estimating Integration: Delete estimate cascades', () => {
 
   it('deleting estimate succeeds (DB handles cascade to lines and versions)', async () => {
     mockClerkAuth(mockAuth, USER_ID);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { estimates: { data: null, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await estimateDELETE(
       makeRequest(`/api/estimates/${ESTIMATE_ID}`),
@@ -606,11 +622,12 @@ describe('Estimating Integration: Delete estimate cascades', () => {
 
   it('after deleting estimate, lines list returns empty', async () => {
     mockClerkAuth(mockAuth, USER_ID);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { estimate_lines: { data: [], error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await linesGET(
       makeRequest(`/api/estimates/${ESTIMATE_ID}/lines`),
@@ -623,11 +640,12 @@ describe('Estimating Integration: Delete estimate cascades', () => {
 
   it('after deleting estimate, versions list returns empty', async () => {
     mockClerkAuth(mockAuth, USER_ID);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { estimate_versions: { data: [], error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await versionsGET(
       makeRequest(`/api/estimates/${ESTIMATE_ID}/versions`),
@@ -654,8 +672,8 @@ describe('Estimating Integration: Batch line update', () => {
       makeEstimateLine({ sort_order: 1, description: 'Replacement line 2', line_total: 1250 }),
     ];
     mockClerkAuth(mockAuth, USER_ID);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           estimate_lines: { data: newLines, error: null },
           estimates: {
@@ -664,7 +682,8 @@ describe('Estimating Integration: Batch line update', () => {
           },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await linesPUT(
       makeJsonRequest(

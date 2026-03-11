@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
@@ -27,7 +27,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   if (!rl.success) return rateLimitResponse(rl);
 
   const divisionId = req.nextUrl.searchParams.get('divisionId');
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   // Fetch sequences with step count
   let seqQuery = supabase
@@ -61,13 +62,21 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   }
 
   // Aggregate enrollment counts per sequence
-  const countMap: Record<string, { active: number; completed: number; paused: number; failed: number }> = {};
+  const countMap: Record<
+    string,
+    { active: number; completed: number; paused: number; failed: number }
+  > = {};
   for (const e of enrollments ?? []) {
     if (!countMap[e.sequence_id]) {
       countMap[e.sequence_id] = { active: 0, completed: 0, paused: 0, failed: 0 };
     }
     const status = e.status as string;
-    if (status === 'active' || status === 'completed' || status === 'paused' || status === 'failed') {
+    if (
+      status === 'active' ||
+      status === 'completed' ||
+      status === 'paused' ||
+      status === 'failed'
+    ) {
       countMap[e.sequence_id][status]++;
     }
   }

@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { NextRequest, NextResponse } from 'next/server';
 import { toolboxTalkCreateSchema } from '@/lib/validators/safety';
@@ -16,11 +16,15 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
   const { id } = await context.params;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   const { data, error, count } = await supabase
     .from('toolbox_talks')
-    .select('id, project_id, talk_date, topic, facilitator_user_id, attendee_count, notes, created_at, updated_at', { count: 'exact' })
+    .select(
+      'id, project_id, talk_date, topic, facilitator_user_id, attendee_count, notes, created_at, updated_at',
+      { count: 'exact' },
+    )
     .eq('project_id', id)
     .order('talk_date', { ascending: false })
     .range(offset, offset + limit - 1);
@@ -46,7 +50,9 @@ export async function POST(req: NextRequest, context: RouteContext) {
   const parsed = toolboxTalkCreateSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('toolbox_talks')
     .insert({ project_id: id, facilitator_user_id: userId, ...parsed.data })

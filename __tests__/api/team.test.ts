@@ -5,11 +5,11 @@ vi.mock('@clerk/nextjs/server', () => ({
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET } from '@/app/api/team/route';
 import {
   mockSupabaseClient,
@@ -19,7 +19,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 describe('GET /api/team', () => {
   beforeEach(() => {
@@ -40,9 +40,10 @@ describe('GET /api/team', () => {
     ];
 
     mockClerkAuth(mockAuth, 'user_123');
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { users: { data: members, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { users: { data: members, error: null } } }),
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/team'));
     expect(res.status).toBe(200);
@@ -54,7 +55,7 @@ describe('GET /api/team', () => {
   it('filters by division_id', async () => {
     mockClerkAuth(mockAuth, 'user_123');
     const client = mockSupabaseClient({ tables: { users: { data: [], error: null } } });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(
       makeRequest('/api/team?division_id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'),
@@ -67,9 +68,10 @@ describe('GET /api/team', () => {
     const members = [{ id: '1', first_name: 'John', last_name: 'Doe', email: 'john@mdm.com' }];
 
     mockClerkAuth(mockAuth, 'user_123');
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { users: { data: members, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { users: { data: members, error: null } } }),
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/team?search=john'));
     expect(res.status).toBe(200);
@@ -77,11 +79,12 @@ describe('GET /api/team', () => {
 
   it('returns 500 on Supabase error', async () => {
     mockClerkAuth(mockAuth, 'user_123');
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { users: { data: null, error: { message: 'DB error', code: 'PGRST000' } } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/team'));
     expect(res.status).toBe(500);

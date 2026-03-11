@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
@@ -26,7 +26,9 @@ export async function GET(req: NextRequest) {
   const { unread_only } = parsed.data;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   let query = supabase
     .from('notifications')
     /* excluded from list: payload */
@@ -71,7 +73,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
 
   if (parsed.data.action === 'mark_all_read') {
     const { error } = await supabase

@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { getOrgIdFromAuth } from '@/lib/api/org';
@@ -48,7 +48,8 @@ export async function GET(_req: NextRequest) {
   }
 
   try {
-    const supabase = await createUserClient();
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
     const orgId = await getOrgIdFromAuth();
 
     // Fetch all non-closed-lost opportunities with revenue and close date

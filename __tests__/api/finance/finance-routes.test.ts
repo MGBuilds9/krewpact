@@ -14,7 +14,12 @@ vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 
 const mockFrom = vi.fn();
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn().mockResolvedValue({ from: (...args: unknown[]) => mockFrom(...args) }),
+  createUserClientSafe: vi
+    .fn()
+    .mockResolvedValue({
+      client: { from: (...args: unknown[]) => mockFrom(...args) },
+      error: null,
+    }),
 }));
 
 import { auth } from '@clerk/nextjs/server';
@@ -131,9 +136,7 @@ describe('GET /api/finance/purchase-orders', () => {
 
   it('returns paginated PO snapshots', async () => {
     mockClerkAuth(mockAuth);
-    const pos = [
-      { id: 'po-1', erp_docname: 'PO-001', grand_total: 30000, status: 'submitted' },
-    ];
+    const pos = [{ id: 'po-1', erp_docname: 'PO-001', grand_total: 30000, status: 'submitted' }];
     mockFrom.mockReturnValue(paginatedChain(pos, 1));
 
     const { GET } = await import('@/app/api/finance/purchase-orders/route');

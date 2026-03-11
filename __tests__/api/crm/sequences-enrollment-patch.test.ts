@@ -5,7 +5,7 @@ vi.mock('@clerk/nextjs/server', () => ({
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 vi.mock('@/lib/api/rate-limit', () => ({
@@ -14,12 +14,12 @@ vi.mock('@/lib/api/rate-limit', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { PATCH } from '@/app/api/crm/sequences/enrollments/[enrollmentId]/route';
 import { makeJsonRequest } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function mockChain(result: { data: unknown; error: unknown }) {
   const chain: Record<string, unknown> = {};
@@ -50,7 +50,7 @@ describe('PATCH /api/crm/sequences/enrollments/[enrollmentId]', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     from = vi.fn();
-    mockCreateUserClient.mockResolvedValue({ from } as never);
+    mockCreateUserClientSafe.mockResolvedValue({ client: { from } as never, error: null });
   });
 
   it('returns 401 for unauthenticated requests', async () => {
@@ -81,9 +81,7 @@ describe('PATCH /api/crm/sequences/enrollments/[enrollmentId]', () => {
       paused_at: '2026-03-05T12:00:00.000Z',
     };
 
-    from.mockReturnValue(
-      mockChain({ data: updatedEnrollment, error: null })
-    );
+    from.mockReturnValue(mockChain({ data: updatedEnrollment, error: null }));
 
     const res = await PATCH(patchRequest({ action: 'pause' }), makeContext());
     expect(res.status).toBe(200);
@@ -104,9 +102,7 @@ describe('PATCH /api/crm/sequences/enrollments/[enrollmentId]', () => {
       paused_at: null,
     };
 
-    from.mockReturnValue(
-      mockChain({ data: updatedEnrollment, error: null })
-    );
+    from.mockReturnValue(mockChain({ data: updatedEnrollment, error: null }));
 
     const res = await PATCH(patchRequest({ action: 'resume' }), makeContext());
     expect(res.status).toBe(200);
@@ -120,9 +116,7 @@ describe('PATCH /api/crm/sequences/enrollments/[enrollmentId]', () => {
   it('returns 500 on database error', async () => {
     mockAuth.mockResolvedValue({ userId: 'user-1' } as never);
 
-    from.mockReturnValue(
-      mockChain({ data: null, error: { message: 'Row not found' } })
-    );
+    from.mockReturnValue(mockChain({ data: null, error: { message: 'Row not found' } }));
 
     const res = await PATCH(patchRequest({ action: 'pause' }), makeContext());
     expect(res.status).toBe(500);

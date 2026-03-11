@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { leadStageTransitionSchema } from '@/lib/validators/crm';
 import { validateTransition, type LeadStage } from '@/lib/crm/lead-stages';
 import { NextRequest, NextResponse } from 'next/server';
@@ -31,7 +31,8 @@ export async function POST(req: NextRequest, context: RouteContext) {
   }
 
   const { id } = await context.params;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   // Fetch current lead to get current stage
   const { data: currentLead, error: fetchError } = await supabase

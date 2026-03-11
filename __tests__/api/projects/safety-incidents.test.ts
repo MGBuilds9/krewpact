@@ -6,14 +6,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET, POST } from '@/app/api/projects/[id]/safety/incidents/route';
 import {
   mockSupabaseClient,
@@ -24,7 +24,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function makeContext(id: string) {
   return { params: Promise.resolve({ id }) };
@@ -55,11 +55,12 @@ describe('GET /api/projects/[id]/safety/incidents', () => {
 
   it('returns paginated safety incidents', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { safety_incidents: { data: [sampleIncident], error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(
       makeRequest('/api/projects/proj-1/safety/incidents'),
@@ -73,11 +74,12 @@ describe('GET /api/projects/[id]/safety/incidents', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { safety_incidents: { data: null, error: { message: 'DB error' } } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(
       makeRequest('/api/projects/proj-1/safety/incidents'),
@@ -106,11 +108,12 @@ describe('POST /api/projects/[id]/safety/incidents', () => {
 
   it('creates a safety incident', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { safety_incidents: { data: sampleIncident, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST(
       makeJsonRequest('/api/projects/proj-1/safety/incidents', {

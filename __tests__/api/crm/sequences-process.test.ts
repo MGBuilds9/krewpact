@@ -7,7 +7,7 @@ vi.mock('@clerk/nextjs/server', () => ({
 
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
   createServiceClient: vi.fn(),
 }));
 
@@ -17,13 +17,13 @@ vi.mock('@/lib/crm/sequence-processor', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient, createServiceClient } from '@/lib/supabase/server';
+import { createUserClientSafe, createServiceClient } from '@/lib/supabase/server';
 import { processSequences } from '@/lib/crm/sequence-processor';
 import { POST } from '@/app/api/crm/sequences/process/route';
 import { mockClerkAuth, mockClerkUnauth, makeRequest } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 const mockCreateServiceClient = vi.mocked(createServiceClient);
 const mockProcessSequences = vi.mocked(processSequences);
 
@@ -42,7 +42,7 @@ describe('POST /api/crm/sequences/process', () => {
   it('processes with authenticated user', async () => {
     mockClerkAuth(mockAuth);
     const mockClient = {} as never;
-    mockCreateUserClient.mockResolvedValue(mockClient);
+    mockCreateUserClientSafe.mockResolvedValue({ client: mockClient, error: null });
     mockProcessSequences.mockResolvedValue({
       processed: 3,
       completed: 1,
@@ -96,7 +96,7 @@ describe('POST /api/crm/sequences/process', () => {
   it('returns processor errors in response', async () => {
     mockClerkAuth(mockAuth);
     const mockClient = {} as never;
-    mockCreateUserClient.mockResolvedValue(mockClient);
+    mockCreateUserClientSafe.mockResolvedValue({ client: mockClient, error: null });
     mockProcessSequences.mockResolvedValue({
       processed: 2,
       completed: 0,

@@ -7,11 +7,11 @@ vi.mock('@clerk/nextjs/server', () => ({
 
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET, POST } from '@/app/api/crm/opportunities/route';
 import { GET as GET_ID, PATCH, DELETE } from '@/app/api/crm/opportunities/[id]/route';
 import {
@@ -25,7 +25,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function makeContext(id: string) {
   return { params: Promise.resolve({ id }) };
@@ -54,11 +54,12 @@ describe('GET /api/crm/opportunities', () => {
       makeOpportunity({ opportunity_name: 'Second Opportunity' }),
     ];
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { opportunities: { data: opportunities, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/crm/opportunities'));
     expect(res.status).toBe(200);
@@ -72,7 +73,7 @@ describe('GET /api/crm/opportunities', () => {
     const client = mockSupabaseClient({
       tables: { opportunities: { data: opportunities, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(
       makeRequest('/api/crm/opportunities?division_id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'),
@@ -87,7 +88,7 @@ describe('GET /api/crm/opportunities', () => {
     const client = mockSupabaseClient({
       tables: { opportunities: { data: opportunities, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(makeRequest('/api/crm/opportunities?stage=proposal'));
     expect(res.status).toBe(200);
@@ -101,7 +102,7 @@ describe('GET /api/crm/opportunities', () => {
     const client = mockSupabaseClient({
       tables: { opportunities: { data: opportunities, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(
       makeRequest('/api/crm/opportunities?owner_user_id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'),
@@ -117,11 +118,12 @@ describe('GET /api/crm/opportunities', () => {
       makeOpportunity({ stage: 'proposal', estimated_revenue: 200000 }),
     ];
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { opportunities: { data: opportunities, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/crm/opportunities?view=pipeline'));
     expect(res.status).toBe(200);
@@ -146,11 +148,12 @@ describe('POST /api/crm/opportunities', () => {
   it('creates opportunity', async () => {
     const created = makeOpportunity();
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { opportunities: { data: created, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST(
       makeJsonRequest('/api/crm/opportunities', {
@@ -168,11 +171,12 @@ describe('POST /api/crm/opportunities', () => {
       account_id: 'b1ffcd00-0d1c-4ef9-bb7e-7cc0ce491b22',
     });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { opportunities: { data: created, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST(
       makeJsonRequest('/api/crm/opportunities', {
@@ -213,8 +217,8 @@ describe('GET /api/crm/opportunities/[id]', () => {
       },
     ];
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           opportunities: {
             data: { ...opportunity, opportunity_stage_history: stageHistory },
@@ -222,7 +226,8 @@ describe('GET /api/crm/opportunities/[id]', () => {
           },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET_ID(
       makeRequest('/api/crm/opportunities/123'),
@@ -236,8 +241,8 @@ describe('GET /api/crm/opportunities/[id]', () => {
 
   it('returns 404 for non-existent opportunity', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           opportunities: {
             data: null,
@@ -245,7 +250,8 @@ describe('GET /api/crm/opportunities/[id]', () => {
           },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET_ID(
       makeRequest('/api/crm/opportunities/nonexistent'),
@@ -267,11 +273,12 @@ describe('PATCH /api/crm/opportunities/[id]', () => {
   it('updates opportunity', async () => {
     const updated = makeOpportunity({ opportunity_name: 'Updated Opportunity' });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { opportunities: { data: updated, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await PATCH(
       makeJsonRequest(
@@ -300,7 +307,7 @@ describe('PATCH /api/crm/opportunities/[id]', () => {
         opportunity_stage_history: { data: { id: 'history-1' }, error: null },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await PATCH(
       makeJsonRequest('/api/crm/opportunities/123', { stage: 'site_visit' }, 'PATCH'),
@@ -320,7 +327,7 @@ describe('PATCH /api/crm/opportunities/[id]', () => {
         opportunities: { data: currentOpp, error: null },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await PATCH(
       makeJsonRequest('/api/crm/opportunities/123', { opportunity_name: 'Same Stage' }, 'PATCH'),
@@ -346,11 +353,12 @@ describe('DELETE /api/crm/opportunities/[id]', () => {
 
   it('deletes opportunity', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { opportunities: { data: null, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await DELETE(makeRequest('/api/crm/opportunities/123'), makeContext('some-id'));
     expect(res.status).toBe(200);

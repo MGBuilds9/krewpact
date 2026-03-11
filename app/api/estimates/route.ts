@@ -1,8 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { estimateCreateSchema } from '@/lib/validators/estimating';
 import { generateEstimateNumber } from '@/lib/estimating/calculations';
-import { getOrgIdFromAuth } from '@/lib/api/org';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
@@ -33,10 +32,17 @@ export async function GET(req: NextRequest) {
 
   const { division_id, status, opportunity_id } = parsed.data;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   /* excluded from list: metadata */
-  let query = supabase.from('estimates').select('id, estimate_number, status, subtotal_amount, tax_amount, total_amount, margin_pct, currency_code, revision_no, account_id, contact_id, opportunity_id, division_id, owner_user_id, approved_at, approved_by, created_at, updated_at', { count: 'exact' }).order('created_at', { ascending: false });
+  let query = supabase
+    .from('estimates')
+    .select(
+      'id, estimate_number, status, subtotal_amount, tax_amount, total_amount, margin_pct, currency_code, revision_no, account_id, contact_id, opportunity_id, division_id, owner_user_id, approved_at, approved_by, created_at, updated_at',
+      { count: 'exact' },
+    )
+    .order('created_at', { ascending: false });
 
   if (division_id) {
     query = query.eq('division_id', division_id);
@@ -79,14 +85,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
 
   // Count existing estimates to generate next number
   const { count } = await supabase.from('estimates').select('*', { count: 'exact', head: true });
 
   const estimate_number = generateEstimateNumber(count ?? 0);
-
-  const orgId = await getOrgIdFromAuth();
 
   const { data, error } = await supabase
     .from('estimates')
@@ -94,7 +100,6 @@ export async function POST(req: NextRequest) {
       ...parsed.data,
       estimate_number,
       status: 'draft',
-      org_id: orgId,
     })
     .select()
     .single();

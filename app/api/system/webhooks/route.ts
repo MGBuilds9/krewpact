@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -19,12 +19,16 @@ export async function GET(req: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
   const { status, event_type, limit = 50, offset = 0 } = parsed.data;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   let query = supabase
     .from('webhook_events')
     /* excluded from list: payload */
-    .select('id, provider, event_id, event_type, received_at, processed_at, processing_status, processing_error', { count: 'exact' })
+    .select(
+      'id, provider, event_id, event_type, received_at, processed_at, processing_status, processing_error',
+      { count: 'exact' },
+    )
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 

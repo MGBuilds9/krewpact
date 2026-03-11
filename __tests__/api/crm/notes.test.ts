@@ -4,11 +4,11 @@ vi.mock('@clerk/nextjs/server', () => ({
   auth: vi.fn(),
 }));
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET, POST } from '@/app/api/crm/notes/route';
 import { PATCH, DELETE as DELETE_NOTE } from '@/app/api/crm/notes/[id]/route';
 import {
@@ -20,7 +20,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 const NOTE_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 const ENTITY_ID = 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22';
@@ -66,11 +66,12 @@ describe('GET /api/crm/notes', () => {
       makeNote({ id: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33', content: 'Second note' }),
     ];
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { notes: { data: notes, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(makeRequest(`/api/crm/notes?entity_type=lead&entity_id=${ENTITY_ID}`));
     expect(res.status).toBe(200);
@@ -98,11 +99,12 @@ describe('POST /api/crm/notes', () => {
   it('creates note', async () => {
     const created = makeNote();
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { notes: { data: created, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST(
       makeJsonRequest('http://localhost/api/crm/notes', {
@@ -128,11 +130,12 @@ describe('PATCH /api/crm/notes/[id]', () => {
   it('updates note content', async () => {
     const updated = makeNote({ content: 'updated content' });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { notes: { data: updated, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await PATCH(
       makeJsonRequest(
@@ -167,11 +170,12 @@ describe('DELETE /api/crm/notes/[id]', () => {
 
   it('deletes note', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { notes: { data: null, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await DELETE_NOTE(
       makeJsonRequest('http://localhost/api/crm/notes/uuid-1', {}, 'DELETE'),

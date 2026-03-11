@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { NextRequest, NextResponse } from 'next/server';
 import { fileMetadataCreateSchema } from '@/lib/validators/documents';
@@ -19,10 +19,15 @@ export async function GET(req: NextRequest, context: RouteContext) {
   const folderId = searchParams.get('folder_id');
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   let query = supabase
     .from('file_metadata')
-    .select('id, filename, original_filename, file_path, file_size_bytes, mime_type, folder_id, project_id, storage_bucket, tags, visibility, version_no, is_deleted, deleted_at, uploaded_by, created_at, updated_at' /* excluded from list: checksum_sha256, source_system, source_identifier */, { count: 'exact' })
+    .select(
+      'id, filename, original_filename, file_path, file_size_bytes, mime_type, folder_id, project_id, storage_bucket, tags, visibility, version_no, is_deleted, deleted_at, uploaded_by, created_at, updated_at' /* excluded from list: checksum_sha256, source_system, source_identifier */,
+      { count: 'exact' },
+    )
     .eq('project_id', id)
     .eq('is_deleted', false)
     .order('created_at', { ascending: false })
@@ -54,7 +59,9 @@ export async function POST(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('file_metadata')
     .insert({ ...parsed.data, project_id: id, uploaded_by: userId })

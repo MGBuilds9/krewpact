@@ -8,14 +8,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET as GET_SHEETS, POST as POST_SHEET } from '@/app/api/projects/[id]/selections/route';
 import {
   GET as GET_SHEET_DETAIL,
@@ -39,7 +39,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 const SHEET_ID = '00000000-0000-4000-a000-000000000601';
 const OPTION_ID = '00000000-0000-4000-a000-000000000602';
 
@@ -97,11 +97,12 @@ describe('GET /api/projects/[id]/selections', () => {
 
   it('returns selection sheets list', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { selection_sheets: { data: [sampleSheet], error: null, count: 1 } },
       }),
-    );
+      error: null,
+    });
     const res = await GET_SHEETS(makeRequest('/api/projects/x/selections'), projectCtx());
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -111,11 +112,12 @@ describe('GET /api/projects/[id]/selections', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { selection_sheets: { data: null, error: { message: 'err' }, count: null } },
       }),
-    );
+      error: null,
+    });
     const res = await GET_SHEETS(makeRequest('/api/projects/x/selections'), projectCtx());
     expect(res.status).toBe(500);
   });
@@ -133,11 +135,12 @@ describe('POST /api/projects/[id]/selections', () => {
 
   it('returns 201 on valid creation', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { selection_sheets: { data: sampleSheet, error: null } },
       }),
-    );
+      error: null,
+    });
     const res = await POST_SHEET(
       makeJsonRequest('/api/projects/x/selections', {
         sheet_name: 'Kitchen Selections',
@@ -149,11 +152,12 @@ describe('POST /api/projects/[id]/selections', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { selection_sheets: { data: null, error: { message: 'insert err' } } },
       }),
-    );
+      error: null,
+    });
     const res = await POST_SHEET(
       makeJsonRequest('/api/projects/x/selections', {
         sheet_name: 'Kitchen Selections',
@@ -176,9 +180,12 @@ describe('GET /api/projects/[id]/selections/[sheetId]', () => {
 
   it('returns sheet detail on success', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { selection_sheets: { data: sampleSheet, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
+        tables: { selection_sheets: { data: sampleSheet, error: null } },
+      }),
+      error: null,
+    });
     const res = await GET_SHEET_DETAIL(makeRequest('/api/projects/x/selections/y'), sheetCtx());
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -187,11 +194,12 @@ describe('GET /api/projects/[id]/selections/[sheetId]', () => {
 
   it('returns 404 on not found', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { selection_sheets: { data: null, error: { message: 'not found' } } },
       }),
-    );
+      error: null,
+    });
     const res = await GET_SHEET_DETAIL(makeRequest('/api/projects/x/selections/y'), sheetCtx());
     expect(res.status).toBe(404);
   });
@@ -212,13 +220,14 @@ describe('PATCH /api/projects/[id]/selections/[sheetId]', () => {
 
   it('returns updated sheet on success', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           selection_sheets: { data: { ...sampleSheet, sheet_name: 'Updated' }, error: null },
         },
       }),
-    );
+      error: null,
+    });
     const res = await PATCH_SHEET(
       makeJsonRequest('/api/projects/x/selections/y', { sheet_name: 'Updated' }, 'PATCH'),
       sheetCtx(),
@@ -230,11 +239,12 @@ describe('PATCH /api/projects/[id]/selections/[sheetId]', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { selection_sheets: { data: null, error: { message: 'err' } } },
       }),
-    );
+      error: null,
+    });
     const res = await PATCH_SHEET(
       makeJsonRequest('/api/projects/x/selections/y', { sheet_name: 'Updated' }, 'PATCH'),
       sheetCtx(),
@@ -255,11 +265,12 @@ describe('GET /api/projects/[id]/selections/[sheetId]/choices', () => {
 
   it('returns choices list', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { selection_choices: { data: [sampleChoice], error: null, count: 1 } },
       }),
-    );
+      error: null,
+    });
     const res = await GET_CHOICES(makeRequest('/api/projects/x/selections/y/choices'), sheetCtx());
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -269,11 +280,12 @@ describe('GET /api/projects/[id]/selections/[sheetId]/choices', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { selection_choices: { data: null, error: { message: 'err' }, count: null } },
       }),
-    );
+      error: null,
+    });
     const res = await GET_CHOICES(makeRequest('/api/projects/x/selections/y/choices'), sheetCtx());
     expect(res.status).toBe(500);
   });
@@ -294,11 +306,12 @@ describe('POST /api/projects/[id]/selections/[sheetId]/choices', () => {
 
   it('returns 201 on valid choice creation', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { selection_choices: { data: sampleChoice, error: null } },
       }),
-    );
+      error: null,
+    });
     const res = await POST_CHOICE(
       makeJsonRequest('/api/projects/x/selections/y/choices', {
         selection_option_id: OPTION_ID,
@@ -311,11 +324,12 @@ describe('POST /api/projects/[id]/selections/[sheetId]/choices', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { selection_choices: { data: null, error: { message: 'upsert err' } } },
       }),
-    );
+      error: null,
+    });
     const res = await POST_CHOICE(
       makeJsonRequest('/api/projects/x/selections/y/choices', {
         selection_option_id: OPTION_ID,
@@ -339,11 +353,12 @@ describe('GET /api/projects/[id]/selections/[sheetId]/options', () => {
 
   it('returns options list', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { selection_options: { data: [sampleOption], error: null, count: 1 } },
       }),
-    );
+      error: null,
+    });
     const res = await GET_OPTIONS(makeRequest('/api/projects/x/selections/y/options'), sheetCtx());
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -353,11 +368,12 @@ describe('GET /api/projects/[id]/selections/[sheetId]/options', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { selection_options: { data: null, error: { message: 'err' }, count: null } },
       }),
-    );
+      error: null,
+    });
     const res = await GET_OPTIONS(makeRequest('/api/projects/x/selections/y/options'), sheetCtx());
     expect(res.status).toBe(500);
   });
@@ -378,11 +394,12 @@ describe('POST /api/projects/[id]/selections/[sheetId]/options', () => {
 
   it('returns 201 on valid option creation', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { selection_options: { data: sampleOption, error: null } },
       }),
-    );
+      error: null,
+    });
     const res = await POST_OPTION(
       makeJsonRequest('/api/projects/x/selections/y/options', {
         option_group: 'Countertops',
@@ -398,11 +415,12 @@ describe('POST /api/projects/[id]/selections/[sheetId]/options', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { selection_options: { data: null, error: { message: 'insert err' } } },
       }),
-    );
+      error: null,
+    });
     const res = await POST_OPTION(
       makeJsonRequest('/api/projects/x/selections/y/options', {
         option_group: 'Countertops',

@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET as getTasks } from '@/app/api/portal/trade/tasks/route';
 import { PATCH as patchTaskStatus } from '@/app/api/portal/trade/tasks/[id]/status/route';
 import {
@@ -21,7 +22,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 const ACTIVE_TRADE_PA = { id: 'pa-trade-001', status: 'active', actor_type: 'trade_partner' };
 const TASK_ID = '00000000-0000-4000-a000-000000000099';
@@ -77,7 +78,7 @@ function makeTradeMock(
 
   const fromFn = vi.fn().mockReturnValue(tableObj);
 
-  return { from: fromFn };
+  return { from: fromFn } as any;
 }
 
 // ============================================================
@@ -94,11 +95,12 @@ describe('GET /api/portal/trade/tasks', () => {
 
   it('returns 403 for non-trade-partner portal account', async () => {
     mockClerkAuth(mockAuth, 'user_client');
-    mockCreateUserClient.mockReturnValue(
-      makeTradeMock({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: makeTradeMock({
         portalAccount: { id: 'pa-1', status: 'active', actor_type: 'client' },
-      }) as unknown as ReturnType<typeof createUserClient>,
-    );
+      }),
+      error: null,
+    });
     const res = await getTasks(makeRequest('/api/portal/trade/tasks'));
     expect(res.status).toBe(403);
   });
@@ -121,9 +123,7 @@ describe('PATCH /api/portal/trade/tasks/[id]/status', () => {
 
   it('returns 400 for invalid status value', async () => {
     mockClerkAuth(mockAuth, 'user_trade');
-    mockCreateUserClient.mockReturnValue(
-      makeTradeMock() as unknown as ReturnType<typeof createUserClient>,
-    );
+    mockCreateUserClientSafe.mockResolvedValue({ client: makeTradeMock(), error: null });
     const res = await patchTaskStatus(
       makeJsonRequest(
         `/api/portal/trade/tasks/${TASK_ID}/status`,
@@ -137,11 +137,12 @@ describe('PATCH /api/portal/trade/tasks/[id]/status', () => {
 
   it('returns 400 when trying to revert a done task', async () => {
     mockClerkAuth(mockAuth, 'user_trade');
-    mockCreateUserClient.mockReturnValue(
-      makeTradeMock({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: makeTradeMock({
         task: { id: TASK_ID, status: 'done', metadata: { trade_portal_id: 'pa-trade-001' } },
-      }) as unknown as ReturnType<typeof createUserClient>,
-    );
+      }),
+      error: null,
+    });
     const res = await patchTaskStatus(
       makeJsonRequest(
         `/api/portal/trade/tasks/${TASK_ID}/status`,
@@ -178,9 +179,7 @@ describe('POST /api/portal/trade/submittals', () => {
 
   it('returns 400 when title is empty', async () => {
     mockClerkAuth(mockAuth, 'user_trade');
-    mockCreateUserClient.mockReturnValue(
-      makeTradeMock() as unknown as ReturnType<typeof createUserClient>,
-    );
+    mockCreateUserClientSafe.mockResolvedValue({ client: makeTradeMock(), error: null });
     const res = await postSubmittal(
       makeJsonRequest(
         '/api/portal/trade/submittals',
@@ -193,9 +192,7 @@ describe('POST /api/portal/trade/submittals', () => {
 
   it('returns 400 for invalid submittal_type', async () => {
     mockClerkAuth(mockAuth, 'user_trade');
-    mockCreateUserClient.mockReturnValue(
-      makeTradeMock() as unknown as ReturnType<typeof createUserClient>,
-    );
+    mockCreateUserClientSafe.mockResolvedValue({ client: makeTradeMock(), error: null });
     const res = await postSubmittal(
       makeJsonRequest(
         '/api/portal/trade/submittals',
@@ -232,9 +229,7 @@ describe('POST /api/portal/trade/site-logs', () => {
 
   it('returns 400 when work_summary is too short', async () => {
     mockClerkAuth(mockAuth, 'user_trade');
-    mockCreateUserClient.mockReturnValue(
-      makeTradeMock() as unknown as ReturnType<typeof createUserClient>,
-    );
+    mockCreateUserClientSafe.mockResolvedValue({ client: makeTradeMock(), error: null });
     const res = await postSiteLog(
       makeJsonRequest(
         '/api/portal/trade/site-logs',
@@ -252,9 +247,7 @@ describe('POST /api/portal/trade/site-logs', () => {
 
   it('returns 400 for invalid log_date format', async () => {
     mockClerkAuth(mockAuth, 'user_trade');
-    mockCreateUserClient.mockReturnValue(
-      makeTradeMock() as unknown as ReturnType<typeof createUserClient>,
-    );
+    mockCreateUserClientSafe.mockResolvedValue({ client: makeTradeMock(), error: null });
     const res = await postSiteLog(
       makeJsonRequest(
         '/api/portal/trade/site-logs',

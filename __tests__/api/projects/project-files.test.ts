@@ -5,11 +5,11 @@ vi.mock('@clerk/nextjs/server', () => ({
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET, POST } from '@/app/api/projects/[id]/files/route';
 import {
   mockSupabaseClient,
@@ -21,7 +21,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 const PROJECT_ID = TEST_IDS.PROJECT_ID;
 
@@ -60,9 +60,10 @@ describe('GET /api/projects/[id]/files', () => {
         created_at: '2026-01-01',
       },
     ];
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { file_metadata: { data: files, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { file_metadata: { data: files, error: null } } }),
+      error: null,
+    });
     const res = await GET(makeRequest(`/api/projects/${PROJECT_ID}/files`), ctx());
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -75,7 +76,7 @@ describe('GET /api/projects/[id]/files', () => {
     const client = mockSupabaseClient({
       tables: { file_metadata: { data: [], error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
     const res = await GET(
       makeRequest(`/api/projects/${PROJECT_ID}/files?folder_id=folder-1`),
       ctx(),
@@ -85,11 +86,12 @@ describe('GET /api/projects/[id]/files', () => {
   });
 
   it('returns 500 on DB error', async () => {
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { file_metadata: { data: null, error: { message: 'DB err', code: '500' } } },
       }),
-    );
+      error: null,
+    });
     const res = await GET(makeRequest(`/api/projects/${PROJECT_ID}/files`), ctx());
     expect(res.status).toBe(500);
   });
@@ -113,10 +115,7 @@ describe('POST /api/projects/[id]/files', () => {
   });
 
   it('returns 400 for invalid body', async () => {
-    const res = await POST(
-      makeJsonRequest(`/api/projects/${PROJECT_ID}/files`, {}),
-      ctx(),
-    );
+    const res = await POST(makeJsonRequest(`/api/projects/${PROJECT_ID}/files`, {}), ctx());
     expect(res.status).toBe(400);
   });
 

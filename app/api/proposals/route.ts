@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { proposalCreateSchema } from '@/lib/validators/contracting';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
@@ -28,7 +28,8 @@ export async function GET(req: NextRequest) {
   }
 
   const { estimate_id, status, limit, offset } = parsed.data;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   let query = supabase
     .from('proposals')
@@ -80,7 +81,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
 
   const { count: existingCount, error: countError } = await supabase
     .from('proposals')

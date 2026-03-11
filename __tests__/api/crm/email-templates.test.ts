@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET, POST } from '@/app/api/crm/email-templates/route';
 import { GET as GET_BY_ID, PATCH, DELETE } from '@/app/api/crm/email-templates/[id]/route';
 import {
@@ -16,7 +16,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 describe('GET /api/crm/email-templates', () => {
   beforeEach(() => vi.clearAllMocks());
@@ -33,7 +33,7 @@ describe('GET /api/crm/email-templates', () => {
     const client = mockSupabaseClient({
       tables: { email_templates: { data: templates, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(makeRequest('/api/crm/email-templates'));
     expect(res.status).toBe(200);
@@ -57,7 +57,7 @@ describe('POST /api/crm/email-templates', () => {
     const client = mockSupabaseClient({
       tables: { email_templates: { data: created, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest('/api/crm/email-templates', {
       name: 'New Template',
@@ -96,7 +96,7 @@ describe('GET /api/crm/email-templates/[id]', () => {
     const client = mockSupabaseClient({
       tables: { email_templates: { data: template, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET_BY_ID(makeRequest('/api/crm/email-templates/tpl-1'), {
       params: Promise.resolve({ id: 'tpl-1' }),
@@ -122,7 +122,7 @@ describe('PATCH /api/crm/email-templates/[id]', () => {
     const client = mockSupabaseClient({
       tables: { email_templates: { data: updated, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest('/api/crm/email-templates/tpl-1', { name: 'Updated' }, 'PATCH');
     const res = await PATCH(req, {
@@ -142,7 +142,7 @@ describe('DELETE /api/crm/email-templates/[id]', () => {
     const client = mockSupabaseClient({
       tables: { email_templates: { data: null, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await DELETE(makeRequest('/api/crm/email-templates/tpl-1', { method: 'DELETE' }), {
       params: Promise.resolve({ id: 'tpl-1' }),

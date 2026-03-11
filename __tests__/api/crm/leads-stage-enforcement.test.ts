@@ -5,11 +5,11 @@ vi.mock('@clerk/nextjs/server', () => ({
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { POST } from '@/app/api/crm/leads/[id]/stage/route';
 import {
   mockSupabaseClient,
@@ -19,7 +19,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function makeContext(id: string) {
   return { params: Promise.resolve({ id }) };
@@ -35,7 +35,7 @@ function setupLead(stage: string) {
       lead_stage_history: { data: null, error: null },
     },
   });
-  mockCreateUserClient.mockResolvedValue(client);
+  mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
   return client;
 }
 

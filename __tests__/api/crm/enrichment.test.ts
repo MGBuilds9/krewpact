@@ -4,7 +4,7 @@ vi.mock('@clerk/nextjs/server', () => ({
   auth: vi.fn(),
 }));
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
@@ -12,12 +12,12 @@ vi.mock('@/lib/api/rate-limit', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET } from '@/app/api/crm/enrichment/route';
 import { mockSupabaseClient, makeRequest, makeEnrichmentJob } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 describe('GET /api/crm/enrichment', () => {
   beforeEach(() => {
@@ -37,7 +37,7 @@ describe('GET /api/crm/enrichment', () => {
     const client = mockSupabaseClient({
       defaultResponse: { data: jobs, error: null, count: 2 },
     });
-    mockCreateUserClient.mockResolvedValue(client as never);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
 
     const req = makeRequest('/api/crm/enrichment');
     const res = await GET(req);
@@ -52,7 +52,7 @@ describe('GET /api/crm/enrichment', () => {
     const client = mockSupabaseClient({
       defaultResponse: { data: [makeEnrichmentJob({ status: 'pending' })], error: null, count: 1 },
     });
-    mockCreateUserClient.mockResolvedValue(client as never);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
 
     const req = makeRequest('/api/crm/enrichment?status=pending');
     const res = await GET(req);
@@ -65,7 +65,7 @@ describe('GET /api/crm/enrichment', () => {
     const client = mockSupabaseClient({
       defaultResponse: { data: [makeEnrichmentJob({ source: 'clearbit' })], error: null, count: 1 },
     });
-    mockCreateUserClient.mockResolvedValue(client as never);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
 
     const req = makeRequest('/api/crm/enrichment?source=clearbit');
     const res = await GET(req);
@@ -84,7 +84,7 @@ describe('GET /api/crm/enrichment', () => {
     const client = mockSupabaseClient({
       defaultResponse: { data: [makeEnrichmentJob()], error: null, count: 50 },
     });
-    mockCreateUserClient.mockResolvedValue(client as never);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
 
     const req = makeRequest('/api/crm/enrichment?limit=10&offset=20');
     const res = await GET(req);
@@ -97,7 +97,7 @@ describe('GET /api/crm/enrichment', () => {
     const client = mockSupabaseClient({
       defaultResponse: { data: null, error: { message: 'DB error' }, count: null },
     });
-    mockCreateUserClient.mockResolvedValue(client as never);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
 
     const req = makeRequest('/api/crm/enrichment');
     const res = await GET(req);
@@ -108,7 +108,7 @@ describe('GET /api/crm/enrichment', () => {
     const client = mockSupabaseClient({
       defaultResponse: { data: [], error: null, count: 0 },
     });
-    mockCreateUserClient.mockResolvedValue(client as never);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
 
     const req = makeRequest('/api/crm/enrichment');
     const res = await GET(req);

@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -27,10 +27,14 @@ export async function GET(
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
   const { data, error, count } = await supabase
     .from('rfq_bids')
-    .select('id, rfq_id, invite_id, submitted_by_portal_id, submitted_at, currency_code, subtotal_amount, tax_amount, total_amount, exclusions, status, created_at, updated_at' /* excluded from list: payload */, { count: 'exact' })
+    .select(
+      'id, rfq_id, invite_id, submitted_by_portal_id, submitted_at, currency_code, subtotal_amount, tax_amount, total_amount, exclusions, status, created_at, updated_at' /* excluded from list: payload */,
+      { count: 'exact' },
+    )
     .eq('rfq_id', rfqId)
     .order('total_amount', { ascending: true })
     .range(offset, offset + limit - 1);
@@ -51,7 +55,9 @@ export async function POST(
   const parsed = rfqBidCreateSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('rfq_bids')
     .insert({ ...parsed.data, rfq_id: rfqId, submitted_at: new Date().toISOString() })

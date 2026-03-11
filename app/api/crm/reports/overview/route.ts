@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
@@ -12,7 +12,9 @@ export async function GET(req: NextRequest) {
   const rl = await rateLimit(req, { limit: 30, window: '1 m', identifier: userId });
   if (!rl.success) return rateLimitResponse(rl);
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
 
   const [
     leadsResult,
@@ -22,12 +24,23 @@ export async function GET(req: NextRequest) {
     activitiesResult,
     biddingResult,
   ] = await Promise.all([
-    supabase.from('leads').select('id, status, division_id, source_channel, lead_score, created_at', { count: 'exact' }),
+    supabase
+      .from('leads')
+      .select('id, status, division_id, source_channel, lead_score, created_at', {
+        count: 'exact',
+      }),
     supabase.from('contacts').select('id', { count: 'exact', head: true }),
     supabase.from('accounts').select('id', { count: 'exact', head: true }),
-    supabase.from('opportunities').select('id, stage, estimated_revenue, division_id, created_at', { count: 'exact' }),
-    supabase.from('activities').select('id, activity_type, created_at', { count: 'exact' }).gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
-    supabase.from('bidding_opportunities').select('id, status, estimated_value', { count: 'exact' }),
+    supabase
+      .from('opportunities')
+      .select('id, stage, estimated_revenue, division_id, created_at', { count: 'exact' }),
+    supabase
+      .from('activities')
+      .select('id, activity_type, created_at', { count: 'exact' })
+      .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
+    supabase
+      .from('bidding_opportunities')
+      .select('id, status, estimated_value', { count: 'exact' }),
   ]);
 
   // Lead funnel

@@ -7,7 +7,7 @@ vi.mock('@clerk/nextjs/server', () => ({
 
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 // Mock SyncService
@@ -29,7 +29,7 @@ vi.mock('@/lib/erp/sync-service', () => {
 });
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { POST } from '@/app/api/crm/opportunities/[id]/won/route';
 import {
   mockSupabaseClient,
@@ -41,7 +41,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function makeContext(id: string) {
   return { params: Promise.resolve({ id }) };
@@ -65,14 +65,15 @@ describe('POST /api/crm/opportunities/[id]/won', () => {
   it('marks a contracted opportunity as won', async () => {
     const opp = makeOpportunity({ stage: 'contracted' });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           opportunities: { data: opp, error: null },
           activities: { data: { id: 'act-1' }, error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST(
       makeJsonRequest('/api/crm/opportunities/123/won', {
@@ -87,11 +88,12 @@ describe('POST /api/crm/opportunities/[id]/won', () => {
   it('rejects non-contracted opportunity', async () => {
     const opp = makeOpportunity({ stage: 'proposal' });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { opportunities: { data: opp, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST(
       makeJsonRequest('/api/crm/opportunities/123/won', {}),
@@ -105,14 +107,15 @@ describe('POST /api/crm/opportunities/[id]/won', () => {
   it('syncs to ERPNext when sync_to_erp is true', async () => {
     const opp = makeOpportunity({ stage: 'contracted' });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           opportunities: { data: opp, error: null },
           activities: { data: { id: 'act-1' }, error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST(
       makeJsonRequest('/api/crm/opportunities/123/won', {
@@ -128,13 +131,14 @@ describe('POST /api/crm/opportunities/[id]/won', () => {
 
   it('returns 404 for non-existent opportunity', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           opportunities: { data: null, error: { message: 'Not found', code: 'PGRST116' } },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST(
       makeJsonRequest('/api/crm/opportunities/123/won', {}),

@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
@@ -10,7 +10,9 @@ export async function GET(req: NextRequest) {
   const rl = await rateLimit(req, { limit: 30, window: '1 m', identifier: userId });
   if (!rl.success) return rateLimitResponse(rl);
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
 
   // Get counts by entity_type and status
   const { data: jobs, error: jobsError } = await supabase

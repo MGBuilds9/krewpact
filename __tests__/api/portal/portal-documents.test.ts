@@ -6,10 +6,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET } from '@/app/api/portal/projects/[id]/documents/route';
 import {
   mockSupabaseClient,
@@ -19,7 +19,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function makeContext(id: string) {
   return { params: Promise.resolve({ id }) };
@@ -49,13 +49,14 @@ describe('GET /api/portal/projects/[id]/documents', () => {
 
   it('returns 403 when no portal account found', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           portal_accounts: { data: null, error: { message: 'Not found', code: 'PGRST116' } },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(
       makeRequest('/api/portal/projects/proj-1/documents'),
@@ -66,13 +67,14 @@ describe('GET /api/portal/projects/[id]/documents', () => {
 
   it('returns 403 when portal account is inactive', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           portal_accounts: { data: { id: 'pa-1', status: 'suspended' }, error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(
       makeRequest('/api/portal/projects/proj-1/documents'),
@@ -83,8 +85,8 @@ describe('GET /api/portal/projects/[id]/documents', () => {
 
   it('returns 403 when view_documents is false', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           portal_accounts: { data: { id: 'pa-1', status: 'active' }, error: null },
           portal_permissions: {
@@ -94,7 +96,8 @@ describe('GET /api/portal/projects/[id]/documents', () => {
           file_metadata: { data: [], error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(
       makeRequest('/api/portal/projects/proj-1/documents'),
@@ -105,8 +108,8 @@ describe('GET /api/portal/projects/[id]/documents', () => {
 
   it('returns documents when portal account has permission', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           portal_accounts: { data: { id: 'pa-1', status: 'active' }, error: null },
           portal_permissions: {
@@ -117,7 +120,8 @@ describe('GET /api/portal/projects/[id]/documents', () => {
           portal_view_logs: { data: null, error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(
       makeRequest('/api/portal/projects/proj-1/documents'),

@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { NextRequest, NextResponse } from 'next/server';
 import { rfiThreadCreateSchema } from '@/lib/validators/field-ops';
@@ -16,11 +16,14 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
   const { rfiId } = await context.params;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   const { data, error, count } = await supabase
     .from('rfi_threads')
-    .select('id, rfi_id, author_user_id, message_text, is_official_response, created_at', { count: 'exact' })
+    .select('id, rfi_id, author_user_id, message_text, is_official_response, created_at', {
+      count: 'exact',
+    })
     .eq('rfi_id', rfiId)
     .order('created_at')
     .range(offset, offset + limit - 1);
@@ -48,7 +51,9 @@ export async function POST(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('rfi_threads')
     .insert({ ...parsed.data, rfi_id: rfiId, author_user_id: userId })

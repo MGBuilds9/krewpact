@@ -7,11 +7,11 @@ vi.mock('@clerk/nextjs/server', () => ({
 
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET, POST } from '@/app/api/crm/activities/route';
 import { GET as GET_ID, PATCH, DELETE } from '@/app/api/crm/activities/[id]/route';
 import {
@@ -26,7 +26,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function makeContext(id: string) {
   return { params: Promise.resolve({ id }) };
@@ -52,11 +52,12 @@ describe('GET /api/crm/activities', () => {
   it('returns activities list', async () => {
     const activities = [makeActivity(), makeActivity({ title: 'Second call' })];
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { activities: { data: activities, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/crm/activities'));
     expect(res.status).toBe(200);
@@ -72,7 +73,7 @@ describe('GET /api/crm/activities', () => {
     const client = mockSupabaseClient({
       tables: { activities: { data: activities, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(
       makeRequest('/api/crm/activities?opportunity_id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'),
@@ -87,7 +88,7 @@ describe('GET /api/crm/activities', () => {
     const client = mockSupabaseClient({
       tables: { activities: { data: activities, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(
       makeRequest('/api/crm/activities?lead_id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'),
@@ -102,7 +103,7 @@ describe('GET /api/crm/activities', () => {
     const client = mockSupabaseClient({
       tables: { activities: { data: activities, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(
       makeRequest('/api/crm/activities?account_id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'),
@@ -117,7 +118,7 @@ describe('GET /api/crm/activities', () => {
     const client = mockSupabaseClient({
       tables: { activities: { data: activities, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(makeRequest('/api/crm/activities?activity_type=email'));
     expect(res.status).toBe(200);
@@ -140,11 +141,12 @@ describe('POST /api/crm/activities', () => {
   it('creates activity linked to opportunity', async () => {
     const created = makeActivity();
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { activities: { data: created, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST(
       makeJsonRequest('/api/crm/activities', {
@@ -164,11 +166,12 @@ describe('POST /api/crm/activities', () => {
       opportunity_id: null,
     });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { activities: { data: created, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST(
       makeJsonRequest('/api/crm/activities', {
@@ -216,11 +219,12 @@ describe('GET /api/crm/activities/[id]', () => {
   it('returns activity by id', async () => {
     const activity = makeActivity();
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { activities: { data: activity, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET_ID(makeRequest('/api/crm/activities/123'), makeContext(activity.id));
     expect(res.status).toBe(200);
@@ -230,8 +234,8 @@ describe('GET /api/crm/activities/[id]', () => {
 
   it('returns 404 for non-existent activity', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           activities: {
             data: null,
@@ -239,7 +243,8 @@ describe('GET /api/crm/activities/[id]', () => {
           },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET_ID(
       makeRequest('/api/crm/activities/nonexistent'),
@@ -261,11 +266,12 @@ describe('PATCH /api/crm/activities/[id]', () => {
   it('updates activity', async () => {
     const updated = makeActivity({ title: 'Updated call notes' });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { activities: { data: updated, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await PATCH(
       makeJsonRequest('/api/crm/activities/123', { title: 'Updated call notes' }, 'PATCH'),
@@ -288,11 +294,12 @@ describe('DELETE /api/crm/activities/[id]', () => {
 
   it('deletes activity', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { activities: { data: null, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await DELETE(makeRequest('/api/crm/activities/123'), makeContext('some-id'));
     expect(res.status).toBe(200);

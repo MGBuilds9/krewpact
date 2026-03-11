@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/org', () => ({ getOrgIdFromAuth: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
@@ -9,18 +9,39 @@ vi.mock('@/lib/api/rate-limit', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { getOrgIdFromAuth } from '@/lib/api/org';
 import { GET, POST } from '@/app/api/crm/bidding/route';
-import { mockClerkAuth, mockClerkUnauth, makeRequest, makeJsonRequest, makeBiddingOpportunity } from '@/__tests__/helpers';
+import {
+  mockClerkAuth,
+  mockClerkUnauth,
+  makeRequest,
+  makeJsonRequest,
+  makeBiddingOpportunity,
+} from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 const mockGetOrgId = vi.mocked(getOrgIdFromAuth);
 
 function mockSupabase(tableResponse: { data: unknown; error: unknown; count?: number | null }) {
   const chain: Record<string, unknown> = {};
-  const methods = ['select', 'insert', 'update', 'delete', 'eq', 'neq', 'ilike', 'gte', 'lte', 'order', 'range', 'single', 'limit', 'in'];
+  const methods = [
+    'select',
+    'insert',
+    'update',
+    'delete',
+    'eq',
+    'neq',
+    'ilike',
+    'gte',
+    'lte',
+    'order',
+    'range',
+    'single',
+    'limit',
+    'in',
+  ];
   for (const m of methods) {
     chain[m] = vi.fn().mockReturnValue(chain);
   }
@@ -31,7 +52,7 @@ function mockSupabase(tableResponse: { data: unknown; error: unknown; count?: nu
   const client = {
     from: vi.fn().mockReturnValue(chain),
   };
-  mockCreateUserClient.mockResolvedValue(client as never);
+  mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
   return client;
 }
 

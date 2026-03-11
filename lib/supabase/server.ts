@@ -1,13 +1,17 @@
 import { createClient } from '@supabase/supabase-js';
 import { auth } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
 import { DEMO_MODE } from '@/lib/demo-mode';
 import type { Database } from '@/types/supabase';
 
 export type { Database };
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+/** The client type returned by createUserClient — matches its inferred return type. */
+type UserClient = Awaited<ReturnType<typeof createUserClient>>;
+
+const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? '').trim();
+const supabaseAnonKey = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '').trim();
+const supabaseServiceKey = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? '').trim();
 
 export function createServiceClient() {
   return createClient(supabaseUrl, supabaseServiceKey, {
@@ -59,4 +63,25 @@ export async function createUserClient() {
       autoRefreshToken: false,
     },
   });
+}
+
+/**
+ * Safe wrapper around createUserClient that returns {client, error} instead of throwing.
+ * Routes use this to return 401 instead of crashing with 500 when JWT template fails.
+ */
+export async function createUserClientSafe(): Promise<
+  { client: UserClient; error: null } | { client: null; error: NextResponse }
+> {
+  try {
+    const client = await createUserClient();
+    return { client, error: null };
+  } catch {
+    return {
+      client: null,
+      error: NextResponse.json(
+        { error: 'Authentication failed — please sign in again' },
+        { status: 401 },
+      ),
+    };
+  }
 }

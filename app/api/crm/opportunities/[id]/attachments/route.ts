@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
@@ -15,7 +15,8 @@ export async function GET(req: NextRequest, context: RouteContext) {
   if (!rl.success) return rateLimitResponse(rl);
 
   const { id } = await context.params;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   const { data, error } = await supabase.storage
     .from('documents')
@@ -73,7 +74,9 @@ export async function POST(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: 'File too large. Maximum size is 10MB.' }, { status: 400 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const path = `opportunity-attachments/${id}/${file.name}`;
 
   const { data, error } = await supabase.storage
@@ -86,12 +89,15 @@ export async function POST(req: NextRequest, context: RouteContext) {
 
   const { data: urlData } = supabase.storage.from('documents').getPublicUrl(path);
 
-  return NextResponse.json({
-    path: data.path,
-    name: file.name,
-    size: file.size,
-    public_url: urlData.publicUrl,
-  }, { status: 201 });
+  return NextResponse.json(
+    {
+      path: data.path,
+      name: file.name,
+      size: file.size,
+      public_url: urlData.publicUrl,
+    },
+    { status: 201 },
+  );
 }
 
 export async function DELETE(req: NextRequest, context: RouteContext) {
@@ -108,12 +114,12 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: 'fileName query parameter is required' }, { status: 400 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const path = `opportunity-attachments/${id}/${fileName}`;
 
-  const { error } = await supabase.storage
-    .from('documents')
-    .remove([path]);
+  const { error } = await supabase.storage.from('documents').remove([path]);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

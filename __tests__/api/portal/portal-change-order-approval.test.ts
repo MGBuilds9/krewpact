@@ -13,7 +13,12 @@ vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 
 const mockFrom = vi.fn();
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn().mockResolvedValue({ from: (...args: unknown[]) => mockFrom(...args) }),
+  createUserClientSafe: vi
+    .fn()
+    .mockResolvedValue({
+      client: { from: (...args: unknown[]) => mockFrom(...args) },
+      error: null,
+    }),
 }));
 
 import { auth } from '@clerk/nextjs/server';
@@ -52,9 +57,7 @@ describe('POST /api/portal/projects/[id]/change-orders/[coId]/approve', () => {
 
   it('returns 403 when portal account not found', async () => {
     mockClerkAuth(mockAuth);
-    mockFrom.mockReturnValue(
-      chainMock({ data: null, error: { code: 'PGRST116' } }),
-    );
+    mockFrom.mockReturnValue(chainMock({ data: null, error: { code: 'PGRST116' } }));
 
     const res = await POST(
       makeJsonRequest(`/api/portal/projects/${PROJECT_ID}/change-orders/${CO_ID}/approve`, {}),
@@ -65,9 +68,7 @@ describe('POST /api/portal/projects/[id]/change-orders/[coId]/approve', () => {
 
   it('returns 403 when portal account is inactive', async () => {
     mockClerkAuth(mockAuth);
-    mockFrom.mockReturnValue(
-      chainMock({ data: { id: 'pa-1', status: 'pending' }, error: null }),
-    );
+    mockFrom.mockReturnValue(chainMock({ data: { id: 'pa-1', status: 'pending' }, error: null }));
 
     const res = await POST(
       makeJsonRequest(`/api/portal/projects/${PROJECT_ID}/change-orders/${CO_ID}/approve`, {}),
@@ -106,7 +107,10 @@ describe('POST /api/portal/projects/[id]/change-orders/[coId]/approve', () => {
         return chainMock({ data: { id: 'pa-1', status: 'active' }, error: null });
       }
       if (callCount === 2) {
-        return chainMock({ data: { permission_set: { approve_change_orders: true } }, error: null });
+        return chainMock({
+          data: { permission_set: { approve_change_orders: true } },
+          error: null,
+        });
       }
       // change_orders — already approved
       return chainMock({
@@ -133,7 +137,10 @@ describe('POST /api/portal/projects/[id]/change-orders/[coId]/approve', () => {
         return chainMock({ data: { id: 'pa-1', status: 'active' }, error: null });
       }
       if (callCount === 2) {
-        return chainMock({ data: { permission_set: { approve_change_orders: true } }, error: null });
+        return chainMock({
+          data: { permission_set: { approve_change_orders: true } },
+          error: null,
+        });
       }
       if (callCount === 3) {
         // CO in pending_client_approval
@@ -171,7 +178,10 @@ describe('POST /api/portal/projects/[id]/change-orders/[coId]/approve', () => {
         return chainMock({ data: { id: 'pa-1', status: 'active' }, error: null });
       }
       if (callCount === 2) {
-        return chainMock({ data: { permission_set: { approve_change_orders: true } }, error: null });
+        return chainMock({
+          data: { permission_set: { approve_change_orders: true } },
+          error: null,
+        });
       }
       // CO not found
       return chainMock({ data: null, error: { code: 'PGRST116' } });

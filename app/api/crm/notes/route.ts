@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { noteCreateSchema } from '@/lib/validators/crm';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
@@ -31,10 +31,14 @@ export async function GET(req: NextRequest) {
   const { entity_type, entity_id } = parsed.data;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error, count } = await supabase
     .from('notes')
-    .select('id, entity_type, entity_id, content, is_pinned, created_by, created_at, updated_at', { count: 'exact' })
+    .select('id, entity_type, entity_id, content, is_pinned, created_by, created_at, updated_at', {
+      count: 'exact',
+    })
     .eq('entity_type', entity_type)
     .eq('entity_id', entity_id)
     .order('is_pinned', { ascending: false })
@@ -70,7 +74,9 @@ export async function POST(req: NextRequest) {
     | string
     | undefined;
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('notes')
     .insert({

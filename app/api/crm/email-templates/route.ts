@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
@@ -38,10 +38,14 @@ export async function GET(req: NextRequest) {
   }
 
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
   let query = supabase
     .from('email_templates')
-    .select('id, name, subject, body_html, body_text, category, variables, division_id, is_active, created_at, updated_at', { count: 'exact' })
+    .select(
+      'id, name, subject, body_html, body_text, category, variables, division_id, is_active, created_at, updated_at',
+      { count: 'exact' },
+    )
     .order('updated_at', { ascending: false });
 
   if (parsed.data.category) {
@@ -77,7 +81,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('email_templates')
     .insert(parsed.data)

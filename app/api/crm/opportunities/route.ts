@@ -1,7 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { opportunityCreateSchema } from '@/lib/validators/crm';
-import { getOrgIdFromAuth } from '@/lib/api/org';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
@@ -42,9 +41,16 @@ export async function GET(req: NextRequest) {
 
   const { division_id, stage, owner_user_id, account_id, view } = parsed.data;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
-  let query = supabase.from('opportunities').select('id, opportunity_name, stage, estimated_revenue, probability_pct, target_close_date, account_id, contact_id, lead_id, division_id, owner_user_id, notes, created_at, updated_at', { count: 'exact' }).order('created_at', { ascending: false });
+  let query = supabase
+    .from('opportunities')
+    .select(
+      'id, opportunity_name, stage, estimated_revenue, probability_pct, target_close_date, account_id, contact_id, lead_id, division_id, owner_user_id, notes, created_at, updated_at',
+      { count: 'exact' },
+    )
+    .order('created_at', { ascending: false });
 
   if (division_id) {
     query = query.eq('division_id', division_id);
@@ -115,12 +121,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const orgId = await getOrgIdFromAuth();
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
   const insertData = {
     ...parsed.data,
     stage: parsed.data.stage ?? 'intake',
-    org_id: orgId,
   };
 
   const { data, error } = await supabase.from('opportunities').insert(insertData).select().single();

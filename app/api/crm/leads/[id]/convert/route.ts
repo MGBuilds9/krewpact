@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { validateConversion } from '@/lib/crm/lead-conversion';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -35,7 +35,8 @@ export async function POST(req: NextRequest, context: RouteContext) {
   }
 
   const { id } = await context.params;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   // Fetch lead
   const { data: lead, error: leadError } = await supabase

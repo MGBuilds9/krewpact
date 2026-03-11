@@ -6,10 +6,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET, PATCH } from '@/app/api/finance/invoices/[id]/route';
 import {
   mockSupabaseClient,
@@ -20,7 +20,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function makeContext(id: string) {
   return { params: Promise.resolve({ id }) };
@@ -56,9 +56,12 @@ describe('GET /api/finance/invoices/[id]', () => {
 
   it('returns invoice by id', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { invoice_snapshots: { data: sampleInvoice, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
+        tables: { invoice_snapshots: { data: sampleInvoice, error: null } },
+      }),
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/finance/invoices/inv-1'), makeContext('inv-1'));
     expect(res.status).toBe(200);
@@ -70,11 +73,14 @@ describe('GET /api/finance/invoices/[id]', () => {
 
   it('returns 404 when not found', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
-        tables: { invoice_snapshots: { data: null, error: { message: 'Not found', code: 'PGRST116' } } },
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
+        tables: {
+          invoice_snapshots: { data: null, error: { message: 'Not found', code: 'PGRST116' } },
+        },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/finance/invoices/missing'), makeContext('missing'));
     expect(res.status).toBe(404);
@@ -96,12 +102,17 @@ describe('PATCH /api/finance/invoices/[id]', () => {
   it('updates invoice fields', async () => {
     mockClerkAuth(mockAuth);
     const updated = { ...sampleInvoice, status: 'paid', amount_paid: 11300 };
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { invoice_snapshots: { data: updated, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { invoice_snapshots: { data: updated, error: null } } }),
+      error: null,
+    });
 
     const res = await PATCH(
-      makeJsonRequest('/api/finance/invoices/inv-1', { status: 'paid', amount_paid: 11300 }, 'PATCH'),
+      makeJsonRequest(
+        '/api/finance/invoices/inv-1',
+        { status: 'paid', amount_paid: 11300 },
+        'PATCH',
+      ),
       makeContext('inv-1'),
     );
     expect(res.status).toBe(200);
@@ -121,11 +132,14 @@ describe('PATCH /api/finance/invoices/[id]', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
-        tables: { invoice_snapshots: { data: null, error: { message: 'DB error', code: '42000' } } },
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
+        tables: {
+          invoice_snapshots: { data: null, error: { message: 'DB error', code: '42000' } },
+        },
       }),
-    );
+      error: null,
+    });
 
     const res = await PATCH(
       makeJsonRequest('/api/finance/invoices/inv-1', { customer_name: 'Updated' }, 'PATCH'),

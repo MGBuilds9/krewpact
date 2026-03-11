@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
@@ -11,7 +11,7 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { POST as leadsBulk } from '@/app/api/crm/leads/bulk/route';
 import { POST as contactsBulk } from '@/app/api/crm/contacts/bulk/route';
 import {
@@ -22,7 +22,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 // Valid RFC 4122 v4 UUIDs for tests
 const UUID1 = '550e8400-e29b-41d4-a716-446655440001';
@@ -98,7 +98,7 @@ describe('POST /api/crm/leads/bulk', () => {
     const client = mockSupabaseClient({
       tables: { leads: { data: null, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest('/api/crm/leads/bulk', {
       action: 'assign',
@@ -118,7 +118,7 @@ describe('POST /api/crm/leads/bulk', () => {
       ids: [UUID1],
     });
     const client = mockSupabaseClient();
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
     const res = await leadsBulk(req);
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -130,7 +130,7 @@ describe('POST /api/crm/leads/bulk', () => {
     const client = mockSupabaseClient({
       tables: { leads: { data: null, error: { message: 'DB down' } } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest('/api/crm/leads/bulk', {
       action: 'assign',
@@ -147,7 +147,7 @@ describe('POST /api/crm/leads/bulk', () => {
     const client = mockSupabaseClient({
       tables: { leads: { data: null, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest('/api/crm/leads/bulk', {
       action: 'stage',
@@ -163,7 +163,7 @@ describe('POST /api/crm/leads/bulk', () => {
   it('stage: returns 400 if value is missing', async () => {
     mockClerkAuth(mockAuth);
     const client = mockSupabaseClient();
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest('/api/crm/leads/bulk', {
       action: 'stage',
@@ -178,7 +178,7 @@ describe('POST /api/crm/leads/bulk', () => {
     const client = mockSupabaseClient({
       tables: { leads: { data: null, error: { message: 'constraint violation' } } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest('/api/crm/leads/bulk', {
       action: 'stage',
@@ -195,7 +195,7 @@ describe('POST /api/crm/leads/bulk', () => {
     const client = mockSupabaseClient({
       tables: { leads: { data: null, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest('/api/crm/leads/bulk', {
       action: 'delete',
@@ -212,7 +212,7 @@ describe('POST /api/crm/leads/bulk', () => {
     const client = mockSupabaseClient({
       tables: { leads: { data: null, error: { message: 'RLS violation' } } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest('/api/crm/leads/bulk', {
       action: 'delete',
@@ -248,7 +248,7 @@ describe('POST /api/crm/leads/bulk', () => {
     const client = mockSupabaseClient({
       tables: { leads: { data: leadData, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest('/api/crm/leads/bulk', {
       action: 'export',
@@ -273,7 +273,7 @@ describe('POST /api/crm/leads/bulk', () => {
     const client = mockSupabaseClient({
       tables: { leads: { data: [], error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest('/api/crm/leads/bulk', {
       action: 'export',
@@ -292,7 +292,7 @@ describe('POST /api/crm/leads/bulk', () => {
     const client = mockSupabaseClient({
       tables: { leads: { data: null, error: { message: 'timeout' } } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest('/api/crm/leads/bulk', {
       action: 'export',
@@ -318,7 +318,7 @@ describe('POST /api/crm/leads/bulk', () => {
     const client = mockSupabaseClient({
       tables: { leads: { data: leadData, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest('/api/crm/leads/bulk', {
       action: 'export',
@@ -339,7 +339,7 @@ describe('POST /api/crm/leads/bulk', () => {
     const client = mockSupabaseClient({
       tables: { leads: { data: null, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest('/api/crm/leads/bulk', {
       action: 'delete',
@@ -399,7 +399,7 @@ describe('POST /api/crm/contacts/bulk', () => {
     const client = mockSupabaseClient({
       tables: { contacts: { data: null, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest('/api/crm/contacts/bulk', {
       action: 'assign',
@@ -415,7 +415,7 @@ describe('POST /api/crm/contacts/bulk', () => {
   it('assign: returns 400 if value is missing', async () => {
     mockClerkAuth(mockAuth);
     const client = mockSupabaseClient();
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest('/api/crm/contacts/bulk', {
       action: 'assign',
@@ -432,7 +432,7 @@ describe('POST /api/crm/contacts/bulk', () => {
     const client = mockSupabaseClient({
       tables: { contacts: { data: null, error: { message: 'permission denied' } } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest('/api/crm/contacts/bulk', {
       action: 'assign',
@@ -449,7 +449,7 @@ describe('POST /api/crm/contacts/bulk', () => {
     const client = mockSupabaseClient({
       tables: { contacts: { data: null, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest('/api/crm/contacts/bulk', {
       action: 'delete',
@@ -466,7 +466,7 @@ describe('POST /api/crm/contacts/bulk', () => {
     const client = mockSupabaseClient({
       tables: { contacts: { data: null, error: { message: 'RLS' } } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest('/api/crm/contacts/bulk', {
       action: 'delete',
@@ -493,7 +493,7 @@ describe('POST /api/crm/contacts/bulk', () => {
     const client = mockSupabaseClient({
       tables: { contacts: { data: contactData, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest('/api/crm/contacts/bulk', {
       action: 'export',
@@ -517,7 +517,7 @@ describe('POST /api/crm/contacts/bulk', () => {
     const client = mockSupabaseClient({
       tables: { contacts: { data: [], error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest('/api/crm/contacts/bulk', {
       action: 'export',
@@ -534,7 +534,7 @@ describe('POST /api/crm/contacts/bulk', () => {
     const client = mockSupabaseClient({
       tables: { contacts: { data: null, error: { message: 'timeout' } } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest('/api/crm/contacts/bulk', {
       action: 'export',
@@ -550,7 +550,7 @@ describe('POST /api/crm/contacts/bulk', () => {
     const client = mockSupabaseClient({
       tables: { contacts: { data: null, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest('/api/crm/contacts/bulk', {
       action: 'delete',

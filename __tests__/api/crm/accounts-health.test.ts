@@ -1,5 +1,5 @@
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
@@ -7,7 +7,7 @@ vi.mock('@/lib/api/rate-limit', () => ({
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET } from '@/app/api/crm/accounts/[id]/health/route';
 import {
   mockSupabaseClient,
@@ -22,7 +22,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function makeContext(id: string) {
   return { params: Promise.resolve({ id }) };
@@ -56,10 +56,21 @@ describe('GET /api/crm/accounts/[id]/health', () => {
 
     const account = makeAccount({ id: TEST_IDS.ACCOUNT_ID, account_name: 'Acme Corp' });
     const opps = [
-      makeOpportunity({ stage: 'contracted', estimated_revenue: 200_000, account_id: TEST_IDS.ACCOUNT_ID }),
-      makeOpportunity({ stage: 'intake', estimated_revenue: 50_000, account_id: TEST_IDS.ACCOUNT_ID }),
+      makeOpportunity({
+        stage: 'contracted',
+        estimated_revenue: 200_000,
+        account_id: TEST_IDS.ACCOUNT_ID,
+      }),
+      makeOpportunity({
+        stage: 'intake',
+        estimated_revenue: 50_000,
+        account_id: TEST_IDS.ACCOUNT_ID,
+      }),
     ];
-    const activity = makeActivity({ account_id: TEST_IDS.ACCOUNT_ID, created_at: '2026-03-04T10:00:00Z' });
+    const activity = makeActivity({
+      account_id: TEST_IDS.ACCOUNT_ID,
+      created_at: '2026-03-04T10:00:00Z',
+    });
 
     const supabase = mockSupabaseClient({
       tables: {
@@ -68,7 +79,7 @@ describe('GET /api/crm/accounts/[id]/health', () => {
         activities: { data: [activity], error: null },
       },
     });
-    mockCreateUserClient.mockResolvedValue(supabase);
+    mockCreateUserClientSafe.mockResolvedValue({ client: supabase, error: null });
 
     const req = makeRequest('/api/crm/accounts/' + TEST_IDS.ACCOUNT_ID + '/health');
     const res = await GET(req, makeContext(TEST_IDS.ACCOUNT_ID));
@@ -102,7 +113,7 @@ describe('GET /api/crm/accounts/[id]/health', () => {
         activities: { data: [], error: null },
       },
     });
-    mockCreateUserClient.mockResolvedValue(supabase);
+    mockCreateUserClientSafe.mockResolvedValue({ client: supabase, error: null });
 
     const req = makeRequest('/api/crm/accounts/nonexistent-id/health');
     const res = await GET(req, makeContext('nonexistent-id'));
@@ -117,11 +128,26 @@ describe('GET /api/crm/accounts/[id]/health', () => {
 
     const account = makeAccount({ id: TEST_IDS.ACCOUNT_ID, account_name: 'Repeat Client Co' });
     const opps = [
-      makeOpportunity({ stage: 'contracted', estimated_revenue: 100_000, account_id: TEST_IDS.ACCOUNT_ID }),
-      makeOpportunity({ stage: 'contracted', estimated_revenue: 150_000, account_id: TEST_IDS.ACCOUNT_ID }),
-      makeOpportunity({ stage: 'intake', estimated_revenue: 75_000, account_id: TEST_IDS.ACCOUNT_ID }),
+      makeOpportunity({
+        stage: 'contracted',
+        estimated_revenue: 100_000,
+        account_id: TEST_IDS.ACCOUNT_ID,
+      }),
+      makeOpportunity({
+        stage: 'contracted',
+        estimated_revenue: 150_000,
+        account_id: TEST_IDS.ACCOUNT_ID,
+      }),
+      makeOpportunity({
+        stage: 'intake',
+        estimated_revenue: 75_000,
+        account_id: TEST_IDS.ACCOUNT_ID,
+      }),
     ];
-    const activity = makeActivity({ account_id: TEST_IDS.ACCOUNT_ID, created_at: '2026-03-04T08:00:00Z' });
+    const activity = makeActivity({
+      account_id: TEST_IDS.ACCOUNT_ID,
+      created_at: '2026-03-04T08:00:00Z',
+    });
 
     const supabase = mockSupabaseClient({
       tables: {
@@ -130,7 +156,7 @@ describe('GET /api/crm/accounts/[id]/health', () => {
         activities: { data: [activity], error: null },
       },
     });
-    mockCreateUserClient.mockResolvedValue(supabase);
+    mockCreateUserClientSafe.mockResolvedValue({ client: supabase, error: null });
 
     const req = makeRequest('/api/crm/accounts/' + TEST_IDS.ACCOUNT_ID + '/health');
     const res = await GET(req, makeContext(TEST_IDS.ACCOUNT_ID));
@@ -156,7 +182,7 @@ describe('GET /api/crm/accounts/[id]/health', () => {
         activities: { data: [], error: null },
       },
     });
-    mockCreateUserClient.mockResolvedValue(supabase);
+    mockCreateUserClientSafe.mockResolvedValue({ client: supabase, error: null });
 
     const req = makeRequest('/api/crm/accounts/' + TEST_IDS.ACCOUNT_ID + '/health');
     const res = await GET(req, makeContext(TEST_IDS.ACCOUNT_ID));

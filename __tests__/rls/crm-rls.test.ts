@@ -18,12 +18,12 @@ vi.mock('@clerk/nextjs/server', () => ({
 
 // Mock Supabase server clients
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
   createServiceClient: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient, createServiceClient } from '@/lib/supabase/server';
+import { createUserClientSafe, createServiceClient } from '@/lib/supabase/server';
 import { GET } from '@/app/api/crm/leads/route';
 import {
   mockSupabaseClient,
@@ -35,7 +35,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 const mockCreateServiceClient = vi.mocked(createServiceClient);
 
 // Division IDs for test isolation
@@ -97,7 +97,7 @@ describe('CRM RLS: Division isolation via API route', () => {
     const client = mockSupabaseClient({
       tables: { leads: { data: contractingLeads, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(makeRequest('/api/crm/leads'));
 
@@ -126,7 +126,7 @@ describe('CRM RLS: Division isolation via API route', () => {
     const client = mockSupabaseClient({
       tables: { leads: { data: [], error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(makeRequest('/api/crm/leads'));
 
@@ -136,15 +136,16 @@ describe('CRM RLS: Division isolation via API route', () => {
     expect(body.total).toBe(0);
   });
 
-  it('createUserClient is called (not service client) for user-scoped requests', async () => {
+  it('createUserClientSafe is called (not service client) for user-scoped requests', async () => {
     mockClerkAuth(mockAuth, 'user-a-uuid');
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { leads: { data: [], error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { leads: { data: [], error: null } } }),
+      error: null,
+    });
 
     await GET(makeRequest('/api/crm/leads'));
 
-    expect(mockCreateUserClient).toHaveBeenCalled();
+    expect(mockCreateUserClientSafe).toHaveBeenCalled();
     expect(mockCreateServiceClient).not.toHaveBeenCalled();
   });
 
@@ -154,7 +155,7 @@ describe('CRM RLS: Division isolation via API route', () => {
     const client = mockSupabaseClient({
       tables: { leads: { data: [], error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     await GET(makeRequest(`/api/crm/leads?division_id=${DIV_CONTRACTING}`));
 
@@ -228,11 +229,11 @@ describe('CRM RLS: Service client bypass', () => {
       },
     });
 
-    mockCreateUserClient.mockResolvedValue(userClient);
+    mockCreateUserClientSafe.mockResolvedValue({ client: userClient, error: null });
     mockCreateServiceClient.mockReturnValue(serviceClient);
 
     // These are different client instances
-    expect(mockCreateUserClient).not.toBe(mockCreateServiceClient);
+    expect(mockCreateUserClientSafe).not.toBe(mockCreateServiceClient);
 
     // Service client returns 3 leads (all divisions), user client returns 0 (RLS filtered)
     const svcClient = mockCreateServiceClient();

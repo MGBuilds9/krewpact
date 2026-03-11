@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import {
@@ -61,7 +61,8 @@ export async function GET(req: NextRequest) {
 
   const { division_id, period = 'month' } = parsed.data;
   const periodStart = getPeriodStart(period);
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   // Fetch opportunities (all for pipeline, filtered by period for velocity)
   let oppQuery = supabase

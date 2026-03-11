@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -26,11 +26,15 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const { status } = parsed.data;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   let query = supabase
     .from('rfq_packages')
-    .select('id, project_id, rfq_number, title, scope_summary, due_at, status, created_by, created_at, updated_at', { count: 'exact' })
+    .select(
+      'id, project_id, rfq_number, title, scope_summary, due_at, status, created_by, created_at, updated_at',
+      { count: 'exact' },
+    )
     .eq('project_id', projectId)
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
@@ -52,7 +56,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const parsed = rfqPackageCreateSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('rfq_packages')
     .insert({ ...parsed.data, project_id: projectId, created_by: userId })

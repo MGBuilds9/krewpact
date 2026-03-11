@@ -6,10 +6,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET, POST } from '@/app/api/contracts/route';
 import { GET as GET_ID, PATCH } from '@/app/api/contracts/[id]/route';
 import {
@@ -21,7 +21,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function makeContext(id: string) {
   return { params: Promise.resolve({ id }) };
@@ -51,9 +51,10 @@ describe('GET /api/contracts', () => {
   it('returns paginated contract list', async () => {
     mockClerkAuth(mockAuth);
     const contracts = [sampleContract, { ...sampleContract, id: 'ct-2' }];
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { contract_terms: { data: contracts, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { contract_terms: { data: contracts, error: null } } }),
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/contracts'));
     expect(res.status).toBe(200);
@@ -68,7 +69,7 @@ describe('GET /api/contracts', () => {
     const client = mockSupabaseClient({
       tables: { contract_terms: { data: [sampleContract], error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(
       makeRequest('/api/contracts?proposal_id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'),
@@ -79,9 +80,10 @@ describe('GET /api/contracts', () => {
 
   it('filters by contract_status', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { contract_terms: { data: [], error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { contract_terms: { data: [], error: null } } }),
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/contracts?contract_status=signed'));
     expect(res.status).toBe(200);
@@ -89,11 +91,12 @@ describe('GET /api/contracts', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { contract_terms: { data: null, error: { message: 'DB down' } } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/contracts'));
     expect(res.status).toBe(500);
@@ -112,9 +115,12 @@ describe('POST /api/contracts', () => {
 
   it('creates a contract', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { contract_terms: { data: sampleContract, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
+        tables: { contract_terms: { data: sampleContract, error: null } },
+      }),
+      error: null,
+    });
 
     const res = await POST(
       makeJsonRequest('/api/contracts', {
@@ -152,9 +158,12 @@ describe('GET /api/contracts/[id]', () => {
 
   it('returns contract by id', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { contract_terms: { data: sampleContract, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
+        tables: { contract_terms: { data: sampleContract, error: null } },
+      }),
+      error: null,
+    });
 
     const res = await GET_ID(makeRequest('/api/contracts/ct-1'), makeContext('ct-1'));
     expect(res.status).toBe(200);
@@ -165,11 +174,14 @@ describe('GET /api/contracts/[id]', () => {
 
   it('returns 404 when not found', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
-        tables: { contract_terms: { data: null, error: { message: 'Not found', code: 'PGRST116' } } },
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
+        tables: {
+          contract_terms: { data: null, error: { message: 'Not found', code: 'PGRST116' } },
+        },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET_ID(makeRequest('/api/contracts/missing'), makeContext('missing'));
     expect(res.status).toBe(404);
@@ -192,9 +204,10 @@ describe('PATCH /api/contracts/[id]', () => {
   it('updates contract fields', async () => {
     mockClerkAuth(mockAuth);
     const updated = { ...sampleContract, contract_status: 'signed' };
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { contract_terms: { data: updated, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { contract_terms: { data: updated, error: null } } }),
+      error: null,
+    });
 
     const res = await PATCH(
       makeJsonRequest('/api/contracts/ct-1', { contract_status: 'signed' }, 'PATCH'),
@@ -218,11 +231,14 @@ describe('PATCH /api/contracts/[id]', () => {
 
   it('returns 404 when contract not found', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
-        tables: { contract_terms: { data: null, error: { message: 'Not found', code: 'PGRST116' } } },
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
+        tables: {
+          contract_terms: { data: null, error: { message: 'Not found', code: 'PGRST116' } },
+        },
       }),
-    );
+      error: null,
+    });
 
     const res = await PATCH(
       makeJsonRequest('/api/contracts/missing', { contract_status: 'signed' }, 'PATCH'),

@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import {
@@ -28,9 +28,16 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   if (!rl.success) return rateLimitResponse(rl);
 
   const { id } = await params;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
-  const { data, error } = await supabase.from('crm_saved_views').select('id, name, entity_type, filters, sort_by, sort_dir, columns, is_default, created_by, created_at, updated_at').eq('id', id).single();
+  const { data, error } = await supabase
+    .from('crm_saved_views')
+    .select(
+      'id, name, entity_type, filters, sort_by, sort_dir, columns, is_default, created_by, created_at, updated_at',
+    )
+    .eq('id', id)
+    .single();
 
   if (error) return errorResponse(dbError(error.message));
 
@@ -53,7 +60,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const parsed = savedViewUpdateSchema.safeParse(body);
   if (!parsed.success) return errorResponse(validationError(parsed.error.flatten()));
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
 
   // If setting as default, unset others first
   if (parsed.data.is_default) {
@@ -90,7 +99,8 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   if (!userId) return errorResponse(UNAUTHORIZED);
 
   const { id } = await params;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   const { error } = await supabase.from('crm_saved_views').delete().eq('id', id);
 

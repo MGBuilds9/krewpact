@@ -15,7 +15,12 @@ vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 
 const mockFrom = vi.fn();
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn().mockResolvedValue({ from: (...args: unknown[]) => mockFrom(...args) }),
+  createUserClientSafe: vi
+    .fn()
+    .mockResolvedValue({
+      client: { from: (...args: unknown[]) => mockFrom(...args) },
+      error: null,
+    }),
 }));
 
 import { auth } from '@clerk/nextjs/server';
@@ -46,10 +51,9 @@ describe('GET /api/projects/[id]/change-orders', () => {
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
     const { GET } = await import('@/app/api/projects/[id]/change-orders/route');
-    const res = await GET(
-      makeRequest(`/api/projects/${PROJECT_ID}/change-orders`),
-      { params: Promise.resolve({ id: PROJECT_ID }) },
-    );
+    const res = await GET(makeRequest(`/api/projects/${PROJECT_ID}/change-orders`), {
+      params: Promise.resolve({ id: PROJECT_ID }),
+    });
     expect(res.status).toBe(401);
   });
 
@@ -61,10 +65,9 @@ describe('GET /api/projects/[id]/change-orders', () => {
     mockFrom.mockReturnValue(paginatedChain(cos, 1));
 
     const { GET } = await import('@/app/api/projects/[id]/change-orders/route');
-    const res = await GET(
-      makeRequest(`/api/projects/${PROJECT_ID}/change-orders`),
-      { params: Promise.resolve({ id: PROJECT_ID }) },
-    );
+    const res = await GET(makeRequest(`/api/projects/${PROJECT_ID}/change-orders`), {
+      params: Promise.resolve({ id: PROJECT_ID }),
+    });
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.data).toHaveLength(1);
@@ -88,7 +91,12 @@ describe('POST /api/projects/[id]/change-orders', () => {
 
   it('creates change order with draft status and project_id', async () => {
     mockClerkAuth(mockAuth);
-    const created = { id: 'co-new', title: 'Extra Plumbing', status: 'draft', project_id: PROJECT_ID };
+    const created = {
+      id: 'co-new',
+      title: 'Extra Plumbing',
+      status: 'draft',
+      project_id: PROJECT_ID,
+    };
     mockFrom.mockReturnValue(paginatedChain([created], 1));
 
     const { POST } = await import('@/app/api/projects/[id]/change-orders/route');
@@ -113,10 +121,9 @@ describe('GET /api/projects/[id]/rfis', () => {
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
     const { GET } = await import('@/app/api/projects/[id]/rfis/route');
-    const res = await GET(
-      makeRequest(`/api/projects/${PROJECT_ID}/rfis`),
-      { params: Promise.resolve({ id: PROJECT_ID }) },
-    );
+    const res = await GET(makeRequest(`/api/projects/${PROJECT_ID}/rfis`), {
+      params: Promise.resolve({ id: PROJECT_ID }),
+    });
     expect(res.status).toBe(401);
   });
 
@@ -128,10 +135,9 @@ describe('GET /api/projects/[id]/rfis', () => {
     mockFrom.mockReturnValue(paginatedChain(rfis, 1));
 
     const { GET } = await import('@/app/api/projects/[id]/rfis/route');
-    const res = await GET(
-      makeRequest(`/api/projects/${PROJECT_ID}/rfis`),
-      { params: Promise.resolve({ id: PROJECT_ID }) },
-    );
+    const res = await GET(makeRequest(`/api/projects/${PROJECT_ID}/rfis`), {
+      params: Promise.resolve({ id: PROJECT_ID }),
+    });
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.data).toHaveLength(1);
@@ -168,10 +174,9 @@ describe('GET /api/projects/[id]/submittals', () => {
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
     const { GET } = await import('@/app/api/projects/[id]/submittals/route');
-    const res = await GET(
-      makeRequest(`/api/projects/${PROJECT_ID}/submittals`),
-      { params: Promise.resolve({ id: PROJECT_ID }) },
-    );
+    const res = await GET(makeRequest(`/api/projects/${PROJECT_ID}/submittals`), {
+      params: Promise.resolve({ id: PROJECT_ID }),
+    });
     expect(res.status).toBe(401);
   });
 
@@ -183,10 +188,9 @@ describe('GET /api/projects/[id]/submittals', () => {
     mockFrom.mockReturnValue(paginatedChain(submittals, 1));
 
     const { GET } = await import('@/app/api/projects/[id]/submittals/route');
-    const res = await GET(
-      makeRequest(`/api/projects/${PROJECT_ID}/submittals`),
-      { params: Promise.resolve({ id: PROJECT_ID }) },
-    );
+    const res = await GET(makeRequest(`/api/projects/${PROJECT_ID}/submittals`), {
+      params: Promise.resolve({ id: PROJECT_ID }),
+    });
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.data).toHaveLength(1);
@@ -199,7 +203,12 @@ describe('POST /api/projects/[id]/submittals', () => {
 
   it('creates submittal with draft status', async () => {
     mockClerkAuth(mockAuth);
-    const created = { id: 'sub-new', title: 'Window specs', status: 'draft', project_id: PROJECT_ID };
+    const created = {
+      id: 'sub-new',
+      title: 'Window specs',
+      status: 'draft',
+      project_id: PROJECT_ID,
+    };
     mockFrom.mockReturnValue(paginatedChain([created], 1));
 
     const { POST } = await import('@/app/api/projects/[id]/submittals/route');

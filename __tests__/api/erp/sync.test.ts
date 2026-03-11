@@ -11,13 +11,15 @@ vi.mock('@clerk/nextjs/server', () => ({
 
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 // Mock ErpClient to disable mock mode
 vi.mock('@/lib/erp/client', () => ({
   ErpClient: class MockErpClient {
-    isMockMode() { return false; }
+    isMockMode() {
+      return false;
+    }
   },
 }));
 
@@ -30,7 +32,7 @@ vi.mock('@/lib/erp/sync-service', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { POST } from '@/app/api/erp/sync/route';
 import { GET as GET_JOB } from '@/app/api/erp/sync/[jobId]/route';
 import {
@@ -43,7 +45,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 const VALID_ENTITY_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 const VALID_JOB_ID = 'c2eebc99-9c0b-4ef8-bb6d-6bb9bd380a33';
@@ -163,7 +165,7 @@ describe('GET /api/erp/sync/[jobId]', () => {
         erp_sync_map: { data: syncMap, error: null },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET_JOB(
       makeRequest(`/api/erp/sync/${VALID_JOB_ID}`),
@@ -183,7 +185,7 @@ describe('GET /api/erp/sync/[jobId]', () => {
         erp_sync_jobs: { data: null, error: { message: 'Not found', code: 'PGRST116' } },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET_JOB(
       makeRequest(`/api/erp/sync/${VALID_JOB_ID}`),

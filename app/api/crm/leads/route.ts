@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { leadCreateSchema } from '@/lib/validators/crm';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
@@ -51,7 +51,8 @@ export async function GET(req: NextRequest) {
 
   const { division_id, status, assigned_to, search, limit, offset, sort_by, sort_dir } =
     parsed.data;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   let query = supabase
     .from('leads')
@@ -107,7 +108,9 @@ export async function POST(req: NextRequest) {
   const parsed = leadCreateSchema.safeParse(body);
   if (!parsed.success) return errorResponse(validationError(parsed.error.flatten()));
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
 
   // Auto-assign owner if not explicitly set
   let ownerId: string | undefined = parsed.data.assigned_to;

@@ -6,14 +6,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET, POST, DELETE } from '@/app/api/projects/[id]/tasks/[taskId]/dependencies/route';
 import {
   mockSupabaseClient,
@@ -24,7 +24,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 // Valid UUIDs required because taskDependencyCreateSchema validates task_id as UUID
 const TASK_UUID = 'a1b2c3d4-e5f6-4890-abcd-ef1234567890';
@@ -57,11 +57,12 @@ describe('GET /api/projects/[id]/tasks/[taskId]/dependencies', () => {
 
   it('returns dependencies for task', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { task_dependencies: { data: [sampleDep], error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(
       makeRequest(`/api/projects/proj-1/tasks/${TASK_UUID}/dependencies`),
@@ -75,11 +76,12 @@ describe('GET /api/projects/[id]/tasks/[taskId]/dependencies', () => {
 
   it('returns empty array when no dependencies', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { task_dependencies: { data: [], error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(
       makeRequest(`/api/projects/proj-1/tasks/${TASK_UUID}/dependencies`),
@@ -92,11 +94,12 @@ describe('GET /api/projects/[id]/tasks/[taskId]/dependencies', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { task_dependencies: { data: null, error: { message: 'DB error' } } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(
       makeRequest(`/api/projects/proj-1/tasks/${TASK_UUID}/dependencies`),
@@ -123,11 +126,12 @@ describe('POST /api/projects/[id]/tasks/[taskId]/dependencies', () => {
 
   it('creates a dependency', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { task_dependencies: { data: sampleDep, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST(
       makeJsonRequest(`/api/projects/proj-1/tasks/${TASK_UUID}/dependencies`, {
@@ -165,11 +169,12 @@ describe('POST /api/projects/[id]/tasks/[taskId]/dependencies', () => {
 
   it('returns 500 on DB insert error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { task_dependencies: { data: null, error: { message: 'Insert failed' } } },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST(
       makeJsonRequest(`/api/projects/proj-1/tasks/${TASK_UUID}/dependencies`, {
@@ -198,11 +203,12 @@ describe('DELETE /api/projects/[id]/tasks/[taskId]/dependencies', () => {
 
   it('deletes a dependency', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { task_dependencies: { data: null, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await DELETE(
       makeRequest(`/api/projects/proj-1/tasks/${TASK_UUID}/dependencies?dependency_id=dep-1`, {
@@ -228,11 +234,12 @@ describe('DELETE /api/projects/[id]/tasks/[taskId]/dependencies', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { task_dependencies: { data: null, error: { message: 'DB error' } } },
       }),
-    );
+      error: null,
+    });
 
     const res = await DELETE(
       makeRequest(`/api/projects/proj-1/tasks/${TASK_UUID}/dependencies?dependency_id=dep-1`, {

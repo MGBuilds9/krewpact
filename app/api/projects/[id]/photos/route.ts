@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { NextRequest, NextResponse } from 'next/server';
 import { photoAssetCreateSchema } from '@/lib/validators/documents';
@@ -19,10 +19,14 @@ export async function GET(req: NextRequest, context: RouteContext) {
   const category = searchParams.get('category');
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   let query = supabase
     .from('photo_assets')
-    .select('id, project_id, file_id, category, taken_at, location_point, created_by, created_at', { count: 'exact' })
+    .select('id, project_id, file_id, category, taken_at, location_point, created_by, created_at', {
+      count: 'exact',
+    })
     .eq('project_id', id)
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
@@ -53,7 +57,9 @@ export async function POST(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('photo_assets')
     .insert({ ...parsed.data, project_id: id, created_by: userId })

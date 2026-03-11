@@ -2,7 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { sendEmailSchema } from '@/lib/validators/email';
 import { getMicrosoftToken, graphFetch, buildGraphUrl } from '@/lib/microsoft/graph';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import type { SendMessagePayload } from '@/lib/microsoft/types';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
@@ -64,7 +64,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   if (leadId || contactId || accountId) {
     const recipients = to.map((r) => r.address).join(', ');
-    const supabase = await createUserClient();
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
     await supabase.from('activities').insert({
       activity_type: 'email',

@@ -5,11 +5,11 @@ vi.mock('@clerk/nextjs/server', () => ({
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 import {
   GET as getDeps,
@@ -40,7 +40,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 const TASK_ID = TEST_IDS.TASK_ID ?? 'task-uuid-001';
 const PROJECT_ID = TEST_IDS.PROJECT_ID ?? 'proj-uuid-001';
@@ -92,9 +92,10 @@ describe('GET /api/tasks/[id]/dependencies', () => {
         created_at: '2026-01-01',
       },
     ];
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { task_dependencies: { data: deps, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { task_dependencies: { data: deps, error: null } } }),
+      error: null,
+    });
     const res = await getDeps(makeRequest('/api/tasks/x/dependencies'), taskCtx());
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -102,11 +103,12 @@ describe('GET /api/tasks/[id]/dependencies', () => {
   });
 
   it('returns 500 on DB error', async () => {
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { task_dependencies: { data: null, error: { message: 'DB error', code: '500' } } },
       }),
-    );
+      error: null,
+    });
     const res = await getDeps(makeRequest('/api/tasks/x/dependencies'), taskCtx());
     expect(res.status).toBe(500);
   });
@@ -138,9 +140,10 @@ describe('POST /api/tasks/[id]/dependencies', () => {
       dependency_type: 'finish_to_start',
       created_at: '2026-01-01',
     };
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { task_dependencies: { data: created, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { task_dependencies: { data: created, error: null } } }),
+      error: null,
+    });
     const res = await postDep(
       makeJsonRequest('/api/tasks/x/dependencies', { depends_on_task_id: DEP_UUID_2 }),
       taskCtx(DEP_UUID_1),
@@ -156,9 +159,10 @@ describe('DELETE /api/tasks/[id]/dependencies', () => {
   });
 
   it('returns 204 on successful delete', async () => {
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ defaultResponse: { data: null, error: null } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ defaultResponse: { data: null, error: null } }),
+      error: null,
+    });
     const res = await deleteDep(
       makeRequest(`/api/tasks/x/dependencies?dependency_id=${DEP_UUID_1}`),
       taskCtx(),
@@ -191,9 +195,12 @@ describe('GET /api/projects/[id]/diary', () => {
         updated_at: '2026-02-26',
       },
     ];
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { site_diary_entries: { data: entries, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
+        tables: { site_diary_entries: { data: entries, error: null } },
+      }),
+      error: null,
+    });
     const res = await getDiary(makeRequest('/api/projects/x/diary'), projectCtx());
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -223,9 +230,12 @@ describe('POST /api/projects/[id]/diary', () => {
       created_at: '2026-02-26',
       updated_at: '2026-02-26',
     };
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { site_diary_entries: { data: created, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
+        tables: { site_diary_entries: { data: created, error: null } },
+      }),
+      error: null,
+    });
     const res = await postDiary(
       makeJsonRequest('/api/projects/x/diary', {
         entry_at: '2026-02-26',
@@ -258,9 +268,12 @@ describe('PATCH /api/projects/[id]/diary/[entryId]', () => {
       created_at: '2026-02-26',
       updated_at: '2026-02-26',
     };
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { site_diary_entries: { data: updated, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
+        tables: { site_diary_entries: { data: updated, error: null } },
+      }),
+      error: null,
+    });
     const res = await patchDiaryEntry(
       makeJsonRequest('/api/projects/x/diary/e', { entry_text: 'Updated' }, 'PATCH'),
       projectEntryCtx(),
@@ -271,9 +284,10 @@ describe('PATCH /api/projects/[id]/diary/[entryId]', () => {
 
 describe('DELETE /api/projects/[id]/diary/[entryId]', () => {
   it('returns 204 on success', async () => {
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ defaultResponse: { data: null, error: null } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ defaultResponse: { data: null, error: null } }),
+      error: null,
+    });
     const res = await deleteDiaryEntry(makeRequest('/api/projects/x/diary/e'), projectEntryCtx());
     expect(res.status).toBe(204);
   });
@@ -307,9 +321,10 @@ describe('GET /api/projects/[id]/daily-logs', () => {
         updated_at: '2026-02-26',
       },
     ];
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { project_daily_logs: { data: logs, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { project_daily_logs: { data: logs, error: null } } }),
+      error: null,
+    });
     const res = await getDailyLogs(makeRequest('/api/projects/x/daily-logs'), projectCtx());
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -338,9 +353,12 @@ describe('POST /api/projects/[id]/daily-logs', () => {
       created_at: '2026-02-26',
       updated_at: '2026-02-26',
     };
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { project_daily_logs: { data: created, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
+        tables: { project_daily_logs: { data: created, error: null } },
+      }),
+      error: null,
+    });
     const res = await postDailyLog(
       makeJsonRequest('/api/projects/x/daily-logs', { log_date: '2026-02-26', crew_count: 8 }),
       projectCtx(),
@@ -373,9 +391,12 @@ describe('PATCH /api/projects/[id]/daily-logs/[logId]', () => {
       created_at: '2026-02-26',
       updated_at: '2026-02-26',
     };
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { project_daily_logs: { data: updated, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
+        tables: { project_daily_logs: { data: updated, error: null } },
+      }),
+      error: null,
+    });
     const res = await patchDailyLog(
       makeJsonRequest('/api/projects/x/daily-logs/l', { crew_count: 10 }, 'PATCH'),
       projectLogCtx(),
@@ -406,9 +427,10 @@ describe('GET /api/tasks/[id]/comments', () => {
         updated_at: '2026-01-01',
       },
     ];
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { task_comments: { data: comments, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { task_comments: { data: comments, error: null } } }),
+      error: null,
+    });
     const res = await getComments(makeRequest('/api/tasks/x/comments'), taskCtx());
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -434,9 +456,10 @@ describe('POST /api/tasks/[id]/comments', () => {
       created_at: '2026-01-01',
       updated_at: '2026-01-01',
     };
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { task_comments: { data: created, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { task_comments: { data: created, error: null } } }),
+      error: null,
+    });
     const res = await postComment(
       makeJsonRequest('/api/tasks/x/comments', { comment_text: 'LGTM' }),
       taskCtx(),
@@ -469,9 +492,12 @@ describe('GET /api/projects/[id]/meetings', () => {
         updated_at: '2026-02-26',
       },
     ];
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { site_diary_entries: { data: meetings, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
+        tables: { site_diary_entries: { data: meetings, error: null } },
+      }),
+      error: null,
+    });
     const res = await getMeetings(makeRequest('/api/projects/x/meetings'), projectCtx());
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -512,9 +538,12 @@ describe('POST /api/projects/[id]/meetings', () => {
       created_at: '2026-02-26',
       updated_at: '2026-02-26',
     };
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { site_diary_entries: { data: created, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
+        tables: { site_diary_entries: { data: created, error: null } },
+      }),
+      error: null,
+    });
     const res = await postMeeting(
       makeJsonRequest('/api/projects/x/meetings', {
         meeting_date: '2026-02-26',

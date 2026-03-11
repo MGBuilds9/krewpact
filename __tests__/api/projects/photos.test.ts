@@ -7,14 +7,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET as GET_LIST, POST as POST_PHOTO } from '@/app/api/projects/[id]/photos/route';
 import { GET as GET_DETAIL } from '@/app/api/projects/[id]/photos/[photoId]/route';
 import {
@@ -31,7 +31,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 const PROJECT_ID = TEST_IDS.PROJECT_ID;
 const PHOTO_ID = '00000000-0000-4000-a000-000000000401';
 
@@ -73,11 +73,12 @@ describe('GET /api/projects/[id]/photos', () => {
 
   it('returns paginated photos', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { photo_assets: { data: [samplePhoto], error: null, count: 1 } },
       }),
-    );
+      error: null,
+    });
     const res = await GET_LIST(makeRequest('/api/projects/p/photos'), listCtx());
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -86,11 +87,12 @@ describe('GET /api/projects/[id]/photos', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { photo_assets: { data: null, error: { message: 'err' }, count: null } },
       }),
-    );
+      error: null,
+    });
     const res = await GET_LIST(makeRequest('/api/projects/p/photos'), listCtx());
     expect(res.status).toBe(500);
   });
@@ -116,9 +118,10 @@ describe('POST /api/projects/[id]/photos', () => {
 
   it('returns 201 on valid creation', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { photo_assets: { data: samplePhoto, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { photo_assets: { data: samplePhoto, error: null } } }),
+      error: null,
+    });
     const res = await POST_PHOTO(
       makeJsonRequest('/api/projects/p/photos', {
         file_id: samplePhoto.file_id,
@@ -142,9 +145,10 @@ describe('GET /api/projects/[id]/photos/[photoId]', () => {
 
   it('returns photo on success', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { photo_assets: { data: samplePhoto, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { photo_assets: { data: samplePhoto, error: null } } }),
+      error: null,
+    });
     const res = await GET_DETAIL(makeRequest('/api/x'), photoCtx());
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -153,11 +157,12 @@ describe('GET /api/projects/[id]/photos/[photoId]', () => {
 
   it('returns 404 when not found', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { photo_assets: { data: null, error: { message: 'not found', code: 'PGRST116' } } },
       }),
-    );
+      error: null,
+    });
     const res = await GET_DETAIL(makeRequest('/api/x'), photoCtx());
     expect(res.status).toBe(404);
   });
@@ -175,11 +180,12 @@ describe('GET /api/projects/[id]/photos/[photoId]/annotations', () => {
 
   it('returns paginated annotations', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { photo_annotations: { data: [sampleAnnotation], error: null, count: 1 } },
       }),
-    );
+      error: null,
+    });
     const res = await GET_ANNOTATIONS(makeRequest('/api/x'), photoCtx());
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -204,11 +210,12 @@ describe('POST /api/projects/[id]/photos/[photoId]/annotations', () => {
 
   it('returns 201 on valid creation', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { photo_annotations: { data: sampleAnnotation, error: null } },
       }),
-    );
+      error: null,
+    });
     const res = await POST_ANNOTATION(
       makeJsonRequest('/api/x', { annotation_json: { type: 'pin', x: 100, y: 200 } }),
       photoCtx(),

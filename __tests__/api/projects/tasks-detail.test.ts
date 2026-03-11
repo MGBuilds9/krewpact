@@ -7,14 +7,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET, PATCH, DELETE } from '@/app/api/projects/[id]/tasks/[taskId]/route';
 import {
   mockSupabaseClient,
@@ -25,7 +25,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function makeContext(id: string, taskId: string) {
   return { params: Promise.resolve({ id, taskId }) };
@@ -65,9 +65,10 @@ describe('GET /api/projects/[id]/tasks/[taskId]', () => {
 
   it('returns task by id', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { tasks: { data: sampleTask, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { tasks: { data: sampleTask, error: null } } }),
+      error: null,
+    });
 
     const res = await GET(
       makeRequest('/api/projects/proj-1/tasks/task-1'),
@@ -80,11 +81,12 @@ describe('GET /api/projects/[id]/tasks/[taskId]', () => {
 
   it('returns 404 when not found', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { tasks: { data: null, error: { message: 'Not found', code: 'PGRST116' } } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(
       makeRequest('/api/projects/proj-1/tasks/missing'),
@@ -95,11 +97,12 @@ describe('GET /api/projects/[id]/tasks/[taskId]', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { tasks: { data: null, error: { message: 'DB error', code: 'OTHER' } } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(
       makeRequest('/api/projects/proj-1/tasks/task-1'),
@@ -125,9 +128,10 @@ describe('PATCH /api/projects/[id]/tasks/[taskId]', () => {
   it('updates task', async () => {
     mockClerkAuth(mockAuth);
     const updated = { ...sampleTask, status: 'in_progress' };
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { tasks: { data: updated, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { tasks: { data: updated, error: null } } }),
+      error: null,
+    });
 
     const res = await PATCH(
       makeJsonRequest('/api/projects/proj-1/tasks/task-1', { status: 'in_progress' }, 'PATCH'),
@@ -143,7 +147,7 @@ describe('PATCH /api/projects/[id]/tasks/[taskId]', () => {
     const client = mockSupabaseClient({
       tables: { tasks: { data: { ...sampleTask, status: 'done' }, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await PATCH(
       makeJsonRequest('/api/projects/proj-1/tasks/task-1', { status: 'done' }, 'PATCH'),
@@ -157,9 +161,10 @@ describe('PATCH /api/projects/[id]/tasks/[taskId]', () => {
   it('clears completed_at when status changes from done to another', async () => {
     mockClerkAuth(mockAuth);
     const updated = { ...sampleTask, status: 'in_progress', completed_at: null };
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { tasks: { data: updated, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { tasks: { data: updated, error: null } } }),
+      error: null,
+    });
 
     const res = await PATCH(
       makeJsonRequest('/api/projects/proj-1/tasks/task-1', { status: 'in_progress' }, 'PATCH'),
@@ -185,11 +190,12 @@ describe('PATCH /api/projects/[id]/tasks/[taskId]', () => {
 
   it('returns 404 when not found', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { tasks: { data: null, error: { message: 'Not found', code: 'PGRST116' } } },
       }),
-    );
+      error: null,
+    });
 
     const res = await PATCH(
       makeJsonRequest('/api/projects/proj-1/tasks/missing', { title: 'Updated' }, 'PATCH'),
@@ -214,9 +220,10 @@ describe('DELETE /api/projects/[id]/tasks/[taskId]', () => {
 
   it('deletes task', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { tasks: { data: null, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { tasks: { data: null, error: null } } }),
+      error: null,
+    });
 
     const res = await DELETE(
       makeRequest('/api/projects/proj-1/tasks/task-1', { method: 'DELETE' }),
@@ -229,11 +236,12 @@ describe('DELETE /api/projects/[id]/tasks/[taskId]', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { tasks: { data: null, error: { message: 'FK constraint' } } },
       }),
-    );
+      error: null,
+    });
 
     const res = await DELETE(
       makeRequest('/api/projects/proj-1/tasks/task-1', { method: 'DELETE' }),

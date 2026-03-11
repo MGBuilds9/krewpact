@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { estimateUpdateSchema } from '@/lib/validators/estimating';
 import { validateStatusTransition } from '@/lib/estimating/estimate-status';
 import type { EstimateStatus } from '@/lib/estimating/estimate-status';
@@ -20,7 +20,8 @@ export async function GET(req: NextRequest, context: RouteContext) {
   if (!rl.success) return rateLimitResponse(rl);
 
   const { id } = await context.params;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('estimates')
     .select(
@@ -59,7 +60,9 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
 
   // If status is being changed, validate the transition
   if (statusField) {
@@ -119,7 +122,8 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
   }
 
   const { id } = await context.params;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
   const { error } = await supabase.from('estimates').delete().eq('id', id);
 
   if (error) {

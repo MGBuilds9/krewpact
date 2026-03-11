@@ -37,5 +37,6 @@ describe('Security headers', () => {
     expect(csp).toContain('https://clerk.mdmgroupinc.ca');
     expect(csp).toContain('https://clerk.hub.mdmgroupinc.ca');
     expect(csp).toContain('wss://*.supabase.co');
+    expect(csp).toContain("worker-src 'self' blob:");
   });
 });

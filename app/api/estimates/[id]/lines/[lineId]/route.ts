@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe, createUserClient } from '@/lib/supabase/server';
 import { estimateLineUpdateSchema } from '@/lib/validators/estimating';
 import { calculateLineTotal, calculateEstimateTotals } from '@/lib/estimating/calculations';
 import { NextRequest, NextResponse } from 'next/server';
@@ -62,7 +62,9 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
 
   const updateData: Record<string, unknown> = { ...parsed.data };
 
@@ -115,7 +117,8 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
   }
 
   const { id, lineId } = await context.params;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   const { error } = await supabase.from('estimate_lines').delete().eq('id', lineId);
 

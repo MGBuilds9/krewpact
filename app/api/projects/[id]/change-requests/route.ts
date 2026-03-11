@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { NextRequest, NextResponse } from 'next/server';
 import { changeRequestCreateSchema } from '@/lib/validators/field-ops';
@@ -19,10 +19,15 @@ export async function GET(req: NextRequest, context: RouteContext) {
   const state = searchParams.get('state');
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   let query = supabase
     .from('change_requests')
-    .select('id, project_id, request_number, title, description, state, requested_by, estimated_cost_impact, estimated_days_impact, created_at, updated_at', { count: 'exact' })
+    .select(
+      'id, project_id, request_number, title, description, state, requested_by, estimated_cost_impact, estimated_days_impact, created_at, updated_at',
+      { count: 'exact' },
+    )
     .eq('project_id', id)
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
@@ -53,7 +58,9 @@ export async function POST(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('change_requests')
     .insert({ ...parsed.data, project_id: id, requested_by: userId, state: 'draft' })

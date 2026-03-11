@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { deficiencyItemUpdateSchema } from '@/lib/validators/closeout';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
@@ -15,10 +15,13 @@ export async function GET(
   if (!rl.success) return rateLimitResponse(rl);
 
   const { id: projectId, defId } = await params;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('deficiency_items')
-    .select('id, project_id, closeout_package_id, title, details, status, severity, assigned_to, due_at, closed_at, created_at, updated_at')
+    .select(
+      'id, project_id, closeout_package_id, title, details, status, severity, assigned_to, due_at, closed_at, created_at, updated_at',
+    )
     .eq('id', defId)
     .eq('project_id', projectId)
     .single();
@@ -45,7 +48,9 @@ export async function PATCH(
   const parsed = deficiencyItemUpdateSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('deficiency_items')
     .update({ ...parsed.data, updated_at: new Date().toISOString() })

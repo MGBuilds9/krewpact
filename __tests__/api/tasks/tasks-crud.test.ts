@@ -5,17 +5,13 @@ vi.mock('@clerk/nextjs/server', () => ({
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET, POST } from '@/app/api/tasks/route';
-import {
-  GET as GET_BY_ID,
-  PATCH,
-  DELETE,
-} from '@/app/api/tasks/[id]/route';
+import { GET as GET_BY_ID, PATCH, DELETE } from '@/app/api/tasks/[id]/route';
 import {
   mockSupabaseClient,
   mockClerkAuth,
@@ -27,7 +23,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 const TASK_ID = TEST_IDS.TASK_ID;
 const PROJECT_ID = TEST_IDS.PROJECT_ID;
@@ -54,9 +50,10 @@ describe('GET /api/tasks', () => {
 
   it('returns tasks when authenticated', async () => {
     const tasks = [makeTask(), makeTask({ title: 'Second task' })];
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { tasks: { data: tasks, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { tasks: { data: tasks, error: null } } }),
+      error: null,
+    });
     const res = await GET(makeRequest('/api/tasks'));
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -65,16 +62,17 @@ describe('GET /api/tasks', () => {
 
   it('filters by project_id', async () => {
     const client = mockSupabaseClient({ tables: { tasks: { data: [], error: null } } });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
     const res = await GET(makeRequest(`/api/tasks?project_id=${PROJECT_ID}`));
     expect(res.status).toBe(200);
     expect(client.from).toHaveBeenCalledWith('tasks');
   });
 
   it('filters by status', async () => {
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { tasks: { data: [], error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { tasks: { data: [], error: null } } }),
+      error: null,
+    });
     const res = await GET(makeRequest('/api/tasks?status=in_progress'));
     expect(res.status).toBe(200);
   });
@@ -85,11 +83,12 @@ describe('GET /api/tasks', () => {
   });
 
   it('returns 500 on DB error', async () => {
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { tasks: { data: null, error: { message: 'DB fail', code: 'PGRST000' } } },
       }),
-    );
+      error: null,
+    });
     const res = await GET(makeRequest('/api/tasks'));
     expect(res.status).toBe(500);
   });
@@ -109,24 +108,21 @@ describe('POST /api/tasks', () => {
   });
 
   it('returns 400 for missing title', async () => {
-    const res = await POST(
-      makeJsonRequest('/api/tasks', { project_id: PROJECT_ID }),
-    );
+    const res = await POST(makeJsonRequest('/api/tasks', { project_id: PROJECT_ID }));
     expect(res.status).toBe(400);
   });
 
   it('returns 400 for missing project_id', async () => {
-    const res = await POST(
-      makeJsonRequest('/api/tasks', { title: 'Test' }),
-    );
+    const res = await POST(makeJsonRequest('/api/tasks', { title: 'Test' }));
     expect(res.status).toBe(400);
   });
 
   it('creates task with valid data', async () => {
     const created = makeTask({ title: 'New Task' });
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { tasks: { data: created, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { tasks: { data: created, error: null } } }),
+      error: null,
+    });
     const res = await POST(
       makeJsonRequest('/api/tasks', { project_id: PROJECT_ID, title: 'New Task' }),
     );
@@ -137,9 +133,10 @@ describe('POST /api/tasks', () => {
 
   it('accepts optional fields (priority, milestone_id, due_at)', async () => {
     const created = makeTask({ title: 'Full Task', priority: 'high' });
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { tasks: { data: created, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { tasks: { data: created, error: null } } }),
+      error: null,
+    });
     const res = await POST(
       makeJsonRequest('/api/tasks', {
         project_id: PROJECT_ID,
@@ -175,9 +172,10 @@ describe('GET /api/tasks/[id]', () => {
 
   it('returns task by ID', async () => {
     const task = makeTask();
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { tasks: { data: task, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { tasks: { data: task, error: null } } }),
+      error: null,
+    });
     const res = await GET_BY_ID(makeRequest(`/api/tasks/${TASK_ID}`), taskCtx());
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -185,11 +183,12 @@ describe('GET /api/tasks/[id]', () => {
   });
 
   it('returns 404 for non-existent task', async () => {
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { tasks: { data: null, error: { message: 'Not found', code: 'PGRST116' } } },
       }),
-    );
+      error: null,
+    });
     const res = await GET_BY_ID(makeRequest(`/api/tasks/${TASK_ID}`), taskCtx());
     expect(res.status).toBe(404);
   });
@@ -211,9 +210,10 @@ describe('PATCH /api/tasks/[id]', () => {
 
   it('updates task status', async () => {
     const updated = makeTask({ status: 'in_progress' });
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { tasks: { data: updated, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { tasks: { data: updated, error: null } } }),
+      error: null,
+    });
     const res = await PATCH(
       makeJsonRequest(`/api/tasks/${TASK_ID}`, { status: 'in_progress' }, 'PATCH'),
       taskCtx(),
@@ -225,9 +225,10 @@ describe('PATCH /api/tasks/[id]', () => {
 
   it('updates task to blocked status', async () => {
     const updated = makeTask({ status: 'blocked' });
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { tasks: { data: updated, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { tasks: { data: updated, error: null } } }),
+      error: null,
+    });
     const res = await PATCH(
       makeJsonRequest(`/api/tasks/${TASK_ID}`, { status: 'blocked' }, 'PATCH'),
       taskCtx(),
@@ -244,11 +245,12 @@ describe('PATCH /api/tasks/[id]', () => {
   });
 
   it('returns 404 for non-existent task', async () => {
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { tasks: { data: null, error: { message: 'Not found', code: 'PGRST116' } } },
       }),
-    );
+      error: null,
+    });
     const res = await PATCH(
       makeJsonRequest(`/api/tasks/${TASK_ID}`, { title: 'Updated' }, 'PATCH'),
       taskCtx(),
@@ -279,9 +281,10 @@ describe('DELETE /api/tasks/[id]', () => {
   });
 
   it('deletes task successfully', async () => {
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { tasks: { data: null, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { tasks: { data: null, error: null } } }),
+      error: null,
+    });
     const res = await DELETE(makeRequest(`/api/tasks/${TASK_ID}`), taskCtx());
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -289,11 +292,12 @@ describe('DELETE /api/tasks/[id]', () => {
   });
 
   it('returns 500 on DB error', async () => {
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { tasks: { data: null, error: { message: 'FK violation', code: '23503' } } },
       }),
-    );
+      error: null,
+    });
     const res = await DELETE(makeRequest(`/api/tasks/${TASK_ID}`), taskCtx());
     expect(res.status).toBe(500);
   });

@@ -1,14 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET } from '@/app/api/crm/activities/timeline/route';
 import {
   mockSupabaseClient,
@@ -21,7 +21,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function makeOutreachEvent(overrides: Record<string, unknown> = {}) {
   return {
@@ -65,7 +65,7 @@ describe('GET /api/crm/activities/timeline', () => {
   it('returns 400 when no entity ID provided', async () => {
     mockClerkAuth(mockAuth);
     const client = mockSupabaseClient();
-    mockCreateUserClient.mockResolvedValue(client as never);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
 
     const req = makeRequest('/api/crm/activities/timeline');
     const res = await GET(req);
@@ -78,8 +78,14 @@ describe('GET /api/crm/activities/timeline', () => {
   it('returns merged timeline for lead_id', async () => {
     mockClerkAuth(mockAuth);
 
-    const activity = makeActivity({ lead_id: TEST_IDS.LEAD_ID, created_at: '2026-01-10T10:00:00Z' });
-    const outreach = makeOutreachEvent({ lead_id: TEST_IDS.LEAD_ID, occurred_at: '2026-01-12T10:00:00Z' });
+    const activity = makeActivity({
+      lead_id: TEST_IDS.LEAD_ID,
+      created_at: '2026-01-10T10:00:00Z',
+    });
+    const outreach = makeOutreachEvent({
+      lead_id: TEST_IDS.LEAD_ID,
+      occurred_at: '2026-01-12T10:00:00Z',
+    });
 
     const client = mockSupabaseClient({
       tables: {
@@ -87,7 +93,7 @@ describe('GET /api/crm/activities/timeline', () => {
         outreach_events: { data: [outreach], error: null },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client as never);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
 
     const req = makeRequest('/api/crm/activities/timeline?lead_id=' + TEST_IDS.LEAD_ID);
     const res = await GET(req);
@@ -109,7 +115,7 @@ describe('GET /api/crm/activities/timeline', () => {
         outreach_events: { data: [], error: null },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client as never);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
 
     const req = makeRequest('/api/crm/activities/timeline?lead_id=' + TEST_IDS.LEAD_ID);
     const res = await GET(req);
@@ -124,10 +130,26 @@ describe('GET /api/crm/activities/timeline', () => {
   it('merges activities and outreach events in chronological order', async () => {
     mockClerkAuth(mockAuth);
 
-    const a1 = makeActivity({ lead_id: TEST_IDS.LEAD_ID, created_at: '2026-01-01T08:00:00Z', title: 'First' });
-    const a2 = makeActivity({ lead_id: TEST_IDS.LEAD_ID, created_at: '2026-01-03T08:00:00Z', title: 'Third' });
-    const o1 = makeOutreachEvent({ lead_id: TEST_IDS.LEAD_ID, occurred_at: '2026-01-02T08:00:00Z', subject: 'Second' });
-    const o2 = makeOutreachEvent({ lead_id: TEST_IDS.LEAD_ID, occurred_at: '2026-01-04T08:00:00Z', subject: 'Fourth' });
+    const a1 = makeActivity({
+      lead_id: TEST_IDS.LEAD_ID,
+      created_at: '2026-01-01T08:00:00Z',
+      title: 'First',
+    });
+    const a2 = makeActivity({
+      lead_id: TEST_IDS.LEAD_ID,
+      created_at: '2026-01-03T08:00:00Z',
+      title: 'Third',
+    });
+    const o1 = makeOutreachEvent({
+      lead_id: TEST_IDS.LEAD_ID,
+      occurred_at: '2026-01-02T08:00:00Z',
+      subject: 'Second',
+    });
+    const o2 = makeOutreachEvent({
+      lead_id: TEST_IDS.LEAD_ID,
+      occurred_at: '2026-01-04T08:00:00Z',
+      subject: 'Fourth',
+    });
 
     const client = mockSupabaseClient({
       tables: {
@@ -135,7 +157,7 @@ describe('GET /api/crm/activities/timeline', () => {
         outreach_events: { data: [o1, o2], error: null },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client as never);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
 
     const req = makeRequest('/api/crm/activities/timeline?lead_id=' + TEST_IDS.LEAD_ID);
     const res = await GET(req);
@@ -159,7 +181,7 @@ describe('GET /api/crm/activities/timeline', () => {
         outreach_events: { data: [], error: null },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client as never);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
 
     const req = makeRequest('/api/crm/activities/timeline?lead_id=' + TEST_IDS.LEAD_ID);
     const res = await GET(req);
@@ -178,7 +200,7 @@ describe('GET /api/crm/activities/timeline', () => {
         outreach_events: { data: null, error: { message: 'outreach query failed' } },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client as never);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
 
     const req = makeRequest('/api/crm/activities/timeline?lead_id=' + TEST_IDS.LEAD_ID);
     const res = await GET(req);
@@ -205,9 +227,11 @@ describe('GET /api/crm/activities/timeline', () => {
         outreach_events: { data: [], error: null },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client as never);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
 
-    const req = makeRequest('/api/crm/activities/timeline?lead_id=' + TEST_IDS.LEAD_ID + '&limit=2&offset=1');
+    const req = makeRequest(
+      '/api/crm/activities/timeline?lead_id=' + TEST_IDS.LEAD_ID + '&limit=2&offset=1',
+    );
     const res = await GET(req);
 
     expect(res.status).toBe(200);
@@ -234,9 +258,11 @@ describe('GET /api/crm/activities/timeline', () => {
         outreach_events: { data: [], error: null },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client as never);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
 
-    const req = makeRequest('/api/crm/activities/timeline?opportunity_id=' + TEST_IDS.OPPORTUNITY_ID);
+    const req = makeRequest(
+      '/api/crm/activities/timeline?opportunity_id=' + TEST_IDS.OPPORTUNITY_ID,
+    );
     const res = await GET(req);
 
     expect(res.status).toBe(200);
@@ -250,8 +276,14 @@ describe('GET /api/crm/activities/timeline', () => {
   it('returns correct source field (activity vs outreach)', async () => {
     mockClerkAuth(mockAuth);
 
-    const activity = makeActivity({ lead_id: TEST_IDS.LEAD_ID, created_at: '2026-01-10T10:00:00Z' });
-    const outreach = makeOutreachEvent({ lead_id: TEST_IDS.LEAD_ID, occurred_at: '2026-01-11T10:00:00Z' });
+    const activity = makeActivity({
+      lead_id: TEST_IDS.LEAD_ID,
+      created_at: '2026-01-10T10:00:00Z',
+    });
+    const outreach = makeOutreachEvent({
+      lead_id: TEST_IDS.LEAD_ID,
+      occurred_at: '2026-01-11T10:00:00Z',
+    });
 
     const client = mockSupabaseClient({
       tables: {
@@ -259,7 +291,7 @@ describe('GET /api/crm/activities/timeline', () => {
         outreach_events: { data: [outreach], error: null },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client as never);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
 
     const req = makeRequest('/api/crm/activities/timeline?lead_id=' + TEST_IDS.LEAD_ID);
     const res = await GET(req);

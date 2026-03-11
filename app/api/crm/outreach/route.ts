@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { outreachCreateSchema } from '@/lib/validators/crm';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
@@ -27,11 +27,15 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   const { lead_id } = parsed.data;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   const { data, error, count } = await supabase
     .from('outreach')
-    .select('id, channel, direction, subject, message_preview, notes, outcome, outcome_detail, activity_type, is_automated, lead_id, contact_id, sequence_id, sequence_step, created_by, occurred_at', { count: 'exact' })
+    .select(
+      'id, channel, direction, subject, message_preview, notes, outcome, outcome_detail, activity_type, is_automated, lead_id, contact_id, sequence_id, sequence_step, created_by, occurred_at',
+      { count: 'exact' },
+    )
     .eq('lead_id', lead_id)
     .order('occurred_at', { ascending: false })
     .range(offset, offset + limit - 1);
@@ -61,7 +65,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase.from('outreach').insert(parsed.data).select().single();
 
   if (error) {

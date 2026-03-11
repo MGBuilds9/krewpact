@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { timesheetBatchCreateSchema } from '@/lib/validators/time-expense';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
@@ -15,7 +15,9 @@ export async function GET(req: NextRequest) {
   const divisionId = req.nextUrl.searchParams.get('division_id');
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   let query = supabase
     .from('timesheet_batches')
     .select(
@@ -50,7 +52,9 @@ export async function POST(req: NextRequest) {
   const parsed = timesheetBatchCreateSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('timesheet_batches')
     .insert({ ...parsed.data, submitted_by: userId, status: 'draft' })

@@ -7,7 +7,7 @@ vi.mock('@clerk/nextjs/server', () => ({
 
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 // Mock the proposal generator (pure function tested separately)
@@ -16,7 +16,7 @@ vi.mock('@/lib/crm/proposal-generator', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { composeProposalData } from '@/lib/crm/proposal-generator';
 import { GET } from '@/app/api/crm/opportunities/[id]/proposal/route';
 import {
@@ -32,7 +32,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 const mockComposeProposalData = vi.mocked(composeProposalData);
 
 const OPP_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
@@ -81,8 +81,8 @@ describe('GET /api/crm/opportunities/[id]/proposal', () => {
 
   it('returns 404 when opportunity does not exist', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           opportunities: {
             data: null,
@@ -90,7 +90,8 @@ describe('GET /api/crm/opportunities/[id]/proposal', () => {
           },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(
       makeRequest(`/api/crm/opportunities/${OPP_ID}/proposal`),
@@ -109,13 +110,11 @@ describe('GET /api/crm/opportunities/[id]/proposal', () => {
     });
     const account = makeAccount({ id: ACCOUNT_ID });
     const contact = makeContact({ id: CONTACT_ID });
-    const estimates = [
-      makeEstimate({ opportunity_id: OPP_ID, total_amount: 130000 }),
-    ];
+    const estimates = [makeEstimate({ opportunity_id: OPP_ID, total_amount: 130000 })];
 
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           opportunities: { data: opportunity, error: null },
           accounts: { data: account, error: null },
@@ -123,7 +122,8 @@ describe('GET /api/crm/opportunities/[id]/proposal', () => {
           estimates: { data: estimates, error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(
       makeRequest(`/api/crm/opportunities/${OPP_ID}/proposal`),
@@ -146,14 +146,15 @@ describe('GET /api/crm/opportunities/[id]/proposal', () => {
     });
 
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           opportunities: { data: opportunity, error: null },
           estimates: { data: [], error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(
       makeRequest(`/api/crm/opportunities/${OPP_ID}/proposal`),
@@ -178,14 +179,15 @@ describe('GET /api/crm/opportunities/[id]/proposal', () => {
     ];
 
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           opportunities: { data: opportunity, error: null },
           estimates: { data: estimates, error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(
       makeRequest(`/api/crm/opportunities/${OPP_ID}/proposal`),
@@ -205,14 +207,15 @@ describe('GET /api/crm/opportunities/[id]/proposal', () => {
     });
 
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           opportunities: { data: opportunity, error: null },
           estimates: { data: [], error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(
       makeRequest(`/api/crm/opportunities/${OPP_ID}/proposal`),

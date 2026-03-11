@@ -4,14 +4,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { PATCH, DELETE } from '@/app/api/projects/[id]/time-entries/[entryId]/route';
 import {
   mockSupabaseClient,
@@ -23,7 +23,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 const PROJECT_ID = TEST_IDS.PROJECT_ID;
 const ENTRY_ID = '00000000-0000-4000-a000-000000000201';
 
@@ -67,9 +67,10 @@ describe('PATCH /api/projects/[id]/time-entries/[entryId]', () => {
 
   it('returns updated entry on success', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { time_entries: { data: sampleEntry, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { time_entries: { data: sampleEntry, error: null } } }),
+      error: null,
+    });
     const res = await PATCH(
       makeJsonRequest('/api/x/time-entries/y', { hours_overtime: 2 }, 'PATCH'),
       ctx(),
@@ -81,11 +82,12 @@ describe('PATCH /api/projects/[id]/time-entries/[entryId]', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { time_entries: { data: null, error: { message: 'update error' } } },
       }),
-    );
+      error: null,
+    });
     const res = await PATCH(
       makeJsonRequest('/api/x/time-entries/y', { hours_overtime: 2 }, 'PATCH'),
       ctx(),
@@ -105,20 +107,22 @@ describe('DELETE /api/projects/[id]/time-entries/[entryId]', () => {
 
   it('returns 204 on success', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { time_entries: { data: null, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { time_entries: { data: null, error: null } } }),
+      error: null,
+    });
     const res = await DELETE(makeRequest('/api/x/time-entries/y'), ctx());
     expect(res.status).toBe(204);
   });
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { time_entries: { data: null, error: { message: 'delete error' } } },
       }),
-    );
+      error: null,
+    });
     const res = await DELETE(makeRequest('/api/x/time-entries/y'), ctx());
     expect(res.status).toBe(500);
   });

@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { sequenceCreateSchema } from '@/lib/validators/crm';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
@@ -28,9 +28,16 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   const { division_id, is_active } = parsed.data;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
-  let query = supabase.from('sequences').select('id, name, description, trigger_type, trigger_conditions, division_id, is_active, created_at, updated_at', { count: 'exact' }).order('created_at', { ascending: false });
+  let query = supabase
+    .from('sequences')
+    .select(
+      'id, name, description, trigger_type, trigger_conditions, division_id, is_active, created_at, updated_at',
+      { count: 'exact' },
+    )
+    .order('created_at', { ascending: false });
 
   if (division_id) {
     query = query.eq('division_id', division_id);
@@ -69,7 +76,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase.from('sequences').insert(parsed.data).select().single();
 
   if (error) {

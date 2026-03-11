@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { getOrgIdFromAuth } from '@/lib/api/org';
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
@@ -24,7 +24,8 @@ export async function GET(req: NextRequest) {
 
   try {
     const orgId = await getOrgIdFromAuth();
-    const supabase = await createUserClient();
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
     const { searchParams } = new URL(req.url);
     const isActiveParam = searchParams.get('is_active');
@@ -79,7 +80,8 @@ export async function POST(req: NextRequest) {
 
   try {
     const orgId = await getOrgIdFromAuth();
-    const supabase = await createUserClient();
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
     const { data, error } = await supabase
       .from('executive_subscriptions')

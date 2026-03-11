@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { embedChunks } from '@/lib/knowledge/embeddings';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
 
 const EXECUTIVE_ROLES = ['platform_admin', 'executive'];
@@ -40,7 +40,8 @@ export async function POST(req: NextRequest) {
     const [queryEmbedding] = await embedChunks([query.trim()]);
 
     // RLS-scoped Supabase client
-    const supabase = await createUserClient();
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
     // Run pgvector similarity search via RPC
     const { data: matches, error: rpcError } = await supabase.rpc('match_knowledge', {

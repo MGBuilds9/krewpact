@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { safetyIncidentUpdateSchema } from '@/lib/validators/safety';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
@@ -25,7 +25,9 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
   const parsed = safetyIncidentUpdateSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('safety_incidents')
     .update({ ...parsed.data, updated_at: new Date().toISOString() })
@@ -44,7 +46,8 @@ export async function DELETE(_req: NextRequest, context: RouteContext) {
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { id, incId } = await context.params;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   const { error } = await supabase
     .from('safety_incidents')

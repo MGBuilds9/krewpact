@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { POST } from '@/app/api/crm/import/route';
 import {
   mockClerkAuth,
@@ -14,7 +14,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 describe('POST /api/crm/import', () => {
   beforeEach(() => vi.clearAllMocks());
@@ -44,7 +44,7 @@ describe('POST /api/crm/import', () => {
     const client = mockSupabaseClient({
       tables: { leads: { data: null, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest('/api/crm/import', {
       entity_type: 'lead',
@@ -65,7 +65,7 @@ describe('POST /api/crm/import', () => {
     const client = mockSupabaseClient({
       tables: { leads: { data: null, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest('/api/crm/import', {
       entity_type: 'lead',
@@ -83,7 +83,7 @@ describe('POST /api/crm/import', () => {
     const client = mockSupabaseClient({
       tables: { leads: { data: null, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest('/api/crm/import', {
       entity_type: 'lead',

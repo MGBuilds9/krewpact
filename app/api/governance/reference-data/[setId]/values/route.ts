@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { referenceDataValueSchema } from '@/lib/validators/governance';
@@ -23,7 +23,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ setI
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
   const { is_active, limit = 100, offset = 0 } = parsed.data;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   let query = supabase
     .from('reference_data_values')
@@ -65,7 +66,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ set
   });
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('reference_data_values')
     .insert({ ...parsed.data, is_active: parsed.data.is_active ?? true })

@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { BoldSignClient } from '@/lib/esign/boldsign-client';
 import { esignEnvelopeCreateSchema } from '@/lib/validators/contracting';
 import { logger } from '@/lib/logger';
@@ -29,7 +29,8 @@ export async function GET(req: NextRequest) {
   }
 
   const { contract_id, limit, offset } = parsed.data;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   let query = supabase
     .from('esign_envelopes')
@@ -102,7 +103,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: directParsed.error.flatten() }, { status: 400 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('esign_envelopes')
     .insert(directParsed.data)
@@ -121,7 +124,8 @@ export async function POST(req: NextRequest) {
 // ============================================================
 
 async function handleProposalSend(params: z.infer<typeof sendForSigningSchema>, userId: string) {
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   // 1. Look up the proposal
   const { data: proposal, error: proposalError } = await supabase

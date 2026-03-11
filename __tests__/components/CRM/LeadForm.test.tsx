@@ -104,7 +104,6 @@ describe('LeadForm', () => {
     expect(screen.getByText('Source')).toBeDefined();
     expect(screen.getByText('City')).toBeDefined();
     expect(screen.getByText('Province')).toBeDefined();
-    expect(screen.getByText('Notes')).toBeDefined();
   });
 
   it('shows Cancel button when onCancel is provided', () => {

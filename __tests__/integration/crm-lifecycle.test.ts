@@ -7,10 +7,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { POST as createLead } from '@/app/api/crm/leads/route';
 import { POST as createContact } from '@/app/api/crm/contacts/route';
 import { POST as createOpportunity } from '@/app/api/crm/opportunities/route';
@@ -25,7 +25,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 const UUID1 = '550e8400-e29b-41d4-a716-446655440001';
 const UUID2 = '550e8400-e29b-41d4-a716-446655440002';
@@ -47,7 +47,7 @@ describe('CRM Lifecycle: Lead → Contact → Opportunity', () => {
     const client = mockSupabaseClient({
       tables: { leads: { data: leadData, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest('/api/crm/leads', {
       company_name: 'MDM Contracting',
@@ -73,7 +73,7 @@ describe('CRM Lifecycle: Lead → Contact → Opportunity', () => {
     const client = mockSupabaseClient({
       tables: { contacts: { data: contactData, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest('/api/crm/contacts', {
       first_name: 'Michael',
@@ -97,7 +97,7 @@ describe('CRM Lifecycle: Lead → Contact → Opportunity', () => {
     const client = mockSupabaseClient({
       tables: { opportunities: { data: oppData, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest('/api/crm/opportunities', {
       opportunity_name: 'MDM Contracting - Renovation',
@@ -118,7 +118,7 @@ describe('CRM Lifecycle: Bulk Operations', () => {
     const client = mockSupabaseClient({
       tables: { leads: { data: null, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest('/api/crm/leads/bulk', {
       action: 'assign',
@@ -136,7 +136,7 @@ describe('CRM Lifecycle: Bulk Operations', () => {
     const client = mockSupabaseClient({
       tables: { leads: { data: null, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest('/api/crm/leads/bulk', {
       action: 'stage',
@@ -158,7 +158,7 @@ describe('CRM Lifecycle: Import', () => {
     const client = mockSupabaseClient({
       tables: { leads: { data: null, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest('/api/crm/import', {
       entity_type: 'lead',
@@ -193,7 +193,7 @@ describe('CRM Lifecycle: Search', () => {
         opportunities: { data: [], error: null },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeRequest('/api/crm/search?q=MDM');
     const res = await searchCRM(req);

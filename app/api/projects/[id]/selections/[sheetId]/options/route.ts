@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { NextRequest, NextResponse } from 'next/server';
 import { selectionOptionSchema } from '@/lib/validators/selections';
@@ -17,10 +17,14 @@ export async function GET(
 
   const { sheetId } = await params;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
   const { data, error, count } = await supabase
     .from('selection_options')
-    .select('id, selection_sheet_id, option_group, option_name, allowance_amount, upgrade_amount, sort_order, created_at, updated_at', { count: 'exact' })
+    .select(
+      'id, selection_sheet_id, option_group, option_name, allowance_amount, upgrade_amount, sort_order, created_at, updated_at',
+      { count: 'exact' },
+    )
     .eq('selection_sheet_id', sheetId)
     .order('sort_order', { ascending: true })
     .range(offset, offset + limit - 1);
@@ -47,7 +51,9 @@ export async function POST(
   const parsed = selectionOptionSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('selection_options')
     .insert({ ...parsed.data, selection_sheet_id: sheetId })

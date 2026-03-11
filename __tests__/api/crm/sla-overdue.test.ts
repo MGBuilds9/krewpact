@@ -7,11 +7,11 @@ vi.mock('@clerk/nextjs/server', () => ({
 
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET } from '@/app/api/crm/sla/overdue/route';
 import {
   mockSupabaseClient,
@@ -23,7 +23,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 describe('GET /api/crm/sla/overdue', () => {
   beforeEach(() => {
@@ -50,14 +50,15 @@ describe('GET /api/crm/sla/overdue', () => {
       stage: 'intake',
       stage_entered_at: new Date().toISOString(),
     });
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           leads: { data: [freshLead], error: null },
           opportunities: { data: [freshOpp], error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(new Request('http://localhost/api/crm/sla/overdue') as never);
     expect(res.status).toBe(200);
@@ -76,14 +77,15 @@ describe('GET /api/crm/sla/overdue', () => {
       status: 'new',
       stage_entered_at: staleDate,
     });
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           leads: { data: [overdueLead], error: null },
           opportunities: { data: [], error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(new Request('http://localhost/api/crm/sla/overdue') as never);
     expect(res.status).toBe(200);
@@ -103,14 +105,15 @@ describe('GET /api/crm/sla/overdue', () => {
       stage: 'intake',
       stage_entered_at: staleDate,
     });
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           leads: { data: [], error: null },
           opportunities: { data: [overdueOpp], error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(new Request('http://localhost/api/crm/sla/overdue') as never);
     expect(res.status).toBe(200);
@@ -124,14 +127,15 @@ describe('GET /api/crm/sla/overdue', () => {
 
   it('returns 500 on Supabase leads query error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           leads: { data: null, error: { message: 'DB connection failed' } },
           opportunities: { data: [], error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(new Request('http://localhost/api/crm/sla/overdue') as never);
     expect(res.status).toBe(500);
@@ -147,14 +151,15 @@ describe('GET /api/crm/sla/overdue', () => {
     const overdueLead = makeLead({ status: 'new', stage_entered_at: staleDate72h });
     const overdueOpp = makeOpportunity({ stage: 'intake', stage_entered_at: staleDate48h });
 
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           leads: { data: [overdueLead], error: null },
           opportunities: { data: [overdueOpp], error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(new Request('http://localhost/api/crm/sla/overdue') as never);
     expect(res.status).toBe(200);

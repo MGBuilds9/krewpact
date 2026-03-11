@@ -2,14 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mocks BEFORE imports
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET, POST, DELETE } from '@/app/api/crm/opportunities/[id]/attachments/route';
 import {
   mockClerkAuth,
@@ -19,7 +19,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function makeContext(id: string) {
   return { params: Promise.resolve({ id }) };
@@ -79,7 +79,7 @@ describe('GET /api/crm/opportunities/[id]/attachments', () => {
   it('lists files from storage', async () => {
     mockClerkAuth(mockAuth);
     const { client } = createStorageMock();
-    mockCreateUserClient.mockResolvedValue(client as never);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
 
     const res = await GET(
       makeRequest(`/api/crm/opportunities/${OPP_ID}/attachments`),
@@ -97,7 +97,7 @@ describe('GET /api/crm/opportunities/[id]/attachments', () => {
     const { client } = createStorageMock({
       list: vi.fn().mockResolvedValue({ data: [], error: null }),
     });
-    mockCreateUserClient.mockResolvedValue(client as never);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
 
     const res = await GET(
       makeRequest(`/api/crm/opportunities/${OPP_ID}/attachments`),
@@ -113,7 +113,7 @@ describe('GET /api/crm/opportunities/[id]/attachments', () => {
     const { client } = createStorageMock({
       list: vi.fn().mockResolvedValue({ data: null, error: { message: 'Storage error' } }),
     });
-    mockCreateUserClient.mockResolvedValue(client as never);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
 
     const res = await GET(
       makeRequest(`/api/crm/opportunities/${OPP_ID}/attachments`),
@@ -145,7 +145,7 @@ describe('POST /api/crm/opportunities/[id]/attachments', () => {
   it('uploads a file to storage', async () => {
     mockClerkAuth(mockAuth);
     const { client } = createStorageMock();
-    mockCreateUserClient.mockResolvedValue(client as never);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
 
     const file = new File(['test content'], 'test.pdf', { type: 'application/pdf' });
     const formData = new FormData();
@@ -167,7 +167,7 @@ describe('POST /api/crm/opportunities/[id]/attachments', () => {
   it('returns 400 when no file provided', async () => {
     mockClerkAuth(mockAuth);
     const { client } = createStorageMock();
-    mockCreateUserClient.mockResolvedValue(client as never);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
 
     const formData = new FormData();
     const req = new Request(`http://localhost:3000/api/crm/opportunities/${OPP_ID}/attachments`, {
@@ -201,7 +201,7 @@ describe('DELETE /api/crm/opportunities/[id]/attachments', () => {
   it('deletes a file from storage', async () => {
     mockClerkAuth(mockAuth);
     const { client, storageBucket } = createStorageMock();
-    mockCreateUserClient.mockResolvedValue(client as never);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
 
     const res = await DELETE(
       makeRequest(`/api/crm/opportunities/${OPP_ID}/attachments?fileName=proposal.pdf`, {
@@ -220,7 +220,7 @@ describe('DELETE /api/crm/opportunities/[id]/attachments', () => {
   it('returns 400 when fileName is missing', async () => {
     mockClerkAuth(mockAuth);
     const { client } = createStorageMock();
-    mockCreateUserClient.mockResolvedValue(client as never);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
 
     const res = await DELETE(
       makeRequest(`/api/crm/opportunities/${OPP_ID}/attachments`, { method: 'DELETE' }),

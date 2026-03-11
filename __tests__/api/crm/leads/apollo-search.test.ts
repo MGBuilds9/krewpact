@@ -41,16 +41,16 @@ vi.mock('@/lib/integrations/apollo', () => ({
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { POST, GET } from '@/app/api/crm/leads/apollo-search/route';
 import { mockSupabaseClient, makeJsonRequest, makeRequest } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function makePerson(id: string) {
   return {
@@ -134,7 +134,7 @@ describe('POST /api/crm/leads/apollo-search', () => {
         contacts: { data: null, error: null },
       },
     });
-    mockCreateUserClient.mockResolvedValue(supabase);
+    mockCreateUserClientSafe.mockResolvedValue({ client: supabase, error: null });
 
     const req = makeJsonRequest('/api/crm/leads/apollo-search', {
       profileId: 'pharmacy-owners-gta',
@@ -215,7 +215,7 @@ describe('POST /api/crm/leads/apollo-search', () => {
       return mockSupabaseClient({}).from('leads');
     });
 
-    mockCreateUserClient.mockResolvedValue(supabase);
+    mockCreateUserClientSafe.mockResolvedValue({ client: supabase, error: null });
 
     const req = makeJsonRequest('/api/crm/leads/apollo-search', {
       profileId: 'pharmacy-owners-gta',

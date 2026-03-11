@@ -5,7 +5,7 @@ vi.mock('@clerk/nextjs/server', () => ({
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 vi.mock('@/lib/api/rate-limit', () => ({
@@ -23,12 +23,12 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET } from '@/app/api/admin/audit-log/route';
 import { mockSupabaseClient, mockClerkUnauth, makeRequest } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function mockClerkWithRoles(userId: string, roles: string[]) {
   mockAuth.mockResolvedValue({
@@ -104,13 +104,14 @@ describe('GET /api/admin/audit-log', () => {
   it('allows platform_admin role', async () => {
     mockClerkWithRoles('user_admin', ['platform_admin']);
 
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           audit_log: { data: sampleAuditEntries, error: null, count: 3 },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/admin/audit-log'));
     expect(res.status).toBe(200);
@@ -122,13 +123,14 @@ describe('GET /api/admin/audit-log', () => {
   it('allows executive role', async () => {
     mockClerkWithRoles('user_exec', ['executive']);
 
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           audit_log: { data: sampleAuditEntries, error: null, count: 3 },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/admin/audit-log'));
     expect(res.status).toBe(200);
@@ -139,13 +141,14 @@ describe('GET /api/admin/audit-log', () => {
   it('returns paginated results with defaults (page=1, pageSize=25)', async () => {
     mockClerkWithRoles('user_admin', ['platform_admin']);
 
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           audit_log: { data: sampleAuditEntries, error: null, count: 50 },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/admin/audit-log'));
     expect(res.status).toBe(200);
@@ -158,13 +161,14 @@ describe('GET /api/admin/audit-log', () => {
   it('respects page and pageSize query params', async () => {
     mockClerkWithRoles('user_admin', ['platform_admin']);
 
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           audit_log: { data: [sampleAuditEntries[0]], error: null, count: 100 },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/admin/audit-log?page=3&pageSize=50'));
     expect(res.status).toBe(200);
@@ -176,13 +180,14 @@ describe('GET /api/admin/audit-log', () => {
   it('clamps pageSize to max 100', async () => {
     mockClerkWithRoles('user_admin', ['platform_admin']);
 
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           audit_log: { data: [], error: null, count: 0 },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/admin/audit-log?pageSize=500'));
     expect(res.status).toBe(200);
@@ -193,13 +198,14 @@ describe('GET /api/admin/audit-log', () => {
   it('clamps page to minimum 1', async () => {
     mockClerkWithRoles('user_admin', ['platform_admin']);
 
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           audit_log: { data: [], error: null, count: 0 },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/admin/audit-log?page=-5'));
     expect(res.status).toBe(200);
@@ -215,7 +221,7 @@ describe('GET /api/admin/audit-log', () => {
         audit_log: { data: [sampleAuditEntries[0]], error: null, count: 1 },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(makeRequest('/api/admin/audit-log?entity_type=project'));
     expect(res.status).toBe(200);
@@ -232,7 +238,7 @@ describe('GET /api/admin/audit-log', () => {
         audit_log: { data: [sampleAuditEntries[2]], error: null, count: 1 },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(makeRequest('/api/admin/audit-log?action=delete'));
     expect(res.status).toBe(200);
@@ -249,7 +255,7 @@ describe('GET /api/admin/audit-log', () => {
         audit_log: { data: [sampleAuditEntries[1]], error: null, count: 1 },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(makeRequest('/api/admin/audit-log?user_id=user_pm'));
     expect(res.status).toBe(200);
@@ -265,7 +271,7 @@ describe('GET /api/admin/audit-log', () => {
         audit_log: { data: sampleAuditEntries, error: null, count: 3 },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(
       makeRequest(
@@ -285,7 +291,7 @@ describe('GET /api/admin/audit-log', () => {
         audit_log: { data: [sampleAuditEntries[0]], error: null, count: 1 },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(
       makeRequest(
@@ -301,8 +307,8 @@ describe('GET /api/admin/audit-log', () => {
   it('returns empty results when audit_log table does not exist', async () => {
     mockClerkWithRoles('user_admin', ['platform_admin']);
 
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           audit_log: {
             data: null,
@@ -311,7 +317,8 @@ describe('GET /api/admin/audit-log', () => {
           },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/admin/audit-log'));
     expect(res.status).toBe(200);
@@ -325,8 +332,8 @@ describe('GET /api/admin/audit-log', () => {
   it('returns 500 for non-table-not-found database errors', async () => {
     mockClerkWithRoles('user_admin', ['platform_admin']);
 
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           audit_log: {
             data: null,
@@ -335,7 +342,8 @@ describe('GET /api/admin/audit-log', () => {
           },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/admin/audit-log'));
     expect(res.status).toBe(500);
@@ -346,13 +354,14 @@ describe('GET /api/admin/audit-log', () => {
   it('returns correct response shape with all expected fields', async () => {
     mockClerkWithRoles('user_admin', ['platform_admin']);
 
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           audit_log: { data: [sampleAuditEntries[0]], error: null, count: 1 },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/admin/audit-log'));
     expect(res.status).toBe(200);
@@ -379,13 +388,14 @@ describe('GET /api/admin/audit-log', () => {
   it('returns empty array when no audit entries match filters', async () => {
     mockClerkWithRoles('user_admin', ['platform_admin']);
 
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           audit_log: { data: [], error: null, count: 0 },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/admin/audit-log?entity_type=nonexistent'));
     expect(res.status).toBe(200);

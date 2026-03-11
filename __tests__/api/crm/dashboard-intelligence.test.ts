@@ -1,5 +1,5 @@
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
@@ -7,7 +7,7 @@ vi.mock('@/lib/api/rate-limit', () => ({
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET } from '@/app/api/crm/dashboard/intelligence/route';
 import {
   mockSupabaseClient,
@@ -19,7 +19,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -41,15 +41,33 @@ describe('GET /api/crm/dashboard/intelligence', () => {
     mockClerkAuth(mockAuth);
 
     const opportunities = [
-      makeOpportunity({ id: '1', stage: 'contracted', estimated_revenue: 200000, owner_user_id: 'rep-a', division_id: 'contracting' }),
-      makeOpportunity({ id: '2', stage: 'closed_lost', estimated_revenue: 100000, owner_user_id: 'rep-a', division_id: 'contracting' }),
-      makeOpportunity({ id: '3', stage: 'intake', estimated_revenue: 50000, owner_user_id: 'rep-b', division_id: 'homes' }),
+      makeOpportunity({
+        id: '1',
+        stage: 'contracted',
+        estimated_revenue: 200000,
+        owner_user_id: 'rep-a',
+        division_id: 'contracting',
+      }),
+      makeOpportunity({
+        id: '2',
+        stage: 'closed_lost',
+        estimated_revenue: 100000,
+        owner_user_id: 'rep-a',
+        division_id: 'contracting',
+      }),
+      makeOpportunity({
+        id: '3',
+        stage: 'intake',
+        estimated_revenue: 50000,
+        owner_user_id: 'rep-b',
+        division_id: 'homes',
+      }),
     ];
 
     const supabase = mockSupabaseClient({
       tables: { opportunities: { data: opportunities, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(supabase as never);
+    mockCreateUserClientSafe.mockResolvedValue({ client: supabase as never, error: null });
 
     const res = await GET(makeRequest('/api/crm/dashboard/intelligence'));
     expect(res.status).toBe(200);
@@ -83,7 +101,7 @@ describe('GET /api/crm/dashboard/intelligence', () => {
     const supabase = mockSupabaseClient({
       tables: { opportunities: { data: [], error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(supabase as never);
+    mockCreateUserClientSafe.mockResolvedValue({ client: supabase as never, error: null });
 
     const res = await GET(makeRequest('/api/crm/dashboard/intelligence?division_id=contracting'));
     expect(res.status).toBe(200);
@@ -99,7 +117,7 @@ describe('GET /api/crm/dashboard/intelligence', () => {
     const supabase = mockSupabaseClient({
       tables: { opportunities: { data: null, error: { message: 'DB connection failed' } } },
     });
-    mockCreateUserClient.mockResolvedValue(supabase as never);
+    mockCreateUserClientSafe.mockResolvedValue({ client: supabase as never, error: null });
 
     const res = await GET(makeRequest('/api/crm/dashboard/intelligence'));
     expect(res.status).toBe(500);
@@ -114,7 +132,7 @@ describe('GET /api/crm/dashboard/intelligence', () => {
     const supabase = mockSupabaseClient({
       tables: { opportunities: { data: [], error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(supabase as never);
+    mockCreateUserClientSafe.mockResolvedValue({ client: supabase as never, error: null });
 
     const res = await GET(makeRequest('/api/crm/dashboard/intelligence'));
     expect(res.status).toBe(200);

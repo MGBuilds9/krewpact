@@ -7,7 +7,7 @@ vi.mock('@clerk/nextjs/server', () => ({
 
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 // Mock rate limiter
@@ -17,7 +17,7 @@ vi.mock('@/lib/api/rate-limit', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET } from '@/app/api/crm/activities/overdue/route';
 import {
   mockSupabaseClient,
@@ -29,7 +29,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 // ============================================================
 // GET /api/crm/activities/overdue
@@ -54,11 +54,12 @@ describe('GET /api/crm/activities/overdue', () => {
       makeActivity({ due_at: '2025-06-15T12:00:00Z', completed_at: null, title: 'Send proposal' }),
     ];
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { activities: { data: overdue, error: null, count: 2 } as never },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/crm/activities/overdue'));
     expect(res.status).toBe(200);
@@ -69,11 +70,12 @@ describe('GET /api/crm/activities/overdue', () => {
 
   it('returns empty array when no overdue tasks', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { activities: { data: [], error: null, count: 0 } as never },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/crm/activities/overdue'));
     expect(res.status).toBe(200);
@@ -84,13 +86,14 @@ describe('GET /api/crm/activities/overdue', () => {
 
   it('handles database errors gracefully', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           activities: { data: null, error: { message: 'relation "activities" does not exist' } },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/crm/activities/overdue'));
     expect(res.status).toBe(500);
@@ -109,7 +112,7 @@ describe('GET /api/crm/activities/overdue', () => {
     const client = mockSupabaseClient({
       tables: { activities: { data: overdueIncomplete, error: null, count: 1 } as never },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(makeRequest('/api/crm/activities/overdue'));
     expect(res.status).toBe(200);

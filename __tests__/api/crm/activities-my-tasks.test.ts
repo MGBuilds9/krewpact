@@ -7,11 +7,11 @@ vi.mock('@clerk/nextjs/server', () => ({
 
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET } from '@/app/api/crm/activities/my-tasks/route';
 import {
   mockSupabaseClient,
@@ -24,7 +24,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 // ============================================================
 // GET /api/crm/activities/my-tasks
@@ -49,11 +49,12 @@ describe('GET /api/crm/activities/my-tasks', () => {
       makeActivity({ title: 'Task 2', completed_at: '2026-02-16T12:00:00Z' }),
     ];
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { activities: { data: tasks, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/crm/activities/my-tasks?filter=all'));
     expect(res.status).toBe(200);
@@ -64,14 +65,12 @@ describe('GET /api/crm/activities/my-tasks', () => {
   });
 
   it('filters by filter=overdue', async () => {
-    const overdueTasks = [
-      makeActivity({ title: 'Overdue task', due_at: '2026-01-01T10:00:00Z' }),
-    ];
+    const overdueTasks = [makeActivity({ title: 'Overdue task', due_at: '2026-01-01T10:00:00Z' })];
     mockClerkAuth(mockAuth);
     const client = mockSupabaseClient({
       tables: { activities: { data: overdueTasks, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(makeRequest('/api/crm/activities/my-tasks?filter=overdue'));
     expect(res.status).toBe(200);
@@ -81,14 +80,12 @@ describe('GET /api/crm/activities/my-tasks', () => {
   });
 
   it('filters by filter=today', async () => {
-    const todayTasks = [
-      makeActivity({ title: 'Today task', due_at: new Date().toISOString() }),
-    ];
+    const todayTasks = [makeActivity({ title: 'Today task', due_at: new Date().toISOString() })];
     mockClerkAuth(mockAuth);
     const client = mockSupabaseClient({
       tables: { activities: { data: todayTasks, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(makeRequest('/api/crm/activities/my-tasks?filter=today'));
     expect(res.status).toBe(200);
@@ -105,7 +102,7 @@ describe('GET /api/crm/activities/my-tasks', () => {
     const client = mockSupabaseClient({
       tables: { activities: { data: upcomingTasks, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(makeRequest('/api/crm/activities/my-tasks?filter=upcoming'));
     expect(res.status).toBe(200);
@@ -125,7 +122,7 @@ describe('GET /api/crm/activities/my-tasks', () => {
     const client = mockSupabaseClient({
       tables: { activities: { data: completedTasks, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(makeRequest('/api/crm/activities/my-tasks?filter=completed'));
     expect(res.status).toBe(200);
@@ -146,11 +143,9 @@ describe('GET /api/crm/activities/my-tasks', () => {
     const client = mockSupabaseClient({
       tables: { activities: { data: leadTasks, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
-    const res = await GET(
-      makeRequest('/api/crm/activities/my-tasks?entity_type=lead'),
-    );
+    const res = await GET(makeRequest('/api/crm/activities/my-tasks?entity_type=lead'));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.data).toEqual(leadTasks);
@@ -159,11 +154,12 @@ describe('GET /api/crm/activities/my-tasks', () => {
 
   it('returns empty array when no tasks', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { activities: { data: [], error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/crm/activities/my-tasks?filter=all'));
     expect(res.status).toBe(200);
@@ -176,16 +172,14 @@ describe('GET /api/crm/activities/my-tasks', () => {
   it('returns 400 for invalid filter value', async () => {
     mockClerkAuth(mockAuth);
 
-    const res = await GET(
-      makeRequest('/api/crm/activities/my-tasks?filter=invalid_filter'),
-    );
+    const res = await GET(makeRequest('/api/crm/activities/my-tasks?filter=invalid_filter'));
     expect(res.status).toBe(400);
   });
 
   it('handles database errors gracefully', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           activities: {
             data: null,
@@ -193,7 +187,8 @@ describe('GET /api/crm/activities/my-tasks', () => {
           },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/crm/activities/my-tasks?filter=all'));
     expect(res.status).toBe(500);

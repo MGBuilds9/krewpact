@@ -1,19 +1,20 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET, calculateHealthScore } from '@/app/api/dashboard/pm/route';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function makeRequest() {
   return new NextRequest(new URL('http://localhost/api/dashboard/pm'));
@@ -26,7 +27,7 @@ function mockAuthWithRoles(userId: string, roles: string[]) {
       krewpact_roles: roles,
       krewpact_user_id: userId,
     },
-  } as unknown as Awaited<ReturnType<typeof auth>>);
+  } as any as Awaited<ReturnType<typeof auth>>);
 }
 
 describe('GET /api/dashboard/pm', () => {
@@ -38,7 +39,7 @@ describe('GET /api/dashboard/pm', () => {
     mockAuth.mockResolvedValue({
       userId: null,
       sessionClaims: null,
-    } as unknown as Awaited<ReturnType<typeof auth>>);
+    } as any as Awaited<ReturnType<typeof auth>>);
 
     const res = await GET(makeRequest());
     expect(res.status).toBe(401);
@@ -82,9 +83,7 @@ describe('GET /api/dashboard/pm', () => {
       return { select: vi.fn().mockReturnValue({ data: [], error: null }) };
     });
 
-    mockCreateUserClient.mockResolvedValue({ from: mockFrom } as unknown as Awaited<
-      ReturnType<typeof createUserClient>
-    >);
+    mockCreateUserClientSafe.mockResolvedValue({ client: { from: mockFrom } as any, error: null });
 
     const res = await GET(makeRequest());
     expect(res.status).toBe(200);
@@ -115,9 +114,7 @@ describe('GET /api/dashboard/pm', () => {
       return { select: vi.fn().mockReturnValue({ data: [], error: null }) };
     });
 
-    mockCreateUserClient.mockResolvedValue({ from: mockFrom } as unknown as Awaited<
-      ReturnType<typeof createUserClient>
-    >);
+    mockCreateUserClientSafe.mockResolvedValue({ client: { from: mockFrom } as any, error: null });
 
     const res = await GET(makeRequest());
     expect(res.status).toBe(200);
@@ -144,9 +141,7 @@ describe('GET /api/dashboard/pm', () => {
       return { select: vi.fn().mockReturnValue({ data: [], error: null }) };
     });
 
-    mockCreateUserClient.mockResolvedValue({ from: mockFrom } as unknown as Awaited<
-      ReturnType<typeof createUserClient>
-    >);
+    mockCreateUserClientSafe.mockResolvedValue({ client: { from: mockFrom } as any, error: null });
 
     const res = await GET(makeRequest());
     expect(res.status).toBe(200);
@@ -168,9 +163,7 @@ describe('GET /api/dashboard/pm', () => {
       }),
     }));
 
-    mockCreateUserClient.mockResolvedValue({ from: mockFrom } as unknown as Awaited<
-      ReturnType<typeof createUserClient>
-    >);
+    mockCreateUserClientSafe.mockResolvedValue({ client: { from: mockFrom } as any, error: null });
 
     const res = await GET(makeRequest());
     expect(res.status).toBe(500);
@@ -328,9 +321,7 @@ describe('GET /api/dashboard/pm', () => {
       };
     });
 
-    mockCreateUserClient.mockResolvedValue({ from: mockFrom } as unknown as Awaited<
-      ReturnType<typeof createUserClient>
-    >);
+    mockCreateUserClientSafe.mockResolvedValue({ client: { from: mockFrom } as any, error: null });
 
     const res = await GET(makeRequest());
     expect(res.status).toBe(200);
@@ -400,9 +391,7 @@ describe('GET /api/dashboard/pm', () => {
       };
     });
 
-    mockCreateUserClient.mockResolvedValue({ from: mockFrom } as unknown as Awaited<
-      ReturnType<typeof createUserClient>
-    >);
+    mockCreateUserClientSafe.mockResolvedValue({ client: { from: mockFrom } as any, error: null });
 
     const res = await GET(makeRequest());
     expect(res.status).toBe(500);
@@ -426,9 +415,7 @@ describe('GET /api/dashboard/pm', () => {
       }),
     }));
 
-    mockCreateUserClient.mockResolvedValue({ from: mockFrom } as unknown as Awaited<
-      ReturnType<typeof createUserClient>
-    >);
+    mockCreateUserClientSafe.mockResolvedValue({ client: { from: mockFrom } as any, error: null });
 
     const res = await GET(makeRequest());
     expect(res.status).toBe(200);

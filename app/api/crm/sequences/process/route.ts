@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient, createServiceClient } from '@/lib/supabase/server';
+import { createUserClientSafe, createServiceClient } from '@/lib/supabase/server';
 import { processSequences } from '@/lib/crm/sequence-processor';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
@@ -33,7 +33,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
   if (!rl.success) return rateLimitResponse(rl);
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const result = await processSequences(supabase);
   return NextResponse.json(result);
 }

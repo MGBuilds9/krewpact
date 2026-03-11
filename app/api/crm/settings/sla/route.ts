@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { getOrgIdFromAuth } from '@/lib/api/org';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
@@ -44,7 +44,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   try {
     const orgId = await getOrgIdFromAuth();
-    const supabase = await createUserClient();
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
     const { data, error } = await supabase
       .from('org_settings')
@@ -84,7 +85,8 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
     }
 
     const orgId = await getOrgIdFromAuth();
-    const supabase = await createUserClient();
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
     // Read current workflow settings
     const { data: existing } = await supabase

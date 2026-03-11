@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { costCatalogItemCreateSchema } from '@/lib/validators/estimating';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
@@ -31,7 +31,8 @@ export async function GET(req: NextRequest) {
   }
 
   const { division_id, item_type, search, limit, offset, sort_by, sort_dir } = parsed.data;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   let query = supabase
     .from('cost_catalog_items')
@@ -87,7 +88,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('cost_catalog_items')
     .insert(parsed.data)

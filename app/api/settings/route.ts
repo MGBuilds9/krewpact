@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
@@ -22,7 +22,8 @@ export async function GET(req: NextRequest) {
   if (!rl.success) return rateLimitResponse(rl);
 
   try {
-    const supabase = await createUserClient();
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
     const { data, error } = await supabase
       .from('users')
       .select(
@@ -64,7 +65,8 @@ export async function PATCH(req: NextRequest) {
   }
 
   try {
-    const supabase = await createUserClient();
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
     const { data, error } = await supabase
       .from('users')
       .update(parsed.data)

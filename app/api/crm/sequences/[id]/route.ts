@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { sequenceUpdateSchema } from '@/lib/validators/crm';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
@@ -16,10 +16,13 @@ export async function GET(req: NextRequest, context: RouteContext): Promise<Next
   if (!rl.success) return rateLimitResponse(rl);
 
   const { id } = await context.params;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('sequences')
-    .select('id, name, description, trigger_type, trigger_conditions, division_id, is_active, created_at, updated_at, sequence_steps(*)')
+    .select(
+      'id, name, description, trigger_type, trigger_conditions, division_id, is_active, created_at, updated_at, sequence_steps(*)',
+    )
     .eq('id', id)
     .single();
 
@@ -51,7 +54,9 @@ export async function PUT(req: NextRequest, context: RouteContext): Promise<Next
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('sequences')
     .update(parsed.data)
@@ -74,7 +79,8 @@ export async function DELETE(req: NextRequest, context: RouteContext): Promise<N
   }
 
   const { id } = await context.params;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
   const { error } = await supabase.from('sequences').delete().eq('id', id);
 
   if (error) {

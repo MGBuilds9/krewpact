@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe, createUserClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
@@ -42,7 +42,8 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
   if (!rl.success) return rateLimitResponse(rl);
 
   const { id: projectId, msgId } = await params;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   const access = await resolvePortalAccess(supabase, userId, projectId);
   if (!access) return NextResponse.json({ error: 'Access denied' }, { status: 403 });
@@ -93,7 +94,9 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: 'is_read (boolean) is required' }, { status: 400 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
 
   const access = await resolvePortalAccess(supabase, userId, projectId);
   if (!access) return NextResponse.json({ error: 'Access denied' }, { status: 403 });

@@ -5,14 +5,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET, POST } from '@/app/api/projects/[id]/folders/route';
 import { PATCH, DELETE } from '@/app/api/projects/[id]/folders/[folderId]/route';
 import {
@@ -25,7 +25,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 const PROJECT_ID = TEST_IDS.PROJECT_ID;
 const FOLDER_ID = '00000000-0000-4000-a000-000000000501';
 
@@ -60,11 +60,12 @@ describe('GET /api/projects/[id]/folders', () => {
 
   it('returns paginated folders', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { file_folders: { data: [sampleFolder], error: null, count: 1 } },
       }),
-    );
+      error: null,
+    });
     const res = await GET(makeRequest('/api/projects/p/folders'), listCtx());
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -74,11 +75,12 @@ describe('GET /api/projects/[id]/folders', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { file_folders: { data: null, error: { message: 'err' }, count: null } },
       }),
-    );
+      error: null,
+    });
     const res = await GET(makeRequest('/api/projects/p/folders'), listCtx());
     expect(res.status).toBe(500);
   });
@@ -101,9 +103,10 @@ describe('POST /api/projects/[id]/folders', () => {
 
   it('returns 201 on valid creation', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { file_folders: { data: sampleFolder, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { file_folders: { data: sampleFolder, error: null } } }),
+      error: null,
+    });
     const res = await POST(
       makeJsonRequest('/api/projects/p/folders', { folder_name: 'Drawings' }),
       listCtx(),
@@ -127,11 +130,12 @@ describe('PATCH /api/projects/[id]/folders/[folderId]', () => {
 
   it('returns updated folder on success', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { file_folders: { data: { ...sampleFolder, folder_name: 'Specs' }, error: null } },
       }),
-    );
+      error: null,
+    });
     const res = await PATCH(
       makeJsonRequest('/api/x', { folder_name: 'Specs' }, 'PATCH'),
       detailCtx(),
@@ -143,11 +147,12 @@ describe('PATCH /api/projects/[id]/folders/[folderId]', () => {
 
   it('returns 404 when not found', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { file_folders: { data: null, error: { message: 'not found', code: 'PGRST116' } } },
       }),
-    );
+      error: null,
+    });
     const res = await PATCH(makeJsonRequest('/api/x', { folder_name: 'X' }, 'PATCH'), detailCtx());
     expect(res.status).toBe(404);
   });
@@ -164,18 +169,22 @@ describe('DELETE /api/projects/[id]/folders/[folderId]', () => {
 
   it('returns 204 on success', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { file_folders: { data: null, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { file_folders: { data: null, error: null } } }),
+      error: null,
+    });
     const res = await DELETE(makeRequest('/api/x'), detailCtx());
     expect(res.status).toBe(204);
   });
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { file_folders: { data: null, error: { message: 'err' } } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
+        tables: { file_folders: { data: null, error: { message: 'err' } } },
+      }),
+      error: null,
+    });
     const res = await DELETE(makeRequest('/api/x'), detailCtx());
     expect(res.status).toBe(500);
   });

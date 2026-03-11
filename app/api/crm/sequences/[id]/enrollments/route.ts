@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
@@ -29,11 +29,14 @@ export async function GET(req: NextRequest, context: RouteContext): Promise<Next
   }
 
   const { status } = parsed.data;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   let query = supabase
     .from('sequence_enrollments')
-    .select('id, sequence_id, lead_id, contact_id, status, current_step, started_at, completed_at, paused_at, created_at, updated_at')
+    .select(
+      'id, sequence_id, lead_id, contact_id, status, current_step, started_at, completed_at, paused_at, created_at, updated_at',
+    )
     .eq('sequence_id', id)
     .order('created_at', { ascending: false });
 

@@ -7,7 +7,7 @@ vi.mock('@clerk/nextjs/server', () => ({
 
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 // Mock email-activity-matcher
@@ -16,7 +16,7 @@ vi.mock('@/lib/crm/email-activity-matcher', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { matchEmailToEntities } from '@/lib/crm/email-activity-matcher';
 import { POST } from '@/app/api/crm/activities/auto-log/route';
 import {
@@ -29,7 +29,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 const mockMatchEmail = vi.mocked(matchEmailToEntities);
 
 describe('POST /api/crm/activities/auto-log', () => {
@@ -77,7 +77,7 @@ describe('POST /api/crm/activities/auto-log', () => {
   it('returns matched:false when no entities match', async () => {
     mockClerkAuth(mockAuth);
     const client = mockSupabaseClient();
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
     mockMatchEmail.mockResolvedValue({
       leads: [],
       contacts: [],
@@ -102,7 +102,7 @@ describe('POST /api/crm/activities/auto-log', () => {
     const client = mockSupabaseClient({
       tables: { activities: { data: null, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
     mockMatchEmail.mockResolvedValue({
       leads: [{ id: 'lead-1', lead_name: 'Test Lead' }],
       contacts: [],
@@ -128,7 +128,7 @@ describe('POST /api/crm/activities/auto-log', () => {
     const client = mockSupabaseClient({
       tables: { activities: { data: null, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
     mockMatchEmail.mockResolvedValue({
       leads: [],
       contacts: [{ id: 'contact-1', first_name: 'Jane', last_name: 'Doe' }],
@@ -155,7 +155,7 @@ describe('POST /api/crm/activities/auto-log', () => {
         activities: { data: null, error: { message: 'Insert failed', code: '42000' } },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
     mockMatchEmail.mockResolvedValue({
       leads: [{ id: 'lead-1', lead_name: 'Test' }],
       contacts: [],

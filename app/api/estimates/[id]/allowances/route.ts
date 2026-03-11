@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { estimateAllowanceCreateSchema } from '@/lib/validators/estimating';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { NextRequest, NextResponse } from 'next/server';
@@ -16,10 +16,13 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const { id } = await params;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
   const { data, error, count } = await supabase
     .from('estimate_allowances')
-    .select('id, estimate_id, allowance_name, allowance_amount, notes, created_at, updated_at', { count: 'exact' })
+    .select('id, estimate_id, allowance_name, allowance_amount, notes, created_at, updated_at', {
+      count: 'exact',
+    })
     .eq('estimate_id', id)
     .order('created_at', { ascending: true })
     .range(offset, offset + limit - 1);
@@ -51,7 +54,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('estimate_allowances')
     .insert({ ...parsed.data, estimate_id: id })

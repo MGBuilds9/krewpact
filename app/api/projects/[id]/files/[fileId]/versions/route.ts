@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { NextRequest, NextResponse } from 'next/server';
 import { fileVersionSchema } from '@/lib/validators/documents';
@@ -16,11 +16,15 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
   const { fileId } = await context.params;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   const { data, error, count } = await supabase
     .from('file_versions')
-    .select('id, file_id, version_no, file_path, storage_bucket, checksum_sha256, change_note, uploaded_by, created_at', { count: 'exact' })
+    .select(
+      'id, file_id, version_no, file_path, storage_bucket, checksum_sha256, change_note, uploaded_by, created_at',
+      { count: 'exact' },
+    )
     .eq('file_id', fileId)
     .order('version_no', { ascending: false })
     .range(offset, offset + limit - 1);
@@ -48,7 +52,9 @@ export async function POST(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
 
   // Get current max version_no
   const { data: existing } = await supabase

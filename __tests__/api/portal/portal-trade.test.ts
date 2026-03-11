@@ -13,7 +13,12 @@ vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 
 const mockFrom = vi.fn();
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn().mockResolvedValue({ from: (...args: unknown[]) => mockFrom(...args) }),
+  createUserClientSafe: vi
+    .fn()
+    .mockResolvedValue({
+      client: { from: (...args: unknown[]) => mockFrom(...args) },
+      error: null,
+    }),
 }));
 
 import { auth } from '@clerk/nextjs/server';
@@ -58,7 +63,10 @@ describe('GET /api/portal/trade/tasks', () => {
   it('returns 403 when trade partner is inactive', async () => {
     mockClerkAuth(mockAuth);
     mockFrom.mockReturnValue(
-      chainMock({ data: { id: 'pa-1', status: 'pending', actor_type: 'trade_partner' }, error: null }),
+      chainMock({
+        data: { id: 'pa-1', status: 'pending', actor_type: 'trade_partner' },
+        error: null,
+      }),
     );
 
     const res = await getTradeTasks(makeRequest('/api/portal/trade/tasks'));
@@ -116,9 +124,7 @@ describe('GET /api/portal/trade/tasks', () => {
       return chainMock({ data: [], error: null });
     });
 
-    const res = await getTradeTasks(
-      makeRequest(`/api/portal/trade/tasks?project_id=${projectId}`),
-    );
+    const res = await getTradeTasks(makeRequest(`/api/portal/trade/tasks?project_id=${projectId}`));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.data).toEqual([]);
@@ -138,10 +144,7 @@ describe('PATCH /api/portal/trade/tasks/[id]/status', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: 'in_progress' }),
     });
-    const res = await PATCH(
-      req as never,
-      { params: Promise.resolve({ id: 'task-1' }) },
-    );
+    const res = await PATCH(req as never, { params: Promise.resolve({ id: 'task-1' }) });
     expect(res.status).toBe(401);
   });
 });

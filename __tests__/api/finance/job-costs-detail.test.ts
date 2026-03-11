@@ -6,10 +6,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET } from '@/app/api/finance/job-costs/[id]/route';
 import {
   mockSupabaseClient,
@@ -19,7 +19,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function makeContext(id: string) {
   return { params: Promise.resolve({ id }) };
@@ -50,9 +50,12 @@ describe('GET /api/finance/job-costs/[id]', () => {
 
   it('returns job cost snapshot by id', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { job_cost_snapshots: { data: sampleJobCost, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
+        tables: { job_cost_snapshots: { data: sampleJobCost, error: null } },
+      }),
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/finance/job-costs/jc-1'), makeContext('jc-1'));
     expect(res.status).toBe(200);
@@ -64,11 +67,14 @@ describe('GET /api/finance/job-costs/[id]', () => {
 
   it('returns 404 when not found', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
-        tables: { job_cost_snapshots: { data: null, error: { message: 'Not found', code: 'PGRST116' } } },
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
+        tables: {
+          job_cost_snapshots: { data: null, error: { message: 'Not found', code: 'PGRST116' } },
+        },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/finance/job-costs/missing'), makeContext('missing'));
     expect(res.status).toBe(404);

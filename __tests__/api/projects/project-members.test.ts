@@ -5,16 +5,12 @@ vi.mock('@clerk/nextjs/server', () => ({
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
-import {
-  GET,
-  POST,
-  DELETE,
-} from '@/app/api/projects/[id]/members/route';
+import { createUserClientSafe } from '@/lib/supabase/server';
+import { GET, POST, DELETE } from '@/app/api/projects/[id]/members/route';
 import {
   mockSupabaseClient,
   mockClerkAuth,
@@ -25,7 +21,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 const PROJECT_ID = TEST_IDS.PROJECT_ID;
 const USER_ID = TEST_IDS.USER_ID;
@@ -58,12 +54,19 @@ describe('GET /api/projects/[id]/members', () => {
         user_id: USER_ID,
         role: 'manager',
         left_at: null,
-        user: { id: USER_ID, first_name: 'John', last_name: 'Doe', email: 'j@test.com', avatar_url: null },
+        user: {
+          id: USER_ID,
+          first_name: 'John',
+          last_name: 'Doe',
+          email: 'j@test.com',
+          avatar_url: null,
+        },
       },
     ];
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { project_members: { data: members, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { project_members: { data: members, error: null } } }),
+      error: null,
+    });
     const res = await GET(makeRequest(`/api/projects/${PROJECT_ID}/members`), ctx());
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -71,11 +74,12 @@ describe('GET /api/projects/[id]/members', () => {
   });
 
   it('returns 500 on DB error', async () => {
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { project_members: { data: null, error: { message: 'DB err', code: '500' } } },
       }),
-    );
+      error: null,
+    });
     const res = await GET(makeRequest(`/api/projects/${PROJECT_ID}/members`), ctx());
     expect(res.status).toBe(500);
   });
@@ -121,11 +125,18 @@ describe('POST /api/projects/[id]/members', () => {
       user_id: USER_ID,
       role: 'worker',
       left_at: null,
-      user: { id: USER_ID, first_name: 'John', last_name: 'Doe', email: 'j@test.com', avatar_url: null },
+      user: {
+        id: USER_ID,
+        first_name: 'John',
+        last_name: 'Doe',
+        email: 'j@test.com',
+        avatar_url: null,
+      },
     };
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { project_members: { data: created, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { project_members: { data: created, error: null } } }),
+      error: null,
+    });
     const res = await POST(
       makeJsonRequest(`/api/projects/${PROJECT_ID}/members`, { user_id: USER_ID }),
       ctx(),
@@ -142,11 +153,18 @@ describe('POST /api/projects/[id]/members', () => {
       user_id: USER_ID,
       role: 'supervisor',
       left_at: null,
-      user: { id: USER_ID, first_name: 'John', last_name: 'Doe', email: 'j@test.com', avatar_url: null },
+      user: {
+        id: USER_ID,
+        first_name: 'John',
+        last_name: 'Doe',
+        email: 'j@test.com',
+        avatar_url: null,
+      },
     };
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { project_members: { data: created, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { project_members: { data: created, error: null } } }),
+      error: null,
+    });
     const res = await POST(
       makeJsonRequest(`/api/projects/${PROJECT_ID}/members`, {
         user_id: USER_ID,
@@ -173,17 +191,15 @@ describe('DELETE /api/projects/[id]/members', () => {
   });
 
   it('returns 400 when member_id param is missing', async () => {
-    const res = await DELETE(
-      makeRequest(`/api/projects/${PROJECT_ID}/members`),
-      ctx(),
-    );
+    const res = await DELETE(makeRequest(`/api/projects/${PROJECT_ID}/members`), ctx());
     expect(res.status).toBe(400);
   });
 
   it('soft-deletes member (sets left_at)', async () => {
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ defaultResponse: { data: null, error: null } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ defaultResponse: { data: null, error: null } }),
+      error: null,
+    });
     const res = await DELETE(
       makeRequest(`/api/projects/${PROJECT_ID}/members?member_id=mem-1`),
       ctx(),
@@ -194,11 +210,12 @@ describe('DELETE /api/projects/[id]/members', () => {
   });
 
   it('returns 500 on DB error', async () => {
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         defaultResponse: { data: null, error: { message: 'DB error', code: '500' } },
       }),
-    );
+      error: null,
+    });
     const res = await DELETE(
       makeRequest(`/api/projects/${PROJECT_ID}/members?member_id=mem-1`),
       ctx(),

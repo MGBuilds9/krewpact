@@ -7,11 +7,11 @@ vi.mock('@clerk/nextjs/server', () => ({
 
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET as GET_PROPOSALS, POST as POST_PROPOSALS } from '@/app/api/proposals/route';
 import { GET as GET_PROPOSAL_ID, PATCH as PATCH_PROPOSAL_ID } from '@/app/api/proposals/[id]/route';
 import { GET as GET_CONTRACTS, POST as POST_CONTRACTS } from '@/app/api/contracts/route';
@@ -28,7 +28,7 @@ import {
 const VALID_UUID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function makeContext(id: string) {
   return { params: Promise.resolve({ id }) };
@@ -96,11 +96,12 @@ describe('GET /api/proposals', () => {
   it('returns paginated list of proposals', async () => {
     const proposals = [makeProposal(), makeProposal({ proposal_number: 'PROP-00002' })];
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { proposals: { data: proposals, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET_PROPOSALS(makeRequest('/api/proposals'));
     expect(res.status).toBe(200);
@@ -115,7 +116,7 @@ describe('GET /api/proposals', () => {
     const client = mockSupabaseClient({
       tables: { proposals: { data: [makeProposal()], error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET_PROPOSALS(makeRequest(`/api/proposals?estimate_id=${VALID_UUID}`));
     expect(res.status).toBe(200);
@@ -146,11 +147,12 @@ describe('POST /api/proposals', () => {
   it('creates proposal with proposal_number and returns 201', async () => {
     const created = makeProposal();
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { proposals: { data: created, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST_PROPOSALS(
       makeJsonRequest('/api/proposals', {
@@ -201,11 +203,12 @@ describe('GET /api/proposals/[id]', () => {
   it('returns single proposal', async () => {
     const proposal = makeProposal();
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { proposals: { data: proposal, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET_PROPOSAL_ID(
       makeRequest(`/api/proposals/${VALID_UUID}`),
@@ -218,8 +221,8 @@ describe('GET /api/proposals/[id]', () => {
 
   it('returns 404 for non-existent proposal', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           proposals: {
             data: null,
@@ -227,7 +230,8 @@ describe('GET /api/proposals/[id]', () => {
           },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET_PROPOSAL_ID(
       makeRequest('/api/proposals/nonexistent'),
@@ -258,11 +262,12 @@ describe('PATCH /api/proposals/[id]', () => {
   it('updates proposal status and returns updated record', async () => {
     const updated = makeProposal({ status: 'sent' });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { proposals: { data: updated, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await PATCH_PROPOSAL_ID(
       makeJsonRequest('/api/proposals/123', { status: 'sent' }, 'PATCH'),
@@ -303,11 +308,12 @@ describe('GET /api/contracts', () => {
   it('returns paginated list of contracts', async () => {
     const contracts = [makeContract(), makeContract({ legal_text_version: 'v1.1' })];
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { contract_terms: { data: contracts, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET_CONTRACTS(makeRequest('/api/contracts'));
     expect(res.status).toBe(200);
@@ -322,7 +328,7 @@ describe('GET /api/contracts', () => {
     const client = mockSupabaseClient({
       tables: { contract_terms: { data: [makeContract()], error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET_CONTRACTS(makeRequest(`/api/contracts?proposal_id=${VALID_UUID}`));
     expect(res.status).toBe(200);
@@ -354,11 +360,12 @@ describe('POST /api/contracts', () => {
   it('creates contract and returns 201', async () => {
     const created = makeContract();
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { contract_terms: { data: created, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST_CONTRACTS(
       makeJsonRequest('/api/contracts', {
@@ -415,11 +422,12 @@ describe('GET /api/esign', () => {
   it('returns paginated list of esign envelopes', async () => {
     const envelopes = [makeEsignEnvelope(), makeEsignEnvelope({ signer_count: 3 })];
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { esign_envelopes: { data: envelopes, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET_ESIGN(makeRequest('/api/esign'));
     expect(res.status).toBe(200);
@@ -434,7 +442,7 @@ describe('GET /api/esign', () => {
     const client = mockSupabaseClient({
       tables: { esign_envelopes: { data: [makeEsignEnvelope()], error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET_ESIGN(makeRequest(`/api/esign?contract_id=${VALID_UUID}`));
     expect(res.status).toBe(200);
@@ -465,11 +473,12 @@ describe('POST /api/esign', () => {
   it('creates esign envelope and returns 201', async () => {
     const created = makeEsignEnvelope();
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { esign_envelopes: { data: created, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST_ESIGN(
       makeJsonRequest('/api/esign', {

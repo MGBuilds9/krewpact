@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET } from '@/app/api/crm/sequences/pending-enrollments/route';
 import { POST as approveHandler } from '@/app/api/crm/sequences/pending-enrollments/[id]/approve/route';
 import { POST as rejectHandler } from '@/app/api/crm/sequences/pending-enrollments/[id]/reject/route';
@@ -17,7 +17,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 describe('GET /api/crm/sequences/pending-enrollments', () => {
   beforeEach(() => {
@@ -56,7 +56,7 @@ describe('GET /api/crm/sequences/pending-enrollments', () => {
         sequence_enrollments: { data: pendingEnrollments, error: null },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(makeRequest('/api/crm/sequences/pending-enrollments'));
     expect(res.status).toBe(200);
@@ -84,7 +84,7 @@ describe('POST /api/crm/sequences/pending-enrollments/[id]/approve', () => {
         sequence_enrollments: { data: updated, error: null },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest('/api/crm/sequences/pending-enrollments/enrollment-1/approve', {});
     const res = await approveHandler(req, {
@@ -115,7 +115,7 @@ describe('POST /api/crm/sequences/pending-enrollments/[id]/reject', () => {
         sequence_enrollments: { data: updated, error: null },
       },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest('/api/crm/sequences/pending-enrollments/enrollment-1/reject', {});
     const res = await rejectHandler(req, {

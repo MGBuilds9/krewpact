@@ -1,15 +1,16 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/knowledge/embeddings', () => ({ embedChunks: vi.fn() }));
 vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() } }));
 
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { embedChunks } from '@/lib/knowledge/embeddings';
 import { POST } from '@/app/api/executive/knowledge/search/route';
 
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 const mockEmbedChunks = vi.mocked(embedChunks);
 
 function makeRequest(body: unknown) {
@@ -94,10 +95,13 @@ describe('POST /api/executive/knowledge/search', () => {
       }),
     });
 
-    mockCreateUserClient.mockResolvedValue({
-      rpc: mockRpc,
-      from: mockFrom,
-    } as unknown as Awaited<ReturnType<typeof createUserClient>>);
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: {
+        rpc: mockRpc,
+        from: mockFrom,
+      } as any,
+      error: null,
+    });
 
     const res = await POST(makeRequest({ query: 'safety procedures' }));
     expect(res.status).toBe(200);
@@ -130,10 +134,13 @@ describe('POST /api/executive/knowledge/search', () => {
 
     const mockRpc = vi.fn().mockResolvedValue({ data: [], error: null });
 
-    mockCreateUserClient.mockResolvedValue({
-      rpc: mockRpc,
-      from: vi.fn(),
-    } as unknown as Awaited<ReturnType<typeof createUserClient>>);
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: {
+        rpc: mockRpc,
+        from: vi.fn(),
+      } as any,
+      error: null,
+    });
 
     const res = await POST(makeRequest({ query: 'test', threshold: 0.9, limit: 25 }));
     expect(res.status).toBe(200);
@@ -152,10 +159,13 @@ describe('POST /api/executive/knowledge/search', () => {
 
     const mockRpc = vi.fn().mockResolvedValue({ data: [], error: null });
 
-    mockCreateUserClient.mockResolvedValue({
-      rpc: mockRpc,
-      from: vi.fn(),
-    } as unknown as Awaited<ReturnType<typeof createUserClient>>);
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: {
+        rpc: mockRpc,
+        from: vi.fn(),
+      } as any,
+      error: null,
+    });
 
     await POST(makeRequest({ query: 'test', limit: 200 }));
 
@@ -172,10 +182,13 @@ describe('POST /api/executive/knowledge/search', () => {
 
     const mockRpc = vi.fn().mockResolvedValue({ data: [], error: null });
 
-    mockCreateUserClient.mockResolvedValue({
-      rpc: mockRpc,
-      from: vi.fn(),
-    } as unknown as Awaited<ReturnType<typeof createUserClient>>);
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: {
+        rpc: mockRpc,
+        from: vi.fn(),
+      } as any,
+      error: null,
+    });
 
     const res = await POST(makeRequest({ query: 'very obscure query' }));
     expect(res.status).toBe(200);

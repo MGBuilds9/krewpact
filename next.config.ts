@@ -53,6 +53,7 @@ const nextConfig: NextConfig = {
               "img-src 'self' data: blob: https://*.clerk.com https://img.clerk.com",
               "font-src 'self' data:",
               "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.clerk.com https://*.clerk.accounts.dev https://clerk.mdmgroupinc.ca https://clerk.hub.mdmgroupinc.ca https://*.sentry.io",
+              "worker-src 'self' blob:",
               "frame-ancestors 'none'",
             ].join('; '),
           },

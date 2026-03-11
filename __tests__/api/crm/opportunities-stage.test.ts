@@ -7,11 +7,11 @@ vi.mock('@clerk/nextjs/server', () => ({
 
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { POST } from '@/app/api/crm/opportunities/[id]/stage/route';
 import {
   mockSupabaseClient,
@@ -23,7 +23,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function makeContext(id: string) {
   return { params: Promise.resolve({ id }) };
@@ -47,11 +47,12 @@ describe('POST /api/crm/opportunities/[id]/stage', () => {
   it('transitions intake -> site_visit', async () => {
     const opp = makeOpportunity({ stage: 'intake' });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { opportunities: { data: opp, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST(
       makeJsonRequest('/api/crm/opportunities/123/stage', { stage: 'site_visit' }),
@@ -63,11 +64,12 @@ describe('POST /api/crm/opportunities/[id]/stage', () => {
   it('transitions site_visit -> estimating', async () => {
     const opp = makeOpportunity({ stage: 'site_visit' });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { opportunities: { data: opp, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST(
       makeJsonRequest('/api/crm/opportunities/123/stage', { stage: 'estimating' }),
@@ -79,11 +81,12 @@ describe('POST /api/crm/opportunities/[id]/stage', () => {
   it('transitions negotiation -> contracted', async () => {
     const opp = makeOpportunity({ stage: 'negotiation' });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { opportunities: { data: opp, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST(
       makeJsonRequest('/api/crm/opportunities/123/stage', { stage: 'contracted' }),
@@ -95,11 +98,12 @@ describe('POST /api/crm/opportunities/[id]/stage', () => {
   it('transitions any -> closed_lost (with lost_reason)', async () => {
     const opp = makeOpportunity({ stage: 'proposal' });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { opportunities: { data: opp, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST(
       makeJsonRequest('/api/crm/opportunities/123/stage', {
@@ -114,11 +118,12 @@ describe('POST /api/crm/opportunities/[id]/stage', () => {
   it('rejects intake -> contracted (skip stages)', async () => {
     const opp = makeOpportunity({ stage: 'intake' });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { opportunities: { data: opp, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST(
       makeJsonRequest('/api/crm/opportunities/123/stage', { stage: 'contracted' }),
@@ -132,11 +137,12 @@ describe('POST /api/crm/opportunities/[id]/stage', () => {
   it('rejects contracted -> intake (terminal)', async () => {
     const opp = makeOpportunity({ stage: 'contracted' });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { opportunities: { data: opp, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST(
       makeJsonRequest('/api/crm/opportunities/123/stage', { stage: 'intake' }),
@@ -150,11 +156,12 @@ describe('POST /api/crm/opportunities/[id]/stage', () => {
   it('rejects closed_lost without lost_reason', async () => {
     const opp = makeOpportunity({ stage: 'intake' });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { opportunities: { data: opp, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await POST(
       makeJsonRequest('/api/crm/opportunities/123/stage', { stage: 'closed_lost' }),

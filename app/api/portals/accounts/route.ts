@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { logger } from '@/lib/logger';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { portalAccountInviteSchema } from '@/lib/validators/portals';
@@ -24,7 +24,8 @@ export async function GET(req: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
   const { status, actor_type, limit = 50, offset = 0 } = parsed.data;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   let query = supabase
     .from('portal_accounts')
@@ -63,7 +64,9 @@ export async function POST(req: NextRequest) {
 
   const { projects, role, ...accountData } = parsed.data;
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data: account, error: accountError } = await supabase
     .from('portal_accounts')
     .insert({ ...accountData, status: 'invited' })

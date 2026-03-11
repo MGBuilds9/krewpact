@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { fileMetadataUpdateSchema } from '@/lib/validators/documents';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
@@ -14,10 +14,13 @@ export async function GET(req: NextRequest, context: RouteContext) {
   if (!rl.success) return rateLimitResponse(rl);
 
   const { id, fileId } = await context.params;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('file_metadata')
-    .select('id, filename, original_filename, file_path, file_size_bytes, mime_type, folder_id, project_id, storage_bucket, tags, visibility, version_no, is_deleted, deleted_at, checksum_sha256, source_system, source_identifier, uploaded_by, created_at, updated_at')
+    .select(
+      'id, filename, original_filename, file_path, file_size_bytes, mime_type, folder_id, project_id, storage_bucket, tags, visibility, version_no, is_deleted, deleted_at, checksum_sha256, source_system, source_identifier, uploaded_by, created_at, updated_at',
+    )
     .eq('id', fileId)
     .eq('project_id', id)
     .single();
@@ -48,7 +51,9 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('file_metadata')
     .update(parsed.data)
@@ -70,7 +75,8 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { id, fileId } = await context.params;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   // Soft delete
   const { error } = await supabase

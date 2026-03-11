@@ -6,10 +6,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET, PATCH } from '@/app/api/finance/purchase-orders/[id]/route';
 import {
   mockSupabaseClient,
@@ -20,7 +20,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function makeContext(id: string) {
   return { params: Promise.resolve({ id }) };
@@ -53,9 +53,10 @@ describe('GET /api/finance/purchase-orders/[id]', () => {
 
   it('returns PO by id', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { po_snapshots: { data: samplePO, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { po_snapshots: { data: samplePO, error: null } } }),
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/finance/purchase-orders/po-1'), makeContext('po-1'));
     expect(res.status).toBe(200);
@@ -67,13 +68,17 @@ describe('GET /api/finance/purchase-orders/[id]', () => {
 
   it('returns 404 when not found', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { po_snapshots: { data: null, error: { message: 'Not found', code: 'PGRST116' } } },
       }),
-    );
+      error: null,
+    });
 
-    const res = await GET(makeRequest('/api/finance/purchase-orders/missing'), makeContext('missing'));
+    const res = await GET(
+      makeRequest('/api/finance/purchase-orders/missing'),
+      makeContext('missing'),
+    );
     expect(res.status).toBe(404);
   });
 });
@@ -93,9 +98,10 @@ describe('PATCH /api/finance/purchase-orders/[id]', () => {
   it('updates PO fields', async () => {
     mockClerkAuth(mockAuth);
     const updated = { ...samplePO, status: 'approved' };
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { po_snapshots: { data: updated, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { po_snapshots: { data: updated, error: null } } }),
+      error: null,
+    });
 
     const res = await PATCH(
       makeJsonRequest('/api/finance/purchase-orders/po-1', { status: 'approved' }, 'PATCH'),
@@ -117,11 +123,12 @@ describe('PATCH /api/finance/purchase-orders/[id]', () => {
 
   it('returns 500 on DB error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { po_snapshots: { data: null, error: { message: 'DB error', code: '42000' } } },
       }),
-    );
+      error: null,
+    });
 
     const res = await PATCH(
       makeJsonRequest('/api/finance/purchase-orders/po-1', { supplier_name: 'Updated' }, 'PATCH'),

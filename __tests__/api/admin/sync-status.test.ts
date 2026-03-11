@@ -5,7 +5,7 @@ vi.mock('@clerk/nextjs/server', () => ({
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 vi.mock('@/lib/api/rate-limit', () => ({
@@ -14,7 +14,7 @@ vi.mock('@/lib/api/rate-limit', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET } from '@/app/api/admin/sync/status/route';
 import {
   mockSupabaseClient,
@@ -24,7 +24,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 describe('GET /api/admin/sync/status', () => {
   beforeEach(() => {
@@ -61,14 +61,15 @@ describe('GET /api/admin/sync/status', () => {
       },
     ];
 
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           erp_sync_jobs: { data: jobs, error: null },
           erp_sync_errors: { data: recentErrors, error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/admin/sync/status'));
     expect(res.status).toBe(200);
@@ -106,13 +107,14 @@ describe('GET /api/admin/sync/status', () => {
   it('returns 500 when erp_sync_jobs query fails', async () => {
     mockClerkAuth(mockAuth, 'user_123');
 
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           erp_sync_jobs: { data: null, error: { message: 'DB connection lost' } },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/admin/sync/status'));
     expect(res.status).toBe(500);
@@ -123,14 +125,15 @@ describe('GET /api/admin/sync/status', () => {
   it('returns empty stats when no jobs exist', async () => {
     mockClerkAuth(mockAuth, 'user_123');
 
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           erp_sync_jobs: { data: [], error: null },
           erp_sync_errors: { data: [], error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/admin/sync/status'));
     expect(res.status).toBe(200);

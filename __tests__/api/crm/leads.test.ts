@@ -7,11 +7,11 @@ vi.mock('@clerk/nextjs/server', () => ({
 
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET, POST } from '@/app/api/crm/leads/route';
 import { GET as GET_ID, PATCH, DELETE } from '@/app/api/crm/leads/[id]/route';
 import { POST as STAGE_POST } from '@/app/api/crm/leads/[id]/stage/route';
@@ -26,7 +26,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function makeContext(id: string) {
   return { params: Promise.resolve({ id }) };
@@ -53,9 +53,10 @@ describe('GET /api/crm/leads', () => {
   it('returns leads list', async () => {
     const leads = [makeLead(), makeLead({ company_name: 'Second Lead' })];
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { leads: { data: leads, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { leads: { data: leads, error: null } } }),
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/crm/leads'));
     expect(res.status).toBe(200);
@@ -71,7 +72,7 @@ describe('GET /api/crm/leads', () => {
     const client = mockSupabaseClient({
       tables: { leads: { data: leads, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(
       makeRequest('/api/crm/leads?division_id=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'),
@@ -86,7 +87,7 @@ describe('GET /api/crm/leads', () => {
     const client = mockSupabaseClient({
       tables: { leads: { data: leads, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(makeRequest('/api/crm/leads?status=qualified'));
     expect(res.status).toBe(200);
@@ -102,7 +103,7 @@ describe('GET /api/crm/leads', () => {
     const client = mockSupabaseClient({
       tables: { leads: { data: leads, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(
       makeRequest('/api/crm/leads?assigned_to=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'),
@@ -117,7 +118,7 @@ describe('GET /api/crm/leads', () => {
     const client = mockSupabaseClient({
       tables: { leads: { data: leads, error: null } },
     });
-    mockCreateUserClient.mockResolvedValue(client);
+    mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await GET(makeRequest('/api/crm/leads?search=Construction'));
     expect(res.status).toBe(200);
@@ -146,9 +147,10 @@ describe('POST /api/crm/leads', () => {
   it('creates lead with default status new', async () => {
     const created = makeLead({ status: 'new' });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { leads: { data: created, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { leads: { data: created, error: null } } }),
+      error: null,
+    });
 
     const res = await POST(makeJsonRequest('/api/crm/leads', { company_name: 'Test Lead' }));
     expect(res.status).toBe(201);
@@ -163,9 +165,10 @@ describe('POST /api/crm/leads', () => {
       industry: 'Construction',
     });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { leads: { data: created, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { leads: { data: created, error: null } } }),
+      error: null,
+    });
 
     const res = await POST(
       makeJsonRequest('/api/crm/leads', {
@@ -201,9 +204,10 @@ describe('GET /api/crm/leads/[id]', () => {
   it('returns lead by id', async () => {
     const lead = makeLead();
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { leads: { data: lead, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { leads: { data: lead, error: null } } }),
+      error: null,
+    });
 
     const res = await GET_ID(makeRequest('/api/crm/leads/123'), makeContext(lead.id));
     expect(res.status).toBe(200);
@@ -213,8 +217,8 @@ describe('GET /api/crm/leads/[id]', () => {
 
   it('returns 404 for non-existent lead', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           leads: {
             data: null,
@@ -222,7 +226,8 @@ describe('GET /api/crm/leads/[id]', () => {
           },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET_ID(makeRequest('/api/crm/leads/nonexistent'), makeContext('nonexistent'));
     expect(res.status).toBe(404);
@@ -241,9 +246,10 @@ describe('PATCH /api/crm/leads/[id]', () => {
   it('updates lead', async () => {
     const updated = makeLead({ company_name: 'Updated Lead' });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { leads: { data: updated, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { leads: { data: updated, error: null } } }),
+      error: null,
+    });
 
     const res = await PATCH(
       makeJsonRequest('/api/crm/leads/123', { company_name: 'Updated Lead' }, 'PATCH'),
@@ -266,9 +272,10 @@ describe('DELETE /api/crm/leads/[id]', () => {
 
   it('deletes lead', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({ tables: { leads: { data: null, error: null } } }),
-    );
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({ tables: { leads: { data: null, error: null } } }),
+      error: null,
+    });
 
     const res = await DELETE(makeRequest('/api/crm/leads/123'), makeContext('some-id'));
     expect(res.status).toBe(200);
@@ -289,11 +296,12 @@ describe('POST /api/crm/leads/[id]/stage', () => {
   it('transitions new → qualified', async () => {
     const currentLead = makeLead({ status: 'new' });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { leads: { data: currentLead, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await STAGE_POST(
       makeJsonRequest('/api/crm/leads/123/stage', { stage: 'qualified' }),
@@ -305,11 +313,12 @@ describe('POST /api/crm/leads/[id]/stage', () => {
   it('transitions qualified → estimating', async () => {
     const currentLead = makeLead({ status: 'qualified' });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { leads: { data: currentLead, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await STAGE_POST(
       makeJsonRequest('/api/crm/leads/123/stage', { stage: 'estimating' }),
@@ -321,11 +330,12 @@ describe('POST /api/crm/leads/[id]/stage', () => {
   it('transitions estimating → proposal_sent', async () => {
     const currentLead = makeLead({ status: 'estimating' });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { leads: { data: currentLead, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await STAGE_POST(
       makeJsonRequest('/api/crm/leads/123/stage', {
@@ -339,11 +349,12 @@ describe('POST /api/crm/leads/[id]/stage', () => {
   it('transitions proposal_sent → won', async () => {
     const currentLead = makeLead({ status: 'proposal_sent' });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { leads: { data: currentLead, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await STAGE_POST(
       makeJsonRequest('/api/crm/leads/123/stage', { stage: 'won' }),
@@ -355,11 +366,12 @@ describe('POST /api/crm/leads/[id]/stage', () => {
   it('transitions any → lost (with lost_reason)', async () => {
     const currentLead = makeLead({ status: 'new' });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { leads: { data: currentLead, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await STAGE_POST(
       makeJsonRequest('/api/crm/leads/123/stage', {
@@ -374,11 +386,12 @@ describe('POST /api/crm/leads/[id]/stage', () => {
   it('rejects new → won (skip stages)', async () => {
     const currentLead = makeLead({ status: 'new' });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { leads: { data: currentLead, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await STAGE_POST(
       makeJsonRequest('/api/crm/leads/123/stage', { stage: 'won' }),
@@ -392,11 +405,12 @@ describe('POST /api/crm/leads/[id]/stage', () => {
   it('rejects lost → qualified (dead end)', async () => {
     const currentLead = makeLead({ status: 'lost' });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { leads: { data: currentLead, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await STAGE_POST(
       makeJsonRequest('/api/crm/leads/123/stage', { stage: 'qualified' }),
@@ -410,11 +424,12 @@ describe('POST /api/crm/leads/[id]/stage', () => {
   it('rejects lost without lost_reason', async () => {
     const currentLead = makeLead({ status: 'new' });
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: { leads: { data: currentLead, error: null } },
       }),
-    );
+      error: null,
+    });
 
     const res = await STAGE_POST(
       makeJsonRequest('/api/crm/leads/123/stage', { stage: 'lost' }),

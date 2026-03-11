@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
@@ -16,12 +16,15 @@ export async function GET(req: NextRequest, context: RouteContext) {
   if (!rl.success) return rateLimitResponse(rl);
 
   const { id } = await context.params;
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const { data, error, count } = await supabase
     .from('project_daily_logs')
-    .select('*, submitted_user:users!project_daily_logs_submitted_by_fkey(first_name, last_name)', { count: 'exact' })
+    .select('*, submitted_user:users!project_daily_logs_submitted_by_fkey(first_name, last_name)', {
+      count: 'exact',
+    })
     .eq('project_id', id)
     .order('log_date', { ascending: false })
     .range(offset, offset + limit - 1);

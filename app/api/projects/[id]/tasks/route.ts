@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { taskCreateSchema } from '@/lib/validators/projects';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { NextRequest, NextResponse } from 'next/server';
@@ -23,7 +23,9 @@ export async function GET(req: NextRequest, context: RouteContext) {
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const searchParams = req.nextUrl.searchParams;
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   let query = supabase.from('tasks').select(TASK_COLUMNS, { count: 'exact' }).eq('project_id', id);
 
   const milestoneId = searchParams.get('milestone_id');
@@ -72,7 +74,9 @@ export async function POST(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('tasks')
     .insert({ ...parsed.data, project_id: id, created_by: userId })

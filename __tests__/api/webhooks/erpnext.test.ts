@@ -5,7 +5,7 @@ const mockReadPurchaseInvoice = vi.fn();
 
 // Mock Supabase server client (required by SyncService)
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 // Mock SyncService
@@ -20,10 +20,7 @@ import { POST } from '@/app/api/webhooks/erpnext/route';
 
 const WEBHOOK_SECRET = 'test-erpnext-webhook-secret';
 
-function makeWebhookRequest(
-  payload: Record<string, unknown>,
-  secret?: string,
-): Request {
+function makeWebhookRequest(payload: Record<string, unknown>, secret?: string): Request {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
@@ -45,7 +42,11 @@ describe('POST /api/webhooks/erpnext', () => {
 
   it('returns 401 when no secret header is provided', async () => {
     const res = await POST(
-      makeWebhookRequest({ doctype: 'Sales Invoice', name: 'SINV-001', event: 'on_update' }) as never,
+      makeWebhookRequest({
+        doctype: 'Sales Invoice',
+        name: 'SINV-001',
+        event: 'on_update',
+      }) as never,
     );
     expect(res.status).toBe(401);
   });

@@ -7,11 +7,11 @@ vi.mock('@clerk/nextjs/server', () => ({
 
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET } from '@/app/api/crm/dashboard/metrics/route';
 import {
   mockSupabaseClient,
@@ -21,7 +21,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 describe('GET /api/crm/dashboard/metrics', () => {
   beforeEach(() => {
@@ -36,14 +36,15 @@ describe('GET /api/crm/dashboard/metrics', () => {
 
   it('returns dashboard metrics with default period', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           opportunities: { data: [], error: null },
           leads: { data: [], error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/crm/dashboard/metrics'));
     expect(res.status).toBe(200);
@@ -56,14 +57,15 @@ describe('GET /api/crm/dashboard/metrics', () => {
 
   it('accepts period query parameter', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           opportunities: { data: [], error: null },
           leads: { data: [], error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/crm/dashboard/metrics?period=quarter'));
     expect(res.status).toBe(200);
@@ -77,14 +79,15 @@ describe('GET /api/crm/dashboard/metrics', () => {
 
   it('returns 500 on Supabase error', async () => {
     mockClerkAuth(mockAuth);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           opportunities: { data: null, error: { message: 'DB error' } },
           leads: { data: [], error: null },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await GET(makeRequest('/api/crm/dashboard/metrics'));
     expect(res.status).toBe(500);

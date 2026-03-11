@@ -1,14 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { POST } from '@/app/api/crm/contacts/merge/route';
 
 function mockChain(result: { data: unknown; error: unknown }) {
@@ -55,10 +55,15 @@ describe('POST /api/crm/contacts/merge', () => {
   });
 
   it('returns 404 if primary contact not found', async () => {
-    const from = vi.fn().mockReturnValue(
-      mockChain({ data: null, error: { message: 'Not found', code: 'PGRST116' } }),
-    );
-    (createUserClient as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({ from });
+    const from = vi
+      .fn()
+      .mockReturnValue(
+        mockChain({ data: null, error: { message: 'Not found', code: 'PGRST116' } }),
+      );
+    (createUserClientSafe as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
+      client: { from },
+      error: null,
+    });
 
     const res = await POST(makeRequest({ primary_id: primaryId, secondary_id: secondaryId }));
     expect(res.status).toBe(404);
@@ -71,16 +76,38 @@ describe('POST /api/crm/contacts/merge', () => {
       if (table === 'contacts') {
         contactSelectCount++;
         if (contactSelectCount <= 2) {
-          const data = contactSelectCount === 1
-            ? { id: primaryId, first_name: 'John', last_name: 'Doe', email: 'john@test.com', phone: null, created_at: '2026-01-01', updated_at: '2026-01-01', deleted_at: null }
-            : { id: secondaryId, first_name: 'Johnny', last_name: 'Doe', email: 'johnny@test.com', phone: '555-1234', created_at: '2026-01-02', updated_at: '2026-01-02', deleted_at: null };
+          const data =
+            contactSelectCount === 1
+              ? {
+                  id: primaryId,
+                  first_name: 'John',
+                  last_name: 'Doe',
+                  email: 'john@test.com',
+                  phone: null,
+                  created_at: '2026-01-01',
+                  updated_at: '2026-01-01',
+                  deleted_at: null,
+                }
+              : {
+                  id: secondaryId,
+                  first_name: 'Johnny',
+                  last_name: 'Doe',
+                  email: 'johnny@test.com',
+                  phone: '555-1234',
+                  created_at: '2026-01-02',
+                  updated_at: '2026-01-02',
+                  deleted_at: null,
+                };
           return mockChain({ data, error: null });
         }
         return mockChain({ data: null, error: null });
       }
       return mockChain({ data: null, error: null });
     });
-    (createUserClient as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({ from });
+    (createUserClientSafe as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
+      client: { from },
+      error: null,
+    });
 
     const res = await POST(makeRequest({ primary_id: primaryId, secondary_id: secondaryId }));
     expect(res.status).toBe(200);

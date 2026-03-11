@@ -7,11 +7,11 @@ vi.mock('@clerk/nextjs/server', () => ({
 
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 // Estimate line routes
 import { PUT as linesPUT } from '@/app/api/estimates/[id]/lines/route';
@@ -31,7 +31,7 @@ import {
 import { calculateLineTotal, calculateEstimateTotals } from '@/lib/estimating/calculations';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 const ESTIMATE_ID = 'f5ddaa44-4b5a-4fd3-ddbc-baa4ac825f66';
 const LINE_ID_1 = 'a1aabb11-1c1d-4ae1-aa11-1bb1cc1dd1e1';
@@ -87,8 +87,8 @@ describe('Calculation Edge Cases: Large number of lines', () => {
       }),
     );
     mockClerkAuth(mockAuth, USER_ID);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           estimate_lines: { data: newLines, error: null },
           estimates: {
@@ -101,7 +101,8 @@ describe('Calculation Edge Cases: Large number of lines', () => {
           },
         },
       }),
-    );
+      error: null,
+    });
 
     const batchPayload = Array.from({ length: 50 }, (_, i) => ({
       description: `Line ${i + 1}`,
@@ -137,8 +138,8 @@ describe('Calculation Edge Cases: Zero and boundary values', () => {
 
   it('deleting all lines sets estimate totals to 0', async () => {
     mockClerkAuth(mockAuth, USER_ID);
-    mockCreateUserClient.mockResolvedValue(
-      mockSupabaseClient({
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
         tables: {
           estimate_lines: { data: [], error: null },
           estimates: {
@@ -151,7 +152,8 @@ describe('Calculation Edge Cases: Zero and boundary values', () => {
           },
         },
       }),
-    );
+      error: null,
+    });
 
     const res = await lineDELETE(
       makeRequest(`/api/estimates/${ESTIMATE_ID}/lines/${LINE_ID_1}`),

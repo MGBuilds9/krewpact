@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
   createServiceClient: vi.fn(),
 }));
 vi.mock('@/lib/api/rate-limit', () => ({

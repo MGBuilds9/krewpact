@@ -1,23 +1,40 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET, PATCH, DELETE } from '@/app/api/crm/bidding/[id]/route';
-import { mockClerkAuth, mockClerkUnauth, makeRequest, makeJsonRequest, makeBiddingOpportunity } from '@/__tests__/helpers';
+import {
+  mockClerkAuth,
+  mockClerkUnauth,
+  makeRequest,
+  makeJsonRequest,
+  makeBiddingOpportunity,
+} from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function mockSupabase(tableResponse: { data: unknown; error: unknown }) {
   const chain: Record<string, unknown> = {};
-  const methods = ['select', 'insert', 'update', 'delete', 'eq', 'neq', 'order', 'range', 'limit', 'in'];
+  const methods = [
+    'select',
+    'insert',
+    'update',
+    'delete',
+    'eq',
+    'neq',
+    'order',
+    'range',
+    'limit',
+    'in',
+  ];
   for (const m of methods) {
     chain[m] = vi.fn().mockReturnValue(chain);
   }
@@ -27,7 +44,7 @@ function mockSupabase(tableResponse: { data: unknown; error: unknown }) {
   const client = {
     from: vi.fn().mockReturnValue(chain),
   };
-  mockCreateUserClient.mockResolvedValue(client as never);
+  mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
   return client;
 }
 
@@ -70,7 +87,10 @@ describe('PATCH /api/crm/bidding/[id]', () => {
   it('updates a bidding opportunity', async () => {
     const updated = makeBiddingOpportunity({ status: 'reviewing' });
     mockSupabase({ data: updated, error: null });
-    const res = await PATCH(makeJsonRequest('/api/crm/bidding/123', { status: 'reviewing' }, 'PATCH'), ctx);
+    const res = await PATCH(
+      makeJsonRequest('/api/crm/bidding/123', { status: 'reviewing' }, 'PATCH'),
+      ctx,
+    );
     expect(res.status).toBe(200);
   });
 
@@ -86,7 +106,10 @@ describe('PATCH /api/crm/bidding/[id]', () => {
 
   it('returns 404 when not found', async () => {
     mockSupabase({ data: null, error: { code: 'PGRST116', message: 'Not found' } });
-    const res = await PATCH(makeJsonRequest('/api/crm/bidding/123', { title: 'Updated' }, 'PATCH'), ctx);
+    const res = await PATCH(
+      makeJsonRequest('/api/crm/bidding/123', { title: 'Updated' }, 'PATCH'),
+      ctx,
+    );
     expect(res.status).toBe(404);
   });
 });

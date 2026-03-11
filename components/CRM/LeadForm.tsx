@@ -17,7 +17,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -80,7 +80,6 @@ export function LeadForm({ lead, onSuccess, onCancel }: LeadFormProps) {
       industry: lead?.industry ?? undefined,
       city: lead?.city ?? undefined,
       province: lead?.province ?? 'ON',
-      notes: lead?.notes ?? undefined,
     },
   });
 
@@ -221,25 +220,6 @@ export function LeadForm({ lead, onSuccess, onCancel }: LeadFormProps) {
             )}
           />
         </div>
-
-        <FormField
-          control={form.control}
-          name="notes"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Notes</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Initial notes about this lead..."
-                  rows={3}
-                  {...field}
-                  value={field.value ?? ''}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
 
         <div className="flex gap-2 justify-end pt-2">
           {onCancel && (

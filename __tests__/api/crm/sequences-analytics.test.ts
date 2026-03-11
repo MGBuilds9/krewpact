@@ -5,7 +5,7 @@ vi.mock('@clerk/nextjs/server', () => ({
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createUserClientSafe: vi.fn(),
 }));
 
 vi.mock('@/lib/api/rate-limit', () => ({
@@ -14,12 +14,12 @@ vi.mock('@/lib/api/rate-limit', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET } from '@/app/api/crm/sequences/analytics/route';
 import { makeRequest } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function mockChain(result: { data: unknown; error: unknown }) {
   const chain: Record<string, unknown> = {};
@@ -46,7 +46,7 @@ describe('GET /api/crm/sequences/analytics', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     from = vi.fn();
-    mockCreateUserClient.mockResolvedValue({ from } as never);
+    mockCreateUserClientSafe.mockResolvedValue({ client: { from } as never, error: null });
   });
 
   it('returns 401 for unauthenticated requests', async () => {
@@ -65,7 +65,12 @@ describe('GET /api/crm/sequences/analytics', () => {
       if (table === 'outreach_sequences') {
         return mockChain({
           data: [
-            { id: 'seq-1', name: 'Welcome', is_active: true, sequence_steps: [{ id: 's1' }, { id: 's2' }] },
+            {
+              id: 'seq-1',
+              name: 'Welcome',
+              is_active: true,
+              sequence_steps: [{ id: 's1' }, { id: 's2' }],
+            },
             { id: 'seq-2', name: 'Follow Up', is_active: false, sequence_steps: [{ id: 's3' }] },
           ],
           error: null,
@@ -146,7 +151,10 @@ describe('GET /api/crm/sequences/analytics', () => {
       return seqChain;
     };
     seqChain.then = (resolve: (v: unknown) => void) =>
-      resolve({ data: [{ id: 'seq-1', name: 'Div Seq', is_active: true, sequence_steps: [] }], error: null });
+      resolve({
+        data: [{ id: 'seq-1', name: 'Div Seq', is_active: true, sequence_steps: [] }],
+        error: null,
+      });
 
     from.mockImplementation((table: string) => {
       if (table === 'outreach_sequences') return seqChain;

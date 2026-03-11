@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { NextRequest, NextResponse } from 'next/server';
 import { timeEntryCreateSchema } from '@/lib/validators/time-expense';
@@ -19,10 +19,15 @@ export async function GET(req: NextRequest, context: RouteContext) {
   const userFilter = url.searchParams.get('user_id');
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   let query = supabase
     .from('time_entries')
-    .select('id, project_id, task_id, user_id, work_date, hours_regular, hours_overtime, cost_code, notes, source, created_at, updated_at', { count: 'exact' })
+    .select(
+      'id, project_id, task_id, user_id, work_date, hours_regular, hours_overtime, cost_code, notes, source, created_at, updated_at',
+      { count: 'exact' },
+    )
     .eq('project_id', id)
     .order('work_date', { ascending: false });
 
@@ -52,7 +57,9 @@ export async function POST(req: NextRequest, context: RouteContext) {
   const parsed = timeEntryCreateSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
   const { data, error } = await supabase
     .from('time_entries')
     .insert({ project_id: id, ...parsed.data })

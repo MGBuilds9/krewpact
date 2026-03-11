@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createUserClient: vi.fn() }));
+vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
@@ -15,7 +15,7 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { GET } from '@/app/api/onboarding/status/route';
 import {
   mockSupabaseClient,
@@ -25,7 +25,7 @@ import {
 } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 describe('GET /api/onboarding/status', () => {
   beforeEach(() => vi.clearAllMocks());
@@ -47,7 +47,7 @@ describe('GET /api/onboarding/status', () => {
         user_profiles: { data: null, error: null, count: 0 },
       },
     });
-    mockCreateUserClient.mockResolvedValue(sb);
+    mockCreateUserClientSafe.mockResolvedValue({ client: sb, error: null });
 
     const res = await GET(makeRequest('/api/onboarding/status'));
     expect(res.status).toBe(200);
@@ -68,7 +68,7 @@ describe('GET /api/onboarding/status', () => {
         user_profiles: { data: null, error: null, count: 0 },
       },
     });
-    mockCreateUserClient.mockResolvedValue(sb);
+    mockCreateUserClientSafe.mockResolvedValue({ client: sb, error: null });
 
     const res = await GET(makeRequest('/api/onboarding/status'));
     expect(res.status).toBe(200);
@@ -89,7 +89,7 @@ describe('GET /api/onboarding/status', () => {
         user_profiles: { data: null, error: null, count: 0 },
       },
     });
-    mockCreateUserClient.mockResolvedValue(sb);
+    mockCreateUserClientSafe.mockResolvedValue({ client: sb, error: null });
 
     const res = await GET(makeRequest('/api/onboarding/status'));
     expect(res.status).toBe(200);
@@ -110,7 +110,7 @@ describe('GET /api/onboarding/status', () => {
         user_profiles: { data: null, error: null, count: 2 },
       },
     });
-    mockCreateUserClient.mockResolvedValue(sb);
+    mockCreateUserClientSafe.mockResolvedValue({ client: sb, error: null });
 
     const res = await GET(makeRequest('/api/onboarding/status'));
     expect(res.status).toBe(200);
@@ -128,7 +128,7 @@ describe('GET /api/onboarding/status', () => {
         user_profiles: { data: null, error: null, count: 0 },
       },
     });
-    mockCreateUserClient.mockResolvedValue(sb);
+    mockCreateUserClientSafe.mockResolvedValue({ client: sb, error: null });
 
     const res = await GET(makeRequest('/api/onboarding/status'));
     expect(res.status).toBe(500);
@@ -146,7 +146,7 @@ describe('GET /api/onboarding/status', () => {
         user_profiles: { data: null, error: null, count: 0 },
       },
     });
-    mockCreateUserClient.mockResolvedValue(sb);
+    mockCreateUserClientSafe.mockResolvedValue({ client: sb, error: null });
 
     const res = await GET(makeRequest('/api/onboarding/status'));
     expect(res.status).toBe(500);
@@ -164,7 +164,7 @@ describe('GET /api/onboarding/status', () => {
         user_profiles: { data: null, error: { message: 'DB error' } },
       },
     });
-    mockCreateUserClient.mockResolvedValue(sb);
+    mockCreateUserClientSafe.mockResolvedValue({ client: sb, error: null });
 
     const res = await GET(makeRequest('/api/onboarding/status'));
     expect(res.status).toBe(500);
@@ -182,7 +182,7 @@ describe('GET /api/onboarding/status', () => {
         user_profiles: { data: null, error: null, count: 0 },
       },
     });
-    mockCreateUserClient.mockResolvedValue(sb);
+    mockCreateUserClientSafe.mockResolvedValue({ client: sb, error: null });
 
     const res = await GET(makeRequest('/api/onboarding/status'));
     expect(res.status).toBe(200);

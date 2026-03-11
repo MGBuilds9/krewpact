@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClient } from '@/lib/supabase/server';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { computeLeadMerge } from '@/lib/crm/duplicate-detector';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -37,7 +37,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Cannot merge a lead with itself' }, { status: 400 });
   }
 
-  const supabase = await createUserClient();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+
+  if (authError) return authError;
 
   // Fetch both leads
   const [primaryResult, secondaryResult] = await Promise.all([
