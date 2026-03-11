@@ -15,13 +15,21 @@ export interface Notification {
   created_at: string;
 }
 
+interface PaginatedNotifications {
+  data: Notification[];
+  total: number;
+  hasMore: boolean;
+}
+
 export function useNotifications(options?: { unreadOnly?: boolean }) {
   return useQuery({
     queryKey: queryKeys.notifications.list({ unreadOnly: options?.unreadOnly }),
-    queryFn: () =>
-      apiFetch<Notification[]>('/api/notifications', {
+    queryFn: async () => {
+      const res = await apiFetch<PaginatedNotifications>('/api/notifications', {
         params: options?.unreadOnly ? { unread_only: 'true' } : undefined,
-      }),
+      });
+      return res.data;
+    },
     staleTime: 30_000,
   });
 }
