@@ -256,6 +256,17 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
+### Mar 11, 2026 — Eliminate All 500 Errors Round 2 (Commit 2445f31)
+
+- **Root cause:** `createUserClient()` throws when Clerk JWT template fails — zero routes caught it → every API route returned 500.
+- **createUserClientSafe():** Added to `lib/supabase/server.ts`. Returns `{ client, error }` tuple. 262+ routes migrated — now return 401 instead of 500.
+- **Column fixes:** Removed `org_id` inserts from 7 routes (column didn't exist pre-migration). Removed `notes` from `leadCreateSchema`, `outcome` from `activityCreateSchema`, `source_channel` from `opportunityCreateSchema`.
+- **CSP:** Added `worker-src 'self' blob:` — fixes Clerk worker blocking.
+- **Env trimming:** `(process.env.X ?? '').trim()` in both `server.ts` and `client.ts` to prevent `%0A` newlines.
+- **25 migrations applied** to production Supabase via MCP (00009–00017, 20260227 series, portal RLS, pipeline gaps, organizations+org_id, seed data, executive nucleus, AI chat).
+- **Tests:** 3,488 passing (309 files). 0 lint errors/warnings. 0 type errors. Build clean.
+- **Deployed:** Vercel production READY. `hub.mdmgroupinc.ca` — 0 runtime 500s post-deploy.
+
 ### Mar 9, 2026 — Executive Nucleus: Full 4-Phase Build (PR #60 Merged)
 
 - **Executive Nucleus** — restricted C-suite module (`executive`, `platform_admin` roles) for MDM Group operational intelligence. 53 new files, 8,387 lines, 19 commits across 4 phases.
