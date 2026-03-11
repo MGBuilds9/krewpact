@@ -32,9 +32,11 @@ export async function GET(req: NextRequest) {
       left_at,
       divisions (
         id,
+        code,
         name,
         description,
-        active,
+        is_active,
+        settings,
         created_at,
         updated_at
       )
@@ -61,10 +63,7 @@ export async function GET(req: NextRequest) {
         const div = ud.divisions as Record<string, unknown>;
         return {
           ...div,
-          code: div.id ?? null, // division_id IS the code (e.g., 'contracting')
-          is_active: (div.active as boolean) ?? true,
           manager_id: null,
-          settings: null,
           user_role: primaryRoleName,
           is_primary: (ud.is_primary as boolean) || false,
         };
