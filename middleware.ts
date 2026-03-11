@@ -7,7 +7,6 @@ const isPublicRoute = createRouteMatcher([
   '/api/web/leads',
   '/api/cron(.*)',
   '/api/health',
-  '/api/diag',
 ]);
 
 const ALLOWED_DOMAINS = (process.env.ALLOWED_DOMAINS || 'mdmgroupinc.ca,mdmcontracting.ca').split(
@@ -69,8 +68,8 @@ export default clerkMiddleware(
       'https://hub.mdmgroupinc.ca',
       'https://dashboard.mdmgroupinc.ca',
       'https://portal.mdmgroupinc.ca',
-      ...(process.env.NEXT_PUBLIC_APP_URL ? [process.env.NEXT_PUBLIC_APP_URL] : []),
-      ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
+      ...(process.env.NEXT_PUBLIC_APP_URL ? [process.env.NEXT_PUBLIC_APP_URL.trim()] : []),
+      ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL.trim()}`] : []),
       ...(process.env.NODE_ENV !== 'production' ? ['http://localhost:3000'] : []),
     ],
   },

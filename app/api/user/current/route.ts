@@ -81,9 +81,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(callerUser);
   } catch (err: unknown) {
-    console.error('[DIAG] /api/user/current crashed:', err);
-    const message = err instanceof Error ? err.message : String(err);
-    const stack = err instanceof Error ? err.stack : undefined;
-    return NextResponse.json({ error: message, stack }, { status: 500 });
+    console.error('/api/user/current error:', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
