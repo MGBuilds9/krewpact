@@ -46,7 +46,8 @@ export async function createUserClient() {
   }
 
   const { getToken } = await auth();
-  const token = await getToken({ template: 'supabase' });
+  // Use Clerk session token (Third-Party Auth) — not the deprecated JWT template
+  const token = await getToken();
 
   if (!token) {
     throw new Error('No Clerk session — user must be authenticated');
