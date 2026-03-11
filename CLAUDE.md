@@ -256,6 +256,18 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
+### Mar 11, 2026 — Fix 500 Errors Round 4: Clerk Third-Party Auth, RLS Recursion, Enum Alignment
+
+- **Clerk Third-Party Auth migration:** Switched from deprecated JWT template to JWKS-based auth. Supabase now verifies Clerk session tokens directly via JWKS endpoint at `clerk.hub.mdmgroupinc.ca`. Updated `server.ts` from `getToken({template:'supabase'})` to `getToken()`.
+- **RLS helper functions SECURITY DEFINER:** `krewpact_org_id()` and `krewpact_divisions()` subqueries hit their own tables' RLS, causing silent empty-string errors. Made both SECURITY DEFINER to bypass RLS on internal lookups.
+- **RLS infinite recursion fix:** `project_members_select` policy self-referenced project_members table via subquery → "infinite recursion detected". Simplified to direct `user_id = krewpact_user_id()` check.
+- **Division code-to-UUID resolution:** JWT contains division codes like `"contracting"`, DB uses UUIDs. Updated `krewpact_divisions()` to resolve codes via divisions table.
+- **`lead_status` enum alignment:** Removed phantom values (`disqualified`, `unqualified`, `nurturing`, `converted`) from 8+ files. Valid values: `new, contacted, qualified, proposal, negotiation, nurture, won, lost`.
+- **NotificationBell crash fix:** `useNotifications` hook typed API response as `Notification[]` but API returns `{ data: [], total, hasMore }`. Added `PaginatedNotifications` interface and `.data` extraction.
+- **Dashboard debug field cleanup:** Removed temporary `_errors` field from dashboard API (was used to diagnose RLS failures).
+- **Production verified:** Dashboard shows 621 Open Leads, CRM leads page renders scores (75/75/70/70/70...), CRM dashboard shows $1.395M pipeline with all charts.
+- **Tests:** 3,488 passing (309 files). 0 lint errors/warnings. 0 type errors. Build clean.
+
 ### Mar 11, 2026 — Fix Scoring, Separate Clients, Production Verification
 
 - **Scoring column fix:** Removed all PostgREST aliases (`name:rule_name`, `score_impact:points`) across 9 files — migrations had already renamed DB columns but code wasn't updated. Cron was silently failing every 4 hours.
