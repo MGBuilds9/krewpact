@@ -16,17 +16,25 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const supabase = createServiceClient();
 
-  // Fetch enriched leads that haven't been scored yet
-  const { data: leads, error: leadsError } = await supabase
+  // Support ?force=true to re-score all leads (not just unscored)
+  const force = req.nextUrl.searchParams.get('force') === 'true';
+
+  // Fetch enriched leads that haven't been scored yet (or all if force)
+  let leadsQuery = supabase
     .from('leads')
     .select(
       'id, company_name, domain, enrichment_status, enrichment_data, lead_score, fit_score, intent_score, engagement_score, source_channel, industry, city, province, postal_code, status, division_id, created_at, updated_at',
     )
     .eq('enrichment_status', 'complete')
-    .or('lead_score.is.null,lead_score.eq.0')
     .is('deleted_at', null)
     .order('created_at', { ascending: true })
     .limit(BATCH_SIZE);
+
+  if (!force) {
+    leadsQuery = leadsQuery.or('lead_score.is.null,lead_score.eq.0');
+  }
+
+  const { data: leads, error: leadsError } = await leadsQuery;
 
   if (leadsError) {
     return NextResponse.json({ error: leadsError.message }, { status: 500 });
@@ -40,9 +48,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const { data: rules, error: rulesError } = await supabase
     .from('scoring_rules')
     .select(
-      'id, name:rule_name, category, field_name, operator, value, score_impact:points, active, description, created_at, updated_at',
+      'id, name, category, field_name, operator, value, score_impact, is_active, priority, division_id, created_at, updated_at',
     )
-    .eq('active', true);
+    .eq('is_active', true);
 
   if (rulesError) {
     return NextResponse.json({ error: rulesError.message }, { status: 500 });
@@ -56,16 +64,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   let errors = 0;
   const scoreHistoryBatch: Array<{
     lead_id: string;
-    score: number;
-    previous_score: number;
-    rule_results: Record<string, unknown>;
+    lead_score: number;
+    fit_score: number;
+    intent_score: number;
+    engagement_score: number;
+    triggered_by: string;
   }> = [];
 
   for (const lead of leads) {
     try {
       const result = scoreLead(lead as Record<string, unknown>, rules as ScoringRule[]);
-
-      const previousScore = lead.lead_score ?? 0;
 
       // Update lead scores (individual — each lead has different values)
       const { error: updateError } = await supabase
@@ -87,9 +95,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       // Collect score history for batch insert
       scoreHistoryBatch.push({
         lead_id: lead.id,
-        score: result.total_score,
-        previous_score: previousScore,
-        rule_results: result.rule_results as unknown as Record<string, unknown>,
+        lead_score: result.total_score,
+        fit_score: result.fit_score,
+        intent_score: result.intent_score,
+        engagement_score: result.engagement_score,
+        triggered_by: 'cron',
       });
 
       // Auto deep research for high-scored leads (80+)

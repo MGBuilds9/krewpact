@@ -60,7 +60,15 @@ export class ErpClient {
 
   /** Check if running in mock mode (no real ERPNext instance) */
   isMockMode(): boolean {
-    return !this.baseUrl || this.baseUrl === 'mock';
+    const mock = !this.baseUrl || this.baseUrl === 'mock';
+    if (mock && process.env.NODE_ENV === 'production') {
+      import('@sentry/nextjs').then((Sentry) => {
+        Sentry.captureMessage('CRITICAL: ERPNext mock mode active in production', {
+          level: 'error',
+        });
+      });
+    }
+    return mock;
   }
 
   getAuthHeaders(): Record<string, string> {

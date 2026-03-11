@@ -739,10 +739,12 @@ export interface ScoringRule {
 export interface ScoreHistory {
   id: string;
   lead_id: string;
-  score: number;
-  previous_score: number | null;
-  scored_at: string;
-  rule_results: Record<string, unknown> | null;
+  lead_score: number;
+  fit_score: number;
+  intent_score: number;
+  engagement_score: number;
+  triggered_by: string | null;
+  recorded_at: string;
 }
 
 export function useScoringRules(divisionId?: string) {

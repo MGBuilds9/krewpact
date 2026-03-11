@@ -55,9 +55,12 @@ describe('GET /api/crm/leads/[id]/score', () => {
       {
         id: 'h1',
         lead_id: lead.id,
-        score: 75,
-        previous_score: 50,
-        created_at: '2026-02-24T00:00:00Z',
+        lead_score: 75,
+        fit_score: 30,
+        intent_score: 25,
+        engagement_score: 20,
+        triggered_by: 'manual',
+        recorded_at: '2026-02-24T00:00:00Z',
       },
     ];
     mockClerkAuth(mockAuth);
@@ -120,8 +123,7 @@ describe('POST /api/crm/leads/[id]/score', () => {
         value: 'referral',
         score_impact: 20,
         category: 'fit',
-        active: true,
-        description: null,
+        is_active: true,
       },
     ];
     mockClerkAuth(mockAuth);
@@ -170,8 +172,7 @@ describe('POST /api/crm/leads/[id]/score', () => {
         value: 'referral',
         score_impact: 20,
         category: 'fit',
-        active: true,
-        description: null,
+        is_active: true,
       },
     ];
     mockClerkAuth(mockAuth);

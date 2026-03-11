@@ -47,6 +47,13 @@ export function isMockMode(): boolean {
   const mock = !process.env.ERPNEXT_BASE_URL || process.env.ERPNEXT_BASE_URL === 'mock';
   if (mock) {
     logger.warn('ERPNext mock mode active — no data will be synced to ERPNext');
+    if (process.env.NODE_ENV === 'production') {
+      import('@sentry/nextjs').then((Sentry) => {
+        Sentry.captureMessage('CRITICAL: ERPNext mock mode active in production', {
+          level: 'error',
+        });
+      });
+    }
   }
   return mock;
 }

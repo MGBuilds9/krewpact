@@ -6,14 +6,13 @@ import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 const scoringRuleSchema = z.object({
-  rule_name: z.string().min(1).max(200),
+  name: z.string().min(1).max(200),
   category: z.enum(['fit', 'intent', 'engagement']),
   field_name: z.string().min(1),
   operator: z.string().min(1),
   value: z.string().min(1),
-  points: z.number().int(),
-  active: z.boolean().optional(),
-  description: z.string().optional(),
+  score_impact: z.number().int(),
+  is_active: z.boolean().optional(),
 });
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
@@ -31,11 +30,11 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const { data, error, count } = await supabase
     .from('scoring_rules')
     .select(
-      'id, name:rule_name, category, field_name, operator, value, score_impact:points, active, description, created_at, updated_at',
+      'id, name, category, field_name, operator, value, score_impact, is_active, priority, division_id, created_at, updated_at',
       { count: 'exact' },
     )
     .order('category')
-    .order('points', { ascending: false })
+    .order('score_impact', { ascending: false })
     .range(offset, offset + limit - 1);
 
   if (error) {

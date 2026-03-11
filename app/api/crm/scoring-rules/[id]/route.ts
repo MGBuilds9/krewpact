@@ -7,14 +7,13 @@ import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 type RouteContext = { params: Promise<{ id: string }> };
 
 const scoringRuleUpdateSchema = z.object({
-  rule_name: z.string().min(1).max(200).optional(),
+  name: z.string().min(1).max(200).optional(),
   category: z.enum(['fit', 'intent', 'engagement']).optional(),
   field_name: z.string().min(1).optional(),
   operator: z.string().min(1).optional(),
   value: z.string().min(1).optional(),
-  points: z.number().int().optional(),
-  active: z.boolean().optional(),
-  description: z.string().optional(),
+  score_impact: z.number().int().optional(),
+  is_active: z.boolean().optional(),
 });
 
 export async function PUT(req: NextRequest, context: RouteContext): Promise<NextResponse> {

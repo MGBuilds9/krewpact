@@ -142,9 +142,9 @@ export async function POST(req: NextRequest) {
     const rulesQuery = supabase
       .from('scoring_rules')
       .select(
-        'id, name:rule_name, category, field_name, operator, value, score_impact:points, active, description, created_at, updated_at',
+        'id, name, category, field_name, operator, value, score_impact, is_active, priority, division_id, created_at, updated_at',
       )
-      .eq('active', true);
+      .eq('is_active', true);
 
     const { data: rules } = await rulesQuery;
     if (rules && rules.length > 0) {
@@ -153,9 +153,11 @@ export async function POST(req: NextRequest) {
 
       await supabase.from('lead_score_history').insert({
         lead_id: data.id,
-        score: result.total_score,
-        previous_score: 0,
-        rule_results: result.rule_results as unknown as Record<string, unknown>,
+        lead_score: result.total_score,
+        fit_score: result.fit_score,
+        intent_score: result.intent_score,
+        engagement_score: result.engagement_score,
+        triggered_by: 'auto_create',
       });
 
       data.lead_score = result.total_score;

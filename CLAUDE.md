@@ -256,6 +256,18 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
+### Mar 11, 2026 — Fix Scoring, Separate Clients, Production Verification
+
+- **Scoring column fix:** Removed all PostgREST aliases (`name:rule_name`, `score_impact:points`) across 9 files — migrations had already renamed DB columns but code wasn't updated. Cron was silently failing every 4 hours.
+- **ScoringRule interface:** `active` → `is_active`, removed `description` field.
+- **lead_score_history fix:** All 4 insert locations used wrong columns (`score, previous_score, rule_results`). Fixed to use actual schema: `lead_score, fit_score, intent_score, engagement_score, triggered_by`.
+- **Cron `?force=true`:** Added query param to scoring cron to allow re-scoring all leads (not just unscored).
+- **Soft-deleted 14 existing client leads** (pharmacies already in accounts table).
+- **Reset + re-scored 263 enriched leads** via SQL. Distribution: 219 low, 36 medium, 8 high. 358 still pending enrichment.
+- **ERP mock mode guard:** Both `lib/erp/sync-service.ts` and `lib/erp/client.ts` now fire Sentry error if mock mode activates in production.
+- **Tests:** 3,488 passing (309 files). 0 lint errors/warnings. 0 type errors. Build clean.
+- **Enrichment status:** 358/621 leads pending. At 20/batch Mon+Thu = ~9 weeks. Consider increasing batch size.
+
 ### Mar 11, 2026 — Eliminate All 500 Errors Round 2 (Commit 2445f31)
 
 - **Root cause:** `createUserClient()` throws when Clerk JWT template fails — zero routes caught it → every API route returned 500.

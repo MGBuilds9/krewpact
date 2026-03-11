@@ -13,8 +13,7 @@ export interface ScoringRule {
   value: string;
   score_impact: number;
   category: 'fit' | 'intent' | 'engagement';
-  active: boolean;
-  description: string | null;
+  is_active: boolean;
 }
 
 export interface RuleResult {
@@ -154,7 +153,7 @@ export function scoreLead(leadData: Record<string, unknown>, rules: ScoringRule[
   let engagementScore = 0;
 
   for (const rule of rules) {
-    if (!rule.active) continue;
+    if (!rule.is_active) continue;
 
     const fieldValue = rule.field_name.includes('.')
       ? getNestedValue(leadData, rule.field_name)

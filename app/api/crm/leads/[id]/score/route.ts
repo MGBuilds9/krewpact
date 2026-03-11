@@ -39,9 +39,11 @@ export async function GET(_req: NextRequest, context: RouteContext) {
   // Fetch score history
   const { data: history, error: historyError } = await supabase
     .from('lead_score_history')
-    .select('id, lead_id, score, previous_score, rule_results, created_at')
+    .select(
+      'id, lead_id, lead_score, fit_score, intent_score, engagement_score, triggered_by, recorded_at',
+    )
     .eq('lead_id', id)
-    .order('created_at', { ascending: false })
+    .order('recorded_at', { ascending: false })
     .limit(50);
 
   if (historyError) {
@@ -90,9 +92,9 @@ export async function POST(_req: NextRequest, context: RouteContext) {
   const { data: rules, error: rulesError } = await supabase
     .from('scoring_rules')
     .select(
-      'id, name:rule_name, category, field_name, operator, value, score_impact:points, active, description, created_at, updated_at',
+      'id, name, category, field_name, operator, value, score_impact, is_active, priority, division_id, created_at, updated_at',
     )
-    .eq('active', true);
+    .eq('is_active', true);
 
   if (rulesError) {
     return NextResponse.json({ error: rulesError.message }, { status: 500 });
@@ -121,9 +123,11 @@ export async function POST(_req: NextRequest, context: RouteContext) {
   // Insert score history
   await supabase.from('lead_score_history').insert({
     lead_id: id,
-    score: result.total_score,
-    previous_score: previousScore,
-    rule_results: result.rule_results as unknown as Record<string, unknown>,
+    lead_score: result.total_score,
+    fit_score: result.fit_score,
+    intent_score: result.intent_score,
+    engagement_score: result.engagement_score,
+    triggered_by: 'manual',
   });
 
   return NextResponse.json({
