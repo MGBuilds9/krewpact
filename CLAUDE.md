@@ -256,6 +256,14 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
+### Mar 12, 2026 — AI Agentic Layer
+
+- **Changes:** Shipped full AI agentic layer from worktree to main. 8 agents (insight-engine, stale-deal-detector, bid-matcher, budget-anomaly, email-drafter, digest-builder, nl-query, next-action-suggester). Gemini Flash provider with cost tracking and model router. 5 React components (AiInsightBanner, AiSuggestion, DailyDigestWidget, EmailDraftModal, InsightAnalyticsCard). NL query mode in CommandPalette. 9 API routes + 2 cron routes (disabled in vercel.json, callable manually). A11y fixes across ~50 pages.
+- **Schema:** `ai_insights`, `user_digests`, `ai_actions` tables with RLS + indexes. `ai_preferences` JSONB column on `users`. Migrations applied to production Supabase.
+- **Infrastructure:** ESLint `.claude/` ignore added. Fixed corrupted git repo (worktree cleanup had removed objects). Cron routes for generate-insights and daily-digest exist but are NOT scheduled in vercel.json — can be tested via manual curl.
+- **Env vars needed:** `GEMINI_API_KEY` for Gemini Flash provider (not yet set in Vercel).
+- **Tests:** 3,737 passing (335 files). 0 lint. 0 type errors. Build clean.
+
 ### Mar 11, 2026 — Closed-Loop CRM + Comprehensive Codebase Audit
 
 - **Changes:** Implemented full 6-phase Closed-Loop CRM (schema enrichment, import pipeline, lead-account matching, ICP engine, won deal automation). Then ran 7-agent comprehensive audit finding 60+ issues across security, data integrity, UX, and performance. Fixed 79 files total.
