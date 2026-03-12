@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { GlobalSearch } from '@/components/CRM/GlobalSearch';
+import { useOrgRouter } from '@/hooks/useOrgRouter';
 
 const crmTabs = [
   { label: 'Dashboard', href: '/crm/dashboard' },
@@ -19,6 +20,8 @@ const crmTabs = [
 
 export default function CRMLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { orgPath } = useOrgRouter();
+  const strippedPath = pathname.replace(/^\/org\/[^/]+/, '');
 
   return (
     <div className="space-y-6">
@@ -34,11 +37,11 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
 
       <nav className="inline-flex h-auto items-center justify-start rounded-md bg-muted p-1 text-muted-foreground flex-wrap gap-0.5">
         {crmTabs.map((tab) => {
-          const isActive = pathname === tab.href || pathname.startsWith(tab.href + '/');
+          const isActive = strippedPath === tab.href || strippedPath.startsWith(tab.href + '/');
           return (
             <Link
               key={tab.href}
-              href={tab.href}
+              href={orgPath(tab.href)}
               className={cn(
                 'inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                 isActive

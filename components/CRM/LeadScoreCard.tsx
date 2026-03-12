@@ -1,7 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { ChevronDown, ChevronRight } from 'lucide-react';
+import type { RuleResultDisplay } from '@/hooks/useCRM';
 
 interface LeadScoreCardProps {
   score: number;
@@ -10,6 +13,7 @@ interface LeadScoreCardProps {
   engagementScore?: number;
   onRecalculate?: () => void;
   isRecalculating?: boolean;
+  ruleResults?: RuleResultDisplay[];
 }
 
 function getScoreColor(score: number): string {
@@ -30,6 +34,12 @@ function getScoreLabel(score: number): string {
   return 'Cold';
 }
 
+const CATEGORY_LABELS: Record<string, string> = {
+  fit: 'Fit',
+  intent: 'Intent',
+  engagement: 'Engagement',
+};
+
 export function LeadScoreCard({
   score,
   fitScore = 0,
@@ -37,7 +47,18 @@ export function LeadScoreCard({
   engagementScore = 0,
   onRecalculate,
   isRecalculating = false,
+  ruleResults,
 }: LeadScoreCardProps) {
+  const [breakdownOpen, setBreakdownOpen] = useState(false);
+
+  const matchedRules = ruleResults?.filter((r) => r.matched) ?? [];
+  const grouped = matchedRules.reduce<Record<string, RuleResultDisplay[]>>((acc, rule) => {
+    const cat = rule.category;
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push(rule);
+    return acc;
+  }, {});
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -71,6 +92,51 @@ export function LeadScoreCard({
             <span className="font-medium">{engagementScore}</span>
           </div>
         </div>
+
+        {matchedRules.length > 0 && (
+          <div className="mt-4">
+            <button
+              onClick={() => setBreakdownOpen((prev) => !prev)}
+              className="flex items-center gap-1 text-xs text-primary hover:underline"
+            >
+              {breakdownOpen ? (
+                <ChevronDown className="h-3 w-3" />
+              ) : (
+                <ChevronRight className="h-3 w-3" />
+              )}
+              {breakdownOpen ? 'Hide Breakdown' : 'View Breakdown'}
+            </button>
+
+            {breakdownOpen && (
+              <div className="mt-3 space-y-3">
+                {(['fit', 'intent', 'engagement'] as const).map((cat) => {
+                  const catRules = grouped[cat];
+                  if (!catRules || catRules.length === 0) return null;
+                  return (
+                    <div key={cat}>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                        {CATEGORY_LABELS[cat]}
+                      </p>
+                      <div className="space-y-1">
+                        {catRules.map((rule) => (
+                          <div
+                            key={rule.rule_id}
+                            className="flex justify-between items-center text-xs"
+                          >
+                            <span className="text-foreground truncate pr-2">{rule.rule_name}</span>
+                            <span className="font-medium text-green-600 shrink-0">
+                              +{rule.score_impact}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
         {onRecalculate && (
           <button

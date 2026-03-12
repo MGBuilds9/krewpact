@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -21,6 +22,15 @@ import { DataTable, type SortState } from '@/components/CRM/DataTable';
 import { ViewToggle, useViewMode } from '@/components/CRM/ViewToggle';
 import type { ColumnDef } from '@tanstack/react-table';
 
+function formatDate(dateStr: string | null): string {
+  if (!dateStr) return '-';
+  return new Date(dateStr).toLocaleDateString('en-CA', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
 const accountColumns: ColumnDef<Account, unknown>[] = [
   {
     accessorKey: 'account_name',
@@ -33,14 +43,34 @@ const accountColumns: ColumnDef<Account, unknown>[] = [
     cell: ({ row }) => <span className="capitalize">{row.original.account_type || '-'}</span>,
   },
   {
+    accessorKey: 'industry',
+    header: 'Industry',
+    cell: ({ row }) => <span>{row.original.industry || '-'}</span>,
+  },
+  {
+    accessorKey: 'total_projects',
+    header: 'Projects',
+    cell: ({ row }) => <span>{row.original.total_projects ?? 0}</span>,
+  },
+  {
+    accessorKey: 'is_repeat_client',
+    header: 'Repeat Client',
+    cell: ({ row }) =>
+      row.original.is_repeat_client ? (
+        <Badge className="bg-green-100 text-green-800 border-green-200 text-xs">Repeat</Badge>
+      ) : (
+        <span className="text-muted-foreground text-xs">-</span>
+      ),
+  },
+  {
+    accessorKey: 'last_project_date',
+    header: 'Last Project',
+    cell: ({ row }) => formatDate(row.original.last_project_date),
+  },
+  {
     accessorKey: 'created_at',
     header: 'Created',
-    cell: ({ row }) =>
-      new Date(row.original.created_at).toLocaleDateString('en-CA', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      }),
+    cell: ({ row }) => formatDate(row.original.created_at),
   },
 ];
 
@@ -180,18 +210,25 @@ export default function AccountsPage() {
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold truncate">{account.account_name}</h3>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-semibold truncate">{account.account_name}</h3>
+                          {account.is_repeat_client && (
+                            <Badge className="bg-green-100 text-green-800 border-green-200 text-xs flex-shrink-0">
+                              Repeat
+                            </Badge>
+                          )}
+                        </div>
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground mt-1">
                           {account.account_type && (
                             <span className="capitalize">{account.account_type}</span>
                           )}
-                          <span>
-                            {new Date(account.created_at).toLocaleDateString('en-CA', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
-                            })}
-                          </span>
+                          {account.industry && <span>{account.industry}</span>}
+                          {account.total_projects > 0 && (
+                            <span>{account.total_projects} project{account.total_projects !== 1 ? 's' : ''}</span>
+                          )}
+                          {account.last_project_date && (
+                            <span>Last: {formatDate(account.last_project_date)}</span>
+                          )}
                         </div>
                       </div>
                     </div>

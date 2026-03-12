@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { scoreLead } from '@/lib/crm/scoring-engine';
 import type { ScoringRule } from '@/lib/crm/scoring-engine';
 import { assignLead } from '@/lib/crm/lead-assignment';
+import { matchLeadToAccounts } from '@/lib/crm/lead-account-matcher';
 import {
   UNAUTHORIZED,
   INVALID_JSON,
@@ -165,6 +166,33 @@ export async function POST(req: NextRequest) {
   } catch (e) {
     // Scoring failure should not block lead creation
     logger.error('Auto-score on create failed', { error: e });
+  }
+
+  // Auto-match against existing accounts (non-blocking)
+  try {
+    const { data: allAccounts } = await supabase
+      .from('accounts')
+      .select(
+        'id, account_name, email, phone, website, address, total_projects, last_project_date, lifetime_revenue',
+      )
+      .is('deleted_at', null);
+
+    if (allAccounts && allAccounts.length > 0) {
+      const matches = matchLeadToAccounts(data, allAccounts);
+      if (matches.length > 0) {
+        const matchInserts = matches.map((m) => ({
+          lead_id: data.id,
+          account_id: m.account_id,
+          match_type: m.match_type,
+          match_score: m.match_score,
+        }));
+        await supabase
+          .from('lead_account_matches')
+          .upsert(matchInserts, { onConflict: 'lead_id,account_id' });
+      }
+    }
+  } catch (e) {
+    logger.error('Lead-account matching failed', { error: e });
   }
 
   return NextResponse.json(data, { status: 201 });

@@ -27,6 +27,7 @@ import {
   useContacts,
   useLeadStageTransition,
   useRecalculateLeadScore,
+  useLeadScoreBreakdown,
 } from '@/hooks/useCRM';
 import { StageProgressBar } from '@/components/CRM/StageProgressBar';
 import { ActivityTimeline } from '@/components/CRM/ActivityTimeline';
@@ -58,6 +59,7 @@ export default function LeadDetailPage() {
   const leadContacts = contactsResponse?.data ?? [];
   const stageTransition = useLeadStageTransition();
   const recalculateScore = useRecalculateLeadScore();
+  const { data: scoreBreakdown } = useLeadScoreBreakdown(leadId);
   const [isEditing, setIsEditing] = useState(false);
   const [activityDialogOpen, setActivityDialogOpen] = useState(false);
   const [convertDialogOpen, setConvertDialogOpen] = useState(false);
@@ -358,6 +360,7 @@ export default function LeadDetailPage() {
             engagementScore={lead.engagement_score ?? 0}
             onRecalculate={() => recalculateScore.mutate(leadId)}
             isRecalculating={recalculateScore.isPending}
+            ruleResults={scoreBreakdown?.rule_results}
           />
 
           <Card>

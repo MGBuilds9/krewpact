@@ -2,18 +2,18 @@ import { auth } from '@clerk/nextjs/server';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { getKrewpactRoles } from '@/lib/api/org';
 
 const ALLOWED_ROLES = ['executive', 'platform_admin'];
 
 export async function GET(req: NextRequest) {
-  const { userId, sessionClaims } = await auth();
+  const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   // Role gating: executive + platform_admin only
-  const roles = (sessionClaims as Record<string, unknown>)?.krewpact_roles;
-  const userRoles = Array.isArray(roles) ? roles : [];
+  const userRoles = await getKrewpactRoles();
   const hasAccess = userRoles.some((r: unknown) => ALLOWED_ROLES.includes(String(r)));
   if (!hasAccess) {
     return NextResponse.json(

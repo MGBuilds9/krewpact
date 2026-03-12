@@ -256,53 +256,26 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
+### Mar 11, 2026 — CRM Navigation, Auth Claims, Score UX & Chart Fixes
+
+- **Auth claims path fix:** Added `_getClerkMetadata()` helper in `lib/api/org.ts` that handles JWKS (`metadata` key), portal (`public_metadata`), and legacy (top-level) claim paths. Fixed `getKrewpactUserId()`, added `getKrewpactRoles()`. Migrated 5 routes from inline `sessionClaims.*` to shared helpers (executive, PM, audit-log, crm/notes, portal layout).
+- **CRM navigation fixes:** (1) CRM default redirect now goes to Dashboard instead of Leads, using org-scoped path `redirect(/org/${orgSlug}/crm/dashboard)`. (2) Main header `isActive` uses `strippedPath.startsWith()` to prevent false positives (CRM Dashboard no longer highlights main Dashboard tab). (3) CRM sub-tabs use `orgPath()` for hrefs and strip org prefix for matching.
+- **Lead Score Breakdown UX:** Added GET handler to `/api/crm/leads/[id]/score` returning `rule_results` from scoring engine. Added `useLeadScoreBreakdown(leadId)` hook. LeadScoreCard now has collapsible "Score Breakdown" section showing matched rules grouped by category (Fit/Intent/Engagement) with point values.
+- **Chart dimension fix:** Added `minWidth={1} minHeight={1}` to `ResponsiveContainer` in `chart.tsx` and `ForecastChart.tsx` to prevent Recharts negative dimension warnings.
+- **Decisions:** Bare-path redirects (`redirect('/crm/dashboard')`) cause double redirects through middleware — always use org-scoped paths in server components that have access to `params.orgSlug`.
+- **Playwright test added:** `crm-smoke.spec.ts` now verifies CRM redirect target is `/crm/dashboard` not `/crm/leads`.
+- **Tests:** 3,488 unit tests passing (309 files). 3 Playwright E2E passing. 0 lint. 0 type errors. Build clean.
+
 ### Mar 11, 2026 — Fix 500 Errors Round 4: Clerk Third-Party Auth, RLS Recursion, Enum Alignment
 
-- **Clerk Third-Party Auth migration:** Switched from deprecated JWT template to JWKS-based auth. Supabase now verifies Clerk session tokens directly via JWKS endpoint at `clerk.hub.mdmgroupinc.ca`. Updated `server.ts` from `getToken({template:'supabase'})` to `getToken()`.
-- **RLS helper functions SECURITY DEFINER:** `krewpact_org_id()` and `krewpact_divisions()` subqueries hit their own tables' RLS, causing silent empty-string errors. Made both SECURITY DEFINER to bypass RLS on internal lookups.
-- **RLS infinite recursion fix:** `project_members_select` policy self-referenced project_members table via subquery → "infinite recursion detected". Simplified to direct `user_id = krewpact_user_id()` check.
-- **Division code-to-UUID resolution:** JWT contains division codes like `"contracting"`, DB uses UUIDs. Updated `krewpact_divisions()` to resolve codes via divisions table.
-- **`lead_status` enum alignment:** Removed phantom values (`disqualified`, `unqualified`, `nurturing`, `converted`) from 8+ files. Valid values: `new, contacted, qualified, proposal, negotiation, nurture, won, lost`.
-- **NotificationBell crash fix:** `useNotifications` hook typed API response as `Notification[]` but API returns `{ data: [], total, hasMore }`. Added `PaginatedNotifications` interface and `.data` extraction.
-- **Dashboard debug field cleanup:** Removed temporary `_errors` field from dashboard API (was used to diagnose RLS failures).
-- **Production verified:** Dashboard shows 621 Open Leads, CRM leads page renders scores (75/75/70/70/70...), CRM dashboard shows $1.395M pipeline with all charts.
-- **Tests:** 3,488 passing (309 files). 0 lint errors/warnings. 0 type errors. Build clean.
+- Clerk Third-Party Auth migration (JWKS). RLS SECURITY DEFINER helpers. RLS recursion fix. Division code-to-UUID resolution. lead_status enum alignment. NotificationBell crash fix. 3,488 tests.
 
 ### Mar 11, 2026 — Fix Scoring, Separate Clients, Production Verification
 
-- **Scoring column fix:** Removed all PostgREST aliases (`name:rule_name`, `score_impact:points`) across 9 files — migrations had already renamed DB columns but code wasn't updated. Cron was silently failing every 4 hours.
-- **ScoringRule interface:** `active` → `is_active`, removed `description` field.
-- **lead_score_history fix:** All 4 insert locations used wrong columns (`score, previous_score, rule_results`). Fixed to use actual schema: `lead_score, fit_score, intent_score, engagement_score, triggered_by`.
-- **Cron `?force=true`:** Added query param to scoring cron to allow re-scoring all leads (not just unscored).
-- **Soft-deleted 14 existing client leads** (pharmacies already in accounts table).
-- **Reset + re-scored 263 enriched leads** via SQL. Distribution: 219 low, 36 medium, 8 high. 358 still pending enrichment.
-- **ERP mock mode guard:** Both `lib/erp/sync-service.ts` and `lib/erp/client.ts` now fire Sentry error if mock mode activates in production.
-- **Tests:** 3,488 passing (309 files). 0 lint errors/warnings. 0 type errors. Build clean.
-- **Enrichment status:** 358/621 leads pending. At 20/batch Mon+Thu = ~9 weeks. Consider increasing batch size.
+- Scoring column fix (9 files). lead_score_history schema fix (4 locations). Soft-deleted 14 client leads. Re-scored 263 leads. ERP mock mode Sentry guard. 3,488 tests.
 
-### Mar 11, 2026 — Fix 500 Errors Round 3: Sentry + RLS + Middleware (Commit b32082c)
-
-- **Root cause #1 (500s):** `withSentryConfig` wrapping all route handlers conflicted with Next.js 16 proxy middleware model — routes returned 200 internally but Vercel reported 500 to clients. Disabled Sentry wrapping; zero 500s since.
-- **Root cause #2 (empty data):** `leads` and `activities` tables had ONLY RESTRICTIVE `org_restrict` RLS policies with no PERMISSIVE policies. PostgreSQL requires at least one PERMISSIVE to pass for rows to be visible → zero rows returned for all authenticated users.
-- **RLS fix:** Added full CRUD PERMISSIVE policies for both tables — leads (division-based, matching accounts/opportunities pattern), activities (org-scoped with owner_user_id for writes).
-- **Data fix:** 253 orphaned leads (NULL division_id) assigned to MDM Contracting division.
-- **Middleware fix:** `.trim()` on `NEXT_PUBLIC_APP_URL` and `VERCEL_URL` in authorizedParties — trailing newline caused Clerk allowedRedirectOrigins mismatch.
-- **Cleanup:** Removed `/api/diag` endpoint, stack trace exposure from error handlers, deleted `diag/500-errors` branch.
-- **Scoring status:** 17 high, 19 medium, 241 low, 358 unscored (pending enrichment). 15 active rules. Score history populated.
-- **Tests:** 3,488 passing (309 files). 0 lint errors/warnings. 0 type errors. Build clean.
-- **Deployed:** Vercel production READY. `hub.mdmgroupinc.ca` — 0 runtime errors post-deploy.
-
-### Mar 11, 2026 — Eliminate All 500 Errors Round 2 (Commit 2445f31)
-
-- **Root cause:** `createUserClient()` throws when Clerk JWT template fails — zero routes caught it → every API route returned 500.
-- **createUserClientSafe():** Added to `lib/supabase/server.ts`. Returns `{ client, error }` tuple. 262+ routes migrated — now return 401 instead of 500.
-- **Column fixes:** Removed `org_id` inserts from 7 routes (column didn't exist pre-migration). Removed `notes` from `leadCreateSchema`, `outcome` from `activityCreateSchema`, `source_channel` from `opportunityCreateSchema`.
-- **CSP:** Added `worker-src 'self' blob:` — fixes Clerk worker blocking.
-- **Env trimming:** `(process.env.X ?? '').trim()` in both `server.ts` and `client.ts` to prevent `%0A` newlines.
-- **25 migrations applied** to production Supabase via MCP (00009–00017, 20260227 series, portal RLS, pipeline gaps, organizations+org_id, seed data, executive nucleus, AI chat).
-- **Tests:** 3,488 passing (309 files). 0 lint errors/warnings. 0 type errors. Build clean.
-- **Deployed:** Vercel production READY. `hub.mdmgroupinc.ca` — 0 runtime 500s post-deploy.
-
+- Mar 11: Fix 500 Errors Round 3 — Sentry wrapping conflict, RESTRICTIVE-only RLS, orphaned leads, middleware trim. 3,488 tests.
+- Mar 11: Eliminate All 500 Errors Round 2 — createUserClientSafe(), 262+ routes migrated, 25 migrations applied, CSP/env fixes. 3,488 tests.
 - Mar 10: Production Readiness (14 stories) — security headers, ESLint 53→0 warnings, E2E smoke suite, Sentry env, error boundary UX. 3,488 tests.
 - Mar 9: Executive Nucleus 4-phase build (PR #60) — C-suite module, RAG chat, metrics, command center. 3,478 tests.
 - Mar 9: Enterprise Phase 2 Ralph Loop (PR #59) — Realtime, PDF, dashboards, global search, audit log. 3,363 tests.

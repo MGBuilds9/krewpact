@@ -103,4 +103,11 @@ export const queryKeys = {
         [...queryKeys.executive.knowledge.all, 'chat', sessionId] as const,
     },
   },
+  icps: {
+    all: ['icps'] as const,
+    lists: () => [...queryKeys.icps.all, 'list'] as const,
+    list: (filters: object) => [...queryKeys.icps.lists(), filters] as const,
+    details: () => [...queryKeys.icps.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.icps.details(), id] as const,
+  },
 } as const;

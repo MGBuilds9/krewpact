@@ -4,13 +4,23 @@ test.describe('CRM smoke tests', () => {
   test('leads page loads without errors', async ({ page }) => {
     const response = await page.goto('/dashboard');
     expect(response?.status()).toBeLessThan(500);
-    // Try navigating to CRM section if available
+  });
+
+  test('/org/mdm-group/crm redirects to crm/dashboard, not crm/leads', async ({ page }) => {
+    await page.goto('/org/mdm-group/crm');
+    // Follow any redirects, then check final URL
+    await page.waitForURL(/crm\/dashboard|auth/, { timeout: 10000 });
+    const url = page.url();
+    // Should land on CRM dashboard (or auth page if unauthenticated), never on /crm/leads
+    expect(url).not.toContain('/crm/leads');
+    if (!url.includes('/auth')) {
+      expect(url).toContain('/crm/dashboard');
+    }
   });
 
   test('command palette opens with keyboard shortcut', async ({ page }) => {
     await page.goto('/dashboard');
     await page.keyboard.press('Meta+k');
-    // Verify no crash — command palette may or may not appear depending on focus
     await page.waitForTimeout(500);
   });
 });

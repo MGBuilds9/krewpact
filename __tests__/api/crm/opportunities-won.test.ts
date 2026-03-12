@@ -8,6 +8,7 @@ vi.mock('@clerk/nextjs/server', () => ({
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
   createUserClientSafe: vi.fn(),
+  createServiceClient: vi.fn(),
 }));
 
 // Mock SyncService
@@ -29,7 +30,7 @@ vi.mock('@/lib/erp/sync-service', () => {
 });
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
+import { createUserClientSafe, createServiceClient } from '@/lib/supabase/server';
 import { POST } from '@/app/api/crm/opportunities/[id]/won/route';
 import {
   mockSupabaseClient,
@@ -42,6 +43,7 @@ import {
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
+const mockCreateServiceClient = vi.mocked(createServiceClient);
 
 function makeContext(id: string) {
   return { params: Promise.resolve({ id }) };
@@ -51,6 +53,12 @@ describe('POST /api/crm/opportunities/[id]/won', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     resetFixtureCounter();
+    // Default service client mock — account/lead lookups return empty, inserts succeed
+    mockCreateServiceClient.mockReturnValue(
+      mockSupabaseClient({
+        defaultResponse: { data: null, error: null },
+      }) as ReturnType<typeof createServiceClient>,
+    );
   });
 
   it('returns 401 without auth', async () => {

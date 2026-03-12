@@ -2,19 +2,24 @@ import { NextRequest } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { ApiError } from './errors';
 
-/**
- * Extract the KrewPact internal UUID from Clerk session claims.
- *
- * Clerk's `userId` is a Clerk ID string (e.g. `user_39Bb...`). DB columns
- * like `owner_user_id`, `changed_by`, etc. reference `users.id` which is a
- * UUID stored in the `krewpact_user_id` JWT claim.
- *
- * Returns null when there is no active session or the claim is absent —
- * callers should respond with 401 in that case.
- */
-export async function getKrewpactUserId(): Promise<string | null> {
+async function _getClerkMetadata(): Promise<Record<string, unknown>> {
   const { sessionClaims } = await auth();
-  return ((sessionClaims as Record<string, unknown>)?.krewpact_user_id as string | null) ?? null;
+  const claims = sessionClaims as Record<string, unknown> | null;
+  return (claims?.metadata as Record<string, unknown>)
+    ?? (claims?.public_metadata as Record<string, unknown>)
+    ?? claims
+    ?? {};
+}
+
+export async function getKrewpactUserId(): Promise<string | null> {
+  const meta = await _getClerkMetadata();
+  return (meta?.krewpact_user_id as string | null) ?? null;
+}
+
+export async function getKrewpactRoles(): Promise<string[]> {
+  const meta = await _getClerkMetadata();
+  const roles = meta?.krewpact_roles;
+  return Array.isArray(roles) ? roles : [];
 }
 
 /**

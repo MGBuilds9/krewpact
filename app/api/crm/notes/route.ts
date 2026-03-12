@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
+import { getKrewpactUserId } from '@/lib/api/org';
 
 const entityTypes = ['lead', 'contact', 'account', 'opportunity'] as const;
 
@@ -53,7 +54,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { userId, sessionClaims } = await auth();
+  const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -70,9 +71,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const krewpactUserId = (sessionClaims as Record<string, unknown>)?.krewpact_user_id as
-    | string
-    | undefined;
+  const krewpactUserId = await getKrewpactUserId();
 
   const { client: supabase, error: authError } = await createUserClientSafe();
 

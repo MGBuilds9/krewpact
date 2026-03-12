@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -16,18 +17,35 @@ import {
   Plus,
   MessageSquarePlus,
   CalendarPlus,
+  Globe,
+  Tag,
+  FolderKanban,
 } from 'lucide-react';
-import { useAccount, useContacts, useOpportunities } from '@/hooks/useCRM';
+import { useAccount, useContacts, useOpportunities, useAccountProjects } from '@/hooks/useCRM';
 import { AccountForm } from '@/components/CRM/AccountForm';
 import { ActivityLogDialog } from '@/components/CRM/ActivityLogDialog';
 import { NotesPanel } from '@/components/CRM/NotesPanel';
 import { AccountHealthCard } from '@/components/CRM/AccountHealthCard';
 import { UnifiedTimeline } from '@/components/CRM/UnifiedTimeline';
 import { QuickFollowUpDialog } from '@/components/CRM/QuickFollowUpDialog';
+import { ProjectHistoryCard } from '@/components/CRM/ProjectHistoryCard';
 
 function formatCurrency(value: number | null): string {
   if (value == null) return '-';
-  return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(value);
+  return new Intl.NumberFormat('en-CA', {
+    style: 'currency',
+    currency: 'CAD',
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+function formatDate(dateStr: string | null): string {
+  if (!dateStr) return '-';
+  return new Date(dateStr).toLocaleDateString('en-CA', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
 }
 
 export default function AccountDetailPage() {
@@ -37,12 +55,14 @@ export default function AccountDetailPage() {
   const { data: account, isLoading } = useAccount(accountId);
   const { data: contactsResponse } = useContacts({ accountId });
   const { data: opportunities } = useOpportunities({ accountId });
+  const { data: projectsResponse } = useAccountProjects(accountId);
   const [isEditing, setIsEditing] = useState(false);
   const [activityDialogOpen, setActivityDialogOpen] = useState(false);
   const [followUpOpen, setFollowUpOpen] = useState(false);
 
   const accountContacts = contactsResponse?.data ?? [];
   const accountOpportunities = opportunities ?? [];
+  const projectHistory = projectsResponse?.data ?? [];
 
   if (isLoading) {
     return (
@@ -88,7 +108,14 @@ export default function AccountDetailPage() {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight truncate">{account.account_name}</h1>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-2xl font-bold tracking-tight truncate">{account.account_name}</h1>
+            {account.is_repeat_client && (
+              <Badge className="bg-green-100 text-green-800 border-green-200 flex-shrink-0">
+                Repeat Client
+              </Badge>
+            )}
+          </div>
           <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
             {account.account_type && <span className="capitalize">{account.account_type}</span>}
             {totalPipelineValue > 0 && (
@@ -121,6 +148,9 @@ export default function AccountDetailPage() {
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="health">Health</TabsTrigger>
+          <TabsTrigger value="projects">
+            Projects ({account.total_projects ?? projectHistory.length})
+          </TabsTrigger>
           <TabsTrigger value="contacts">Contacts ({accountContacts.length})</TabsTrigger>
           <TabsTrigger value="notes">Notes</TabsTrigger>
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
@@ -148,14 +178,86 @@ export default function AccountDetailPage() {
                     <dd className="text-sm capitalize">{account.account_type || '-'}</dd>
                   </div>
                   <div>
-                    <dt className="text-sm font-medium text-muted-foreground">Created</dt>
+                    <dt className="text-sm font-medium text-muted-foreground">Industry</dt>
+                    <dd className="text-sm">{account.industry || '-'}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm font-medium text-muted-foreground">Phone</dt>
                     <dd className="text-sm">
-                      {new Date(account.created_at).toLocaleDateString('en-CA', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
+                      {account.phone ? (
+                        <a href={`tel:${account.phone}`} className="hover:underline flex items-center gap-1">
+                          <Phone className="h-3 w-3" />
+                          {account.phone}
+                        </a>
+                      ) : (
+                        '-'
+                      )}
                     </dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm font-medium text-muted-foreground">Email</dt>
+                    <dd className="text-sm">
+                      {account.email ? (
+                        <a href={`mailto:${account.email}`} className="hover:underline flex items-center gap-1">
+                          <Mail className="h-3 w-3" />
+                          {account.email}
+                        </a>
+                      ) : (
+                        '-'
+                      )}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm font-medium text-muted-foreground">Website</dt>
+                    <dd className="text-sm">
+                      {account.website ? (
+                        <a
+                          href={account.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hover:underline flex items-center gap-1 text-primary"
+                        >
+                          <Globe className="h-3 w-3" />
+                          {account.website.replace(/^https?:\/\//, '')}
+                        </a>
+                      ) : (
+                        '-'
+                      )}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm font-medium text-muted-foreground">Source</dt>
+                    <dd className="text-sm capitalize">{account.source || '-'}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm font-medium text-muted-foreground">Total Projects</dt>
+                    <dd className="text-sm">{account.total_projects ?? 0}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm font-medium text-muted-foreground">Lifetime Revenue</dt>
+                    <dd className="text-sm font-medium">{formatCurrency(account.lifetime_revenue)}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm font-medium text-muted-foreground">First Project</dt>
+                    <dd className="text-sm">{formatDate(account.first_project_date)}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm font-medium text-muted-foreground">Last Project</dt>
+                    <dd className="text-sm">{formatDate(account.last_project_date)}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm font-medium text-muted-foreground">Repeat Client</dt>
+                    <dd className="text-sm">
+                      {account.is_repeat_client ? (
+                        <Badge className="bg-green-100 text-green-800 border-green-200 text-xs">Yes</Badge>
+                      ) : (
+                        <span className="text-muted-foreground">No</span>
+                      )}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm font-medium text-muted-foreground">Created</dt>
+                    <dd className="text-sm">{formatDate(account.created_at)}</dd>
                   </div>
                   <div>
                     <dt className="text-sm font-medium text-muted-foreground">Contacts</dt>
@@ -165,6 +267,21 @@ export default function AccountDetailPage() {
                     <dt className="text-sm font-medium text-muted-foreground">Opportunities</dt>
                     <dd className="text-sm">{accountOpportunities.length}</dd>
                   </div>
+                  {account.tags && account.tags.length > 0 && (
+                    <div className="sm:col-span-2">
+                      <dt className="text-sm font-medium text-muted-foreground mb-1 flex items-center gap-1">
+                        <Tag className="h-3 w-3" />
+                        Tags
+                      </dt>
+                      <dd className="flex flex-wrap gap-1">
+                        {account.tags.map((tag) => (
+                          <Badge key={tag} variant="secondary" className="text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </dd>
+                    </div>
+                  )}
                   {account.notes && (
                     <div className="sm:col-span-2">
                       <dt className="text-sm font-medium text-muted-foreground">Notes</dt>
@@ -172,6 +289,35 @@ export default function AccountDetailPage() {
                     </div>
                   )}
                 </dl>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="health">
+          <AccountHealthCard accountId={accountId} />
+        </TabsContent>
+
+        <TabsContent value="projects">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FolderKanban className="h-5 w-5" />
+                Project History
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {projectHistory.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <FolderKanban className="mx-auto h-8 w-8 mb-2 opacity-50" />
+                  <p>No project history found</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {projectHistory.map((project) => (
+                    <ProjectHistoryCard key={project.id} project={project} />
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>
@@ -239,10 +385,6 @@ export default function AccountDetailPage() {
 
         <TabsContent value="notes">
           <NotesPanel entityType="account" entityId={accountId} />
-        </TabsContent>
-
-        <TabsContent value="health">
-          <AccountHealthCard accountId={accountId} />
         </TabsContent>
 
         <TabsContent value="timeline">

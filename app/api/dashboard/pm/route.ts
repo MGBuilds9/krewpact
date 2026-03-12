@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { getKrewpactRoles, getKrewpactUserId } from '@/lib/api/org';
 
 const ALLOWED_ROLES = ['project_manager', 'operations_manager', 'executive', 'platform_admin'];
 
@@ -90,14 +91,13 @@ export function calculateHealthScore(
 }
 
 export async function GET(req: NextRequest) {
-  const { userId, sessionClaims } = await auth();
+  const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   // Role gating
-  const roles = (sessionClaims as Record<string, unknown>)?.krewpact_roles;
-  const userRoles = Array.isArray(roles) ? roles : [];
+  const userRoles = await getKrewpactRoles();
   const hasAccess = userRoles.some((r: unknown) => ALLOWED_ROLES.includes(String(r)));
   if (!hasAccess) {
     return NextResponse.json(
@@ -113,10 +113,7 @@ export async function GET(req: NextRequest) {
 
   if (authError) return authError;
 
-  // Get the user's krewpact_user_id from session claims
-  const krewpactUserId = (sessionClaims as Record<string, unknown>)?.krewpact_user_id as
-    | string
-    | undefined;
+  const krewpactUserId = await getKrewpactUserId();
 
   // Get projects where user is assigned as project manager (via project_members with role='manager')
   // or where user created the project

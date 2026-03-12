@@ -9,7 +9,7 @@ type RouteContext = { params: Promise<{ id: string }> };
 
 /**
  * GET /api/crm/leads/[id]/score
- * Returns current score + score history for a lead.
+ * Returns current score + score history + rule breakdown for a lead.
  */
 export async function GET(_req: NextRequest, context: RouteContext) {
   const { userId } = await auth();
@@ -24,10 +24,12 @@ export async function GET(_req: NextRequest, context: RouteContext) {
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
-  // Fetch lead for current score
+  // Fetch lead data for scoring
   const { data: lead, error: leadError } = await supabase
     .from('leads')
-    .select('lead_score, fit_score, intent_score, engagement_score')
+    .select(
+      'id, company_name, status, lost_reason, lead_score, fit_score, intent_score, engagement_score, source_channel, utm_campaign, source_detail, assigned_to, division_id, created_at, updated_at, city, province, address, postal_code, industry, next_followup_at, last_touch_at, is_qualified, automation_paused, current_sequence_id, domain, enrichment_status, enrichment_data, deleted_at',
+    )
     .eq('id', id)
     .single();
 
@@ -35,6 +37,21 @@ export async function GET(_req: NextRequest, context: RouteContext) {
     const status = leadError.code === 'PGRST116' ? 404 : 500;
     return NextResponse.json({ error: leadError.message }, { status });
   }
+
+  // Fetch active scoring rules
+  const { data: rules, error: rulesError } = await supabase
+    .from('scoring_rules')
+    .select(
+      'id, name, category, field_name, operator, value, score_impact, is_active, priority, division_id, created_at, updated_at',
+    )
+    .eq('is_active', true);
+
+  if (rulesError) {
+    return NextResponse.json({ error: rulesError.message }, { status: 500 });
+  }
+
+  // Run scoring engine to get rule_results
+  const result = scoreLead(lead as Record<string, unknown>, (rules ?? []) as ScoringRule[]);
 
   // Fetch score history
   const { data: history, error: historyError } = await supabase
@@ -55,6 +72,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
     fit_score: lead.fit_score ?? 0,
     intent_score: lead.intent_score ?? 0,
     engagement_score: lead.engagement_score ?? 0,
+    rule_results: result.rule_results,
     history: history ?? [],
   });
 }

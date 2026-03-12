@@ -30,6 +30,21 @@ export interface Account {
   billing_address: Record<string, string> | null;
   shipping_address: Record<string, string> | null;
   notes: string | null;
+  industry: string | null;
+  phone: string | null;
+  email: string | null;
+  website: string | null;
+  address: Record<string, string> | null;
+  company_code: string | null;
+  source: string | null;
+  total_projects: number;
+  lifetime_revenue: number;
+  first_project_date: string | null;
+  last_project_date: string | null;
+  is_repeat_client: boolean;
+  tags: string[];
+  metadata: Record<string, unknown>;
+  deleted_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -237,7 +252,7 @@ export function useCreateAccount() {
 export function useUpdateAccount() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, ...data }: Partial<Account> & { id: string }) =>
+    mutationFn: ({ id, ...data }: { id: string } & Record<string, unknown>) =>
       apiFetch<Account>(`/api/crm/accounts/${id}`, { method: 'PATCH', body: data }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.accounts.all });
@@ -798,6 +813,36 @@ export function useLeadScore(leadId: string) {
   });
 }
 
+export interface RuleResultDisplay {
+  rule_id: string;
+  rule_name: string;
+  category: string;
+  score_impact: number;
+  matched: boolean;
+  field_name: string;
+}
+
+export interface ScoreBreakdown {
+  score: number;
+  fit_score: number;
+  intent_score: number;
+  engagement_score: number;
+  rule_results: RuleResultDisplay[];
+  history: ScoreHistory[];
+}
+
+export function useLeadScoreBreakdown(leadId: string) {
+  return useQuery({
+    queryKey: ['lead-score-breakdown', leadId],
+    queryFn: async () => {
+      const res = await fetch(`/api/crm/leads/${leadId}/score`);
+      if (!res.ok) throw new Error('Failed to fetch score breakdown');
+      return res.json() as Promise<ScoreBreakdown>;
+    },
+    enabled: !!leadId,
+  });
+}
+
 export function useRecalculateLeadScore() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -806,6 +851,54 @@ export function useRecalculateLeadScore() {
     onSuccess: (_, leadId) => {
       queryClient.invalidateQueries({ queryKey: ['lead-score', leadId] });
       queryClient.invalidateQueries({ queryKey: queryKeys.leads.detail(leadId) });
+    },
+  });
+}
+
+// --- Lead-Account Matches ---
+
+export interface LeadAccountMatch {
+  id: string;
+  lead_id: string;
+  account_id: string;
+  match_type: string;
+  match_score: number;
+  is_confirmed: boolean;
+  account?: {
+    account_name: string;
+    total_projects: number;
+    last_project_date: string | null;
+    lifetime_revenue: number;
+  };
+}
+
+export function useLeadAccountMatches(leadId: string) {
+  return useQuery({
+    queryKey: ['lead-account-matches', leadId],
+    queryFn: () => apiFetch<LeadAccountMatch[]>(`/api/crm/leads/${leadId}/matches`),
+    enabled: !!leadId,
+    staleTime: 60_000,
+  });
+}
+
+export function useConfirmLeadAccountMatch() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      leadId,
+      match_id,
+      is_confirmed,
+    }: {
+      leadId: string;
+      match_id: string;
+      is_confirmed: boolean;
+    }) =>
+      apiFetch<LeadAccountMatch>(`/api/crm/leads/${leadId}/matches`, {
+        method: 'PATCH',
+        body: { match_id, is_confirmed },
+      }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['lead-account-matches', variables.leadId] });
     },
   });
 }
@@ -1456,5 +1549,112 @@ export function useUpdateSequenceDefaults() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crm-settings', 'sequences'] });
     },
+  });
+}
+
+// --- Project History ---
+
+export interface ProjectHistory {
+  id: string;
+  account_id: string;
+  project_number: string | null;
+  project_name: string;
+  project_description: string | null;
+  project_address: Record<string, string> | null;
+  start_date: string | null;
+  end_date: string | null;
+  estimated_value: number | null;
+  outcome: string;
+  source: string;
+  created_at: string;
+}
+
+export function useAccountProjects(accountId: string) {
+  return useQuery({
+    queryKey: ['account-projects', accountId],
+    queryFn: () =>
+      apiFetch<PaginatedResponse<ProjectHistory>>(`/api/crm/accounts/${accountId}/projects`),
+    enabled: !!accountId,
+    staleTime: 60_000,
+  });
+}
+
+// --- ICP ---
+
+export interface ICP {
+  id: string;
+  division_id: string | null;
+  name: string;
+  description: string | null;
+  is_auto_generated: boolean;
+  is_active: boolean;
+  industry_match: string[];
+  geography_match: { cities: string[]; provinces: string[] } | null;
+  project_value_range: { min: number; max: number } | null;
+  project_types: string[];
+  repeat_rate_weight: number;
+  sample_size: number;
+  confidence_score: number;
+  avg_deal_value: number | null;
+  avg_project_duration_days: number | null;
+  top_sources: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+interface ICPFilters {
+  divisionId?: string;
+  isActive?: boolean;
+  limit?: number;
+  offset?: number;
+}
+
+export function useICPs(filters?: ICPFilters) {
+  return useQuery({
+    queryKey: queryKeys.icps.list(filters ?? {}),
+    queryFn: () =>
+      apiFetch<PaginatedResponse<ICP>>('/api/crm/icp', {
+        params: {
+          division_id: filters?.divisionId,
+          is_active: filters?.isActive,
+          limit: filters?.limit,
+          offset: filters?.offset,
+        },
+      }),
+    placeholderData: (prev) => prev,
+    staleTime: 60_000,
+  });
+}
+
+export function useICP(id: string) {
+  return useQuery({
+    queryKey: queryKeys.icps.detail(id),
+    queryFn: () => apiFetch<ICP>(`/api/crm/icp/${id}`),
+    enabled: !!id,
+    staleTime: 60_000,
+  });
+}
+
+export function useGenerateICPs() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (_: void) =>
+      apiFetch<{ message: string; generated: number; deleted: number; icps: ICP[] }>(
+        '/api/crm/icp/generate',
+        { method: 'POST', body: {} },
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.icps.all });
+    },
+  });
+}
+
+export function useMatchLeadsToICPs() {
+  return useMutation({
+    mutationFn: (body?: { limit?: number }) =>
+      apiFetch<{ message: string; leads_processed: number; icps_evaluated: number; pairs_upserted: number }>(
+        '/api/crm/icp/match',
+        { method: 'POST', body: body ?? {} },
+      ),
   });
 }

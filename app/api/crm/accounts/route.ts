@@ -37,9 +37,10 @@ export async function GET(req: NextRequest) {
   let query = supabase
     .from('accounts')
     .select(
-      'id, account_name, account_type, division_id, billing_address, shipping_address, notes, created_by, created_at, updated_at',
+      'id, account_name, account_type, division_id, billing_address, shipping_address, notes, industry, phone, email, website, address, company_code, source, total_projects, lifetime_revenue, first_project_date, last_project_date, is_repeat_client, tags, metadata, deleted_at, created_by, created_at, updated_at',
       { count: 'exact' },
     )
+    .is('deleted_at', null)
     .order(sort_by ?? 'created_at', { ascending: sort_dir === 'asc' });
 
   if (division_id) {

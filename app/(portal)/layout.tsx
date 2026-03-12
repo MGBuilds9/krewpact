@@ -10,12 +10,12 @@ export default async function PortalLayout({ children }: { children: React.React
     redirect('/');
   }
 
-  // Expect custom JWT claims from Clerk. Adjust this based on your Clerk setup.
-  const metadata = sessionClaims.public_metadata as
-    | {
-        krewpact_roles?: string[];
-      }
-    | undefined;
+  const claims = sessionClaims as Record<string, unknown>;
+  const metadata = (
+    (claims.metadata as Record<string, unknown>)
+    ?? (claims.public_metadata as Record<string, unknown>)
+    ?? claims
+  ) as { krewpact_roles?: string[] } | undefined;
 
   const roles = metadata?.krewpact_roles || [];
 

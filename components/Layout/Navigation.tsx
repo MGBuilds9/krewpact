@@ -86,12 +86,14 @@ export function Navigation({ isMobile = false }: NavigationProps) {
     (item) => !item.adminOnly || currentUser?.role === 'admin',
   );
 
+  const strippedPath = pathname.replace(/^\/org\/[^/]+/, '');
+
   if (isMobile) {
     return (
       <nav className="flex flex-col gap-2">
         {filteredItems.map((item) => {
           const href = orgPath(item.path);
-          const isActive = pathname.includes(item.path);
+          const isActive = strippedPath === item.path || strippedPath.startsWith(item.path + '/');
           return (
             <Link
               key={item.label}
@@ -117,7 +119,7 @@ export function Navigation({ isMobile = false }: NavigationProps) {
       <div className="flex items-center justify-start gap-1 w-full relative">
         {filteredItems.map((item) => {
           const href = orgPath(item.path);
-          const isActive = pathname.includes(item.path);
+          const isActive = strippedPath === item.path || strippedPath.startsWith(item.path + '/');
           return (
             <Tooltip key={item.label}>
               <TooltipTrigger asChild>
