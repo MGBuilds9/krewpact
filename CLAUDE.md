@@ -256,13 +256,15 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
-### Mar 12, 2026 — AI Agentic Layer
+### Mar 12, 2026 — AI Agentic Layer (Ship + Killswitch + Docs)
 
-- **Changes:** Shipped full AI agentic layer from worktree to main. 8 agents (insight-engine, stale-deal-detector, bid-matcher, budget-anomaly, email-drafter, digest-builder, nl-query, next-action-suggester). Gemini Flash provider with cost tracking and model router. 5 React components (AiInsightBanner, AiSuggestion, DailyDigestWidget, EmailDraftModal, InsightAnalyticsCard). NL query mode in CommandPalette. 9 API routes + 2 cron routes (disabled in vercel.json, callable manually). A11y fixes across ~50 pages.
+- **Changes:** Shipped full AI agentic layer from worktree to main. 8 agents (insight-engine, stale-deal-detector, bid-matcher, budget-anomaly, email-drafter, digest-builder, nl-query, next-action-suggester). Gemini 2.0 Flash provider with cost tracking and model router. 5 React components (AiInsightBanner, AiSuggestion, DailyDigestWidget, EmailDraftModal, InsightAnalyticsCard). NL query mode in CommandPalette. 9 API routes + 2 cron routes. A11y fixes across ~50 pages. Comprehensive `docs/ai-agentic-layer.md` with architecture, cost breakdown, and launch checklist.
 - **Schema:** `ai_insights`, `user_digests`, `ai_actions` tables with RLS + indexes. `ai_preferences` JSONB column on `users`. Migrations applied to production Supabase.
-- **Infrastructure:** ESLint `.claude/` ignore added. Fixed corrupted git repo (worktree cleanup had removed objects). Cron routes for generate-insights and daily-digest exist but are NOT scheduled in vercel.json — can be tested via manual curl.
-- **Env vars needed:** `GEMINI_API_KEY` for Gemini Flash provider (not yet set in Vercel).
-- **Tests:** 3,737 passing (335 files). 0 lint. 0 type errors. Build clean.
+- **Killswitch:** `AI_ENABLED` env var (default `false`) gates all LLM-calling routes (query, draft-email, generate-insights, daily-digest). Returns 503 when off. Crons also removed from `vercel.json`. Everything is OFF until launch.
+- **Infrastructure:** ESLint `.claude/` ignore added. Fixed corrupted git repo (worktree cleanup had removed objects).
+- **Env vars for launch:** `AI_ENABLED=true`, `GOOGLE_GENERATIVE_AI_API_KEY` (NOT `GEMINI_API_KEY`), optionally `ANTHROPIC_API_KEY`. Re-add cron entries to `vercel.json`.
+- **Cost:** ~$0.50-$1.00/month for MDM at launch (Gemini Flash is $0.075/$0.30 per 1M tokens).
+- **Tests:** 3,750/3,750 passing (337 files). 0 lint. 0 type errors. Build clean.
 
 ### Mar 11, 2026 — Closed-Loop CRM + Comprehensive Codebase Audit
 
@@ -273,14 +275,9 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 - **Decisions:** `lead_status` DB enum is canonical: `new, contacted, qualified, proposal, negotiation, nurture, won, lost`. All app-level stage names must match these exactly.
 - **Tests:** 3,489/3,489 passing (309 files). 0 lint. 0 type errors. Build clean.
 
-### Mar 11, 2026 — CRM Navigation, Auth Claims, Score UX & Chart Fixes
-
-- Auth claims `_getClerkMetadata()` helper for JWKS/legacy/portal. CRM nav org-scoped redirect. Lead Score Breakdown UX. Recharts dimension fix. 3,488 tests.
-
-- Mar 11: Fix 500 Errors Round 4 — Clerk JWKS, RLS recursion, enum alignment. 3,488 tests.
-- Mar 11: Fix Scoring, Separate Clients, Production Verification. 3,488 tests.
-- Mar 11: Fix 500 Errors Round 3 — Sentry wrapping, RESTRICTIVE RLS, orphaned leads. 3,488 tests.
-- Mar 11: Eliminate All 500 Errors Round 2 — createUserClientSafe(), 262+ routes, 25 migrations. 3,488 tests.
+- Mar 11: CRM Navigation, Auth Claims, Score UX & Chart Fixes. 3,488 tests.
+- Mar 11: Closed-Loop CRM + 7-agent audit (79 files fixed). 3,489 tests.
+- Mar 11: Fix 500 Errors Rounds 2-4, createUserClientSafe() on 262+ routes. 3,488 tests.
 - Mar 10: Production Readiness (14 stories) — security headers, ESLint 0 warnings, E2E smoke. 3,488 tests.
 - Mar 9: Executive Nucleus + Enterprise Phase 2. 3,478 tests.
 - Mar 8: P1 completion + autonomous loop (all 18 PRD tasks). 3,092 tests.
