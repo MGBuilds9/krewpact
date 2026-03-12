@@ -18,6 +18,7 @@ coverage/
 # misc
 .DS_Store
 *.pem
+__pycache__/
 
 # debug
 npm-debug.log*
@@ -51,3 +52,25 @@ frappe_api_keys.csv
 
 # Ralph loop archives (historical PRDs/progress)
 scripts/ralph/archive/
+
+# Playwright MCP screenshots
+.playwright-mcp/
+
+# Playwright test artifacts
+playwright-report/
+test-results/
+
+# Claude Code local config
+.claude/
+
+# Jules config
+.jules/
+
+# Business documents (not code)
+admin_meetings/
+krewpact-feature-review.html
+krewpact-prd.html
+krewpact.html
+sharing-message.md
+NEXT-SESSIONS-PLAN.md
+reference/
