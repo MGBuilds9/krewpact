@@ -123,7 +123,13 @@ export default function LeadDetailPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-start gap-4">
-        <Button variant="ghost" size="icon" onClick={() => orgPush('/crm/leads')} className="mt-1">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => orgPush('/crm/leads')}
+          className="mt-1"
+          aria-label="Back to leads"
+        >
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1 min-w-0">

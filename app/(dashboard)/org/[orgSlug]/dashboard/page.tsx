@@ -320,7 +320,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-[10px] text-muted-foreground/40 pt-2 pb-2 tracking-wide select-none">
+        <p className="text-center text-[10px] text-muted-foreground pt-2 pb-2 tracking-wide select-none">
           Built by MKG Builds
         </p>
       </div>

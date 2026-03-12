@@ -104,6 +104,7 @@ export default function AccountDetailPage() {
           size="icon"
           onClick={() => orgPush('/crm/accounts')}
           className="mt-1"
+          aria-label="Back to accounts"
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
@@ -185,7 +186,10 @@ export default function AccountDetailPage() {
                     <dt className="text-sm font-medium text-muted-foreground">Phone</dt>
                     <dd className="text-sm">
                       {account.phone ? (
-                        <a href={`tel:${account.phone}`} className="hover:underline flex items-center gap-1">
+                        <a
+                          href={`tel:${account.phone}`}
+                          className="hover:underline flex items-center gap-1"
+                        >
                           <Phone className="h-3 w-3" />
                           {account.phone}
                         </a>
@@ -198,7 +202,10 @@ export default function AccountDetailPage() {
                     <dt className="text-sm font-medium text-muted-foreground">Email</dt>
                     <dd className="text-sm">
                       {account.email ? (
-                        <a href={`mailto:${account.email}`} className="hover:underline flex items-center gap-1">
+                        <a
+                          href={`mailto:${account.email}`}
+                          className="hover:underline flex items-center gap-1"
+                        >
                           <Mail className="h-3 w-3" />
                           {account.email}
                         </a>
@@ -235,7 +242,9 @@ export default function AccountDetailPage() {
                   </div>
                   <div>
                     <dt className="text-sm font-medium text-muted-foreground">Lifetime Revenue</dt>
-                    <dd className="text-sm font-medium">{formatCurrency(account.lifetime_revenue)}</dd>
+                    <dd className="text-sm font-medium">
+                      {formatCurrency(account.lifetime_revenue)}
+                    </dd>
                   </div>
                   <div>
                     <dt className="text-sm font-medium text-muted-foreground">First Project</dt>
@@ -249,7 +258,9 @@ export default function AccountDetailPage() {
                     <dt className="text-sm font-medium text-muted-foreground">Repeat Client</dt>
                     <dd className="text-sm">
                       {account.is_repeat_client ? (
-                        <Badge className="bg-green-100 text-green-800 border-green-200 text-xs">Yes</Badge>
+                        <Badge className="bg-green-100 text-green-800 border-green-200 text-xs">
+                          Yes
+                        </Badge>
                       ) : (
                         <span className="text-muted-foreground">No</span>
                       )}

@@ -142,7 +142,13 @@ export function SubscriptionForm({ subscription, onClose }: SubscriptionFormProp
         <CardTitle className="text-base font-semibold">
           {isEdit ? 'Edit Subscription' : 'Add Subscription'}
         </CardTitle>
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7"
+          onClick={onClose}
+          aria-label="Close form"
+        >
           <X className="h-4 w-4" />
         </Button>
       </CardHeader>

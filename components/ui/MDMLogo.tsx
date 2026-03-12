@@ -30,7 +30,7 @@ function LogoMark({ height }: { height: number }) {
         className="dark:fill-slate-200"
       />
       <path
-        fill="#EF7922"
+        fill="#BD570E"
         d="M60.251,79.19c0,0,4.023,0.48,4.023-2.658V35.914c0,0-0.268-2.3-4.023-1.927V79.19z"
       />
       <polygon
@@ -39,11 +39,11 @@ function LogoMark({ height }: { height: number }) {
         className="dark:fill-slate-200"
       />
       <polygon
-        fill="#EF7922"
+        fill="#BD570E"
         points="119.008,60.843 113.18,54.565 113.18,85.08 125.283,85.08 125.283,54.12 122.409,54.12"
       />
       <path
-        fill="#EF7922"
+        fill="#BD570E"
         d="M153,42.643l-9.915-4.098l1.834-7.023l-14.43,1.708l16.596-15.081l-8.506-1.12l2.987-14.495
         c0,0-9.967,4.891-12.358,6.169c-2.39,1.264-2.282-1.835-2.282-1.835l-1.308-6.649l-9.897,18.454l-1.346,1.744l-0.598-0.46
         L112.135,5.45l-5.379,3.286L100.48,0l-5.369,12.696l-4.344-1.569l2.84,13.372h-64.36l-5.603,31.159L17.15,24.499H0V85.08h10.869
@@ -78,7 +78,7 @@ export function MDMLogo({ size = 'md', showText = true, className = '' }: MDMLog
       <LogoMark height={s.logo} />
       {showText && (
         <div className="flex flex-col leading-tight">
-          <span className={`${s.label} font-semibold tracking-wide text-[#EF7922]`}>KrewPact</span>
+          <span className={`${s.label} font-semibold tracking-wide text-[#BD570E]`}>KrewPact</span>
         </div>
       )}
     </div>

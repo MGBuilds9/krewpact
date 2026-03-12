@@ -116,6 +116,7 @@ export default function SequenceDetailPage() {
           size="icon"
           onClick={() => orgPush('/crm/sequences')}
           className="mt-1"
+          aria-label="Back to sequences"
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>

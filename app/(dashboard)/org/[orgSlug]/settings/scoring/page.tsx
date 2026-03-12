@@ -264,6 +264,7 @@ export default function ScoringRulesPage() {
                             size="icon"
                             className="h-7 w-7"
                             onClick={() => startEdit(rule)}
+                            aria-label="Edit scoring rule"
                           >
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
@@ -273,6 +274,7 @@ export default function ScoringRulesPage() {
                             className="h-7 w-7 text-destructive hover:text-destructive"
                             onClick={() => deleteRule.mutate(rule.id)}
                             disabled={deleteRule.isPending}
+                            aria-label="Delete scoring rule"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>

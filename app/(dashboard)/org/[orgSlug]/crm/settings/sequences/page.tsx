@@ -12,7 +12,12 @@ export default function SequenceDefaultsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => orgPush('/crm/settings')}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => orgPush('/crm/settings')}
+          aria-label="Back to CRM settings"
+        >
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <Zap className="h-8 w-8 text-primary" />
@@ -28,8 +33,8 @@ export default function SequenceDefaultsPage() {
         <CardHeader>
           <CardTitle>Sending Configuration</CardTitle>
           <CardDescription>
-            These defaults apply to all new sequences. Individual sequences can override
-            these values in their own settings.
+            These defaults apply to all new sequences. Individual sequences can override these
+            values in their own settings.
           </CardDescription>
         </CardHeader>
         <CardContent>

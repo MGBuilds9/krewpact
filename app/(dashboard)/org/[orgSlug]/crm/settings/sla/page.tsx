@@ -12,7 +12,12 @@ export default function SLASettingsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => orgPush('/crm/settings')}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => orgPush('/crm/settings')}
+          aria-label="Back to CRM settings"
+        >
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <Clock className="h-8 w-8 text-primary" />
@@ -28,8 +33,8 @@ export default function SLASettingsPage() {
         <CardHeader>
           <CardTitle>Stage SLA Deadlines</CardTitle>
           <CardDescription>
-            Configure the maximum hours allowed in each stage for leads and opportunities.
-            Items exceeding these thresholds will be flagged as overdue in dashboards and reports.
+            Configure the maximum hours allowed in each stage for leads and opportunities. Items
+            exceeding these thresholds will be flagged as overdue in dashboards and reports.
           </CardDescription>
         </CardHeader>
         <CardContent>

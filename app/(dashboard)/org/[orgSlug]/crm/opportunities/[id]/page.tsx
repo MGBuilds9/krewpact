@@ -101,6 +101,7 @@ export default function OpportunityDetailPage() {
           size="icon"
           onClick={() => orgPush('/crm/opportunities')}
           className="mt-1"
+          aria-label="Back to opportunities"
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>

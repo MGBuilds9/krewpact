@@ -61,7 +61,12 @@ export default function NewReportPage() {
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => orgPush('/reports')}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => orgPush('/reports')}
+          aria-label="Back to reports"
+        >
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <h1 className="text-3xl font-bold tracking-tight">New Daily Log</h1>

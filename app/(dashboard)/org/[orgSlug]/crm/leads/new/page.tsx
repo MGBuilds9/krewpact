@@ -17,7 +17,12 @@ export default function NewLeadPage() {
   return (
     <div className="space-y-6 max-w-2xl">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => orgPush('/crm/leads')}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => orgPush('/crm/leads')}
+          aria-label="Back to leads"
+        >
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <h1 className="text-2xl font-bold tracking-tight">New Lead</h1>

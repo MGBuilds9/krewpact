@@ -13,7 +13,9 @@ export default function NewBiddingPage() {
 
   const handleSubmit = async (data: Record<string, unknown>) => {
     try {
-      const result = await createBidding.mutateAsync(data as Parameters<typeof createBidding.mutateAsync>[0]);
+      const result = await createBidding.mutateAsync(
+        data as Parameters<typeof createBidding.mutateAsync>[0],
+      );
       orgPush(`/crm/bidding/${result.id}`);
     } catch {
       // Error handled by React Query
@@ -23,7 +25,12 @@ export default function NewBiddingPage() {
   return (
     <div className="space-y-6 max-w-2xl">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => orgPush('/crm/bidding')}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => orgPush('/crm/bidding')}
+          aria-label="Back to bidding"
+        >
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <h2 className="text-2xl font-bold tracking-tight">New Bidding Opportunity</h2>

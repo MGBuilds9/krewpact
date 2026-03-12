@@ -164,10 +164,22 @@ export default function SchedulePage() {
                 <Button variant="outline" size="sm" onClick={goToToday}>
                   Today
                 </Button>
-                <Button variant="outline" size="icon" className="h-8 w-8" onClick={prevMonth}>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={prevMonth}
+                  aria-label="Previous month"
+                >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <Button variant="outline" size="icon" className="h-8 w-8" onClick={nextMonth}>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={nextMonth}
+                  aria-label="Next month"
+                >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>

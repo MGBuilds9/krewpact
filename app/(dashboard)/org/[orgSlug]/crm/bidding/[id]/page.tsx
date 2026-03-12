@@ -27,9 +27,7 @@ export default function BiddingDetailPage({
 
   if (!bid) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
-        Bidding opportunity not found.
-      </div>
+      <div className="text-center py-12 text-muted-foreground">Bidding opportunity not found.</div>
     );
   }
 
@@ -37,7 +35,9 @@ export default function BiddingDetailPage({
 
   const handleUpdate = async (data: Record<string, unknown>) => {
     try {
-      await updateBidding.mutateAsync({ id: bid.id, ...data } as Parameters<typeof updateBidding.mutateAsync>[0]);
+      await updateBidding.mutateAsync({ id: bid.id, ...data } as Parameters<
+        typeof updateBidding.mutateAsync
+      >[0]);
     } catch {
       // Error handled by React Query
     }
@@ -57,16 +57,19 @@ export default function BiddingDetailPage({
     <div className="space-y-6 max-w-3xl">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => orgPush('/crm/bidding')}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => orgPush('/crm/bidding')}
+            aria-label="Back to bidding"
+          >
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
             <h2 className="text-2xl font-bold tracking-tight">{bid.title}</h2>
             <div className="flex items-center gap-2 mt-1">
               <BiddingStatusBadge status={bid.status} />
-              <span className="text-sm text-muted-foreground">
-                {getSourceLabel(bid.source)}
-              </span>
+              <span className="text-sm text-muted-foreground">{getSourceLabel(bid.source)}</span>
             </div>
           </div>
         </div>
@@ -101,7 +104,9 @@ export default function BiddingDetailPage({
               <Clock className="h-5 w-5 text-muted-foreground" />
               <div>
                 <p className="text-sm text-muted-foreground">Deadline</p>
-                <p className={`font-semibold ${deadlineAlert.level === 'urgent' ? 'text-red-600' : deadlineAlert.level === 'expired' ? 'text-gray-500' : ''}`}>
+                <p
+                  className={`font-semibold ${deadlineAlert.level === 'urgent' ? 'text-red-600' : deadlineAlert.level === 'expired' ? 'text-gray-500' : ''}`}
+                >
                   {deadlineAlert.label}
                 </p>
               </div>

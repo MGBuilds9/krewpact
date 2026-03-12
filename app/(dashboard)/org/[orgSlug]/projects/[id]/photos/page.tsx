@@ -118,6 +118,7 @@ export default function PhotosPage() {
                   size="icon"
                   className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
                   onClick={() => setAnnotatePhotoId(photo.id)}
+                  aria-label="Annotate photo"
                 >
                   <MessageSquare className="h-3.5 w-3.5" />
                 </Button>

@@ -19,7 +19,12 @@ export default function NewAccountPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => orgPush('/crm/accounts')}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => orgPush('/crm/accounts')}
+          aria-label="Back to accounts"
+        >
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <h1 className="text-2xl font-bold tracking-tight">New Account</h1>

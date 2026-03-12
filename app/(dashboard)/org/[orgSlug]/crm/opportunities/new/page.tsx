@@ -17,7 +17,12 @@ export default function NewOpportunityPage() {
   return (
     <div className="space-y-6 max-w-2xl">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => orgPush('/crm/opportunities')}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => orgPush('/crm/opportunities')}
+          aria-label="Back to opportunities"
+        >
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <h1 className="text-2xl font-bold tracking-tight">New Opportunity</h1>
