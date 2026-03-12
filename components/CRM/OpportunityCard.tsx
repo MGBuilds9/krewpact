@@ -3,10 +3,11 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { DollarSign, Calendar } from 'lucide-react';
 import type { Opportunity } from '@/hooks/useCRM';
+import { formatCurrency, formatShortDate } from '@/lib/date';
 
-function formatCurrency(value: number | null): string {
+function formatCurrencyNullable(value: number | null): string {
   if (value == null) return '-';
-  return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(value);
+  return formatCurrency(value);
 }
 
 interface OpportunityCardProps {
@@ -30,7 +31,7 @@ export function OpportunityCard({ opportunity, onClick }: OpportunityCardProps) 
               <div className="p-1 rounded bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400">
                 <DollarSign className="h-3 w-3" />
               </div>
-              {formatCurrency(opportunity.estimated_revenue)}
+              {formatCurrencyNullable(opportunity.estimated_revenue)}
             </span>
             {opportunity.probability_pct != null && (
               <span className="font-bold text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded uppercase tracking-wider">
@@ -43,10 +44,7 @@ export function OpportunityCard({ opportunity, onClick }: OpportunityCardProps) 
             {opportunity.target_close_date ? (
               <span className="flex items-center gap-1.5 text-muted-foreground font-medium">
                 <Calendar className="h-3 w-3" />
-                {new Date(opportunity.target_close_date).toLocaleDateString('en-CA', {
-                  month: 'short',
-                  day: 'numeric',
-                })}
+                {formatShortDate(opportunity.target_close_date)}
               </span>
             ) : (
               <span />
@@ -55,7 +53,7 @@ export function OpportunityCard({ opportunity, onClick }: OpportunityCardProps) 
             {opportunity.estimated_revenue != null && opportunity.probability_pct != null && (
               <span className="text-muted-foreground font-semibold flex flex-col items-end">
                 <span className="text-[9px] uppercase tracking-wider opacity-70">Weighted</span>
-                {formatCurrency(
+                {formatCurrencyNullable(
                   (opportunity.estimated_revenue * opportunity.probability_pct) / 100,
                 )}
               </span>

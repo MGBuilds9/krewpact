@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Clock, ChevronDown, ChevronUp } from 'lucide-react';
 import type { EstimateVersion } from '@/hooks/useEstimates';
+import { formatDate } from '@/lib/date';
 
 interface VersionHistoryProps {
   versions: EstimateVersion[];
@@ -36,7 +37,7 @@ export function VersionHistory({ versions }: VersionHistoryProps) {
                   Revision {version.revision_no}
                 </Badge>
                 <span className="text-xs text-muted-foreground">
-                  {new Date(version.created_at).toLocaleDateString('en-CA', {
+                  {formatDate(version.created_at, {
                     month: 'short',
                     day: 'numeric',
                     year: 'numeric',

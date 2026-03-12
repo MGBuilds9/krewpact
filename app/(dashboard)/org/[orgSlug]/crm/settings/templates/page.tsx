@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { useQuery } from '@tanstack/react-query';
+import { formatDate } from '@/lib/date';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -116,7 +117,7 @@ export default function TemplatesPage() {
                 <h3 className="font-semibold text-sm mb-1 line-clamp-1">{template.name}</h3>
                 <p className="text-xs text-muted-foreground line-clamp-1">{template.subject}</p>
                 <p className="text-xs text-muted-foreground mt-3">
-                  Updated {new Date(template.updated_at).toLocaleDateString()}
+                  Updated {formatDate(template.updated_at)}
                 </p>
               </CardContent>
             </Card>

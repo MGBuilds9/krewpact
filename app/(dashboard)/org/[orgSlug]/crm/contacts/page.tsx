@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Search, Plus, Users, Mail, Phone } from 'lucide-react';
+import { formatDate } from '@/lib/date';
 import { useContacts, type Contact } from '@/hooks/useCRM';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { DataTable, type SortState } from '@/components/CRM/DataTable';
@@ -50,12 +51,7 @@ const contactColumns: ColumnDef<Contact, unknown>[] = [
   {
     accessorKey: 'created_at',
     header: 'Created',
-    cell: ({ row }) =>
-      new Date(row.original.created_at).toLocaleDateString('en-CA', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      }),
+    cell: ({ row }) => formatDate(row.original.created_at),
   },
 ];
 

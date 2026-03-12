@@ -5,25 +5,12 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Building2, Trophy } from 'lucide-react';
 import type { DivisionComparison } from '@/lib/crm/construction-intelligence';
+import { formatCurrencyAbbrev } from '@/lib/date';
 
-const DIVISION_LABELS: Record<string, string> = {
-  contracting: 'MDM Contracting',
-  homes: 'MDM Homes',
-  wood: 'MDM Wood',
-  telecom: 'MDM Telecom',
-  'group-inc': 'MDM Group Inc.',
-  management: 'MDM Management',
-  unassigned: 'Unassigned',
-};
-
-function formatCurrency(value: number): string {
-  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
-  if (value >= 1_000) return `$${(value / 1_000).toFixed(0)}K`;
-  return `$${value.toLocaleString()}`;
-}
+type EnrichedDivisionComparison = DivisionComparison & { name?: string };
 
 interface DivisionComparisonCardProps {
-  divisions: DivisionComparison[];
+  divisions: EnrichedDivisionComparison[];
 }
 
 export function DivisionComparisonCard({ divisions }: DivisionComparisonCardProps) {
@@ -59,9 +46,7 @@ export function DivisionComparisonCard({ divisions }: DivisionComparisonCardProp
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {idx === 0 && <Trophy className="h-4 w-4 text-yellow-500" />}
-                <span className="font-medium text-sm">
-                  {DIVISION_LABELS[div.division_id] ?? div.division_id}
-                </span>
+                <span className="font-medium text-sm">{div.name ?? div.division_id}</span>
               </div>
               <div className="flex items-center gap-3 text-sm">
                 <span className="text-muted-foreground">{div.total_opportunities} opps</span>
@@ -80,19 +65,19 @@ export function DivisionComparisonCard({ divisions }: DivisionComparisonCardProp
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-muted-foreground">
               <div>
                 <span className="block font-medium text-foreground">
-                  {formatCurrency(div.won_revenue)}
+                  {formatCurrencyAbbrev(div.won_revenue)}
                 </span>
                 Won Revenue
               </div>
               <div>
                 <span className="block font-medium text-foreground">
-                  {formatCurrency(div.total_pipeline_value)}
+                  {formatCurrencyAbbrev(div.total_pipeline_value)}
                 </span>
                 Pipeline
               </div>
               <div>
                 <span className="block font-medium text-foreground">
-                  {formatCurrency(div.avg_deal_size)}
+                  {formatCurrencyAbbrev(div.avg_deal_size)}
                 </span>
                 Avg Deal
               </div>

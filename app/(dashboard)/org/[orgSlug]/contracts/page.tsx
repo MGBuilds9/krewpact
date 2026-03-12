@@ -19,6 +19,7 @@ import { Search, Plus, FileText } from 'lucide-react';
 import { useContractTerms } from '@/hooks/useContracting';
 import { ContractTermsForm } from '@/components/Contracting/ContractTermsForm';
 import type { ContractTerms } from '@/hooks/useContracting';
+import { formatDate } from '@/lib/date';
 
 const CONTRACT_STATUS_COLORS: Record<string, string> = {
   draft: 'bg-gray-100 text-gray-700 border-gray-200',
@@ -140,13 +141,9 @@ export default function ContractsPage() {
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
                         <span>Proposal: {contract.proposal_id}</span>
                         {contract.signed_at && (
-                          <span>
-                            Signed: {new Date(contract.signed_at).toLocaleDateString('en-CA')}
-                          </span>
+                          <span>Signed: {formatDate(contract.signed_at)}</span>
                         )}
-                        <span>
-                          Created: {new Date(contract.created_at).toLocaleDateString('en-CA')}
-                        </span>
+                        <span>Created: {formatDate(contract.created_at)}</span>
                       </div>
                     </div>
                   </div>

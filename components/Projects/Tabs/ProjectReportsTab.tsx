@@ -1,5 +1,6 @@
 'use client';
 
+import { formatDate } from '@/lib/date';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ClipboardList, Calendar, User } from 'lucide-react';
@@ -54,7 +55,7 @@ export function ProjectReportsTab({ projectId }: ProjectReportsTabProps) {
                     <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
                       <span className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
-                        {new Date(log.log_date).toLocaleDateString()}
+                        {formatDate(log.log_date)}
                       </span>
                       {log.submitted_user && (
                         <span className="flex items-center gap-1">

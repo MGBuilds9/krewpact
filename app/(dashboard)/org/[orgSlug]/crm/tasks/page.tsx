@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { formatDate, formatTime, formatShortDate } from '@/lib/date';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,7 +20,11 @@ import type { Activity } from '@/hooks/useCRM';
 
 type Filter = 'all' | 'overdue' | 'today' | 'upcoming' | 'completed';
 
-const FILTER_OPTIONS: { value: Filter; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+const FILTER_OPTIONS: {
+  value: Filter;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+}[] = [
   { value: 'all', label: 'Active', icon: ListTodo },
   { value: 'overdue', label: 'Overdue', icon: AlertTriangle },
   { value: 'today', label: 'Today', icon: Clock },
@@ -48,11 +53,11 @@ function formatDueDate(dueAt: string): string {
   if (diffDays < -1) return `${Math.abs(diffDays)} days overdue`;
   if (diffDays === -1) return 'Yesterday';
   if (diffDays === 0) {
-    return due.toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit' });
+    return formatTime(due, { hour: '2-digit', minute: '2-digit' });
   }
   if (diffDays === 1) return 'Tomorrow';
-  if (diffDays <= 7) return due.toLocaleDateString('en-CA', { weekday: 'short' });
-  return due.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
+  if (diffDays <= 7) return formatDate(due, { weekday: 'short' });
+  return formatShortDate(due);
 }
 
 const urgencyBadge: Record<string, string> = {
@@ -75,14 +80,34 @@ function TaskItem({ task, onComplete }: { task: Activity; onComplete: (id: strin
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium">{task.title}</p>
         {task.details && (
-          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{String(task.details)}</p>
+          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+            {String(task.details)}
+          </p>
         )}
         <div className="flex items-center gap-2 mt-1 flex-wrap">
-          <Badge variant="outline" className="text-xs">{task.activity_type}</Badge>
-          {task.lead_id && <Badge variant="secondary" className="text-xs">Lead</Badge>}
-          {task.opportunity_id && <Badge variant="secondary" className="text-xs">Opportunity</Badge>}
-          {task.account_id && <Badge variant="secondary" className="text-xs">Account</Badge>}
-          {task.contact_id && <Badge variant="secondary" className="text-xs">Contact</Badge>}
+          <Badge variant="outline" className="text-xs">
+            {task.activity_type}
+          </Badge>
+          {task.lead_id && (
+            <Badge variant="secondary" className="text-xs">
+              Lead
+            </Badge>
+          )}
+          {task.opportunity_id && (
+            <Badge variant="secondary" className="text-xs">
+              Opportunity
+            </Badge>
+          )}
+          {task.account_id && (
+            <Badge variant="secondary" className="text-xs">
+              Account
+            </Badge>
+          )}
+          {task.contact_id && (
+            <Badge variant="secondary" className="text-xs">
+              Contact
+            </Badge>
+          )}
         </div>
       </div>
       {task.due_at && (
@@ -101,7 +126,10 @@ export default function CRMTasksPage() {
 
   const { data, isLoading } = useMyTasks({
     filter,
-    entityType: entityType === 'all' ? undefined : entityType as 'lead' | 'opportunity' | 'account' | 'contact',
+    entityType:
+      entityType === 'all'
+        ? undefined
+        : (entityType as 'lead' | 'opportunity' | 'account' | 'contact'),
     limit: 50,
   });
 

@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ClipboardList, Calendar, User, Plus } from 'lucide-react';
 import { useReports } from '@/hooks/useReports';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
+import { formatDate } from '@/lib/date';
 
 export default function ReportsPage() {
   const { push: orgPush } = useOrgRouter();
@@ -89,7 +90,7 @@ export default function ReportsPage() {
                       <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
                         <span className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
-                          {new Date(report.log_date).toLocaleDateString()}
+                          {formatDate(report.log_date)}
                         </span>
                         {report.submitted_user && (
                           <span className="flex items-center gap-1">

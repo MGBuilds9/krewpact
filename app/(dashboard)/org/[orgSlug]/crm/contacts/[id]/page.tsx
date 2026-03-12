@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { formatDate } from '@/lib/date';
 import { ArrowLeft, Mail, Phone, Pencil, Building2, MessageSquarePlus, Send } from 'lucide-react';
 import { useContact, useAccount, useActivities } from '@/hooks/useCRM';
 import { ActivityTimeline } from '@/components/CRM/ActivityTimeline';
@@ -175,13 +176,7 @@ export default function ContactDetailPage() {
                   </div>
                   <div>
                     <dt className="text-sm font-medium text-muted-foreground">Created</dt>
-                    <dd className="text-sm">
-                      {new Date(contact.created_at).toLocaleDateString('en-CA', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
-                    </dd>
+                    <dd className="text-sm">{formatDate(contact.created_at)}</dd>
                   </div>
                 </dl>
               )}

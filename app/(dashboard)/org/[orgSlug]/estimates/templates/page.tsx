@@ -12,6 +12,7 @@ import { useEstimateTemplates } from '@/hooks/useEstimating';
 import { useDivision } from '@/contexts/DivisionContext';
 import { EstimateTemplateForm } from '@/components/Estimates/EstimateTemplateForm';
 import type { EstimateTemplate } from '@/hooks/useEstimating';
+import { formatDate } from '@/lib/date';
 
 export default function EstimateTemplatesPage() {
   const { activeDivision } = useDivision();
@@ -101,7 +102,7 @@ export default function EstimateTemplatesPage() {
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
                       {template.project_type && <span>Type: {template.project_type}</span>}
                       <span>
-                        {new Date(template.created_at).toLocaleDateString('en-CA', {
+                        {formatDate(template.created_at, {
                           month: 'short',
                           day: 'numeric',
                           year: 'numeric',

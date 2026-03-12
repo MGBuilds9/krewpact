@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useEmailMessages } from '@/hooks/useEmail';
 import { cn } from '@/lib/utils';
+import { formatShortDate } from '@/lib/date';
 
 function formatTimeAgo(dateString: string): string {
   const now = new Date();
@@ -22,7 +23,7 @@ function formatTimeAgo(dateString: string): string {
   const diffDays = Math.floor(diffHours / 24);
   if (diffDays < 7) return `${diffDays}d ago`;
 
-  return date.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
+  return formatShortDate(date);
 }
 
 function InboxPreviewSkeleton(): React.ReactElement {

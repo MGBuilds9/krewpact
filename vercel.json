@@ -2,11 +2,11 @@
   "crons": [
     {
       "path": "/api/cron/apollo-pump",
-      "schedule": "0 6 * * 1"
+      "schedule": "0 10 * * 1"
     },
     {
       "path": "/api/cron/enrichment",
-      "schedule": "0 7 * * 1,4"
+      "schedule": "0 11 * * 1,4"
     },
     {
       "path": "/api/cron/scoring",
@@ -18,15 +18,15 @@
     },
     {
       "path": "/api/cron/sla-alerts",
-      "schedule": "0 8 * * 1-5"
+      "schedule": "0 12 * * 1-5"
     },
     {
       "path": "/api/cron/portal-reminders",
-      "schedule": "0 9 * * 1-5"
+      "schedule": "0 13 * * 1-5"
     },
     {
       "path": "/api/cron/summarize",
-      "schedule": "0 18 * * 1-5"
+      "schedule": "0 22 * * 1-5"
     },
     {
       "path": "/api/cron/erp-sync",
@@ -34,11 +34,11 @@
     },
     {
       "path": "/api/cron/followup-reminders",
-      "schedule": "0 9 * * 1-5"
+      "schedule": "0 13 * * 1-5"
     },
     {
       "path": "/api/cron/icp-refresh",
-      "schedule": "0 6 * * 1"
+      "schedule": "0 10 * * 1"
     }
   ]
 }

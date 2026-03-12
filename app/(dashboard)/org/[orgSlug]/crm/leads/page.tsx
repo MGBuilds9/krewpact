@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
+import { formatDate } from '@/lib/date';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -107,12 +108,7 @@ const leadColumns: ColumnDef<Lead, unknown>[] = [
   {
     accessorKey: 'created_at',
     header: 'Created',
-    cell: ({ row }) =>
-      new Date(row.original.created_at).toLocaleDateString('en-CA', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      }),
+    cell: ({ row }) => formatDate(row.original.created_at),
   },
 ];
 
@@ -349,11 +345,7 @@ export default function LeadsPage() {
                           <span className="text-muted-foreground/80 flex w-full justify-between items-center text-xs pt-1">
                             Added:
                             <span className="font-semibold text-foreground">
-                              {new Date(lead.created_at).toLocaleDateString('en-CA', {
-                                month: 'short',
-                                day: 'numeric',
-                                year: 'numeric',
-                              })}
+                              {formatDate(lead.created_at)}
                             </span>
                           </span>
                         </div>

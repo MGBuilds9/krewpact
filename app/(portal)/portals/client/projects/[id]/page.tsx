@@ -1,5 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect, notFound } from 'next/navigation';
+import { formatDate } from '@/lib/date';
 
 interface ProjectDetail {
   id: string;
@@ -109,17 +110,13 @@ export default async function PortalProjectDetailPage({ params, searchParams }: 
             <div>
               <p className="text-xs text-gray-400 uppercase tracking-wide">Started</p>
               <p className="text-gray-900 font-medium mt-1">
-                {project.start_date
-                  ? new Date(project.start_date).toLocaleDateString('en-CA')
-                  : '—'}
+                {project.start_date ? formatDate(project.start_date) : '—'}
               </p>
             </div>
             <div>
               <p className="text-xs text-gray-400 uppercase tracking-wide">Target Completion</p>
               <p className="text-gray-900 font-medium mt-1">
-                {project.target_completion_date
-                  ? new Date(project.target_completion_date).toLocaleDateString('en-CA')
-                  : '—'}
+                {project.target_completion_date ? formatDate(project.target_completion_date) : '—'}
               </p>
             </div>
             <div>

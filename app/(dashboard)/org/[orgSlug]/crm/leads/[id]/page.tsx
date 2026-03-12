@@ -4,6 +4,7 @@ import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useParams } from 'next/navigation';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
+import { formatDate, formatShortDate } from '@/lib/date';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -241,24 +242,12 @@ export default function LeadDetailPage() {
                   </div>
                   <div>
                     <dt className="text-sm font-medium text-muted-foreground">Created</dt>
-                    <dd className="text-sm">
-                      {new Date(lead.created_at).toLocaleDateString('en-CA', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
-                    </dd>
+                    <dd className="text-sm">{formatDate(lead.created_at)}</dd>
                   </div>
                   <div>
                     <dt className="text-sm font-medium text-muted-foreground">Last Activity</dt>
                     <dd className="text-sm">
-                      {lead.last_touch_at
-                        ? new Date(lead.last_touch_at).toLocaleDateString('en-CA', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })
-                        : '-'}
+                      {lead.last_touch_at ? formatDate(lead.last_touch_at) : '-'}
                     </dd>
                   </div>
                   {lead.notes && (
@@ -390,10 +379,7 @@ export default function LeadDetailPage() {
                         : '',
                     )}
                   >
-                    {new Date(lead.next_followup_at).toLocaleDateString('en-CA', {
-                      month: 'short',
-                      day: 'numeric',
-                    })}
+                    {formatShortDate(lead.next_followup_at)}
                   </span>
                 </div>
               )}

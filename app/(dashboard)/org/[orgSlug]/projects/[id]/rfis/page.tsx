@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
+import { formatDate } from '@/lib/date';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -112,7 +113,7 @@ export default function RFIsPage() {
                   </span>
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
-                  {rfi.due_at ? new Date(rfi.due_at).toLocaleDateString('en-CA') : '—'}
+                  {rfi.due_at ? formatDate(rfi.due_at) : '—'}
                 </TableCell>
                 <TableCell className="text-right">
                   {rfi.status === 'open' && (

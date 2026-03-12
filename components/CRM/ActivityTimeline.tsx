@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Phone, Mail, Calendar, StickyNote, ListTodo } from 'lucide-react';
 import type { Activity } from '@/hooks/useCRM';
+import { formatDateTime } from '@/lib/date';
 
 const activityIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   call: Phone,
@@ -20,17 +21,6 @@ const activityColors: Record<string, string> = {
   note: 'bg-yellow-100 text-yellow-700 border-yellow-200',
   task: 'bg-orange-100 text-orange-700 border-orange-200',
 };
-
-function formatDate(dateString: string): string {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-CA', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
 
 interface ActivityTimelineProps {
   activities: Activity[];
@@ -76,7 +66,13 @@ export function ActivityTimeline({ activities }: ActivityTimelineProps) {
                 <p className="text-sm text-muted-foreground mb-1">{activity.details}</p>
               )}
               <time className="text-xs text-muted-foreground">
-                {formatDate(activity.created_at)}
+                {formatDateTime(activity.created_at, {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
               </time>
             </div>
           </div>

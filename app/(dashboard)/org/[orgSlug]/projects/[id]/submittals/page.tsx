@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
+import { formatDate } from '@/lib/date';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -111,7 +112,7 @@ export default function SubmittalsPage() {
                   </Badge>
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
-                  {sub.due_at ? new Date(sub.due_at).toLocaleDateString('en-CA') : '—'}
+                  {sub.due_at ? formatDate(sub.due_at) : '—'}
                 </TableCell>
                 <TableCell className="text-right">
                   {sub.status === 'submitted' && (

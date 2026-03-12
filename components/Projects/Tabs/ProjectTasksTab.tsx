@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { formatDate } from '@/lib/date';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -157,7 +158,7 @@ export function ProjectTasksTab({ projectId }: ProjectTasksTabProps) {
                       {task.due_at && (
                         <div className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
-                          {new Date(task.due_at).toLocaleDateString()}
+                          {formatDate(task.due_at)}
                         </div>
                       )}
                       {task.assigned_user_id && (

@@ -12,6 +12,7 @@ import { useContractTerm, useESignEnvelopes } from '@/hooks/useContracting';
 import type { ESignEnvelope } from '@/hooks/useContracting';
 import { ESignEnvelopeForm } from '@/components/Contracting/ESignEnvelopeForm';
 import { ContractAmendmentForm } from '@/components/Contracting/ContractAmendmentForm';
+import { formatDate } from '@/lib/date';
 
 const CONTRACT_STATUS_COLORS: Record<string, string> = {
   draft: 'bg-gray-100 text-gray-700 border-gray-200',
@@ -120,16 +121,16 @@ export default function ContractDetailPage() {
           </div>
           <div>
             <p className="text-muted-foreground mb-1">Created</p>
-            <p>{new Date(contract.created_at).toLocaleDateString('en-CA')}</p>
+            <p>{formatDate(contract.created_at)}</p>
           </div>
           <div>
             <p className="text-muted-foreground mb-1">Last Updated</p>
-            <p>{new Date(contract.updated_at).toLocaleDateString('en-CA')}</p>
+            <p>{formatDate(contract.updated_at)}</p>
           </div>
           {contract.signed_at && (
             <div>
               <p className="text-muted-foreground mb-1">Signed At</p>
-              <p>{new Date(contract.signed_at).toLocaleDateString('en-CA')}</p>
+              <p>{formatDate(contract.signed_at)}</p>
             </div>
           )}
           {contract.supersedes_contract_id && (

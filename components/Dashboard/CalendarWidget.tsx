@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCalendarEvents } from '@/hooks/useCalendar';
 import { cn } from '@/lib/utils';
+import { formatTime } from '@/lib/date';
 
 function getTodayRange(): { startDateTime: string; endDateTime: string } {
   const now = new Date();
@@ -21,8 +22,7 @@ function getTodayRange(): { startDateTime: string; endDateTime: string } {
 }
 
 function formatEventTime(dateTimeStr: string): string {
-  const date = new Date(dateTimeStr);
-  return date.toLocaleTimeString('en-CA', {
+  return formatTime(dateTimeStr, {
     hour: 'numeric',
     minute: '2-digit',
     hour12: true,

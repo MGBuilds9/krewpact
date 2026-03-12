@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { Card, CardContent } from '@/components/ui/card';
+import { formatDate } from '@/lib/date';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -25,14 +26,6 @@ function formatTriggerType(trigger: string): string {
     .split('_')
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ');
-}
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('en-CA', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
 }
 
 export default function SequencesPage() {
@@ -154,69 +147,70 @@ export default function SequencesPage() {
               <TabsContent value="list" className="mt-4">
                 <Card>
                   <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Trigger</TableHead>
-                        <TableHead>Steps</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Division</TableHead>
-                        <TableHead>Created</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {sequenceList.map((sequence) => (
-                        <TableRow
-                          key={sequence.id}
-                          className="cursor-pointer hover:bg-muted/50"
-                          onClick={() => orgPush(`/crm/sequences/${sequence.id}`)}
-                        >
-                          <TableCell>
-                            <div>
-                              <p className="font-medium">{sequence.name}</p>
-                              {sequence.description && (
-                                <p className="text-xs text-muted-foreground truncate max-w-xs">
-                                  {sequence.description}
-                                </p>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {formatTriggerType(sequence.trigger_type)}
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {sequence.sequence_steps?.length ?? '-'}
-                          </TableCell>
-                          <TableCell>
-                            {sequence.is_active ? (
-                              <Badge
-                                className="bg-green-100 text-green-700 border-green-200 border"
-                                variant="outline"
-                              >
-                                Active
-                              </Badge>
-                            ) : (
-                              <Badge
-                                className="bg-gray-100 text-gray-600 border-gray-200 border"
-                                variant="outline"
-                              >
-                                Inactive
-                              </Badge>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {sequence.division_id
-                              ? userDivisions.find((d) => d.id === sequence.division_id)?.name ?? 'Division'
-                              : 'All divisions'}
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {formatDate(sequence.created_at)}
-                          </TableCell>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Trigger</TableHead>
+                          <TableHead>Steps</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Division</TableHead>
+                          <TableHead>Created</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {sequenceList.map((sequence) => (
+                          <TableRow
+                            key={sequence.id}
+                            className="cursor-pointer hover:bg-muted/50"
+                            onClick={() => orgPush(`/crm/sequences/${sequence.id}`)}
+                          >
+                            <TableCell>
+                              <div>
+                                <p className="font-medium">{sequence.name}</p>
+                                {sequence.description && (
+                                  <p className="text-xs text-muted-foreground truncate max-w-xs">
+                                    {sequence.description}
+                                  </p>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {formatTriggerType(sequence.trigger_type)}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {sequence.sequence_steps?.length ?? '-'}
+                            </TableCell>
+                            <TableCell>
+                              {sequence.is_active ? (
+                                <Badge
+                                  className="bg-green-100 text-green-700 border-green-200 border"
+                                  variant="outline"
+                                >
+                                  Active
+                                </Badge>
+                              ) : (
+                                <Badge
+                                  className="bg-gray-100 text-gray-600 border-gray-200 border"
+                                  variant="outline"
+                                >
+                                  Inactive
+                                </Badge>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {sequence.division_id
+                                ? (userDivisions.find((d) => d.id === sequence.division_id)?.name ??
+                                  'Division')
+                                : 'All divisions'}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {formatDate(sequence.created_at)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
                   </div>
                 </Card>
               </TabsContent>

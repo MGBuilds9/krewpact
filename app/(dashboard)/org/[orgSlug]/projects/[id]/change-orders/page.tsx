@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
+import { formatDate } from '@/lib/date';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -169,7 +170,7 @@ export default function ChangeOrdersPage() {
                         : '—'}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {co.approved_at ? new Date(co.approved_at).toLocaleDateString('en-CA') : '—'}
+                      {co.approved_at ? formatDate(co.approved_at) : '—'}
                     </TableCell>
                   </TableRow>
                 ))}

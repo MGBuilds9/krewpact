@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
+import { formatDate } from '@/lib/date';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -37,15 +38,6 @@ function formatCurrency(value: number | null): string {
     currency: 'CAD',
     maximumFractionDigits: 0,
   }).format(value);
-}
-
-function formatDate(dateStr: string | null): string {
-  if (!dateStr) return '-';
-  return new Date(dateStr).toLocaleDateString('en-CA', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
 }
 
 export default function AccountDetailPage() {
@@ -248,11 +240,15 @@ export default function AccountDetailPage() {
                   </div>
                   <div>
                     <dt className="text-sm font-medium text-muted-foreground">First Project</dt>
-                    <dd className="text-sm">{formatDate(account.first_project_date)}</dd>
+                    <dd className="text-sm">
+                      {account.first_project_date ? formatDate(account.first_project_date) : '-'}
+                    </dd>
                   </div>
                   <div>
                     <dt className="text-sm font-medium text-muted-foreground">Last Project</dt>
-                    <dd className="text-sm">{formatDate(account.last_project_date)}</dd>
+                    <dd className="text-sm">
+                      {account.last_project_date ? formatDate(account.last_project_date) : '-'}
+                    </dd>
                   </div>
                   <div>
                     <dt className="text-sm font-medium text-muted-foreground">Repeat Client</dt>

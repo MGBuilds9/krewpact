@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
+import { formatDate } from '@/lib/date';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,15 +22,6 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { DataTable, type SortState } from '@/components/CRM/DataTable';
 import { ViewToggle, useViewMode } from '@/components/CRM/ViewToggle';
 import type { ColumnDef } from '@tanstack/react-table';
-
-function formatDate(dateStr: string | null): string {
-  if (!dateStr) return '-';
-  return new Date(dateStr).toLocaleDateString('en-CA', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
 
 const accountColumns: ColumnDef<Account, unknown>[] = [
   {
@@ -65,7 +57,8 @@ const accountColumns: ColumnDef<Account, unknown>[] = [
   {
     accessorKey: 'last_project_date',
     header: 'Last Project',
-    cell: ({ row }) => formatDate(row.original.last_project_date),
+    cell: ({ row }) =>
+      row.original.last_project_date ? formatDate(row.original.last_project_date) : '-',
   },
   {
     accessorKey: 'created_at',
@@ -224,7 +217,10 @@ export default function AccountsPage() {
                           )}
                           {account.industry && <span>{account.industry}</span>}
                           {account.total_projects > 0 && (
-                            <span>{account.total_projects} project{account.total_projects !== 1 ? 's' : ''}</span>
+                            <span>
+                              {account.total_projects} project
+                              {account.total_projects !== 1 ? 's' : ''}
+                            </span>
                           )}
                           {account.last_project_date && (
                             <span>Last: {formatDate(account.last_project_date)}</span>

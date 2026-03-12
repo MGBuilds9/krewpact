@@ -30,8 +30,29 @@ export async function GET(req: NextRequest) {
 
   const opps = opportunities ?? [];
 
+  const divisionComparison = calculateDivisionComparison(opps);
+
+  // Resolve division UUIDs to names
+  const divIds = divisionComparison.map((d) => d.division_id).filter((id) => id !== 'unassigned');
+  let divNameMap = new Map<string, string>();
+  if (divIds.length > 0) {
+    const { data: divisions } = await supabase
+      .from('divisions')
+      .select('id, name')
+      .in('id', divIds);
+    divNameMap = new Map((divisions ?? []).map((d) => [d.id, d.name]));
+  }
+
+  const enrichedDivisions = divisionComparison.map((d) => ({
+    ...d,
+    name:
+      d.division_id === 'unassigned'
+        ? 'Unassigned'
+        : (divNameMap.get(d.division_id) ?? d.division_id),
+  }));
+
   return NextResponse.json({
-    division_comparison: calculateDivisionComparison(opps),
+    division_comparison: enrichedDivisions,
     seasonal_analysis: calculateSeasonalAnalysis(opps),
   });
 }

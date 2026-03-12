@@ -20,6 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { formatDate } from '@/lib/date';
 
 const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   valid: 'default',
@@ -105,7 +106,7 @@ export default function CompliancePage() {
                   </TableCell>
                   <TableCell>
                     {doc.verified_at ? (
-                      new Date(doc.verified_at).toLocaleDateString('en-CA')
+                      formatDate(doc.verified_at)
                     ) : (
                       <span className="text-muted-foreground text-sm">Pending</span>
                     )}

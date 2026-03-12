@@ -6,22 +6,17 @@ import { TableCell, TableRow } from '@/components/ui/table';
 import { useRetryEnrichment } from '@/hooks/useCRM';
 import type { EnrichmentJob } from '@/hooks/useCRM';
 import { RefreshCw } from 'lucide-react';
+import { formatDateTime } from '@/lib/date';
 
-const STATUS_BADGE: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; label: string }> = {
+const STATUS_BADGE: Record<
+  string,
+  { variant: 'default' | 'secondary' | 'destructive' | 'outline'; label: string }
+> = {
   pending: { variant: 'outline', label: 'Pending' },
   in_progress: { variant: 'secondary', label: 'In Progress' },
   completed: { variant: 'default', label: 'Completed' },
   failed: { variant: 'destructive', label: 'Failed' },
 };
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-CA', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
 
 interface EnrichmentJobRowProps {
   job: EnrichmentJob;
@@ -43,8 +38,18 @@ export function EnrichmentJobRow({ job }: EnrichmentJobRowProps) {
         <Badge variant={badge.variant}>{badge.label}</Badge>
       </TableCell>
       <TableCell className="capitalize">{job.source}</TableCell>
-      <TableCell className="text-xs text-muted-foreground">{formatDate(job.created_at)}</TableCell>
-      <TableCell className="text-xs text-red-600 max-w-[200px] truncate" title={job.error_message ?? undefined}>
+      <TableCell className="text-xs text-muted-foreground">
+        {formatDateTime(job.created_at, {
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })}
+      </TableCell>
+      <TableCell
+        className="text-xs text-red-600 max-w-[200px] truncate"
+        title={job.error_message ?? undefined}
+      >
         {job.error_message ?? '-'}
       </TableCell>
       <TableCell>

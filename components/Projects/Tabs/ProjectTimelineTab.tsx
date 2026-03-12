@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock } from 'lucide-react';
 import { Project } from '@/hooks/useProjects';
+import { formatDate } from '@/lib/date';
 
 interface ProjectTimelineTabProps {
   project: Project;
@@ -98,7 +99,7 @@ export function ProjectTimelineTab({ project }: ProjectTimelineTabProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {startDate ? startDate.toLocaleDateString() : 'Not set'}
+              {startDate ? formatDate(startDate) : 'Not set'}
             </div>
           </CardContent>
         </Card>
@@ -109,9 +110,7 @@ export function ProjectTimelineTab({ project }: ProjectTimelineTabProps) {
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {endDate ? endDate.toLocaleDateString() : 'Not set'}
-            </div>
+            <div className="text-2xl font-bold">{endDate ? formatDate(endDate) : 'Not set'}</div>
           </CardContent>
         </Card>
 
@@ -172,7 +171,7 @@ export function ProjectTimelineTab({ project }: ProjectTimelineTabProps) {
                   {milestone.date && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Calendar className="h-3 w-3" />
-                      {milestone.date.toLocaleDateString()}
+                      {formatDate(milestone.date)}
                     </div>
                   )}
                 </div>

@@ -18,6 +18,7 @@ import { Search, Plus, Calculator, DollarSign } from 'lucide-react';
 import { useEstimates } from '@/hooks/useEstimates';
 import { useDivision } from '@/contexts/DivisionContext';
 import { cn } from '@/lib/utils';
+import { formatDate } from '@/lib/date';
 
 const STATUS_BADGE_COLORS: Record<string, string> = {
   draft: 'bg-gray-100 text-gray-700 border-gray-200',
@@ -144,7 +145,7 @@ export default function EstimatesListPage() {
                         </span>
                         <span>Rev. {estimate.revision_no}</span>
                         <span>
-                          {new Date(estimate.created_at).toLocaleDateString('en-CA', {
+                          {formatDate(estimate.created_at, {
                             month: 'short',
                             day: 'numeric',
                             year: 'numeric',

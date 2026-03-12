@@ -1,5 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
+import { formatDate } from '@/lib/date';
 
 interface PortalProject {
   id: string;
@@ -108,23 +109,19 @@ export default async function PortalProjectsPage() {
                 {project.start_date && (
                   <div className="flex justify-between">
                     <span>Started</span>
-                    <span>{new Date(project.start_date).toLocaleDateString('en-CA')}</span>
+                    <span>{formatDate(project.start_date)}</span>
                   </div>
                 )}
                 {project.target_completion_date && !project.actual_completion_date && (
                   <div className="flex justify-between">
                     <span>Target completion</span>
-                    <span>
-                      {new Date(project.target_completion_date).toLocaleDateString('en-CA')}
-                    </span>
+                    <span>{formatDate(project.target_completion_date)}</span>
                   </div>
                 )}
                 {project.actual_completion_date && (
                   <div className="flex justify-between text-emerald-600">
                     <span>Completed</span>
-                    <span>
-                      {new Date(project.actual_completion_date).toLocaleDateString('en-CA')}
-                    </span>
+                    <span>{formatDate(project.actual_completion_date)}</span>
                   </div>
                 )}
               </div>

@@ -1,5 +1,6 @@
 'use client';
 
+import { formatDate } from '@/lib/date';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -88,7 +89,7 @@ export function ProjectExpensesTab({ projectId }: ProjectExpensesTabProps) {
                     <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
                       <span className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
-                        {new Date(expense.expense_date).toLocaleDateString()}
+                        {formatDate(expense.expense_date)}
                       </span>
                       {expense.user && (
                         <span className="flex items-center gap-1">
