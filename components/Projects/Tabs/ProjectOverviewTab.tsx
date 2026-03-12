@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import { formatDate } from '@/lib/date';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -133,10 +132,12 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
               <div>
                 <p className="text-sm font-medium">Timeline</p>
                 <p className="text-sm text-muted-foreground">
-                  {project.start_date ? formatDate(project.start_date) : 'Not set'}
+                  {project.start_date
+                    ? new Date(project.start_date).toLocaleDateString()
+                    : 'Not set'}
                   {' to '}
                   {project.target_completion_date
-                    ? formatDate(project.target_completion_date)
+                    ? new Date(project.target_completion_date).toLocaleDateString()
                     : 'Not set'}
                 </p>
               </div>

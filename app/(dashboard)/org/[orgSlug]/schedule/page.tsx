@@ -15,7 +15,6 @@ import {
 } from 'lucide-react';
 import { useTasks, type Task } from '@/hooks/useTasks';
 import { cn } from '@/lib/utils';
-import { formatDate } from '@/lib/date';
 
 const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -78,7 +77,7 @@ export default function SchedulePage() {
   }, [tasks]);
 
   const days = getMonthDays(year, month);
-  const monthLabel = formatDate(currentDate, {
+  const monthLabel = currentDate.toLocaleDateString('en-CA', {
     month: 'long',
     year: 'numeric',
   });
@@ -309,7 +308,7 @@ export default function SchedulePage() {
                       <div
                         className={`text-sm font-medium flex-shrink-0 ${isOverdue ? 'text-red-600' : 'text-muted-foreground'}`}
                       >
-                        {formatDate(task.due_at!)}
+                        {new Date(task.due_at!).toLocaleDateString()}
                         {isOverdue && <span className="ml-1 text-xs">(overdue)</span>}
                       </div>
                     </div>

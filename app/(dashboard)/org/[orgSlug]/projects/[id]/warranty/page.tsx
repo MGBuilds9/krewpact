@@ -1,7 +1,6 @@
 'use client';
 
 import { use, useState } from 'react';
-import { formatDate } from '@/lib/date';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -79,7 +78,8 @@ export default function WarrantyPage({ params }: { params: Promise<{ id: string 
                   )}
                   <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
                     <CalendarDays className="h-3 w-3" />
-                    {formatDate(item.warranty_start)} — {formatDate(item.warranty_end)}
+                    {new Date(item.warranty_start).toLocaleDateString('en-CA')} —{' '}
+                    {new Date(item.warranty_end).toLocaleDateString('en-CA')}
                   </div>
                 </div>
                 <Badge variant={isActive(item.warranty_end) ? 'default' : 'secondary'}>

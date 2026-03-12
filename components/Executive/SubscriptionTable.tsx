@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Pencil, Trash2, Plus } from 'lucide-react';
-import { formatDate } from '@/lib/date';
 
 export interface Subscription {
   id: string;
@@ -54,9 +53,9 @@ function formatCurrency(amount: number, currency: string): string {
   }).format(amount);
 }
 
-function formatDateOrDash(dateStr: string | null): string {
+function formatDate(dateStr: string | null): string {
   if (!dateStr) return '—';
-  return formatDate(dateStr);
+  return new Date(dateStr).toLocaleDateString('en-CA');
 }
 
 export function SubscriptionTable({ onEdit, onAdd }: SubscriptionTableProps) {
@@ -170,7 +169,7 @@ export function SubscriptionTable({ onEdit, onAdd }: SubscriptionTableProps) {
                         {sub.billing_cycle}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">
-                        {formatDateOrDash(sub.renewal_date)}
+                        {formatDate(sub.renewal_date)}
                       </td>
                       <td className="px-4 py-3">
                         <Badge

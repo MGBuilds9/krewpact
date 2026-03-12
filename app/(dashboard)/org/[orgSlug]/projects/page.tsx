@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { formatDate } from '@/lib/date';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -213,7 +212,10 @@ export default function ProjectsPage() {
                             <div className="p-1 rounded-md bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">
                               <Calendar className="h-3.5 w-3.5" />
                             </div>
-                            {formatDate(project.start_date, { month: 'short', day: 'numeric' })}
+                            {new Date(project.start_date).toLocaleDateString('en-CA', {
+                              month: 'short',
+                              day: 'numeric',
+                            })}
                           </div>
                         )}
                       </div>

@@ -5,19 +5,13 @@ import { Progress } from '@/components/ui/progress';
 import { BarChart3 } from 'lucide-react';
 import type { WinLossEntry } from '@/lib/crm/pipeline-intelligence';
 
-type EnrichedWinLossEntry = WinLossEntry & { name?: string };
-
 interface WinLossAnalysisProps {
   title?: string;
-  data: EnrichedWinLossEntry[];
+  data: WinLossEntry[];
   isLoading?: boolean;
 }
 
-export function WinLossAnalysis({
-  title = 'Win/Loss Analysis',
-  data,
-  isLoading,
-}: WinLossAnalysisProps) {
+export function WinLossAnalysis({ title = 'Win/Loss Analysis', data, isLoading }: WinLossAnalysisProps) {
   if (isLoading) {
     return (
       <Card>
@@ -52,10 +46,7 @@ export function WinLossAnalysis({
               <div key={entry.dimension} className="space-y-1">
                 <div className="flex items-center justify-between text-sm">
                   <span className="font-medium truncate">
-                    {entry.name ??
-                      (entry.dimension === 'unassigned'
-                        ? 'Unassigned'
-                        : entry.dimension.slice(0, 12))}
+                    {entry.dimension === 'unassigned' ? 'Unassigned' : entry.dimension.slice(0, 12)}
                   </span>
                   <span className="text-muted-foreground text-xs">
                     {entry.won}W / {entry.lost}L ({Math.round(entry.win_rate * 100)}%)

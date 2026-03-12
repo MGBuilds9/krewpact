@@ -4,12 +4,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Users } from 'lucide-react';
 import type { RepPerformance } from '@/lib/crm/pipeline-intelligence';
-import { formatCurrencyShort } from '@/lib/date';
 
-type EnrichedRepPerformance = RepPerformance & { name?: string };
+function formatCurrency(value: number): string {
+  return new Intl.NumberFormat('en-CA', {
+    style: 'currency',
+    currency: 'CAD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value);
+}
 
 interface RepPerformanceCardProps {
-  data: EnrichedRepPerformance[];
+  data: RepPerformance[];
   isLoading?: boolean;
 }
 
@@ -49,8 +55,7 @@ export function RepPerformanceCard({ data, isLoading }: RepPerformanceCardProps)
                 <span className="text-sm font-bold text-muted-foreground w-5">{index + 1}</span>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">
-                    {rep.name ??
-                      (rep.user_id === 'unassigned' ? 'Unassigned' : rep.user_id.slice(0, 8))}
+                    {rep.user_id === 'unassigned' ? 'Unassigned' : rep.user_id.slice(0, 8)}
                   </p>
                   <div className="flex gap-2 text-xs text-muted-foreground">
                     <span>{rep.deals_won} won</span>
@@ -59,8 +64,11 @@ export function RepPerformanceCard({ data, isLoading }: RepPerformanceCardProps)
                   </div>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="text-sm font-bold">{formatCurrencyShort(rep.revenue_closed)}</p>
-                  <Badge variant="outline" className="text-xs">
+                  <p className="text-sm font-bold">{formatCurrency(rep.revenue_closed)}</p>
+                  <Badge
+                    variant="outline"
+                    className="text-xs"
+                  >
                     {Math.round(rep.conversion_rate * 100)}% win rate
                   </Badge>
                 </div>

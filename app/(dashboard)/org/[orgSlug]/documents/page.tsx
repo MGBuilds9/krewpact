@@ -25,7 +25,6 @@ import { useProjects } from '@/hooks/useProjects';
 import { useFolders, useFiles, useCreateFolder, useDeleteFile } from '@/hooks/useDocuments';
 import { useDivision } from '@/contexts/DivisionContext';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
-import { formatDate } from '@/lib/date';
 
 function getFileIcon(mimeType: string | null) {
   if (!mimeType) return File;
@@ -332,7 +331,7 @@ export default function DocumentsPage() {
                           <div className="flex items-center gap-3 text-xs text-muted-foreground">
                             <span>{formatFileSize(file.file_size_bytes)}</span>
                             <span>
-                              {formatDate(file.created_at, {
+                              {new Date(file.created_at).toLocaleDateString('en-CA', {
                                 month: 'short',
                                 day: 'numeric',
                                 year: 'numeric',

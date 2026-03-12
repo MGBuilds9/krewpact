@@ -26,6 +26,7 @@ import {
   Target,
   Calculator,
   CheckSquare,
+  Lightbulb,
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -162,6 +163,8 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   const [searchResults, setSearchResults] = useState<GlobalSearchResults | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [nlAnswer, setNlAnswer] = useState<string | null>(null);
+  const [isNlQuery, setIsNlQuery] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const [recentPages, setRecentPages] = useState<string[]>(() => {
     if (typeof window === 'undefined') return [];
@@ -206,12 +209,41 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
 
   const hasSearchResults = flatResults.length > 0;
 
+  function isNaturalLanguageQuery(q: string): boolean {
+    const nlPatterns = /^(show me|what|how many|find|list all|get me|who|where|which|count|total|average)/i;
+    return q.includes('?') || nlPatterns.test(q.trim());
+  }
+
   // Search all entities with debounce (300ms)
   useEffect(() => {
     if (searchQuery.length < 2) {
       setSearchResults(null);
+      setIsNlQuery(false);
+      setNlAnswer(null);
       return;
     }
+
+    if (isNaturalLanguageQuery(searchQuery) && searchQuery.length >= 5) {
+      // NL query mode — call AI endpoint
+      const nlTimeout = setTimeout(async () => {
+        setIsNlQuery(true);
+        setIsSearching(true);
+        try {
+          const res = await apiFetch<{ answer: string; data?: unknown }>('/api/ai/query', {
+            method: 'POST',
+            body: { query: searchQuery },
+          });
+          setNlAnswer(res.answer);
+        } catch {
+          setNlAnswer(null);
+        } finally {
+          setIsSearching(false);
+        }
+      }, 600); // Longer debounce for NL queries
+      return () => clearTimeout(nlTimeout);
+    }
+    setIsNlQuery(false);
+    setNlAnswer(null);
 
     const timeout = setTimeout(async () => {
       setIsSearching(true);
@@ -235,6 +267,8 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
       setSearchQuery('');
       setSearchResults(null);
       setSelectedIndex(0);
+      setNlAnswer(null);
+      setIsNlQuery(false);
     }
   }, [isOpen]);
 
@@ -358,7 +392,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search leads, accounts, contacts, projects, tasks..."
+              placeholder="Search or ask a question..."
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
@@ -381,6 +415,9 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
             </span>
             <span className="flex items-center gap-1">
               <kbd className="px-1.5 py-0.5 text-xs bg-muted rounded">Enter</kbd> select
+            </span>
+            <span className="flex items-center gap-1">
+              <kbd className="px-1.5 py-0.5 text-xs bg-muted rounded">?</kbd> ask AI
             </span>
           </div>
         </div>
@@ -435,8 +472,27 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
                 );
               })}
 
+            {/* AI Answer */}
+            {isNlQuery && nlAnswer && (
+              <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 space-y-2">
+                <div className="flex items-center gap-2 text-sm font-medium text-blue-700">
+                  <Lightbulb className="h-4 w-4" />
+                  AI Answer
+                </div>
+                <p className="text-sm text-blue-900">{nlAnswer}</p>
+              </div>
+            )}
+
+            {/* NL query in progress */}
+            {isNlQuery && isSearching && !nlAnswer && (
+              <div className="text-center py-8 text-sm text-muted-foreground flex items-center justify-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Thinking...
+              </div>
+            )}
+
             {/* No results message */}
-            {searchQuery.length >= 2 && !isSearching && !hasSearchResults && (
+            {!isNlQuery && searchQuery.length >= 2 && !isSearching && !hasSearchResults && (
               <div className="text-center py-8 text-sm text-muted-foreground">
                 No results found for &quot;{searchQuery}&quot;
               </div>

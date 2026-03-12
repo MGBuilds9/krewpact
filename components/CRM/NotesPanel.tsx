@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Pin, Trash2, Pencil, Plus, ChevronDown, ChevronRight } from 'lucide-react';
-import { formatDate } from '@/lib/date';
 
 interface Note {
   id: string;
@@ -239,7 +238,7 @@ export function NotesPanel({ entityType, entityId }: NotesPanelProps) {
                           </button>
                         )}
                         <p className="text-xs text-muted-foreground mt-1">
-                          {formatDate(note.created_at)}
+                          {new Date(note.created_at).toLocaleDateString()}
                         </p>
                       </>
                     )}

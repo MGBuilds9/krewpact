@@ -1,7 +1,6 @@
 'use client';
 
 import { use, useState } from 'react';
-import { formatDate } from '@/lib/date';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -90,7 +89,7 @@ export default function SelectionsPage({ params }: { params: Promise<{ id: strin
               </CardHeader>
               <CardContent>
                 <p className="text-xs text-muted-foreground">
-                  Created {formatDate(sheet.created_at)}
+                  Created {new Date(sheet.created_at).toLocaleDateString('en-CA')}
                 </p>
               </CardContent>
             </Card>

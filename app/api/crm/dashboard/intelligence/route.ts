@@ -56,56 +56,10 @@ export async function GET(req: NextRequest) {
     (o) => (o as unknown as { division_id: string | null }).division_id ?? 'unassigned',
   );
 
-  // Resolve user UUIDs to names
-  const userIds = repPerformance.map((r) => r.user_id).filter((id) => id !== 'unassigned');
-  let userNameMap = new Map<string, string>();
-  if (userIds.length > 0) {
-    const { data: users } = await supabase
-      .from('users')
-      .select('id, first_name, last_name')
-      .in('id', userIds);
-    userNameMap = new Map(
-      (users ?? []).map((u) => [u.id, `${u.first_name} ${u.last_name}`.trim()]),
-    );
-  }
-
-  const enrichedRepPerformance = repPerformance.map((r) => ({
-    ...r,
-    name:
-      r.user_id === 'unassigned'
-        ? 'Unassigned'
-        : (userNameMap.get(r.user_id) ?? r.user_id.slice(0, 8)),
-  }));
-
-  // Resolve division UUIDs to names for win/loss
-  const divIds = winLossByDivision.map((w) => w.dimension).filter((id) => id !== 'unassigned');
-  let divNameMap = new Map<string, string>();
-  if (divIds.length > 0) {
-    const { data: divisions } = await supabase
-      .from('divisions')
-      .select('id, name')
-      .in('id', divIds);
-    divNameMap = new Map((divisions ?? []).map((d) => [d.id, d.name]));
-  }
-
-  const enrichedWinLossByRep = winLossByRep.map((w) => ({
-    ...w,
-    name:
-      w.dimension === 'unassigned'
-        ? 'Unassigned'
-        : (userNameMap.get(w.dimension) ?? w.dimension.slice(0, 8)),
-  }));
-
-  const enrichedWinLossByDivision = winLossByDivision.map((w) => ({
-    ...w,
-    name:
-      w.dimension === 'unassigned' ? 'Unassigned' : (divNameMap.get(w.dimension) ?? w.dimension),
-  }));
-
   return NextResponse.json({
-    rep_performance: enrichedRepPerformance,
+    rep_performance: repPerformance,
     pipeline_aging: pipelineAging,
-    win_loss_by_rep: enrichedWinLossByRep,
-    win_loss_by_division: enrichedWinLossByDivision,
+    win_loss_by_rep: winLossByRep,
+    win_loss_by_division: winLossByDivision,
   });
 }

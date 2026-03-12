@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Settings, User, Bell, Shield, Save } from 'lucide-react';
+import { Settings, User, Bell, Shield, Save, Sparkles } from 'lucide-react';
 import { useUserRBAC } from '@/hooks/useRBAC';
 
 interface NotificationPrefs {
@@ -45,6 +45,32 @@ export default function SettingsPage() {
   const { roles } = useUserRBAC();
   const [prefs, setPrefs] = useState<NotificationPrefs>(DEFAULT_PREFS);
   const [saved, setSaved] = useState(false);
+  const [aiPrefs, setAiPrefs] = useState({
+    insight_min_confidence: 0.7,
+    digest_enabled: true,
+    ai_suggestions_enabled: true,
+  });
+  const [aiSaved, setAiSaved] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/ai/preferences')
+      .then(res => res.ok ? res.json() : null)
+      .then((data: { preferences?: typeof aiPrefs } | null) => {
+        if (data?.preferences) setAiPrefs(data.preferences);
+      })
+      .catch(() => {});
+  }, []);
+
+  function handleSaveAiPrefs() {
+    fetch('/api/ai/preferences', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(aiPrefs),
+    }).then(() => {
+      setAiSaved(true);
+      setTimeout(() => setAiSaved(false), 2000);
+    }).catch(() => {});
+  }
 
   function handleSaveNotifications() {
     // In production, this would save to API
@@ -77,6 +103,10 @@ export default function SettingsPage() {
             <TabsTrigger value="security" className="gap-1.5">
               <Shield className="h-4 w-4" />
               Security
+            </TabsTrigger>
+            <TabsTrigger value="ai" className="gap-1.5">
+              <Sparkles className="h-4 w-4" />
+              AI
             </TabsTrigger>
           </TabsList>
 
@@ -274,6 +304,63 @@ export default function SettingsPage() {
                   Security settings including password and two-factor authentication are managed
                   through Clerk. Visit your Clerk dashboard to make changes.
                 </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="ai" className="mt-6 space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>AI Preferences</CardTitle>
+                <CardDescription>Configure how AI features behave for your account.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label>Insight Confidence Threshold</Label>
+                  <p className="text-sm text-muted-foreground">Only show AI insights with confidence above this value (0-100%).</p>
+                  <div className="flex items-center gap-3">
+                    <Input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={Math.round(aiPrefs.insight_min_confidence * 100)}
+                      onChange={(e) => setAiPrefs(prev => ({ ...prev, insight_min_confidence: Number(e.target.value) / 100 }))}
+                      className="w-24"
+                      aria-label="Confidence threshold percentage"
+                    />
+                    <span className="text-sm text-muted-foreground">%</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Daily Digest Email</Label>
+                    <p className="text-sm text-muted-foreground">Receive a morning briefing email with key metrics and tasks.</p>
+                  </div>
+                  <Switch
+                    checked={aiPrefs.digest_enabled}
+                    onCheckedChange={(checked) => setAiPrefs(prev => ({ ...prev, digest_enabled: checked }))}
+                    aria-label="Toggle daily digest"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>AI Suggestions</Label>
+                    <p className="text-sm text-muted-foreground">Show AI-powered suggestions on form fields.</p>
+                  </div>
+                  <Switch
+                    checked={aiPrefs.ai_suggestions_enabled}
+                    onCheckedChange={(checked) => setAiPrefs(prev => ({ ...prev, ai_suggestions_enabled: checked }))}
+                    aria-label="Toggle AI suggestions"
+                  />
+                </div>
+
+                <div className="flex justify-end">
+                  <Button onClick={handleSaveAiPrefs}>
+                    <Save className="h-4 w-4 mr-2" />
+                    {aiSaved ? 'Saved!' : 'Save AI Preferences'}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

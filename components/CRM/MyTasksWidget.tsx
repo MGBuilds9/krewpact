@@ -8,7 +8,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { ListTodo, Clock, AlertTriangle, ChevronRight } from 'lucide-react';
 import { useMyTasks, useCompleteTask } from '@/hooks/useCRM';
-import { formatShortDate } from '@/lib/date';
 import type { Activity } from '@/hooks/useCRM';
 import Link from 'next/link';
 
@@ -39,7 +38,7 @@ function formatDueDate(dueAt: string): string {
   if (diffDays === 0) return 'Today';
   if (diffDays === 1) return 'Tomorrow';
   if (diffDays <= 7) return `In ${diffDays} days`;
-  return formatShortDate(due);
+  return due.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
 }
 
 const urgencyStyles = {
@@ -132,7 +131,11 @@ export function MyTasksWidget({ orgSlug }: MyTasksWidgetProps) {
         ) : (
           <div className="space-y-1">
             {tasks.map((task) => (
-              <TaskRow key={task.id} task={task} onComplete={(id) => completeTask.mutate({ id })} />
+              <TaskRow
+                key={task.id}
+                task={task}
+                onComplete={(id) => completeTask.mutate({ id })}
+              />
             ))}
           </div>
         )}

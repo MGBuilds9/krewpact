@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
-import { formatDate } from '@/lib/date';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -125,7 +124,7 @@ export default function PhotosPage() {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                {photo.taken_at ? formatDate(photo.taken_at) : 'No date'}
+                {photo.taken_at ? new Date(photo.taken_at).toLocaleDateString('en-CA') : 'No date'}
               </p>
               <p className="text-xs font-mono text-muted-foreground truncate">{photo.file_id}</p>
             </div>

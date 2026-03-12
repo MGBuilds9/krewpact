@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useProject } from '@/hooks/useProjects';
 import { ProjectOverviewTab } from '@/components/Projects/Tabs/ProjectOverviewTab';
+import { AiInsightBanner } from '@/components/AI';
 
 const TabSkeleton = () => <Skeleton className="h-64 w-full rounded-xl" />;
 
@@ -114,6 +115,8 @@ export default function ProjectDetailPage() {
           </div>
         </div>
       </div>
+
+      <AiInsightBanner entityType="project" entityId={projectId} />
 
       {/* Tabs */}
       <Tabs defaultValue="overview" className="w-full">

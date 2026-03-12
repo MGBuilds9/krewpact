@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { formatDate } from '@/lib/date';
 
 interface ChangeOrder {
   id: string;
@@ -84,7 +83,9 @@ function COApprovalCard({ co, canApprove, projectId }: COApprovalCardProps) {
         </div>
         <div className="text-right">
           <p className="text-xs text-gray-400">Submitted</p>
-          <p className="text-sm text-gray-600">{formatDate(co.submitted_at)}</p>
+          <p className="text-sm text-gray-600">
+            {new Date(co.submitted_at).toLocaleDateString('en-CA')}
+          </p>
         </div>
       </div>
 

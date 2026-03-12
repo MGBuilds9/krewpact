@@ -15,7 +15,6 @@ import {
 import { Plus, ShieldAlert } from 'lucide-react';
 import { usePrivacyRequests, useUpdatePrivacyRequest } from '@/hooks/useGovernance';
 import { PrivacyRequestForm } from '@/components/Privacy/PrivacyRequestForm';
-import { formatDate } from '@/lib/date';
 
 const STATUS_COLORS: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   received: 'secondary',
@@ -98,7 +97,8 @@ export default function PrivacyPage() {
                   <p className="font-medium">{req.requester_name ?? req.requester_email}</p>
                   <p className="text-sm text-muted-foreground">{req.requester_email}</p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {TYPE_LABELS[req.request_type]} · {formatDate(req.created_at)}
+                    {TYPE_LABELS[req.request_type]} ·{' '}
+                    {new Date(req.created_at).toLocaleDateString('en-CA')}
                   </p>
                 </div>
                 <Badge variant={STATUS_COLORS[req.status] ?? 'outline'} className="capitalize">

@@ -1,7 +1,6 @@
 'use client';
 
 import { use, useState } from 'react';
-import { formatDate } from '@/lib/date';
 import { useRFQPackages, useCreateRFQPackage } from '@/hooks/useProcurement';
 import { RFQPackageForm } from '@/components/Procurement/RFQPackageForm';
 import { Badge } from '@/components/ui/badge';
@@ -95,11 +94,13 @@ export default function ProjectProcurementPage({ params }: Props) {
                 <TableRow key={rfq.id}>
                   <TableCell className="font-mono text-sm">{rfq.rfq_number}</TableCell>
                   <TableCell>{rfq.title}</TableCell>
-                  <TableCell>{rfq.due_at ? formatDate(rfq.due_at) : '—'}</TableCell>
+                  <TableCell>
+                    {rfq.due_at ? new Date(rfq.due_at).toLocaleDateString('en-CA') : '—'}
+                  </TableCell>
                   <TableCell>
                     <Badge variant={STATUS_VARIANT[rfq.status] ?? 'outline'}>{rfq.status}</Badge>
                   </TableCell>
-                  <TableCell>{formatDate(rfq.created_at)}</TableCell>
+                  <TableCell>{new Date(rfq.created_at).toLocaleDateString('en-CA')}</TableCell>
                 </TableRow>
               ))
             )}

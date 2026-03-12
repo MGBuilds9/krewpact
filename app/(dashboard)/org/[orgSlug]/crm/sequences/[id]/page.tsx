@@ -8,7 +8,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
-import { formatDate } from '@/lib/date';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -34,6 +33,14 @@ import {
 import type { SequenceStep } from '@/hooks/useCRM';
 import { SequenceStepEditor } from '@/components/CRM/SequenceStepEditor';
 import { SequenceStepForm } from '@/components/CRM/SequenceStepForm';
+
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('en-CA', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
 
 function formatEnrollmentStatus(status: string): string {
   return status.charAt(0).toUpperCase() + status.slice(1);

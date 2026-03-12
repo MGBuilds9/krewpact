@@ -16,10 +16,12 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
-import { useSequenceEnrollments, useProcessSequences } from '@/hooks/useCRM';
+import {
+  useSequenceEnrollments,
+  useProcessSequences,
+} from '@/hooks/useCRM';
 import type { SequenceAnalytics } from '@/app/api/crm/sequences/analytics/route';
 import { apiFetch } from '@/lib/api-client';
-import { formatDateTime } from '@/lib/date';
 import { useQueryClient } from '@tanstack/react-query';
 
 interface SequenceMonitorCardProps {
@@ -33,11 +35,13 @@ export function SequenceMonitorCard({ analytics }: SequenceMonitorCardProps) {
 
   const { data: enrollments } = useSequenceEnrollments(
     analytics.sequence_id,
-    expanded ? undefined : undefined,
+    expanded ? undefined : undefined
   );
 
   const { enrollments: counts } = analytics;
-  const completionRate = counts.total > 0 ? Math.round((counts.completed / counts.total) * 100) : 0;
+  const completionRate = counts.total > 0
+    ? Math.round((counts.completed / counts.total) * 100)
+    : 0;
 
   async function handlePauseResume(enrollmentId: string, action: 'pause' | 'resume') {
     await apiFetch(`/api/crm/sequences/enrollments/${enrollmentId}`, {
@@ -56,10 +60,9 @@ export function SequenceMonitorCard({ analytics }: SequenceMonitorCardProps) {
             <CardTitle className="text-base">{analytics.sequence_name}</CardTitle>
             <Badge
               variant="outline"
-              className={
-                analytics.is_active
-                  ? 'bg-green-100 text-green-700 border-green-200'
-                  : 'bg-gray-100 text-gray-600 border-gray-200'
+              className={analytics.is_active
+                ? 'bg-green-100 text-green-700 border-green-200'
+                : 'bg-gray-100 text-gray-600 border-gray-200'
               }
             >
               {analytics.is_active ? 'Active' : 'Inactive'}
@@ -73,11 +76,13 @@ export function SequenceMonitorCard({ analytics }: SequenceMonitorCardProps) {
               disabled={processSequences.isPending}
               title="Process pending steps"
             >
-              <RefreshCw
-                className={`h-4 w-4 ${processSequences.isPending ? 'animate-spin' : ''}`}
-              />
+              <RefreshCw className={`h-4 w-4 ${processSequences.isPending ? 'animate-spin' : ''}`} />
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => setExpanded(!expanded)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setExpanded(!expanded)}
+            >
               {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             </Button>
           </div>
@@ -112,9 +117,7 @@ export function SequenceMonitorCard({ analytics }: SequenceMonitorCardProps) {
         <div className="space-y-1">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>Completion rate</span>
-            <span>
-              {completionRate}% ({counts.completed}/{counts.total})
-            </span>
+            <span>{completionRate}% ({counts.completed}/{counts.total})</span>
           </div>
           <Progress value={completionRate} className="h-2" />
         </div>
@@ -141,13 +144,10 @@ export function SequenceMonitorCard({ analytics }: SequenceMonitorCardProps) {
                       <Badge
                         variant="outline"
                         className={
-                          enrollment.status === 'active'
-                            ? 'bg-blue-50 text-blue-700 border-blue-200'
-                            : enrollment.status === 'completed'
-                              ? 'bg-green-50 text-green-700 border-green-200'
-                              : enrollment.status === 'paused'
-                                ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
-                                : 'bg-red-50 text-red-700 border-red-200'
+                          enrollment.status === 'active' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                          enrollment.status === 'completed' ? 'bg-green-50 text-green-700 border-green-200' :
+                          enrollment.status === 'paused' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
+                          'bg-red-50 text-red-700 border-red-200'
                         }
                       >
                         {enrollment.status}
@@ -158,7 +158,7 @@ export function SequenceMonitorCard({ analytics }: SequenceMonitorCardProps) {
                       {enrollment.next_step_at && (
                         <span className="flex items-center gap-1 text-xs text-muted-foreground">
                           <Clock className="h-3 w-3" />
-                          {formatDateTime(enrollment.next_step_at, {
+                          {new Date(enrollment.next_step_at).toLocaleDateString('en-CA', {
                             month: 'short',
                             day: 'numeric',
                             hour: '2-digit',

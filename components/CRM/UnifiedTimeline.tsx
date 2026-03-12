@@ -16,7 +16,6 @@ import {
 } from 'lucide-react';
 import { useTimeline } from '@/hooks/useCRM';
 import type { TimelineEntry } from '@/app/api/crm/activities/timeline/route';
-import { formatDateTime } from '@/lib/date';
 
 const sourceIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   call: Phone,
@@ -38,6 +37,17 @@ const sourceColors: Record<string, string> = {
   sms: 'bg-teal-100 text-teal-700 border-teal-200',
 };
 
+function formatDate(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-CA', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 interface TimelineItemProps {
   entry: TimelineEntry;
 }
@@ -52,9 +62,7 @@ function TimelineItem({ entry }: TimelineItemProps) {
   return (
     <div className="flex gap-3">
       <div className="flex-shrink-0 mt-1">
-        <div
-          className={cn('w-8 h-8 rounded-full flex items-center justify-center border', colorClass)}
-        >
+        <div className={cn('w-8 h-8 rounded-full flex items-center justify-center border', colorClass)}>
           <Icon className="h-4 w-4" />
         </div>
       </div>
@@ -89,15 +97,7 @@ function TimelineItem({ entry }: TimelineItemProps) {
         {entry.details && (
           <p className="text-sm text-muted-foreground mb-1 line-clamp-2">{entry.details}</p>
         )}
-        <time className="text-xs text-muted-foreground">
-          {formatDateTime(entry.occurred_at, {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-          })}
-        </time>
+        <time className="text-xs text-muted-foreground">{formatDate(entry.occurred_at)}</time>
       </div>
     </div>
   );

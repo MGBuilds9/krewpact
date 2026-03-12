@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ExternalLink, MapPin, Globe, User, Newspaper, Brain, Search, Loader2 } from 'lucide-react';
-import { formatDate } from '@/lib/date';
 
 interface EnrichmentData {
   google_maps?: {
@@ -164,7 +163,7 @@ export function EnrichmentIntelCard({
               <h4 className="text-sm font-semibold">Deep Research</h4>
               {deep_research.researched_at && (
                 <span className="text-xs text-muted-foreground">
-                  {formatDate(deep_research.researched_at)}
+                  {new Date(deep_research.researched_at).toLocaleDateString('en-CA')}
                 </span>
               )}
             </div>

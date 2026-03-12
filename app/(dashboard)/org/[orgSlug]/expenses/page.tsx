@@ -31,7 +31,6 @@ import {
 import { useProjects } from '@/hooks/useProjects';
 import { useDivision } from '@/contexts/DivisionContext';
 import { toast } from 'sonner';
-import { formatDate } from '@/lib/date';
 
 const CATEGORIES = [
   'Materials',
@@ -306,7 +305,7 @@ export default function ExpensesPage() {
                     <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
                       <span className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
-                        {formatDate(expense.expense_date)}
+                        {new Date(expense.expense_date).toLocaleDateString()}
                       </span>
                       {expense.user && (
                         <span className="flex items-center gap-1">

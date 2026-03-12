@@ -45,6 +45,10 @@ const envSchema = z.object({
   SENTRY_PROJECT: z.string().min(1).optional(),
   SENTRY_AUTH_TOKEN: z.string().min(1).optional(),
 
+  // ── AI Providers (optional — features degrade gracefully) ──
+  GOOGLE_GENERATIVE_AI_API_KEY: z.string().min(1).optional(),
+  ANTHROPIC_API_KEY: z.string().min(1).optional(),
+
   // ── App ──
   NEXT_PUBLIC_APP_URL: z.string().url().optional(),
   CRON_SECRET: z.string().min(1).optional(),

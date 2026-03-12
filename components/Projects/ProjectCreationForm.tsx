@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { formatDate } from '@/lib/date';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -371,13 +370,13 @@ export function ProjectCreationForm({ onClose, onSuccess }: ProjectCreationFormP
                 {formData.start_date && (
                   <div className="flex justify-between">
                     <span className="font-medium">Start Date:</span>
-                    <span>{formatDate(formData.start_date)}</span>
+                    <span>{new Date(formData.start_date).toLocaleDateString()}</span>
                   </div>
                 )}
                 {formData.target_completion_date && (
                   <div className="flex justify-between">
                     <span className="font-medium">Target Completion:</span>
-                    <span>{formatDate(formData.target_completion_date)}</span>
+                    <span>{new Date(formData.target_completion_date).toLocaleDateString()}</span>
                   </div>
                 )}
                 {formData.baseline_budget && (

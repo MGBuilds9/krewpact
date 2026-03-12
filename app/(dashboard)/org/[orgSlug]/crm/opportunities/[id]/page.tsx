@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
-import { formatDate, formatShortDate } from '@/lib/date';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -35,6 +34,7 @@ import { WonDealDialog } from '@/components/CRM/WonDealDialog';
 import { LostDealDialog } from '@/components/CRM/LostDealDialog';
 import { ALLOWED_TRANSITIONS } from '@/lib/crm/opportunity-stages';
 import type { OpportunityStage } from '@/lib/crm/opportunity-stages';
+import { AiInsightBanner } from '@/components/AI';
 
 function formatCurrency(value: number | null): string {
   if (value == null) return '-';
@@ -129,6 +129,8 @@ export default function OpportunityDetailPage() {
         </div>
       </div>
 
+      <AiInsightBanner entityType="opportunity" entityId={opportunityId} />
+
       {/* Stage Progress */}
       <Card>
         <CardContent className="pt-6">
@@ -205,13 +207,23 @@ export default function OpportunityDetailPage() {
                     <dt className="text-sm font-medium text-muted-foreground">Target Close</dt>
                     <dd className="text-sm">
                       {opportunity.target_close_date
-                        ? formatDate(opportunity.target_close_date)
+                        ? new Date(opportunity.target_close_date).toLocaleDateString('en-CA', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })
                         : '-'}
                     </dd>
                   </div>
                   <div>
                     <dt className="text-sm font-medium text-muted-foreground">Created</dt>
-                    <dd className="text-sm">{formatDate(opportunity.created_at)}</dd>
+                    <dd className="text-sm">
+                      {new Date(opportunity.created_at).toLocaleDateString('en-CA', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </dd>
                   </div>
                 </dl>
               )}
@@ -300,7 +312,10 @@ export default function OpportunityDetailPage() {
                 <span className="text-muted-foreground">Target Close</span>
                 <span>
                   {opportunity.target_close_date
-                    ? formatShortDate(opportunity.target_close_date)
+                    ? new Date(opportunity.target_close_date).toLocaleDateString('en-CA', {
+                        month: 'short',
+                        day: 'numeric',
+                      })
                     : '-'}
                 </span>
               </div>
@@ -340,7 +355,10 @@ export default function OpportunityDetailPage() {
                           </span>
                         </div>
                         <span className="text-xs text-muted-foreground">
-                          {formatShortDate(entry.created_at)}
+                          {new Date(entry.created_at).toLocaleDateString('en-CA', {
+                            month: 'short',
+                            day: 'numeric',
+                          })}
                         </span>
                       </div>
                     ))}

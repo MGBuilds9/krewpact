@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2 } from 'lucide-react';
 import type { EstimateLine } from '@/hooks/useEstimates';
+import { AiSuggestion } from '@/components/AI';
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(value);
@@ -86,26 +87,42 @@ export function LineItemEditor({
                   {isReadOnly ? (
                     <span className="block text-right">{formatCurrency(line.unit_cost)}</span>
                   ) : (
-                    <Input
-                      type="number"
-                      defaultValue={line.unit_cost}
-                      onBlur={(e) => onUpdateLine(line.id, 'unit_cost', Number(e.target.value))}
-                      className="h-8 text-sm text-right"
-                      aria-label="Unit cost"
-                    />
+                    <>
+                      <Input
+                        type="number"
+                        defaultValue={line.unit_cost}
+                        onBlur={(e) => onUpdateLine(line.id, 'unit_cost', Number(e.target.value))}
+                        className="h-8 text-sm text-right"
+                        aria-label="Unit cost"
+                      />
+                      {line.description && (
+                        <AiSuggestion
+                          field="unit_cost"
+                          context={{ description: line.description }}
+                          onApply={(val) => onUpdateLine(line.id, 'unit_cost', Number(val))}
+                        />
+                      )}
+                    </>
                   )}
                 </td>
                 <td className="py-2 px-1">
                   {isReadOnly ? (
                     <span className="block text-right">{line.markup_pct}%</span>
                   ) : (
-                    <Input
-                      type="number"
-                      defaultValue={line.markup_pct}
-                      onBlur={(e) => onUpdateLine(line.id, 'markup_pct', Number(e.target.value))}
-                      className="h-8 text-sm text-right"
-                      aria-label="Markup percentage"
-                    />
+                    <>
+                      <Input
+                        type="number"
+                        defaultValue={line.markup_pct}
+                        onBlur={(e) => onUpdateLine(line.id, 'markup_pct', Number(e.target.value))}
+                        className="h-8 text-sm text-right"
+                        aria-label="Markup percentage"
+                      />
+                      <AiSuggestion
+                        field="markup_pct"
+                        context={{ item_type: line.line_type ?? 'material' }}
+                        onApply={(val) => onUpdateLine(line.id, 'markup_pct', Number(val))}
+                      />
+                    </>
                   )}
                 </td>
                 <td className="py-2 pl-1 text-right font-medium">

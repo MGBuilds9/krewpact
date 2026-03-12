@@ -613,20 +613,15 @@ interface SequenceFilters {
 export function useSequences(filters?: SequenceFilters) {
   return useQuery({
     queryKey: ['sequences', filters],
-    queryFn: async () => {
-      const res = await apiFetch<{ data: Sequence[]; total: number; hasMore: boolean }>(
-        '/api/crm/sequences',
-        {
-          params: {
-            division_id: filters?.divisionId,
-            is_active: filters?.isActive,
-            limit: filters?.limit,
-            offset: filters?.offset,
-          },
+    queryFn: () =>
+      apiFetch<Sequence[]>('/api/crm/sequences', {
+        params: {
+          division_id: filters?.divisionId,
+          is_active: filters?.isActive,
+          limit: filters?.limit,
+          offset: filters?.offset,
         },
-      );
-      return res.data;
-    },
+      }),
   });
 }
 
@@ -1657,11 +1652,9 @@ export function useGenerateICPs() {
 export function useMatchLeadsToICPs() {
   return useMutation({
     mutationFn: (body?: { limit?: number }) =>
-      apiFetch<{
-        message: string;
-        leads_processed: number;
-        icps_evaluated: number;
-        pairs_upserted: number;
-      }>('/api/crm/icp/match', { method: 'POST', body: body ?? {} }),
+      apiFetch<{ message: string; leads_processed: number; icps_evaluated: number; pairs_upserted: number }>(
+        '/api/crm/icp/match',
+        { method: 'POST', body: body ?? {} },
+      ),
   });
 }
