@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+process.env.AI_ENABLED = 'true';
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({

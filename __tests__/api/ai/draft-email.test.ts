@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+process.env.AI_ENABLED = 'true';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));

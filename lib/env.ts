@@ -46,6 +46,7 @@ const envSchema = z.object({
   SENTRY_AUTH_TOKEN: z.string().min(1).optional(),
 
   // ── AI Providers (optional — features degrade gracefully) ──
+  AI_ENABLED: z.enum(['true', 'false']).optional().default('false'),
   GOOGLE_GENERATIVE_AI_API_KEY: z.string().min(1).optional(),
   ANTHROPIC_API_KEY: z.string().min(1).optional(),
 

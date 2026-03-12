@@ -6,6 +6,10 @@ import { buildDigest } from '@/lib/ai/agents/digest-builder';
 import { sendEmail } from '@/lib/email/resend';
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  if (process.env.AI_ENABLED !== 'true') {
+    return NextResponse.json({ error: 'AI features are not enabled', disabled: true }, { status: 503 });
+  }
+
   const { authorized } = await verifyCronAuth(req);
   if (!authorized) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

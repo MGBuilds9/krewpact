@@ -11,6 +11,10 @@ const querySchema = z.object({
 });
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  if (process.env.AI_ENABLED !== 'true') {
+    return NextResponse.json({ error: 'AI features are not enabled' }, { status: 503 });
+  }
+
   const limited = await rateLimit(req, { limit: 20, window: '1 m', identifier: 'ai-query' });
   if (!limited.success) return rateLimitResponse(limited);
 
