@@ -19,7 +19,6 @@ if (process.env.NODE_ENV === 'production' && isDemoMode) {
 
 const nextConfig: NextConfig = {
   turbopack: {
-    root: path.resolve(__dirname, '..'),
     ...(isDemoMode
       ? {
           resolveAlias: {
