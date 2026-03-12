@@ -32,7 +32,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   // Fetch sequences with step count
   let seqQuery = supabase
-    .from('outreach_sequences')
+    .from('sequences')
     .select('id, name, is_active, sequence_steps(id)')
     .order('created_at', { ascending: false });
 

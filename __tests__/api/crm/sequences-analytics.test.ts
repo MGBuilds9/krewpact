@@ -62,7 +62,7 @@ describe('GET /api/crm/sequences/analytics', () => {
     mockAuth.mockResolvedValue({ userId: 'user-1' } as never);
 
     from.mockImplementation((table: string) => {
-      if (table === 'outreach_sequences') {
+      if (table === 'sequences') {
         return mockChain({
           data: [
             {
@@ -120,7 +120,7 @@ describe('GET /api/crm/sequences/analytics', () => {
     mockAuth.mockResolvedValue({ userId: 'user-1' } as never);
 
     from.mockImplementation((table: string) => {
-      if (table === 'outreach_sequences') {
+      if (table === 'sequences') {
         return mockChain({ data: [], error: null });
       }
       return mockChain({ data: null, error: null });
@@ -132,7 +132,7 @@ describe('GET /api/crm/sequences/analytics', () => {
     expect(body.data).toEqual([]);
     // Should not query enrollments when there are no sequences
     expect(from).toHaveBeenCalledTimes(1);
-    expect(from).toHaveBeenCalledWith('outreach_sequences');
+    expect(from).toHaveBeenCalledWith('sequences');
   });
 
   it('filters by divisionId when provided', async () => {
@@ -157,7 +157,7 @@ describe('GET /api/crm/sequences/analytics', () => {
       });
 
     from.mockImplementation((table: string) => {
-      if (table === 'outreach_sequences') return seqChain;
+      if (table === 'sequences') return seqChain;
       if (table === 'sequence_enrollments') {
         return mockChain({ data: [], error: null });
       }
@@ -173,7 +173,7 @@ describe('GET /api/crm/sequences/analytics', () => {
     mockAuth.mockResolvedValue({ userId: 'user-1' } as never);
 
     from.mockImplementation((table: string) => {
-      if (table === 'outreach_sequences') {
+      if (table === 'sequences') {
         return mockChain({ data: null, error: { message: 'Connection refused' } });
       }
       return mockChain({ data: null, error: null });
