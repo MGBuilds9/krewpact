@@ -114,16 +114,27 @@ export default function SettingsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="settings-first-name">First Name</Label>
-                    <Input id="settings-first-name" value={user?.firstName || ''} disabled />
+                    <Input
+                      id="settings-first-name"
+                      aria-label="First Name"
+                      value={user?.firstName || ''}
+                      disabled
+                    />
                   </div>
                   <div>
                     <Label htmlFor="settings-last-name">Last Name</Label>
-                    <Input id="settings-last-name" value={user?.lastName || ''} disabled />
+                    <Input
+                      id="settings-last-name"
+                      aria-label="Last Name"
+                      value={user?.lastName || ''}
+                      disabled
+                    />
                   </div>
                   <div className="md:col-span-2">
                     <Label htmlFor="settings-email">Email</Label>
                     <Input
                       id="settings-email"
+                      aria-label="Email"
                       value={user?.emailAddresses?.[0]?.emailAddress || ''}
                       disabled
                     />
