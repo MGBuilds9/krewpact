@@ -59,13 +59,13 @@ export async function POST(req: NextRequest) {
     .is('deleted_at', null)
     .limit(limit + matchedLeadIds.size);
 
-  const unmatchedLeads = (allLeads ?? []).filter(
-    (l: { id: string }) => !matchedLeadIds.has(l.id)
-  ).slice(0, limit);
-
   if (leadsError) {
     return NextResponse.json({ error: leadsError.message }, { status: 500 });
   }
+
+  const unmatchedLeads = (allLeads ?? []).filter(
+    (l: { id: string }) => !matchedLeadIds.has(l.id)
+  ).slice(0, limit);
 
   if (!unmatchedLeads || unmatchedLeads.length === 0) {
     return NextResponse.json({

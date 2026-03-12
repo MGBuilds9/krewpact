@@ -8,6 +8,7 @@ import {
   computeSubscriptionSummaryForDivision,
   computeEstimatingVelocity,
 } from '@/lib/executive/metrics';
+import { getKrewpactRoles } from '@/lib/api/org';
 
 const EXECUTIVE_ROLES = ['platform_admin', 'executive'];
 
@@ -21,12 +22,11 @@ const VALID_DIVISIONS = new Set([
 ]);
 
 export async function GET(req: NextRequest) {
-  const { userId, sessionClaims } = await auth();
+  const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const claims = sessionClaims as Record<string, unknown>;
-  const roles = Array.isArray(claims?.krewpact_roles) ? claims.krewpact_roles : [];
-  if (!roles.some((r) => EXECUTIVE_ROLES.includes(r as string))) {
+  const roles = await getKrewpactRoles();
+  if (!roles.some((r) => EXECUTIVE_ROLES.includes(r))) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

@@ -9,6 +9,7 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: vi.fn(),
   }),
+  useParams: () => ({ orgSlug: 'test-org' }),
 }));
 
 import { PipelineView } from '@/components/CRM/PipelineView';

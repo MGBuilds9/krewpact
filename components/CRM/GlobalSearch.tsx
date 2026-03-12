@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { Search, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -24,11 +24,12 @@ const TYPE_PATHS: Record<string, string> = {
   lead: '/crm/leads',
   contact: '/crm/contacts',
   account: '/crm/accounts',
-  opportunity: '/crm/pipeline',
+  opportunity: '/crm/opportunities',
 };
 
 export function GlobalSearch() {
   const router = useRouter();
+  const { orgSlug } = useParams<{ orgSlug: string }>();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -60,9 +61,9 @@ export function GlobalSearch() {
     (result: SearchResult) => {
       handleClose();
       const basePath = TYPE_PATHS[result.type] ?? '/crm';
-      router.push(`${basePath}/${result.id}`);
+      router.push(`/org/${orgSlug}${basePath}/${result.id}`);
     },
-    [handleClose, router],
+    [handleClose, router, orgSlug],
   );
 
   useEffect(() => {

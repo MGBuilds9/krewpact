@@ -6,6 +6,7 @@ import { stagingBulkImportSchema } from '@/lib/validators/executive';
 import { readFile, stat } from 'fs/promises';
 import { createHash } from 'crypto';
 import path from 'path';
+import { getKrewpactRoles, getOrgIdFromAuth } from '@/lib/api/org';
 
 const ADMIN_ROLES = ['platform_admin'];
 
@@ -16,12 +17,11 @@ interface FileDetail {
 }
 
 export async function POST(req: NextRequest) {
-  const { userId, sessionClaims } = await auth();
+  const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const claims = sessionClaims as Record<string, unknown>;
-  const roles = Array.isArray(claims?.krewpact_roles) ? claims.krewpact_roles : [];
-  const hasAccess = roles.some((r: unknown) => ADMIN_ROLES.includes(String(r)));
+  const roles = await getKrewpactRoles();
+  const hasAccess = roles.some((r) => ADMIN_ROLES.includes(r));
   if (!hasAccess) {
     return NextResponse.json({ error: 'Forbidden: platform_admin role required' }, { status: 403 });
   }
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const orgId = (claims.krewpact_org_id as string) || 'mdm-group';
+  const orgId = await getOrgIdFromAuth();
   const supabase = await createServiceClient();
 
   let imported = 0;

@@ -9,6 +9,7 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: vi.fn(),
   }),
+  useParams: () => ({ orgSlug: 'test-org' }),
 }));
 
 // Mock the CRM hooks
@@ -54,7 +55,6 @@ function makeLead(overrides: Partial<Lead> = {}): Lead {
     assigned_to: null,
     created_at: '2026-02-12T10:00:00Z',
     updated_at: '2026-02-12T10:00:00Z',
-    last_activity_at: null,
     last_touch_at: null,
     next_followup_at: null,
     deleted_at: null,

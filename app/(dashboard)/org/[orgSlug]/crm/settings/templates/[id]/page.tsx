@@ -139,7 +139,7 @@ function TemplateForm({ template, id }: { template: Record<string, string>; id: 
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="col-span-2">
             <Card>
               <CardContent className="pt-6">
@@ -163,7 +163,7 @@ function TemplateForm({ template, id }: { template: Record<string, string>; id: 
                       required
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-medium" htmlFor="tpl-category">
                         Category

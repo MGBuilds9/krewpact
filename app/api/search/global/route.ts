@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { getKrewpactDivisions } from '@/lib/api/org';
 
 interface EntityResult {
   id: string;
@@ -22,7 +23,7 @@ interface GlobalSearchResults {
 const MAX_PER_TYPE = 5;
 
 export async function GET(req: NextRequest) {
-  const { userId, sessionClaims } = await auth();
+  const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -50,9 +51,8 @@ export async function GET(req: NextRequest) {
   if (authError) return authError;
   const pattern = `%${q}%`;
 
-  // Extract divisions from JWT claims for division isolation
-  const claims = sessionClaims as Record<string, unknown> | null;
-  const divisions = (claims?.krewpact_divisions ?? []) as string[];
+  // Extract divisions from JWKS-aware helper for division isolation
+  const divisions = await getKrewpactDivisions();
 
   // Run all queries in parallel for performance
   const [leadsRes, accountsRes, contactsRes, oppsRes, estimatesRes, projectsRes, tasksRes] =

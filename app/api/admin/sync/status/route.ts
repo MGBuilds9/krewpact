@@ -2,10 +2,18 @@ import { auth } from '@clerk/nextjs/server';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { getKrewpactRoles } from '@/lib/api/org';
+
+const ALLOWED_ROLES = ['platform_admin', 'executive'];
 
 export async function GET(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const roles = await getKrewpactRoles();
+  if (!roles.some((r) => ALLOWED_ROLES.includes(r))) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
 
   const rl = await rateLimit(req, { limit: 30, window: '1 m', identifier: userId });
   if (!rl.success) return rateLimitResponse(rl);

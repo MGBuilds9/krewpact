@@ -3,6 +3,7 @@ import { createServiceClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 import { stagingUpdateSchema } from '@/lib/validators/executive';
+import { getKrewpactRoles, getKrewpactUserId } from '@/lib/api/org';
 
 const READ_ROLES = ['executive', 'platform_admin'];
 const WRITE_ROLES = ['platform_admin'];
@@ -10,12 +11,11 @@ const WRITE_ROLES = ['platform_admin'];
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  const { userId, sessionClaims } = await auth();
+  const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const claims = sessionClaims as Record<string, unknown>;
-  const roles = Array.isArray(claims?.krewpact_roles) ? claims.krewpact_roles : [];
-  const hasAccess = roles.some((r: unknown) => READ_ROLES.includes(String(r)));
+  const roles = await getKrewpactRoles();
+  const hasAccess = roles.some((r) => READ_ROLES.includes(r));
   if (!hasAccess) {
     return NextResponse.json(
       { error: 'Forbidden: executive or platform_admin role required' },
@@ -43,12 +43,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  const { userId, sessionClaims } = await auth();
+  const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const claims = sessionClaims as Record<string, unknown>;
-  const roles = Array.isArray(claims?.krewpact_roles) ? claims.krewpact_roles : [];
-  const hasAccess = roles.some((r: unknown) => WRITE_ROLES.includes(String(r)));
+  const roles = await getKrewpactRoles();
+  const hasAccess = roles.some((r) => WRITE_ROLES.includes(r));
   if (!hasAccess) {
     return NextResponse.json({ error: 'Forbidden: platform_admin role required' }, { status: 403 });
   }
@@ -71,7 +70,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const updatePayload: Record<string, unknown> = { ...parsed.data };
 
   if (parsed.data.status === 'approved' || parsed.data.status === 'rejected') {
-    updatePayload.reviewed_by = (claims.krewpact_user_id as string) || null;
+    const krewpactUserId = await getKrewpactUserId();
+    updatePayload.reviewed_by = krewpactUserId || null;
     updatePayload.reviewed_at = new Date().toISOString();
   }
 
@@ -93,12 +93,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  const { userId, sessionClaims } = await auth();
+  const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const claims = sessionClaims as Record<string, unknown>;
-  const roles = Array.isArray(claims?.krewpact_roles) ? claims.krewpact_roles : [];
-  const hasAccess = roles.some((r: unknown) => WRITE_ROLES.includes(String(r)));
+  const roles = await getKrewpactRoles();
+  const hasAccess = roles.some((r) => WRITE_ROLES.includes(r));
   if (!hasAccess) {
     return NextResponse.json({ error: 'Forbidden: platform_admin role required' }, { status: 403 });
   }

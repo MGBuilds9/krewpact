@@ -7,8 +7,9 @@ export type LeadStage =
   | 'new'
   | 'contacted'
   | 'qualified'
-  | 'estimating'
-  | 'proposal_sent'
+  | 'proposal'
+  | 'negotiation'
+  | 'nurture'
   | 'won'
   | 'lost';
 
@@ -20,9 +21,10 @@ export type LeadStage =
 export const ALLOWED_TRANSITIONS: Record<LeadStage, LeadStage[]> = {
   new: ['contacted', 'qualified', 'lost'],
   contacted: ['qualified', 'lost'],
-  qualified: ['estimating', 'lost'],
-  estimating: ['proposal_sent', 'lost'],
-  proposal_sent: ['won', 'lost'],
+  qualified: ['proposal', 'nurture', 'lost'],
+  proposal: ['negotiation', 'nurture', 'lost'],
+  negotiation: ['won', 'nurture', 'lost'],
+  nurture: ['contacted', 'qualified', 'lost'],
   won: [],
   lost: [],
 };

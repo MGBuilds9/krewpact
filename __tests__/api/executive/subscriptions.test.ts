@@ -4,20 +4,21 @@ import { NextRequest } from 'next/server';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
-vi.mock('@/lib/api/org', () => ({ getOrgIdFromAuth: vi.fn() }));
+vi.mock('@/lib/api/org', () => ({ getOrgIdFromAuth: vi.fn(), getKrewpactRoles: vi.fn() }));
 vi.mock('@/lib/logger', () => ({
   logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
 }));
 
 import { auth } from '@clerk/nextjs/server';
 import { createUserClientSafe } from '@/lib/supabase/server';
-import { getOrgIdFromAuth } from '@/lib/api/org';
+import { getOrgIdFromAuth, getKrewpactRoles } from '@/lib/api/org';
 import { GET, POST } from '@/app/api/executive/subscriptions/route';
 import { GET as GET_DETAIL, PATCH, DELETE } from '@/app/api/executive/subscriptions/[id]/route';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 const mockGetOrgIdFromAuth = vi.mocked(getOrgIdFromAuth);
+const mockGetKrewpactRoles = vi.mocked(getKrewpactRoles);
 
 const PARAMS = Promise.resolve({ id: 'sub-1' });
 
@@ -60,6 +61,7 @@ const VALID_SUBSCRIPTION = {
 describe('GET /api/executive/subscriptions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetKrewpactRoles.mockResolvedValue(['executive']);
   });
 
   it('returns 401 without auth', async () => {
@@ -114,6 +116,7 @@ describe('GET /api/executive/subscriptions', () => {
 describe('POST /api/executive/subscriptions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetKrewpactRoles.mockResolvedValue(['platform_admin']);
   });
 
   it('returns 403 for non-admin', async () => {
@@ -121,6 +124,7 @@ describe('POST /api/executive/subscriptions', () => {
       userId: 'user_exec',
       sessionClaims: { krewpact_roles: ['executive'] },
     } as any as Awaited<ReturnType<typeof auth>>);
+    mockGetKrewpactRoles.mockResolvedValue(['executive']);
 
     const res = await POST(makeRequest('POST', {}, VALID_SUBSCRIPTION));
     expect(res.status).toBe(403);
@@ -172,6 +176,7 @@ describe('POST /api/executive/subscriptions', () => {
 describe('GET /api/executive/subscriptions/[id]', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetKrewpactRoles.mockResolvedValue(['executive']);
   });
 
   it('returns 401 without auth', async () => {
@@ -217,6 +222,7 @@ describe('GET /api/executive/subscriptions/[id]', () => {
 describe('PATCH /api/executive/subscriptions/[id]', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetKrewpactRoles.mockResolvedValue(['platform_admin']);
   });
 
   it('returns 200 on update', async () => {
@@ -255,6 +261,7 @@ describe('PATCH /api/executive/subscriptions/[id]', () => {
 describe('DELETE /api/executive/subscriptions/[id]', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetKrewpactRoles.mockResolvedValue(['platform_admin']);
   });
 
   it('returns 204 on success', async () => {

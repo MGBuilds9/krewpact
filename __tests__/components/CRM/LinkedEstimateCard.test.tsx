@@ -7,6 +7,7 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: mockPush,
   }),
+  useParams: () => ({ orgSlug: 'test-org' }),
 }));
 
 import { LinkedEstimateCard } from '@/components/CRM/LinkedEstimateCard';
@@ -64,6 +65,6 @@ describe('LinkedEstimateCard', () => {
       />,
     );
     fireEvent.click(screen.getByText('EST-001'));
-    expect(mockPush).toHaveBeenCalledWith('/estimates/est-1');
+    expect(mockPush).toHaveBeenCalledWith('/org/test-org/estimates/est-1');
   });
 });

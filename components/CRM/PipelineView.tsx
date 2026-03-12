@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { OpportunityCard } from '@/components/CRM/OpportunityCard';
 import { WeightedPipelineHeader } from '@/components/CRM/WeightedPipelineHeader';
@@ -42,6 +42,7 @@ interface PipelineViewProps {
 
 export function PipelineView({ data }: PipelineViewProps) {
   const router = useRouter();
+  const { orgSlug } = useParams<{ orgSlug: string }>();
 
   const stageKeys = Object.keys(data.stages);
   if (stageKeys.length === 0) {
@@ -108,7 +109,7 @@ export function PipelineView({ data }: PipelineViewProps) {
                   <OpportunityCard
                     key={opp.id}
                     opportunity={opp}
-                    onClick={() => router.push(`/crm/opportunities/${opp.id}`)}
+                    onClick={() => router.push(`/org/${orgSlug}/crm/opportunities/${opp.id}`)}
                   />
                 ))}
               </div>

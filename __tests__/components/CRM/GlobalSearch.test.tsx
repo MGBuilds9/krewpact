@@ -6,6 +6,7 @@ import { GlobalSearch } from '@/components/CRM/GlobalSearch';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
+  useParams: () => ({ orgSlug: 'test-org' }),
 }));
 
 function createWrapper() {

@@ -71,7 +71,6 @@ function makeLead(overrides: Partial<Lead> = {}): Lead {
     assigned_to: null,
     created_at: '2026-01-01T00:00:00Z',
     updated_at: '2026-01-01T00:00:00Z',
-    last_activity_at: null,
     last_touch_at: null,
     next_followup_at: null,
     deleted_at: null,

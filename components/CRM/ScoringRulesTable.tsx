@@ -73,6 +73,7 @@ export function ScoringRulesTable({
   }
 
   return (
+    <div className="overflow-x-auto">
     <Table>
       <TableHeader>
         <TableRow>
@@ -136,5 +137,6 @@ export function ScoringRulesTable({
         ))}
       </TableBody>
     </Table>
+    </div>
   );
 }

@@ -4,13 +4,17 @@ import { NextRequest } from 'next/server';
 vi.mock('@/lib/supabase/server', () => ({ createServiceClient: vi.fn() }));
 vi.mock('@/lib/knowledge/embeddings', () => ({ embedChunks: vi.fn() }));
 vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() } }));
+vi.mock('@/lib/api/org', () => ({ getKrewpactRoles: vi.fn(), getKrewpactUserId: vi.fn() }));
 
 import { createServiceClient } from '@/lib/supabase/server';
 import { embedChunks } from '@/lib/knowledge/embeddings';
+import { getKrewpactRoles, getKrewpactUserId } from '@/lib/api/org';
 import { POST } from '@/app/api/executive/knowledge/chat/route';
 
 const mockCreateServiceClient = vi.mocked(createServiceClient);
 const mockEmbedChunks = vi.mocked(embedChunks);
+const mockGetKrewpactRoles = vi.mocked(getKrewpactRoles);
+const mockGetKrewpactUserId = vi.mocked(getKrewpactUserId);
 
 function makeRequest(body: unknown) {
   return new NextRequest(new URL('http://localhost/api/executive/knowledge/chat'), {
@@ -32,6 +36,13 @@ function mockAuth(userId: string | null, roles: string[] = [], krewpactUserId?: 
         : null,
     }),
   }));
+  if (userId) {
+    mockGetKrewpactRoles.mockResolvedValue(roles);
+    mockGetKrewpactUserId.mockResolvedValue(krewpactUserId ?? 'user-uuid-123');
+  } else {
+    mockGetKrewpactRoles.mockResolvedValue([]);
+    mockGetKrewpactUserId.mockResolvedValue(null);
+  }
 }
 
 describe('POST /api/executive/knowledge/chat', () => {

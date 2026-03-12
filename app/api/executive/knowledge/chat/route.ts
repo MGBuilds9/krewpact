@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { embedChunks } from '@/lib/knowledge/embeddings';
 import { createServiceClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
+import { getKrewpactRoles, getKrewpactUserId } from '@/lib/api/org';
 
 const EXECUTIVE_ROLES = ['platform_admin', 'executive'];
 
@@ -32,17 +33,16 @@ interface ChatMessage {
 export async function POST(req: NextRequest) {
   // Auth check
   const { auth } = await import('@clerk/nextjs/server');
-  const { userId, sessionClaims } = await auth();
+  const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const claims = sessionClaims as Record<string, unknown>;
-  const roles = Array.isArray(claims?.krewpact_roles) ? claims.krewpact_roles : [];
-  if (!roles.some((r) => EXECUTIVE_ROLES.includes(r as string))) {
+  const roles = await getKrewpactRoles();
+  if (!roles.some((r) => EXECUTIVE_ROLES.includes(r))) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  // Get user_id from JWT claims
-  const krewpactUserId = claims?.krewpact_user_id as string | undefined;
+  // Get user_id from JWKS-aware helper
+  const krewpactUserId = await getKrewpactUserId();
 
   // Parse body
   let body: { message?: unknown; sessionId?: unknown };

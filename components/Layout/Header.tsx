@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Settings, User, LogOut, Bell, MoreHorizontal, Eye, X } from 'lucide-react';
+import { Settings, User, LogOut, Bell, MoreHorizontal, Eye, X, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -111,6 +111,17 @@ export function Header() {
           <div className="flex items-center justify-between gap-4">
             {/* Logo and Desktop Navigation */}
             <div className="flex items-center gap-4 md:gap-6 flex-1 min-w-0">
+              {/* Mobile Menu Toggle */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden shrink-0"
+                onClick={() => setIsMobileMenuOpen(true)}
+                aria-label="Open mobile menu"
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+
               <div className="flex items-center gap-3 shrink-0 group cursor-pointer hover:opacity-80 transition-opacity">
                 <MDMLogo size="md" showText={true} />
               </div>

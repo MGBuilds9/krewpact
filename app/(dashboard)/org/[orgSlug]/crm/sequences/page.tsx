@@ -37,7 +37,7 @@ function formatDate(dateStr: string): string {
 
 export default function SequencesPage() {
   const { push: orgPush } = useOrgRouter();
-  const { activeDivision } = useDivision();
+  const { activeDivision, userDivisions } = useDivision();
   const [tab, setTab] = useState('monitor');
 
   const { data: sequences, isLoading } = useSequences({
@@ -153,6 +153,7 @@ export default function SequencesPage() {
 
               <TabsContent value="list" className="mt-4">
                 <Card>
+                  <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -205,7 +206,9 @@ export default function SequencesPage() {
                             )}
                           </TableCell>
                           <TableCell className="text-sm text-muted-foreground">
-                            {sequence.division_id ?? 'All divisions'}
+                            {sequence.division_id
+                              ? userDivisions.find((d) => d.id === sequence.division_id)?.name ?? 'Division'
+                              : 'All divisions'}
                           </TableCell>
                           <TableCell className="text-sm text-muted-foreground">
                             {formatDate(sequence.created_at)}
@@ -214,6 +217,7 @@ export default function SequencesPage() {
                       ))}
                     </TableBody>
                   </Table>
+                  </div>
                 </Card>
               </TabsContent>
             </Tabs>

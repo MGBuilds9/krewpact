@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import {
   Dialog,
   DialogContent,
@@ -31,6 +31,7 @@ interface ConvertLeadDialogProps {
 
 export function ConvertLeadDialog({ lead, open, onOpenChange }: ConvertLeadDialogProps) {
   const router = useRouter();
+  const { orgSlug } = useParams<{ orgSlug: string }>();
   const [accountId, setAccountId] = useState<string>('');
   const [contactId, setContactId] = useState<string>('');
   const [opportunityName, setOpportunityName] = useState(lead.company_name);
@@ -50,7 +51,7 @@ export function ConvertLeadDialog({ lead, open, onOpenChange }: ConvertLeadDialo
         opportunity_name: opportunityName || undefined,
       });
       onOpenChange(false);
-      router.push(`/crm/opportunities/${result.id}`);
+      router.push(`/org/${orgSlug}/crm/opportunities/${result.id}`);
     } catch {
       // Error is handled by React Query
     }

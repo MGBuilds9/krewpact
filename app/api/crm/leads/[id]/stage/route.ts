@@ -50,7 +50,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
 
   // Validate the transition
   const currentStage = currentLead.status as LeadStage;
-  const newStage = parsed.data.stage;
+  const newStage = parsed.data.status;
   const result = validateTransition(currentStage, newStage);
 
   if (!result.valid) {

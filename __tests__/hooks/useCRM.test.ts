@@ -144,12 +144,12 @@ describe('useCRM hooks', () => {
 
       const { result } = renderHook(() => useLeadStageTransition(), { wrapper: createWrapper() });
 
-      result.current.mutate({ id: 'lead-1', stage: 'qualified' });
+      result.current.mutate({ id: 'lead-1', status: 'qualified' });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
       expect(mockApiFetch).toHaveBeenCalledWith('/api/crm/leads/lead-1/stage', {
         method: 'POST',
-        body: { stage: 'qualified' },
+        body: { status: 'qualified' },
       });
     });
   });

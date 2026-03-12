@@ -80,7 +80,7 @@ export interface Lead {
   fit_score: number | null;
   intent_score: number | null;
   engagement_score: number | null;
-  is_qualified: boolean;
+  is_qualified: boolean | null;
   current_sequence_id: string | null;
   automation_paused: boolean | null;
   notes: string | null;
@@ -88,7 +88,6 @@ export interface Lead {
   assigned_to: string | null;
   created_at: string;
   updated_at: string;
-  last_activity_at: string | null;
   last_touch_at: string | null;
   next_followup_at: string | null;
   deleted_at: string | null;
@@ -403,7 +402,7 @@ export function useDeleteLead() {
 export function useLeadStageTransition() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, ...body }: { id: string; stage: string; lost_reason?: string }) =>
+    mutationFn: ({ id, ...body }: { id: string; status: string; lost_reason?: string }) =>
       apiFetch<Lead>(`/api/crm/leads/${id}/stage`, { method: 'POST', body }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.leads.all });
@@ -440,7 +439,7 @@ export function useOpportunities(filters?: OpportunityFilters) {
     queryKey: queryKeys.opportunities.list(filters ?? {}),
     staleTime: 30_000,
     queryFn: () =>
-      apiFetch<Opportunity[]>('/api/crm/opportunities', {
+      apiFetch<PaginatedResponse<Opportunity>>('/api/crm/opportunities', {
         params: {
           division_id: filters?.divisionId,
           account_id: filters?.accountId,
@@ -850,6 +849,7 @@ export function useRecalculateLeadScore() {
       apiFetch<{ score: number }>(`/api/crm/leads/${leadId}/score`, { method: 'POST' }),
     onSuccess: (_, leadId) => {
       queryClient.invalidateQueries({ queryKey: ['lead-score', leadId] });
+      queryClient.invalidateQueries({ queryKey: ['lead-score-breakdown', leadId] });
       queryClient.invalidateQueries({ queryKey: queryKeys.leads.detail(leadId) });
     },
   });

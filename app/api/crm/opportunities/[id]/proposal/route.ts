@@ -55,7 +55,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
   if (oppData.contact_id) {
     const { data } = await supabase
       .from('contacts')
-      .select('id, first_name, last_name, email, phone, role_title')
+      .select('id, first_name, last_name, email, phone, title')
       .eq('id', oppData.contact_id as string)
       .single();
     contact = data as {
@@ -64,7 +64,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
       last_name: string;
       email: string | null;
       phone: string | null;
-      role_title: string | null;
+      title: string | null;
     } | null;
   }
 

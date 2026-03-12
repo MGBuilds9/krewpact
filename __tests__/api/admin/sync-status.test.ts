@@ -13,8 +13,13 @@ vi.mock('@/lib/api/rate-limit', () => ({
   rateLimitResponse: vi.fn(),
 }));
 
+vi.mock('@/lib/api/org', () => ({
+  getKrewpactRoles: vi.fn(),
+}));
+
 import { auth } from '@clerk/nextjs/server';
 import { createUserClientSafe } from '@/lib/supabase/server';
+import { getKrewpactRoles } from '@/lib/api/org';
 import { GET } from '@/app/api/admin/sync/status/route';
 import {
   mockSupabaseClient,
@@ -25,10 +30,12 @@ import {
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
+const mockGetKrewpactRoles = vi.mocked(getKrewpactRoles);
 
 describe('GET /api/admin/sync/status', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetKrewpactRoles.mockResolvedValue(['platform_admin']);
   });
 
   it('returns 401 when not authenticated', async () => {

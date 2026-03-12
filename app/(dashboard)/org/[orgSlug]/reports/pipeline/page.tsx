@@ -60,7 +60,7 @@ export default function PipelineReportPage() {
   }
 
   const allLeads = leadsResponse?.data ?? [];
-  const allOpps = opportunities ?? [];
+  const allOpps = opportunities?.data ?? [];
 
   const totalPipelineValue = allOpps.reduce((sum, opp) => sum + (opp.estimated_revenue ?? 0), 0);
   const wonOpps = allOpps.filter((o) => o.stage === 'closed_won');

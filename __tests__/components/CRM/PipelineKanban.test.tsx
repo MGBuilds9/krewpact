@@ -10,6 +10,7 @@ import type { PipelineData, Opportunity } from '@/hooks/useCRM';
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
   usePathname: () => '/crm/opportunities',
+  useParams: () => ({ orgSlug: 'test-org' }),
 }));
 
 // Mock useCRM hooks

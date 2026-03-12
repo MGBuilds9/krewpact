@@ -61,7 +61,7 @@ export default function AccountDetailPage() {
   const [followUpOpen, setFollowUpOpen] = useState(false);
 
   const accountContacts = contactsResponse?.data ?? [];
-  const accountOpportunities = opportunities ?? [];
+  const accountOpportunities = opportunities?.data ?? [];
   const projectHistory = projectsResponse?.data ?? [];
 
   if (isLoading) {

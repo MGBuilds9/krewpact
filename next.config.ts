@@ -1,5 +1,5 @@
 import type { NextConfig } from 'next';
-// import { withSentryConfig } from '@sentry/nextjs'; // TEMP: disabled to diagnose 500 errors
+import { withSentryConfig } from '@sentry/nextjs';
 import withBundleAnalyzer from '@next/bundle-analyzer';
 import path from 'path';
 
@@ -73,17 +73,11 @@ const nextConfig: NextConfig = {
   },
 };
 
-// TEMP: Sentry wrapping disabled to diagnose 500 errors in production API routes.
-// withSentryConfig wraps route handlers and may conflict with Next.js 16.
-// Re-enable after confirming whether this resolves the issue.
-export default analyzeBundles(nextConfig);
-
-// Original Sentry config (restore after diagnosis):
-// export default withSentryConfig(analyzeBundles(nextConfig), {
-//   silent: !process.env.SENTRY_AUTH_TOKEN,
-//   org: process.env.SENTRY_ORG,
-//   project: process.env.SENTRY_PROJECT,
-//   authToken: process.env.SENTRY_AUTH_TOKEN,
-//   sourcemaps: { disable: !process.env.SENTRY_AUTH_TOKEN },
-//   telemetry: false,
-// });
+export default withSentryConfig(analyzeBundles(nextConfig), {
+  silent: !process.env.SENTRY_AUTH_TOKEN,
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  sourcemaps: { disable: !process.env.SENTRY_AUTH_TOKEN },
+  telemetry: false,
+});

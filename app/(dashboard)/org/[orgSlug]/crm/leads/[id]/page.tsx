@@ -109,13 +109,13 @@ export default function LeadDetailPage() {
 
   function handleNextStage() {
     if (!nextRegularStage) return;
-    stageTransition.mutate({ id: leadId, stage: nextRegularStage });
+    stageTransition.mutate({ id: leadId, status: nextRegularStage });
   }
 
   function handleMarkLost() {
     const reason = window.prompt('Reason for losing this lead:');
     if (reason) {
-      stageTransition.mutate({ id: leadId, stage: 'lost', lost_reason: reason });
+      stageTransition.mutate({ id: leadId, status: 'lost', lost_reason: reason });
     }
   }
 
@@ -246,8 +246,8 @@ export default function LeadDetailPage() {
                   <div>
                     <dt className="text-sm font-medium text-muted-foreground">Last Activity</dt>
                     <dd className="text-sm">
-                      {lead.last_activity_at
-                        ? new Date(lead.last_activity_at).toLocaleDateString('en-CA', {
+                      {lead.last_touch_at
+                        ? new Date(lead.last_touch_at).toLocaleDateString('en-CA', {
                             month: 'short',
                             day: 'numeric',
                             year: 'numeric',

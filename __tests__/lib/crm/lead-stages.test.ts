@@ -2,18 +2,19 @@ import { describe, it, expect } from 'vitest';
 import { ALLOWED_TRANSITIONS, validateTransition, type LeadStage } from '@/lib/crm/lead-stages';
 
 describe('ALLOWED_TRANSITIONS', () => {
-  it('defines transitions for all 7 stages', () => {
+  it('defines transitions for all 8 stages', () => {
     const stages: LeadStage[] = [
       'new',
       'contacted',
       'qualified',
-      'estimating',
-      'proposal_sent',
+      'proposal',
+      'negotiation',
+      'nurture',
       'won',
       'lost',
     ];
     expect(Object.keys(ALLOWED_TRANSITIONS)).toEqual(expect.arrayContaining(stages));
-    expect(Object.keys(ALLOWED_TRANSITIONS)).toHaveLength(7);
+    expect(Object.keys(ALLOWED_TRANSITIONS)).toHaveLength(8);
   });
 
   it('new transitions include contacted', () => {
@@ -36,23 +37,23 @@ describe('validateTransition', () => {
     expect(result).toEqual({ valid: true });
   });
 
-  it('allows qualified → estimating', () => {
-    const result = validateTransition('qualified', 'estimating');
+  it('allows qualified → proposal', () => {
+    const result = validateTransition('qualified', 'proposal');
     expect(result).toEqual({ valid: true });
   });
 
-  it('allows estimating → proposal_sent', () => {
-    const result = validateTransition('estimating', 'proposal_sent');
+  it('allows proposal → negotiation', () => {
+    const result = validateTransition('proposal', 'negotiation');
     expect(result).toEqual({ valid: true });
   });
 
-  it('allows proposal_sent → won', () => {
-    const result = validateTransition('proposal_sent', 'won');
+  it('allows negotiation → won', () => {
+    const result = validateTransition('negotiation', 'won');
     expect(result).toEqual({ valid: true });
   });
 
-  it('allows any stage → lost', () => {
-    const stagesWithLost: LeadStage[] = ['new', 'qualified', 'estimating', 'proposal_sent'];
+  it('allows any non-terminal stage → lost', () => {
+    const stagesWithLost: LeadStage[] = ['new', 'contacted', 'qualified', 'proposal', 'negotiation', 'nurture'];
     for (const stage of stagesWithLost) {
       const result = validateTransition(stage, 'lost');
       expect(result).toEqual({ valid: true });
@@ -91,11 +92,16 @@ describe('validateTransition', () => {
     }
   });
 
-  it('rejects backward transitions (estimating → new)', () => {
-    const result = validateTransition('estimating', 'new');
+  it('rejects backward transitions (proposal → new)', () => {
+    const result = validateTransition('proposal', 'new');
     expect(result.valid).toBe(false);
     if (!result.valid) {
       expect(result.reason).toContain('not allowed');
     }
+  });
+
+  it('allows nurture → contacted (re-engagement)', () => {
+    const result = validateTransition('nurture', 'contacted');
+    expect(result).toEqual({ valid: true });
   });
 });

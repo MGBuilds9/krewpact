@@ -31,7 +31,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   if (authError) return authError;
 
   const { data, error, count } = await supabase
-    .from('outreach')
+    .from('outreach_log')
     .select(
       'id, channel, direction, subject, message_preview, notes, outcome, outcome_detail, activity_type, is_automated, lead_id, contact_id, sequence_id, sequence_step, created_by, occurred_at',
       { count: 'exact' },
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const { client: supabase, error: authError } = await createUserClientSafe();
 
   if (authError) return authError;
-  const { data, error } = await supabase.from('outreach').insert(parsed.data).select().single();
+  const { data, error } = await supabase.from('outreach_log').insert(parsed.data).select().single();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

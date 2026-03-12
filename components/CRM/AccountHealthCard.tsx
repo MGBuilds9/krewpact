@@ -91,7 +91,7 @@ export function AccountHealthCard({ accountId }: AccountHealthCardProps) {
         </div>
 
         {/* Factor breakdown */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="flex items-center gap-2 text-sm">
             <Activity className="h-3.5 w-3.5 text-muted-foreground" />
             <span className="text-muted-foreground">Recency</span>
@@ -115,7 +115,7 @@ export function AccountHealthCard({ accountId }: AccountHealthCardProps) {
         </div>
 
         {/* Quick stats */}
-        <div className="border-t pt-3 grid grid-cols-3 gap-2 text-center">
+        <div className="border-t pt-3 grid grid-cols-1 sm:grid-cols-3 gap-2 text-center">
           <div>
             <p className="text-lg font-bold">{stats.total_opportunities}</p>
             <p className="text-xs text-muted-foreground">Opportunities</p>

@@ -22,6 +22,12 @@ export async function getKrewpactRoles(): Promise<string[]> {
   return Array.isArray(roles) ? roles : [];
 }
 
+export async function getKrewpactDivisions(): Promise<string[]> {
+  const meta = await _getClerkMetadata();
+  const divisions = meta?.krewpact_divisions;
+  return Array.isArray(divisions) ? divisions : [];
+}
+
 /**
  * Extract org context from request headers (set by middleware for page routes).
  */

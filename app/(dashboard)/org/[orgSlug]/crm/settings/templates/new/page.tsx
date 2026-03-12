@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { BRANDED_TEMPLATES } from '@/lib/email/branded-templates';
@@ -16,6 +16,7 @@ const CATEGORIES = [
 
 export default function NewTemplatePage() {
   const router = useRouter();
+  const { orgSlug } = useParams<{ orgSlug: string }>();
   const [name, setName] = useState('');
   const [category, setCategory] = useState('outreach');
   const [subject, setSubject] = useState('');
@@ -50,7 +51,7 @@ export default function NewTemplatePage() {
       });
       if (res.ok) {
         const json = await res.json();
-        router.push(`/crm/settings/templates/${json.data?.id ?? ''}`);
+        router.push(`/org/${orgSlug}/crm/settings/templates/${json.data?.id ?? ''}`);
       }
     } finally {
       setSaving(false);
@@ -87,7 +88,7 @@ export default function NewTemplatePage() {
       <Card>
         <CardContent className="pt-6">
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="col-span-2">
                 <label className="text-sm font-medium" htmlFor="tpl-name">
                   Template Name

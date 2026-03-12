@@ -9,10 +9,10 @@ export async function POST(req: NextRequest) {
 
   if (!qstashSignature && authHeader !== `Bearer ${process.env.QSTASH_TOKEN}`) {
     const { auth } = await import('@clerk/nextjs/server');
-    const { userId, sessionClaims } = await auth();
+    const { userId } = await auth();
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    const claims = sessionClaims as Record<string, unknown>;
-    const roles = Array.isArray(claims?.krewpact_roles) ? claims.krewpact_roles : [];
+    const { getKrewpactRoles } = await import('@/lib/api/org');
+    const roles = await getKrewpactRoles();
     if (!roles.includes('platform_admin')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }

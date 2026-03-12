@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
   // Search leads
   const { data: leads } = await supabase
     .from('leads')
-    .select('id, company_name, stage')
+    .select('id, company_name, status')
     .ilike('company_name', pattern)
     .limit(5);
 
@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
         id: l.id,
         type: 'lead',
         title: l.company_name ?? 'Unknown',
-        subtitle: l.stage,
+        subtitle: l.status,
       });
     }
   }
@@ -87,8 +87,8 @@ export async function GET(req: NextRequest) {
   // Search opportunities
   const { data: opps } = await supabase
     .from('opportunities')
-    .select('id, name, stage')
-    .ilike('name', pattern)
+    .select('id, opportunity_name, stage')
+    .ilike('opportunity_name', pattern)
     .limit(5);
 
   if (opps) {
@@ -96,7 +96,7 @@ export async function GET(req: NextRequest) {
       results.push({
         id: o.id,
         type: 'opportunity',
-        title: o.name ?? 'Unknown',
+        title: o.opportunity_name ?? 'Unknown',
         subtitle: o.stage,
       });
     }

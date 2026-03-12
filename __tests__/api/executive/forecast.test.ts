@@ -6,19 +6,20 @@ vi.mock('@clerk/nextjs/server', () => ({
   auth: vi.fn(),
 }));
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
-vi.mock('@/lib/api/org', () => ({ getOrgIdFromAuth: vi.fn() }));
+vi.mock('@/lib/api/org', () => ({ getOrgIdFromAuth: vi.fn(), getKrewpactRoles: vi.fn() }));
 vi.mock('@/lib/logger', () => ({
   logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
 }));
 
 import { auth } from '@clerk/nextjs/server';
 import { createUserClientSafe } from '@/lib/supabase/server';
-import { getOrgIdFromAuth } from '@/lib/api/org';
+import { getOrgIdFromAuth, getKrewpactRoles } from '@/lib/api/org';
 import { GET } from '@/app/api/executive/forecast/route';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 const mockGetOrgIdFromAuth = vi.mocked(getOrgIdFromAuth);
+const mockGetKrewpactRoles = vi.mocked(getKrewpactRoles);
 
 function makeRequest() {
   return new NextRequest(new URL('http://localhost/api/executive/forecast'));
@@ -59,6 +60,7 @@ describe('GET /api/executive/forecast', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetOrgIdFromAuth.mockResolvedValue('mdm-group');
+    mockGetKrewpactRoles.mockResolvedValue(['executive']);
   });
 
   it('returns 401 when not authenticated', async () => {
@@ -78,6 +80,7 @@ describe('GET /api/executive/forecast', () => {
       userId: 'user_123',
       sessionClaims: { krewpact_roles: ['project_manager'] },
     } as any as Awaited<ReturnType<typeof auth>>);
+    mockGetKrewpactRoles.mockResolvedValue(['project_manager']);
 
     const res = await GET(makeRequest());
     expect(res.status).toBe(403);

@@ -5,13 +5,14 @@ import type { LeadStage } from '@/lib/crm/lead-stages';
 
 const PIPELINE_STAGES: { key: LeadStage; label: string }[] = [
   { key: 'new', label: 'New' },
+  { key: 'contacted', label: 'Contacted' },
   { key: 'qualified', label: 'Qualified' },
-  { key: 'estimating', label: 'Estimating' },
-  { key: 'proposal_sent', label: 'Proposal Sent' },
+  { key: 'proposal', label: 'Proposal' },
+  { key: 'negotiation', label: 'Negotiation' },
   { key: 'won', label: 'Won' },
 ];
 
-const STAGE_ORDER: LeadStage[] = ['new', 'qualified', 'estimating', 'proposal_sent', 'won'];
+const STAGE_ORDER: LeadStage[] = ['new', 'contacted', 'qualified', 'proposal', 'negotiation', 'won'];
 
 function getStageIndex(stage: LeadStage): number {
   if (stage === 'lost') return -1;

@@ -5,13 +5,16 @@ import { NextRequest } from 'next/server';
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/knowledge/embeddings', () => ({ embedChunks: vi.fn() }));
 vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() } }));
+vi.mock('@/lib/api/org', () => ({ getKrewpactRoles: vi.fn() }));
 
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { embedChunks } from '@/lib/knowledge/embeddings';
+import { getKrewpactRoles } from '@/lib/api/org';
 import { POST } from '@/app/api/executive/knowledge/search/route';
 
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 const mockEmbedChunks = vi.mocked(embedChunks);
+const mockGetKrewpactRoles = vi.mocked(getKrewpactRoles);
 
 function makeRequest(body: unknown) {
   return new NextRequest(new URL('http://localhost/api/executive/knowledge/search'), {
@@ -28,6 +31,11 @@ function mockAuth(userId: string | null, roles: string[] = []) {
       sessionClaims: userId ? { krewpact_roles: roles } : null,
     }),
   }));
+  if (userId) {
+    mockGetKrewpactRoles.mockResolvedValue(roles);
+  } else {
+    mockGetKrewpactRoles.mockResolvedValue([]);
+  }
 }
 
 describe('POST /api/executive/knowledge/search', () => {

@@ -26,7 +26,7 @@ function makeInput(overrides: Partial<ProposalInput> = {}): ProposalInput {
       last_name: 'Doe',
       email: 'jane@acme.com',
       phone: '416-555-1234',
-      role_title: 'VP Operations',
+      title: 'VP Operations',
     },
     estimates: [
       { id: 'est-1', estimate_number: 'EST-001', total_amount: 30000, status: 'approved' },

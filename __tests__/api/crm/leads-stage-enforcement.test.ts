@@ -27,11 +27,11 @@ function makeContext(id: string) {
 
 const leadId = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 
-function setupLead(stage: string) {
+function setupLead(currentStatus: string) {
   mockClerkAuth(mockAuth);
   const client = mockSupabaseClient({
     tables: {
-      leads: { data: { id: leadId, status: stage, stage }, error: null },
+      leads: { data: { id: leadId, status: currentStatus }, error: null },
       lead_stage_history: { data: null, error: null },
     },
   });
@@ -45,7 +45,7 @@ describe('Lead Stage Enforcement', () => {
   // Valid transitions
   it('allows new → qualified', async () => {
     setupLead('new');
-    const req = makeJsonRequest(`/api/crm/leads/${leadId}/stage`, { stage: 'qualified' });
+    const req = makeJsonRequest(`/api/crm/leads/${leadId}/stage`, { status: 'qualified' });
     const res = await POST(req, makeContext(leadId));
     expect(res.status).toBe(200);
   });
@@ -53,66 +53,66 @@ describe('Lead Stage Enforcement', () => {
   it('allows new → lost (with lost_reason)', async () => {
     setupLead('new');
     const req = makeJsonRequest(`/api/crm/leads/${leadId}/stage`, {
-      stage: 'lost',
+      status: 'lost',
       lost_reason: 'No budget',
     });
     const res = await POST(req, makeContext(leadId));
     expect(res.status).toBe(200);
   });
 
-  it('allows qualified → estimating', async () => {
+  it('allows qualified → proposal', async () => {
     setupLead('qualified');
-    const req = makeJsonRequest(`/api/crm/leads/${leadId}/stage`, { stage: 'estimating' });
+    const req = makeJsonRequest(`/api/crm/leads/${leadId}/stage`, { status: 'proposal' });
     const res = await POST(req, makeContext(leadId));
     expect(res.status).toBe(200);
   });
 
-  it('allows estimating → proposal_sent', async () => {
-    setupLead('estimating');
-    const req = makeJsonRequest(`/api/crm/leads/${leadId}/stage`, { stage: 'proposal_sent' });
+  it('allows proposal → negotiation', async () => {
+    setupLead('proposal');
+    const req = makeJsonRequest(`/api/crm/leads/${leadId}/stage`, { status: 'negotiation' });
     const res = await POST(req, makeContext(leadId));
     expect(res.status).toBe(200);
   });
 
-  it('allows proposal_sent → won', async () => {
-    setupLead('proposal_sent');
-    const req = makeJsonRequest(`/api/crm/leads/${leadId}/stage`, { stage: 'won' });
+  it('allows negotiation → won', async () => {
+    setupLead('negotiation');
+    const req = makeJsonRequest(`/api/crm/leads/${leadId}/stage`, { status: 'won' });
     const res = await POST(req, makeContext(leadId));
     expect(res.status).toBe(200);
   });
 
   // Invalid transitions
-  it('rejects new → estimating (skip)', async () => {
+  it('rejects new → proposal (skip)', async () => {
     setupLead('new');
-    const req = makeJsonRequest(`/api/crm/leads/${leadId}/stage`, { stage: 'estimating' });
+    const req = makeJsonRequest(`/api/crm/leads/${leadId}/stage`, { status: 'proposal' });
     const res = await POST(req, makeContext(leadId));
     expect(res.status).toBe(400);
   });
 
   it('rejects new → won (skip)', async () => {
     setupLead('new');
-    const req = makeJsonRequest(`/api/crm/leads/${leadId}/stage`, { stage: 'won' });
+    const req = makeJsonRequest(`/api/crm/leads/${leadId}/stage`, { status: 'won' });
     const res = await POST(req, makeContext(leadId));
     expect(res.status).toBe(400);
   });
 
   it('rejects won → new (terminal)', async () => {
     setupLead('won');
-    const req = makeJsonRequest(`/api/crm/leads/${leadId}/stage`, { stage: 'new' });
+    const req = makeJsonRequest(`/api/crm/leads/${leadId}/stage`, { status: 'new' });
     const res = await POST(req, makeContext(leadId));
     expect(res.status).toBe(400);
   });
 
   it('rejects lost → qualified (terminal)', async () => {
     setupLead('lost');
-    const req = makeJsonRequest(`/api/crm/leads/${leadId}/stage`, { stage: 'qualified' });
+    const req = makeJsonRequest(`/api/crm/leads/${leadId}/stage`, { status: 'qualified' });
     const res = await POST(req, makeContext(leadId));
     expect(res.status).toBe(400);
   });
 
   it('rejects same-stage transition', async () => {
     setupLead('qualified');
-    const req = makeJsonRequest(`/api/crm/leads/${leadId}/stage`, { stage: 'qualified' });
+    const req = makeJsonRequest(`/api/crm/leads/${leadId}/stage`, { status: 'qualified' });
     const res = await POST(req, makeContext(leadId));
     expect(res.status).toBe(400);
   });
@@ -120,21 +120,21 @@ describe('Lead Stage Enforcement', () => {
   // Validation
   it('requires lost_reason when transitioning to lost', async () => {
     setupLead('new');
-    const req = makeJsonRequest(`/api/crm/leads/${leadId}/stage`, { stage: 'lost' });
+    const req = makeJsonRequest(`/api/crm/leads/${leadId}/stage`, { status: 'lost' });
     const res = await POST(req, makeContext(leadId));
     expect(res.status).toBe(400);
   });
 
   it('returns 401 when unauthenticated', async () => {
     mockClerkUnauth(mockAuth);
-    const req = makeJsonRequest(`/api/crm/leads/${leadId}/stage`, { stage: 'qualified' });
+    const req = makeJsonRequest(`/api/crm/leads/${leadId}/stage`, { status: 'qualified' });
     const res = await POST(req, makeContext(leadId));
     expect(res.status).toBe(401);
   });
 
   it('records stage change in lead_stage_history', async () => {
     const client = setupLead('new');
-    const req = makeJsonRequest(`/api/crm/leads/${leadId}/stage`, { stage: 'qualified' });
+    const req = makeJsonRequest(`/api/crm/leads/${leadId}/stage`, { status: 'qualified' });
     await POST(req, makeContext(leadId));
 
     // Verify history insert was called

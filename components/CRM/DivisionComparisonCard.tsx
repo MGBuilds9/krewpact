@@ -77,7 +77,7 @@ export function DivisionComparisonCard({ divisions }: DivisionComparisonCardProp
                 </Badge>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-muted-foreground">
               <div>
                 <span className="block font-medium text-foreground">
                   {formatCurrency(div.won_revenue)}

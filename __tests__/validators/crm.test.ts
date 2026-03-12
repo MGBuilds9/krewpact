@@ -263,46 +263,46 @@ describe('leadUpdateSchema', () => {
 });
 
 describe('leadStageTransitionSchema', () => {
-  it('passes with valid stage', () => {
+  it('passes with valid status', () => {
     const result = leadStageTransitionSchema.safeParse({
-      stage: 'qualified',
+      status: 'qualified',
     });
     expect(result.success).toBe(true);
   });
 
-  it('fails with invalid stage enum value', () => {
+  it('fails with invalid status enum value', () => {
     const result = leadStageTransitionSchema.safeParse({
-      stage: 'invalid_stage',
+      status: 'invalid_stage',
     });
     expect(result.success).toBe(false);
   });
 
-  it('passes with lost stage and lost_reason', () => {
+  it('passes with lost status and lost_reason', () => {
     const result = leadStageTransitionSchema.safeParse({
-      stage: 'lost',
+      status: 'lost',
       lost_reason: 'Budget constraints',
     });
     expect(result.success).toBe(true);
   });
 
-  it('fails with lost stage without lost_reason', () => {
+  it('fails with lost status without lost_reason', () => {
     const result = leadStageTransitionSchema.safeParse({
-      stage: 'lost',
+      status: 'lost',
     });
     expect(result.success).toBe(false);
   });
 
-  it('fails with lost stage and empty lost_reason', () => {
+  it('fails with lost status and empty lost_reason', () => {
     const result = leadStageTransitionSchema.safeParse({
-      stage: 'lost',
+      status: 'lost',
       lost_reason: '',
     });
     expect(result.success).toBe(false);
   });
 
-  it('passes with non-lost stage without lost_reason', () => {
+  it('passes with non-lost status without lost_reason', () => {
     const result = leadStageTransitionSchema.safeParse({
-      stage: 'estimating',
+      status: 'proposal',
     });
     expect(result.success).toBe(true);
   });

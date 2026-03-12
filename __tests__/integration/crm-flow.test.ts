@@ -137,7 +137,7 @@ describe('CRM Integration: Full happy path', () => {
     );
     expect(leadRes.status).toBe(201);
 
-    // Step 4: Transition lead new → qualified
+    // Step 4: Transition lead new → contacted
     // Mock returns lead at current stage 'new' (route fetches current then updates)
     const newLead = makeLead({ status: 'new' });
     mockCreateUserClientSafe.mockResolvedValue({
@@ -146,21 +146,21 @@ describe('CRM Integration: Full happy path', () => {
     });
 
     const transitionRes1 = await leadStagePOST(
-      makeJsonRequest('/api/crm/leads/stage', { stage: 'qualified' }),
+      makeJsonRequest('/api/crm/leads/stage', { status: 'contacted' }),
       makeContext(lead.id),
     );
     expect(transitionRes1.status).toBe(200);
 
-    // Step 5: Transition lead qualified → estimating
-    // Mock returns lead at current stage 'qualified'
-    const qualifiedLead = makeLead({ status: 'qualified' });
+    // Step 5: Transition lead contacted → qualified
+    // Mock returns lead at current stage 'contacted'
+    const contactedLead = makeLead({ status: 'contacted' });
     mockCreateUserClientSafe.mockResolvedValue({
-      client: mockSupabaseClient({ tables: { leads: { data: qualifiedLead, error: null } } }),
+      client: mockSupabaseClient({ tables: { leads: { data: contactedLead, error: null } } }),
       error: null,
     });
 
     const transitionRes2 = await leadStagePOST(
-      makeJsonRequest('/api/crm/leads/stage', { stage: 'estimating' }),
+      makeJsonRequest('/api/crm/leads/stage', { status: 'qualified' }),
       makeContext(lead.id),
     );
     expect(transitionRes2.status).toBe(200);
@@ -306,7 +306,7 @@ describe('CRM Integration: Validation chain', () => {
     });
 
     const res = await leadStagePOST(
-      makeJsonRequest('/api/crm/leads/stage', { stage: 'won' }),
+      makeJsonRequest('/api/crm/leads/stage', { status: 'won' }),
       makeContext(currentLead.id),
     );
     expect(res.status).toBe(400);
@@ -582,8 +582,8 @@ describe('CRM Integration: Lead stage progression', () => {
     resetFixtureCounter();
   });
 
-  it('lead progresses through full lifecycle: new→qualified→estimating→proposal_sent→won', async () => {
-    const stages = ['new', 'qualified', 'estimating', 'proposal_sent', 'won'] as const;
+  it('lead progresses through full lifecycle: new→contacted→qualified→proposal→negotiation→won', async () => {
+    const stages = ['new', 'contacted', 'qualified', 'proposal', 'negotiation', 'won'] as const;
 
     for (let i = 0; i < stages.length - 1; i++) {
       const currentStage = stages[i];
@@ -598,7 +598,7 @@ describe('CRM Integration: Lead stage progression', () => {
       });
 
       const res = await leadStagePOST(
-        makeJsonRequest('/api/crm/leads/stage', { stage: nextStage }),
+        makeJsonRequest('/api/crm/leads/stage', { status: nextStage }),
         makeContext(currentLead.id),
       );
       expect(res.status).toBe(200);
@@ -606,7 +606,7 @@ describe('CRM Integration: Lead stage progression', () => {
   });
 
   it('lead can go to lost from any active stage with reason', async () => {
-    const activeStages = ['new', 'qualified', 'estimating', 'proposal_sent'] as const;
+    const activeStages = ['new', 'contacted', 'qualified', 'proposal', 'negotiation'] as const;
 
     for (const stage of activeStages) {
       const currentLead = makeLead({ status: stage });
@@ -618,7 +618,7 @@ describe('CRM Integration: Lead stage progression', () => {
 
       const res = await leadStagePOST(
         makeJsonRequest('/api/crm/leads/stage', {
-          stage: 'lost',
+          status: 'lost',
           lost_reason: 'Budget constraints',
         }),
         makeContext(currentLead.id),
@@ -636,7 +636,7 @@ describe('CRM Integration: Lead stage progression', () => {
     });
 
     const res = await leadStagePOST(
-      makeJsonRequest('/api/crm/leads/stage', { stage: 'qualified' }),
+      makeJsonRequest('/api/crm/leads/stage', { status: 'qualified' }),
       makeContext(lostLead.id),
     );
     expect(res.status).toBe(400);
@@ -651,7 +651,7 @@ describe('CRM Integration: Lead stage progression', () => {
     });
 
     const res = await leadStagePOST(
-      makeJsonRequest('/api/crm/leads/stage', { stage: 'qualified' }),
+      makeJsonRequest('/api/crm/leads/stage', { status: 'qualified' }),
       makeContext(wonLead.id),
     );
     expect(res.status).toBe(400);

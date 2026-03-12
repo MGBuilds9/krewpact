@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import {
   DndContext,
   DragOverlay,
@@ -117,6 +117,7 @@ interface PipelineKanbanProps {
 
 export function PipelineKanban({ data }: PipelineKanbanProps) {
   const router = useRouter();
+  const { orgSlug } = useParams<{ orgSlug: string }>();
   const stageTransition = useOpportunityStageTransition();
   const [activeOpp, setActiveOpp] = useState<Opportunity | null>(null);
 
@@ -192,7 +193,7 @@ export function PipelineKanban({ data }: PipelineKanbanProps) {
                   <DraggableCard
                     key={opp.id}
                     opportunity={opp}
-                    onClick={() => router.push(`/crm/opportunities/${opp.id}`)}
+                    onClick={() => router.push(`/org/${orgSlug}/crm/opportunities/${opp.id}`)}
                   />
                 ))}
               </DroppableColumn>

@@ -4,17 +4,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 import { stagingCreateSchema } from '@/lib/validators/executive';
 import { createHash } from 'crypto';
+import { getKrewpactRoles, getOrgIdFromAuth } from '@/lib/api/org';
 
 const READ_ROLES = ['executive', 'platform_admin'];
 const WRITE_ROLES = ['platform_admin'];
 
 export async function GET(req: NextRequest) {
-  const { userId, sessionClaims } = await auth();
+  const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const claims = sessionClaims as Record<string, unknown>;
-  const roles = Array.isArray(claims?.krewpact_roles) ? claims.krewpact_roles : [];
-  const hasAccess = roles.some((r: unknown) => READ_ROLES.includes(String(r)));
+  const roles = await getKrewpactRoles();
+  const hasAccess = roles.some((r) => READ_ROLES.includes(r));
   if (!hasAccess) {
     return NextResponse.json(
       { error: 'Forbidden: executive or platform_admin role required' },
@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
   const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') ?? '50', 10)));
   const offset = (page - 1) * limit;
 
-  const orgId = (claims.krewpact_org_id as string) || 'mdm-group';
+  const orgId = await getOrgIdFromAuth();
   const supabase = await createServiceClient();
 
   let query = supabase
@@ -60,12 +60,11 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { userId, sessionClaims } = await auth();
+  const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const claims = sessionClaims as Record<string, unknown>;
-  const roles = Array.isArray(claims?.krewpact_roles) ? claims.krewpact_roles : [];
-  const hasAccess = roles.some((r: unknown) => WRITE_ROLES.includes(String(r)));
+  const roles = await getKrewpactRoles();
+  const hasAccess = roles.some((r) => WRITE_ROLES.includes(r));
   if (!hasAccess) {
     return NextResponse.json({ error: 'Forbidden: platform_admin role required' }, { status: 403 });
   }
@@ -85,7 +84,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const orgId = (claims.krewpact_org_id as string) || 'mdm-group';
+  const orgId = await getOrgIdFromAuth();
   const content_checksum = createHash('sha256').update(parsed.data.raw_content).digest('hex');
 
   const supabase = await createServiceClient();

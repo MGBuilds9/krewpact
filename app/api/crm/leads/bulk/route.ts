@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
     case 'delete': {
       const { error } = await supabase
         .from('leads')
-        .update({ status: 'deleted', deleted_at: new Date().toISOString() })
+        .update({ deleted_at: new Date().toISOString() })
         .in('id', ids);
       if (error) {
         logger.error('Bulk lead soft-delete failed', { error: error.message });
@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
     case 'export': {
       const { data, error } = await supabase
         .from('leads')
-        .select('company_name, contact_name, email, phone, status, source_channel, created_at')
+        .select('company_name, email, phone, status, source_channel, created_at')
         .in('id', ids);
       if (error) {
         logger.error('Bulk lead export failed', { error: error.message });
@@ -85,7 +85,6 @@ export async function POST(req: NextRequest) {
       }
       const columns = [
         'company_name',
-        'contact_name',
         'email',
         'phone',
         'status',

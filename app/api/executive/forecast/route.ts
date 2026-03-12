@@ -2,7 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
-import { getOrgIdFromAuth } from '@/lib/api/org';
+import { getOrgIdFromAuth, getKrewpactRoles } from '@/lib/api/org';
 
 const EXECUTIVE_ROLES = ['platform_admin', 'executive'];
 
@@ -38,12 +38,11 @@ function isCurrentQuarter(year: number, quarterIndex: number, now: Date): boolea
 }
 
 export async function GET(_req: NextRequest) {
-  const { userId, sessionClaims } = await auth();
+  const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const claims = sessionClaims as Record<string, unknown>;
-  const roles = Array.isArray(claims?.krewpact_roles) ? claims.krewpact_roles : [];
-  if (!roles.some((r) => EXECUTIVE_ROLES.includes(r as string))) {
+  const roles = await getKrewpactRoles();
+  if (!roles.some((r) => EXECUTIVE_ROLES.includes(r))) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

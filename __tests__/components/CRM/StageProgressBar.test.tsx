@@ -6,26 +6,27 @@ describe('StageProgressBar', () => {
   it('renders all lead stages', () => {
     render(<StageProgressBar currentStage="new" />);
     expect(screen.getByText('New')).toBeDefined();
+    expect(screen.getByText('Contacted')).toBeDefined();
     expect(screen.getByText('Qualified')).toBeDefined();
-    expect(screen.getByText('Estimating')).toBeDefined();
-    expect(screen.getByText('Proposal Sent')).toBeDefined();
+    expect(screen.getByText('Proposal')).toBeDefined();
+    expect(screen.getByText('Negotiation')).toBeDefined();
     expect(screen.getByText('Won')).toBeDefined();
   });
 
   it('highlights the current stage', () => {
-    const { container } = render(<StageProgressBar currentStage="estimating" />);
+    const { container } = render(<StageProgressBar currentStage="proposal" />);
     // The current stage should have aria-current="step"
     const currentStep = container.querySelector('[aria-current="step"]');
     expect(currentStep).not.toBeNull();
-    expect(currentStep?.textContent).toContain('Estimating');
+    expect(currentStep?.textContent).toContain('Proposal');
   });
 
   it('marks completed stages before the current stage', () => {
-    const { container } = render(<StageProgressBar currentStage="proposal_sent" />);
-    // Stages before proposal_sent should be marked as completed (data-completed)
+    const { container } = render(<StageProgressBar currentStage="negotiation" />);
+    // Stages before negotiation should be marked as completed (data-completed)
     const completedSteps = container.querySelectorAll('[data-completed="true"]');
-    // new, qualified, estimating should be completed (3 stages before proposal_sent)
-    expect(completedSteps.length).toBe(3);
+    // new, contacted, qualified, proposal should be completed (4 stages before negotiation)
+    expect(completedSteps.length).toBe(4);
   });
 
   it('handles the won stage correctly', () => {
@@ -34,7 +35,7 @@ describe('StageProgressBar', () => {
     expect(currentStep?.textContent).toContain('Won');
     // All stages before won should be completed
     const completedSteps = container.querySelectorAll('[data-completed="true"]');
-    expect(completedSteps.length).toBe(4); // new, qualified, estimating, proposal_sent
+    expect(completedSteps.length).toBe(5); // new, contacted, qualified, proposal, negotiation
   });
 
   it('handles the lost stage with distinct styling', () => {

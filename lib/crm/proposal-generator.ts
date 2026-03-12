@@ -22,7 +22,7 @@ export interface ProposalInput {
     last_name: string;
     email: string | null;
     phone: string | null;
-    role_title: string | null;
+    title: string | null;
   } | null;
   estimates: {
     id: string;
@@ -104,7 +104,7 @@ export function composeProposalData(input: ProposalInput): ProposalData {
       contactName,
       contactEmail: contact?.email ?? null,
       contactPhone: contact?.phone ?? null,
-      contactTitle: contact?.role_title ?? null,
+      contactTitle: contact?.title ?? null,
       address: formatAddress(account?.billing_address ?? null),
     },
     provider: {

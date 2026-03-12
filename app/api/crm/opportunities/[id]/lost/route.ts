@@ -107,15 +107,12 @@ export async function POST(req: NextRequest, context: RouteContext) {
     const { data: leadData } = await supabase
       .from('leads')
       .insert({
-        lead_name: `${oppData.opportunity_name} (Re-nurture)`,
-        division_id: oppData.division_id,
-        source: 'lost_opportunity',
+        first_name: `${oppData.opportunity_name} (Re-nurture)`,
+        source_channel: 'lost_opportunity',
         company_name: null,
         email: null,
         phone: null,
-        estimated_value: oppData.estimated_revenue,
-        probability_pct: 10,
-        stage: 'new',
+        status: 'new',
         assigned_to: oppData.owner_user_id,
       })
       .select()

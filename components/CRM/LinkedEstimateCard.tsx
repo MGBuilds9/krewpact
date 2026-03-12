@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,6 +34,7 @@ function statusVariant(status: string): 'default' | 'secondary' | 'destructive' 
 
 export function LinkedEstimateCard({ estimates, onCreateEstimate }: LinkedEstimateCardProps) {
   const router = useRouter();
+  const { orgSlug } = useParams<{ orgSlug: string }>();
 
   return (
     <Card>
@@ -54,7 +55,7 @@ export function LinkedEstimateCard({ estimates, onCreateEstimate }: LinkedEstima
                 <button
                   type="button"
                   className="w-full text-left rounded-lg border p-3 hover:bg-muted/50 transition-colors flex items-center justify-between gap-2"
-                  onClick={() => router.push(`/estimates/${est.id}`)}
+                  onClick={() => router.push(`/org/${orgSlug}/estimates/${est.id}`)}
                 >
                   <div className="min-w-0">
                     <span className="text-sm font-medium">{est.estimate_number}</span>

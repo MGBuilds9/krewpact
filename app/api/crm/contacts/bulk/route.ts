@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
       if (!value) {
         return NextResponse.json({ error: 'value is required for assign action' }, { status: 400 });
       }
-      const { error } = await supabase.from('contacts').update({ owner_id: value }).in('id', ids);
+      const { error } = await supabase.from('contacts').update({ assigned_to: value }).in('id', ids);
       if (error) {
         logger.error('Bulk contact assign failed', { error: error.message });
         return NextResponse.json({ error: error.message }, { status: 500 });
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
     case 'export': {
       const { data, error } = await supabase
         .from('contacts')
-        .select('first_name, last_name, email, phone, company, title, created_at')
+        .select('first_name, last_name, email, phone, title, created_at')
         .in('id', ids);
       if (error) {
         logger.error('Bulk contact export failed', { error: error.message });
@@ -76,7 +76,6 @@ export async function POST(req: NextRequest) {
         'last_name',
         'email',
         'phone',
-        'company',
         'title',
         'created_at',
       ];

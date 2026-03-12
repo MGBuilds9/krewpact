@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
   const { client: supabase, error: authError } = await createUserClientSafe();
 
   if (authError) return authError;
-  const { data, error } = await supabase.from(entity).select('*');
+  const { data, error } = await supabase.from(entity).select('*').limit(5000);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -34,7 +34,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
   // Fetch opportunities for this account
   const { data: opportunities } = await supabase
     .from('opportunities')
-    .select('id, stage, estimated_revenue')
+    .select('id, stage, estimated_revenue, updated_at')
     .eq('account_id', id);
 
   const opps = opportunities ?? [];
@@ -51,7 +51,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
     .limit(1);
 
   const lastActivityAt = recentActivity?.[0]?.created_at ?? null;
-  const lastWonDate = wonOpps.length > 0 ? wonOpps[0].id : null; // Placeholder
+  const lastWonDate = wonOpps.length > 0 ? wonOpps[0].updated_at : null;
 
   const healthInput = {
     last_activity_at: lastActivityAt,

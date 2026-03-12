@@ -189,11 +189,10 @@ export async function POST(req: NextRequest, context: RouteContext) {
     const { error: histErr } = await serviceClient.from('client_project_history').insert({
       account_id: accountId,
       project_name: (opp.opportunity_name as string | null) ?? 'Project',
-      division_id: opp.division_id as string | null,
-      estimated_revenue: (opp.estimated_revenue as number | null) ?? 0,
+      estimated_value: (opp.estimated_revenue as number | null) ?? 0,
       start_date: wonDate,
-      status: 'active',
-      opportunity_id: id,
+      outcome: 'completed',
+      metadata: { opportunity_id: id },
     });
 
     if (histErr) {

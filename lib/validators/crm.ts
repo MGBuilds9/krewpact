@@ -1,13 +1,14 @@
 import { z } from 'zod';
 import { safeString, optionalSafeString, nullableSafeString } from '@/lib/sanitize';
 
-// --- Lead stages (from DB enum lead_stage) ---
+// --- Lead statuses (from DB enum lead_status) ---
 const leadStages = [
   'new',
   'contacted',
   'qualified',
-  'estimating',
-  'proposal_sent',
+  'proposal',
+  'negotiation',
+  'nurture',
   'won',
   'lost',
 ] as const;
@@ -122,13 +123,13 @@ export const leadUpdateSchema = z.object({
 
 export const leadStageTransitionSchema = z
   .object({
-    stage: z.enum(leadStages),
+    status: z.enum(leadStages),
     lost_reason: z.string().optional(),
   })
   .refine(
     (data) =>
-      data.stage !== 'lost' || (data.lost_reason !== undefined && data.lost_reason.length > 0),
-    { message: 'lost_reason is required when stage is lost' },
+      data.status !== 'lost' || (data.lost_reason !== undefined && data.lost_reason.length > 0),
+    { message: 'lost_reason is required when status is lost' },
   );
 
 // ============================================================

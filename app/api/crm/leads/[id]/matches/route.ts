@@ -12,6 +12,7 @@ import {
 } from '@/lib/api/errors';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 import { logger } from '@/lib/logger';
+import { getKrewpactUserId } from '@/lib/api/org';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -93,11 +94,13 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     return errorResponse(notFound('Match not found'));
   }
 
+  const krewpactUserId = await getKrewpactUserId();
+
   const { data, error } = await supabase
     .from('lead_account_matches')
     .update({
       is_confirmed,
-      confirmed_by: userId,
+      confirmed_by: krewpactUserId,
       confirmed_at: new Date().toISOString(),
     })
     .eq('id', match_id)

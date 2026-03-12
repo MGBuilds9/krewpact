@@ -228,7 +228,6 @@ describe('POST /api/crm/leads/bulk', () => {
     const leadData = [
       {
         company_name: 'Acme Corp',
-        contact_name: 'John Doe',
         email: 'john@acme.com',
         phone: '416-555-0100',
         status: 'new',
@@ -237,7 +236,6 @@ describe('POST /api/crm/leads/bulk', () => {
       },
       {
         company_name: 'Beta Inc',
-        contact_name: 'Jane Smith',
         email: 'jane@beta.com',
         phone: '416-555-0200',
         status: 'qualified',
@@ -261,7 +259,7 @@ describe('POST /api/crm/leads/bulk', () => {
 
     const csv = await res.text();
     const lines = csv.split('\n');
-    expect(lines[0]).toBe('company_name,contact_name,email,phone,status,source,created_at');
+    expect(lines[0]).toBe('company_name,email,phone,status,source,created_at');
     expect(lines[1]).toContain('Acme Corp');
     expect(lines[1]).toContain('website');
     expect(lines[2]).toContain('Beta Inc');
@@ -307,7 +305,6 @@ describe('POST /api/crm/leads/bulk', () => {
     const leadData = [
       {
         company_name: 'Smith, Jones & Associates',
-        contact_name: 'Al "The Boss" Smith',
         email: 'al@sj.com',
         phone: null,
         status: 'new',
@@ -329,8 +326,6 @@ describe('POST /api/crm/leads/bulk', () => {
     const csv = await res.text();
     // Company name with comma should be quoted
     expect(csv).toContain('"Smith, Jones & Associates"');
-    // Contact name with quotes should be double-escaped
-    expect(csv).toContain('"Al ""The Boss"" Smith"');
   });
 
   // --- accepts exactly 100 items ---
@@ -485,7 +480,6 @@ describe('POST /api/crm/contacts/bulk', () => {
         last_name: 'Johnson',
         email: 'alice@test.com',
         phone: '416-555-0100',
-        company: 'Acme Corp',
         title: 'Project Manager',
         created_at: '2026-01-15T00:00:00Z',
       },
@@ -506,10 +500,9 @@ describe('POST /api/crm/contacts/bulk', () => {
 
     const csv = await res.text();
     const lines = csv.split('\n');
-    expect(lines[0]).toBe('first_name,last_name,email,phone,company,title,created_at');
+    expect(lines[0]).toBe('first_name,last_name,email,phone,title,created_at');
     expect(lines[1]).toContain('Alice');
     expect(lines[1]).toContain('Johnson');
-    expect(lines[1]).toContain('Acme Corp');
   });
 
   it('export: returns CSV header only when no data', async () => {
