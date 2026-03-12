@@ -256,29 +256,25 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
+### Mar 11, 2026 — Closed-Loop CRM + Comprehensive Codebase Audit
+
+- **Changes:** Implemented full 6-phase Closed-Loop CRM (schema enrichment, import pipeline, lead-account matching, ICP engine, won deal automation). Then ran 7-agent comprehensive audit finding 60+ issues across security, data integrity, UX, and performance. Fixed 79 files total.
+- **Security:** Added org_id + RLS to 4 closed-loop tables. Migrated 12 executive routes from raw session claims to `getKrewpactRoles()`. Added `getKrewpactDivisions()` helper. Gated admin sync/status to platform_admin. Fixed global search division isolation. Added email tracking to middleware public routes.
+- **Data integrity:** Fixed `outreach` → `outreach_log` table name. Removed phantom columns from 8 API routes. Fixed `lead_status` enum alignment across validators, stages, and tests (`estimating`/`proposal_sent` → `contacted`/`proposal`/`negotiation`). Fixed `recompute_account_stats()` to include lifetime_revenue. Added `.limit(5000)` to export. Fixed `confirmed_by` to use UUID.
+- **UX:** Org-scoped navigation in 6 components (GlobalSearch, PipelineKanban, PipelineView, LinkedEstimateCard, ConvertLeadDialog, templates). Responsive grids in 9 components. overflow-x-auto on tables. Mobile hamburger menu. Re-enabled Sentry.
+- **Decisions:** `lead_status` DB enum is canonical: `new, contacted, qualified, proposal, negotiation, nurture, won, lost`. All app-level stage names must match these exactly.
+- **Tests:** 3,489/3,489 passing (309 files). 0 lint. 0 type errors. Build clean.
+
 ### Mar 11, 2026 — CRM Navigation, Auth Claims, Score UX & Chart Fixes
 
-- **Auth claims path fix:** Added `_getClerkMetadata()` helper in `lib/api/org.ts` that handles JWKS (`metadata` key), portal (`public_metadata`), and legacy (top-level) claim paths. Fixed `getKrewpactUserId()`, added `getKrewpactRoles()`. Migrated 5 routes from inline `sessionClaims.*` to shared helpers (executive, PM, audit-log, crm/notes, portal layout).
-- **CRM navigation fixes:** (1) CRM default redirect now goes to Dashboard instead of Leads, using org-scoped path `redirect(/org/${orgSlug}/crm/dashboard)`. (2) Main header `isActive` uses `strippedPath.startsWith()` to prevent false positives (CRM Dashboard no longer highlights main Dashboard tab). (3) CRM sub-tabs use `orgPath()` for hrefs and strip org prefix for matching.
-- **Lead Score Breakdown UX:** Added GET handler to `/api/crm/leads/[id]/score` returning `rule_results` from scoring engine. Added `useLeadScoreBreakdown(leadId)` hook. LeadScoreCard now has collapsible "Score Breakdown" section showing matched rules grouped by category (Fit/Intent/Engagement) with point values.
-- **Chart dimension fix:** Added `minWidth={1} minHeight={1}` to `ResponsiveContainer` in `chart.tsx` and `ForecastChart.tsx` to prevent Recharts negative dimension warnings.
-- **Decisions:** Bare-path redirects (`redirect('/crm/dashboard')`) cause double redirects through middleware — always use org-scoped paths in server components that have access to `params.orgSlug`.
-- **Playwright test added:** `crm-smoke.spec.ts` now verifies CRM redirect target is `/crm/dashboard` not `/crm/leads`.
-- **Tests:** 3,488 unit tests passing (309 files). 3 Playwright E2E passing. 0 lint. 0 type errors. Build clean.
+- Auth claims `_getClerkMetadata()` helper for JWKS/legacy/portal. CRM nav org-scoped redirect. Lead Score Breakdown UX. Recharts dimension fix. 3,488 tests.
 
-### Mar 11, 2026 — Fix 500 Errors Round 4: Clerk Third-Party Auth, RLS Recursion, Enum Alignment
-
-- Clerk Third-Party Auth migration (JWKS). RLS SECURITY DEFINER helpers. RLS recursion fix. Division code-to-UUID resolution. lead_status enum alignment. NotificationBell crash fix. 3,488 tests.
-
-### Mar 11, 2026 — Fix Scoring, Separate Clients, Production Verification
-
-- Scoring column fix (9 files). lead_score_history schema fix (4 locations). Soft-deleted 14 client leads. Re-scored 263 leads. ERP mock mode Sentry guard. 3,488 tests.
-
-- Mar 11: Fix 500 Errors Round 3 — Sentry wrapping conflict, RESTRICTIVE-only RLS, orphaned leads, middleware trim. 3,488 tests.
-- Mar 11: Eliminate All 500 Errors Round 2 — createUserClientSafe(), 262+ routes migrated, 25 migrations applied, CSP/env fixes. 3,488 tests.
-- Mar 10: Production Readiness (14 stories) — security headers, ESLint 53→0 warnings, E2E smoke suite, Sentry env, error boundary UX. 3,488 tests.
-- Mar 9: Executive Nucleus 4-phase build (PR #60) — C-suite module, RAG chat, metrics, command center. 3,478 tests.
-- Mar 9: Enterprise Phase 2 Ralph Loop (PR #59) — Realtime, PDF, dashboards, global search, audit log. 3,363 tests.
+- Mar 11: Fix 500 Errors Round 4 — Clerk JWKS, RLS recursion, enum alignment. 3,488 tests.
+- Mar 11: Fix Scoring, Separate Clients, Production Verification. 3,488 tests.
+- Mar 11: Fix 500 Errors Round 3 — Sentry wrapping, RESTRICTIVE RLS, orphaned leads. 3,488 tests.
+- Mar 11: Eliminate All 500 Errors Round 2 — createUserClientSafe(), 262+ routes, 25 migrations. 3,488 tests.
+- Mar 10: Production Readiness (14 stories) — security headers, ESLint 0 warnings, E2E smoke. 3,488 tests.
+- Mar 9: Executive Nucleus + Enterprise Phase 2. 3,478 tests.
 - Mar 8: P1 completion + autonomous loop (all 18 PRD tasks). 3,092 tests.
 - Mar 7: Collaboration readiness, first production deploy. 2,780 tests.
 - Mar 6: CRM FEATURE COMPLETE. 2,780 tests.
