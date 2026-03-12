@@ -83,11 +83,13 @@ export default function UsersPage() {
                   <User className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium">{user.full_name}</p>
+                  <p className="font-medium">
+                    {user.first_name} {user.last_name}
+                  </p>
                   <p className="text-sm text-muted-foreground">{user.email}</p>
                 </div>
-                <Badge variant={user.is_active ? 'default' : 'secondary'}>
-                  {user.is_active ? 'Active' : 'Inactive'}
+                <Badge variant={user.status === 'active' ? 'default' : 'secondary'}>
+                  {user.status === 'active' ? 'Active' : 'Inactive'}
                 </Badge>
               </CardContent>
             </Card>

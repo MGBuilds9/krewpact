@@ -90,7 +90,7 @@ describe('GET /api/crm/activities/timeline', () => {
     const client = mockSupabaseClient({
       tables: {
         activities: { data: [activity], error: null },
-        outreach_events: { data: [outreach], error: null },
+        outreach: { data: [outreach], error: null },
       },
     });
     mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
@@ -112,7 +112,7 @@ describe('GET /api/crm/activities/timeline', () => {
     const client = mockSupabaseClient({
       tables: {
         activities: { data: [], error: null },
-        outreach_events: { data: [], error: null },
+        outreach: { data: [], error: null },
       },
     });
     mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
@@ -154,7 +154,7 @@ describe('GET /api/crm/activities/timeline', () => {
     const client = mockSupabaseClient({
       tables: {
         activities: { data: [a1, a2], error: null },
-        outreach_events: { data: [o1, o2], error: null },
+        outreach: { data: [o1, o2], error: null },
       },
     });
     mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
@@ -178,7 +178,7 @@ describe('GET /api/crm/activities/timeline', () => {
     const client = mockSupabaseClient({
       tables: {
         activities: { data: null, error: { message: 'activities query failed' } },
-        outreach_events: { data: [], error: null },
+        outreach: { data: [], error: null },
       },
     });
     mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
@@ -191,13 +191,13 @@ describe('GET /api/crm/activities/timeline', () => {
     expect(body.error).toBe('activities query failed');
   });
 
-  it('handles outreach_events table error', async () => {
+  it('handles outreach table error', async () => {
     mockClerkAuth(mockAuth);
 
     const client = mockSupabaseClient({
       tables: {
         activities: { data: [], error: null },
-        outreach_events: { data: null, error: { message: 'outreach query failed' } },
+        outreach: { data: null, error: { message: 'outreach query failed' } },
       },
     });
     mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
@@ -224,7 +224,7 @@ describe('GET /api/crm/activities/timeline', () => {
     const client = mockSupabaseClient({
       tables: {
         activities: { data: activities, error: null },
-        outreach_events: { data: [], error: null },
+        outreach: { data: [], error: null },
       },
     });
     mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
@@ -255,7 +255,7 @@ describe('GET /api/crm/activities/timeline', () => {
     const client = mockSupabaseClient({
       tables: {
         activities: { data: [activity], error: null },
-        outreach_events: { data: [], error: null },
+        outreach: { data: [], error: null },
       },
     });
     mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
@@ -270,7 +270,7 @@ describe('GET /api/crm/activities/timeline', () => {
     expect(body.data).toHaveLength(1);
     expect(body.data[0].source).toBe('activity');
     expect(client.from).toHaveBeenCalledWith('activities');
-    expect(client.from).toHaveBeenCalledWith('outreach_events');
+    expect(client.from).toHaveBeenCalledWith('outreach');
   });
 
   it('returns correct source field (activity vs outreach)', async () => {
@@ -288,7 +288,7 @@ describe('GET /api/crm/activities/timeline', () => {
     const client = mockSupabaseClient({
       tables: {
         activities: { data: [activity], error: null },
-        outreach_events: { data: [outreach], error: null },
+        outreach: { data: [outreach], error: null },
       },
     });
     mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });

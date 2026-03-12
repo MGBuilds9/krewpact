@@ -44,7 +44,7 @@ describe('GET /api/onboarding/status', () => {
       tables: {
         organizations: { data: null, error: null },
         divisions: { data: null, error: null, count: 0 },
-        user_profiles: { data: null, error: null, count: 0 },
+        users: { data: null, error: null, count: 0 },
       },
     });
     mockCreateUserClientSafe.mockResolvedValue({ client: sb, error: null });
@@ -65,7 +65,7 @@ describe('GET /api/onboarding/status', () => {
           error: null,
         },
         divisions: { data: null, error: null, count: 0 },
-        user_profiles: { data: null, error: null, count: 0 },
+        users: { data: null, error: null, count: 0 },
       },
     });
     mockCreateUserClientSafe.mockResolvedValue({ client: sb, error: null });
@@ -86,7 +86,7 @@ describe('GET /api/onboarding/status', () => {
           error: null,
         },
         divisions: { data: null, error: null, count: 2 },
-        user_profiles: { data: null, error: null, count: 0 },
+        users: { data: null, error: null, count: 0 },
       },
     });
     mockCreateUserClientSafe.mockResolvedValue({ client: sb, error: null });
@@ -107,7 +107,7 @@ describe('GET /api/onboarding/status', () => {
           error: null,
         },
         divisions: { data: null, error: null, count: 3 },
-        user_profiles: { data: null, error: null, count: 2 },
+        users: { data: null, error: null, count: 2 },
       },
     });
     mockCreateUserClientSafe.mockResolvedValue({ client: sb, error: null });
@@ -125,7 +125,7 @@ describe('GET /api/onboarding/status', () => {
       tables: {
         organizations: { data: null, error: { message: 'DB error' } },
         divisions: { data: null, error: null, count: 0 },
-        user_profiles: { data: null, error: null, count: 0 },
+        users: { data: null, error: null, count: 0 },
       },
     });
     mockCreateUserClientSafe.mockResolvedValue({ client: sb, error: null });
@@ -143,7 +143,7 @@ describe('GET /api/onboarding/status', () => {
           error: null,
         },
         divisions: { data: null, error: { message: 'DB error' } },
-        user_profiles: { data: null, error: null, count: 0 },
+        users: { data: null, error: null, count: 0 },
       },
     });
     mockCreateUserClientSafe.mockResolvedValue({ client: sb, error: null });
@@ -161,7 +161,7 @@ describe('GET /api/onboarding/status', () => {
           error: null,
         },
         divisions: { data: null, error: null, count: 1 },
-        user_profiles: { data: null, error: { message: 'DB error' } },
+        users: { data: null, error: { message: 'DB error' } },
       },
     });
     mockCreateUserClientSafe.mockResolvedValue({ client: sb, error: null });
@@ -179,7 +179,7 @@ describe('GET /api/onboarding/status', () => {
           error: null,
         },
         divisions: { data: null, error: null, count: 0 },
-        user_profiles: { data: null, error: null, count: 0 },
+        users: { data: null, error: null, count: 0 },
       },
     });
     mockCreateUserClientSafe.mockResolvedValue({ client: sb, error: null });

@@ -74,9 +74,9 @@ export default function OrganizationSettingsPage() {
                     <div className="flex items-center justify-between">
                       <CardTitle className="flex items-center gap-2 text-base">
                         <Building2 className="h-4 w-4" />
-                        {d.division_name}
+                        {d.name}
                       </CardTitle>
-                      <Badge variant="secondary">{d.division_code}</Badge>
+                      <Badge variant="secondary">{d.code}</Badge>
                     </div>
                   </CardHeader>
                   {d.description && (

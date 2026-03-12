@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
   if (authError) return authError;
 
   let baseQuery = supabase
-    .from('outreach_events')
+    .from('outreach')
     .select('*', { count: 'exact', head: true })
     .eq('channel', 'email')
     .gte('occurred_at', since);
@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
   const { count: totalSent } = await baseQuery;
 
   let openedQuery = supabase
-    .from('outreach_events')
+    .from('outreach')
     .select('*', { count: 'exact', head: true })
     .eq('channel', 'email')
     .gte('occurred_at', since)
@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
   const { count: totalOpened } = await openedQuery;
 
   let clickedQuery = supabase
-    .from('outreach_events')
+    .from('outreach')
     .select('*', { count: 'exact', head: true })
     .eq('channel', 'email')
     .gte('occurred_at', since)
@@ -65,7 +65,7 @@ export async function GET(req: NextRequest) {
   const { count: totalClicked } = await clickedQuery;
 
   let repliedQuery = supabase
-    .from('outreach_events')
+    .from('outreach')
     .select('*', { count: 'exact', head: true })
     .eq('channel', 'email')
     .gte('occurred_at', since)

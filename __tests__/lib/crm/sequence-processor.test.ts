@@ -232,8 +232,8 @@ describe('processSequences', () => {
     expect(result.processed).toBe(1);
     expect(result.completed).toBe(1);
     expect(result.errors).toHaveLength(0);
-    // Verify outreach_events insert was called
-    expect(mockClient.from).toHaveBeenCalledWith('outreach_events');
+    // Verify outreach insert was called
+    expect(mockClient.from).toHaveBeenCalledWith('outreach');
   });
 
   it('processes task step and creates activity', async () => {
@@ -478,7 +478,7 @@ describe('processSequences', () => {
             if (table === 'sequence_enrollments') {
               return resolve({ data: enrollmentData, error: null });
             }
-            if (table === 'outreach_events') {
+            if (table === 'outreach') {
               return resolve({ data: null, error: { message: 'Insert failed' } });
             }
             return resolve({ data: [], error: null });

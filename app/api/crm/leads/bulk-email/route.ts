@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
 
     // Log outreach event
     if (result.success) {
-      await supabase.from('outreach_events').insert({
+      await supabase.from('outreach').insert({
         lead_id: contact.lead_id,
         contact_id: contact.id,
         channel: 'email',

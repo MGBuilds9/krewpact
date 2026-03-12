@@ -160,7 +160,7 @@ export async function processSequences(
           }
 
           // Also log as outreach event with the appropriate channel
-          await supabase.from('outreach_events').insert({
+          await supabase.from('outreach').insert({
             lead_id: enrollment.lead_id,
             contact_id: enrollment.contact_id ?? null,
             channel: actionType,
@@ -341,7 +341,7 @@ async function executeEmailStep(
   }
 
   // Create outreach event record
-  const { error: outreachError } = await supabase.from('outreach_events').insert({
+  const { error: outreachError } = await supabase.from('outreach').insert({
     lead_id: enrollment.lead_id,
     contact_id: enrollment.contact_id ?? null,
     channel: 'email',
@@ -380,18 +380,18 @@ export async function evaluateCondition(
 
       const { data: lead } = await supabase
         .from('leads')
-        .select('computed_score')
+        .select('lead_score')
         .eq('id', leadId)
         .single();
 
       if (!lead) return false;
-      const score = (lead.computed_score as number) ?? 0;
+      const score = (lead.lead_score as number) ?? 0;
       return score >= threshold;
     }
 
     case 'if_email_opened': {
       const { data: outreach } = await supabase
-        .from('outreach_events')
+        .from('outreach')
         .select('opened_at')
         .eq('lead_id', leadId)
         .eq('sequence_id', enrollment.sequence_id)
@@ -404,7 +404,7 @@ export async function evaluateCondition(
 
     case 'if_replied': {
       const { data: outreach } = await supabase
-        .from('outreach_events')
+        .from('outreach')
         .select('replied_at')
         .eq('lead_id', leadId)
         .eq('sequence_id', enrollment.sequence_id)

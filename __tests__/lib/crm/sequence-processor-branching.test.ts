@@ -63,7 +63,7 @@ describe('evaluateCondition', () => {
 
   it('if_score: returns true when lead score >= threshold', async () => {
     const supabase = createChainableMock({
-      leads: { data: { computed_score: 80 }, error: null },
+      leads: { data: { lead_score: 80 }, error: null },
     });
     const result = await evaluateCondition(supabase, baseEnrollment, 'if_score', { threshold: 70 });
     expect(result).toBe(true);
@@ -71,7 +71,7 @@ describe('evaluateCondition', () => {
 
   it('if_score: returns false when lead score < threshold', async () => {
     const supabase = createChainableMock({
-      leads: { data: { computed_score: 30 }, error: null },
+      leads: { data: { lead_score: 30 }, error: null },
     });
     const result = await evaluateCondition(supabase, baseEnrollment, 'if_score', { threshold: 70 });
     expect(result).toBe(false);
@@ -79,7 +79,7 @@ describe('evaluateCondition', () => {
 
   it('if_email_opened: returns true when outreach has opened_at', async () => {
     const supabase = createChainableMock({
-      outreach_events: { data: { id: 'oe-1', opened_at: '2026-02-01T00:00:00Z' }, error: null },
+      outreach: { data: { id: 'oe-1', opened_at: '2026-02-01T00:00:00Z' }, error: null },
     });
     const result = await evaluateCondition(supabase, baseEnrollment, 'if_email_opened', {});
     expect(result).toBe(true);
@@ -87,7 +87,7 @@ describe('evaluateCondition', () => {
 
   it('if_replied: returns true when outreach has replied_at', async () => {
     const supabase = createChainableMock({
-      outreach_events: { data: { id: 'oe-1', replied_at: '2026-02-01T00:00:00Z' }, error: null },
+      outreach: { data: { id: 'oe-1', replied_at: '2026-02-01T00:00:00Z' }, error: null },
     });
     const result = await evaluateCondition(supabase, baseEnrollment, 'if_replied', {});
     expect(result).toBe(true);

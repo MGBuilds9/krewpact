@@ -7,8 +7,8 @@ export interface ProjectMember {
   id: string;
   project_id: string;
   user_id: string;
-  role: string;
-  hours_allocated: number | null;
+  member_role: string;
+  allocation_pct: number | null;
   joined_at: string;
   left_at: string | null;
   user: {
@@ -32,7 +32,7 @@ export function useAddProjectMember(projectId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: { user_id: string; role: string; hours_allocated?: number | null }) =>
+    mutationFn: (data: { user_id: string; member_role: string; allocation_pct?: number | null }) =>
       apiFetch<ProjectMember>(`/api/projects/${projectId}/members`, {
         method: 'POST',
         body: data,

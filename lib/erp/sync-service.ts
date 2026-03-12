@@ -898,12 +898,22 @@ export class SyncService {
 
       // Transform via mapper and store snapshot in invoice_snapshots
       const snapshot = fromErpSalesInvoice(invoiceData);
-      await supabase.from('invoice_snapshots').upsert({
-        erp_docname: erpDocname,
-        doctype: 'Sales Invoice',
-        snapshot: { ...snapshot, raw: invoiceData },
-        synced_at: snapshot.synced_at as string,
-      });
+      await supabase.from('invoice_snapshots').upsert(
+        {
+          erp_docname: erpDocname,
+          invoice_number: (snapshot.erp_invoice_name as string) || erpDocname,
+          customer_name: snapshot.customer_name as string,
+          invoice_date: snapshot.posting_date as string | null,
+          due_date: snapshot.due_date as string | null,
+          status: snapshot.status as string,
+          subtotal_amount: snapshot.grand_total as number,
+          tax_amount: 0,
+          total_amount: snapshot.grand_total as number,
+          amount_paid: (snapshot.grand_total as number) - (snapshot.outstanding_amount as number),
+          snapshot_payload: { ...snapshot, raw: invoiceData },
+        },
+        { onConflict: 'invoice_number' },
+      );
 
       await this.logEvent(supabase, job.id, 'sync_completed', {
         entity_type: 'sales_invoice',
@@ -947,12 +957,20 @@ export class SyncService {
 
       // Transform via mapper and store snapshot in po_snapshots
       const mapped = fromErpPurchaseInvoice(invoiceData);
-      await supabase.from('po_snapshots').upsert({
-        erp_docname: erpDocname,
-        doctype: 'Purchase Invoice',
-        snapshot: { ...mapped, raw: invoiceData },
-        synced_at: mapped.synced_at as string,
-      });
+      await supabase.from('po_snapshots').upsert(
+        {
+          erp_docname: erpDocname,
+          po_number: (mapped.erp_invoice_name as string) || erpDocname,
+          supplier_name: mapped.supplier_name as string,
+          po_date: mapped.posting_date as string | null,
+          status: mapped.status as string,
+          subtotal_amount: mapped.grand_total as number,
+          tax_amount: 0,
+          total_amount: mapped.grand_total as number,
+          snapshot_payload: { ...mapped, raw: invoiceData },
+        },
+        { onConflict: 'po_number' },
+      );
 
       await this.logEvent(supabase, job.id, 'sync_completed', {
         entity_type: 'purchase_invoice',

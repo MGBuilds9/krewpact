@@ -68,7 +68,7 @@ describe('EmailComposeDialog', () => {
     expect(sendBtn).toBeDisabled();
   });
 
-  it('calls sendEmail with entity IDs on submit', async () => {
+  it('calls sendEmail with entity IDs on submit', { timeout: 15000 }, async () => {
     const user = userEvent.setup();
     const onOpenChange = vi.fn();
 

@@ -71,7 +71,7 @@ export async function GET(req: NextRequest) {
 
   // Fetch outreach events
   let outreachQuery = supabase
-    .from('outreach_events')
+    .from('outreach')
     .select(
       'id, lead_id, contact_id, channel, direction, activity_type, outcome, outcome_detail, subject, message_preview, notes, sequence_id, sequence_step, is_automated, occurred_at, created_by',
     );

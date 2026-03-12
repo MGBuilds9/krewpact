@@ -29,10 +29,10 @@ export async function GET(req: NextRequest) {
     .from('divisions')
     /* excluded from list: settings */
     .select('id, name, code, description, is_active, created_at, updated_at', { count: 'exact' })
-    .order('division_name', { ascending: true })
+    .order('name', { ascending: true })
     .range(offset, offset + limit - 1);
 
-  if (search) query = query.ilike('division_name', `%${search}%`);
+  if (search) query = query.ilike('name', `%${search}%`);
 
   const { data, error, count } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

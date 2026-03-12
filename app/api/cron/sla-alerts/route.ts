@@ -1,4 +1,4 @@
-import { createUserClientSafe } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/server';
 import { LEAD_SLA_CONFIG, OPPORTUNITY_SLA_CONFIG, isOverdue } from '@/lib/crm/sla-config';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyCronAuth } from '@/lib/api/cron-auth';
@@ -9,9 +9,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { client: supabase, error: authError } = await createUserClientSafe();
-
-  if (authError) return authError;
+  const supabase = createServiceClient();
 
   // Fetch leads in active stages
   const { data: leads } = await supabase
@@ -77,3 +75,6 @@ export async function POST(req: NextRequest) {
     checkedOpportunities: opportunities?.length ?? 0,
   });
 }
+
+// Vercel Cron Jobs sends GET requests
+export { POST as GET };

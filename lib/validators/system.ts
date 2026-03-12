@@ -37,8 +37,8 @@ export const auditLogQuerySchema = z.object({
   action: z.string().optional(),
   from_date: z.string().optional(),
   to_date: z.string().optional(),
-  limit: z.number().int().positive().max(100).optional(),
-  offset: z.number().int().min(0).optional(),
+  limit: z.coerce.number().int().positive().max(100).optional(),
+  offset: z.coerce.number().int().min(0).optional(),
 });
 
 // ============================================================

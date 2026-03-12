@@ -1,4 +1,4 @@
-import { createUserClientSafe } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyCronAuth } from '@/lib/api/cron-auth';
 
@@ -8,9 +8,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { client: supabase, error: authError } = await createUserClientSafe();
-
-  if (authError) return authError;
+  const supabase = createServiceClient();
   const now = new Date().toISOString();
 
   // Find all overdue tasks that haven't been notified yet
@@ -68,3 +66,6 @@ export async function POST(req: NextRequest) {
     totalOverdue: overdueTasks.length,
   });
 }
+
+// Vercel Cron Jobs sends GET requests
+export { POST as GET };

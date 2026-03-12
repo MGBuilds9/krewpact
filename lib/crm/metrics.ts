@@ -163,25 +163,25 @@ export function calculateConversionMetrics(leads: LeadData[]): ConversionMetrics
   const total = leads.length;
 
   // Qualified = any stage beyond 'new' and 'contacted'
-  const qualifiedStages = ['qualified', 'converted', 'won', 'proposal', 'negotiation'];
-  const convertedStages = ['converted', 'won'];
+  const qualifiedStages = ['qualified', 'won', 'proposal', 'negotiation'];
+  const wonStages = ['won'];
   const lostStages = ['lost'];
 
   const qualified = leads.filter(
-    (l) => qualifiedStages.includes(l.status) || convertedStages.includes(l.status),
+    (l) => qualifiedStages.includes(l.status) || wonStages.includes(l.status),
   ).length;
 
-  const converted = leads.filter((l) => convertedStages.includes(l.status)).length;
+  const won = leads.filter((l) => wonStages.includes(l.status)).length;
 
   const lost = leads.filter((l) => lostStages.includes(l.status)).length;
 
   return {
     totalLeads: total,
     qualifiedLeads: qualified,
-    convertedLeads: converted,
+    convertedLeads: won,
     lostLeads: lost,
     qualificationRate: total > 0 ? qualified / total : 0,
-    conversionRate: total > 0 ? converted / total : 0,
+    conversionRate: total > 0 ? won / total : 0,
     lossRate: total > 0 ? lost / total : 0,
   };
 }
@@ -256,7 +256,7 @@ export function calculateSourceMetrics(leads: LeadData[]): SourceMetrics {
   for (const lead of leads) {
     const source = lead.source_channel ?? 'Unknown';
     const existing = sourceMap.get(source);
-    const isConverted = ['converted', 'won'].includes(lead.status);
+    const isConverted = lead.status === 'won';
 
     if (existing) {
       existing.count += 1;

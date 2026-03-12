@@ -5,14 +5,13 @@ import { apiFetch } from '@/lib/api-client';
 
 export interface WebhookEvent {
   id: string;
+  provider: string;
+  event_id: string;
   event_type: string;
-  source: string;
-  payload: Record<string, unknown>;
-  status: string;
-  attempts: number;
-  last_error: string | null;
-  created_at: string;
+  received_at: string;
   processed_at: string | null;
+  processing_status: string;
+  processing_error: string | null;
 }
 
 export interface AuditLog {

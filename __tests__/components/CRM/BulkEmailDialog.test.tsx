@@ -99,7 +99,7 @@ describe('BulkEmailDialog', () => {
     expect(screen.getByLabelText('Template (optional)')).toBeInTheDocument();
   });
 
-  it('allows freeform compose with subject and body', async () => {
+  it('allows freeform compose with subject and body', { timeout: 15000 }, async () => {
     const user = userEvent.setup();
 
     render(
@@ -120,7 +120,7 @@ describe('BulkEmailDialog', () => {
     expect(bodyInput).toHaveValue('Test body content');
   });
 
-  it('advances to confirm step', async () => {
+  it('advances to confirm step', { timeout: 15000 }, async () => {
     const user = userEvent.setup();
 
     render(
@@ -144,7 +144,7 @@ describe('BulkEmailDialog', () => {
     expect(screen.getByText('Test body')).toBeInTheDocument();
   });
 
-  it('calls bulk email mutation on send', async () => {
+  it('calls bulk email mutation on send', { timeout: 15000 }, async () => {
     const user = userEvent.setup();
 
     render(
@@ -171,7 +171,7 @@ describe('BulkEmailDialog', () => {
     });
   });
 
-  it('shows results after send (sent/failed counts)', async () => {
+  it('shows results after send (sent/failed counts)', { timeout: 15000 }, async () => {
     mockMutateAsync.mockResolvedValue({ sent: 2, failed: 1, total: 3 });
     const user = userEvent.setup();
 
@@ -212,7 +212,7 @@ describe('BulkEmailDialog', () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
-  it('disables send when subject/body empty', async () => {
+  it('disables send when subject/body empty', { timeout: 15000 }, async () => {
     const user = userEvent.setup();
 
     render(

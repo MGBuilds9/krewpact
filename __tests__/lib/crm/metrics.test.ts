@@ -96,12 +96,12 @@ describe('calculateConversionMetrics', () => {
     const leads = [
       makeLead({ status: 'new' }),
       makeLead({ status: 'qualified' }),
-      makeLead({ status: 'converted' }),
+      makeLead({ status: 'won' }),
       makeLead({ status: 'lost' }),
     ];
     const result = calculateConversionMetrics(leads);
     expect(result.totalLeads).toBe(4);
-    expect(result.qualifiedLeads).toBe(2); // qualified + converted
+    expect(result.qualifiedLeads).toBe(2); // qualified + won
     expect(result.convertedLeads).toBe(1);
     expect(result.lostLeads).toBe(1);
     expect(result.conversionRate).toBe(0.25);
@@ -166,7 +166,7 @@ describe('calculateSourceMetrics', () => {
   it('groups leads by source and calculates conversion rates', () => {
     const leads = [
       makeLead({ source_channel: 'Website', status: 'new' }),
-      makeLead({ source_channel: 'Website', status: 'converted' }),
+      makeLead({ source_channel: 'Website', status: 'won' }),
       makeLead({ source_channel: 'Referral', status: 'qualified' }),
     ];
     const result = calculateSourceMetrics(leads);

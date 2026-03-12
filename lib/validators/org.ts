@@ -16,13 +16,13 @@ export const profileUpdateSchema = z.object({
 // ============================================================
 
 export const divisionSetupCreateSchema = z.object({
-  division_name: z.string().min(1).max(100),
-  division_code: z.string().min(1).max(20),
+  name: z.string().min(1).max(100),
+  code: z.string().min(1).max(20),
   description: z.string().optional(),
 });
 
 export const divisionUpdateSchema = z.object({
-  division_name: z.string().min(1).max(100).optional(),
+  name: z.string().min(1).max(100).optional(),
   description: z.string().optional().nullable(),
 });
 

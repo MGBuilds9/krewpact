@@ -5,8 +5,8 @@ import { apiFetch } from '@/lib/api-client';
 
 export interface Division {
   id: string;
-  division_name: string;
-  division_code: string;
+  name: string;
+  code: string;
   description: string | null;
   is_active: boolean;
   created_at: string;
@@ -16,11 +16,14 @@ export interface Division {
 export interface OrgUser {
   id: string;
   clerk_user_id: string;
+  first_name: string;
+  last_name: string;
   email: string;
-  full_name: string;
-  role_ids: string[];
-  division_ids: string[];
-  is_active: boolean;
+  phone: string | null;
+  avatar_url: string | null;
+  locale: string;
+  timezone: string;
+  status: string;
   created_at: string;
   updated_at: string;
 }

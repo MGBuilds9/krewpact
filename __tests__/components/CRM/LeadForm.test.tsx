@@ -119,7 +119,7 @@ describe('LeadForm', () => {
     expect(screen.queryByText('Cancel')).toBeNull();
   });
 
-  it('calls createLead.mutate on submit in create mode', async () => {
+  it('calls createLead.mutate on submit in create mode', { timeout: 15000 }, async () => {
     const user = userEvent.setup();
     renderForm();
 

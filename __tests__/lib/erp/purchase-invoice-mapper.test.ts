@@ -13,28 +13,28 @@ describe('mapPurchaseInvoiceStatus', () => {
     expect(mapPurchaseInvoiceStatus('Submitted')).toBe('submitted');
   });
 
-  it('maps Unpaid to unpaid', () => {
-    expect(mapPurchaseInvoiceStatus('Unpaid')).toBe('unpaid');
+  it('maps Unpaid to submitted', () => {
+    expect(mapPurchaseInvoiceStatus('Unpaid')).toBe('submitted');
   });
 
-  it('maps Overdue to overdue', () => {
-    expect(mapPurchaseInvoiceStatus('Overdue')).toBe('overdue');
+  it('maps Overdue to submitted', () => {
+    expect(mapPurchaseInvoiceStatus('Overdue')).toBe('submitted');
   });
 
-  it('maps Partly Paid to partially_paid', () => {
-    expect(mapPurchaseInvoiceStatus('Partly Paid')).toBe('partially_paid');
+  it('maps Partly Paid to received', () => {
+    expect(mapPurchaseInvoiceStatus('Partly Paid')).toBe('received');
   });
 
-  it('maps Paid to paid', () => {
-    expect(mapPurchaseInvoiceStatus('Paid')).toBe('paid');
+  it('maps Paid to closed', () => {
+    expect(mapPurchaseInvoiceStatus('Paid')).toBe('closed');
   });
 
-  it('maps Cancelled to void', () => {
-    expect(mapPurchaseInvoiceStatus('Cancelled')).toBe('void');
+  it('maps Cancelled to cancelled', () => {
+    expect(mapPurchaseInvoiceStatus('Cancelled')).toBe('cancelled');
   });
 
-  it('maps Return to void', () => {
-    expect(mapPurchaseInvoiceStatus('Return')).toBe('void');
+  it('maps Return to cancelled', () => {
+    expect(mapPurchaseInvoiceStatus('Return')).toBe('cancelled');
   });
 
   it('defaults unknown status to draft', () => {
@@ -91,7 +91,7 @@ describe('fromErpPurchaseInvoice', () => {
     expect(result.currency).toBe('CAD');
     expect(result.grand_total).toBe(8000.0);
     expect(result.outstanding_amount).toBe(3000.0);
-    expect(result.status).toBe('partially_paid');
+    expect(result.status).toBe('received');
     expect(result.project_id).toBe('proj-001');
     expect(result.supplier_id).toBe('sup-001');
     expect(result.synced_at).toBe('2026-03-08T12:00:00.000Z');

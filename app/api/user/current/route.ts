@@ -81,7 +81,9 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(callerUser);
   } catch (err: unknown) {
-    console.error('/api/user/current error:', err);
+    logger.error('/api/user/current error:', {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
 
   // Reassign outreach log from secondary to primary
   const { error: outreachError } = await supabase
-    .from('outreach_log')
+    .from('outreach')
     .update({ lead_id: primary_id })
     .eq('lead_id', secondary_id);
 

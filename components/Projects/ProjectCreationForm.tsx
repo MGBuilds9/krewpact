@@ -27,8 +27,8 @@ interface ProjectCreationFormProps {
 
 interface ProjectMember {
   user_id: string;
-  role: string;
-  hours_allocated: number | null;
+  member_role: string;
+  allocation_pct: number | null;
 }
 
 export function ProjectCreationForm({ onClose, onSuccess }: ProjectCreationFormProps) {
@@ -66,7 +66,10 @@ export function ProjectCreationForm({ onClose, onSuccess }: ProjectCreationFormP
   };
 
   const addProjectMember = () => {
-    setProjectMembers([...projectMembers, { user_id: '', role: 'worker', hours_allocated: null }]);
+    setProjectMembers([
+      ...projectMembers,
+      { user_id: '', member_role: 'worker', allocation_pct: null },
+    ]);
   };
 
   const removeProjectMember = (index: number) => {
@@ -278,8 +281,10 @@ export function ProjectCreationForm({ onClose, onSuccess }: ProjectCreationFormP
                         <div>
                           <Label>Role</Label>
                           <Select
-                            value={member.role}
-                            onValueChange={(value) => updateProjectMember(index, 'role', value)}
+                            value={member.member_role}
+                            onValueChange={(value) =>
+                              updateProjectMember(index, 'member_role', value)
+                            }
                           >
                             <SelectTrigger>
                               <SelectValue />
@@ -292,15 +297,15 @@ export function ProjectCreationForm({ onClose, onSuccess }: ProjectCreationFormP
                           </Select>
                         </div>
                         <div>
-                          <Label>Hours Allocated</Label>
+                          <Label>Allocation %</Label>
                           <Input
                             type="number"
                             placeholder="0"
-                            value={member.hours_allocated || ''}
+                            value={member.allocation_pct || ''}
                             onChange={(e) =>
                               updateProjectMember(
                                 index,
-                                'hours_allocated',
+                                'allocation_pct',
                                 e.target.value ? parseFloat(e.target.value) : null,
                               )
                             }
@@ -398,7 +403,7 @@ export function ProjectCreationForm({ onClose, onSuccess }: ProjectCreationFormP
                         <span>
                           {user?.first_name} {user?.last_name}
                         </span>
-                        <Badge variant="outline">{member.role}</Badge>
+                        <Badge variant="outline">{member.member_role}</Badge>
                       </div>
                     );
                   })}

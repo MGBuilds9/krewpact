@@ -93,14 +93,14 @@ export function PortalHeader() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="cursor-pointer touch-target hover:bg-accent transition-colors duration-200"
-                  onClick={() => router.push('/portal/profile')}
+                  onClick={() => router.push('/portals/profile')}
                 >
                   <User className="mr-2 h-4 w-4" />
                   <span>Profile</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="cursor-pointer touch-target hover:bg-accent transition-colors duration-200"
-                  onClick={() => router.push('/portal/settings')}
+                  onClick={() => router.push('/portals/settings')}
                 >
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Settings</span>

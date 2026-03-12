@@ -53,9 +53,9 @@ export async function GET(req: NextRequest) {
 
     const hasDivisions = (divisionCount ?? 0) > 0;
 
-    // Check team members (user_profiles beyond the current user)
+    // Check team members (users beyond the current user)
     const { count: memberCount, error: memberError } = await supabase
-      .from('user_profiles')
+      .from('users')
       .select('id', { count: 'exact', head: true })
       .neq('clerk_user_id', userId);
 

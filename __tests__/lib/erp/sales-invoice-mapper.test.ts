@@ -1,40 +1,37 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import {
-  fromErpSalesInvoice,
-  mapInvoiceStatus,
-} from '@/lib/erp/sales-invoice-mapper';
+import { fromErpSalesInvoice, mapInvoiceStatus } from '@/lib/erp/sales-invoice-mapper';
 
 describe('mapInvoiceStatus', () => {
   it('maps Draft to draft', () => {
     expect(mapInvoiceStatus('Draft')).toBe('draft');
   });
 
-  it('maps Submitted to issued', () => {
-    expect(mapInvoiceStatus('Submitted')).toBe('issued');
+  it('maps Submitted to submitted', () => {
+    expect(mapInvoiceStatus('Submitted')).toBe('submitted');
   });
 
-  it('maps Unpaid to sent', () => {
-    expect(mapInvoiceStatus('Unpaid')).toBe('sent');
+  it('maps Unpaid to submitted', () => {
+    expect(mapInvoiceStatus('Unpaid')).toBe('submitted');
   });
 
   it('maps Overdue to overdue', () => {
     expect(mapInvoiceStatus('Overdue')).toBe('overdue');
   });
 
-  it('maps Partly Paid to partially_paid', () => {
-    expect(mapInvoiceStatus('Partly Paid')).toBe('partially_paid');
+  it('maps Partly Paid to paid', () => {
+    expect(mapInvoiceStatus('Partly Paid')).toBe('paid');
   });
 
   it('maps Paid to paid', () => {
     expect(mapInvoiceStatus('Paid')).toBe('paid');
   });
 
-  it('maps Cancelled to void', () => {
-    expect(mapInvoiceStatus('Cancelled')).toBe('void');
+  it('maps Cancelled to cancelled', () => {
+    expect(mapInvoiceStatus('Cancelled')).toBe('cancelled');
   });
 
-  it('maps Credit Note Issued to void', () => {
-    expect(mapInvoiceStatus('Credit Note Issued')).toBe('void');
+  it('maps Credit Note Issued to cancelled', () => {
+    expect(mapInvoiceStatus('Credit Note Issued')).toBe('cancelled');
   });
 
   it('defaults unknown status to draft', () => {
@@ -91,7 +88,7 @@ describe('fromErpSalesInvoice', () => {
     expect(result.currency).toBe('CAD');
     expect(result.grand_total).toBe(15000.0);
     expect(result.outstanding_amount).toBe(5000.0);
-    expect(result.status).toBe('partially_paid');
+    expect(result.status).toBe('paid');
     expect(result.project_id).toBe('proj-001');
     expect(result.account_id).toBe('acct-001');
     expect(result.synced_at).toBe('2026-03-05T12:00:00.000Z');

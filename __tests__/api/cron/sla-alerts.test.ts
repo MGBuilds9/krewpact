@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const mockVerifyCronAuth = vi.fn();
@@ -7,14 +8,14 @@ vi.mock('@/lib/api/cron-auth', () => ({
 
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClientSafe: vi.fn(),
+  createServiceClient: vi.fn(),
 }));
 
-import { createUserClientSafe } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/server';
 import { POST } from '@/app/api/cron/sla-alerts/route';
 import { mockSupabaseClient, makeRequest } from '@/__tests__/helpers';
 
-const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
+const mockCreateServiceClient = vi.mocked(createServiceClient);
 
 function makeCronRequest() {
   return makeRequest('/api/cron/sla-alerts', { method: 'POST' });
@@ -34,16 +35,15 @@ describe('POST /api/cron/sla-alerts', () => {
   });
 
   it('allows request when cron auth succeeds', async () => {
-    mockCreateUserClientSafe.mockResolvedValue({
-      client: mockSupabaseClient({
+    mockCreateServiceClient.mockReturnValue(
+      mockSupabaseClient({
         tables: {
           leads: { data: [], error: null },
           opportunities: { data: [], error: null },
           notifications: { data: null, error: null },
         },
-      }),
-      error: null,
-    });
+      }) as any,
+    );
 
     const res = await POST(makeCronRequest());
     expect(res.status).toBe(200);
@@ -55,8 +55,8 @@ describe('POST /api/cron/sla-alerts', () => {
     // Lead in 'new' stage (48h SLA) entered 72h ago — overdue
     const staleDate = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString();
 
-    mockCreateUserClientSafe.mockResolvedValue({
-      client: mockSupabaseClient({
+    mockCreateServiceClient.mockReturnValue(
+      mockSupabaseClient({
         tables: {
           leads: {
             data: [
@@ -73,9 +73,8 @@ describe('POST /api/cron/sla-alerts', () => {
           opportunities: { data: [], error: null },
           notifications: { data: null, error: null },
         },
-      }),
-      error: null,
-    });
+      }) as any,
+    );
 
     const res = await POST(makeCronRequest());
     expect(res.status).toBe(200);
@@ -88,8 +87,8 @@ describe('POST /api/cron/sla-alerts', () => {
   it('skips leads without assigned_to (no notification created)', async () => {
     const staleDate = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString();
 
-    mockCreateUserClientSafe.mockResolvedValue({
-      client: mockSupabaseClient({
+    mockCreateServiceClient.mockReturnValue(
+      mockSupabaseClient({
         tables: {
           leads: {
             data: [
@@ -106,9 +105,8 @@ describe('POST /api/cron/sla-alerts', () => {
           opportunities: { data: [], error: null },
           notifications: { data: null, error: null },
         },
-      }),
-      error: null,
-    });
+      }) as any,
+    );
 
     const res = await POST(makeCronRequest());
     expect(res.status).toBe(200);
@@ -121,8 +119,8 @@ describe('POST /api/cron/sla-alerts', () => {
     // Opportunity in 'intake' stage (24h SLA) entered 48h ago — overdue
     const staleDate = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
 
-    mockCreateUserClientSafe.mockResolvedValue({
-      client: mockSupabaseClient({
+    mockCreateServiceClient.mockReturnValue(
+      mockSupabaseClient({
         tables: {
           leads: { data: [], error: null },
           opportunities: {
@@ -139,9 +137,8 @@ describe('POST /api/cron/sla-alerts', () => {
           },
           notifications: { data: null, error: null },
         },
-      }),
-      error: null,
-    });
+      }) as any,
+    );
 
     const res = await POST(makeCronRequest());
     expect(res.status).toBe(200);
@@ -153,8 +150,8 @@ describe('POST /api/cron/sla-alerts', () => {
   it('does not create alerts for leads within SLA', async () => {
     const freshDate = new Date().toISOString();
 
-    mockCreateUserClientSafe.mockResolvedValue({
-      client: mockSupabaseClient({
+    mockCreateServiceClient.mockReturnValue(
+      mockSupabaseClient({
         tables: {
           leads: {
             data: [
@@ -171,9 +168,8 @@ describe('POST /api/cron/sla-alerts', () => {
           opportunities: { data: [], error: null },
           notifications: { data: null, error: null },
         },
-      }),
-      error: null,
-    });
+      }) as any,
+    );
 
     const res = await POST(makeCronRequest());
     expect(res.status).toBe(200);
@@ -184,8 +180,8 @@ describe('POST /api/cron/sla-alerts', () => {
   it('does not create alerts for stages not in SLA config (e.g. won)', async () => {
     const staleDate = new Date(Date.now() - 9999 * 60 * 60 * 1000).toISOString();
 
-    mockCreateUserClientSafe.mockResolvedValue({
-      client: mockSupabaseClient({
+    mockCreateServiceClient.mockReturnValue(
+      mockSupabaseClient({
         tables: {
           leads: {
             data: [
@@ -202,9 +198,8 @@ describe('POST /api/cron/sla-alerts', () => {
           opportunities: { data: [], error: null },
           notifications: { data: null, error: null },
         },
-      }),
-      error: null,
-    });
+      }) as any,
+    );
 
     const res = await POST(makeCronRequest());
     expect(res.status).toBe(200);
@@ -214,16 +209,15 @@ describe('POST /api/cron/sla-alerts', () => {
   });
 
   it('handles null leads/opportunities from Supabase gracefully', async () => {
-    mockCreateUserClientSafe.mockResolvedValue({
-      client: mockSupabaseClient({
+    mockCreateServiceClient.mockReturnValue(
+      mockSupabaseClient({
         tables: {
           leads: { data: null, error: null },
           opportunities: { data: null, error: null },
           notifications: { data: null, error: null },
         },
-      }),
-      error: null,
-    });
+      }) as any,
+    );
 
     const res = await POST(makeCronRequest());
     expect(res.status).toBe(200);

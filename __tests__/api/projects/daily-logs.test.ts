@@ -49,7 +49,7 @@ const sampleLog = {
   work_summary: 'Framing on second floor complete. Electrical rough-in started.',
   delays: null,
   safety_notes: 'All PPE compliance checked.',
-  author_user_id: 'user_test_123',
+  submitted_by: 'user_test_123',
   created_at: '2026-03-05T17:00:00Z',
 };
 

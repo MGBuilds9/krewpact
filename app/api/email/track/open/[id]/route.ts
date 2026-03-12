@@ -11,7 +11,7 @@ const TRACKING_PIXEL = Buffer.from(
 /**
  * Email open tracking pixel.
  * GET /api/email/track/open/:outreachEventId
- * Returns a 1x1 transparent GIF and updates outreach_events.opened_at.
+ * Returns a 1x1 transparent GIF and updates outreach.opened_at.
  */
 export async function GET(
   _req: NextRequest,
@@ -25,7 +25,7 @@ export async function GET(
   try {
     const supabase = createServiceClient();
     await supabase
-      .from('outreach_events')
+      .from('outreach')
       .update({ opened_at: new Date().toISOString() })
       .eq('id', id)
       .is('opened_at', null); // Only set on first open

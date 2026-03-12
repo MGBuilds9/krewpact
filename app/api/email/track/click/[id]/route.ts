@@ -35,7 +35,7 @@ export async function GET(
   try {
     const supabase = createServiceClient();
     await supabase
-      .from('outreach_events')
+      .from('outreach')
       .update({ clicked_at: new Date().toISOString() })
       .eq('id', id)
       .is('clicked_at', null); // Only set on first click

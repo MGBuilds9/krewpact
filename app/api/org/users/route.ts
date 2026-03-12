@@ -32,10 +32,13 @@ export async function GET(req: NextRequest) {
       'id, clerk_user_id, first_name, last_name, email, phone, avatar_url, locale, timezone, status, created_at, updated_at',
       { count: 'exact' },
     )
-    .order('full_name', { ascending: true })
+    .order('first_name', { ascending: true })
     .range(offset, offset + limit - 1);
 
-  if (search) query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%`);
+  if (search)
+    query = query.or(
+      `first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%`,
+    );
 
   const { data, error, count } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

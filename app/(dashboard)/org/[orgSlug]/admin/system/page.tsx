@@ -57,15 +57,15 @@ export default function SystemAdminPage() {
                   <div className="flex-1">
                     <p className="font-mono text-sm">{wh.event_type}</p>
                     <p className="text-xs text-muted-foreground">
-                      {wh.source} · {new Date(wh.created_at).toLocaleString('en-CA')} ·{' '}
-                      {wh.attempts} attempt(s)
+                      {wh.provider} · {new Date(wh.received_at).toLocaleString('en-CA')}
                     </p>
-                    {wh.last_error && (
-                      <p className="mt-1 text-xs text-destructive">{wh.last_error}</p>
+                    {wh.processing_error && (
+                      <p className="mt-1 text-xs text-destructive">{wh.processing_error}</p>
                     )}
                   </div>
-                  <WebhookStatus status={wh.status} />
-                  {(wh.status === 'failed' || wh.status === 'dead_letter') && (
+                  <WebhookStatus status={wh.processing_status} />
+                  {(wh.processing_status === 'failed' ||
+                    wh.processing_status === 'dead_letter') && (
                     <WebhookReplayForm webhookId={wh.id} />
                   )}
                 </CardContent>

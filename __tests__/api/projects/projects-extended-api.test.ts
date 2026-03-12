@@ -316,7 +316,7 @@ describe('GET /api/projects/[id]/daily-logs', () => {
         delays: null,
         safety_notes: null,
         is_offline_origin: false,
-        author_user_id: 'u',
+        submitted_by: 'u',
         created_at: '2026-02-26',
         updated_at: '2026-02-26',
       },
@@ -349,7 +349,7 @@ describe('POST /api/projects/[id]/daily-logs', () => {
       delays: null,
       safety_notes: null,
       is_offline_origin: false,
-      author_user_id: 'u',
+      submitted_by: 'u',
       created_at: '2026-02-26',
       updated_at: '2026-02-26',
     };
@@ -387,7 +387,7 @@ describe('PATCH /api/projects/[id]/daily-logs/[logId]', () => {
       delays: null,
       safety_notes: null,
       is_offline_origin: false,
-      author_user_id: 'u',
+      submitted_by: 'u',
       created_at: '2026-02-26',
       updated_at: '2026-02-26',
     };

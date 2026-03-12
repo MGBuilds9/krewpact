@@ -22,7 +22,7 @@ export default function TradePortalError({
       reset={reset}
       errorMessage={error.message}
       errorDigest={error.digest}
-      homeHref="/trade"
+      homeHref="/portals/trade"
     />
   );
 }

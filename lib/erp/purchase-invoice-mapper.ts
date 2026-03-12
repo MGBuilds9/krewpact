@@ -10,12 +10,12 @@
 const STATUS_MAP: Record<string, string> = {
   Draft: 'draft',
   Submitted: 'submitted',
-  Unpaid: 'unpaid',
-  Overdue: 'overdue',
-  'Partly Paid': 'partially_paid',
-  Paid: 'paid',
-  Cancelled: 'void',
-  Return: 'void',
+  Unpaid: 'submitted',
+  Overdue: 'submitted',
+  'Partly Paid': 'received',
+  Paid: 'closed',
+  Cancelled: 'cancelled',
+  Return: 'cancelled',
 };
 
 /**

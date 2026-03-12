@@ -31,7 +31,7 @@ export function DivisionSetupForm({ onSuccess, onCancel }: DivisionSetupFormProp
 
   const form = useForm<FormValues>({
     resolver: zodResolver(divisionSetupCreateSchema),
-    defaultValues: { division_name: '', division_code: '', description: '' },
+    defaultValues: { name: '', code: '', description: '' },
   });
 
   async function onSubmit(values: FormValues) {
@@ -50,7 +50,7 @@ export function DivisionSetupForm({ onSuccess, onCancel }: DivisionSetupFormProp
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
-          name="division_name"
+          name="name"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Division Name</FormLabel>
@@ -64,7 +64,7 @@ export function DivisionSetupForm({ onSuccess, onCancel }: DivisionSetupFormProp
 
         <FormField
           control={form.control}
-          name="division_code"
+          name="code"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Division Code</FormLabel>

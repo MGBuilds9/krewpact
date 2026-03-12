@@ -48,7 +48,7 @@ export function ProjectTeamTab({ projectId }: ProjectTeamTabProps) {
 
   const handleAddMember = async () => {
     try {
-      await addMember.mutateAsync({ user_id: selectedUserId, role: selectedRole });
+      await addMember.mutateAsync({ user_id: selectedUserId, member_role: selectedRole });
       setIsOpen(false);
       setSelectedUserId('');
       toast.success('Team member added');
@@ -136,7 +136,7 @@ export function ProjectTeamTab({ projectId }: ProjectTeamTabProps) {
                       {member.user?.first_name} {member.user?.last_name}
                     </p>
                     <Badge variant="secondary" className="mt-1">
-                      {member.role}
+                      {member.member_role}
                     </Badge>
                     {member.user?.email && (
                       <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">

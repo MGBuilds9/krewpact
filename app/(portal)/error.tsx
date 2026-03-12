@@ -20,7 +20,7 @@ export default function PortalError({
       reset={reset}
       errorMessage={error.message}
       errorDigest={error.digest}
-      homeHref="/portal"
+      homeHref="/portals"
     />
   );
 }

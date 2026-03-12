@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
       .select(
         'id, email, first_name, last_name, avatar_url, clerk_user_id, phone, locale, timezone, status, created_at, updated_at',
       )
-      .eq('clerk_id', userId)
+      .eq('clerk_user_id', userId)
       .single();
 
     if (error) {
@@ -70,7 +70,7 @@ export async function PATCH(req: NextRequest) {
     const { data, error } = await supabase
       .from('users')
       .update(parsed.data)
-      .eq('clerk_id', userId)
+      .eq('clerk_user_id', userId)
       .select()
       .single();
 

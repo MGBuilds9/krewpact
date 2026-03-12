@@ -22,7 +22,7 @@ export default function ClientPortalError({
       reset={reset}
       errorMessage={error.message}
       errorDigest={error.digest}
-      homeHref="/client"
+      homeHref="/portals/client/projects"
     />
   );
 }

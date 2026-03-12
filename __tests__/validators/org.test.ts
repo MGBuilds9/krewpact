@@ -51,34 +51,34 @@ describe('profileUpdateSchema', () => {
 describe('divisionSetupCreateSchema', () => {
   it('accepts valid input with all required fields', () => {
     const result = divisionSetupCreateSchema.safeParse({
-      division_name: 'MDM Contracting',
-      division_code: 'contracting',
+      name: 'MDM Contracting',
+      code: 'contracting',
     });
     expect(result.success).toBe(true);
   });
 
-  it('fails when division_name is missing', () => {
-    const result = divisionSetupCreateSchema.safeParse({ division_code: 'contracting' });
+  it('fails when name is missing', () => {
+    const result = divisionSetupCreateSchema.safeParse({ code: 'contracting' });
     expect(result.success).toBe(false);
   });
 
-  it('fails when division_code is missing', () => {
-    const result = divisionSetupCreateSchema.safeParse({ division_name: 'MDM Contracting' });
+  it('fails when code is missing', () => {
+    const result = divisionSetupCreateSchema.safeParse({ name: 'MDM Contracting' });
     expect(result.success).toBe(false);
   });
 
-  it('fails when division_code exceeds 20 characters', () => {
+  it('fails when code exceeds 20 characters', () => {
     const result = divisionSetupCreateSchema.safeParse({
-      division_name: 'Division',
-      division_code: 'c'.repeat(21),
+      name: 'Division',
+      code: 'c'.repeat(21),
     });
     expect(result.success).toBe(false);
   });
 
   it('accepts optional description', () => {
     const result = divisionSetupCreateSchema.safeParse({
-      division_name: 'MDM Homes',
-      division_code: 'homes',
+      name: 'MDM Homes',
+      code: 'homes',
       description: 'Residential construction division',
     });
     expect(result.success).toBe(true);

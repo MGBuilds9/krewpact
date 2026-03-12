@@ -6,7 +6,6 @@ import { processSequences } from '@/lib/crm/sequence-processor';
 import type { EmailSender, TemplateResolver } from '@/lib/crm/sequence-processor';
 import { verifyCronAuth } from '@/lib/api/cron-auth';
 
-
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const { authorized } = await verifyCronAuth(req);
   if (!authorized) {
@@ -28,7 +27,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     async resolve(templateId, variables) {
       const { data: template } = await supabase
         .from('email_templates')
-        .select('id, name, subject, body_html, body_text, category, division_id, is_active, variables, created_at, updated_at')
+        .select(
+          'id, name, subject, body_html, body_text, category, division_id, is_active, variables, created_at, updated_at',
+        )
         .eq('id', templateId)
         .single();
 
@@ -49,3 +50,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     timestamp: new Date().toISOString(),
   });
 }
+
+// Vercel Cron Jobs sends GET requests
+export { POST as GET };

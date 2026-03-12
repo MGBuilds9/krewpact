@@ -52,7 +52,7 @@ describe('GET /api/projects/[id]/members', () => {
         id: 'mem-1',
         project_id: PROJECT_ID,
         user_id: USER_ID,
-        role: 'manager',
+        member_role: 'manager',
         left_at: null,
         user: {
           id: USER_ID,
@@ -101,7 +101,7 @@ describe('POST /api/projects/[id]/members', () => {
 
   it('returns 400 for invalid body (missing user_id)', async () => {
     const res = await POST(
-      makeJsonRequest(`/api/projects/${PROJECT_ID}/members`, { role: 'worker' }),
+      makeJsonRequest(`/api/projects/${PROJECT_ID}/members`, { member_role: 'worker' }),
       ctx(),
     );
     expect(res.status).toBe(400);
@@ -111,7 +111,7 @@ describe('POST /api/projects/[id]/members', () => {
     const res = await POST(
       makeJsonRequest(`/api/projects/${PROJECT_ID}/members`, {
         user_id: USER_ID,
-        role: 'ceo',
+        member_role: 'ceo',
       }),
       ctx(),
     );
@@ -123,7 +123,7 @@ describe('POST /api/projects/[id]/members', () => {
       id: 'mem-new',
       project_id: PROJECT_ID,
       user_id: USER_ID,
-      role: 'worker',
+      member_role: 'worker',
       left_at: null,
       user: {
         id: USER_ID,
@@ -143,7 +143,7 @@ describe('POST /api/projects/[id]/members', () => {
     );
     expect(res.status).toBe(201);
     const body = await res.json();
-    expect(body.role).toBe('worker');
+    expect(body.member_role).toBe('worker');
   });
 
   it('adds member with explicit role', async () => {
@@ -151,7 +151,7 @@ describe('POST /api/projects/[id]/members', () => {
       id: 'mem-new',
       project_id: PROJECT_ID,
       user_id: USER_ID,
-      role: 'supervisor',
+      member_role: 'supervisor',
       left_at: null,
       user: {
         id: USER_ID,
@@ -168,7 +168,7 @@ describe('POST /api/projects/[id]/members', () => {
     const res = await POST(
       makeJsonRequest(`/api/projects/${PROJECT_ID}/members`, {
         user_id: USER_ID,
-        role: 'supervisor',
+        member_role: 'supervisor',
       }),
       ctx(),
     );

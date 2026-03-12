@@ -7,8 +7,8 @@ import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 const addMemberSchema = z.object({
   user_id: z.string().uuid(),
-  role: z.enum(['manager', 'supervisor', 'worker', 'admin']).default('worker'),
-  hours_allocated: z.number().nonnegative().nullable().optional(),
+  member_role: z.enum(['manager', 'supervisor', 'worker', 'admin']).default('worker'),
+  allocation_pct: z.number().nonnegative().max(100).nullable().optional(),
 });
 
 type RouteContext = { params: Promise<{ id: string }> };

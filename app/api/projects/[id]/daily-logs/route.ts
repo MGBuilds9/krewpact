@@ -66,7 +66,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
   if (authError) return authError;
   const { data, error } = await supabase
     .from('project_daily_logs')
-    .insert({ ...parsed.data, project_id: id, author_user_id: userId })
+    .insert({ ...parsed.data, project_id: id, submitted_by: userId })
     .select()
     .single();
 
