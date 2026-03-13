@@ -115,6 +115,16 @@ describe('enrichLead', () => {
       website_url: null,
       linkedin_url: null,
       title: null,
+      seniority: null,
+      departments: null,
+      employees: null,
+      annual_revenue: null,
+      founded_year: null,
+      technologies: null,
+      org_linkedin: null,
+      org_industry: null,
+      org_city: null,
+      org_state: null,
     });
     mockBrave.mockResolvedValue({
       website: null,
@@ -171,6 +181,16 @@ describe('enrichLead', () => {
       website_url: 'https://www.acmeconstruction.com/',
       linkedin_url: 'https://linkedin.com/in/johndoe',
       title: 'CEO',
+      seniority: 'c_suite',
+      departments: ['executive'],
+      employees: 50,
+      annual_revenue: 5000000,
+      founded_year: 2010,
+      technologies: null,
+      org_linkedin: null,
+      org_industry: 'construction',
+      org_city: 'Toronto',
+      org_state: 'Ontario',
     });
 
     const { sideEffects } = await enrichLead(baseLead, baseContact);
@@ -187,6 +207,16 @@ describe('enrichLead', () => {
       website_url: 'https://newdomain.com',
       linkedin_url: null,
       title: null,
+      seniority: null,
+      departments: null,
+      employees: null,
+      annual_revenue: null,
+      founded_year: null,
+      technologies: null,
+      org_linkedin: null,
+      org_industry: null,
+      org_city: null,
+      org_state: null,
     });
 
     const leadWithDomain = { ...baseLead, domain: 'existing.com' };

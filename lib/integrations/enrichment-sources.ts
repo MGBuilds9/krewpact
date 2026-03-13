@@ -18,6 +18,16 @@ export interface ApolloMatchResult {
   website_url: string | null;
   linkedin_url: string | null;
   title: string | null;
+  seniority: string | null;
+  departments: string[] | null;
+  employees: number | null;
+  annual_revenue: number | null;
+  founded_year: number | null;
+  technologies: string[] | null;
+  org_linkedin: string | null;
+  org_industry: string | null;
+  org_city: string | null;
+  org_state: string | null;
 }
 
 export interface BraveSearchResult {
@@ -74,7 +84,12 @@ export async function enrichFromApolloMatch(input: ApolloMatchInput): Promise<Ap
   const data = await res.json();
   const person = data.person;
   if (!person)
-    return { email: null, phone: null, website_url: null, linkedin_url: null, title: null };
+    return {
+      email: null, phone: null, website_url: null, linkedin_url: null, title: null,
+      seniority: null, departments: null, employees: null, annual_revenue: null,
+      founded_year: null, technologies: null, org_linkedin: null, org_industry: null,
+      org_city: null, org_state: null,
+    };
 
   return {
     email: person.email ?? null,
@@ -82,6 +97,16 @@ export async function enrichFromApolloMatch(input: ApolloMatchInput): Promise<Ap
     website_url: person.organization?.website_url ?? null,
     linkedin_url: person.linkedin_url ?? null,
     title: person.title ?? null,
+    seniority: person.seniority ?? null,
+    departments: person.departments ?? null,
+    employees: person.organization?.estimated_num_employees ?? null,
+    annual_revenue: person.organization?.annual_revenue ?? null,
+    founded_year: person.organization?.founded_year ?? null,
+    technologies: person.organization?.technologies ?? null,
+    org_linkedin: person.organization?.linkedin_url ?? null,
+    org_industry: person.organization?.industry ?? null,
+    org_city: person.organization?.city ?? null,
+    org_state: person.organization?.state ?? null,
   };
 }
 

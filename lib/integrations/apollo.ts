@@ -2,9 +2,13 @@ const APOLLO_API_URL = 'https://api.apollo.io/api/v1';
 
 export interface ApolloSearchParams {
   person_titles?: string[];
+  person_seniorities?: string[];
+  person_locations?: string[];
   organization_industry_tag_ids?: string[];
   organization_locations?: string[];
   organization_num_employees_ranges?: string[];
+  q_keywords?: string[];
+  contact_email_status?: string[];
   per_page?: number;
   page?: number;
 }
@@ -16,20 +20,47 @@ export interface ApolloPerson {
   name: string;
   email: string | null;
   title: string;
+  seniority: string | null;
+  departments: string[] | null;
+  headline: string | null;
   organization?: {
     id: string;
     name: string;
     website_url: string | null;
     industry: string | null;
     estimated_num_employees: number | null;
+    annual_revenue: number | null;
+    founded_year: number | null;
     city: string | null;
     state: string | null;
+    country: string | null;
+    linkedin_url: string | null;
+    technologies: string[] | null;
+    keywords: string[] | null;
   };
   linkedin_url: string | null;
-  phone_numbers?: { raw_number: string }[];
+  phone_numbers?: { raw_number: string; type?: string }[];
+}
+
+export interface ApolloSearchResponse {
+  people: ApolloPerson[];
+  pagination: {
+    page: number;
+    per_page: number;
+    total_entries: number;
+    total_pages: number;
+  };
 }
 
 export async function searchPeople(params: ApolloSearchParams): Promise<ApolloPerson[]> {
+  const { pagination } = await searchPeopleWithPagination(params);
+  // For backward compat, flatten to just the people array
+  return pagination.people;
+}
+
+export async function searchPeopleWithPagination(
+  params: ApolloSearchParams,
+): Promise<{ pagination: { people: ApolloPerson[]; page: number; per_page: number; total_entries: number; total_pages: number } }> {
   const apiKey = process.env.APOLLO_API_KEY;
   if (!apiKey) throw new Error('APOLLO_API_KEY not configured');
 
@@ -53,7 +84,18 @@ export async function searchPeople(params: ApolloSearchParams): Promise<ApolloPe
   }
 
   const data = await res.json();
-  return data.matches ?? data.people ?? [];
+  const people: ApolloPerson[] = data.matches ?? data.people ?? [];
+  const pagination = data.pagination ?? {};
+
+  return {
+    pagination: {
+      people,
+      page: pagination.page ?? params.page ?? 1,
+      per_page: pagination.per_page ?? params.per_page ?? 25,
+      total_entries: pagination.total_entries ?? people.length,
+      total_pages: pagination.total_pages ?? 1,
+    },
+  };
 }
 
 // MDM-specific Apollo search config
@@ -87,6 +129,19 @@ export function mapApolloToLead(person: ApolloPerson) {
     city: person.organization?.city ?? null,
     province: person.organization?.state ?? 'Ontario',
     estimated_value: null,
+    enrichment_data: {
+      apollo_search: {
+        employees: person.organization?.estimated_num_employees ?? null,
+        annual_revenue: person.organization?.annual_revenue ?? null,
+        founded_year: person.organization?.founded_year ?? null,
+        technologies: person.organization?.technologies ?? null,
+        org_keywords: person.organization?.keywords ?? null,
+        org_linkedin: person.organization?.linkedin_url ?? null,
+        seniority: person.seniority ?? null,
+        departments: person.departments ?? null,
+        enriched_at: new Date().toISOString(),
+      },
+    },
   };
 }
 
@@ -100,6 +155,8 @@ export function mapApolloToContact(person: ApolloPerson, leadId: string) {
     phone: person.phone_numbers?.[0]?.raw_number ?? null,
     title: person.title,
     linkedin_url: person.linkedin_url,
+    seniority: person.seniority ?? null,
+    departments: person.departments?.join(', ') ?? null,
     is_primary: true,
     is_decision_maker: true,
   };

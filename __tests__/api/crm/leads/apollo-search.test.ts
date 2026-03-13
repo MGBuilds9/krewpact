@@ -24,6 +24,7 @@ vi.mock('@/lib/integrations/apollo', () => ({
       city: null,
       province: 'Ontario',
       estimated_value: null,
+      enrichment_data: { apollo_search: { enriched_at: new Date().toISOString() } },
     }),
   ),
   mapApolloToContact: vi.fn((_person: unknown, leadId: string) => ({
@@ -35,6 +36,8 @@ vi.mock('@/lib/integrations/apollo', () => ({
     phone: null,
     title: 'Owner',
     linkedin_url: null,
+    seniority: null,
+    departments: null,
     is_primary: true,
     is_decision_maker: true,
   })),
@@ -60,14 +63,23 @@ function makePerson(id: string) {
     name: 'Test Person',
     email: `${id}@test.com`,
     title: 'Owner',
+    seniority: 'owner',
+    departments: ['executive'],
+    headline: null,
     organization: {
       id: `org-${id}`,
       name: `Company ${id}`,
       website_url: null,
       industry: 'healthcare',
       estimated_num_employees: 10,
+      annual_revenue: null,
+      founded_year: null,
       city: 'Toronto',
       state: 'Ontario',
+      country: 'Canada',
+      linkedin_url: null,
+      technologies: null,
+      keywords: null,
     },
     linkedin_url: null,
     phone_numbers: [],
@@ -84,7 +96,7 @@ describe('POST /api/crm/leads/apollo-search', () => {
     mockAuth.mockResolvedValue({ userId: null } as never);
 
     const req = makeJsonRequest('/api/crm/leads/apollo-search', {
-      profileId: 'pharmacy-owners-gta',
+      profileId: 'contracting-pharmacy-healthcare-on',
     });
     const res = await POST(req);
     expect(res.status).toBe(401);
@@ -107,14 +119,14 @@ describe('POST /api/crm/leads/apollo-search', () => {
     mockSearchPeople.mockResolvedValue(people);
 
     const req = makeJsonRequest('/api/crm/leads/apollo-search', {
-      profileId: 'pharmacy-owners-gta',
+      profileId: 'contracting-pharmacy-healthcare-on',
       page: 1,
     });
     const res = await POST(req);
     expect(res.status).toBe(200);
 
     const body = await res.json();
-    expect(body.profile.id).toBe('pharmacy-owners-gta');
+    expect(body.profile.id).toBe('contracting-pharmacy-healthcare-on');
     expect(body.results).toHaveLength(2);
     expect(body.results[0]).toHaveProperty('name');
     expect(body.results[0]).toHaveProperty('company');
@@ -137,7 +149,7 @@ describe('POST /api/crm/leads/apollo-search', () => {
     mockCreateUserClientSafe.mockResolvedValue({ client: supabase, error: null });
 
     const req = makeJsonRequest('/api/crm/leads/apollo-search', {
-      profileId: 'pharmacy-owners-gta',
+      profileId: 'contracting-pharmacy-healthcare-on',
       import: true,
     });
     const res = await POST(req);
@@ -146,14 +158,14 @@ describe('POST /api/crm/leads/apollo-search', () => {
     const body = await res.json();
     // With the default mock, the dedup query also returns the lead as "existing",
     // so the route reports all duplicates. This is expected behavior for the mock.
-    expect(body.imported === 0 || body.profileId === 'pharmacy-owners-gta').toBe(true);
+    expect(body.imported === 0 || body.profileId === 'contracting-pharmacy-healthcare-on').toBe(true);
   });
 
   it('handles Apollo API error', async () => {
     mockSearchPeople.mockRejectedValue(new Error('Rate limited'));
 
     const req = makeJsonRequest('/api/crm/leads/apollo-search', {
-      profileId: 'pharmacy-owners-gta',
+      profileId: 'contracting-pharmacy-healthcare-on',
     });
     const res = await POST(req);
     expect(res.status).toBe(500);
@@ -218,7 +230,7 @@ describe('POST /api/crm/leads/apollo-search', () => {
     mockCreateUserClientSafe.mockResolvedValue({ client: supabase, error: null });
 
     const req = makeJsonRequest('/api/crm/leads/apollo-search', {
-      profileId: 'pharmacy-owners-gta',
+      profileId: 'contracting-pharmacy-healthcare-on',
       import: true,
     });
     const res = await POST(req);

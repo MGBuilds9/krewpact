@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
         profile: {
           id: profile.id,
           name: profile.name,
-          division: profile.division,
+          divisionCode: profile.divisionCode,
           vertical: profile.vertical,
         },
         results: people.map((p) => ({

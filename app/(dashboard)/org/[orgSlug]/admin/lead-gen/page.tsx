@@ -254,7 +254,7 @@ export default function LeadGenDashboardPage() {
                 <option value="">Select a profile...</option>
                 {MDM_SEARCH_PROFILES.filter((p) => p.isActive).map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name} ({p.division} / {p.vertical})
+                    {p.name} ({p.divisionCode} / {p.vertical})
                   </option>
                 ))}
               </select>

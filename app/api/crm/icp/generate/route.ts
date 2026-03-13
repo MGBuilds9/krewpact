@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     const { data: accounts, error: accountsError } = await supabase
       .from('accounts')
       .select(
-        'id, industry, address, total_projects, lifetime_revenue, is_repeat_client, source, tags',
+        'id, division_id, industry, address, total_projects, lifetime_revenue, is_repeat_client, source, tags',
       )
       .gte('total_projects', 1)
       .is('deleted_at', null);
@@ -45,6 +45,7 @@ export async function POST(req: NextRequest) {
 
     const accountsForICP: AccountForICP[] = (accounts ?? []).map((a) => ({
       id: a.id,
+      division_id: a.division_id ?? null,
       industry: a.industry ?? null,
       address: (a.address as Record<string, string> | null) ?? null,
       total_projects: a.total_projects ?? 0,

@@ -5,7 +5,7 @@ import { summarizeEnrichment } from '@/lib/integrations/enrichment-summarizer';
 import { verifyCronAuth } from '@/lib/api/cron-auth';
 import { logger } from '@/lib/logger';
 
-const BATCH_SIZE = 20;
+const BATCH_SIZE = 50;
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const { authorized } = await verifyCronAuth(req);

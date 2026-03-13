@@ -21,7 +21,20 @@ vi.mock('@/lib/integrations/apollo', () => ({
       id: string;
       first_name: string;
       last_name: string;
-      organization?: { name?: string; industry?: string; city?: string; state?: string };
+      seniority?: string | null;
+      departments?: string[] | null;
+      organization?: {
+        name?: string;
+        industry?: string;
+        city?: string;
+        state?: string;
+        estimated_num_employees?: number | null;
+        annual_revenue?: number | null;
+        founded_year?: number | null;
+        technologies?: string[] | null;
+        keywords?: string[] | null;
+        linkedin_url?: string | null;
+      };
     }) => ({
       company_name: person.organization?.name ?? `${person.first_name} ${person.last_name}`,
       domain: null,
@@ -33,6 +46,19 @@ vi.mock('@/lib/integrations/apollo', () => ({
       city: person.organization?.city ?? null,
       province: person.organization?.state ?? 'Ontario',
       estimated_value: null,
+      enrichment_data: {
+        apollo_search: {
+          employees: person.organization?.estimated_num_employees ?? null,
+          annual_revenue: person.organization?.annual_revenue ?? null,
+          founded_year: person.organization?.founded_year ?? null,
+          technologies: person.organization?.technologies ?? null,
+          org_keywords: person.organization?.keywords ?? null,
+          org_linkedin: person.organization?.linkedin_url ?? null,
+          seniority: person.seniority ?? null,
+          departments: person.departments ?? null,
+          enriched_at: new Date().toISOString(),
+        },
+      },
     }),
   ),
   mapApolloToContact: vi.fn(
@@ -44,7 +70,9 @@ vi.mock('@/lib/integrations/apollo', () => ({
         email: string | null;
         title: string;
         linkedin_url: string | null;
-        phone_numbers?: { raw_number: string }[];
+        seniority?: string | null;
+        departments?: string[] | null;
+        phone_numbers?: { raw_number: string; type?: string }[];
       },
       leadId: string,
     ) => ({
@@ -53,9 +81,11 @@ vi.mock('@/lib/integrations/apollo', () => ({
       first_name: person.first_name,
       last_name: person.last_name,
       email: person.email,
-      phone: null,
+      phone: person.phone_numbers?.[0]?.raw_number ?? null,
       title: person.title,
       linkedin_url: person.linkedin_url,
+      seniority: person.seniority ?? null,
+      departments: person.departments?.join(', ') ?? null,
       is_primary: true,
       is_decision_maker: true,
     }),
@@ -80,14 +110,23 @@ function makePerson(id: string, name: string = 'Test Person') {
     name,
     email: `${id}@test.com`,
     title: 'Owner',
+    seniority: 'owner',
+    departments: ['operations'],
+    headline: null,
     organization: {
       id: `org-${id}`,
       name: `Company ${id}`,
       website_url: null,
       industry: 'construction',
       estimated_num_employees: 20,
+      annual_revenue: null,
+      founded_year: null,
       city: 'Toronto',
       state: 'Ontario',
+      country: 'Canada',
+      linkedin_url: null,
+      technologies: null,
+      keywords: null,
     },
     linkedin_url: null,
     phone_numbers: [],
@@ -97,6 +136,25 @@ function makePerson(id: string, name: string = 'Test Person') {
 function makeCronRequest(profileId?: string) {
   const path = profileId ? `/api/cron/apollo-pump?profileId=${profileId}` : '/api/cron/apollo-pump';
   return makeRequest(path, { method: 'POST' });
+}
+
+/** Build a supabase mock that handles all the tables the pump touches. */
+function makeFullSupabaseMock(options: {
+  stateData?: { last_page: number; credits_used_this_month: number; month_reset_at: string } | null;
+  insertedLeads?: { id: string; external_id: string }[];
+} = {}) {
+  const { stateData = null, insertedLeads = [] } = options;
+  return mockSupabaseClient({
+    tables: {
+      apollo_pump_state: { data: stateData, error: null },
+      apollo_profile_runs: { data: null, error: null },
+      leads: {
+        data: insertedLeads,
+        error: null,
+      },
+      contacts: { data: null, error: null },
+    },
+  });
 }
 
 describe('POST /api/cron/apollo-pump', () => {
@@ -112,54 +170,8 @@ describe('POST /api/cron/apollo-pump', () => {
     expect(res.status).toBe(401);
   });
 
-  it('imports leads using default config when no profileId', async () => {
-    const people = [makePerson('p1'), makePerson('p2')];
-    mockSearchPeople.mockResolvedValueOnce(people).mockResolvedValueOnce([]);
-
-    const supabase = mockSupabaseClient({
-      tables: {
-        leads: {
-          data: [
-            { id: 'lead-1', external_id: 'p1' },
-            { id: 'lead-2', external_id: 'p2' },
-          ],
-          error: null,
-        },
-        contacts: { data: null, error: null },
-      },
-    });
-    mockCreateServiceClient.mockReturnValue(supabase);
-
-    const res = await POST(makeCronRequest());
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.success).toBe(true);
-    expect(body.profileId).toBeNull();
-  });
-
-  it('uses profile searchParams when profileId is provided', async () => {
-    mockSearchPeople.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
-
-    const supabase = mockSupabaseClient({});
-    mockCreateServiceClient.mockReturnValue(supabase);
-
-    const res = await POST(makeCronRequest('pharmacy-owners-gta'));
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.profileId).toBe('pharmacy-owners-gta');
-    expect(body.success).toBe(true);
-
-    // Verify searchPeople was called with pharmacy profile params
-    expect(mockSearchPeople).toHaveBeenCalledWith(
-      expect.objectContaining({
-        person_titles: ['Owner', 'Pharmacist', 'Director of Operations'],
-        organization_industry_tag_ids: ['pharmaceutical', 'healthcare'],
-      }),
-    );
-  });
-
   it('returns 400 for unknown profile ID', async () => {
-    const supabase = mockSupabaseClient({});
+    const supabase = makeFullSupabaseMock();
     mockCreateServiceClient.mockReturnValue(supabase);
 
     const res = await POST(makeCronRequest('nonexistent-profile'));
@@ -168,50 +180,134 @@ describe('POST /api/cron/apollo-pump', () => {
     expect(body.error).toContain('Profile not found');
   });
 
-  it('deduplicates against existing leads', async () => {
-    const people = [makePerson('existing-1'), makePerson('new-1')];
-    mockSearchPeople.mockResolvedValueOnce(people).mockResolvedValueOnce([]);
+  it('runs single-profile mode when profileId query param is provided', async () => {
+    mockSearchPeople.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
 
-    const _supabase = mockSupabaseClient({
-      tables: {
-        leads: { data: [{ id: 'lead-new', external_id: 'new-1' }], error: null },
-        contacts: { data: null, error: null },
-      },
-    });
-    // Override the dedup query to return existing-1 as already present
-    // The mock supabase returns the same data for all queries on `leads` table.
-    // This test verifies the dedup flow runs without error.
+    const supabase = makeFullSupabaseMock();
+    mockCreateServiceClient.mockReturnValue(supabase);
 
-    const res = await POST(makeCronRequest());
+    const res = await POST(makeCronRequest('contracting-pharmacy-healthcare-on'));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);
+    expect(body.mode).toBe('single-profile');
+    expect(Array.isArray(body.profiles)).toBe(true);
+    expect(body.profiles).toHaveLength(1);
+    expect(body.profiles[0].profileId).toBe('contracting-pharmacy-healthcare-on');
   });
 
-  it('handles search returning empty results', async () => {
+  it('single-profile response includes divisionCode', async () => {
     mockSearchPeople.mockResolvedValueOnce([]);
 
-    const supabase = mockSupabaseClient({});
+    const supabase = makeFullSupabaseMock();
+    mockCreateServiceClient.mockReturnValue(supabase);
+
+    const res = await POST(makeCronRequest('contracting-pharmacy-healthcare-on'));
+    const body = await res.json();
+    expect(body.profiles[0].divisionCode).toBe('contracting');
+  });
+
+  it('single-profile response shape has leadsFound, leadsImported, duplicatesSkipped', async () => {
+    mockSearchPeople.mockResolvedValueOnce([]);
+
+    const supabase = makeFullSupabaseMock();
+    mockCreateServiceClient.mockReturnValue(supabase);
+
+    const res = await POST(makeCronRequest('contracting-commercial-developers-gta'));
+    const body = await res.json();
+    const profile = body.profiles[0];
+    expect(typeof profile.leadsFound).toBe('number');
+    expect(typeof profile.leadsImported).toBe('number');
+    expect(typeof profile.duplicatesSkipped).toBe('number');
+    expect(typeof profile.pageStart).toBe('number');
+    expect(typeof profile.pageEnd).toBe('number');
+  });
+
+  it('auto-rotation mode response includes mode, weekNumber, profiles array', async () => {
+    // Return empty results so profiles finish quickly
+    mockSearchPeople.mockResolvedValue([]);
+
+    const supabase = makeFullSupabaseMock();
     mockCreateServiceClient.mockReturnValue(supabase);
 
     const res = await POST(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.success).toBe(true);
-    expect(body.imported).toBe(0);
-    expect(body.duplicates).toBe(0);
+    expect(body.mode).toBe('auto-rotation');
+    expect(typeof body.weekNumber).toBe('number');
+    expect(Array.isArray(body.profiles)).toBe(true);
   });
 
-  it('returns 500 on Apollo API error', async () => {
-    const supabase = mockSupabaseClient({});
+  it('auto-rotation response includes totalImported and totalDuplicates', async () => {
+    mockSearchPeople.mockResolvedValue([]);
+
+    const supabase = makeFullSupabaseMock();
+    mockCreateServiceClient.mockReturnValue(supabase);
+
+    const res = await POST(makeCronRequest());
+    const body = await res.json();
+    expect(typeof body.totalImported).toBe('number');
+    expect(typeof body.totalDuplicates).toBe('number');
+    expect(typeof body.profilesRun).toBe('number');
+    expect(typeof body.profilesFailed).toBe('number');
+  });
+
+  it('imports leads in single-profile mode and returns correct counts', async () => {
+    const people = [makePerson('p1'), makePerson('p2')];
+    mockSearchPeople.mockResolvedValueOnce(people).mockResolvedValueOnce([]);
+
+    const supabase = makeFullSupabaseMock({
+      insertedLeads: [
+        { id: 'lead-1', external_id: 'p1' },
+        { id: 'lead-2', external_id: 'p2' },
+      ],
+    });
+    mockCreateServiceClient.mockReturnValue(supabase);
+
+    const res = await POST(makeCronRequest('contracting-commercial-developers-gta'));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    expect(body.mode).toBe('single-profile');
+    expect(body.profiles[0].leadsFound).toBe(2);
+  });
+
+  it('handles search returning empty results gracefully', async () => {
+    mockSearchPeople.mockResolvedValueOnce([]);
+
+    const supabase = makeFullSupabaseMock();
+    mockCreateServiceClient.mockReturnValue(supabase);
+
+    const res = await POST(makeCronRequest('contracting-commercial-developers-gta'));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    expect(body.profiles[0].leadsFound).toBe(0);
+    expect(body.profiles[0].leadsImported).toBe(0);
+  });
+
+  it('returns 500 on Apollo API error in single-profile mode', async () => {
+    const supabase = makeFullSupabaseMock();
     mockCreateServiceClient.mockReturnValue(supabase);
     mockSearchPeople.mockImplementation(() => {
       throw new Error('Apollo API error 429');
     });
 
-    const res = await POST(makeCronRequest());
+    const res = await POST(makeCronRequest('contracting-commercial-developers-gta'));
     const body = await res.json();
     expect(res.status).toBe(500);
     expect(body.error).toBe('Apollo pump failed');
+  });
+
+  it('includes timestamp in response', async () => {
+    mockSearchPeople.mockResolvedValue([]);
+
+    const supabase = makeFullSupabaseMock();
+    mockCreateServiceClient.mockReturnValue(supabase);
+
+    const res = await POST(makeCronRequest('contracting-commercial-developers-gta'));
+    const body = await res.json();
+    expect(body.timestamp).toBeTruthy();
+    expect(new Date(body.timestamp).getTime()).not.toBeNaN();
   });
 });

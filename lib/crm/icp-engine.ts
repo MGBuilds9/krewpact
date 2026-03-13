@@ -7,6 +7,7 @@
 
 export interface AccountForICP {
   id: string;
+  division_id: string | null;
   industry: string | null;
   address: Record<string, string> | null;
   total_projects: number;
@@ -61,27 +62,33 @@ function topN<T extends string>(items: T[], n: number): T[] {
  * Generate ICPs from a set of accounts.
  *
  * Algorithm:
- * 1. Group accounts by industry (skip nulls)
+ * 1. Group accounts by division_id first, then by industry within each division
  * 2. Each group with ≥ 3 accounts becomes an ICP
  * 3. Compute aggregate stats per group
+ * 4. Division-specific ICPs get their division_id set for per-division profile tuning
  */
 export function generateICPsFromAccounts(accounts: AccountForICP[]): ICPProfile[] {
-  // Group by industry
+  // Group by division_id → industry (composite key)
   const groups = new Map<string, AccountForICP[]>();
   for (const account of accounts) {
     if (!account.industry) continue;
     const industry = account.industry.trim();
     if (!industry) continue;
-    const existing = groups.get(industry) ?? [];
+    // Use division_id as prefix for grouping; null divisions get grouped together
+    const divisionKey = account.division_id ?? '__no_division__';
+    const groupKey = `${divisionKey}::${industry}`;
+    const existing = groups.get(groupKey) ?? [];
     existing.push(account);
-    groups.set(industry, existing);
+    groups.set(groupKey, existing);
   }
 
   const profiles: ICPProfile[] = [];
 
-  for (const [industry, group] of groups) {
+  for (const [groupKey, group] of groups) {
     if (group.length < 3) continue;
 
+    const [divisionKey, industry] = groupKey.split('::');
+    const divisionId = divisionKey === '__no_division__' ? null : divisionKey;
     const sampleSize = group.length;
 
     // Avg deal value: lifetime_revenue / total_projects (guard against div-by-zero)
@@ -128,7 +135,7 @@ export function generateICPsFromAccounts(accounts: AccountForICP[]): ICPProfile[
     profiles.push({
       name: `${industry} Client Profile`,
       description: `Auto-generated ICP based on ${sampleSize} ${industry} accounts. Avg deal value: $${Math.round(avgDealValue).toLocaleString()}.`,
-      division_id: null,
+      division_id: divisionId,
       is_auto_generated: true,
       industry_match: [industry],
       geography_match: { cities: topCities, provinces: topProvinces },
