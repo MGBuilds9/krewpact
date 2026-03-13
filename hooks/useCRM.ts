@@ -613,15 +613,20 @@ interface SequenceFilters {
 export function useSequences(filters?: SequenceFilters) {
   return useQuery({
     queryKey: ['sequences', filters],
-    queryFn: () =>
-      apiFetch<Sequence[]>('/api/crm/sequences', {
-        params: {
-          division_id: filters?.divisionId,
-          is_active: filters?.isActive,
-          limit: filters?.limit,
-          offset: filters?.offset,
+    queryFn: async () => {
+      const res = await apiFetch<{ data: Sequence[]; total: number; hasMore: boolean }>(
+        '/api/crm/sequences',
+        {
+          params: {
+            division_id: filters?.divisionId,
+            is_active: filters?.isActive,
+            limit: filters?.limit,
+            offset: filters?.offset,
+          },
         },
-      }),
+      );
+      return res.data;
+    },
   });
 }
 

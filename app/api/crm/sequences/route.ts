@@ -34,7 +34,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   let query = supabase
     .from('sequences')
     .select(
-      'id, name, description, trigger_type, trigger_conditions, division_id, is_active, created_at, updated_at',
+      'id, name, description, trigger_type, trigger_conditions, division_id, is_active, created_at, updated_at, sequence_steps(id)',
       { count: 'exact' },
     )
     .order('created_at', { ascending: false });
