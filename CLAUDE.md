@@ -256,30 +256,24 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
-### Mar 12, 2026 — AI Agentic Layer (Ship + Killswitch + Docs)
+### Mar 14, 2026 — Platform Hardening & Mobile Scaffold (4-Phase Sprint)
 
-- **Changes:** Shipped full AI agentic layer from worktree to main. 8 agents (insight-engine, stale-deal-detector, bid-matcher, budget-anomaly, email-drafter, digest-builder, nl-query, next-action-suggester). Gemini 2.0 Flash provider with cost tracking and model router. 5 React components (AiInsightBanner, AiSuggestion, DailyDigestWidget, EmailDraftModal, InsightAnalyticsCard). NL query mode in CommandPalette. 9 API routes + 2 cron routes. A11y fixes across ~50 pages. Comprehensive `docs/ai-agentic-layer.md` with architecture, cost breakdown, and launch checklist.
-- **Schema:** `ai_insights`, `user_digests`, `ai_actions` tables with RLS + indexes. `ai_preferences` JSONB column on `users`. Migrations applied to production Supabase.
-- **Killswitch:** `AI_ENABLED` env var (default `false`) gates all LLM-calling routes (query, draft-email, generate-insights, daily-digest). Returns 503 when off. Crons also removed from `vercel.json`. Everything is OFF until launch.
-- **Infrastructure:** ESLint `.claude/` ignore added. Fixed corrupted git repo (worktree cleanup had removed objects).
-- **Env vars for launch:** `AI_ENABLED=true`, `GOOGLE_GENERATIVE_AI_API_KEY` (NOT `GEMINI_API_KEY`), optionally `ANTHROPIC_API_KEY`. Re-add cron entries to `vercel.json`.
-- **Cost:** ~$0.50-$1.00/month for MDM at launch (Gemini Flash is $0.075/$0.30 per 1M tokens).
-- **Tests:** 3,750/3,750 passing (337 files). 0 lint. 0 type errors. Build clean.
+- **Changes:** Executed full 4-phase plan across 418 files. Phase 1: CRM pipeline fix — StageProgressBar shows all 8 lead statuses, activity requirement before contacted transition, lead source/quality indicators on list view, pipeline funnel on CRM dashboard. Phase 2: Full RBAC — 13 roles (9 internal + 4 external), 25 permissions, `requirePermission()` server guard, `PermissionGate` client component, `RoleGuard` server component, 8 layout guard files. Phase 3: Toast notifications on all 78 forms, responsive grid fixes across ~20 pages, table overflow wrappers, loading skeleton states. Phase 4: React Native + Expo mobile scaffold — Clerk auth, TanStack Query, 5-tab navigation, project detail with daily log form + camera, API client to existing routes.
+- **Decisions:** Simpler monorepo (mobile/ alongside Next.js) over apps/packages restructure. RBAC via layout-level guards (not per-route). Mobile excluded from web tsconfig/eslint. Clerk publishable key shared between web and mobile.
+- **New files:** `lib/rbac/permissions.shared.ts` + `permissions.ts`, `components/Auth/{RoleGuard,PermissionGate}.tsx`, 8 layout guards, 21 mobile scaffold files, 3 new test files.
+- **Next steps:** Install full Xcode for iOS simulator (`sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`). Test mobile on physical device via Expo Go. Replace placeholder PNG assets with real KrewPact branding. Wire up remaining mobile screens (safety reports, expenses, approvals).
+- **Tests:** 3,851/3,851 passing (340 files). 0 lint. 0 type errors.
 
-### Mar 11, 2026 — Closed-Loop CRM + Comprehensive Codebase Audit
+### Mar 13, 2026 — David's Sales Deliverables + CEO Sales Book v2
 
-- **Changes:** Implemented full 6-phase Closed-Loop CRM (schema enrichment, import pipeline, lead-account matching, ICP engine, won deal automation). Then ran 7-agent comprehensive audit finding 60+ issues across security, data integrity, UX, and performance. Fixed 79 files total.
-- **Security:** Added org_id + RLS to 4 closed-loop tables. Migrated 12 executive routes from raw session claims to `getKrewpactRoles()`. Added `getKrewpactDivisions()` helper. Gated admin sync/status to platform_admin. Fixed global search division isolation. Added email tracking to middleware public routes.
-- **Data integrity:** Fixed `outreach` → `outreach_log` table name. Removed phantom columns from 8 API routes. Fixed `lead_status` enum alignment across validators, stages, and tests (`estimating`/`proposal_sent` → `contacted`/`proposal`/`negotiation`). Fixed `recompute_account_stats()` to include lifetime_revenue. Added `.limit(5000)` to export. Fixed `confirmed_by` to use UUID.
-- **UX:** Org-scoped navigation in 6 components (GlobalSearch, PipelineKanban, PipelineView, LinkedEstimateCard, ConvertLeadDialog, templates). Responsive grids in 9 components. overflow-x-auto on tables. Mobile hamburger menu. Re-enabled Sentry.
-- **Decisions:** `lead_status` DB enum is canonical: `new, contacted, qualified, proposal, negotiation, nurture, won, lost`. All app-level stage names must match these exactly.
-- **Tests:** 3,489/3,489 passing (309 files). 0 lint. 0 type errors. Build clean.
+- **Changes:** Created 3 sales deliverables for David + CEO's Sales Book merge. Field Guide, Claude system prompt, Apollo filter profiles, final .docx.
+- **Tests:** 3,851/3,851 passing (340 files). 0 lint. 0 type errors.
 
-- Mar 11: CRM Navigation, Auth Claims, Score UX & Chart Fixes. 3,488 tests.
+- Mar 12: AI Agentic Layer (8 agents, Gemini Flash, killswitch). 3,750 tests.
+- Mar 12: Lusha API Integration + Lead Enrichment. 3,750 tests.
+- Mar 12: Lead Workstation Data-Driven Scoring Engine. 3,750 tests.
 - Mar 11: Closed-Loop CRM + 7-agent audit (79 files fixed). 3,489 tests.
-- Mar 11: Fix 500 Errors Rounds 2-4, createUserClientSafe() on 262+ routes. 3,488 tests.
-- Mar 10: Production Readiness (14 stories) — security headers, ESLint 0 warnings, E2E smoke. 3,488 tests.
+- Mar 11: CRM Navigation, Auth Claims, 500 Error Elimination. 3,488 tests.
+- Mar 10: Production Readiness (14 stories). 3,488 tests.
 - Mar 9: Executive Nucleus + Enterprise Phase 2. 3,478 tests.
 - Mar 8: P1 completion + autonomous loop (all 18 PRD tasks). 3,092 tests.
-- Mar 7: Collaboration readiness, first production deploy. 2,780 tests.
-- Mar 6: CRM FEATURE COMPLETE. 2,780 tests.
