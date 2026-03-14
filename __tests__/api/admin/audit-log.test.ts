@@ -37,10 +37,14 @@ function mockClerkWithRoles(userId: string, roles: string[]) {
     sessionId: 'session_test',
     sessionClaims: {
       sub: userId,
+      metadata: {
+        krewpact_user_id: userId,
+        krewpact_org_id: 'org_test_default',
+        division_ids: ['contracting'],
+        role_keys: roles,
+      },
       krewpact_user_id: userId,
       krewpact_org_id: 'org_test_default',
-      krewpact_divisions: ['contracting'],
-      krewpact_roles: roles,
     },
   } as never);
 }

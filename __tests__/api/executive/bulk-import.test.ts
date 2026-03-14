@@ -35,7 +35,13 @@ function mockAdminAuth(orgId = 'org-1') {
   mockAuth.mockResolvedValue({
     userId: 'user_admin',
     sessionClaims: {
-      krewpact_roles: ['platform_admin'],
+      sub: 'user_admin',
+      metadata: {
+        krewpact_user_id: 'user_admin',
+        krewpact_org_id: orgId,
+        role_keys: ['platform_admin'],
+      },
+      krewpact_user_id: 'user_admin',
       krewpact_org_id: orgId,
     },
   } as unknown as Awaited<ReturnType<typeof auth>>);
@@ -49,7 +55,11 @@ describe('POST /api/executive/staging/bulk-import', () => {
   it('returns 403 for executive (non-admin) role', async () => {
     mockAuth.mockResolvedValue({
       userId: 'user_exec',
-      sessionClaims: { krewpact_roles: ['executive'] },
+      sessionClaims: {
+        sub: 'user_exec',
+        metadata: { krewpact_user_id: 'user_exec', role_keys: ['executive'] },
+        krewpact_user_id: 'user_exec',
+      },
     } as unknown as Awaited<ReturnType<typeof auth>>);
 
     const res = await POST(makeRequest({ files: [{ path: '/some/file.md' }] }));

@@ -78,7 +78,13 @@ describe('GET /api/executive/subscriptions', () => {
     mockAuth.mockResolvedValue({
       userId: 'user_exec',
       sessionClaims: {
-        krewpact_roles: ['executive'],
+        sub: 'user_exec',
+        metadata: {
+          krewpact_user_id: 'user_exec',
+          krewpact_org_id: 'org-1',
+          role_keys: ['executive'],
+        },
+        krewpact_user_id: 'user_exec',
         krewpact_org_id: 'org-1',
       },
     } as any as Awaited<ReturnType<typeof auth>>);
@@ -122,7 +128,11 @@ describe('POST /api/executive/subscriptions', () => {
   it('returns 403 for non-admin', async () => {
     mockAuth.mockResolvedValue({
       userId: 'user_exec',
-      sessionClaims: { krewpact_roles: ['executive'] },
+      sessionClaims: {
+        sub: 'user_exec',
+        metadata: { krewpact_user_id: 'user_exec', role_keys: ['executive'] },
+        krewpact_user_id: 'user_exec',
+      },
     } as any as Awaited<ReturnType<typeof auth>>);
     mockGetKrewpactRoles.mockResolvedValue(['executive']);
 
@@ -134,7 +144,13 @@ describe('POST /api/executive/subscriptions', () => {
     mockAuth.mockResolvedValue({
       userId: 'user_admin',
       sessionClaims: {
-        krewpact_roles: ['platform_admin'],
+        sub: 'user_admin',
+        metadata: {
+          krewpact_user_id: 'user_admin',
+          krewpact_org_id: 'org-1',
+          role_keys: ['platform_admin'],
+        },
+        krewpact_user_id: 'user_admin',
         krewpact_org_id: 'org-1',
       },
     } as any as Awaited<ReturnType<typeof auth>>);
@@ -163,7 +179,11 @@ describe('POST /api/executive/subscriptions', () => {
   it('returns 400 for invalid data (missing name)', async () => {
     mockAuth.mockResolvedValue({
       userId: 'user_admin',
-      sessionClaims: { krewpact_roles: ['platform_admin'] },
+      sessionClaims: {
+        sub: 'user_admin',
+        metadata: { krewpact_user_id: 'user_admin', role_keys: ['platform_admin'] },
+        krewpact_user_id: 'user_admin',
+      },
     } as any as Awaited<ReturnType<typeof auth>>);
 
     const res = await POST(makeRequest('POST', {}, { category: 'dev_tools', monthly_cost: 100 }));
@@ -192,7 +212,11 @@ describe('GET /api/executive/subscriptions/[id]', () => {
   it('returns 200 with subscription detail', async () => {
     mockAuth.mockResolvedValue({
       userId: 'user_exec',
-      sessionClaims: { krewpact_roles: ['executive'] },
+      sessionClaims: {
+        sub: 'user_exec',
+        metadata: { krewpact_user_id: 'user_exec', role_keys: ['executive'] },
+        krewpact_user_id: 'user_exec',
+      },
     } as any as Awaited<ReturnType<typeof auth>>);
 
     mockGetOrgIdFromAuth.mockResolvedValue('org-1');
@@ -228,7 +252,11 @@ describe('PATCH /api/executive/subscriptions/[id]', () => {
   it('returns 200 on update', async () => {
     mockAuth.mockResolvedValue({
       userId: 'user_admin',
-      sessionClaims: { krewpact_roles: ['platform_admin'] },
+      sessionClaims: {
+        sub: 'user_admin',
+        metadata: { krewpact_user_id: 'user_admin', role_keys: ['platform_admin'] },
+        krewpact_user_id: 'user_admin',
+      },
     } as any as Awaited<ReturnType<typeof auth>>);
 
     mockGetOrgIdFromAuth.mockResolvedValue('org-1');
@@ -267,7 +295,11 @@ describe('DELETE /api/executive/subscriptions/[id]', () => {
   it('returns 204 on success', async () => {
     mockAuth.mockResolvedValue({
       userId: 'user_admin',
-      sessionClaims: { krewpact_roles: ['platform_admin'] },
+      sessionClaims: {
+        sub: 'user_admin',
+        metadata: { krewpact_user_id: 'user_admin', role_keys: ['platform_admin'] },
+        krewpact_user_id: 'user_admin',
+      },
     } as any as Awaited<ReturnType<typeof auth>>);
 
     mockGetOrgIdFromAuth.mockResolvedValue('org-1');

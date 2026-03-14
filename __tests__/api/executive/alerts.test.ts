@@ -120,7 +120,11 @@ describe('GET /api/executive/alerts', () => {
   it('returns 403 for non-executive role', async () => {
     mockAuth.mockResolvedValue({
       userId: 'user_123',
-      sessionClaims: { krewpact_roles: ['project_manager'] },
+      sessionClaims: {
+        sub: 'user_123',
+        metadata: { krewpact_user_id: 'user_123', role_keys: ['project_manager'] },
+        krewpact_user_id: 'user_123',
+      },
     } as any as Awaited<ReturnType<typeof auth>>);
 
     const res = await GET(makeRequest());
@@ -132,7 +136,11 @@ describe('GET /api/executive/alerts', () => {
   it('returns 200 with empty alerts when nothing triggers thresholds', async () => {
     mockAuth.mockResolvedValue({
       userId: 'user_exec',
-      sessionClaims: { krewpact_roles: ['executive'] },
+      sessionClaims: {
+        sub: 'user_exec',
+        metadata: { krewpact_user_id: 'user_exec', role_keys: ['executive'] },
+        krewpact_user_id: 'user_exec',
+      },
     } as any as Awaited<ReturnType<typeof auth>>);
 
     mockCreateUserClientSafe.mockResolvedValue({ client: makeSupabaseMock() as any, error: null });
@@ -148,7 +156,11 @@ describe('GET /api/executive/alerts', () => {
   it('returns stalled deal alert when opportunities are stale', async () => {
     mockAuth.mockResolvedValue({
       userId: 'user_exec',
-      sessionClaims: { krewpact_roles: ['executive'] },
+      sessionClaims: {
+        sub: 'user_exec',
+        metadata: { krewpact_user_id: 'user_exec', role_keys: ['executive'] },
+        krewpact_user_id: 'user_exec',
+      },
     } as any as Awaited<ReturnType<typeof auth>>);
 
     const stalledOpportunities = [
@@ -184,7 +196,11 @@ describe('GET /api/executive/alerts', () => {
   it('returns knowledge queue alert when pending count exceeds 5', async () => {
     mockAuth.mockResolvedValue({
       userId: 'user_admin',
-      sessionClaims: { krewpact_roles: ['platform_admin'] },
+      sessionClaims: {
+        sub: 'user_admin',
+        metadata: { krewpact_user_id: 'user_admin', role_keys: ['platform_admin'] },
+        krewpact_user_id: 'user_admin',
+      },
     } as any as Awaited<ReturnType<typeof auth>>);
 
     mockCreateUserClientSafe.mockResolvedValue({
@@ -208,7 +224,11 @@ describe('GET /api/executive/alerts', () => {
   it('does NOT return knowledge queue alert when count is 5 or fewer', async () => {
     mockAuth.mockResolvedValue({
       userId: 'user_exec',
-      sessionClaims: { krewpact_roles: ['executive'] },
+      sessionClaims: {
+        sub: 'user_exec',
+        metadata: { krewpact_user_id: 'user_exec', role_keys: ['executive'] },
+        krewpact_user_id: 'user_exec',
+      },
     } as any as Awaited<ReturnType<typeof auth>>);
 
     mockCreateUserClientSafe.mockResolvedValue({
@@ -229,7 +249,11 @@ describe('GET /api/executive/alerts', () => {
   it('sorts alerts by severity (high then medium then low)', async () => {
     mockAuth.mockResolvedValue({
       userId: 'user_exec',
-      sessionClaims: { krewpact_roles: ['executive'] },
+      sessionClaims: {
+        sub: 'user_exec',
+        metadata: { krewpact_user_id: 'user_exec', role_keys: ['executive'] },
+        krewpact_user_id: 'user_exec',
+      },
     } as any as Awaited<ReturnType<typeof auth>>);
 
     mockCreateUserClientSafe.mockResolvedValue({

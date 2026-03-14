@@ -115,10 +115,14 @@ describe('CRM RLS: Division isolation via API route', () => {
       sessionId: 'session_test',
       sessionClaims: {
         sub: 'user-b-uuid',
+        metadata: {
+          krewpact_user_id: 'user-b-uuid',
+          krewpact_org_id: 'org_test_default',
+          division_ids: [DIV_HOMES],
+          role_keys: ['estimator'],
+        },
         krewpact_user_id: 'user-b-uuid',
         krewpact_org_id: 'org_test_default',
-        krewpact_divisions: [DIV_HOMES],
-        krewpact_roles: ['estimator'],
       },
     } as never);
 

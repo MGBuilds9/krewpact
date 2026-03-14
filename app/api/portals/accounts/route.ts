@@ -96,8 +96,8 @@ export async function POST(req: NextRequest) {
       notify: true,
       publicMetadata: {
         krewpact_user_id: account.id,
-        krewpact_roles: role ? [role] : ['client_owner'],
-        krewpact_divisions: [],
+        role_keys: role ? [role] : ['client_owner'],
+        division_ids: [],
       },
     });
   } catch (err: unknown) {

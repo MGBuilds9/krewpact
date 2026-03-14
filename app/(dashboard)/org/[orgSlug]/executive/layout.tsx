@@ -5,7 +5,7 @@ import { ExecutiveNav } from '@/components/Executive/ExecutiveNav';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ShieldAlert } from 'lucide-react';
 
-const EXECUTIVE_ROLES = ['executive', 'platform_admin', 'CEO', 'CFO', 'COO', 'IT_ADMIN'];
+const EXECUTIVE_ROLES = ['executive', 'platform_admin'];
 
 export default function ExecutiveLayout({ children }: { children: React.ReactNode }) {
   const { hasRole, isLoading } = useUserRBAC();

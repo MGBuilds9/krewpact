@@ -37,14 +37,13 @@ export function canAccessServiceWithRBAC(
   }
 
   if (service.access_level === 'admin_only') {
-    return rbac.permissions.includes('system.admin');
+    return rbac.permissions.includes('admin.system');
   }
   if (service.access_level === 'finance') {
-    return rbac.permissions.includes('financial.view');
+    return rbac.permissions.includes('finance.view');
   }
   if (service.access_level === 'manager') {
-    const managerRoles = ['CEO', 'CFO', 'COO', 'OPERATIONS_MANAGER'];
-    return rbac.roles.some((r) => managerRoles.includes(r.role_name));
+    return rbac.permissions.includes('admin.view');
   }
 
   return false;
@@ -71,12 +70,12 @@ export function useUserRBAC() {
 
   const rbacData = useMemo(() => {
     const roleByLegacy: Record<string, string[]> = {
-      admin: ['IT_ADMIN'],
-      manager: ['OPERATIONS_MANAGER'],
-      worker: ['EMPLOYEE'],
+      admin: ['platform_admin'],
+      manager: ['operations_manager'],
+      worker: [],
     };
     const permissionsByLegacy: Record<string, string[]> = {
-      admin: ['system.admin', 'user.manage'],
+      admin: ['admin.system', 'users.manage'],
       manager: ['projects.view'],
       worker: [],
     };
@@ -105,7 +104,7 @@ export function useUserRBAC() {
       isLoading,
       hasPermission: (permission: string) => rbacData.permissions.includes(permission),
       hasRole: (roleName: string) => rbacData.roles.some((r) => r.role_name === roleName),
-      isAdmin: rbacData.permissions.includes('system.admin'),
+      isAdmin: rbacData.permissions.includes('admin.system'),
     }),
     [rbacData, isLoading],
   );

@@ -24,7 +24,11 @@ function makeRequest(url = 'http://localhost/api/executive/overview') {
 function makeExecutiveAuth() {
   mockAuth.mockResolvedValue({
     userId: 'user_exec',
-    sessionClaims: { krewpact_roles: ['executive'] },
+    sessionClaims: {
+      sub: 'user_exec',
+      metadata: { krewpact_user_id: 'user_exec', role_keys: ['executive'] },
+      krewpact_user_id: 'user_exec',
+    },
   } as any as Awaited<ReturnType<typeof auth>>);
 }
 
@@ -107,7 +111,11 @@ describe('GET /api/executive/overview', () => {
     it('returns 403 for non-executive role', async () => {
       mockAuth.mockResolvedValue({
         userId: 'user_pm',
-        sessionClaims: { krewpact_roles: ['project_manager'] },
+        sessionClaims: {
+          sub: 'user_pm',
+          metadata: { krewpact_user_id: 'user_pm', role_keys: ['project_manager'] },
+          krewpact_user_id: 'user_pm',
+        },
       } as any as Awaited<ReturnType<typeof auth>>);
 
       const res = await GET(makeRequest());

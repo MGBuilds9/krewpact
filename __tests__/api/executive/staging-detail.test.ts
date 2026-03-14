@@ -40,7 +40,11 @@ describe('GET /api/executive/staging/[id]', () => {
   it('returns 404 when doc not found', async () => {
     mockAuth.mockResolvedValue({
       userId: 'user_exec',
-      sessionClaims: { krewpact_roles: ['executive'] },
+      sessionClaims: {
+        sub: 'user_exec',
+        metadata: { krewpact_user_id: 'user_exec', role_keys: ['executive'] },
+        krewpact_user_id: 'user_exec',
+      },
     } as unknown as Awaited<ReturnType<typeof auth>>);
 
     const singleFn = vi.fn().mockReturnValue({ data: null, error: { code: 'PGRST116' } });
@@ -58,7 +62,11 @@ describe('GET /api/executive/staging/[id]', () => {
   it('returns 200 with document detail', async () => {
     mockAuth.mockResolvedValue({
       userId: 'user_exec',
-      sessionClaims: { krewpact_roles: ['executive'] },
+      sessionClaims: {
+        sub: 'user_exec',
+        metadata: { krewpact_user_id: 'user_exec', role_keys: ['executive'] },
+        krewpact_user_id: 'user_exec',
+      },
     } as unknown as Awaited<ReturnType<typeof auth>>);
 
     const doc = { id: 'doc-1', title: 'Test SOP', status: 'pending_review' };
@@ -85,7 +93,11 @@ describe('PATCH /api/executive/staging/[id]', () => {
   it('returns 403 for non-admin', async () => {
     mockAuth.mockResolvedValue({
       userId: 'user_exec',
-      sessionClaims: { krewpact_roles: ['executive'] },
+      sessionClaims: {
+        sub: 'user_exec',
+        metadata: { krewpact_user_id: 'user_exec', role_keys: ['executive'] },
+        krewpact_user_id: 'user_exec',
+      },
     } as unknown as Awaited<ReturnType<typeof auth>>);
 
     const res = await PATCH(makeRequest('PATCH', { status: 'approved' }), { params: PARAMS });
@@ -96,7 +108,11 @@ describe('PATCH /api/executive/staging/[id]', () => {
     mockAuth.mockResolvedValue({
       userId: 'user_admin',
       sessionClaims: {
-        krewpact_roles: ['platform_admin'],
+        sub: 'user_admin',
+        metadata: {
+          krewpact_user_id: 'kp-user-1',
+          role_keys: ['platform_admin'],
+        },
         krewpact_user_id: 'kp-user-1',
       },
     } as unknown as Awaited<ReturnType<typeof auth>>);
@@ -127,7 +143,11 @@ describe('PATCH /api/executive/staging/[id]', () => {
   it('returns 400 on invalid input', async () => {
     mockAuth.mockResolvedValue({
       userId: 'user_admin',
-      sessionClaims: { krewpact_roles: ['platform_admin'] },
+      sessionClaims: {
+        sub: 'user_admin',
+        metadata: { krewpact_user_id: 'user_admin', role_keys: ['platform_admin'] },
+        krewpact_user_id: 'user_admin',
+      },
     } as unknown as Awaited<ReturnType<typeof auth>>);
 
     const res = await PATCH(makeRequest('PATCH', { status: 'invalid_status_value' }), {
@@ -145,7 +165,11 @@ describe('DELETE /api/executive/staging/[id]', () => {
   it('returns 403 for non-admin', async () => {
     mockAuth.mockResolvedValue({
       userId: 'user_exec',
-      sessionClaims: { krewpact_roles: ['executive'] },
+      sessionClaims: {
+        sub: 'user_exec',
+        metadata: { krewpact_user_id: 'user_exec', role_keys: ['executive'] },
+        krewpact_user_id: 'user_exec',
+      },
     } as unknown as Awaited<ReturnType<typeof auth>>);
 
     const res = await DELETE(makeRequest('DELETE'), { params: PARAMS });
@@ -155,7 +179,11 @@ describe('DELETE /api/executive/staging/[id]', () => {
   it('returns 200 on successful delete', async () => {
     mockAuth.mockResolvedValue({
       userId: 'user_admin',
-      sessionClaims: { krewpact_roles: ['platform_admin'] },
+      sessionClaims: {
+        sub: 'user_admin',
+        metadata: { krewpact_user_id: 'user_admin', role_keys: ['platform_admin'] },
+        krewpact_user_id: 'user_admin',
+      },
     } as unknown as Awaited<ReturnType<typeof auth>>);
 
     const eqFn = vi.fn().mockReturnValue({ error: null });

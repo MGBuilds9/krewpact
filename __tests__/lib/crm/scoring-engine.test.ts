@@ -150,6 +150,52 @@ describe('evaluateOperator', () => {
     expect(evaluateOperator('test@example.org', 'ends_with', '.com')).toBe(false);
   });
 
+  // --- in_set ---
+  it('in_set: matches exact value in pipe-separated list', () => {
+    expect(evaluateOperator('Toronto', 'in_set', 'mississauga|toronto|brampton')).toBe(true);
+  });
+
+  it('in_set: case-insensitive match', () => {
+    expect(evaluateOperator('MISSISSAUGA', 'in_set', 'mississauga|toronto')).toBe(true);
+  });
+
+  it('in_set: returns false for non-match', () => {
+    expect(evaluateOperator('Ottawa', 'in_set', 'mississauga|toronto|brampton')).toBe(false);
+  });
+
+  it('in_set: returns false for null', () => {
+    expect(evaluateOperator(null, 'in_set', 'mississauga|toronto')).toBe(false);
+  });
+
+  it('in_set: returns false for empty string', () => {
+    expect(evaluateOperator('', 'in_set', 'mississauga|toronto')).toBe(false);
+  });
+
+  it('in_set: trims whitespace', () => {
+    expect(evaluateOperator(' toronto ', 'in_set', 'mississauga | toronto | brampton')).toBe(true);
+  });
+
+  // --- contains_any ---
+  it('contains_any: matches substring from pipe-separated list', () => {
+    expect(evaluateOperator('General Construction', 'contains_any', 'healthcare|construction|retail')).toBe(true);
+  });
+
+  it('contains_any: returns false when no substring matches', () => {
+    expect(evaluateOperator('Software Engineering', 'contains_any', 'healthcare|construction|retail')).toBe(false);
+  });
+
+  it('contains_any: returns false for null', () => {
+    expect(evaluateOperator(null, 'contains_any', 'healthcare|construction')).toBe(false);
+  });
+
+  it('contains_any: returns false for empty string', () => {
+    expect(evaluateOperator('', 'contains_any', 'healthcare|construction')).toBe(false);
+  });
+
+  it('contains_any: case-insensitive', () => {
+    expect(evaluateOperator('REAL ESTATE Development', 'contains_any', 'real estate|healthcare')).toBe(true);
+  });
+
   // --- unknown operator ---
   it('unknown operator: returns false', () => {
     expect(evaluateOperator('value', 'banana_split', 'test')).toBe(false);
@@ -252,11 +298,14 @@ describe('scoreLead', () => {
     expect(result.intent_score).toBe(25);
   });
 
-  it('handles negative score impact', () => {
+  it('handles negative score impact (clamped to 0 by caps)', () => {
     const rules = [makeRule({ score_impact: -10 })];
     const result = scoreLead({ source: 'referral' }, rules);
-    expect(result.total_score).toBe(-10);
-    expect(result.fit_score).toBe(-10);
+    // Negative scores are clamped to 0 per dimension
+    expect(result.total_score).toBe(0);
+    expect(result.fit_score).toBe(0);
+    // But the raw rule result still shows the negative impact
+    expect(result.rule_results[0].score_impact).toBe(-10);
   });
 
   it('separates scores by category', () => {
@@ -301,6 +350,51 @@ describe('scoreLead', () => {
     expect(rr.matched).toBe(true);
     expect(rr.score_impact).toBe(20);
     expect(rr.category).toBe('fit');
+  });
+
+  // --- Score caps ---
+  it('caps fit score at 40', () => {
+    const rules = [
+      makeRule({ id: 'r1', score_impact: 30 }),
+      makeRule({ id: 'r2', field_name: 'company_name', operator: 'exists', value: '', score_impact: 20 }),
+    ];
+    const result = scoreLead({ source: 'referral', company_name: 'Test' }, rules);
+    // Raw sum would be 50, capped to 40
+    expect(result.fit_score).toBe(40);
+    expect(result.total_score).toBe(40);
+  });
+
+  it('caps intent score at 35', () => {
+    const rules = [
+      makeRule({ id: 'r1', category: 'intent', field_name: 'a', operator: 'exists', value: '', score_impact: 20 }),
+      makeRule({ id: 'r2', category: 'intent', field_name: 'b', operator: 'exists', value: '', score_impact: 20 }),
+    ];
+    const result = scoreLead({ a: 'x', b: 'y' }, rules);
+    expect(result.intent_score).toBe(35);
+    expect(result.total_score).toBe(35);
+  });
+
+  it('caps engagement score at 25', () => {
+    const rules = [
+      makeRule({ id: 'r1', category: 'engagement', field_name: 'a', operator: 'exists', value: '', score_impact: 15 }),
+      makeRule({ id: 'r2', category: 'engagement', field_name: 'b', operator: 'exists', value: '', score_impact: 15 }),
+    ];
+    const result = scoreLead({ a: 'x', b: 'y' }, rules);
+    expect(result.engagement_score).toBe(25);
+    expect(result.total_score).toBe(25);
+  });
+
+  it('total score maxes at 100 when all dimensions capped', () => {
+    const rules = [
+      makeRule({ id: 'r1', category: 'fit', field_name: 'a', operator: 'exists', value: '', score_impact: 50 }),
+      makeRule({ id: 'r2', category: 'intent', field_name: 'b', operator: 'exists', value: '', score_impact: 50 }),
+      makeRule({ id: 'r3', category: 'engagement', field_name: 'c', operator: 'exists', value: '', score_impact: 50 }),
+    ];
+    const result = scoreLead({ a: '1', b: '2', c: '3' }, rules);
+    expect(result.fit_score).toBe(40);
+    expect(result.intent_score).toBe(35);
+    expect(result.engagement_score).toBe(25);
+    expect(result.total_score).toBe(100);
   });
 
   // --- Nested field (dot-notation) scoring ---

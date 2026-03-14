@@ -24,7 +24,11 @@ function mockAuthWithRoles(userId: string, roles: string[]) {
   mockAuth.mockResolvedValue({
     userId,
     sessionClaims: {
-      krewpact_roles: roles,
+      sub: userId,
+      metadata: {
+        krewpact_user_id: userId,
+        role_keys: roles,
+      },
       krewpact_user_id: userId,
     },
   } as any as Awaited<ReturnType<typeof auth>>);

@@ -27,10 +27,15 @@ export function mockClerkAuth(
     sessionClaims: userId
       ? {
           sub: userId,
+          metadata: {
+            krewpact_user_id: userId,
+            krewpact_org_id: 'org_test_default',
+            division_ids: ['contracting'],
+            role_keys: ['project_manager'],
+          },
+          // Top-level for backward compat
           krewpact_user_id: userId,
           krewpact_org_id: 'org_test_default',
-          krewpact_divisions: ['contracting'],
-          krewpact_roles: ['project_manager'],
         }
       : null,
   });

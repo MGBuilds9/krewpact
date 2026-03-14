@@ -15,9 +15,9 @@ export default async function PortalLayout({ children }: { children: React.React
     (claims.metadata as Record<string, unknown>)
     ?? (claims.public_metadata as Record<string, unknown>)
     ?? claims
-  ) as { krewpact_roles?: string[] } | undefined;
+  ) as { role_keys?: string[]; krewpact_roles?: string[] } | undefined;
 
-  const roles = metadata?.krewpact_roles || [];
+  const roles = metadata?.role_keys ?? metadata?.krewpact_roles ?? [];
 
   // If they are internal staff, they should probably be on /dashboard, but we'll allow access if they want to view the portal
   // Wait, let's redirect to /dashboard if they have NO client/trade roles

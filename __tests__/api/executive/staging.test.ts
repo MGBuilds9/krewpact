@@ -70,7 +70,11 @@ describe('GET /api/executive/staging', () => {
   it('returns 403 when user lacks executive role', async () => {
     mockAuth.mockResolvedValue({
       userId: 'user_123',
-      sessionClaims: { krewpact_roles: ['project_manager'] },
+      sessionClaims: {
+        sub: 'user_123',
+        metadata: { krewpact_user_id: 'user_123', role_keys: ['project_manager'] },
+        krewpact_user_id: 'user_123',
+      },
     } as unknown as Awaited<ReturnType<typeof auth>>);
 
     const res = await GET(makeRequest());
@@ -83,7 +87,13 @@ describe('GET /api/executive/staging', () => {
     mockAuth.mockResolvedValue({
       userId: 'user_exec',
       sessionClaims: {
-        krewpact_roles: ['executive'],
+        sub: 'user_exec',
+        metadata: {
+          krewpact_user_id: 'user_exec',
+          krewpact_org_id: 'org-1',
+          role_keys: ['executive'],
+        },
+        krewpact_user_id: 'user_exec',
         krewpact_org_id: 'org-1',
       },
     } as unknown as Awaited<ReturnType<typeof auth>>);
@@ -121,7 +131,11 @@ describe('POST /api/executive/staging', () => {
   it('returns 403 when executive (non-admin) tries to create', async () => {
     mockAuth.mockResolvedValue({
       userId: 'user_exec',
-      sessionClaims: { krewpact_roles: ['executive'] },
+      sessionClaims: {
+        sub: 'user_exec',
+        metadata: { krewpact_user_id: 'user_exec', role_keys: ['executive'] },
+        krewpact_user_id: 'user_exec',
+      },
     } as unknown as Awaited<ReturnType<typeof auth>>);
 
     const res = await POST(
@@ -134,7 +148,13 @@ describe('POST /api/executive/staging', () => {
     mockAuth.mockResolvedValue({
       userId: 'user_admin',
       sessionClaims: {
-        krewpact_roles: ['platform_admin'],
+        sub: 'user_admin',
+        metadata: {
+          krewpact_user_id: 'user_admin',
+          krewpact_org_id: 'org-1',
+          role_keys: ['platform_admin'],
+        },
+        krewpact_user_id: 'user_admin',
         krewpact_org_id: 'org-1',
       },
     } as unknown as Awaited<ReturnType<typeof auth>>);
@@ -166,7 +186,11 @@ describe('POST /api/executive/staging', () => {
   it('returns 400 on invalid input (empty title)', async () => {
     mockAuth.mockResolvedValue({
       userId: 'user_admin',
-      sessionClaims: { krewpact_roles: ['platform_admin'] },
+      sessionClaims: {
+        sub: 'user_admin',
+        metadata: { krewpact_user_id: 'user_admin', role_keys: ['platform_admin'] },
+        krewpact_user_id: 'user_admin',
+      },
     } as unknown as Awaited<ReturnType<typeof auth>>);
 
     const res = await POST(

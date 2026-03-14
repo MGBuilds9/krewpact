@@ -69,7 +69,12 @@ describe('GET /api/dashboard/executive', () => {
     mockAuth.mockResolvedValue({
       userId: 'user_123',
       sessionClaims: {
-        krewpact_roles: ['project_manager'],
+        sub: 'user_123',
+        metadata: {
+          krewpact_user_id: 'user_123',
+          role_keys: ['project_manager'],
+        },
+        krewpact_user_id: 'user_123',
       },
     } as any as Awaited<ReturnType<typeof auth>>);
 
@@ -83,7 +88,12 @@ describe('GET /api/dashboard/executive', () => {
     mockAuth.mockResolvedValue({
       userId: 'user_exec',
       sessionClaims: {
-        krewpact_roles: ['executive'],
+        sub: 'user_exec',
+        metadata: {
+          krewpact_user_id: 'user_exec',
+          role_keys: ['executive'],
+        },
+        krewpact_user_id: 'user_exec',
       },
     } as any as Awaited<ReturnType<typeof auth>>);
 
@@ -165,7 +175,12 @@ describe('GET /api/dashboard/executive', () => {
     mockAuth.mockResolvedValue({
       userId: 'user_admin',
       sessionClaims: {
-        krewpact_roles: ['platform_admin'],
+        sub: 'user_admin',
+        metadata: {
+          krewpact_user_id: 'user_admin',
+          role_keys: ['platform_admin'],
+        },
+        krewpact_user_id: 'user_admin',
       },
     } as any as Awaited<ReturnType<typeof auth>>);
 
@@ -199,7 +214,12 @@ describe('GET /api/dashboard/executive', () => {
     mockAuth.mockResolvedValue({
       userId: 'user_exec',
       sessionClaims: {
-        krewpact_roles: ['executive'],
+        sub: 'user_exec',
+        metadata: {
+          krewpact_user_id: 'user_exec',
+          role_keys: ['executive'],
+        },
+        krewpact_user_id: 'user_exec',
       },
     } as any as Awaited<ReturnType<typeof auth>>);
 
@@ -226,7 +246,12 @@ describe('GET /api/dashboard/executive', () => {
     mockAuth.mockResolvedValue({
       userId: 'user_exec',
       sessionClaims: {
-        krewpact_roles: ['executive'],
+        sub: 'user_exec',
+        metadata: {
+          krewpact_user_id: 'user_exec',
+          role_keys: ['executive'],
+        },
+        krewpact_user_id: 'user_exec',
       },
     } as any as Awaited<ReturnType<typeof auth>>);
 

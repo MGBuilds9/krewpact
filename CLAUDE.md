@@ -256,24 +256,24 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
-### Mar 14, 2026 — Platform Hardening & Mobile Scaffold (4-Phase Sprint)
+### Mar 14, 2026 — Scoring Alignment + Full Env Setup + Service Health Check
 
-- **Changes:** Executed full 4-phase plan across 418 files. Phase 1: CRM pipeline fix — StageProgressBar shows all 8 lead statuses, activity requirement before contacted transition, lead source/quality indicators on list view, pipeline funnel on CRM dashboard. Phase 2: Full RBAC — 13 roles (9 internal + 4 external), 25 permissions, `requirePermission()` server guard, `PermissionGate` client component, `RoleGuard` server component, 8 layout guard files. Phase 3: Toast notifications on all 78 forms, responsive grid fixes across ~20 pages, table overflow wrappers, loading skeleton states. Phase 4: React Native + Expo mobile scaffold — Clerk auth, TanStack Query, 5-tab navigation, project detail with daily log form + camera, API client to existing routes.
-- **Decisions:** Simpler monorepo (mobile/ alongside Next.js) over apps/packages restructure. RBAC via layout-level guards (not per-route). Mobile excluded from web tsconfig/eslint. Clerk publishable key shared between web and mobile.
-- **New files:** `lib/rbac/permissions.shared.ts` + `permissions.ts`, `components/Auth/{RoleGuard,PermissionGate}.tsx`, 8 layout guards, 21 mobile scaffold files, 3 new test files.
-- **Next steps:** Install full Xcode for iOS simulator (`sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`). Test mobile on physical device via Expo Go. Replace placeholder PNG assets with real KrewPact branding. Wire up remaining mobile screens (safety reports, expenses, approvals).
-- **Tests:** 3,851/3,851 passing (340 files). 0 lint. 0 type errors.
+- **Changes:** Aligned KrewPact scoring engine with lead-workstation.html. Added `in_set` and `contains_any` operators to scoring engine for multi-value matching. Added score caps (fit:40, intent:35, engagement:25, max total:100). Created migration with 15 new scoring rules (GTA city match, core industry match, source channel scoring, project signals, engagement signals). Re-scored all 275 enriched leads via cron. Created `.env.local` with all 35 env vars. Added 11 missing vars to Vercel (QStash, Resend, Sentry, Redis, Clerk domain). Updated ERPNext and Redis credentials. Created `scripts/health-check.ts` — pings all 12 external services. Created `reference/krewpact-architecture-costs.html` — interactive architecture map + monthly cost breakdown ($153-193/mo).
+- **Decisions:** Pipe `|` separator for `in_set`/`contains_any` operators (not comma, since city names might contain commas). Score caps clamp negatives to 0 per dimension. Separate Upstash Redis instance (`present-whale`) for KrewPact vs shared KV (`tender-poodle`).
+- **Services verified:** 12/12 — Supabase, Clerk, Upstash Redis, QStash, ERPNext, Resend, Sentry, Apollo, Brave, Google Maps, Tavily all connected.
+- **New files:** `supabase/migrations/20260314_001_align_scoring_rules.sql`, `scripts/health-check.ts`, `reference/krewpact-architecture-costs.html`
+- **Tests:** 3,866/3,866 passing (340 files). 15 new tests (in_set, contains_any operators + cap behavior). 0 lint. 0 type errors. Build clean.
 
-### Mar 13, 2026 — David's Sales Deliverables + CEO Sales Book v2
+### Mar 14, 2026 — RBAC Unification: Fix Access Denied for platform_admin
 
-- **Changes:** Created 3 sales deliverables for David + CEO's Sales Book merge. Field Guide, Claude system prompt, Apollo filter profiles, final .docx.
-- **Tests:** 3,851/3,851 passing (340 files). 0 lint. 0 type errors.
+- **Changes:** Fixed Access Denied for platform_admin. Unified RBAC: merged Clerk JWT + Supabase DB permissions. Fixed field name mismatches (`role_keys`/`division_ids` vs `krewpact_roles`/`krewpact_divisions`). Updated 12 test files.
+- **Tests:** 3,866/3,866 passing (340 files).
 
+- Mar 14: Platform Hardening & Mobile Scaffold (4 phases, 418 files). 3,851 tests.
+- Mar 13: David's Sales Deliverables + CEO Sales Book v2 + Leads folder optimization.
 - Mar 12: AI Agentic Layer (8 agents, Gemini Flash, killswitch). 3,750 tests.
 - Mar 12: Lusha API Integration + Lead Enrichment. 3,750 tests.
-- Mar 12: Lead Workstation Data-Driven Scoring Engine. 3,750 tests.
 - Mar 11: Closed-Loop CRM + 7-agent audit (79 files fixed). 3,489 tests.
-- Mar 11: CRM Navigation, Auth Claims, 500 Error Elimination. 3,488 tests.
 - Mar 10: Production Readiness (14 stories). 3,488 tests.
 - Mar 9: Executive Nucleus + Enterprise Phase 2. 3,478 tests.
 - Mar 8: P1 completion + autonomous loop (all 18 PRD tasks). 3,092 tests.

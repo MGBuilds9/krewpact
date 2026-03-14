@@ -326,17 +326,17 @@ describe('scoreLead enrichment edge cases', () => {
 
     const result = scoreLead(lead, rules);
 
-    // Fit: industry(15) + rating(10) + reviews(5) + operational(5) + ontario(10) + city(5) = 50
-    expect(result.fit_score).toBe(50);
+    // Fit: industry(15) + rating(10) + reviews(5) + operational(5) + ontario(10) + city(5) = 50 → capped at 40
+    expect(result.fit_score).toBe(40);
 
-    // Intent: website(10) + email(10) + description(5) + domain(5) = 30
+    // Intent: website(10) + email(10) + description(5) + domain(5) = 30 (under 35 cap)
     expect(result.intent_score).toBe(30);
 
-    // Engagement: qualified(20) + linkedin(5) = 25 (not contacted/proposal/won)
+    // Engagement: qualified(20) + linkedin(5) = 25 (at cap)
     expect(result.engagement_score).toBe(25);
 
-    // Total: 50 + 30 + 25 = 105
-    expect(result.total_score).toBe(105);
+    // Total: 40 + 30 + 25 = 95
+    expect(result.total_score).toBe(95);
     expect(result.rule_results).toHaveLength(15);
   });
 

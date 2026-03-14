@@ -122,6 +122,22 @@ export function evaluateOperator(
       return strField.endsWith(ruleValue.toLowerCase());
     }
 
+    case 'in_set': {
+      if (fieldValue === null || fieldValue === undefined || fieldValue === '') return false;
+      const strField = String(fieldValue).toLowerCase().trim();
+      return ruleValue
+        .split('|')
+        .some((item) => item.toLowerCase().trim() === strField);
+    }
+
+    case 'contains_any': {
+      if (fieldValue === null || fieldValue === undefined || fieldValue === '') return false;
+      const strField = String(fieldValue).toLowerCase();
+      return ruleValue
+        .split('|')
+        .some((item) => strField.includes(item.toLowerCase().trim()));
+    }
+
     default:
       return false;
   }
@@ -187,11 +203,16 @@ export function scoreLead(leadData: Record<string, unknown>, rules: ScoringRule[
     }
   }
 
+  // Cap each dimension to match workstation scoring (max total = 100)
+  const cappedFit = Math.min(Math.max(fitScore, 0), 40);
+  const cappedIntent = Math.min(Math.max(intentScore, 0), 35);
+  const cappedEngagement = Math.min(Math.max(engagementScore, 0), 25);
+
   return {
-    total_score: fitScore + intentScore + engagementScore,
-    fit_score: fitScore,
-    intent_score: intentScore,
-    engagement_score: engagementScore,
+    total_score: cappedFit + cappedIntent + cappedEngagement,
+    fit_score: cappedFit,
+    intent_score: cappedIntent,
+    engagement_score: cappedEngagement,
     rule_results: ruleResults,
   };
 }

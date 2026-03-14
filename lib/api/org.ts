@@ -18,13 +18,13 @@ export async function getKrewpactUserId(): Promise<string | null> {
 
 export async function getKrewpactRoles(): Promise<string[]> {
   const meta = await _getClerkMetadata();
-  const roles = meta?.krewpact_roles;
+  const roles = meta?.role_keys ?? meta?.krewpact_roles;
   return Array.isArray(roles) ? roles : [];
 }
 
 export async function getKrewpactDivisions(): Promise<string[]> {
   const meta = await _getClerkMetadata();
-  const divisions = meta?.krewpact_divisions;
+  const divisions = meta?.division_ids ?? meta?.krewpact_divisions;
   return Array.isArray(divisions) ? divisions : [];
 }
 

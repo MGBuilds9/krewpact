@@ -78,7 +78,11 @@ describe('GET /api/executive/forecast', () => {
   it('returns 403 for non-executive role', async () => {
     mockAuth.mockResolvedValue({
       userId: 'user_123',
-      sessionClaims: { krewpact_roles: ['project_manager'] },
+      sessionClaims: {
+        sub: 'user_123',
+        metadata: { krewpact_user_id: 'user_123', role_keys: ['project_manager'] },
+        krewpact_user_id: 'user_123',
+      },
     } as any as Awaited<ReturnType<typeof auth>>);
     mockGetKrewpactRoles.mockResolvedValue(['project_manager']);
 
@@ -91,7 +95,11 @@ describe('GET /api/executive/forecast', () => {
   it('returns 200 with 8 quarterly buckets', async () => {
     mockAuth.mockResolvedValue({
       userId: 'user_exec',
-      sessionClaims: { krewpact_roles: ['executive'] },
+      sessionClaims: {
+        sub: 'user_exec',
+        metadata: { krewpact_user_id: 'user_exec', role_keys: ['executive'] },
+        krewpact_user_id: 'user_exec',
+      },
     } as any as Awaited<ReturnType<typeof auth>>);
 
     mockCreateUserClientSafe.mockResolvedValue({
@@ -110,7 +118,11 @@ describe('GET /api/executive/forecast', () => {
   it('handles empty opportunities gracefully — all quarters return zero', async () => {
     mockAuth.mockResolvedValue({
       userId: 'user_exec',
-      sessionClaims: { krewpact_roles: ['executive'] },
+      sessionClaims: {
+        sub: 'user_exec',
+        metadata: { krewpact_user_id: 'user_exec', role_keys: ['executive'] },
+        krewpact_user_id: 'user_exec',
+      },
     } as any as Awaited<ReturnType<typeof auth>>);
 
     mockCreateUserClientSafe.mockResolvedValue({
@@ -131,7 +143,11 @@ describe('GET /api/executive/forecast', () => {
   it('applies stage weights correctly', async () => {
     mockAuth.mockResolvedValue({
       userId: 'user_exec',
-      sessionClaims: { krewpact_roles: ['executive'] },
+      sessionClaims: {
+        sub: 'user_exec',
+        metadata: { krewpact_user_id: 'user_exec', role_keys: ['executive'] },
+        krewpact_user_id: 'user_exec',
+      },
     } as any as Awaited<ReturnType<typeof auth>>);
 
     const currentYear = new Date().getFullYear();
@@ -179,7 +195,11 @@ describe('GET /api/executive/forecast', () => {
   it('marks exactly one quarter as isCurrent', async () => {
     mockAuth.mockResolvedValue({
       userId: 'user_admin',
-      sessionClaims: { krewpact_roles: ['platform_admin'] },
+      sessionClaims: {
+        sub: 'user_admin',
+        metadata: { krewpact_user_id: 'user_admin', role_keys: ['platform_admin'] },
+        krewpact_user_id: 'user_admin',
+      },
     } as any as Awaited<ReturnType<typeof auth>>);
 
     mockCreateUserClientSafe.mockResolvedValue({
@@ -199,7 +219,11 @@ describe('GET /api/executive/forecast', () => {
   it('returns forecast data with correct shape', async () => {
     mockAuth.mockResolvedValue({
       userId: 'user_exec',
-      sessionClaims: { krewpact_roles: ['executive'] },
+      sessionClaims: {
+        sub: 'user_exec',
+        metadata: { krewpact_user_id: 'user_exec', role_keys: ['executive'] },
+        krewpact_user_id: 'user_exec',
+      },
     } as any as Awaited<ReturnType<typeof auth>>);
 
     mockCreateUserClientSafe.mockResolvedValue({
