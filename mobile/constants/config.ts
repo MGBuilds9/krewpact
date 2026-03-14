@@ -2,7 +2,7 @@ export const API_BASE_URL = __DEV__
   ? 'http://localhost:3000'
   : 'https://hub.mdmgroupinc.ca';
 
-export const CLERK_PUBLISHABLE_KEY = 'pk_live_Y2xlcmsubWRtZ3JvdXBpbmMuY2EkKQ';
+export const CLERK_PUBLISHABLE_KEY = 'pk_live_Y2xlcmsuaHViLm1kbWdyb3VwaW5jLmNhJA';
 
 export const COLORS = {
   primary: '#2563EB',
