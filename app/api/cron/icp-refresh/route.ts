@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
 import { verifyCronAuth } from '@/lib/api/cron-auth';
+import { createCronLogger } from '@/lib/api/cron-logger';
 import {
   generateICPsFromAccounts,
   scoreLeadAgainstICP,
@@ -25,6 +26,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const cronLog = createCronLogger('icp-refresh');
   const supabase = createServiceClient();
 
   // --- Step 1: Fetch accounts with at least 1 project ---
@@ -232,10 +234,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   logger.info('ICP refresh complete', { icps_updated: icpsUpdated, leads_rescored: leadsRescored });
 
-  return NextResponse.json({
-    success: true,
-    icps_updated: icpsUpdated,
-    leads_rescored: leadsRescored,
-    timestamp: new Date().toISOString(),
-  });
+  const result = { success: true, icps_updated: icpsUpdated, leads_rescored: leadsRescored, timestamp: new Date().toISOString() };
+  await cronLog.success({ icps_updated: icpsUpdated, leads_rescored: leadsRescored });
+  return NextResponse.json(result);
 }

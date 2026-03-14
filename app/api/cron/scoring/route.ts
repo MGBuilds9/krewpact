@@ -5,6 +5,7 @@ import { scoreLead } from '@/lib/crm/scoring-engine';
 import type { ScoringRule } from '@/lib/crm/scoring-engine';
 import { deepResearchLead } from '@/lib/integrations/deep-research';
 import { verifyCronAuth } from '@/lib/api/cron-auth';
+import { createCronLogger } from '@/lib/api/cron-logger';
 
 const BATCH_SIZE = 50;
 
@@ -14,6 +15,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const cronLog = createCronLogger('scoring');
   const supabase = createServiceClient();
 
   // Support ?force=true to re-score all leads (not just unscored)
@@ -138,14 +140,22 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }
   }
 
-  return NextResponse.json({
+  const result = {
     success: true,
     processed,
     errors,
     total: leads.length,
     rules_count: rules.length,
     timestamp: new Date().toISOString(),
-  });
+  };
+
+  if (errors > 0 && processed === 0) {
+    await cronLog.failure(new Error(`All ${errors} leads failed to score`));
+  } else {
+    await cronLog.success({ processed, errors, total: leads.length });
+  }
+
+  return NextResponse.json(result);
 }
 
 // Vercel Cron Jobs sends GET requests

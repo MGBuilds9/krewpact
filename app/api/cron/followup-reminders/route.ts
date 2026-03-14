@@ -1,6 +1,7 @@
 import { createServiceClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyCronAuth } from '@/lib/api/cron-auth';
+import { createCronLogger } from '@/lib/api/cron-logger';
 
 export async function POST(req: NextRequest) {
   const { authorized } = await verifyCronAuth(req);
@@ -8,6 +9,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const cronLog = createCronLogger('followup-reminders');
   const supabase = createServiceClient();
   const now = new Date().toISOString();
 
@@ -61,10 +63,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: notifyError.message }, { status: 500 });
   }
 
-  return NextResponse.json({
-    notified: notifications.length,
-    totalOverdue: overdueTasks.length,
-  });
+  const result = { notified: notifications.length, totalOverdue: overdueTasks.length };
+  await cronLog.success(result);
+  return NextResponse.json(result);
 }
 
 // Vercel Cron Jobs sends GET requests

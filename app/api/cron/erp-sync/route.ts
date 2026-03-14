@@ -3,6 +3,7 @@ import { SyncService } from '@/lib/erp/sync-service';
 import { ErpClient } from '@/lib/erp/client';
 import { isMockMode } from '@/lib/erp/sync-service';
 import { verifyCronAuth } from '@/lib/api/cron-auth';
+import { createCronLogger } from '@/lib/api/cron-logger';
 import { logger } from '@/lib/logger';
 
 /**
@@ -19,6 +20,8 @@ export async function GET(request: NextRequest) {
   if (!authorized) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const cronLog = createCronLogger('erp-sync');
 
   // 2. Determine sync window (last 24 hours)
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 19);
@@ -119,6 +122,16 @@ export async function GET(request: NextRequest) {
     pos_synced: summary.pos_synced,
     error_count: summary.errors.length,
   });
+
+  if (summary.errors.length > 0 && summary.invoices_synced === 0 && summary.pos_synced === 0) {
+    await cronLog.failure(new Error(`All sync failed: ${summary.errors[0]}`));
+  } else {
+    await cronLog.success({
+      invoices_synced: summary.invoices_synced,
+      pos_synced: summary.pos_synced,
+      errors: summary.errors.length,
+    });
+  }
 
   return NextResponse.json(summary);
 }

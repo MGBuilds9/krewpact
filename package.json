@@ -13,7 +13,10 @@
     "test:coverage": "vitest run --coverage",
     "seed:demo": "tsx scripts/seed-demo.ts",
     "seed:real": "tsx scripts/seed-real-data.ts",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test --project=chromium",
+    "test:e2e:full": "E2E_FULL=true playwright test --project=full",
+    "health": "tsx scripts/health-check.ts",
+    "health:deep": "tsx scripts/health-check.ts --deep",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "husky"

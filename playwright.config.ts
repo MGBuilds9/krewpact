@@ -15,10 +15,18 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+      testIgnore: /flows\//,
+    },
+    {
+      name: 'full',
+      use: { ...devices['Desktop Chrome'] },
+      testDir: './e2e/flows',
     },
   ],
   webServer: {
-    command: 'NEXT_PUBLIC_DEMO_MODE=true npm run dev',
+    command: process.env.E2E_FULL
+      ? 'npm run dev'
+      : 'NEXT_PUBLIC_DEMO_MODE=true npm run dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 30_000,

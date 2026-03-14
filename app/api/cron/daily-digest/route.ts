@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { createServiceClient } from '@/lib/supabase/server';
 import { verifyCronAuth } from '@/lib/api/cron-auth';
+import { createCronLogger } from '@/lib/api/cron-logger';
 import { buildDigest } from '@/lib/ai/agents/digest-builder';
 import { sendEmail } from '@/lib/email/resend';
 
@@ -15,6 +16,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const cronLog = createCronLogger('daily-digest');
   const supabase = createServiceClient();
   const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 
@@ -107,13 +109,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }
   }
 
-  return NextResponse.json({
-    success: true,
-    sent,
-    errors,
-    users_processed: users.length,
-    timestamp: new Date().toISOString(),
-  });
+  const result = { success: true, sent, errors, users_processed: users.length, timestamp: new Date().toISOString() };
+  await cronLog.success({ sent, errors, users_processed: users.length });
+  return NextResponse.json(result);
 }
 
 export { POST as GET };

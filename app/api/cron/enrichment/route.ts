@@ -3,6 +3,7 @@ import { createServiceClient } from '@/lib/supabase/server';
 import { enrichLead, mergeEnrichmentData } from '@/lib/integrations/enrichment';
 import { summarizeEnrichment } from '@/lib/integrations/enrichment-summarizer';
 import { verifyCronAuth } from '@/lib/api/cron-auth';
+import { createCronLogger } from '@/lib/api/cron-logger';
 import { logger } from '@/lib/logger';
 
 const BATCH_SIZE = 50;
@@ -13,6 +14,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const cronLog = createCronLogger('enrichment');
   const supabase = createServiceClient();
 
   // Fetch leads that need enrichment (pending or null status)
@@ -136,13 +138,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }
   }
 
-  return NextResponse.json({
-    success: true,
-    processed,
-    errors,
-    total: leads.length,
-    timestamp: new Date().toISOString(),
-  });
+  const result = { success: true, processed, errors, total: leads.length, timestamp: new Date().toISOString() };
+  await cronLog.success({ processed, errors, total: leads.length });
+  return NextResponse.json(result);
 }
 
 // Vercel Cron Jobs sends GET requests

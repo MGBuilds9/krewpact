@@ -5,6 +5,7 @@ import { renderEmailTemplate } from '@/lib/email/template-renderer';
 import { processSequences } from '@/lib/crm/sequence-processor';
 import type { EmailSender, TemplateResolver } from '@/lib/crm/sequence-processor';
 import { verifyCronAuth } from '@/lib/api/cron-auth';
+import { createCronLogger } from '@/lib/api/cron-logger';
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const { authorized } = await verifyCronAuth(req);
@@ -12,6 +13,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const cronLog = createCronLogger('sequence-processor');
   const supabase = createServiceClient();
 
   // Wire real email sending via Resend
@@ -41,14 +43,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const result = await processSequences(supabase, { emailSender, templateResolver });
 
-  return NextResponse.json({
+  const response = {
     success: true,
     processed: result.processed,
     completed: result.completed,
     deadLettered: result.deadLettered,
     errors: result.errors.length,
     timestamp: new Date().toISOString(),
-  });
+  };
+  await cronLog.success({ processed: result.processed, completed: result.completed, errors: result.errors.length });
+  return NextResponse.json(response);
 }
 
 // Vercel Cron Jobs sends GET requests

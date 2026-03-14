@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { createServiceClient } from '@/lib/supabase/server';
 import { verifyCronAuth } from '@/lib/api/cron-auth';
+import { createCronLogger } from '@/lib/api/cron-logger';
 import { generateInsights } from '@/lib/ai/agents/insight-engine';
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
@@ -14,6 +15,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const cronLog = createCronLogger('generate-insights');
   const supabase = createServiceClient();
 
   // Get all active organizations
@@ -49,14 +51,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   logger.info('Insight generation complete', { totalGenerated, totalSkipped, totalErrors });
 
-  return NextResponse.json({
+  const result = {
     success: true,
     generated: totalGenerated,
     skipped: totalSkipped,
     errors: totalErrors,
     orgs_processed: orgs.length,
     timestamp: new Date().toISOString(),
-  });
+  };
+  await cronLog.success({ generated: totalGenerated, skipped: totalSkipped, errors: totalErrors });
+  return NextResponse.json(result);
 }
 
 // Vercel Cron Jobs sends GET requests

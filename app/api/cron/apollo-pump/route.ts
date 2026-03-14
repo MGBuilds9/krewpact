@@ -12,6 +12,7 @@ import {
 } from '@/lib/integrations/apollo-profiles';
 import type { ApolloSearchProfile } from '@/lib/integrations/apollo-profiles';
 import { verifyCronAuth } from '@/lib/api/cron-auth';
+import { createCronLogger } from '@/lib/api/cron-logger';
 import { logger } from '@/lib/logger';
 
 interface ProfileRunResult {
@@ -207,6 +208,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const cronLog = createCronLogger('apollo-pump');
   const supabase = createServiceClient();
 
   // Check for single-profile override (manual trigger or testing)
@@ -265,7 +267,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const totalImported = results.reduce((sum, r) => sum + r.leadsImported, 0);
   const totalDuplicates = results.reduce((sum, r) => sum + r.duplicatesSkipped, 0);
 
-  return NextResponse.json({
+  const response = {
     success: errors.length === 0,
     mode: 'auto-rotation',
     weekNumber,
@@ -276,7 +278,15 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     profiles: results,
     errors: errors.length > 0 ? errors : undefined,
     timestamp: new Date().toISOString(),
-  });
+  };
+
+  if (errors.length > 0 && results.length === 0) {
+    await cronLog.failure(new Error(errors.map(e => e.error).join('; ')));
+  } else {
+    await cronLog.success({ profilesRun: results.length, totalImported, totalDuplicates, errors: errors.length });
+  }
+
+  return NextResponse.json(response);
 }
 
 // Vercel Cron Jobs sends GET requests
