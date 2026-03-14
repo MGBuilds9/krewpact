@@ -1,0 +1,62 @@
+{
+  "expo": {
+    "name": "KrewPact",
+    "slug": "krewpact",
+    "version": "0.1.0",
+    "scheme": "krewpact",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.mdmgroup.krewpact",
+      "infoPlist": {
+        "NSCameraUsageDescription": "KrewPact uses your camera to capture site photos for daily logs.",
+        "NSPhotoLibraryUsageDescription": "KrewPact accesses your photo library to attach images to daily logs.",
+        "NSLocationWhenInUseUsageDescription": "KrewPact uses your location to tag site visits and time entries.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "KrewPact uses your location to tag site visits and time entries."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.mdmgroup.krewpact",
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-camera",
+      "expo-location",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#2563EB"
+        }
+      ],
+      "expo-secure-store"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

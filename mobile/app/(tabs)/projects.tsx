@@ -1,0 +1,109 @@
+import React from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  RefreshControl,
+  StyleSheet,
+  ActivityIndicator,
+} from 'react-native';
+import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'expo-router';
+import { api, Project } from '@/lib/api-client';
+import { queryKeys } from '@/lib/query-client';
+import { COLORS, SPACING } from '@/constants/config';
+
+const STATUS_COLORS: Record<string, string> = {
+  active: COLORS.success,
+  on_hold: COLORS.warning,
+  completed: COLORS.muted,
+  cancelled: COLORS.danger,
+};
+
+function ProjectCard({ project, onPress }: { project: Project; onPress: () => void }) {
+  const statusColor = STATUS_COLORS[project.status] ?? COLORS.muted;
+
+  return (
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
+      <View style={styles.cardHeader}>
+        <Text style={styles.projectNumber}>{project.project_number}</Text>
+        <View style={[styles.badge, { backgroundColor: statusColor + '22', borderColor: statusColor }]}>
+          <Text style={[styles.badgeText, { color: statusColor }]}>
+            {project.status.replace('_', ' ')}
+          </Text>
+        </View>
+      </View>
+      <Text style={styles.projectName} numberOfLines={2}>{project.project_name}</Text>
+      {project.start_date && (
+        <Text style={styles.date}>Started {new Date(project.start_date).toLocaleDateString()}</Text>
+      )}
+    </TouchableOpacity>
+  );
+}
+
+export default function ProjectsScreen() {
+  const router = useRouter();
+  const { data, isLoading, isError, refetch, isFetching } = useQuery<Project[]>({
+    queryKey: queryKeys.projects,
+    queryFn: api.projects.list,
+  });
+
+  if (isLoading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
+  }
+
+  if (isError) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.header}>Projects</Text>
+        <View style={styles.errorBox}>
+          <Text style={styles.errorText}>Failed to load projects. Pull to refresh.</Text>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <FlatList
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      data={data ?? []}
+      keyExtractor={(item) => item.id}
+      refreshControl={
+        <RefreshControl refreshing={isFetching && !isLoading} onRefresh={refetch} />
+      }
+      ListHeaderComponent={<Text style={styles.header}>Projects</Text>}
+      ListEmptyComponent={<Text style={styles.empty}>No projects found.</Text>}
+      renderItem={({ item }) => (
+        <ProjectCard
+          project={item}
+          onPress={() => router.push(`/project/${item.id}`)}
+        />
+      )}
+      ItemSeparatorComponent={() => <View style={styles.separator} />}
+    />
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: COLORS.surface },
+  content: { padding: SPACING.md, paddingBottom: SPACING.xl },
+  header: { fontSize: 24, fontWeight: '700', color: COLORS.text, marginBottom: SPACING.md },
+  card: { backgroundColor: COLORS.background, borderRadius: 12, padding: SPACING.md, borderWidth: 1, borderColor: COLORS.border },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.xs },
+  projectNumber: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary },
+  badge: { borderRadius: 12, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 2 },
+  badgeText: { fontSize: 12, fontWeight: '600', textTransform: 'capitalize' },
+  projectName: { fontSize: 16, fontWeight: '600', color: COLORS.text },
+  date: { fontSize: 13, color: COLORS.muted, marginTop: SPACING.xs },
+  separator: { height: SPACING.sm },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  errorBox: { backgroundColor: '#FEE2E2', borderRadius: 8, padding: SPACING.md },
+  errorText: { color: COLORS.danger },
+  empty: { color: COLORS.muted, textAlign: 'center', paddingVertical: SPACING.lg },
+});
