@@ -5,10 +5,15 @@ import { createServiceClient } from '@/lib/supabase/server';
 import { sendEmail } from '@/lib/email/resend';
 
 /**
- * Internal smoke test — runs every 15 minutes.
+ * Internal smoke test — runs every hour.
  * Hits key internal APIs and data paths, logs results,
  * and alerts on failure via email.
+ *
+ * Alert cooldown: only sends email on state transition (pass→fail)
+ * or at most once per hour to prevent email flooding.
  */
+
+const ALERT_COOLDOWN_MS = 60 * 60 * 1000; // 1 hour
 
 interface SmokeCheck {
   name: string;
@@ -78,13 +83,10 @@ async function runChecks(): Promise<SmokeCheck[]> {
     try {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 12000);
-      const res = await fetch(
-        `${erpUrl}/api/method/frappe.auth.get_logged_user`,
-        {
-          headers: { Authorization: `token ${erpKey}:${erpSecret}` },
-          signal: controller.signal,
-        },
-      );
+      const res = await fetch(`${erpUrl}/api/method/frappe.auth.get_logged_user`, {
+        headers: { Authorization: `token ${erpKey}:${erpSecret}` },
+        signal: controller.signal,
+      });
       clearTimeout(timer);
       checks.push({
         name: 'erpnext_auth',
@@ -144,14 +146,17 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const durationMs = Date.now() - startTime;
 
   const failedChecks = checks.filter((c) => c.status === 'fail');
-  const status = failedChecks.length === 0 ? 'pass' : failedChecks.length < checks.length ? 'partial' : 'fail';
+  const status =
+    failedChecks.length === 0 ? 'pass' : failedChecks.length < checks.length ? 'partial' : 'fail';
 
   // Log results to smoke_test_results table
   try {
     const supabase = createServiceClient();
     await supabase.from('smoke_test_results').insert({
       status,
-      checks: Object.fromEntries(checks.map((c) => [c.name, { status: c.status, detail: c.detail }])),
+      checks: Object.fromEntries(
+        checks.map((c) => [c.name, { status: c.status, detail: c.detail }]),
+      ),
       failed_checks: failedChecks.map((c) => c.name),
       duration_ms: durationMs,
     });
@@ -161,18 +166,61 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     });
   }
 
-  // Alert on failures
+  // Alert on failures — with cooldown to prevent email flooding
   if (failedChecks.length > 0) {
     logger.warn('Smoke test failures detected', {
       failedCount: failedChecks.length,
       failed: failedChecks.map((c) => c.name),
     });
+
+    // Check if we should send an alert (state transition or cooldown expired)
+    let shouldAlert = true;
     try {
-      await sendAlertEmail(failedChecks);
+      const supabaseForCheck = createServiceClient();
+      const { data: lastFailedRun } = await supabaseForCheck
+        .from('smoke_test_results')
+        .select('created_at, status')
+        .neq('status', 'pass')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (lastFailedRun) {
+        const msSinceLastFailure = Date.now() - new Date(lastFailedRun.created_at).getTime();
+        // Skip alert if a failure was already recorded within the cooldown window
+        // (the current run's result was already inserted above, so check for a PREVIOUS failure)
+        if (msSinceLastFailure < ALERT_COOLDOWN_MS) {
+          // Check if this is the FIRST failure (previous run was pass)
+          const { data: prevRun } = await supabaseForCheck
+            .from('smoke_test_results')
+            .select('status')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .range(1, 1)
+            .maybeSingle();
+
+          // Only suppress if previous run was also a failure (not a state transition)
+          if (prevRun && prevRun.status !== 'pass') {
+            shouldAlert = false;
+            logger.info('Smoke test alert suppressed (cooldown active, previous run also failed)');
+          }
+        }
+      }
     } catch (err) {
-      logger.error('Failed to send smoke test alert email', {
+      // If cooldown check fails, send the alert anyway (fail open)
+      logger.error('Failed to check alert cooldown', {
         error: err instanceof Error ? err : undefined,
       });
+    }
+
+    if (shouldAlert) {
+      try {
+        await sendAlertEmail(failedChecks);
+      } catch (err) {
+        logger.error('Failed to send smoke test alert email', {
+          error: err instanceof Error ? err : undefined,
+        });
+      }
     }
   }
 
