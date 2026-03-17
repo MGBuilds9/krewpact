@@ -4,12 +4,12 @@
 
 KrewPact deploys automatically via Vercel on push to `main`.
 
-| Item | Value |
-|------|-------|
-| **Vercel Project** | `prj_zoqw9AOSqaUcuKfgzpBFWcIbvRiX` (team: MKG Builds) |
-| **Production URLs** | `krewpact.vercel.app`, `hub.mdmgroupinc.ca` |
-| **Region** | `iad1` (US East) |
-| **Framework** | Next.js 15 (App Router) |
+| Item                | Value                                                 |
+| ------------------- | ----------------------------------------------------- |
+| **Vercel Project**  | `prj_zoqw9AOSqaUcuKfgzpBFWcIbvRiX` (team: MKG Builds) |
+| **Production URLs** | `krewpact.vercel.app`, `hub.mdmgroupinc.ca`           |
+| **Region**          | `iad1` (US East)                                      |
+| **Framework**       | Next.js 15 (App Router)                               |
 
 ### Deploy Process
 
@@ -22,6 +22,7 @@ KrewPact deploys automatically via Vercel on push to `main`.
 Via Vercel Dashboard → Deployments → select a deployment → Redeploy.
 
 Or via CLI:
+
 ```bash
 vercel --prod
 ```
@@ -42,33 +43,38 @@ curl https://hub.mdmgroupinc.ca/api/health
 ```
 
 The health endpoint verifies:
+
 - App is running
 - Supabase connection is functional
 
 ## Monitoring
 
-| Service | What it covers | Access |
-|---------|---------------|--------|
-| **Vercel Analytics** | Web vitals, traffic, function execution | Vercel Dashboard |
-| **Vercel Logs** | Serverless function logs, errors | Vercel Dashboard → Logs |
-| **Sentry** | Error tracking, stack traces (when configured) | sentry.io |
-| **BetterStack** | Uptime monitoring | betterstack.com |
-| **Supabase Dashboard** | Database metrics, RLS policy hits, storage | supabase.com/dashboard |
+| Service                | What it covers                                 | Access                  |
+| ---------------------- | ---------------------------------------------- | ----------------------- |
+| **Vercel Analytics**   | Web vitals, traffic, function execution        | Vercel Dashboard        |
+| **Vercel Logs**        | Serverless function logs, errors               | Vercel Dashboard → Logs |
+| **Sentry**             | Error tracking, stack traces (when configured) | sentry.io               |
+| **BetterStack**        | Uptime monitoring                              | betterstack.com         |
+| **Supabase Dashboard** | Database metrics, RLS policy hits, storage     | supabase.com/dashboard  |
 
 ## Cron Jobs
 
 Configured in `vercel.json`. All cron endpoints require `CRON_SECRET` for authentication.
 
-| Job | Schedule | Endpoint |
-|-----|----------|----------|
-| Apollo lead pump | Mon 6:00 AM UTC | `/api/cron/apollo-pump` |
-| Lead enrichment | Mon/Thu 7:00 AM UTC | `/api/cron/enrichment` |
-| Lead scoring | Every 4 hours | `/api/cron/scoring` |
-| Sequence processor | Every 15 minutes | `/api/cron/sequence-processor` |
-| SLA alerts | Weekdays 8:00 AM UTC | `/api/cron/sla-alerts` |
-| Portal reminders | Weekdays 9:00 AM UTC | `/api/cron/portal-reminders` |
-| Daily summary | Weekdays 6:00 PM UTC | `/api/cron/summarize` |
-| ERP sync | Every 30 minutes | `/api/cron/erp-sync` |
+| Job                 | Schedule             | Endpoint                       |
+| ------------------- | -------------------- | ------------------------------ |
+| Smoke test          | Every 15 minutes     | `/api/cron/smoke-test`         |
+| Apollo lead pump    | Mon 6:00 AM UTC      | `/api/cron/apollo-pump`        |
+| Lead enrichment     | Mon/Thu 7:00 AM UTC  | `/api/cron/enrichment`         |
+| Lead scoring        | Every 4 hours        | `/api/cron/scoring`            |
+| Sequence processor  | Every 15 minutes     | `/api/cron/sequence-processor` |
+| Follow-up reminders | Weekdays 9:00 AM UTC | `/api/cron/followup-reminders` |
+| SLA alerts          | Weekdays 8:00 AM UTC | `/api/cron/sla-alerts`         |
+| Portal reminders    | Weekdays 9:00 AM UTC | `/api/cron/portal-reminders`   |
+| Daily summary       | Weekdays 6:00 PM UTC | `/api/cron/summarize`          |
+| ERP sync            | Every 30 minutes     | `/api/cron/erp-sync`           |
+| ICP refresh         | Mon 6:30 AM UTC      | `/api/cron/icp-refresh`        |
+| Watchdog            | Every hour           | `/api/cron/watchdog`           |
 
 ### Testing a Cron Job Locally
 
@@ -76,14 +82,47 @@ Configured in `vercel.json`. All cron endpoints require `CRON_SECRET` for authen
 curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/scoring
 ```
 
+### Alert Cooldown Pattern (smoke-test + watchdog)
+
+Both crons use an alert cooldown to prevent email flooding:
+
+- **Smoke test** (`/api/cron/smoke-test`): Runs every 15 minutes. Only sends an alert email on state transition (pass→fail) or if the last failure alert was sent more than 1 hour ago. This prevents 70+ alert emails per day on sustained failures.
+- **Watchdog** (`/api/cron/watchdog`): Runs every hour. Only sends an alert when the set of overdue crons **changes** (a new overdue cron appears). Repeated runs with the same overdue set are suppressed. Expected cron intervals are defined in `CRON_SCHEDULE` const in the route file.
+
+Both patterns fail open: if the cooldown state check itself fails, the alert is sent.
+
+### Apollo Pump Pipeline
+
+The lead generation pipeline runs in three stages:
+
+1. **`/api/cron/apollo-pump`** (Mon 6:00 AM) — Queries Apollo.io API for new leads matching ICP criteria. Writes raw results to `bidding_opportunities` / lead staging tables.
+2. **`/api/cron/enrichment`** (Mon + Thu 7:00 AM) — Runs the enrichment waterfall: Apollo → Clearbit → LinkedIn → Google. Updates `enrichment_jobs` table.
+3. **`/api/cron/scoring`** (every 4 hours) — Re-scores all unenriched or recently updated leads using `lead_scoring_rules`.
+
+### Scoring Engine Rules and Caps
+
+Scoring uses configurable rules in the `lead_scoring_rules` table, evaluated by `lib/crm/scoring-engine.ts`.
+
+**Dimension caps (hard limits):**
+| Dimension | Max Score |
+|-----------|-----------|
+| Fit | 40 |
+| Intent | 35 |
+| Engagement | 25 |
+| **Total** | **100** |
+
+**Supported operators:** `eq`, `gt`, `lt`, `gte`, `lte`, `contains`, `in_set`, `contains_any`
+
+- `in_set`: matches field value against `|`-delimited list (e.g., `Toronto|Mississauga|Brampton`)
+- `contains_any`: field contains at least one value from `|`-delimited list
+
+Scores below 0 per dimension are clamped to 0. Score history is tracked in `lead_score_history`.
+
 ## Seed Data
 
 ```bash
 # Seed MDM organization
 npx tsx scripts/seed-org.ts --file supabase/seed/seed-org-mdm.json
-
-# Seed demo data (contacts, leads, projects)
-npx tsx scripts/seed-demo.ts
 
 # Seed test users with Clerk metadata
 npx tsx scripts/seed-test-users.ts
@@ -96,22 +135,15 @@ All seed scripts require `SUPABASE_SERVICE_ROLE_KEY` (bypasses RLS).
 
 ## Environment Strategy
 
-| Environment | Purpose | URL | Branch |
-|-------------|---------|-----|--------|
-| **Production** | Live app | `hub.mdmgroupinc.ca` | `main` |
-| **Preview** | PR review | `*.vercel.app` (per-PR) | PR branches |
-| **Local** | Development | `localhost:3000` | any |
-| **Demo** | UI dev (no services) | `localhost:3000` | any (`NEXT_PUBLIC_DEMO_MODE=true`) |
+| Environment    | Purpose     | URL                     | Branch      |
+| -------------- | ----------- | ----------------------- | ----------- |
+| **Production** | Live app    | `hub.mdmgroupinc.ca`    | `main`      |
+| **Preview**    | PR review   | `*.vercel.app` (per-PR) | PR branches |
+| **Local**      | Development | `localhost:3000`        | any         |
 
 Vercel env vars are configured per-environment (Production / Preview / Development) in the Vercel Dashboard.
 
 ## Troubleshooting
-
-### Build fails: "demo mode" guard
-
-**Symptom:** Build succeeds locally but fails on Vercel.
-**Cause:** `NEXT_PUBLIC_DEMO_MODE=true` was set in Vercel env vars.
-**Fix:** Remove `NEXT_PUBLIC_DEMO_MODE` from Vercel environment variables or set to `false`.
 
 ### Empty data after deploy
 

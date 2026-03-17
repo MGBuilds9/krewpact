@@ -91,15 +91,65 @@ Clerk JWTs drive Supabase RLS. Configured via Clerk JWT template:
 - **Enrichment pipeline:** `enrichment_jobs` — Apollo → Clearbit → LinkedIn → Google
 - **Bidding opportunities:** `bidding_opportunities` — Bids & Tenders, MERX import
 
-## RAG / Knowledge Layer (pgvector)
+## AI Agentic Layer
 
-- **`knowledge_embeddings`** — vectorized content from MDM-Book
-- **`ai_chat_sessions` + `ai_chat_messages`** — context-aware AI chat
-- **Embedding model:** OpenAI ada-002 (1536 dimensions), IVFFlat index
+> **Status: OFF by default** — Gated by `AI_ENABLED=true` env var. See `docs/ai-agentic-layer.md` for full documentation.
 
-## ERPNext Integration (MVP = 12 mappings)
+**Primary model:** Gemini 2.0 Flash (`gemini-2.0-flash`) via `@ai-sdk/google` — requires `GOOGLE_GENERATIVE_AI_API_KEY`.
 
-MVP mappings: Customer, Contact, Opportunity, Quotation, Sales Order, Project, Task, Sales Invoice (read), Purchase Invoice (read), Supplier, Expense Claim, Timesheet
+### 8 Agents (`lib/ai/agents/`)
+
+| Agent                   | Type         | Description                                                                 |
+| ----------------------- | ------------ | --------------------------------------------------------------------------- |
+| `insight-engine`        | Orchestrator | Runs 4 detectors in parallel, deduplicates, batch-inserts with 7-day TTL    |
+| `stale-deal-detector`   | LLM          | Flags opportunities not updated in 14+ days; confidence 0.70→0.95           |
+| `bid-matcher`           | LLM          | Matches new bidding opportunities against lead industries                   |
+| `budget-anomaly`        | Rule-based   | Flags projects where actual cost / budget > 80%                             |
+| `next-action-suggester` | Rule-based   | Suggests next step based on opportunity stage + last activity age           |
+| `email-drafter`         | LLM          | Writes subject + body for follow-up, introduction, proposal emails          |
+| `digest-builder`        | LLM          | Role-aware daily briefings (executive, PM, sales); stored in `user_digests` |
+| `nl-query`              | LLM          | Two-step NL→plan→execute→answer using 4 Supabase query tools                |
+
+### Killswitch Pattern
+
+Every route calling a model checks `process.env.AI_ENABLED !== 'true'` and returns `503` if off. Cron schedules are also removed from `vercel.json` when off. LLM-calling crons (`generate-insights`, `daily-digest`) are gated; read-only routes (`insights`, `suggest`, `digest`, `analytics`, `preferences`) are always active.
+
+### Cost Tracking
+
+Every AI call logs to `ai_actions` table: `org_id`, `user_id`, `model_used`, `input_tokens`, `output_tokens`, `cost_cents`, `latency_ms`. Estimated monthly AI cost per org: $0.50–$1.00 (launch, 10–20 users).
+
+### AI Database Tables
+
+- `ai_insights` — entity-linked nudges (7-day expiry, dismissed/acted_on timestamps)
+- `user_digests` — per-user daily briefings (unique per user per day)
+- `ai_actions` — cost/usage tracking
+- `users.ai_preferences` — JSONB column (min confidence, email opt-in, NL query toggle)
+
+## Executive Dashboard
+
+`app/api/executive/` routes provide a read-only intelligence layer for the `executive` role.
+
+| Route                             | Description                                |
+| --------------------------------- | ------------------------------------------ |
+| `/api/executive/overview`         | Aggregated metrics across all divisions    |
+| `/api/executive/forecast`         | Pipeline forecast and projections          |
+| `/api/executive/alerts`           | Active alerts (budget, SLA, stale deals)   |
+| `/api/executive/staging`          | Staging pipeline for bulk data import      |
+| `/api/executive/subscriptions`    | Executive alert subscriptions              |
+| `/api/executive/knowledge/chat`   | RAG-powered chat over knowledge embeddings |
+| `/api/executive/knowledge/embed`  | Ingest documents into pgvector             |
+| `/api/executive/knowledge/search` | Semantic search over knowledge base        |
+
+### RAG / Knowledge Layer
+
+- **`knowledge_embeddings`** — pgvector table; vectorized content from MDM-Book (SOPs, market data, competitor intel), project lessons, strategy docs
+- **`ai_chat_sessions` + `ai_chat_messages`** — context-aware AI chat within dashboard
+- **Embedding model:** OpenAI `text-embedding-ada-002` (1536 dimensions), IVFFlat index with 100 lists
+- Context-awareness: queries from project view automatically include project context
+
+## ERPNext Integration (13 mappers)
+
+Mappers: Customer, Contact, Opportunity, Quotation, Sales Order, Project, Task, Sales Invoice (read), Purchase Invoice (read), Supplier, Expense Claim, Timesheet, Payment Entry
 
 - Sync: eventual consistency, outbox/inbox, idempotent upsert, retry with backoff, dead-letter
 - All custom fields prefixed `krewpact_*`

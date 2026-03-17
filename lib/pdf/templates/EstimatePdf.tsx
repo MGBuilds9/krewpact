@@ -1,5 +1,6 @@
+import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
 import React from 'react';
-import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
+
 import type { EstimatePdfData } from '../types';
 
 const styles = StyleSheet.create({
@@ -77,7 +78,7 @@ export function EstimatePdf({ data }: { data: EstimatePdfData }) {
         {data.lineItems && data.lineItems.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Line Items</Text>
-            <View style={styles.tableHeader}>
+            <View style={styles.tableHeader} fixed>
               <Text style={styles.colDesc}>Description</Text>
               <Text style={styles.colQty}>Qty</Text>
               <Text style={styles.colUnit}>Unit</Text>
@@ -88,7 +89,7 @@ export function EstimatePdf({ data }: { data: EstimatePdfData }) {
             {data.lineItems.map((item, i) => {
               const lineTotal = item.quantity * item.unitCost * (1 + (item.markup || 0) / 100);
               return (
-                <View key={i} style={styles.tableRow}>
+                <View key={i} style={styles.tableRow} wrap={false} minPresenceAhead={20}>
                   <Text style={styles.colDesc}>{item.description}</Text>
                   <Text style={styles.colQty}>{item.quantity}</Text>
                   <Text style={styles.colUnit}>{item.unit || '-'}</Text>
@@ -102,7 +103,7 @@ export function EstimatePdf({ data }: { data: EstimatePdfData }) {
         )}
 
         {/* Totals */}
-        <View style={styles.totalsSection}>
+        <View style={styles.totalsSection} wrap={false}>
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Subtotal:</Text>
             <Text style={styles.totalValue}>{formatCurrency(data.subtotal)}</Text>

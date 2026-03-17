@@ -23,6 +23,7 @@ bench --site [your-site-name] console
 ```
 
 In the console:
+
 ```python
 import frappe
 
@@ -42,6 +43,7 @@ print("User created:", user.name)
 ```
 
 Then assign roles (still in console):
+
 ```python
 roles_needed = [
     "Sales User", "Sales Manager",
@@ -62,6 +64,7 @@ print("Roles assigned")
 ## Step 3: Generate API Keys
 
 Still in the bench console:
+
 ```python
 user = frappe.get_doc("User", "krewpact-api@mdmgroupinc.ca")
 api_key = frappe.generate_hash(length=15)
@@ -213,6 +216,8 @@ custom_fields = [
     {"dt": "Sales Invoice", "fieldname": "custom_mdm_project_id", "fieldtype": "Data", "label": "KrewPact Project ID", "read_only": 1},
     # Purchase Invoice
     {"dt": "Purchase Invoice", "fieldname": "custom_mdm_project_id", "fieldtype": "Data", "label": "KrewPact Project ID", "read_only": 1},
+    # Payment Entry
+    {"dt": "Payment Entry", "fieldname": "custom_mdm_project_id", "fieldtype": "Data", "label": "KrewPact Project ID", "read_only": 1},
 ]
 
 for cf in custom_fields:
@@ -299,10 +304,10 @@ curl -s "http://localhost:3000/api/erp/sync" | python3 -m json.tool
 
 ## Troubleshooting
 
-| Problem | Fix |
-|---------|-----|
-| `403 Forbidden` on API calls | User doesn't have the right roles. Re-run Step 2 role assignment. |
-| Tunnel won't start | Check `~/.cloudflared/config.yml` has correct tunnel ID. Run `cloudflared tunnel list` to verify. |
-| `erp-api.krewpact.com` doesn't resolve | DNS propagation. Wait 5 min. Check `cloudflared tunnel route dns` output. |
-| Custom fields not showing in API responses | Clear cache: `bench --site [site] clear-cache` |
-| `ERPNEXT_BASE_URL` not working in KrewPact | Make sure the URL has no trailing slash. Should be `https://erp-api.krewpact.com` |
+| Problem                                    | Fix                                                                                               |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| `403 Forbidden` on API calls               | User doesn't have the right roles. Re-run Step 2 role assignment.                                 |
+| Tunnel won't start                         | Check `~/.cloudflared/config.yml` has correct tunnel ID. Run `cloudflared tunnel list` to verify. |
+| `erp-api.krewpact.com` doesn't resolve     | DNS propagation. Wait 5 min. Check `cloudflared tunnel route dns` output.                         |
+| Custom fields not showing in API responses | Clear cache: `bench --site [site] clear-cache`                                                    |
+| `ERPNEXT_BASE_URL` not working in KrewPact | Make sure the URL has no trailing slash. Should be `https://erp-api.krewpact.com`                 |

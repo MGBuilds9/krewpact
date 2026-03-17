@@ -1,29 +1,53 @@
-/* eslint-disable no-console */
 /**
- * Seed test users for UAT — one per role (13 total).
+ * Seed users in Supabase (org_users / users / user_roles / user_divisions).
  *
- * Creates Clerk users via Backend API, then inserts matching records
- * in Supabase (users, user_roles, user_divisions).
+ * Two modes:
  *
- * Usage: npx tsx scripts/seed-test-users.ts
+ *   1. Production admin seed (recommended for first deploy):
+ *      Set SEED_ADMIN_CLERK_ID in .env.local and run with --admin-only flag.
+ *      Creates a single platform_admin row linked to an existing Clerk user.
+ *      Clerk user must already exist (created manually in Clerk dashboard).
+ *
+ *      npx tsx scripts/seed-test-users.ts --admin-only
+ *
+ *   2. Full UAT seed (creates 13 Clerk test users + Supabase rows):
+ *      npx tsx scripts/seed-test-users.ts
  *
  * Required env vars (in .env.local):
- *   CLERK_SECRET_KEY          — Clerk Backend API key
  *   NEXT_PUBLIC_SUPABASE_URL  — Supabase project URL
  *   SUPABASE_SERVICE_ROLE_KEY — Supabase service role key
+ *   CLERK_SECRET_KEY          — Clerk Backend API key (required for full UAT seed)
+ *   SEED_ADMIN_CLERK_ID       — Existing Clerk user ID for admin-only mode
+ *   SEED_ADMIN_EMAIL          — Admin email (optional, defaults to info@mdmgroupinc.ca)
  */
 import { config } from 'dotenv';
 config({ path: '.env.local' });
 
 import { createClient } from '@supabase/supabase-js';
 
+const ADMIN_ONLY = process.argv.includes('--admin-only');
+
 const CLERK_SECRET_KEY = process.env.CLERK_SECRET_KEY;
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SEED_ADMIN_CLERK_ID = process.env.SEED_ADMIN_CLERK_ID;
+const SEED_ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL ?? 'info@mdmgroupinc.ca';
 
-if (!CLERK_SECRET_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+  console.error('Missing required env vars: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY');
+  process.exit(1);
+}
+
+if (!ADMIN_ONLY && !CLERK_SECRET_KEY) {
   console.error(
-    'Missing required env vars: CLERK_SECRET_KEY, NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY',
+    'Missing CLERK_SECRET_KEY (required for full UAT seed). Use --admin-only to skip Clerk user creation.',
+  );
+  process.exit(1);
+}
+
+if (ADMIN_ONLY && !SEED_ADMIN_CLERK_ID) {
+  console.error(
+    'Missing SEED_ADMIN_CLERK_ID (required for --admin-only mode). Set it in .env.local.',
   );
   process.exit(1);
 }
@@ -202,9 +226,88 @@ async function getRoleId(roleKey: string): Promise<string> {
   return data.id;
 }
 
+async function seedAdminOnly(orgId: string): Promise<void> {
+  const clerkId = SEED_ADMIN_CLERK_ID!;
+  const email = SEED_ADMIN_EMAIL;
+
+  console.log(`  Admin-only mode: linking Clerk user ${clerkId} as platform_admin...`);
+
+  // Check if already exists
+  const { data: existing } = await supabase
+    .from('users')
+    .select('id')
+    .eq('clerk_id', clerkId)
+    .limit(1);
+
+  let dbUserId: string;
+
+  if (existing && existing.length > 0) {
+    dbUserId = existing[0].id as string;
+    console.log(`  Supabase user already exists (id: ${dbUserId})`);
+  } else {
+    const { data: dbUser, error: userError } = await supabase
+      .from('users')
+      .insert({ clerk_id: clerkId, email, full_name: 'Admin', org_id: orgId, is_active: true })
+      .select('id')
+      .single();
+
+    if (userError || !dbUser) {
+      throw new Error(`Failed to insert admin user: ${userError?.message}`);
+    }
+    dbUserId = dbUser.id as string;
+    console.log(`  Created Supabase user (id: ${dbUserId})`);
+  }
+
+  // Assign platform_admin role
+  const roleId = await getRoleId('platform_admin');
+  await supabase
+    .from('user_roles')
+    .upsert({ user_id: dbUserId, role_id: roleId }, { onConflict: 'user_id,role_id' });
+  console.log(`  Assigned role: platform_admin`);
+
+  // Assign all divisions
+  const allCodes = ['contracting', 'homes', 'wood', 'telecom', 'group-inc', 'management'];
+  const divisionIds = await getDivisionIds(orgId, allCodes);
+  if (divisionIds.length > 0) {
+    const rows = divisionIds.map((divId) => ({ user_id: dbUserId, division_id: divId }));
+    await supabase.from('user_divisions').upsert(rows, { onConflict: 'user_id,division_id' });
+    console.log(`  Assigned ${divisionIds.length} divisions`);
+  }
+
+  // Update Clerk metadata
+  if (CLERK_SECRET_KEY) {
+    try {
+      await clerkApiCall(`/users/${clerkId}/metadata`, 'PATCH', {
+        public_metadata: {
+          krewpact_user_id: dbUserId,
+          division_ids: divisionIds,
+          role_keys: ['platform_admin'],
+        },
+      });
+      console.log(`  Updated Clerk metadata`);
+    } catch (err) {
+      console.warn(`  Warning: Could not update Clerk metadata (non-fatal): ${err}`);
+    }
+  } else {
+    console.warn(`  Skipped Clerk metadata update (CLERK_SECRET_KEY not set)`);
+    console.warn(`  Manually set public_metadata on Clerk user ${clerkId}:`);
+    console.warn(`    krewpact_user_id: ${dbUserId}`);
+    console.warn(`    division_ids: ${JSON.stringify(divisionIds)}`);
+    console.warn(`    role_keys: ["platform_admin"]`);
+  }
+
+  console.log(`\nDone: platform_admin seeded (clerk: ${clerkId}, db: ${dbUserId})`);
+}
+
 async function main() {
   console.log('Fetching org and division data...');
   const orgId = await getOrgId();
+
+  if (ADMIN_ONLY) {
+    await seedAdminOnly(orgId);
+    return;
+  }
+
   let created = 0;
   let skipped = 0;
 

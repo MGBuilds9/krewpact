@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { Download, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+
+import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import type { EstimatePdfData } from '@/lib/pdf/types';
 
@@ -44,8 +45,9 @@ export function ExportPdfButton({ estimateNumber, estimateData }: ExportPdfButto
       const a = document.createElement('a');
       a.href = url;
       a.download = filename;
+      document.body.appendChild(a);
       a.click();
-      a.remove();
+      document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch {
       toast({

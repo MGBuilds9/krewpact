@@ -24,11 +24,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: process.env.E2E_FULL
-      ? 'npm run dev'
-      : 'NEXT_PUBLIC_DEMO_MODE=true npm run dev',
+    command: process.env.CI ? 'npm start' : 'npm run dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
-    timeout: 30_000,
+    timeout: process.env.CI ? 60_000 : 30_000,
   },
 });

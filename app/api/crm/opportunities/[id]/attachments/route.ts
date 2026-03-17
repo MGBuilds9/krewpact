@@ -1,7 +1,8 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -19,28 +20,32 @@ export async function GET(req: NextRequest, context: RouteContext) {
   if (authError) return authError;
 
   const { data, error } = await supabase.storage
-    .from('documents')
+    .from('contracts')
     .list(`opportunity-attachments/${id}`);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Build file metadata with public URLs
-  const files = (data ?? [])
-    .filter((f) => f.name !== '.emptyFolderPlaceholder')
-    .map((f) => {
-      const path = `opportunity-attachments/${id}/${f.name}`;
-      const { data: urlData } = supabase.storage.from('documents').getPublicUrl(path);
-      return {
-        name: f.name,
-        path,
-        size: f.metadata?.size ?? null,
-        created_at: f.created_at,
-        updated_at: f.updated_at,
-        public_url: urlData.publicUrl,
-      };
-    });
+  // Build file metadata with signed URLs (contracts bucket is private)
+  const files = await Promise.all(
+    (data ?? [])
+      .filter((f) => f.name !== '.emptyFolderPlaceholder')
+      .map(async (f) => {
+        const path = `opportunity-attachments/${id}/${f.name}`;
+        const { data: signedData } = await supabase.storage
+          .from('contracts')
+          .createSignedUrl(path, 3600);
+        return {
+          name: f.name,
+          path,
+          size: f.metadata?.size ?? null,
+          created_at: f.created_at,
+          updated_at: f.updated_at,
+          signed_url: signedData?.signedUrl ?? null,
+        };
+      }),
+  );
 
   return NextResponse.json({ files });
 }
@@ -80,21 +85,21 @@ export async function POST(req: NextRequest, context: RouteContext) {
   const path = `opportunity-attachments/${id}/${file.name}`;
 
   const { data, error } = await supabase.storage
-    .from('documents')
+    .from('contracts')
     .upload(path, file, { upsert: true });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const { data: urlData } = supabase.storage.from('documents').getPublicUrl(path);
+  const { data: signedData } = await supabase.storage.from('contracts').createSignedUrl(path, 3600);
 
   return NextResponse.json(
     {
       path: data.path,
       name: file.name,
       size: file.size,
-      public_url: urlData.publicUrl,
+      signed_url: signedData?.signedUrl ?? null,
     },
     { status: 201 },
   );
@@ -119,7 +124,7 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
   if (authError) return authError;
   const path = `opportunity-attachments/${id}/${fileName}`;
 
-  const { error } = await supabase.storage.from('documents').remove([path]);
+  const { error } = await supabase.storage.from('contracts').remove([path]);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

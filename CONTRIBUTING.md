@@ -99,9 +99,20 @@ See `.env.example` for all required variables with documentation. Key services:
 - **Supabase** — Database and storage
 - **Clerk** — Authentication
 - **ERPNext** — ERP integration (via Cloudflare Tunnel)
-- **Upstash** — Redis queue
+- **Upstash** — QStash (job queue) + Redis (rate limiting)
+- **Resend** — Transactional email
+- **BoldSign** — E-signature (Phase 2+)
+- **Sentry** — Error tracking
 
-For demo mode (no external services needed): set `NEXT_PUBLIC_DEMO_MODE=true`
+**AI features (optional — disabled by default):**
+
+- `AI_ENABLED=true` — master killswitch to enable all AI routes and crons
+- `GOOGLE_GENERATIVE_AI_API_KEY` — Gemini 2.0 Flash (primary model). Note: must be `GOOGLE_GENERATIVE_AI_API_KEY`, not `GEMINI_API_KEY` — the Vercel AI SDK reads this exact name.
+- `ANTHROPIC_API_KEY` — Claude Haiku (NL query fallback, optional)
+
+**Lead enrichment (optional — enrichment features disabled when missing):**
+
+- `APOLLO_API_KEY`, `BRAVE_API_KEY`, `TAVILY_API_KEY`, `GOOGLE_MAPS_API_KEY`
 
 ## Testing
 

@@ -118,6 +118,73 @@ Clerk JWTs drive Supabase RLS. Configured via Clerk JWT template:
 - DB connections from Vercel: use Supabase pooler (port 6543, transaction mode), NOT direct (port 5432)
 - Environment variables: NEVER hardcode secrets; see `.env.local` template in Access-and-Workflow-Plan.md
 
+## Coding Standards (Enforced)
+
+### File Size Limits (ESLint enforced)
+
+- **Components:** Max 150 lines (extract sub-components, hooks, or utils)
+- **Page files (page.tsx):** Max 200 lines (extract sections into components)
+- **API routes (route.ts):** Max 200 lines (extract business logic to lib/)
+- **Lib files:** Max 300 lines (split into focused modules)
+- **Validators:** Max 300 lines (split by domain)
+- **Exception:** `components/ui/` (shadcn/ui generated), `types/supabase.ts` (generated)
+
+### When a file is too large, split it:
+
+- Extract custom hooks -> `hooks/use<Feature>.ts`
+- Extract sub-components -> same directory as `<Component>/<SubComponent>.tsx`
+- Extract business logic -> `lib/<domain>/<function>.ts`
+- Extract types -> `types/<domain>.ts`
+- Extract constants -> co-locate or `lib/constants/<domain>.ts`
+
+### Component Rules
+
+- One exported component per file (internal helpers OK)
+- Server Components by default -- only add 'use client' when needed for interactivity
+- Never define components inside other components (causes re-mount on every render)
+- Use `React.memo()` only when profiling shows re-render issues, not preemptively
+- Prefer composition (children prop) over deep prop drilling
+
+### Performance Rules
+
+- **CRITICAL: No async waterfalls** -- use Promise.all() for independent fetches
+- **CRITICAL: No barrel imports** -- import directly: `import { Button } from '@/components/ui/button'` not `from '@/components/ui'`
+- **CRITICAL: Lazy load heavy components** -- use `next/dynamic` for charts, editors, modals
+- **HIGH: Use React.cache()** for deduplicating server-side data fetches
+- **HIGH: Minimize Server->Client serialization** -- only pass what the client needs
+- **MEDIUM: Use Suspense boundaries** -- wrap async Server Components in `<Suspense>`
+
+### Import Order (ESLint enforced via simple-import-sort)
+
+1. React/Next.js imports
+2. External packages
+3. Internal aliases (@/lib, @/components, @/hooks, @/types)
+4. Relative imports
+5. Style imports
+
+### API Route Rules
+
+- Always start with auth check (Clerk `auth()`)
+- Always validate input with Zod on mutating routes
+- Never expose raw DB errors to clients
+- Use `lib/logger.ts` -- never `console.log` (ESLint error)
+- Extract business logic to `lib/` -- routes are thin orchestrators
+
+### Testing Rules
+
+- Mocks belong ONLY in **tests**/ and e2e/ directories
+- No mock data, fake users, or demo mode in production code
+- Test files mirror source structure: `__tests__/lib/crm/scoring.test.ts` -> `lib/crm/scoring-engine.ts`
+
+### What NOT to Do
+
+- NEVER use `any` type -- use `unknown` with type guards or define interfaces
+- NEVER hardcode secrets, API keys, or user data
+- NEVER use `getServerSideProps` -- App Router only
+- NEVER skip Clerk auth in any API route or page
+- NEVER commit `console.log` -- use `logger.info/warn/error`
+- NEVER create barrel index files (re-export files) -- they break tree-shaking
+
 ## Sales AGI Layer (from LeadForge Merge)
 
 KrewPact's CRM now includes an autonomous sales automation layer:
@@ -255,6 +322,14 @@ ERPNext is GPL v3. **Critical:** maintain strict API boundary. No shared code, s
 Run `/scope` to initialize the project. This reads the Resolution doc, confirms pending decisions, scaffolds Next.js, and creates the Phase 0 task list.
 
 ## Session Log
+
+### Mar 16, 2026 — Production Hardening: Demo Removal, Coding Standards, File Splits
+
+- **Phase 1 — Demo Mode Removal:** Deleted 5 files (`demo-mode.ts`, `clerk-demo-server.ts`, `clerk-demo-client.tsx`, `seed-demo.ts`, `demo-mode-guard.test.ts`). Edited 5 production files to remove demo bypasses (`next.config.ts`, `supabase/server.ts`, `org/[slug]/route.ts`, `playwright.config.ts`, `ci.yml`). Rewrote 3 E2E tests to use real Clerk auth (`auth-smoke.spec.ts`, `auth.spec.ts`, `dashboard-ui.spec.ts`). Updated 5 docs (`local-dev.md`, `runbook.md`, `CONTRIBUTING.md`, `.env.example`, `lib/CLAUDE.md`). ERPNext mock mode (`isMockMode`) kept — separate concern with Sentry alerts.
+- **Phase 2 — Coding Standards:** Installed `eslint-plugin-simple-import-sort`. Added 10 new ESLint rules (`max-lines:300`, `max-lines-per-function:80`, `complexity:15`, `max-depth:4`, `max-params:4`, `simple-import-sort/imports+exports`, `no-explicit-any:error`, `no-console:error`, `react/no-array-index-key`). Auto-fixed 1365 import ordering issues. Added file-specific overrides for `components/ui/`, tests, scripts, generated types. Created `components/CLAUDE.md` with component conventions. Updated `app/api/CLAUDE.md` with size limits and waterfall patterns. Added `## Coding Standards (Enforced)` section to root CLAUDE.md.
+- **Phase 3 — File Splits (8 files):** `hooks/useCRM.ts` (1666L -> 10 files in `hooks/crm/`), `lib/erp/sync-service.ts` (1167L -> 11 handlers in `lib/erp/sync-handlers/`), `lib/email/branded-templates.ts` (802L -> 7 files in `lib/email/templates/`), `components/Layout/CommandPalette.tsx` (583L -> 6 files + hook), `components/Projects/ProjectCreationForm.tsx` (486L -> 9 files + hook), `lib/validators/crm.ts` (482L -> 8 domain files), `hooks/useEstimating.ts` (463L -> 5 files in `hooks/estimating/`), `lib/crm/sequence-processor.ts` (447L -> 3 files).
+- **Phase 4 — Production Checklist:** Verified: `global-error.tsx`, `not-found.tsx`, `next/font`, `.env.local` in `.gitignore`, CSP headers, no raw `<img>` tags, no secret leaks in `NEXT_PUBLIC_` vars. All pass.
+- **Tests:** 3,871/3,871 passing (342 files). 0 type errors. 0 lint errors. 469 lint warnings (from warn-level rules). Build clean.
 
 ### Mar 14, 2026 — Scoring Alignment + Full Env Setup + Service Health Check
 

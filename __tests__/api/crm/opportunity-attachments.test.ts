@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mocks BEFORE imports
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
@@ -9,14 +9,15 @@ vi.mock('@/lib/api/rate-limit', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { GET, POST, DELETE } from '@/app/api/crm/opportunities/[id]/attachments/route';
+
 import {
+  makeRequest,
   mockClerkAuth,
   mockClerkUnauth,
-  makeRequest,
   resetFixtureCounter,
 } from '@/__tests__/helpers';
+import { DELETE, GET, POST } from '@/app/api/crm/opportunities/[id]/attachments/route';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
@@ -45,8 +46,8 @@ function createStorageMock(overrides: Record<string, unknown> = {}) {
       error: null,
     }),
     remove: vi.fn().mockResolvedValue({ data: [{ name: 'test.pdf' }], error: null }),
-    getPublicUrl: vi.fn().mockReturnValue({
-      data: { publicUrl: 'https://storage.example.com/documents/test.pdf' },
+    createSignedUrl: vi.fn().mockResolvedValue({
+      data: { signedUrl: 'https://storage.example.com/contracts/test.pdf?token=abc' },
     }),
     ...overrides,
   };
@@ -89,7 +90,7 @@ describe('GET /api/crm/opportunities/[id]/attachments', () => {
     const body = await res.json();
     expect(body.files).toHaveLength(1);
     expect(body.files[0].name).toBe('proposal.pdf');
-    expect(body.files[0].public_url).toBeDefined();
+    expect(body.files[0].signed_url).toBeDefined();
   });
 
   it('returns empty array when no files exist', async () => {
@@ -161,7 +162,7 @@ describe('POST /api/crm/opportunities/[id]/attachments', () => {
     expect(res.status).toBe(201);
     const body = await res.json();
     expect(body.name).toBeDefined();
-    expect(body.public_url).toBeDefined();
+    expect(body.signed_url).toBeDefined();
   });
 
   it('returns 400 when no file provided', async () => {

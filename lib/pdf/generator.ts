@@ -1,15 +1,15 @@
-import React from 'react';
 import { renderToBuffer } from '@react-pdf/renderer';
+import React from 'react';
+
 import { EstimatePdf } from './templates/EstimatePdf';
 import { ProjectStatusPdf } from './templates/ProjectStatusPdf';
-import type { PdfTemplate, EstimatePdfData, ProjectStatusPdfData } from './types';
+import type { EstimatePdfData, PdfTemplate, ProjectStatusPdfData } from './types';
 
 export async function generatePdf(
   template: PdfTemplate,
   data: Record<string, unknown>,
 ): Promise<Buffer> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let document: React.ReactElement<any>;
+  let document: React.ReactElement;
 
   switch (template) {
     case 'estimate':

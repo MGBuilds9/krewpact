@@ -11,13 +11,14 @@
  * Uses service client (bypasses RLS) since webhooks are system-level.
  */
 
-import { createServiceClient } from '@/lib/supabase/server';
-import { BoldSignClient } from '@/lib/esign/boldsign-client';
-import { dispatchNotification } from '@/lib/notifications/dispatcher';
-import { logger } from '@/lib/logger';
-import { NextRequest, NextResponse } from 'next/server';
 import { createHmac, timingSafeEqual } from 'crypto';
+import { NextRequest, NextResponse } from 'next/server';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { BoldSignClient } from '@/lib/esign/boldsign-client';
+import { logger } from '@/lib/logger';
+import { dispatchNotification } from '@/lib/notifications/dispatcher';
+import { createServiceClient } from '@/lib/supabase/server';
 
 // ============================================================
 // Types
@@ -80,7 +81,7 @@ async function handleCompleted(
   if (signedPdf) {
     const fileName = `signed-contracts/${documentId}/${Date.now()}-signed.pdf`;
     const { error: uploadError } = await supabase.storage
-      .from('documents')
+      .from('contracts')
       .upload(fileName, signedPdf, {
         contentType: 'application/pdf',
         upsert: true,

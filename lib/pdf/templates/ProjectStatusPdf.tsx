@@ -1,5 +1,6 @@
+import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
 import React from 'react';
-import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
+
 import type { ProjectStatusPdfData } from '../types';
 
 const styles = StyleSheet.create({
@@ -71,7 +72,7 @@ export function ProjectStatusPdf({ data }: { data: ProjectStatusPdfData }) {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Milestone Progress</Text>
             {data.milestones.map((m, i) => (
-              <View key={i} style={styles.milestoneRow}>
+              <View key={i} style={styles.milestoneRow} wrap={false}>
                 <Text style={styles.milestoneName}>{m.name}</Text>
                 <View style={styles.progressBarOuter}>
                   <View
@@ -127,7 +128,7 @@ export function ProjectStatusPdf({ data }: { data: ProjectStatusPdfData }) {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Recent Daily Logs</Text>
             {data.recentLogs.map((log, i) => (
-              <View key={i} style={styles.logEntry}>
+              <View key={i} style={styles.logEntry} wrap={false}>
                 <Text style={styles.logDate}>{log.date}</Text>
                 <Text style={styles.logAuthor}>{log.author}</Text>
                 <Text style={styles.logSummary}>{log.summary}</Text>
