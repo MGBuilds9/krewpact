@@ -32,6 +32,14 @@ export default async function PortalLayout({ children }: { children: React.React
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {/* Skip navigation for keyboard/screen reader users */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground focus:shadow-lg"
+      >
+        Skip to main content
+      </a>
+
       {/* Simplified Portal Header */}
       <PortalHeader />
 
@@ -40,7 +48,9 @@ export default async function PortalLayout({ children }: { children: React.React
         {/* Placeholder for optional Sidebar */}
         {/* <PortalSidebar /> */}
 
-        <main className="flex-1 container mx-auto px-4 py-8">{children}</main>
+        <main id="main-content" className="flex-1 container mx-auto px-4 py-8">
+          {children}
+        </main>
       </div>
     </div>
   );

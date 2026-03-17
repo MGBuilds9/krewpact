@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Trade Partner Portal',
+  description: 'Access tasks, submittals, bids, and compliance documents.',
+};
+
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 

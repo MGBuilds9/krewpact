@@ -1,20 +1,12 @@
-'use client';
+import type { Metadata } from 'next';
 
-import { EnrichmentDashboard } from '@/components/CRM/EnrichmentDashboard';
+import EnrichmentPageContent from './_page-content';
 
-export default function EnrichmentPage() {
-  return (
-    <>
-      <title>Enrichment — KrewPact CRM</title>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">Enrichment Management</h1>
-          <p className="text-sm text-muted-foreground">
-            Monitor and manage lead enrichment jobs across all data sources.
-          </p>
-        </div>
-        <EnrichmentDashboard />
-      </div>
-    </>
-  );
+export const metadata: Metadata = {
+  title: 'Lead Enrichment',
+  description: 'Enrich leads and contacts with data from Apollo, Clearbit, and LinkedIn.',
+};
+
+export default function Page() {
+  return <EnrichmentPageContent />;
 }

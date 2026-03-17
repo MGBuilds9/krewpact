@@ -1,14 +1,12 @@
-'use client';
+import type { Metadata } from 'next';
 
-import { ChatInterface } from '@/components/Executive/ChatInterface';
+import ChatPageContent from './_page-content';
 
-export default function KnowledgeChatPage() {
-  return (
-    <>
-      <title>AI Chat — KrewPact</title>
-      <div className="h-[calc(100vh-8rem)] p-4">
-        <ChatInterface />
-      </div>
-    </>
-  );
+export const metadata: Metadata = {
+  title: 'Knowledge Chat',
+  description: 'Chat with the MDM Group knowledge base using natural language.',
+};
+
+export default function Page() {
+  return <ChatPageContent />;
 }

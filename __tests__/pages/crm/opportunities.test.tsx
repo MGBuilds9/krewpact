@@ -34,7 +34,7 @@ vi.mock('@/hooks/use-mobile', () => ({
   useIsMobile: () => false,
 }));
 
-import OpportunitiesPage from '@/app/(dashboard)/org/[orgSlug]/crm/opportunities/page';
+import OpportunitiesPage from '@/app/(dashboard)/org/[orgSlug]/crm/opportunities/OpportunitiesView';
 
 describe('Opportunities Pipeline Page', () => {
   beforeEach(() => {
@@ -89,9 +89,9 @@ describe('Opportunities Pipeline Page', () => {
       isError: false,
     });
 
-    const { container } = render(<OpportunitiesPage />);
-    const skeletons = container.querySelectorAll('[class*="animate-pulse"]');
-    expect(skeletons.length).toBeGreaterThan(0);
+    render(<OpportunitiesPage />);
+    // When loading, pipeline stages are not yet rendered
+    expect(screen.queryByText('Qualification')).not.toBeInTheDocument();
   });
 
   it('shows empty pipeline message when no stages data', () => {

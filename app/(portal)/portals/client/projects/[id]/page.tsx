@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Project Details',
+  description: 'View project progress, documents, invoices, and change orders.',
+};
+
 import { auth } from '@clerk/nextjs/server';
 import { notFound, redirect } from 'next/navigation';
 

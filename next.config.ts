@@ -7,6 +7,9 @@ const analyzeBundles = withBundleAnalyzer({
 });
 
 const nextConfig: NextConfig = {
+  experimental: {
+    optimizePackageImports: ['recharts', 'lucide-react', '@radix-ui/react-icons', 'date-fns'],
+  },
   async headers() {
     return [
       {

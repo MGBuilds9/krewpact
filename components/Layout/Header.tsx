@@ -2,11 +2,12 @@
 
 import { useClerk, useUser } from '@clerk/nextjs';
 import { Bell, Eye, LogOut, Menu, MoreHorizontal, Settings, User, X } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import React from 'react';
 import { toast } from 'sonner';
 
-import { NotificationBell } from '@/components/Notifications';
+import { NotificationBell } from '@/components/Notifications/NotificationBell';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,7 +24,10 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { useUserRBAC } from '@/hooks/useRBAC';
 
-import { CommandPalette } from './CommandPalette';
+const CommandPalette = dynamic(
+  () => import('./CommandPalette').then((m) => ({ default: m.CommandPalette })),
+  { ssr: false },
+);
 import { DivisionSelector } from './DivisionSelector';
 import { ImpersonationSelector } from './ImpersonationSelector';
 import { MobileNavigationDrawer } from './MobileNavigationDrawer';

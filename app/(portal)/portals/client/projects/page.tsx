@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'My Projects',
+  description: 'View your active projects and their current status.',
+};
+
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 

@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'KrewPact',
+  description: 'Construction operations platform for MDM Group Inc.',
+};
+
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 
