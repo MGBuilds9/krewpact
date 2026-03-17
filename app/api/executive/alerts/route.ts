@@ -18,7 +18,7 @@ interface Alert {
 
 const SEVERITY_ORDER = { high: 0, medium: 1, low: 2 };
 
-type SupabaseClient = Awaited<ReturnType<typeof createUserClientSafe>>['client'];
+type SupabaseClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
 type DataResult = { error: { message: string } | null; data: unknown[] | null };
 type CountResult = { error: { message: string } | null; count: number | null };
 

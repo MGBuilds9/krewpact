@@ -9,7 +9,7 @@ import {
   type ProjectMember,
 } from '@/components/Projects/ProjectCreationForm/types';
 import { useDivision } from '@/contexts/DivisionContext';
-import { useCreateProject } from '@/hooks/useProjects';
+import { type Project, useCreateProject } from '@/hooks/useProjects';
 
 function buildSiteAddress(formData: ProjectFormData): Record<string, string> | undefined {
   const addr: Record<string, string> = {};
@@ -72,13 +72,13 @@ export function useProjectCreationForm(onSuccess?: () => void) {
     return {
       project_name: formData.project_name,
       project_number: formData.project_number || undefined,
-      status: formData.status || 'planning',
+      status: (formData.status || 'planning') as Project['status'],
       start_date: formData.start_date || undefined,
       target_completion_date: formData.target_completion_date || undefined,
       baseline_budget: budget,
       current_budget: budget,
       division_id: activeDivision?.id || undefined,
-      site_address: buildSiteAddress(formData),
+      site_address: buildSiteAddress(formData) ?? null,
     };
   };
 

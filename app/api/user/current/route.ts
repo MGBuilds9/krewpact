@@ -5,7 +5,7 @@ import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 import { logger } from '@/lib/logger';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
-type SupabaseClient = Awaited<ReturnType<typeof createUserClientSafe>>['client'];
+type SupabaseClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
 
 async function resolveCallerUser(
   supabase: SupabaseClient,

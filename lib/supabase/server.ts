@@ -9,6 +9,13 @@ export type { Database };
 /** The client type returned by createUserClient — matches its inferred return type. */
 type UserClient = Awaited<ReturnType<typeof createUserClient>>;
 
+/**
+ * The non-null Supabase client type — use this when extracting the client type
+ * from createUserClientSafe to avoid 'possibly null' errors after the guard.
+ * After `if (authError) return authError`, TypeScript knows client is UserClientType.
+ */
+export type UserClientType = UserClient;
+
 const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? '').trim();
 const supabaseAnonKey = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '').trim();
 const supabaseServiceKey = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? '').trim();

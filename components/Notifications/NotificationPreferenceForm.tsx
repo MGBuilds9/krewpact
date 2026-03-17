@@ -74,7 +74,7 @@ export function NotificationPreferenceForm() {
                   <p className="text-sm text-muted-foreground">{description}</p>
                 </div>
                 <FormControl>
-                  <Switch checked={field.value} onCheckedChange={field.onChange} />
+                  <Switch checked={field.value as boolean} onCheckedChange={field.onChange} />
                 </FormControl>
               </FormItem>
             )}

@@ -15,7 +15,7 @@ const searchSchema = z.object({
 
 type ApolloProfile = NonNullable<ReturnType<typeof getProfileById>>;
 type ApolloPerson = Awaited<ReturnType<typeof searchPeople>>[number];
-type SupabaseClient = Awaited<ReturnType<typeof createUserClientSafe>>['client'];
+type SupabaseClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
 
 function formatPreviewResults(people: ApolloPerson[], profile: ApolloProfile, page: number) {
   return NextResponse.json({

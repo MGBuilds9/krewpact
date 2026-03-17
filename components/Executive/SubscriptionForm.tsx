@@ -50,7 +50,9 @@ const BILLING_CYCLE_OPTIONS = [
   { value: 'annual', label: 'Annual' },
 ];
 
-const EMPTY_DEFAULTS: SubscriptionFormInput = {
+const EMPTY_DEFAULTS: Omit<SubscriptionFormInput, 'category'> & {
+  category?: SubscriptionFormInput['category'];
+} = {
   name: '',
   category: undefined,
   vendor: '',

@@ -45,7 +45,7 @@ function ProjectHeader({ data }: { data: ProjectStatusPdfData }) {
   return (
     <View style={styles.header}>
       <View style={styles.logoRow}>
-        <Image style={styles.logo} src="/mdm-logo.svg" alt="MDM Group logo" />
+        <Image style={styles.logo} src="/mdm-logo.svg" />
         <Text style={styles.companyName}>{data.companyName}</Text>
       </View>
       {data.project && (

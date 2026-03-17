@@ -86,7 +86,7 @@ export function EstimatePdf({ data }: { data: EstimatePdfData }) {
       <Page size="LETTER" style={styles.page}>
         <View style={styles.header}>
           <View style={styles.logoRow}>
-            <Image style={styles.logo} src="/mdm-logo.svg" alt="MDM Group logo" />
+            <Image style={styles.logo} src="/mdm-logo.svg" />
             <Text style={styles.companyName}>{data.companyName}</Text>
           </View>
           {data.estimateNumber && (

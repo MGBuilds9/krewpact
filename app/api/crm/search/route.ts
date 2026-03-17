@@ -11,7 +11,7 @@ interface SearchResult {
   subtitle: string | null;
 }
 
-type SupabaseClient = Awaited<ReturnType<typeof createUserClientSafe>>['client'];
+type SupabaseClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
 
 async function searchEntities(supabase: SupabaseClient, pattern: string): Promise<SearchResult[]> {
   const [leadsRes, contactsRes, accountsRes, oppsRes] = await Promise.all([

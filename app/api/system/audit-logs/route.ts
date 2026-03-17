@@ -5,7 +5,7 @@ import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { auditLogQuerySchema } from '@/lib/validators/system';
 
-type SupabaseClient = Awaited<ReturnType<typeof createUserClientSafe>>['client'];
+type SupabaseClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
 type AuditQueryParams = {
   entity_type?: string;
   entity_id?: string;

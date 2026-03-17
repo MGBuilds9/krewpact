@@ -10,7 +10,7 @@ const querySchema = z.object({
   context: z.string().min(2), // JSON string
 });
 
-type SupabaseClient = Awaited<ReturnType<typeof createUserClientSafe>>['client'];
+type SupabaseClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
 
 async function suggestEstimatedValue(supabase: SupabaseClient): Promise<NextResponse | null> {
   const { data: similar } = await supabase

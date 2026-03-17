@@ -10,7 +10,7 @@ const mergeSchema = z.object({
   secondary_id: z.string().uuid(),
 });
 
-type SupabaseClient = Awaited<ReturnType<typeof createUserClientSafe>>['client'];
+type SupabaseClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
 
 function computeMergeUpdates(
   primary: Record<string, unknown>,

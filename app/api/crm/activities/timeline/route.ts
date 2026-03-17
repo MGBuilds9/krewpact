@@ -31,7 +31,7 @@ type Filters = {
   contact_id?: string;
   opportunity_id?: string;
 };
-type SupabaseClient = Awaited<ReturnType<typeof createUserClientSafe>>['client'];
+type SupabaseClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
 
 async function fetchActivities(supabase: SupabaseClient, filters: Filters) {
   let q = supabase

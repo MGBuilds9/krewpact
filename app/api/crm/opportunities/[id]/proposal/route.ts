@@ -6,7 +6,7 @@ import { composeProposalData } from '@/lib/crm/proposal-generator';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 type RouteContext = { params: Promise<{ id: string }> };
-type SupabaseClient = Awaited<ReturnType<typeof createUserClientSafe>>['client'];
+type SupabaseClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
 
 const COMPANY_INFO = {
   name: process.env.COMPANY_NAME ?? 'MDM Group Inc.',

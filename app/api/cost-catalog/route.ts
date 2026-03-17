@@ -16,7 +16,7 @@ const querySchema = z.object({
   sort_dir: z.enum(['asc', 'desc']).optional(),
 });
 
-type SupabaseClient = Awaited<ReturnType<typeof createUserClientSafe>>['client'];
+type SupabaseClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
 type QueryParams = z.infer<typeof querySchema>;
 
 function buildCatalogQuery(supabase: SupabaseClient, params: QueryParams) {

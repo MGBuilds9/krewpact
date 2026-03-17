@@ -21,7 +21,7 @@ const sendForSigningSchema = z.object({
 });
 
 type SendParams = z.infer<typeof sendForSigningSchema>;
-type SupabaseClient = Awaited<ReturnType<typeof createUserClientSafe>>['client'];
+type SupabaseClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
 
 export async function GET(req: NextRequest) {
   const { userId } = await auth();

@@ -18,7 +18,7 @@ const matchSchema = z.object({
  * Inserts results into lead_account_matches.
  */
 
-type SupabaseClient = Awaited<ReturnType<typeof createUserClientSafe>>['client'];
+type SupabaseClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
 
 interface MatchResults {
   processed: number;

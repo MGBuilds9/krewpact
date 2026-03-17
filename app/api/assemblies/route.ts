@@ -14,7 +14,7 @@ const querySchema = z.object({
   offset: z.coerce.number().int().min(0).optional(),
 });
 
-type SupabaseClient = Awaited<ReturnType<typeof createUserClientSafe>>['client'];
+type SupabaseClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
 type QueryParams = z.infer<typeof querySchema>;
 
 function buildAssemblyQuery(supabase: SupabaseClient, params: QueryParams) {

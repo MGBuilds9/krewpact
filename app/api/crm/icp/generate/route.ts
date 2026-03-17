@@ -18,7 +18,7 @@ import { createUserClientSafe } from '@/lib/supabase/server';
  * 4. Insert new ICPs
  */
 
-type SupabaseClient = Awaited<ReturnType<typeof createUserClientSafe>>['client'];
+type SupabaseClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
 
 async function fetchAccountsForICP(
   supabase: SupabaseClient,

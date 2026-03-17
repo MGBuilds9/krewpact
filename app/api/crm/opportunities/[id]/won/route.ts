@@ -142,7 +142,7 @@ async function finalizeAccountRecords(params: FinalizeAccountParams): Promise<vo
 }
 
 interface PostWonParams {
-  supabase: Awaited<ReturnType<typeof createUserClientSafe>>['client'];
+  supabase: NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
   serviceClient: ServiceClient;
   opp: Record<string, unknown>;
   opportunityId: string;
@@ -213,7 +213,7 @@ async function parseWonBody(req: NextRequest) {
   return { parsed: parsed.data };
 }
 
-type UserClient = Awaited<ReturnType<typeof createUserClientSafe>>['client'];
+type UserClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
 
 async function fetchAndValidateOpportunity(supabase: UserClient, id: string) {
   const { data: opportunity, error: fetchError } = await supabase

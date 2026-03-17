@@ -88,7 +88,7 @@ export async function GET(req: NextRequest) {
   });
 }
 
-type SupabaseClient = Awaited<ReturnType<typeof createUserClientSafe>>['client'];
+type SupabaseClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
 
 async function autoScoreLead(
   supabase: SupabaseClient,
@@ -128,7 +128,7 @@ async function autoMatchAccounts(
     .is('deleted_at', null);
   if (!allAccounts || allAccounts.length === 0) return;
   const matches = matchLeadToAccounts(
-    lead as Parameters<typeof matchLeadToAccounts>[0],
+    lead as unknown as Parameters<typeof matchLeadToAccounts>[0],
     allAccounts,
   );
   if (matches.length === 0) return;

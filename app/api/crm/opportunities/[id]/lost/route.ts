@@ -7,7 +7,7 @@ import { createUserClientSafe } from '@/lib/supabase/server';
 import { lostDealSchema } from '@/lib/validators/crm';
 
 type RouteContext = { params: Promise<{ id: string }> };
-type UserClient = Awaited<ReturnType<typeof createUserClientSafe>>['client'];
+type UserClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
 
 function buildUpdatePayload(data: {
   lost_reason: string;

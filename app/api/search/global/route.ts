@@ -32,68 +32,53 @@ const EMPTY_RESULTS: GlobalSearchResults = {
   tasks: [],
 };
 
-type SupabaseClient = Awaited<ReturnType<typeof createUserClientSafe>>['client'];
-
-function withDivisions<T extends ReturnType<SupabaseClient['from']>>(
-  query: T,
-  divisions: string[],
-): T {
-  if (divisions.length > 0) return query.in('division_id', divisions) as T;
-  return query;
-}
+type SupabaseClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
 
 async function runGlobalSearch(
   supabase: SupabaseClient,
   pattern: string,
   divisions: string[],
 ): Promise<GlobalSearchResults> {
+  const hasDivisions = divisions.length > 0;
+
+  const leadsQ = supabase
+    .from('leads')
+    .select('id, company_name, status')
+    .ilike('company_name', pattern)
+    .limit(MAX_PER_TYPE);
+  const accountsQ = supabase
+    .from('accounts')
+    .select('id, account_name, industry')
+    .ilike('account_name', pattern)
+    .limit(MAX_PER_TYPE);
+  const oppsQ = supabase
+    .from('opportunities')
+    .select('id, opportunity_name, stage')
+    .ilike('opportunity_name', pattern)
+    .limit(MAX_PER_TYPE);
+  const estimatesQ = supabase
+    .from('estimates')
+    .select('id, estimate_number, status')
+    .ilike('estimate_number', pattern)
+    .limit(MAX_PER_TYPE);
+  const projectsQ = supabase
+    .from('projects')
+    .select('id, project_name, project_number, status')
+    .or(`project_name.ilike.${pattern},project_number.ilike.${pattern}`)
+    .limit(MAX_PER_TYPE);
+
   const [leadsRes, accountsRes, contactsRes, oppsRes, estimatesRes, projectsRes, tasksRes] =
     await Promise.all([
-      withDivisions(
-        supabase
-          .from('leads')
-          .select('id, company_name, status')
-          .ilike('company_name', pattern)
-          .limit(MAX_PER_TYPE),
-        divisions,
-      ),
-      withDivisions(
-        supabase
-          .from('accounts')
-          .select('id, account_name, industry')
-          .ilike('account_name', pattern)
-          .limit(MAX_PER_TYPE),
-        divisions,
-      ),
+      hasDivisions ? leadsQ.in('division_id', divisions) : leadsQ,
+      hasDivisions ? accountsQ.in('division_id', divisions) : accountsQ,
       supabase
         .from('contacts')
         .select('id, first_name, last_name, email')
         .or(`first_name.ilike.${pattern},last_name.ilike.${pattern},email.ilike.${pattern}`)
         .limit(MAX_PER_TYPE),
-      withDivisions(
-        supabase
-          .from('opportunities')
-          .select('id, opportunity_name, stage')
-          .ilike('opportunity_name', pattern)
-          .limit(MAX_PER_TYPE),
-        divisions,
-      ),
-      withDivisions(
-        supabase
-          .from('estimates')
-          .select('id, estimate_number, status')
-          .ilike('estimate_number', pattern)
-          .limit(MAX_PER_TYPE),
-        divisions,
-      ),
-      withDivisions(
-        supabase
-          .from('projects')
-          .select('id, project_name, project_number, status')
-          .or(`project_name.ilike.${pattern},project_number.ilike.${pattern}`)
-          .limit(MAX_PER_TYPE),
-        divisions,
-      ),
+      hasDivisions ? oppsQ.in('division_id', divisions) : oppsQ,
+      hasDivisions ? estimatesQ.in('division_id', divisions) : estimatesQ,
+      hasDivisions ? projectsQ.in('division_id', divisions) : projectsQ,
       supabase
         .from('tasks')
         .select('id, title, status, project_id')

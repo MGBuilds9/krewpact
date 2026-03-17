@@ -13,7 +13,7 @@ const bulkSchema = z.object({
   value: z.string().optional(),
 });
 
-type SupabaseClient = Awaited<ReturnType<typeof createUserClientSafe>>['client'];
+type SupabaseClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
 
 async function handleBulkAssign(
   supabase: SupabaseClient,

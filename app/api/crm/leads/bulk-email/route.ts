@@ -14,7 +14,7 @@ const bulkEmailSchema = z.object({
   template_id: z.string().uuid().optional(),
 });
 
-type SupabaseClient = Awaited<ReturnType<typeof createUserClientSafe>>['client'];
+type SupabaseClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
 
 interface Contact {
   id: string;
@@ -51,17 +51,15 @@ async function sendToContact(
   });
 
   if (result.success) {
-    await supabase
-      .from('outreach')
-      .insert({
-        lead_id: contact.lead_id,
-        contact_id: contact.id,
-        channel: 'email',
-        direction: 'outbound',
-        activity_type: 'bulk_email',
-        outcome: 'sent',
-        occurred_at: new Date().toISOString(),
-      });
+    await supabase.from('outreach').insert({
+      lead_id: contact.lead_id,
+      contact_id: contact.id,
+      channel: 'email',
+      direction: 'outbound',
+      activity_type: 'bulk_email',
+      outcome: 'sent',
+      occurred_at: new Date().toISOString(),
+    });
   }
 
   return {

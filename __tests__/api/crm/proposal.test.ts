@@ -77,7 +77,7 @@ describe('GET /api/crm/opportunities/[id]/proposal', () => {
       makeRequest(`/api/crm/opportunities/${OPP_ID}/proposal`),
       makeContext(OPP_ID),
     );
-    expect(res.status).toBe(401);
+    expect(res!.status).toBe(401);
   });
 
   it('returns 404 when opportunity does not exist', async () => {
@@ -98,7 +98,7 @@ describe('GET /api/crm/opportunities/[id]/proposal', () => {
       makeRequest(`/api/crm/opportunities/${OPP_ID}/proposal`),
       makeContext(OPP_ID),
     );
-    expect(res.status).toBe(404);
+    expect(res!.status).toBe(404);
   });
 
   it('returns proposal data with opportunity, account, contact, and estimates', async () => {
@@ -130,7 +130,7 @@ describe('GET /api/crm/opportunities/[id]/proposal', () => {
       makeRequest(`/api/crm/opportunities/${OPP_ID}/proposal`),
       makeContext(OPP_ID),
     );
-    expect(res.status).toBe(200);
+    expect(res!.status).toBe(200);
     expect(mockComposeProposalData).toHaveBeenCalledTimes(1);
 
     // Verify the input to composeProposalData includes opportunity data
@@ -161,7 +161,7 @@ describe('GET /api/crm/opportunities/[id]/proposal', () => {
       makeRequest(`/api/crm/opportunities/${OPP_ID}/proposal`),
       makeContext(OPP_ID),
     );
-    expect(res.status).toBe(200);
+    expect(res!.status).toBe(200);
 
     const callArg = mockComposeProposalData.mock.calls[0][0];
     expect(callArg.account).toBeNull();
@@ -194,7 +194,7 @@ describe('GET /api/crm/opportunities/[id]/proposal', () => {
       makeRequest(`/api/crm/opportunities/${OPP_ID}/proposal`),
       makeContext(OPP_ID),
     );
-    expect(res.status).toBe(200);
+    expect(res!.status).toBe(200);
 
     const callArg = mockComposeProposalData.mock.calls[0][0];
     expect(callArg.estimates).toHaveLength(2);
@@ -222,7 +222,7 @@ describe('GET /api/crm/opportunities/[id]/proposal', () => {
       makeRequest(`/api/crm/opportunities/${OPP_ID}/proposal`),
       makeContext(OPP_ID),
     );
-    expect(res.status).toBe(200);
+    expect(res!.status).toBe(200);
 
     const callArg = mockComposeProposalData.mock.calls[0][0];
     expect(callArg.companyInfo).toBeDefined();

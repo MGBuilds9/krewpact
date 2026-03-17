@@ -16,7 +16,7 @@ import { createUserClientSafe } from '@/lib/supabase/server';
  *   Step 1 = company profile, Step 2 = divisions, Step 3 = team invites, Step 4 = done
  */
 
-type SupabaseClient = Awaited<ReturnType<typeof createUserClientSafe>>['client'];
+type SupabaseClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
 
 async function fetchOnboardingData(supabase: SupabaseClient, userId: string) {
   const [orgResult, divResult, memberResult] = await Promise.all([

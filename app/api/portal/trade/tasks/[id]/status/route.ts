@@ -15,7 +15,7 @@ const taskStatusSchema = z.object({
  * Allows a trade partner to update the status of one of their assigned tasks.
  * Immutability guard: once 'done', cannot be reverted by trade portal.
  */
-type SupabaseClient = Awaited<ReturnType<typeof createUserClientSafe>>['client'];
+type SupabaseClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
 
 async function resolveTradePortalAccount(supabase: SupabaseClient, userId: string) {
   const { data: pa } = await supabase

@@ -182,7 +182,7 @@ function buildDashboardData(data: AllData): PMDashboardResponse {
   return { projects: projectHealthCards, upcomingMilestones, overdueTasks };
 }
 
-type SupabaseClient = Awaited<ReturnType<typeof createUserClientSafe>>['client'];
+type SupabaseClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
 
 async function fetchProjectData(
   supabase: SupabaseClient,

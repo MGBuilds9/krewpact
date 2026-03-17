@@ -7,7 +7,7 @@ import type { KrewpactRole } from '@/lib/rbac/permissions.shared';
 import { getPermissions, isExternalRole, isInternalRole } from '@/lib/rbac/permissions.shared';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
-type SupabaseClient = Awaited<ReturnType<typeof createUserClientSafe>>['client'];
+type SupabaseClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
 
 interface RoleEntry {
   role_name: string;

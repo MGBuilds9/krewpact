@@ -16,7 +16,7 @@ import { createUserClientSafe } from '@/lib/supabase/server';
  * Body: { limit?: number } — max leads to process (default 200)
  */
 
-type SupabaseClient = Awaited<ReturnType<typeof createUserClientSafe>>['client'];
+type SupabaseClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
 
 interface IcpProfileRow {
   id: string;

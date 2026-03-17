@@ -1,4 +1,3 @@
-import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -6,6 +5,7 @@ import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 import { resolveDivisionId, routeToDivision } from '@/lib/crm/division-router';
 import { assignLead } from '@/lib/crm/lead-assignment';
 import { logger } from '@/lib/logger';
+import { createServiceClient } from '@/lib/supabase/server';
 
 // Schema for incoming lead data
 const leadSchema = z.object({
@@ -23,7 +23,7 @@ const leadSchema = z.object({
 });
 
 type LeadData = z.infer<typeof leadSchema>;
-type SupabaseAdminClient = ReturnType<typeof createClient>;
+type SupabaseAdminClient = ReturnType<typeof createServiceClient>;
 
 async function resolveOwner(
   supabase: SupabaseAdminClient,
@@ -127,14 +127,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!supabaseUrl || !supabaseServiceKey) {
-      logger.error('Missing Supabase credentials');
-      return NextResponse.json({ error: 'Server Configuration Error' }, { status: 500 });
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createServiceClient();
     return await insertLeadAndContact(supabase, result.data);
   } catch (err: unknown) {
     logger.error('API Error:', { error: err });

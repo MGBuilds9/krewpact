@@ -10,7 +10,7 @@ import { createUserClientSafe } from '@/lib/supabase/server';
 import { estimateUpdateSchema } from '@/lib/validators/estimating';
 
 type RouteContext = { params: Promise<{ id: string }> };
-type SupabaseClient = Awaited<ReturnType<typeof createUserClientSafe>>['client'];
+type SupabaseClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
 
 function fireApprovalNotification(record: Record<string, unknown>, id: string): void {
   dispatchNotification({
