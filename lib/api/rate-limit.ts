@@ -3,13 +3,20 @@ import { Redis } from '@upstash/redis';
 import { NextResponse } from 'next/server';
 
 let redis: Redis | null = null;
+let redisFailed = false;
 function getRedis(): Redis | null {
+  if (redisFailed) return null;
   if (redis) return redis;
   const url = process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
   if (!url || !token) return null;
-  redis = new Redis({ url, token });
-  return redis;
+  try {
+    redis = new Redis({ url, token });
+    return redis;
+  } catch {
+    redisFailed = true;
+    return null;
+  }
 }
 
 interface RateLimitConfig {
@@ -39,15 +46,16 @@ export async function rateLimit(
   });
 
   const id =
-    identifier ||
-    req.headers.get('x-forwarded-for') ||
-    req.headers.get('x-real-ip') ||
-    'anonymous';
+    identifier || req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'anonymous';
 
   try {
     const result = await limiter.limit(id);
     return { success: result.success, remaining: result.remaining, reset: result.reset };
   } catch {
+    // Redis is down or misconfigured — fail open (allow request) and stop
+    // retrying Redis for this process lifetime to prevent cascading 500s
+    redisFailed = true;
+    redis = null;
     return { success: true, remaining: limit, reset: 0 };
   }
 }
