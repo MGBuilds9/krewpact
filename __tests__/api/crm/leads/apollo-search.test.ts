@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({
   auth: vi.fn(),
@@ -48,9 +48,10 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
+
+import { makeJsonRequest, makeRequest, mockSupabaseClient } from '@/__tests__/helpers';
+import { GET, POST } from '@/app/api/crm/leads/apollo-search/route';
 import { createUserClientSafe } from '@/lib/supabase/server';
-import { POST, GET } from '@/app/api/crm/leads/apollo-search/route';
-import { mockSupabaseClient, makeJsonRequest, makeRequest } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
@@ -158,7 +159,9 @@ describe('POST /api/crm/leads/apollo-search', () => {
     const body = await res.json();
     // With the default mock, the dedup query also returns the lead as "existing",
     // so the route reports all duplicates. This is expected behavior for the mock.
-    expect(body.imported === 0 || body.profileId === 'contracting-pharmacy-healthcare-on').toBe(true);
+    expect(body.imported === 0 || body.profileId === 'contracting-pharmacy-healthcare-on').toBe(
+      true,
+    );
   });
 
   it('handles Apollo API error', async () => {

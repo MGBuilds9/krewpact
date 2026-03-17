@@ -1,9 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import {
   enrichFromApolloMatch,
   enrichFromBrave,
-  enrichFromTavily,
   enrichFromGoogleMaps,
+  enrichFromTavily,
 } from '@/lib/integrations/enrichment-sources';
 
 // Mock global fetch

@@ -1,8 +1,9 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const updateSchema = z.object({
   name: z.string().min(1).max(100).optional(),

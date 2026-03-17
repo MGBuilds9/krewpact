@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { logger } from '@/lib/logger';
+
 import { verifyCronAuth } from '@/lib/api/cron-auth';
-import { createServiceClient } from '@/lib/supabase/server';
 import { sendEmail } from '@/lib/email/resend';
+import { logger } from '@/lib/logger';
+import { createServiceClient } from '@/lib/supabase/server';
 
 /**
  * Internal smoke test — runs every hour.
@@ -15,17 +16,106 @@ import { sendEmail } from '@/lib/email/resend';
 
 const ALERT_COOLDOWN_MS = 60 * 60 * 1000; // 1 hour
 
+async function shouldSendAlert(): Promise<boolean> {
+  const supabase = createServiceClient();
+  const { data: lastFailedRun } = await supabase
+    .from('smoke_test_results')
+    .select('created_at, status')
+    .neq('status', 'pass')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!lastFailedRun) return true;
+
+  const msSinceLastFailure = Date.now() - new Date(lastFailedRun.created_at).getTime();
+  if (msSinceLastFailure >= ALERT_COOLDOWN_MS) return true;
+
+  const { data: prevRun } = await supabase
+    .from('smoke_test_results')
+    .select('status')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .range(1, 1)
+    .maybeSingle();
+
+  if (prevRun && prevRun.status !== 'pass') {
+    logger.info('Smoke test alert suppressed (cooldown active, previous run also failed)');
+    return false;
+  }
+
+  return true;
+}
+
 interface SmokeCheck {
   name: string;
   status: 'pass' | 'fail';
   detail?: string;
 }
 
+async function checkRedis(): Promise<SmokeCheck | null> {
+  const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
+  const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!redisUrl || !redisToken) return null;
+  try {
+    const res = await fetch(`${redisUrl}/ping`, {
+      headers: { Authorization: `Bearer ${redisToken}` },
+    });
+    const body = await res.text();
+    return {
+      name: 'redis_ping',
+      status: body.includes('PONG') ? 'pass' : 'fail',
+      detail: body.includes('PONG') ? undefined : body.slice(0, 80),
+    };
+  } catch (err) {
+    return { name: 'redis_ping', status: 'fail', detail: String(err) };
+  }
+}
+
+async function checkClerk(): Promise<SmokeCheck | null> {
+  const clerkKey = process.env.CLERK_SECRET_KEY;
+  if (!clerkKey) return null;
+  try {
+    const res = await fetch('https://api.clerk.com/v1/users?limit=1', {
+      headers: { Authorization: `Bearer ${clerkKey}` },
+    });
+    return {
+      name: 'clerk_api',
+      status: res.ok ? 'pass' : 'fail',
+      detail: res.ok ? undefined : `HTTP ${res.status}`,
+    };
+  } catch (err) {
+    return { name: 'clerk_api', status: 'fail', detail: String(err) };
+  }
+}
+
+async function checkErpNext(): Promise<SmokeCheck | null> {
+  const erpUrl = process.env.ERPNEXT_BASE_URL;
+  const erpKey = process.env.ERPNEXT_API_KEY;
+  const erpSecret = process.env.ERPNEXT_API_SECRET;
+  if (!erpUrl || !erpKey || !erpSecret) return null;
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12000);
+    const res = await fetch(`${erpUrl}/api/method/frappe.auth.get_logged_user`, {
+      headers: { Authorization: `token ${erpKey}:${erpSecret}` },
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+    return {
+      name: 'erpnext_auth',
+      status: res.ok ? 'pass' : 'fail',
+      detail: res.ok ? undefined : `HTTP ${res.status}`,
+    };
+  } catch (err) {
+    return { name: 'erpnext_auth', status: 'fail', detail: String(err) };
+  }
+}
+
 async function runChecks(): Promise<SmokeCheck[]> {
   const checks: SmokeCheck[] = [];
   const supabase = createServiceClient();
 
-  // 1. Supabase: query divisions
   try {
     const { data, error } = await supabase.from('divisions').select('id').limit(1);
     checks.push({
@@ -37,68 +127,15 @@ async function runChecks(): Promise<SmokeCheck[]> {
     checks.push({ name: 'supabase_read', status: 'fail', detail: String(err) });
   }
 
-  // 2. Supabase: write test (insert + delete to smoke_test_results is done after all checks)
+  const redisCheck = await checkRedis();
+  if (redisCheck) checks.push(redisCheck);
 
-  // 3. Redis: PING
-  const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
-  const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
-  if (redisUrl && redisToken) {
-    try {
-      const res = await fetch(`${redisUrl}/ping`, {
-        headers: { Authorization: `Bearer ${redisToken}` },
-      });
-      const body = await res.text();
-      checks.push({
-        name: 'redis_ping',
-        status: body.includes('PONG') ? 'pass' : 'fail',
-        detail: body.includes('PONG') ? undefined : body.slice(0, 80),
-      });
-    } catch (err) {
-      checks.push({ name: 'redis_ping', status: 'fail', detail: String(err) });
-    }
-  }
+  const clerkCheck = await checkClerk();
+  if (clerkCheck) checks.push(clerkCheck);
 
-  // 4. Clerk: list 1 user
-  const clerkKey = process.env.CLERK_SECRET_KEY;
-  if (clerkKey) {
-    try {
-      const res = await fetch('https://api.clerk.com/v1/users?limit=1', {
-        headers: { Authorization: `Bearer ${clerkKey}` },
-      });
-      checks.push({
-        name: 'clerk_api',
-        status: res.ok ? 'pass' : 'fail',
-        detail: res.ok ? undefined : `HTTP ${res.status}`,
-      });
-    } catch (err) {
-      checks.push({ name: 'clerk_api', status: 'fail', detail: String(err) });
-    }
-  }
+  const erpCheck = await checkErpNext();
+  if (erpCheck) checks.push(erpCheck);
 
-  // 5. ERPNext: get_logged_user
-  const erpUrl = process.env.ERPNEXT_BASE_URL;
-  const erpKey = process.env.ERPNEXT_API_KEY;
-  const erpSecret = process.env.ERPNEXT_API_SECRET;
-  if (erpUrl && erpKey && erpSecret) {
-    try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 12000);
-      const res = await fetch(`${erpUrl}/api/method/frappe.auth.get_logged_user`, {
-        headers: { Authorization: `token ${erpKey}:${erpSecret}` },
-        signal: controller.signal,
-      });
-      clearTimeout(timer);
-      checks.push({
-        name: 'erpnext_auth',
-        status: res.ok ? 'pass' : 'fail',
-        detail: res.ok ? undefined : `HTTP ${res.status}`,
-      });
-    } catch (err) {
-      checks.push({ name: 'erpnext_auth', status: 'fail', detail: String(err) });
-    }
-  }
-
-  // 6. Health endpoint itself
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.krewpact.com';
   try {
     const res = await fetch(`${appUrl}/api/health`, {
@@ -121,7 +158,6 @@ async function sendAlertEmail(failedChecks: SmokeCheck[]) {
   const failedList = failedChecks
     .map((c) => `- ${c.name}: ${c.detail ?? 'unknown error'}`)
     .join('\n');
-
   await sendEmail({
     to: alertEmail,
     subject: `[KrewPact] Smoke Test FAILED — ${failedChecks.length} check(s) down`,
@@ -135,11 +171,34 @@ async function sendAlertEmail(failedChecks: SmokeCheck[]) {
   });
 }
 
+async function maybeAlert(failedChecks: SmokeCheck[]): Promise<void> {
+  if (failedChecks.length === 0) return;
+  logger.warn('Smoke test failures detected', {
+    failedCount: failedChecks.length,
+    failed: failedChecks.map((c) => c.name),
+  });
+  let shouldAlert = true;
+  try {
+    shouldAlert = await shouldSendAlert();
+  } catch (err) {
+    logger.error('Failed to check alert cooldown', {
+      error: err instanceof Error ? err : undefined,
+    });
+  }
+  if (shouldAlert) {
+    try {
+      await sendAlertEmail(failedChecks);
+    } catch (err) {
+      logger.error('Failed to send smoke test alert email', {
+        error: err instanceof Error ? err : undefined,
+      });
+    }
+  }
+}
+
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const { authorized } = await verifyCronAuth(req);
-  if (!authorized) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!authorized) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const startTime = Date.now();
   const checks = await runChecks();
@@ -149,7 +208,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const status =
     failedChecks.length === 0 ? 'pass' : failedChecks.length < checks.length ? 'partial' : 'fail';
 
-  // Log results to smoke_test_results table
   try {
     const supabase = createServiceClient();
     await supabase.from('smoke_test_results').insert({
@@ -166,63 +224,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     });
   }
 
-  // Alert on failures — with cooldown to prevent email flooding
-  if (failedChecks.length > 0) {
-    logger.warn('Smoke test failures detected', {
-      failedCount: failedChecks.length,
-      failed: failedChecks.map((c) => c.name),
-    });
-
-    // Check if we should send an alert (state transition or cooldown expired)
-    let shouldAlert = true;
-    try {
-      const supabaseForCheck = createServiceClient();
-      const { data: lastFailedRun } = await supabaseForCheck
-        .from('smoke_test_results')
-        .select('created_at, status')
-        .neq('status', 'pass')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (lastFailedRun) {
-        const msSinceLastFailure = Date.now() - new Date(lastFailedRun.created_at).getTime();
-        // Skip alert if a failure was already recorded within the cooldown window
-        // (the current run's result was already inserted above, so check for a PREVIOUS failure)
-        if (msSinceLastFailure < ALERT_COOLDOWN_MS) {
-          // Check if this is the FIRST failure (previous run was pass)
-          const { data: prevRun } = await supabaseForCheck
-            .from('smoke_test_results')
-            .select('status')
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .range(1, 1)
-            .maybeSingle();
-
-          // Only suppress if previous run was also a failure (not a state transition)
-          if (prevRun && prevRun.status !== 'pass') {
-            shouldAlert = false;
-            logger.info('Smoke test alert suppressed (cooldown active, previous run also failed)');
-          }
-        }
-      }
-    } catch (err) {
-      // If cooldown check fails, send the alert anyway (fail open)
-      logger.error('Failed to check alert cooldown', {
-        error: err instanceof Error ? err : undefined,
-      });
-    }
-
-    if (shouldAlert) {
-      try {
-        await sendAlertEmail(failedChecks);
-      } catch (err) {
-        logger.error('Failed to send smoke test alert email', {
-          error: err instanceof Error ? err : undefined,
-        });
-      }
-    }
-  }
+  await maybeAlert(failedChecks);
 
   return NextResponse.json({
     success: true,

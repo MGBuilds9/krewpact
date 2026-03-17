@@ -1,5 +1,6 @@
-import { test, expect } from '@playwright/test';
-import { signIn, assertAuthenticated } from '../helpers/auth';
+import { expect, test } from '@playwright/test';
+
+import { assertAuthenticated, signIn } from '../helpers/auth';
 import { fixtures, orgUrl } from '../helpers/fixtures';
 
 test.describe('Expense Submission', () => {
@@ -20,7 +21,9 @@ test.describe('Expense Submission', () => {
     await expect(page.locator('main')).toBeVisible({ timeout: 10_000 });
 
     // Click create button
-    const createBtn = page.getByRole('button', { name: /new expense|add expense|create|submit expense/i });
+    const createBtn = page.getByRole('button', {
+      name: /new expense|add expense|create|submit expense/i,
+    });
     if (!(await createBtn.isVisible({ timeout: 5000 }).catch(() => false))) {
       // Expenses page may not have a create button yet — skip gracefully
       test.skip();
@@ -53,8 +56,14 @@ test.describe('Expense Submission', () => {
 
     // Verify success — either redirect or success toast
     const success =
-      (await page.getByText(/success|created|submitted/i).isVisible({ timeout: 5000 }).catch(() => false)) ||
-      (await page.getByText(fixtures.expense.description().split(' ')[0]).isVisible({ timeout: 5000 }).catch(() => false));
+      (await page
+        .getByText(/success|created|submitted/i)
+        .isVisible({ timeout: 5000 })
+        .catch(() => false)) ||
+      (await page
+        .getByText(fixtures.expense.description().split(' ')[0])
+        .isVisible({ timeout: 5000 })
+        .catch(() => false));
 
     expect(success).toBe(true);
   });
@@ -64,7 +73,9 @@ test.describe('Expense Submission', () => {
     await expect(page.locator('main')).toBeVisible({ timeout: 10_000 });
 
     // Click first expense in the list
-    const firstExpense = page.locator('table tbody tr').first()
+    const firstExpense = page
+      .locator('table tbody tr')
+      .first()
       .or(page.locator('[data-testid="expense-card"]').first());
 
     if (await firstExpense.isVisible({ timeout: 5000 }).catch(() => false)) {

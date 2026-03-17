@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/supabase/server', () => ({
   createServiceClient: vi.fn(),
@@ -11,10 +10,10 @@ vi.mock('@/lib/ai/providers/gemini', () => ({
   generateWithGemini: vi.fn(),
 }));
 
-import { createServiceClient } from '@/lib/supabase/server';
+import { detectStaleDeals } from '@/lib/ai/agents/stale-deal-detector';
 import { generateWithGemini } from '@/lib/ai/providers/gemini';
 import { logger } from '@/lib/logger';
-import { detectStaleDeals } from '@/lib/ai/agents/stale-deal-detector';
+import { createServiceClient } from '@/lib/supabase/server';
 
 const mockCreateServiceClient = vi.mocked(createServiceClient);
 const mockGenerateWithGemini = vi.mocked(generateWithGemini);
@@ -54,7 +53,9 @@ describe('detectStaleDeals', () => {
 
     const result = await detectStaleDeals(ORG_ID);
     expect(result).toEqual([]);
-    expect(logger.warn).toHaveBeenCalledWith('Stale deal detection failed', { error: 'connection timeout' });
+    expect(logger.warn).toHaveBeenCalledWith('Stale deal detection failed', {
+      error: 'connection timeout',
+    });
   });
 
   it('detects deals older than 14 days with correct title format', async () => {

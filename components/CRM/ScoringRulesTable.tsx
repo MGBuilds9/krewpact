@@ -1,5 +1,8 @@
 'use client';
 
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import {
   Table,
   TableBody,
@@ -8,9 +11,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { Button } from '@/components/ui/button';
 
 export interface ScoringRuleRow {
   id: string;
@@ -58,6 +58,62 @@ function getCategoryBadgeVariant(category: string): 'default' | 'secondary' | 'o
   }
 }
 
+interface RuleRowProps {
+  rule: ScoringRuleRow;
+  onToggleActive?: (id: string, isActive: boolean) => void;
+  onEdit?: (rule: ScoringRuleRow) => void;
+  onDelete?: (id: string) => void;
+}
+function RuleRow({ rule, onToggleActive, onEdit, onDelete }: RuleRowProps) {
+  return (
+    <TableRow key={rule.id}>
+      <TableCell className="font-medium">{rule.name}</TableCell>
+      <TableCell>{rule.field_name}</TableCell>
+      <TableCell>{OPERATOR_LABELS[rule.operator] ?? rule.operator}</TableCell>
+      <TableCell>
+        {rule.operator === 'exists' || rule.operator === 'not_exists' ? '-' : rule.value}
+      </TableCell>
+      <TableCell className="text-right">
+        <span className={rule.score_impact >= 0 ? 'text-green-600' : 'text-red-600'}>
+          {rule.score_impact > 0 ? '+' : ''}
+          {rule.score_impact}
+        </span>
+      </TableCell>
+      <TableCell>
+        <Badge variant={getCategoryBadgeVariant(rule.category)}>{rule.category}</Badge>
+      </TableCell>
+      <TableCell>
+        <Switch
+          checked={rule.is_active}
+          onCheckedChange={(checked) => onToggleActive?.(rule.id, checked)}
+          aria-label={`Toggle ${rule.name}`}
+        />
+      </TableCell>
+      {(onEdit || onDelete) && (
+        <TableCell>
+          <div className="flex gap-2">
+            {onEdit && (
+              <Button variant="ghost" size="sm" onClick={() => onEdit(rule)}>
+                Edit
+              </Button>
+            )}
+            {onDelete && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive"
+                onClick={() => onDelete(rule.id)}
+              >
+                Delete
+              </Button>
+            )}
+          </div>
+        </TableCell>
+      )}
+    </TableRow>
+  );
+}
+
 export function ScoringRulesTable({
   rules,
   onToggleActive,
@@ -71,72 +127,33 @@ export function ScoringRulesTable({
       </div>
     );
   }
-
   return (
     <div className="overflow-x-auto">
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Name</TableHead>
-          <TableHead>Field</TableHead>
-          <TableHead>Operator</TableHead>
-          <TableHead>Value</TableHead>
-          <TableHead className="text-right">Score</TableHead>
-          <TableHead>Category</TableHead>
-          <TableHead>Active</TableHead>
-          {(onEdit || onDelete) && <TableHead>Actions</TableHead>}
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {rules.map((rule) => (
-          <TableRow key={rule.id}>
-            <TableCell className="font-medium">{rule.name}</TableCell>
-            <TableCell>{rule.field_name}</TableCell>
-            <TableCell>{OPERATOR_LABELS[rule.operator] ?? rule.operator}</TableCell>
-            <TableCell>
-              {rule.operator === 'exists' || rule.operator === 'not_exists' ? '-' : rule.value}
-            </TableCell>
-            <TableCell className="text-right">
-              <span className={rule.score_impact >= 0 ? 'text-green-600' : 'text-red-600'}>
-                {rule.score_impact > 0 ? '+' : ''}
-                {rule.score_impact}
-              </span>
-            </TableCell>
-            <TableCell>
-              <Badge variant={getCategoryBadgeVariant(rule.category)}>{rule.category}</Badge>
-            </TableCell>
-            <TableCell>
-              <Switch
-                checked={rule.is_active}
-                onCheckedChange={(checked) => onToggleActive?.(rule.id, checked)}
-                aria-label={`Toggle ${rule.name}`}
-              />
-            </TableCell>
-            {(onEdit || onDelete) && (
-              <TableCell>
-                <div className="flex gap-2">
-                  {onEdit && (
-                    <Button variant="ghost" size="sm" onClick={() => onEdit(rule)}>
-                      Edit
-                    </Button>
-                  )}
-                  {onDelete && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-destructive"
-                      onClick={() => onDelete(rule.id)}
-                    >
-                      Delete
-                    </Button>
-                  )}
-                </div>
-              </TableCell>
-            )}
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>Field</TableHead>
+            <TableHead>Operator</TableHead>
+            <TableHead>Value</TableHead>
+            <TableHead className="text-right">Score</TableHead>
+            <TableHead>Category</TableHead>
+            <TableHead>Active</TableHead>
+            {(onEdit || onDelete) && <TableHead>Actions</TableHead>}
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {rules.map((rule) => (
+            <RuleRow
+              key={rule.id}
+              rule={rule}
+              onToggleActive={onToggleActive}
+              onEdit={onEdit}
+              onDelete={onDelete}
+            />
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 }

@@ -1,13 +1,14 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 import {
-  calculateRepPerformance,
   calculatePipelineAging,
+  calculateRepPerformance,
   calculateWinLossAnalysis,
 } from '@/lib/crm/pipeline-intelligence';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const querySchema = z.object({
   division_id: z.string().min(1).optional(),

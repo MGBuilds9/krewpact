@@ -1,11 +1,11 @@
 'use client';
 
+import { BottomNav } from '@/components/Layout/BottomNav';
+import { Breadcrumbs } from '@/components/Layout/Breadcrumbs';
+import { Header } from '@/components/Layout/Header';
+import { QuickAddFAB } from '@/components/Layout/QuickAddFAB';
 import { DivisionProvider } from '@/contexts/DivisionContext';
 import { ImpersonationProvider } from '@/contexts/ImpersonationContext';
-import { Header } from '@/components/Layout/Header';
-import { Breadcrumbs } from '@/components/Layout/Breadcrumbs';
-import { BottomNav } from '@/components/Layout/BottomNav';
-import { QuickAddFAB } from '@/components/Layout/QuickAddFAB';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (

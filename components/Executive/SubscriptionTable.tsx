@@ -1,14 +1,15 @@
 'use client';
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiFetch } from '@/lib/api-client';
-import { queryKeys } from '@/lib/query-keys';
-import { showToast } from '@/lib/toast';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Pencil, Trash2, Plus } from 'lucide-react';
+import { apiFetch } from '@/lib/api-client';
+import { queryKeys } from '@/lib/query-keys';
+import { showToast } from '@/lib/toast';
 
 export interface Subscription {
   id: string;
@@ -30,7 +31,6 @@ export interface Subscription {
 interface SubscriptionsResponse {
   data: Subscription[];
 }
-
 interface SubscriptionTableProps {
   onEdit: (sub: Subscription) => void;
   onAdd: () => void;
@@ -45,22 +45,86 @@ const CATEGORY_BADGE_CLASSES: Record<string, string> = {
   infrastructure: 'bg-slate-100 text-slate-800 border-slate-300',
 };
 
-function formatCurrency(amount: number, currency: string): string {
+function formatCurrency(amount: number, currency: string) {
   return new Intl.NumberFormat('en-CA', {
     style: 'currency',
     currency: currency || 'CAD',
     minimumFractionDigits: 2,
   }).format(amount);
 }
+function formatDate(dateStr: string | null) {
+  return dateStr ? new Date(dateStr).toLocaleDateString('en-CA') : '—';
+}
 
-function formatDate(dateStr: string | null): string {
-  if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleDateString('en-CA');
+function SubRow({
+  sub,
+  onEdit,
+  onDelete,
+  isDeleting,
+}: {
+  sub: Subscription;
+  onEdit: (s: Subscription) => void;
+  onDelete: (s: Subscription) => void;
+  isDeleting: boolean;
+}) {
+  return (
+    <tr className="hover:bg-muted/30 transition-colors">
+      <td className="px-4 py-3 font-medium">{sub.name}</td>
+      <td className="px-4 py-3">
+        <Badge
+          variant="outline"
+          className={`text-xs capitalize ${CATEGORY_BADGE_CLASSES[sub.category] ?? ''}`}
+        >
+          {sub.category.replace(/_/g, ' ')}
+        </Badge>
+      </td>
+      <td className="px-4 py-3 text-muted-foreground">{sub.vendor ?? '—'}</td>
+      <td className="px-4 py-3 text-right font-mono">
+        {formatCurrency(sub.monthly_cost ?? 0, sub.currency)}
+      </td>
+      <td className="px-4 py-3 capitalize text-muted-foreground">{sub.billing_cycle}</td>
+      <td className="px-4 py-3 text-muted-foreground">{formatDate(sub.renewal_date)}</td>
+      <td className="px-4 py-3">
+        <Badge
+          variant="outline"
+          className={
+            sub.is_active
+              ? 'bg-green-100 text-green-800 border-green-300'
+              : 'bg-slate-100 text-slate-500 border-slate-300'
+          }
+        >
+          {sub.is_active ? 'Active' : 'Inactive'}
+        </Badge>
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex items-center justify-end gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => onEdit(sub)}
+            aria-label={`Edit ${sub.name}`}
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-destructive hover:text-destructive"
+            onClick={() => onDelete(sub)}
+            disabled={isDeleting}
+            aria-label={`Delete ${sub.name}`}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </td>
+    </tr>
+  );
 }
 
 export function SubscriptionTable({ onEdit, onAdd }: SubscriptionTableProps) {
   const queryClient = useQueryClient();
-
   const { data, isLoading, isError } = useQuery({
     queryKey: queryKeys.executive.subscriptions.lists(),
     queryFn: () => apiFetch<SubscriptionsResponse>('/api/executive/subscriptions'),
@@ -73,9 +137,7 @@ export function SubscriptionTable({ onEdit, onAdd }: SubscriptionTableProps) {
       void queryClient.invalidateQueries({ queryKey: queryKeys.executive.subscriptions.all });
       showToast.success('Subscription deleted');
     },
-    onError: () => {
-      showToast.error('Failed to delete subscription');
-    },
+    onError: () => showToast.error('Failed to delete subscription'),
   });
 
   function handleDelete(sub: Subscription) {
@@ -100,46 +162,39 @@ export function SubscriptionTable({ onEdit, onAdd }: SubscriptionTableProps) {
       <CardContent className="p-0">
         {isLoading && (
           <div className="space-y-2 p-4">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full rounded-md" />
+            {[0, 1, 2, 3, 4].map((n) => (
+              <Skeleton key={n} className="h-12 w-full rounded-md" />
             ))}
           </div>
         )}
-
         {isError && (
           <p className="text-sm text-destructive text-center py-8 px-4">
             Failed to load subscriptions.
           </p>
         )}
-
         {!isLoading && !isError && (
           <>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b bg-muted/30">
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Name</th>
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">
-                      Category
-                    </th>
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">
-                      Vendor
-                    </th>
-                    <th className="text-right px-4 py-3 font-medium text-muted-foreground">
-                      Monthly Cost
-                    </th>
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">
-                      Billing Cycle
-                    </th>
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">
-                      Renewal Date
-                    </th>
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">
-                      Status
-                    </th>
-                    <th className="text-right px-4 py-3 font-medium text-muted-foreground">
-                      Actions
-                    </th>
+                    {[
+                      'Name',
+                      'Category',
+                      'Vendor',
+                      'Monthly Cost',
+                      'Billing Cycle',
+                      'Renewal Date',
+                      'Status',
+                      'Actions',
+                    ].map((h, i) => (
+                      <th
+                        key={h}
+                        className={`px-4 py-3 font-medium text-muted-foreground ${i === 3 || i === 7 ? 'text-right' : 'text-left'}`}
+                      >
+                        {h}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -151,67 +206,17 @@ export function SubscriptionTable({ onEdit, onAdd }: SubscriptionTableProps) {
                     </tr>
                   )}
                   {subscriptions.map((sub) => (
-                    <tr key={sub.id} className="hover:bg-muted/30 transition-colors">
-                      <td className="px-4 py-3 font-medium">{sub.name}</td>
-                      <td className="px-4 py-3">
-                        <Badge
-                          variant="outline"
-                          className={`text-xs capitalize ${CATEGORY_BADGE_CLASSES[sub.category] ?? ''}`}
-                        >
-                          {sub.category.replace(/_/g, ' ')}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">{sub.vendor ?? '—'}</td>
-                      <td className="px-4 py-3 text-right font-mono">
-                        {formatCurrency(sub.monthly_cost ?? 0, sub.currency)}
-                      </td>
-                      <td className="px-4 py-3 capitalize text-muted-foreground">
-                        {sub.billing_cycle}
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {formatDate(sub.renewal_date)}
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge
-                          variant="outline"
-                          className={
-                            sub.is_active
-                              ? 'bg-green-100 text-green-800 border-green-300'
-                              : 'bg-slate-100 text-slate-500 border-slate-300'
-                          }
-                        >
-                          {sub.is_active ? 'Active' : 'Inactive'}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() => onEdit(sub)}
-                            aria-label={`Edit ${sub.name}`}
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-destructive hover:text-destructive"
-                            onClick={() => handleDelete(sub)}
-                            disabled={deleteMutation.isPending}
-                            aria-label={`Delete ${sub.name}`}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
+                    <SubRow
+                      key={sub.id}
+                      sub={sub}
+                      onEdit={onEdit}
+                      onDelete={handleDelete}
+                      isDeleting={deleteMutation.isPending}
+                    />
                   ))}
                 </tbody>
               </table>
             </div>
-
             {subscriptions.length > 0 && (
               <div className="flex items-center justify-between px-4 py-3 border-t bg-muted/20 text-sm">
                 <span className="text-muted-foreground">

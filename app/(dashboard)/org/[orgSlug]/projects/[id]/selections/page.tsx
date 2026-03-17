@@ -1,9 +1,11 @@
 'use client';
 
+import { ListChecks, Plus } from 'lucide-react';
 import { use, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+import { SelectionSheetForm } from '@/components/Selections/SelectionSheetForm';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -11,9 +13,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Plus, ListChecks } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useSelectionSheets } from '@/hooks/useSelections';
-import { SelectionSheetForm } from '@/components/Selections/SelectionSheetForm';
 
 const STATUS_COLORS: Record<string, string> = {
   draft: 'bg-gray-400',
@@ -61,8 +62,8 @@ export default function SelectionsPage({ params }: { params: Promise<{ id: strin
 
       {isLoading ? (
         <div className="space-y-3">
-          {[...Array(3)].map((_, i) => (
-            <Skeleton key={i} className="h-24 w-full" />
+          {['sk-1', 'sk-2', 'sk-3'].map((id) => (
+            <Skeleton key={id} className="h-24 w-full" />
           ))}
         </div>
       ) : sheets.length === 0 ? (

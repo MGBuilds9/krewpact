@@ -1,20 +1,21 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { leadUpdateSchema } from '@/lib/validators/crm';
 import { NextRequest, NextResponse } from 'next/server';
-import { scoreLead } from '@/lib/crm/scoring-engine';
-import type { ScoringRule } from '@/lib/crm/scoring-engine';
-import { dispatchNotification } from '@/lib/notifications/dispatcher';
+
 import {
-  UNAUTHORIZED,
-  INVALID_JSON,
-  validationError,
-  notFound,
   dbError,
   errorResponse,
+  INVALID_JSON,
+  notFound,
+  UNAUTHORIZED,
+  validationError,
 } from '@/lib/api/errors';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import type { ScoringRule } from '@/lib/crm/scoring-engine';
+import { scoreLead } from '@/lib/crm/scoring-engine';
 import { logger } from '@/lib/logger';
+import { dispatchNotification } from '@/lib/notifications/dispatcher';
+import { createUserClientSafe } from '@/lib/supabase/server';
+import { leadUpdateSchema } from '@/lib/validators/crm';
 
 type RouteContext = { params: Promise<{ id: string }> };
 

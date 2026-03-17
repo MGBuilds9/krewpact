@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 test.describe('Project smoke tests', () => {
   test('dashboard loads without 500 error', async ({ page }) => {

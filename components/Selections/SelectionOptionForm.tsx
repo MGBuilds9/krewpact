@@ -1,17 +1,17 @@
 'use client';
 
+import { Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2 } from 'lucide-react';
 import { useAddSelectionOption } from '@/hooks/useSelections';
 import { selectionOptionSchema } from '@/lib/validators/selections';
-import { toast } from 'sonner';
 
 type FormValues = z.infer<typeof selectionOptionSchema>;
 
-// Numeric form type — z.string() for inputs, parseFloat on submit
 interface FormState {
   option_group: string;
   option_name: string;
@@ -34,7 +34,6 @@ export function SelectionOptionForm({
   onCancel,
 }: SelectionOptionFormProps) {
   const addOption = useAddSelectionOption(projectId, sheetId);
-
   const form = useForm<FormState>({
     defaultValues: {
       option_group: '',

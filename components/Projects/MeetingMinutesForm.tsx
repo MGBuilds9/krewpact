@@ -1,21 +1,22 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+
+import { Button } from '@/components/ui/button';
 import {
   Form,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormControl,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useCreateMeeting } from '@/hooks/useProjectExtended';
-import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
   meeting_date: z.string().min(1, 'Date is required'),
@@ -32,6 +33,21 @@ export interface MeetingMinutesFormProps {
   projectId: string;
   onSuccess?: () => void;
   onCancel?: () => void;
+}
+
+type ActionItem = { description: string; assignee?: string; due_date?: string };
+
+function parseActionItems(raw: string | undefined): ActionItem[] | undefined {
+  if (!raw?.trim()) return undefined;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return raw
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .map((description) => ({ description }));
+  }
 }
 
 export function MeetingMinutesForm({ projectId, onSuccess, onCancel }: MeetingMinutesFormProps) {
@@ -54,28 +70,10 @@ export function MeetingMinutesForm({ projectId, onSuccess, onCancel }: MeetingMi
       .split(',')
       .map((a) => a.trim())
       .filter(Boolean);
-
     if (attendees.length === 0) {
       form.setError('attendees_raw', { message: 'At least one attendee is required' });
       return;
     }
-
-    let action_items:
-      | Array<{ description: string; assignee?: string; due_date?: string }>
-      | undefined;
-    if (values.action_items_raw?.trim()) {
-      try {
-        action_items = JSON.parse(values.action_items_raw);
-      } catch {
-        // Parse as plain text lines — each line is a description
-        action_items = values.action_items_raw
-          .split('\n')
-          .map((line) => line.trim())
-          .filter(Boolean)
-          .map((description) => ({ description }));
-      }
-    }
-
     createMeeting.mutate(
       {
         meeting_date: values.meeting_date,
@@ -83,7 +81,7 @@ export function MeetingMinutesForm({ projectId, onSuccess, onCancel }: MeetingMi
         attendees,
         agenda: values.agenda || undefined,
         notes: values.notes,
-        action_items,
+        action_items: parseActionItems(values.action_items_raw),
       },
       {
         onSuccess: () => {
@@ -111,7 +109,6 @@ export function MeetingMinutesForm({ projectId, onSuccess, onCancel }: MeetingMi
               </FormItem>
             )}
           />
-
           <FormField
             control={form.control}
             name="title"
@@ -126,7 +123,6 @@ export function MeetingMinutesForm({ projectId, onSuccess, onCancel }: MeetingMi
             )}
           />
         </div>
-
         <FormField
           control={form.control}
           name="attendees_raw"
@@ -140,7 +136,6 @@ export function MeetingMinutesForm({ projectId, onSuccess, onCancel }: MeetingMi
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="agenda"
@@ -154,7 +149,6 @@ export function MeetingMinutesForm({ projectId, onSuccess, onCancel }: MeetingMi
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="notes"
@@ -172,7 +166,6 @@ export function MeetingMinutesForm({ projectId, onSuccess, onCancel }: MeetingMi
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="action_items_raw"
@@ -190,7 +183,6 @@ export function MeetingMinutesForm({ projectId, onSuccess, onCancel }: MeetingMi
             </FormItem>
           )}
         />
-
         <div className="flex gap-2 justify-end pt-2">
           {onCancel && (
             <Button

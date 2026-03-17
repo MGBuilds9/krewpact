@@ -1,7 +1,8 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth();

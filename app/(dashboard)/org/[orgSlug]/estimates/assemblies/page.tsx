@@ -1,41 +1,71 @@
 'use client';
 
+import { Layers, Plus, Search } from 'lucide-react';
 import { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+
+import { AssemblyBuilderForm } from '@/components/Estimates/AssemblyBuilderForm';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Search, Plus, Layers } from 'lucide-react';
-import { useAssemblies } from '@/hooks/useEstimating';
 import { useDivision } from '@/contexts/DivisionContext';
-import { AssemblyBuilderForm } from '@/components/Estimates/AssemblyBuilderForm';
 import type { Assembly } from '@/hooks/useEstimating';
+import { useAssemblies } from '@/hooks/useEstimating';
+
+interface AssemblyCardProps {
+  assembly: Assembly;
+  onClick: () => void;
+}
+function AssemblyCard({ assembly, onClick }: AssemblyCardProps) {
+  return (
+    <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
+      <CardContent className="p-4">
+        <div className="flex items-center gap-2 mb-1">
+          {assembly.assembly_code && (
+            <span className="text-xs font-mono text-muted-foreground">
+              {assembly.assembly_code}
+            </span>
+          )}
+          <h3 className="font-semibold truncate">{assembly.assembly_name}</h3>
+          <Badge
+            variant="outline"
+            className={`text-xs flex-shrink-0 border ${assembly.is_active ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gray-100 text-gray-700 border-gray-200'}`}
+          >
+            {assembly.is_active ? 'Active' : 'Inactive'}
+          </Badge>
+        </div>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          <span>Unit: {assembly.unit}</span>
+          <span>v{assembly.version_no}</span>
+          {assembly.description && (
+            <span className="truncate max-w-[300px]">{assembly.description}</span>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function AssembliesPage() {
   const { activeDivision } = useDivision();
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingAssembly, setEditingAssembly] = useState<Assembly | undefined>();
+  const divId = activeDivision ? activeDivision.id : undefined;
+  const { data, isLoading } = useAssemblies({ divisionId: divId, search: search || undefined });
+  const assemblies = data ? data.data || [] : [];
 
-  const { data, isLoading } = useAssemblies({
-    divisionId: activeDivision?.id,
-    search: search || undefined,
-  });
-
-  const assemblies = data?.data ?? [];
-
-  if (isLoading) {
+  if (isLoading)
     return (
       <div className="space-y-4">
         <Skeleton className="h-10 w-48 animate-pulse" />
-        {[1, 2, 3].map((i) => (
+        {['a1', 'a2', 'a3'].map((i) => (
           <Skeleton key={i} className="h-16 rounded-xl animate-pulse" />
         ))}
       </div>
     );
-  }
 
   return (
     <div className="space-y-4">
@@ -59,7 +89,6 @@ export default function AssembliesPage() {
           New Assembly
         </Button>
       </div>
-
       {assemblies.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
@@ -73,46 +102,17 @@ export default function AssembliesPage() {
       ) : (
         <div className="grid gap-3">
           {assemblies.map((assembly) => (
-            <Card
+            <AssemblyCard
               key={assembly.id}
-              className="cursor-pointer hover:shadow-md transition-shadow"
+              assembly={assembly}
               onClick={() => {
                 setEditingAssembly(assembly);
                 setDialogOpen(true);
               }}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      {assembly.assembly_code && (
-                        <span className="text-xs font-mono text-muted-foreground">
-                          {assembly.assembly_code}
-                        </span>
-                      )}
-                      <h3 className="font-semibold truncate">{assembly.assembly_name}</h3>
-                      <Badge
-                        variant="outline"
-                        className={`text-xs flex-shrink-0 border ${assembly.is_active ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gray-100 text-gray-700 border-gray-200'}`}
-                      >
-                        {assembly.is_active ? 'Active' : 'Inactive'}
-                      </Badge>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                      <span>Unit: {assembly.unit}</span>
-                      <span>v{assembly.version_no}</span>
-                      {assembly.description && (
-                        <span className="truncate max-w-[300px]">{assembly.description}</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            />
           ))}
         </div>
       )}
-
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -120,7 +120,7 @@ export default function AssembliesPage() {
           </DialogHeader>
           <AssemblyBuilderForm
             assembly={editingAssembly}
-            divisionId={activeDivision?.id}
+            divisionId={divId}
             onSuccess={() => setDialogOpen(false)}
             onCancel={() => setDialogOpen(false)}
           />

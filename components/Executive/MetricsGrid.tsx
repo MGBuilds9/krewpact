@@ -1,14 +1,15 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { CreditCard, DollarSign, FolderKanban, Target } from 'lucide-react';
+
 import { KPICard } from '@/components/Dashboard/KPICard';
-import { DollarSign, FolderKanban, Target, CreditCard } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import type {
+  EstimatingVelocity,
   PipelineSummary,
   ProjectPortfolio,
-  EstimatingVelocity,
   SubscriptionSummary,
 } from '@/lib/executive/metrics';
 
@@ -46,6 +47,69 @@ const stageLabels: Record<string, string> = {
   closed_lost: 'Lost',
 };
 
+function PipelineStagesCard({ pipeline }: { pipeline?: PipelineSummary }) {
+  return (
+    <Card className="rounded-2xl border-0 shadow-sm bg-white dark:bg-card">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+          Pipeline Stages
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="pt-0">
+        {pipeline && pipeline.stageBreakdown.length > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {pipeline.stageBreakdown.map(({ stage, count, value }) => (
+              <div
+                key={stage}
+                className="flex items-center gap-1.5 bg-muted/50 rounded-lg px-3 py-1.5"
+              >
+                <Badge variant="secondary" className="text-xs">
+                  {stageLabels[stage] ?? stage}
+                </Badge>
+                <span className="text-xs font-medium">{count}</span>
+                <span className="text-xs text-muted-foreground">({formatCurrency(value)})</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">No pipeline data available</p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function ProjectStatusCard({ portfolio }: { portfolio?: ProjectPortfolio }) {
+  return (
+    <Card className="rounded-2xl border-0 shadow-sm bg-white dark:bg-card">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+          Project Status
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="pt-0">
+        {portfolio && portfolio.statusBreakdown.length > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {portfolio.statusBreakdown.map(({ status, count }) => (
+              <div
+                key={status}
+                className="flex items-center gap-1.5 bg-muted/50 rounded-lg px-3 py-1.5"
+              >
+                <Badge variant="outline" className="text-xs capitalize">
+                  {status}
+                </Badge>
+                <span className="text-xs font-medium">{count}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">No project data available</p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export function MetricsGrid({ pipeline, portfolio, subscriptions, isLoading }: MetricsGridProps) {
   if (isLoading) {
     return (
@@ -63,9 +127,16 @@ export function MetricsGrid({ pipeline, portfolio, subscriptions, isLoading }: M
     );
   }
 
+  const monthlySaaS = subscriptions
+    ? new Intl.NumberFormat('en-CA', {
+        style: 'currency',
+        currency: 'CAD',
+        maximumFractionDigits: 0,
+      }).format(subscriptions.totalMonthlyCost)
+    : '—';
+
   return (
     <div className="space-y-4">
-      {/* KPI Row */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <KPICard
           label="Pipeline Value"
@@ -84,75 +155,13 @@ export function MetricsGrid({ pipeline, portfolio, subscriptions, isLoading }: M
         />
         <KPICard
           label="Monthly SaaS"
-          value={
-            subscriptions
-              ? new Intl.NumberFormat('en-CA', {
-                  style: 'currency',
-                  currency: 'CAD',
-                  maximumFractionDigits: 0,
-                }).format(subscriptions.totalMonthlyCost)
-              : '—'
-          }
+          value={monthlySaaS}
           icon={<CreditCard className="h-4 w-4" />}
         />
       </div>
-
-      {/* Pipeline Stage Breakdown + Project Status */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Card className="rounded-2xl border-0 shadow-sm bg-white dark:bg-card">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-              Pipeline Stages
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {pipeline && pipeline.stageBreakdown.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {pipeline.stageBreakdown.map(({ stage, count, value }) => (
-                  <div
-                    key={stage}
-                    className="flex items-center gap-1.5 bg-muted/50 rounded-lg px-3 py-1.5"
-                  >
-                    <Badge variant="secondary" className="text-xs">
-                      {stageLabels[stage] ?? stage}
-                    </Badge>
-                    <span className="text-xs font-medium">{count}</span>
-                    <span className="text-xs text-muted-foreground">({formatCurrency(value)})</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">No pipeline data available</p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-2xl border-0 shadow-sm bg-white dark:bg-card">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-              Project Status
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {portfolio && portfolio.statusBreakdown.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {portfolio.statusBreakdown.map(({ status, count }) => (
-                  <div
-                    key={status}
-                    className="flex items-center gap-1.5 bg-muted/50 rounded-lg px-3 py-1.5"
-                  >
-                    <Badge variant="outline" className="text-xs capitalize">
-                      {status}
-                    </Badge>
-                    <span className="text-xs font-medium">{count}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">No project data available</p>
-            )}
-          </CardContent>
-        </Card>
+        <PipelineStagesCard pipeline={pipeline} />
+        <ProjectStatusCard portfolio={portfolio} />
       </div>
     </div>
   );

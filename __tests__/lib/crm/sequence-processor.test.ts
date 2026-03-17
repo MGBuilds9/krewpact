@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { processSequences } from '@/lib/crm/sequence-processor';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { mockSupabaseClient } from '@/__tests__/helpers';
+import { processSequences } from '@/lib/crm/sequence-processor';
 
 describe('processSequences', () => {
   beforeEach(() => {

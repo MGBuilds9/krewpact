@@ -1,24 +1,19 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  leadCreateSchema,
-  leadUpdateSchema,
-  type LeadCreate,
-  type LeadUpdate,
-} from '@/lib/validators/crm';
+import { Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+
+import { Button } from '@/components/ui/button';
 import {
   Form,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormControl,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-
-import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -26,16 +21,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useCreateLead, useUpdateLead, type Lead } from '@/hooks/useCRM';
 import { useDivision } from '@/contexts/DivisionContext';
-import { Loader2 } from 'lucide-react';
+import { type Lead, useCreateLead, useUpdateLead } from '@/hooks/useCRM';
+import {
+  type LeadCreate,
+  leadCreateSchema,
+  type LeadUpdate,
+  leadUpdateSchema,
+} from '@/lib/validators/crm';
 
 interface LeadFormProps {
-  /** Existing lead for edit mode. Omit for create mode. */
   lead?: Lead;
-  /** Called after successful create/update */
   onSuccess?: (lead: Lead) => void;
-  /** Called when user cancels */
   onCancel?: () => void;
 }
 
@@ -49,7 +46,6 @@ const SOURCE_CHANNELS = [
   'repeat_client',
   'other',
 ];
-
 const INDUSTRIES = [
   'Restaurant & Food Service',
   'Retail',
@@ -62,48 +58,44 @@ const INDUSTRIES = [
   'Hospitality',
   'Other',
 ];
-
 const PROVINCES = ['ON', 'QC', 'BC', 'AB', 'SK', 'MB', 'NS', 'NB', 'NL', 'PE', 'NT', 'NU', 'YT'];
+
+function cleanValues(raw: LeadCreate | LeadUpdate): LeadCreate | LeadUpdate {
+  return Object.fromEntries(Object.entries(raw).map(([k, v]) => [k, v === '' ? undefined : v])) as
+    | LeadCreate
+    | LeadUpdate;
+}
+
+function buildDefaultValues(lead?: Lead, divisionId?: string) {
+  return {
+    company_name: lead?.company_name ?? '',
+    division_id: lead?.division_id ?? divisionId ?? undefined,
+    source_channel: lead?.source_channel ?? undefined,
+    industry: lead?.industry ?? undefined,
+    city: lead?.city ?? undefined,
+    province: lead?.province ?? 'ON',
+  };
+}
 
 export function LeadForm({ lead, onSuccess, onCancel }: LeadFormProps) {
   const isEdit = !!lead;
   const createLead = useCreateLead();
   const updateLead = useUpdateLead();
   const { activeDivision } = useDivision();
+  const isPending = createLead.isPending || updateLead.isPending;
 
   const form = useForm<LeadCreate | LeadUpdate>({
     resolver: zodResolver(isEdit ? leadUpdateSchema : leadCreateSchema),
-    defaultValues: {
-      company_name: lead?.company_name ?? '',
-      division_id: lead?.division_id ?? activeDivision?.id ?? undefined,
-      source_channel: lead?.source_channel ?? undefined,
-      industry: lead?.industry ?? undefined,
-      city: lead?.city ?? undefined,
-      province: lead?.province ?? 'ON',
-    },
+    defaultValues: buildDefaultValues(lead, activeDivision?.id),
   });
 
-  const isPending = createLead.isPending || updateLead.isPending;
-
   function onSubmit(raw: LeadCreate | LeadUpdate) {
-    const values = Object.fromEntries(
-      Object.entries(raw).map(([k, v]) => [k, v === '' ? undefined : v]),
-    ) as LeadCreate | LeadUpdate;
+    const values = cleanValues(raw);
+    const cb = { onSuccess: (data: unknown) => onSuccess?.(data as Lead) };
     if (isEdit && lead) {
-      updateLead.mutate(
-        { id: lead.id, ...values },
-        {
-          onSuccess: (data) => {
-            onSuccess?.(data as Lead);
-          },
-        },
-      );
+      updateLead.mutate({ id: lead.id, ...values }, cb);
     } else {
-      createLead.mutate(values as LeadCreate, {
-        onSuccess: (data) => {
-          onSuccess?.(data as Lead);
-        },
-      });
+      createLead.mutate(values as LeadCreate, cb);
     }
   }
 
@@ -127,7 +119,6 @@ export function LeadForm({ lead, onSuccess, onCancel }: LeadFormProps) {
             </FormItem>
           )}
         />
-
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -153,7 +144,6 @@ export function LeadForm({ lead, onSuccess, onCancel }: LeadFormProps) {
               </FormItem>
             )}
           />
-
           <FormField
             control={form.control}
             name="source_channel"
@@ -179,7 +169,6 @@ export function LeadForm({ lead, onSuccess, onCancel }: LeadFormProps) {
             )}
           />
         </div>
-
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -194,7 +183,6 @@ export function LeadForm({ lead, onSuccess, onCancel }: LeadFormProps) {
               </FormItem>
             )}
           />
-
           <FormField
             control={form.control}
             name="province"
@@ -220,7 +208,6 @@ export function LeadForm({ lead, onSuccess, onCancel }: LeadFormProps) {
             )}
           />
         </div>
-
         <div className="flex gap-2 justify-end pt-2">
           {onCancel && (
             <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>

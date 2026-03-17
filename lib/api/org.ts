@@ -1,14 +1,17 @@
-import { NextRequest } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
+import { NextRequest } from 'next/server';
+
 import { ApiError } from './errors';
 
 async function _getClerkMetadata(): Promise<Record<string, unknown>> {
   const { sessionClaims } = await auth();
   const claims = sessionClaims as Record<string, unknown> | null;
-  return (claims?.metadata as Record<string, unknown>)
-    ?? (claims?.public_metadata as Record<string, unknown>)
-    ?? claims
-    ?? {};
+  return (
+    (claims?.metadata as Record<string, unknown>) ??
+    (claims?.public_metadata as Record<string, unknown>) ??
+    claims ??
+    {}
+  );
 }
 
 export async function getKrewpactUserId(): Promise<string | null> {
@@ -42,7 +45,7 @@ export function getOrgFromHeaders(req: NextRequest): { orgId: string; orgSlug: s
 
 /**
  * Extract org_id from Clerk session claims for API routes.
- * Falls back to the default org if no claim is present (demo mode compat).
+ * Falls back to the default org if no claim is present (single-org mode).
  */
 export async function getOrgIdFromAuth(): Promise<string> {
   const { sessionClaims } = await auth();

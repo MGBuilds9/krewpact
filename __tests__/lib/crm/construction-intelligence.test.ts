@@ -1,16 +1,52 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
+import type { DivisionOpportunity } from '@/lib/crm/construction-intelligence';
 import {
   calculateDivisionComparison,
   calculateSeasonalAnalysis,
 } from '@/lib/crm/construction-intelligence';
-import type { DivisionOpportunity } from '@/lib/crm/construction-intelligence';
 
 const opps: DivisionOpportunity[] = [
-  { id: '1', division_id: 'contracting', stage: 'contracted', estimated_revenue: 200000, created_at: '2026-01-15T00:00:00Z', updated_at: '2026-02-01T00:00:00Z' },
-  { id: '2', division_id: 'contracting', stage: 'closed_lost', estimated_revenue: 50000, created_at: '2026-02-10T00:00:00Z', updated_at: '2026-03-01T00:00:00Z' },
-  { id: '3', division_id: 'homes', stage: 'estimating', estimated_revenue: 500000, created_at: '2026-04-05T00:00:00Z', updated_at: '2026-04-10T00:00:00Z' },
-  { id: '4', division_id: 'homes', stage: 'contracted', estimated_revenue: 750000, created_at: '2026-07-20T00:00:00Z', updated_at: '2026-08-01T00:00:00Z' },
-  { id: '5', division_id: null, stage: 'intake', estimated_revenue: 10000, created_at: '2025-10-15T12:00:00Z', updated_at: '2025-10-20T12:00:00Z' },
+  {
+    id: '1',
+    division_id: 'contracting',
+    stage: 'contracted',
+    estimated_revenue: 200000,
+    created_at: '2026-01-15T00:00:00Z',
+    updated_at: '2026-02-01T00:00:00Z',
+  },
+  {
+    id: '2',
+    division_id: 'contracting',
+    stage: 'closed_lost',
+    estimated_revenue: 50000,
+    created_at: '2026-02-10T00:00:00Z',
+    updated_at: '2026-03-01T00:00:00Z',
+  },
+  {
+    id: '3',
+    division_id: 'homes',
+    stage: 'estimating',
+    estimated_revenue: 500000,
+    created_at: '2026-04-05T00:00:00Z',
+    updated_at: '2026-04-10T00:00:00Z',
+  },
+  {
+    id: '4',
+    division_id: 'homes',
+    stage: 'contracted',
+    estimated_revenue: 750000,
+    created_at: '2026-07-20T00:00:00Z',
+    updated_at: '2026-08-01T00:00:00Z',
+  },
+  {
+    id: '5',
+    division_id: null,
+    stage: 'intake',
+    estimated_revenue: 10000,
+    created_at: '2025-10-15T12:00:00Z',
+    updated_at: '2025-10-20T12:00:00Z',
+  },
 ];
 
 describe('calculateDivisionComparison', () => {

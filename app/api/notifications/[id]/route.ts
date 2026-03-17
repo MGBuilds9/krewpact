@@ -1,9 +1,10 @@
 import { auth } from '@clerk/nextjs/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 import { logger } from '@/lib/logger';
 import { createUserClientSafe } from '@/lib/supabase/server';
-import { z } from 'zod';
-import { NextRequest, NextResponse } from 'next/server';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 
 const updateSchema = z.object({
   state: z.enum(['read']).optional(),

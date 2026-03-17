@@ -1,21 +1,22 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+
+import { signIn } from './helpers/auth';
 
 test.describe('Auth smoke tests', () => {
-  test('demo mode lands on dashboard with nav elements', async ({ page }) => {
-    await page.goto('/dashboard');
-    // Should not redirect to login in demo mode
-    await expect(page).toHaveURL(/dashboard/);
-    // Verify key nav elements exist
+  test('authenticated user lands on dashboard with nav elements', async ({ page }) => {
+    await signIn(page);
+    await expect(page).toHaveURL(/dashboard|org\//);
     await expect(page.getByRole('navigation')).toBeVisible();
   });
 
-  test('unauthenticated routes redirect appropriately', async ({ page }) => {
-    // In demo mode, all routes are accessible — just verify no 500s
+  test('unauthenticated request redirects to sign-in', async ({ page }) => {
     const response = await page.goto('/dashboard');
+    // Should redirect to sign-in or return non-500
     expect(response?.status()).toBeLessThan(500);
+    await expect(page).toHaveURL(/sign-in/);
   });
 
-  test('major route groups load without 500 errors', async ({ page }) => {
+  test('major route groups do not return 500 errors', async ({ page }) => {
     const routes = ['/dashboard', '/sign-in'];
     for (const route of routes) {
       const response = await page.goto(route);

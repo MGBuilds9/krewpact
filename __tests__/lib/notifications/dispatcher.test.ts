@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { buildNotificationEmails, dispatchNotification } from '@/lib/notifications/dispatcher';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import type { NotificationEvent } from '@/lib/notifications/dispatcher';
+import { buildNotificationEmails, dispatchNotification } from '@/lib/notifications/dispatcher';
 
 // Mock sendEmail
 vi.mock('@/lib/email/resend', () => ({
@@ -180,12 +181,8 @@ describe('dispatchNotification', () => {
     });
 
     expect(mockSendEmail).toHaveBeenCalledTimes(2);
-    expect(mockSendEmail).toHaveBeenCalledWith(
-      expect.objectContaining({ to: 'a@mdm.ca' }),
-    );
-    expect(mockSendEmail).toHaveBeenCalledWith(
-      expect.objectContaining({ to: 'b@mdm.ca' }),
-    );
+    expect(mockSendEmail).toHaveBeenCalledWith(expect.objectContaining({ to: 'a@mdm.ca' }));
+    expect(mockSendEmail).toHaveBeenCalledWith(expect.objectContaining({ to: 'b@mdm.ca' }));
   });
 
   it('calls sendEmail with correct subject for lead_assigned', async () => {

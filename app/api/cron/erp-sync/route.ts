@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { SyncService } from '@/lib/erp/sync-service';
-import { ErpClient } from '@/lib/erp/client';
-import { isMockMode } from '@/lib/erp/sync-service';
+
 import { verifyCronAuth } from '@/lib/api/cron-auth';
 import { createCronLogger } from '@/lib/api/cron-logger';
+import { ErpClient } from '@/lib/erp/client';
+import { isMockMode, SyncService } from '@/lib/erp/sync-service';
 import { logger } from '@/lib/logger';
 
 /**
@@ -11,104 +11,121 @@ import { logger } from '@/lib/logger';
  *
  * Called by QStash cron or Vercel cron. Fetches recently modified invoices from ERPNext
  * and syncs them into KrewPact's snapshot tables.
- *
- * Auth: Bearer token via Authorization header (CRON_SECRET env var) or
- *       QStash signature verification via Upstash-Signature header.
  */
+
+interface SyncSummary {
+  invoices_synced: number;
+  pos_synced: number;
+  errors: string[];
+  started_at: string;
+  completed_at: string;
+}
+
+const SALES_INVOICE_FIELDS = [
+  'name',
+  'customer',
+  'posting_date',
+  'grand_total',
+  'outstanding_amount',
+  'status',
+  'custom_mdm_project_id',
+];
+
+const PURCHASE_INVOICE_FIELDS = [
+  'name',
+  'supplier',
+  'posting_date',
+  'grand_total',
+  'outstanding_amount',
+  'status',
+  'custom_mdm_project_id',
+];
+
+async function syncSalesInvoices(
+  client: ErpClient,
+  service: SyncService,
+  since: string,
+  summary: SyncSummary,
+): Promise<void> {
+  try {
+    const invoices = await client.list<{ name: string }>(
+      'Sales Invoice',
+      { modified: ['>', since] },
+      SALES_INVOICE_FIELDS,
+      100,
+    );
+    for (const invoice of invoices) {
+      try {
+        await service.readSalesInvoice(invoice.name);
+        summary.invoices_synced++;
+      } catch (err) {
+        const msg = `Sales Invoice ${invoice.name}: ${err instanceof Error ? err.message : String(err)}`;
+        logger.error('Sales Invoice sync failed', { invoice: invoice.name, error: msg });
+        summary.errors.push(msg);
+      }
+    }
+  } catch (err) {
+    const msg = `Failed to list Sales Invoices: ${err instanceof Error ? err.message : String(err)}`;
+    logger.error('Failed to list Sales Invoices', { error: msg });
+    summary.errors.push(msg);
+  }
+}
+
+async function syncPurchaseInvoices(
+  client: ErpClient,
+  service: SyncService,
+  since: string,
+  summary: SyncSummary,
+): Promise<void> {
+  try {
+    const invoices = await client.list<{ name: string }>(
+      'Purchase Invoice',
+      { modified: ['>', since] },
+      PURCHASE_INVOICE_FIELDS,
+      100,
+    );
+    for (const invoice of invoices) {
+      try {
+        await service.readPurchaseInvoice(invoice.name);
+        summary.pos_synced++;
+      } catch (err) {
+        const msg = `Purchase Invoice ${invoice.name}: ${err instanceof Error ? err.message : String(err)}`;
+        logger.error('Purchase Invoice sync failed', { invoice: invoice.name, error: msg });
+        summary.errors.push(msg);
+      }
+    }
+  } catch (err) {
+    const msg = `Failed to list Purchase Invoices: ${err instanceof Error ? err.message : String(err)}`;
+    logger.error('Failed to list Purchase Invoices', { error: msg });
+    summary.errors.push(msg);
+  }
+}
+
 export async function GET(request: NextRequest) {
   const { authorized } = await verifyCronAuth(request);
-  if (!authorized) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!authorized) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const cronLog = createCronLogger('erp-sync');
-
-  // 2. Determine sync window (last 24 hours)
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 19);
 
-  const service = new SyncService();
-  const summary = {
+  const summary: SyncSummary = {
     invoices_synced: 0,
     pos_synced: 0,
-    errors: [] as string[],
+    errors: [],
     started_at: new Date().toISOString(),
     completed_at: '',
   };
 
   try {
     if (isMockMode()) {
-      // In mock mode, nothing to fetch — return empty summary
       summary.completed_at = new Date().toISOString();
       return NextResponse.json(summary);
     }
 
     const client = new ErpClient();
-
-    // 3. Fetch recent Sales Invoices
-    try {
-      const salesInvoices = await client.list<{ name: string }>(
-        'Sales Invoice',
-        { modified: ['>', since] },
-        [
-          'name',
-          'customer',
-          'posting_date',
-          'grand_total',
-          'outstanding_amount',
-          'status',
-          'custom_mdm_project_id',
-        ],
-        100,
-      );
-
-      for (const invoice of salesInvoices) {
-        try {
-          await service.readSalesInvoice(invoice.name);
-          summary.invoices_synced++;
-        } catch (err) {
-          const msg = `Sales Invoice ${invoice.name}: ${err instanceof Error ? err.message : String(err)}`;
-          logger.error('Sales Invoice sync failed', { invoice: invoice.name, error: msg });
-          summary.errors.push(msg);
-        }
-      }
-    } catch (err) {
-      const msg = `Failed to list Sales Invoices: ${err instanceof Error ? err.message : String(err)}`;
-      logger.error('Failed to list Sales Invoices', { error: msg });
-      summary.errors.push(msg);
-    }
-
-    // 4. Fetch recent Purchase Invoices
-    try {
-      const purchaseInvoices = await client.list<{ name: string }>(
-        'Purchase Invoice',
-        { modified: ['>', since] },
-        [
-          'name',
-          'supplier',
-          'posting_date',
-          'grand_total',
-          'outstanding_amount',
-          'status',
-          'custom_mdm_project_id',
-        ],
-        100,
-      );
-
-      for (const invoice of purchaseInvoices) {
-        try {
-          await service.readPurchaseInvoice(invoice.name);
-          summary.pos_synced++;
-        } catch (err) {
-          const msg = `Purchase Invoice ${invoice.name}: ${err instanceof Error ? err.message : String(err)}`;
-          logger.error('Purchase Invoice sync failed', { invoice: invoice.name, error: msg });
-          summary.errors.push(msg);
-        }
-      }
-    } catch (err) {
-      const msg = `Failed to list Purchase Invoices: ${err instanceof Error ? err.message : String(err)}`;
-      logger.error('Failed to list Purchase Invoices', { error: msg });
-      summary.errors.push(msg);
-    }
+    const service = new SyncService();
+    await syncSalesInvoices(client, service, since, summary);
+    await syncPurchaseInvoices(client, service, since, summary);
   } catch (err) {
     const msg = `Cron sync failed: ${err instanceof Error ? err.message : String(err)}`;
     logger.error('ERP cron sync failed', { error: msg });
@@ -116,7 +133,6 @@ export async function GET(request: NextRequest) {
   }
 
   summary.completed_at = new Date().toISOString();
-
   logger.info('ERP cron sync completed', {
     invoices_synced: summary.invoices_synced,
     pos_synced: summary.pos_synced,

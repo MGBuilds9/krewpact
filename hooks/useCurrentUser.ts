@@ -1,7 +1,8 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
 import { useUser } from '@clerk/nextjs';
+import { useQuery } from '@tanstack/react-query';
+
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { apiFetch } from '@/lib/api-client';
 

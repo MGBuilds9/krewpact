@@ -1,8 +1,9 @@
 'use client';
 
+import { BarChart3, Building2, Loader2, Target, Trophy } from 'lucide-react';
 import { useEffect, useState } from 'react';
+
 import { Card, CardContent } from '@/components/ui/card';
-import { Trophy, Building2, Target, BarChart3, Loader2 } from 'lucide-react';
 
 interface ClosedLoopData {
   won_deals_this_month: number;
@@ -78,8 +79,8 @@ export function ClosedLoopStats() {
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[...Array(4)].map((_, i) => (
-          <Card key={i}>
+        {[0, 1, 2, 3].map((n) => (
+          <Card key={n}>
             <CardContent className="pt-6">
               <div className="h-16 bg-muted/50 rounded animate-pulse" />
             </CardContent>

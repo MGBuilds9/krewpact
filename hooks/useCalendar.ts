@@ -1,6 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
 import { apiFetch } from '@/lib/api-client';
 import type { GraphEvent, GraphListResponse } from '@/lib/microsoft/types';
 

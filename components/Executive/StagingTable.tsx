@@ -1,13 +1,11 @@
 'use client';
 
-import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
-import { apiFetch } from '@/lib/api-client';
-import { queryKeys } from '@/lib/query-keys';
+import { useState } from 'react';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
   SelectContent,
@@ -15,6 +13,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { apiFetch } from '@/lib/api-client';
+import { queryKeys } from '@/lib/query-keys';
 
 export interface StagingDoc {
   id: string;
@@ -34,7 +35,6 @@ interface StagingListResponse {
   page: number;
   limit: number;
 }
-
 interface StagingTableProps {
   onSelect: (doc: StagingDoc) => void;
   selectedId?: string;
@@ -65,11 +65,54 @@ const STATUS_BADGE_CLASSES: Record<string, string> = {
   ingested: 'bg-blue-100 text-blue-800 border-blue-300',
 };
 
+function DocRow({
+  doc,
+  isSelected,
+  onSelect,
+}: {
+  doc: StagingDoc;
+  isSelected: boolean;
+  onSelect: (d: StagingDoc) => void;
+}) {
+  return (
+    <button
+      onClick={() => onSelect(doc)}
+      className={`w-full text-left px-4 py-3 hover:bg-muted/50 transition-colors ${isSelected ? 'bg-muted' : ''}`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <p className="font-medium text-sm truncate">{doc.title}</p>
+          {doc.source_path && (
+            <p className="text-xs text-muted-foreground font-mono truncate mt-0.5">
+              {doc.source_path}
+            </p>
+          )}
+          <p className="text-xs text-muted-foreground mt-1">
+            {formatDistanceToNow(new Date(doc.created_at), { addSuffix: true })}
+          </p>
+        </div>
+        <div className="flex flex-col items-end gap-1 shrink-0">
+          <Badge
+            variant={STATUS_BADGE_VARIANTS[doc.status] ?? 'outline'}
+            className={`text-xs ${STATUS_BADGE_CLASSES[doc.status] ?? ''}`}
+          >
+            {doc.status.replace(/_/g, ' ')}
+          </Badge>
+          {doc.category && (
+            <Badge variant="secondary" className="text-xs">
+              {doc.category}
+            </Badge>
+          )}
+        </div>
+      </div>
+    </button>
+  );
+}
+
 export function StagingTable({ onSelect, selectedId }: StagingTableProps) {
   const [status, setStatus] = useState('all');
   const [page, setPage] = useState(1);
   const limit = 25;
-
   const queryStatus = status === 'all' ? undefined : status;
 
   const { data, isLoading, isError } = useQuery({
@@ -101,61 +144,24 @@ export function StagingTable({ onSelect, selectedId }: StagingTableProps) {
           ))}
         </SelectContent>
       </Select>
-
       {isLoading && (
         <div className="space-y-2">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-16 w-full rounded-md" />
+          {[0, 1, 2, 3, 4].map((n) => (
+            <Skeleton key={n} className="h-16 w-full rounded-md" />
           ))}
         </div>
       )}
-
       {isError && <p className="text-sm text-destructive">Failed to load staging documents.</p>}
-
       {data && (
         <div className="border rounded-md divide-y">
           {data.data.length === 0 && (
             <p className="text-sm text-muted-foreground text-center py-8">No documents found.</p>
           )}
           {data.data.map((doc) => (
-            <button
-              key={doc.id}
-              onClick={() => onSelect(doc)}
-              className={`w-full text-left px-4 py-3 hover:bg-muted/50 transition-colors ${
-                selectedId === doc.id ? 'bg-muted' : ''
-              }`}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm truncate">{doc.title}</p>
-                  {doc.source_path && (
-                    <p className="text-xs text-muted-foreground font-mono truncate mt-0.5">
-                      {doc.source_path}
-                    </p>
-                  )}
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {formatDistanceToNow(new Date(doc.created_at), { addSuffix: true })}
-                  </p>
-                </div>
-                <div className="flex flex-col items-end gap-1 shrink-0">
-                  <Badge
-                    variant={STATUS_BADGE_VARIANTS[doc.status] ?? 'outline'}
-                    className={`text-xs ${STATUS_BADGE_CLASSES[doc.status] ?? ''}`}
-                  >
-                    {doc.status.replace(/_/g, ' ')}
-                  </Badge>
-                  {doc.category && (
-                    <Badge variant="secondary" className="text-xs">
-                      {doc.category}
-                    </Badge>
-                  )}
-                </div>
-              </div>
-            </button>
+            <DocRow key={doc.id} doc={doc} isSelected={selectedId === doc.id} onSelect={onSelect} />
           ))}
         </div>
       )}
-
       {data && totalPages > 1 && (
         <div className="flex items-center justify-between text-sm">
           <Button

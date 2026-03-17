@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Define mock methods at module level so they're accessible in tests
 const mockSyncAccount = vi.fn();
@@ -48,13 +48,14 @@ vi.mock('@/lib/erp/sync-service', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { POST } from '@/app/api/erp/sync/route';
+
 import {
+  makeJsonRequest,
   mockClerkAuth,
   mockClerkUnauth,
-  makeJsonRequest,
   resetFixtureCounter,
 } from '@/__tests__/helpers';
+import { POST } from '@/app/api/erp/sync/route';
 
 const mockAuth = vi.mocked(auth);
 

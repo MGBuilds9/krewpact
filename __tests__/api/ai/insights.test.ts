@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({
@@ -12,11 +11,13 @@ vi.mock('@/lib/api/rate-limit', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
+
 import { GET } from '@/app/api/ai/insights/route';
+import { createUserClientSafe } from '@/lib/supabase/server';
+
 import { mockClerkAuth, mockClerkUnauth } from '../../helpers/mock-auth';
-import { mockSupabaseClient } from '../../helpers/mock-supabase';
 import { makeRequest } from '../../helpers/mock-request';
+import { mockSupabaseClient } from '../../helpers/mock-supabase';
 
 describe('GET /api/ai/insights', () => {
   const mockAuth = vi.mocked(auth);
@@ -28,7 +29,9 @@ describe('GET /api/ai/insights', () => {
 
   it('returns 401 when unauthenticated', async () => {
     mockClerkUnauth(mockAuth);
-    const req = makeRequest('/api/ai/insights?entity_type=lead&entity_id=550e8400-e29b-41d4-a716-446655440000');
+    const req = makeRequest(
+      '/api/ai/insights?entity_type=lead&entity_id=550e8400-e29b-41d4-a716-446655440000',
+    );
     const res = await GET(req);
     expect(res.status).toBe(401);
     const body = await res.json();
@@ -77,7 +80,9 @@ describe('GET /api/ai/insights', () => {
         created_at: '2026-03-12T00:00:00Z',
       },
     ];
-    const supabase = mockSupabaseClient({ tables: { ai_insights: { data: insights, error: null } } });
+    const supabase = mockSupabaseClient({
+      tables: { ai_insights: { data: insights, error: null } },
+    });
     (createUserClientSafe as any).mockResolvedValue({ client: supabase, error: null });
 
     const req = makeRequest(

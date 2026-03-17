@@ -1,10 +1,13 @@
 'use client';
 
+import { AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+import { BCPIncidentForm } from '@/components/BCP/BCPIncidentForm';
+import { BCPRecoveryEventForm } from '@/components/BCP/BCPRecoveryEventForm';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -12,10 +15,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { AlertTriangle } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useBCPIncidents, useUpdateBCPIncident } from '@/hooks/useGovernance';
-import { BCPIncidentForm } from '@/components/BCP/BCPIncidentForm';
-import { BCPRecoveryEventForm } from '@/components/BCP/BCPRecoveryEventForm';
 
 const SEV_COLORS: Record<string, string> = {
   sev1: 'bg-red-600',
@@ -60,8 +61,8 @@ export default function BCPPage() {
 
       {isLoading ? (
         <div className="space-y-3">
-          {[...Array(3)].map((_, i) => (
-            <Skeleton key={i} className="h-24 w-full" />
+          {['sk-1', 'sk-2', 'sk-3'].map((id) => (
+            <Skeleton key={id} className="h-24 w-full" />
           ))}
         </div>
       ) : incidents.length === 0 ? (

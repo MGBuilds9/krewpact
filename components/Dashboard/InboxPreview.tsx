@@ -1,8 +1,9 @@
 'use client';
 
 import { Mail, Paperclip } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useEmailMessages } from '@/hooks/useEmail';
 import { cn } from '@/lib/utils';
@@ -12,16 +13,12 @@ function formatTimeAgo(dateString: string): string {
   const date = new Date(dateString);
   const diffMs = now.getTime() - date.getTime();
   const diffMin = Math.floor(diffMs / 60_000);
-
   if (diffMin < 1) return 'just now';
   if (diffMin < 60) return `${diffMin}m ago`;
-
   const diffHours = Math.floor(diffMin / 60);
   if (diffHours < 24) return `${diffHours}h ago`;
-
   const diffDays = Math.floor(diffHours / 24);
   if (diffDays < 7) return `${diffDays}d ago`;
-
   return date.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
 }
 
@@ -43,9 +40,51 @@ function InboxPreviewSkeleton(): React.ReactElement {
   );
 }
 
+type GraphMessage = NonNullable<ReturnType<typeof useEmailMessages>['data']>['value'][number];
+
+function MessageItem({ message }: { message: GraphMessage }): React.ReactElement {
+  const senderName =
+    message.from?.emailAddress.name || message.from?.emailAddress.address || 'Unknown';
+  return (
+    <div
+      className={cn(
+        'flex items-start gap-3 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors',
+        !message.isRead && 'bg-muted/30',
+      )}
+    >
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-0.5">
+          <p className={cn('text-sm truncate', !message.isRead ? 'font-semibold' : 'font-medium')}>
+            {senderName}
+          </p>
+          {!message.isRead && (
+            <Badge variant="default" className="text-[10px] px-1.5 py-0 h-4 flex-shrink-0">
+              New
+            </Badge>
+          )}
+          {message.hasAttachments && (
+            <Paperclip className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+          )}
+        </div>
+        <p
+          className={cn(
+            'text-sm truncate',
+            !message.isRead ? 'font-medium text-foreground' : 'text-muted-foreground',
+          )}
+        >
+          {message.subject || '(no subject)'}
+        </p>
+        <p className="text-xs text-muted-foreground truncate mt-0.5">{message.bodyPreview}</p>
+      </div>
+      <span className="text-[11px] text-muted-foreground flex-shrink-0 pt-0.5">
+        {formatTimeAgo(message.receivedDateTime)}
+      </span>
+    </div>
+  );
+}
+
 export default function InboxPreview(): React.ReactElement {
   const { data, isLoading, error } = useEmailMessages({ top: 5 });
-
   const messages = data?.value ?? [];
 
   return (
@@ -58,7 +97,6 @@ export default function InboxPreview(): React.ReactElement {
       </CardHeader>
       <CardContent>
         {isLoading && <InboxPreviewSkeleton />}
-
         {error && (
           <div className="text-center py-8 text-muted-foreground">
             <Mail className="h-8 w-8 mx-auto mb-2 opacity-40" />
@@ -66,64 +104,16 @@ export default function InboxPreview(): React.ReactElement {
             <p className="text-xs mt-1">Connect your M365 account to see your inbox</p>
           </div>
         )}
-
         {!isLoading && !error && messages.length === 0 && (
           <div className="text-center py-8 text-muted-foreground">
             <Mail className="h-8 w-8 mx-auto mb-2 opacity-40" />
             <p className="text-sm">No recent emails</p>
           </div>
         )}
-
         {!isLoading && !error && messages.length > 0 && (
           <div className="space-y-1">
             {messages.map((message) => (
-              <div
-                key={message.id}
-                className={cn(
-                  'flex items-start gap-3 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors',
-                  !message.isRead && 'bg-muted/30',
-                )}
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <p
-                      className={cn(
-                        'text-sm truncate',
-                        !message.isRead ? 'font-semibold' : 'font-medium',
-                      )}
-                    >
-                      {message.from?.emailAddress.name ||
-                        message.from?.emailAddress.address ||
-                        'Unknown'}
-                    </p>
-                    {!message.isRead && (
-                      <Badge
-                        variant="default"
-                        className="text-[10px] px-1.5 py-0 h-4 flex-shrink-0"
-                      >
-                        New
-                      </Badge>
-                    )}
-                    {message.hasAttachments && (
-                      <Paperclip className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                    )}
-                  </div>
-                  <p
-                    className={cn(
-                      'text-sm truncate',
-                      !message.isRead ? 'font-medium text-foreground' : 'text-muted-foreground',
-                    )}
-                  >
-                    {message.subject || '(no subject)'}
-                  </p>
-                  <p className="text-xs text-muted-foreground truncate mt-0.5">
-                    {message.bodyPreview}
-                  </p>
-                </div>
-                <span className="text-[11px] text-muted-foreground flex-shrink-0 pt-0.5">
-                  {formatTimeAgo(message.receivedDateTime)}
-                </span>
-              </div>
+              <MessageItem key={message.id} message={message} />
             ))}
           </div>
         )}

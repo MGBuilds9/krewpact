@@ -1,12 +1,13 @@
 'use client';
 
-import { Bar, BarChart, XAxis, YAxis, Cell } from 'recharts';
+import { Bar, BarChart, Cell, XAxis, YAxis } from 'recharts';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
+  type ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from '@/components/ui/chart';
 import type { ConversionMetrics } from '@/lib/crm/metrics';
 
@@ -70,8 +71,8 @@ export function ConversionFunnelChart({ metrics }: ConversionFunnelChartProps) {
               }
             />
             <Bar dataKey="count" radius={[0, 6, 6, 0]} barSize={36}>
-              {chartData.map((_, index) => (
-                <Cell key={index} fill={FUNNEL_COLORS[index]} fillOpacity={0.85} />
+              {chartData.map((entry, index) => (
+                <Cell key={entry.stage} fill={FUNNEL_COLORS[index]} fillOpacity={0.85} />
               ))}
             </Bar>
           </BarChart>

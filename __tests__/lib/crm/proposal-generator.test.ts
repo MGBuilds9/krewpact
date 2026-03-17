@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { composeProposalData, type ProposalInput } from '@/lib/crm/proposal-generator';
 
 function makeInput(overrides: Partial<ProposalInput> = {}): ProposalInput {

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock Clerk auth
 vi.mock('@clerk/nextjs/server', () => ({
@@ -11,36 +11,32 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
 
-// Estimate routes
-import { GET as estimatesGET, POST as estimatesPOST } from '@/app/api/estimates/route';
-import { PATCH as estimatePATCH, DELETE as estimateDELETE } from '@/app/api/estimates/[id]/route';
-
+import {
+  makeEstimate,
+  makeEstimateLine,
+  makeJsonRequest,
+  makeRequest,
+  mockClerkAuth,
+  mockClerkUnauth,
+  mockSupabaseClient,
+  resetFixtureCounter,
+} from '@/__tests__/helpers';
+import { PATCH as linePATCH } from '@/app/api/estimates/[id]/lines/[lineId]/route';
 // Estimate line routes
 import {
   GET as linesGET,
   POST as linePOST,
   PUT as linesPUT,
 } from '@/app/api/estimates/[id]/lines/route';
-import { PATCH as linePATCH } from '@/app/api/estimates/[id]/lines/[lineId]/route';
-
+import { DELETE as estimateDELETE, PATCH as estimatePATCH } from '@/app/api/estimates/[id]/route';
 // Estimate version routes
 import { GET as versionsGET, POST as versionPOST } from '@/app/api/estimates/[id]/versions/route';
-
-import {
-  mockSupabaseClient,
-  mockClerkAuth,
-  mockClerkUnauth,
-  makeRequest,
-  makeJsonRequest,
-  makeEstimate,
-  makeEstimateLine,
-  resetFixtureCounter,
-} from '@/__tests__/helpers';
-
+// Estimate routes
+import { GET as estimatesGET, POST as estimatesPOST } from '@/app/api/estimates/route';
 // Pure calculation functions
-import { calculateLineTotal, calculateEstimateTotals } from '@/lib/estimating/calculations';
+import { calculateEstimateTotals, calculateLineTotal } from '@/lib/estimating/calculations';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);

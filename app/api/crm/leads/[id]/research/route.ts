@@ -1,9 +1,10 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { createServiceClient } from '@/lib/supabase/server';
-import { deepResearchLead } from '@/lib/integrations/deep-research';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { deepResearchLead } from '@/lib/integrations/deep-research';
 import { logger } from '@/lib/logger';
+import { createServiceClient } from '@/lib/supabase/server';
 
 export async function POST(
   _req: NextRequest,

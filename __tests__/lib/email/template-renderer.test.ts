@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { renderTemplate, renderEmailTemplate } from '@/lib/email/template-renderer';
+import { describe, expect, it } from 'vitest';
+
+import { renderEmailTemplate, renderTemplate } from '@/lib/email/template-renderer';
 
 describe('renderTemplate', () => {
   it('replaces a single merge field', () => {

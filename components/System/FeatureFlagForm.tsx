@@ -1,10 +1,11 @@
 'use client';
 
+import { Search } from 'lucide-react';
 import { useForm } from 'react-hook-form';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { Search } from 'lucide-react';
 
 interface FeatureFlagQuery {
   feature_name?: string;

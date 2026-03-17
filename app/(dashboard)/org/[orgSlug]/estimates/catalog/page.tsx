@@ -1,11 +1,14 @@
 'use client';
 
+import { DollarSign, Package, Plus, Search } from 'lucide-react';
 import { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+
+import { CostCatalogItemForm } from '@/components/Estimates/CostCatalogItemForm';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
   SelectContent,
@@ -13,12 +16,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Search, Plus, Package, DollarSign } from 'lucide-react';
-import { useCostCatalogItems } from '@/hooks/useEstimating';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useDivision } from '@/contexts/DivisionContext';
-import { CostCatalogItemForm } from '@/components/Estimates/CostCatalogItemForm';
 import type { CostCatalogItem } from '@/hooks/useEstimating';
+import { useCostCatalogItems } from '@/hooks/useEstimating';
 
 const TYPE_BADGE_COLORS: Record<string, string> = {
   material: 'bg-blue-100 text-blue-700 border-blue-200',
@@ -32,31 +33,61 @@ function formatCurrency(value: number): string {
   return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(value);
 }
 
+interface CatalogItemCardProps {
+  item: CostCatalogItem;
+  onClick: () => void;
+}
+function CatalogItemCard({ item, onClick }: CatalogItemCardProps) {
+  return (
+    <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
+      <CardContent className="p-4">
+        <div className="flex items-center gap-2 mb-1">
+          {item.item_code && (
+            <span className="text-xs font-mono text-muted-foreground">{item.item_code}</span>
+          )}
+          <h3 className="font-semibold truncate">{item.item_name}</h3>
+          <Badge
+            variant="outline"
+            className={`text-xs flex-shrink-0 border ${TYPE_BADGE_COLORS[item.item_type] || ''}`}
+          >
+            {item.item_type}
+          </Badge>
+        </div>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <DollarSign className="h-3 w-3" />
+            {formatCurrency(item.base_cost)} / {item.unit}
+          </span>
+          {item.vendor_name && <span>{item.vendor_name}</span>}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function CostCatalogPage() {
   const { activeDivision } = useDivision();
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<CostCatalogItem | undefined>();
-
+  const divId = activeDivision ? activeDivision.id : undefined;
   const { data, isLoading } = useCostCatalogItems({
-    divisionId: activeDivision?.id,
+    divisionId: divId,
     itemType: typeFilter !== 'all' ? typeFilter : undefined,
     search: search || undefined,
   });
+  const items = data ? data.data || [] : [];
 
-  const items = data?.data ?? [];
-
-  if (isLoading) {
+  if (isLoading)
     return (
       <div className="space-y-4">
         <Skeleton className="h-10 w-48 animate-pulse" />
-        {[1, 2, 3].map((i) => (
+        {['c1', 'c2', 'c3'].map((i) => (
           <Skeleton key={i} className="h-16 rounded-xl animate-pulse" />
         ))}
       </div>
     );
-  }
 
   return (
     <div className="space-y-4">
@@ -93,7 +124,6 @@ export default function CostCatalogPage() {
           Add Item
         </Button>
       </div>
-
       {items.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
@@ -107,46 +137,17 @@ export default function CostCatalogPage() {
       ) : (
         <div className="grid gap-3">
           {items.map((item) => (
-            <Card
+            <CatalogItemCard
               key={item.id}
-              className="cursor-pointer hover:shadow-md transition-shadow"
+              item={item}
               onClick={() => {
                 setEditingItem(item);
                 setDialogOpen(true);
               }}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      {item.item_code && (
-                        <span className="text-xs font-mono text-muted-foreground">
-                          {item.item_code}
-                        </span>
-                      )}
-                      <h3 className="font-semibold truncate">{item.item_name}</h3>
-                      <Badge
-                        variant="outline"
-                        className={`text-xs flex-shrink-0 border ${TYPE_BADGE_COLORS[item.item_type] || ''}`}
-                      >
-                        {item.item_type}
-                      </Badge>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <DollarSign className="h-3 w-3" />
-                        {formatCurrency(item.base_cost)} / {item.unit}
-                      </span>
-                      {item.vendor_name && <span>{item.vendor_name}</span>}
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            />
           ))}
         </div>
       )}
-
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -154,7 +155,7 @@ export default function CostCatalogPage() {
           </DialogHeader>
           <CostCatalogItemForm
             item={editingItem}
-            divisionId={activeDivision?.id}
+            divisionId={divId}
             onSuccess={() => setDialogOpen(false)}
             onCancel={() => setDialogOpen(false)}
           />

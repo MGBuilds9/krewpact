@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({
@@ -11,21 +10,23 @@ vi.mock('@/lib/api/rate-limit', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { rateLimit } from '@/lib/api/rate-limit';
+
 import { GET, PATCH } from '@/app/api/ai/preferences/route';
-import { makeRequest, makeJsonRequest } from '../../helpers/mock-request';
+import { rateLimit } from '@/lib/api/rate-limit';
+import { createUserClientSafe } from '@/lib/supabase/server';
+
+import { makeJsonRequest, makeRequest } from '../../helpers/mock-request';
 
 function mockUserClient(aiPrefs: Record<string, unknown> | null, updateError: any = null) {
   const selectChain: any = {};
-  ['select', 'eq', 'single'].forEach(m => {
+  ['select', 'eq', 'single'].forEach((m) => {
     selectChain[m] = vi.fn().mockReturnValue(selectChain);
   });
   selectChain.then = (resolve: any) =>
     resolve({ data: aiPrefs !== null ? { ai_preferences: aiPrefs } : null, error: null });
 
   const updateChain: any = {};
-  ['update', 'eq'].forEach(m => {
+  ['update', 'eq'].forEach((m) => {
     updateChain[m] = vi.fn().mockReturnValue(updateChain);
   });
   updateChain.then = (resolve: any) => resolve({ error: updateError });
@@ -105,11 +106,7 @@ describe('PATCH /api/ai/preferences', () => {
   });
 
   it('returns 400 for invalid preference values (confidence > 1)', async () => {
-    const req = makeJsonRequest(
-      '/api/ai/preferences',
-      { insight_min_confidence: 1.5 },
-      'PATCH',
-    );
+    const req = makeJsonRequest('/api/ai/preferences', { insight_min_confidence: 1.5 }, 'PATCH');
     const res = await PATCH(req);
     expect(res.status).toBe(400);
     const body = await res.json();

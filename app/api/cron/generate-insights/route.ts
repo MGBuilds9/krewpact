@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { logger } from '@/lib/logger';
-import { createServiceClient } from '@/lib/supabase/server';
+
+import { generateInsights } from '@/lib/ai/agents/insight-engine';
 import { verifyCronAuth } from '@/lib/api/cron-auth';
 import { createCronLogger } from '@/lib/api/cron-logger';
-import { generateInsights } from '@/lib/ai/agents/insight-engine';
+import { logger } from '@/lib/logger';
+import { createServiceClient } from '@/lib/supabase/server';
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   if (process.env.AI_ENABLED !== 'true') {
-    return NextResponse.json({ error: 'AI features are not enabled', disabled: true }, { status: 503 });
+    return NextResponse.json(
+      { error: 'AI features are not enabled', disabled: true },
+      { status: 503 },
+    );
   }
 
   const { authorized } = await verifyCronAuth(req);
@@ -25,7 +29,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     .limit(50);
 
   if (orgsError) {
-    logger.error('Failed to fetch organizations for insight generation', { error: orgsError.message });
+    logger.error('Failed to fetch organizations for insight generation', {
+      error: orgsError.message,
+    });
     return NextResponse.json({ error: orgsError.message }, { status: 500 });
   }
 
@@ -45,7 +51,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       totalErrors += result.errors;
     } catch (err) {
       totalErrors++;
-      logger.error(`Insight generation failed for org ${org.id}`, { error: err instanceof Error ? err.message : String(err) });
+      logger.error(`Insight generation failed for org ${org.id}`, {
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
   }
 

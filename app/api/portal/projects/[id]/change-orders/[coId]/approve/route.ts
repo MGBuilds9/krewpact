@@ -1,6 +1,8 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 /**
  * POST /api/portal/projects/[id]/change-orders/[coId]/approve
@@ -13,6 +15,9 @@ export async function POST(
 ) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const rl = await rateLimit(req, { limit: 20, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
 
   const { id: projectId, coId } = await params;
   const { client: supabase, error: authError } = await createUserClientSafe();

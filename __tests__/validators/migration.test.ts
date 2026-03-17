@@ -1,14 +1,15 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
 import {
-  migrationBatchCreateSchema,
-  migrationBatchUpdateSchema,
-  migrationConflictResolutionSchema,
-  privacyRequestCreateSchema,
-  privacyRequestUpdateSchema,
-  privacyEventSchema,
   bcpIncidentCreateSchema,
   bcpIncidentUpdateSchema,
   bcpRecoveryEventSchema,
+  migrationBatchCreateSchema,
+  migrationBatchUpdateSchema,
+  migrationConflictResolutionSchema,
+  privacyEventSchema,
+  privacyRequestCreateSchema,
+  privacyRequestUpdateSchema,
 } from '@/lib/validators/migration';
 
 // ============================================================

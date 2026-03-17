@@ -1,11 +1,12 @@
 'use client';
 
+import { Plus, User } from 'lucide-react';
 import { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+
+import { UserProvisioningForm } from '@/components/Org/UserProvisioningForm';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -13,10 +14,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Plus, User } from 'lucide-react';
-import { useOrgUsers } from '@/hooks/useOrg';
-import { UserProvisioningForm } from '@/components/Org/UserProvisioningForm';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { useOrgUsers } from '@/hooks/useOrg';
 
 export default function UsersPage() {
   const [search, setSearch] = useState('');
@@ -63,8 +64,8 @@ export default function UsersPage() {
 
       {isLoading ? (
         <div className="space-y-3">
-          {[...Array(5)].map((_, i) => (
-            <Skeleton key={i} className="h-16 w-full" />
+          {['sk-1', 'sk-2', 'sk-3', 'sk-4', 'sk-5'].map((id) => (
+            <Skeleton key={id} className="h-16 w-full" />
           ))}
         </div>
       ) : users.length === 0 ? (

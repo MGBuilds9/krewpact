@@ -5,7 +5,7 @@
  * /api/projects/[id]/selections/[sheetId]/options (GET + POST).
  * Tables: selection_sheets, selection_choices, selection_options
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
@@ -15,12 +15,15 @@ vi.mock('@/lib/api/rate-limit', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { GET as GET_SHEETS, POST as POST_SHEET } from '@/app/api/projects/[id]/selections/route';
+
 import {
-  GET as GET_SHEET_DETAIL,
-  PATCH as PATCH_SHEET,
-} from '@/app/api/projects/[id]/selections/[sheetId]/route';
+  makeJsonRequest,
+  makeRequest,
+  mockClerkAuth,
+  mockClerkUnauth,
+  mockSupabaseClient,
+  TEST_IDS,
+} from '@/__tests__/helpers';
 import {
   GET as GET_CHOICES,
   POST as POST_CHOICE,
@@ -30,13 +33,11 @@ import {
   POST as POST_OPTION,
 } from '@/app/api/projects/[id]/selections/[sheetId]/options/route';
 import {
-  mockSupabaseClient,
-  mockClerkAuth,
-  mockClerkUnauth,
-  makeRequest,
-  makeJsonRequest,
-  TEST_IDS,
-} from '@/__tests__/helpers';
+  GET as GET_SHEET_DETAIL,
+  PATCH as PATCH_SHEET,
+} from '@/app/api/projects/[id]/selections/[sheetId]/route';
+import { GET as GET_SHEETS, POST as POST_SHEET } from '@/app/api/projects/[id]/selections/route';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);

@@ -1,8 +1,11 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
+
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -13,10 +16,8 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Loader2 } from 'lucide-react';
-import { submittalCreateSchema } from '@/lib/validators/field-ops';
 import { useCreateSubmittal } from '@/hooks/useFieldOps';
-import { toast } from 'sonner';
+import { submittalCreateSchema } from '@/lib/validators/field-ops';
 
 type FormValues = z.infer<typeof submittalCreateSchema>;
 
@@ -28,14 +29,9 @@ interface SubmittalCreateFormProps {
 
 export function SubmittalCreateForm({ projectId, onSuccess, onCancel }: SubmittalCreateFormProps) {
   const createSubmittal = useCreateSubmittal(projectId);
-
   const form = useForm<FormValues>({
     resolver: zodResolver(submittalCreateSchema),
-    defaultValues: {
-      submittal_number: '',
-      title: '',
-      due_at: '',
-    },
+    defaultValues: { submittal_number: '', title: '', due_at: '' },
   });
 
   async function onSubmit(values: FormValues) {

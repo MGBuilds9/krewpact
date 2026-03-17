@@ -1,12 +1,13 @@
 'use client';
 
+import { BarChart3, List, Plus, Workflow } from 'lucide-react';
 import { useState } from 'react';
-import { useOrgRouter } from '@/hooks/useOrgRouter';
-import { Card, CardContent } from '@/components/ui/card';
+
+import { SequenceMonitorCard } from '@/components/CRM/SequenceMonitorCard';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
   TableBody,
@@ -15,10 +16,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Plus, Workflow, BarChart3, List } from 'lucide-react';
-import { useSequences, useSequenceAnalytics } from '@/hooks/useCRM';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useDivision } from '@/contexts/DivisionContext';
-import { SequenceMonitorCard } from '@/components/CRM/SequenceMonitorCard';
+import { useSequenceAnalytics, useSequences } from '@/hooks/useCRM';
+import { useOrgRouter } from '@/hooks/useOrgRouter';
 
 function formatTriggerType(trigger: string): string {
   return trigger
@@ -35,19 +36,103 @@ function formatDate(dateStr: string): string {
   });
 }
 
+type AnalyticsItem = {
+  sequence_id: string;
+  enrollments: { active: number; completed: number; paused: number; failed: number };
+};
+
+function aggregateTotals(analytics: AnalyticsItem[]) {
+  return analytics.reduce(
+    (acc, a) => ({
+      totalActive: acc.totalActive + a.enrollments.active,
+      totalCompleted: acc.totalCompleted + a.enrollments.completed,
+      totalPaused: acc.totalPaused + a.enrollments.paused,
+      totalFailed: acc.totalFailed + a.enrollments.failed,
+    }),
+    { totalActive: 0, totalCompleted: 0, totalPaused: 0, totalFailed: 0 },
+  );
+}
+
+interface SummaryStat {
+  label: string;
+  value: number;
+  color: string;
+}
+function SummaryStatCard({ label, value, color }: SummaryStat) {
+  return (
+    <Card>
+      <CardContent className="p-4 text-center">
+        <p className={`text-2xl font-bold ${color}`}>{value}</p>
+        <p className="text-xs text-muted-foreground">{label}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+type SequenceRow = {
+  id: string;
+  name: string;
+  description?: string | null;
+  trigger_type: string;
+  sequence_steps?: unknown[];
+  is_active: boolean;
+  division_id?: string | null;
+  created_at: string;
+};
+
+function SequenceTableRow({
+  sequence,
+  divisionName,
+  onNavigate,
+}: {
+  sequence: SequenceRow;
+  divisionName: string;
+  onNavigate: (id: string) => void;
+}) {
+  return (
+    <TableRow className="cursor-pointer hover:bg-muted/50" onClick={() => onNavigate(sequence.id)}>
+      <TableCell>
+        <p className="font-medium">{sequence.name}</p>
+        {sequence.description && (
+          <p className="text-xs text-muted-foreground truncate max-w-xs">{sequence.description}</p>
+        )}
+      </TableCell>
+      <TableCell className="text-sm text-muted-foreground">
+        {formatTriggerType(sequence.trigger_type)}
+      </TableCell>
+      <TableCell className="text-sm text-muted-foreground">
+        {sequence.sequence_steps?.length ?? '-'}
+      </TableCell>
+      <TableCell>
+        <Badge
+          className={
+            sequence.is_active
+              ? 'bg-green-100 text-green-700 border-green-200 border'
+              : 'bg-gray-100 text-gray-600 border-gray-200 border'
+          }
+          variant="outline"
+        >
+          {sequence.is_active ? 'Active' : 'Inactive'}
+        </Badge>
+      </TableCell>
+      <TableCell className="text-sm text-muted-foreground">{divisionName}</TableCell>
+      <TableCell className="text-sm text-muted-foreground">
+        {formatDate(sequence.created_at)}
+      </TableCell>
+    </TableRow>
+  );
+}
+
 export default function SequencesPage() {
   const { push: orgPush } = useOrgRouter();
   const { activeDivision, userDivisions } = useDivision();
   const [tab, setTab] = useState('monitor');
+  const divId = activeDivision ? activeDivision.id : undefined;
+  const { data: sequences, isLoading } = useSequences({ divisionId: divId });
+  const { data: analyticsResponse } = useSequenceAnalytics(divId);
+  const analytics = analyticsResponse ? analyticsResponse.data || [] : [];
 
-  const { data: sequences, isLoading } = useSequences({
-    divisionId: activeDivision?.id,
-  });
-
-  const { data: analyticsResponse } = useSequenceAnalytics(activeDivision?.id);
-  const analytics = analyticsResponse?.data ?? [];
-
-  if (isLoading) {
+  if (isLoading)
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
@@ -57,15 +142,9 @@ export default function SequencesPage() {
         <Skeleton className="h-64 rounded-xl animate-pulse" />
       </div>
     );
-  }
 
-  const sequenceList = sequences ?? [];
-
-  // Aggregate totals for summary
-  const totalActive = analytics.reduce((s, a) => s + a.enrollments.active, 0);
-  const totalCompleted = analytics.reduce((s, a) => s + a.enrollments.completed, 0);
-  const totalPaused = analytics.reduce((s, a) => s + a.enrollments.paused, 0);
-  const totalFailed = analytics.reduce((s, a) => s + a.enrollments.failed, 0);
+  const sequenceList = sequences || [];
+  const { totalActive, totalCompleted, totalPaused, totalFailed } = aggregateTotals(analytics);
 
   return (
     <>
@@ -86,7 +165,6 @@ export default function SequencesPage() {
             New Sequence
           </Button>
         </div>
-
         {sequenceList.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
@@ -103,36 +181,18 @@ export default function SequencesPage() {
           </Card>
         ) : (
           <>
-            {/* Summary Cards */}
             {analytics.length > 0 && (
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <Card>
-                  <CardContent className="p-4 text-center">
-                    <p className="text-2xl font-bold text-blue-600">{totalActive}</p>
-                    <p className="text-xs text-muted-foreground">Active Enrollments</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-4 text-center">
-                    <p className="text-2xl font-bold text-green-600">{totalCompleted}</p>
-                    <p className="text-xs text-muted-foreground">Completed</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-4 text-center">
-                    <p className="text-2xl font-bold text-yellow-600">{totalPaused}</p>
-                    <p className="text-xs text-muted-foreground">Paused</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-4 text-center">
-                    <p className="text-2xl font-bold text-red-600">{totalFailed}</p>
-                    <p className="text-xs text-muted-foreground">Failed</p>
-                  </CardContent>
-                </Card>
+                <SummaryStatCard
+                  label="Active Enrollments"
+                  value={totalActive}
+                  color="text-blue-600"
+                />
+                <SummaryStatCard label="Completed" value={totalCompleted} color="text-green-600" />
+                <SummaryStatCard label="Paused" value={totalPaused} color="text-yellow-600" />
+                <SummaryStatCard label="Failed" value={totalFailed} color="text-red-600" />
               </div>
             )}
-
             <Tabs value={tab} onValueChange={setTab}>
               <TabsList>
                 <TabsTrigger value="monitor" className="flex items-center gap-1.5">
@@ -144,79 +204,46 @@ export default function SequencesPage() {
                   List
                 </TabsTrigger>
               </TabsList>
-
               <TabsContent value="monitor" className="space-y-4 mt-4">
                 {analytics.map((a) => (
                   <SequenceMonitorCard key={a.sequence_id} analytics={a} />
                 ))}
               </TabsContent>
-
               <TabsContent value="list" className="mt-4">
                 <Card>
                   <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Trigger</TableHead>
-                        <TableHead>Steps</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Division</TableHead>
-                        <TableHead>Created</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {sequenceList.map((sequence) => (
-                        <TableRow
-                          key={sequence.id}
-                          className="cursor-pointer hover:bg-muted/50"
-                          onClick={() => orgPush(`/crm/sequences/${sequence.id}`)}
-                        >
-                          <TableCell>
-                            <div>
-                              <p className="font-medium">{sequence.name}</p>
-                              {sequence.description && (
-                                <p className="text-xs text-muted-foreground truncate max-w-xs">
-                                  {sequence.description}
-                                </p>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {formatTriggerType(sequence.trigger_type)}
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {sequence.sequence_steps?.length ?? '-'}
-                          </TableCell>
-                          <TableCell>
-                            {sequence.is_active ? (
-                              <Badge
-                                className="bg-green-100 text-green-700 border-green-200 border"
-                                variant="outline"
-                              >
-                                Active
-                              </Badge>
-                            ) : (
-                              <Badge
-                                className="bg-gray-100 text-gray-600 border-gray-200 border"
-                                variant="outline"
-                              >
-                                Inactive
-                              </Badge>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {sequence.division_id
-                              ? userDivisions.find((d) => d.id === sequence.division_id)?.name ?? 'Division'
-                              : 'All divisions'}
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {formatDate(sequence.created_at)}
-                          </TableCell>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Trigger</TableHead>
+                          <TableHead>Steps</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Division</TableHead>
+                          <TableHead>Created</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {sequenceList.map((sequence) => {
+                          const foundDiv = sequence.division_id
+                            ? userDivisions.find((d) => d.id === sequence.division_id)
+                            : null;
+                          const divisionName = sequence.division_id
+                            ? foundDiv
+                              ? foundDiv.name
+                              : 'Division'
+                            : 'All divisions';
+                          return (
+                            <SequenceTableRow
+                              key={sequence.id}
+                              sequence={sequence}
+                              divisionName={divisionName}
+                              onNavigate={(id) => orgPush(`/crm/sequences/${id}`)}
+                            />
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
                   </div>
                 </Card>
               </TabsContent>

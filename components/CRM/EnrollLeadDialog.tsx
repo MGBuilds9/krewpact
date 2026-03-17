@@ -1,6 +1,9 @@
 'use client';
 
+import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
+
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -9,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -16,10 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Loader2 } from 'lucide-react';
-import { useSequences, useEnrollInSequence } from '@/hooks/useCRM';
+import { useEnrollInSequence, useSequences } from '@/hooks/useCRM';
 
 export interface EnrollLeadDialogProps {
   open: boolean;

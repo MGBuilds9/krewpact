@@ -1,8 +1,11 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
+
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -12,13 +15,11 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Loader2 } from 'lucide-react';
-import { rfiThreadCreateSchema } from '@/lib/validators/field-ops';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
 import { useCreateRFIThread } from '@/hooks/useFieldOps';
-import { toast } from 'sonner';
+import { rfiThreadCreateSchema } from '@/lib/validators/field-ops';
 
 type FormValues = z.infer<typeof rfiThreadCreateSchema>;
 

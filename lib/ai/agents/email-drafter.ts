@@ -1,5 +1,6 @@
-import { createServiceClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
+import { createServiceClient } from '@/lib/supabase/server';
+
 import { generateWithGemini } from '../providers/gemini';
 import type { EntityType } from '../types';
 
@@ -26,7 +27,9 @@ async function fetchEntityContext(entityType: EntityType, entityId: string) {
   if (entityType === 'lead') {
     const { data: lead } = await supabase
       .from('leads')
-      .select('id, company_name, contact_name, contact_email, industry, city, province, status, enrichment_data')
+      .select(
+        'id, company_name, contact_name, contact_email, industry, city, province, status, enrichment_data',
+      )
       .eq('id', entityId)
       .single();
 
@@ -89,9 +92,12 @@ async function fetchEntityContext(entityType: EntityType, entityId: string) {
 }
 
 const DRAFT_PROMPTS: Record<DraftType, string> = {
-  follow_up: 'Write a professional follow-up email. Reference the most recent interaction if available. Keep it brief (3-5 sentences) and include a clear call to action.',
-  introduction: 'Write a professional introduction email from MDM Group Inc., a construction company in the Greater Toronto Area. Mention what MDM can offer based on the recipient\'s industry. Keep it warm but professional, 3-5 sentences.',
-  proposal: 'Write a professional email presenting a proposal or estimate. Reference the project scope and value if available. Include a request to schedule a review meeting. 4-6 sentences.',
+  follow_up:
+    'Write a professional follow-up email. Reference the most recent interaction if available. Keep it brief (3-5 sentences) and include a clear call to action.',
+  introduction:
+    "Write a professional introduction email from MDM Group Inc., a construction company in the Greater Toronto Area. Mention what MDM can offer based on the recipient's industry. Keep it warm but professional, 3-5 sentences.",
+  proposal:
+    'Write a professional email presenting a proposal or estimate. Reference the project scope and value if available. Include a request to schedule a review meeting. 4-6 sentences.',
   custom: '', // Will be replaced with customInstructions
 };
 
@@ -103,13 +109,15 @@ export async function draftEmail(input: DraftEmailInput): Promise<DraftEmailOutp
   }
 
   const entitySummary = JSON.stringify(context.entity, null, 2);
-  const activitySummary = context.activities.length > 0
-    ? `Recent activities:\n${context.activities.map((a: { title: string; activity_type: string; completed_at: string }) => `- ${a.activity_type}: ${a.title} (${a.completed_at})`).join('\n')}`
-    : 'No recent activity recorded.';
+  const activitySummary =
+    context.activities.length > 0
+      ? `Recent activities:\n${context.activities.map((a: { title: string; activity_type: string; completed_at: string }) => `- ${a.activity_type}: ${a.title} (${a.completed_at})`).join('\n')}`
+      : 'No recent activity recorded.';
 
-  const instructions = input.draftType === 'custom' && input.customInstructions
-    ? input.customInstructions
-    : DRAFT_PROMPTS[input.draftType];
+  const instructions =
+    input.draftType === 'custom' && input.customInstructions
+      ? input.customInstructions
+      : DRAFT_PROMPTS[input.draftType];
 
   const prompt = `You are writing an email on behalf of an employee at MDM Group Inc., a construction conglomerate in the Greater Toronto Area (GTA), Ontario, Canada.
 

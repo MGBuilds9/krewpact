@@ -9,7 +9,7 @@
  *   2. User A cannot read User B's division data
  *   3. Service client bypasses RLS (cron/admin operations)
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock Clerk auth
 vi.mock('@clerk/nextjs/server', () => ({
@@ -23,16 +23,17 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe, createServiceClient } from '@/lib/supabase/server';
-import { GET } from '@/app/api/crm/leads/route';
+
 import {
-  mockSupabaseClient,
+  makeLead,
+  makeRequest,
   mockClerkAuth,
   mockClerkUnauth,
-  makeRequest,
-  makeLead,
+  mockSupabaseClient,
   resetFixtureCounter,
 } from '@/__tests__/helpers';
+import { GET } from '@/app/api/crm/leads/route';
+import { createServiceClient, createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);

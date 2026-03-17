@@ -1,19 +1,54 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+
+import { getKrewpactRoles } from '@/lib/api/org';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 import { logger } from '@/lib/logger';
-import { getKrewpactRoles } from '@/lib/api/org';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const ALLOWED_ROLES = ['platform_admin', 'executive'];
 
+type SupabaseClient = Awaited<ReturnType<typeof createUserClientSafe>>['client'];
+
+interface AuditFilters {
+  entityType: string | null;
+  actionFilter: string | null;
+  userIdFilter: string | null;
+  dateFrom: string | null;
+  dateTo: string | null;
+}
+
+function applyAuditFilters(query: ReturnType<SupabaseClient['from']>, filters: AuditFilters) {
+  let q = query;
+  if (filters.entityType) q = q.eq('entity_type', filters.entityType);
+  if (filters.actionFilter) q = q.eq('action', filters.actionFilter);
+  if (filters.userIdFilter) q = q.eq('user_id', filters.userIdFilter);
+  if (filters.dateFrom) q = q.gte('created_at', filters.dateFrom);
+  if (filters.dateTo) q = q.lte('created_at', filters.dateTo);
+  return q;
+}
+
+function handleAuditError(
+  error: { message?: string; code?: string },
+  page: number,
+  pageSize: number,
+): NextResponse {
+  const isTableMissing =
+    error.message?.includes('does not exist') ||
+    error.code === '42P01' ||
+    error.message?.includes('relation');
+  if (isTableMissing) {
+    logger.warn('audit_log table not found, returning empty results', { error: error.message });
+    return NextResponse.json({ data: [], total: 0, page, pageSize });
+  }
+  logger.error('Failed to query audit_log', { error: error.message });
+  return NextResponse.json({ error: 'Failed to fetch audit log' }, { status: 500 });
+}
+
 export async function GET(req: NextRequest) {
   const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  // Role gating: platform_admin + executive only
   const userRoles = await getKrewpactRoles();
   const hasAccess = userRoles.some((r: unknown) => ALLOWED_ROLES.includes(String(r)));
   if (!hasAccess) {
@@ -32,73 +67,33 @@ export async function GET(req: NextRequest) {
     100,
     Math.max(1, parseInt(url.searchParams.get('pageSize') || '25', 10)),
   );
-  const entityType = url.searchParams.get('entity_type');
-  const actionFilter = url.searchParams.get('action');
-  const userIdFilter = url.searchParams.get('user_id');
-  const dateFrom = url.searchParams.get('date_from');
-  const dateTo = url.searchParams.get('date_to');
+
+  const filters: AuditFilters = {
+    entityType: url.searchParams.get('entity_type'),
+    actionFilter: url.searchParams.get('action'),
+    userIdFilter: url.searchParams.get('user_id'),
+    dateFrom: url.searchParams.get('date_from'),
+    dateTo: url.searchParams.get('date_to'),
+  };
 
   const { client: supabase, error: authError } = await createUserClientSafe();
-
   if (authError) return authError;
 
-  // Build query with explicit columns
-  let query = supabase
+  const baseQuery = supabase
     .from('audit_log')
     .select('id, user_id, action, entity_type, entity_id, entity_name, details, created_at', {
       count: 'exact',
     });
 
-  // Apply filters
-  if (entityType) {
-    query = query.eq('entity_type', entityType);
-  }
-  if (actionFilter) {
-    query = query.eq('action', actionFilter);
-  }
-  if (userIdFilter) {
-    query = query.eq('user_id', userIdFilter);
-  }
-  if (dateFrom) {
-    query = query.gte('created_at', dateFrom);
-  }
-  if (dateTo) {
-    query = query.lte('created_at', dateTo);
-  }
-
-  // Order and paginate
   const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
-  query = query.order('created_at', { ascending: false }).range(from, to);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const query = applyAuditFilters(baseQuery as any, filters)
+    .order('created_at', { ascending: false })
+    .range(from, from + pageSize - 1);
 
   const { data, error, count } = await query;
 
-  if (error) {
-    // If the table doesn't exist, return empty results instead of erroring
-    if (
-      error.message?.includes('does not exist') ||
-      error.code === '42P01' ||
-      error.message?.includes('relation')
-    ) {
-      logger.warn('audit_log table not found, returning empty results', {
-        error: error.message,
-      });
-      return NextResponse.json({
-        data: [],
-        total: 0,
-        page,
-        pageSize,
-      });
-    }
+  if (error) return handleAuditError(error, page, pageSize);
 
-    logger.error('Failed to query audit_log', { error: error.message });
-    return NextResponse.json({ error: 'Failed to fetch audit log' }, { status: 500 });
-  }
-
-  return NextResponse.json({
-    data: data ?? [],
-    total: count ?? 0,
-    page,
-    pageSize,
-  });
+  return NextResponse.json({ data: data ?? [], total: count ?? 0, page, pageSize });
 }

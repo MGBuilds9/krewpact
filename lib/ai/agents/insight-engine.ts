@@ -1,10 +1,11 @@
-import { createServiceClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
-import { detectStaleDeals } from './stale-deal-detector';
+import { createServiceClient } from '@/lib/supabase/server';
+
+import type { EntityType, GeneratedInsight, InsightType } from '../types';
 import { detectBidMatches } from './bid-matcher';
-import { detectNextActions } from './next-action-suggester';
 import { detectBudgetAnomalies } from './budget-anomaly';
-import type { EntityType, InsightType, GeneratedInsight } from '../types';
+import { detectNextActions } from './next-action-suggester';
+import { detectStaleDeals } from './stale-deal-detector';
 
 interface InsightResult {
   entityType: EntityType;
@@ -14,7 +15,9 @@ interface InsightResult {
   modelUsed: string;
 }
 
-export async function generateInsights(orgId: string): Promise<{ generated: number; skipped: number; errors: number }> {
+export async function generateInsights(
+  orgId: string,
+): Promise<{ generated: number; skipped: number; errors: number }> {
   const supabase = createServiceClient();
   const allInsights: InsightResult[] = [];
   let errors = 0;
@@ -29,7 +32,13 @@ export async function generateInsights(orgId: string): Promise<{ generated: numb
 
   if (staleDeals.status === 'fulfilled') {
     for (const r of staleDeals.value) {
-      allInsights.push({ entityType: 'opportunity', entityId: r.entityId, insightType: 'stale_deal', insight: r.insight, modelUsed: 'gemini-2.0-flash' });
+      allInsights.push({
+        entityType: 'opportunity',
+        entityId: r.entityId,
+        insightType: 'stale_deal',
+        insight: r.insight,
+        modelUsed: 'gemini-2.0-flash',
+      });
     }
   } else {
     errors++;
@@ -38,7 +47,13 @@ export async function generateInsights(orgId: string): Promise<{ generated: numb
 
   if (bidMatches.status === 'fulfilled') {
     for (const r of bidMatches.value) {
-      allInsights.push({ entityType: 'lead', entityId: r.entityId, insightType: 'bid_match', insight: r.insight, modelUsed: 'gemini-2.0-flash' });
+      allInsights.push({
+        entityType: 'lead',
+        entityId: r.entityId,
+        insightType: 'bid_match',
+        insight: r.insight,
+        modelUsed: 'gemini-2.0-flash',
+      });
     }
   } else {
     errors++;
@@ -47,7 +62,13 @@ export async function generateInsights(orgId: string): Promise<{ generated: numb
 
   if (nextActions.status === 'fulfilled') {
     for (const r of nextActions.value) {
-      allInsights.push({ entityType: 'opportunity', entityId: r.entityId, insightType: 'next_action', insight: r.insight, modelUsed: 'rule-based' });
+      allInsights.push({
+        entityType: 'opportunity',
+        entityId: r.entityId,
+        insightType: 'next_action',
+        insight: r.insight,
+        modelUsed: 'rule-based',
+      });
     }
   } else {
     errors++;
@@ -56,7 +77,13 @@ export async function generateInsights(orgId: string): Promise<{ generated: numb
 
   if (budgetAnomalies.status === 'fulfilled') {
     for (const r of budgetAnomalies.value) {
-      allInsights.push({ entityType: 'project', entityId: r.entityId, insightType: 'budget_alert', insight: r.insight, modelUsed: 'rule-based' });
+      allInsights.push({
+        entityType: 'project',
+        entityId: r.entityId,
+        insightType: 'budget_alert',
+        insight: r.insight,
+        modelUsed: 'rule-based',
+      });
     }
   } else {
     errors++;
@@ -75,10 +102,15 @@ export async function generateInsights(orgId: string): Promise<{ generated: numb
     .is('dismissed_at', null);
 
   const existingSet = new Set(
-    (existing ?? []).map((e: { entity_type: string; entity_id: string; insight_type: string }) => `${e.entity_type}:${e.entity_id}:${e.insight_type}`),
+    (existing ?? []).map(
+      (e: { entity_type: string; entity_id: string; insight_type: string }) =>
+        `${e.entity_type}:${e.entity_id}:${e.insight_type}`,
+    ),
   );
 
-  const newInsights = allInsights.filter((i) => !existingSet.has(`${i.entityType}:${i.entityId}:${i.insightType}`));
+  const newInsights = allInsights.filter(
+    (i) => !existingSet.has(`${i.entityType}:${i.entityId}:${i.insightType}`),
+  );
   const skipped = allInsights.length - newInsights.length;
 
   if (newInsights.length === 0) {

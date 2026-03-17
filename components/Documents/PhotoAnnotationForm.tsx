@@ -1,8 +1,11 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
+
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -13,9 +16,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2 } from 'lucide-react';
 import { useCreatePhotoAnnotation } from '@/hooks/useDocuments';
-import { toast } from 'sonner';
 
 const formSchema = z.object({
   note: z.string().min(1, 'Annotation note is required'),

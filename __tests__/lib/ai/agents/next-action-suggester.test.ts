@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/supabase/server', () => ({
   createServiceClient: vi.fn(),
@@ -8,9 +7,9 @@ vi.mock('@/lib/logger', () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 
-import { createServiceClient } from '@/lib/supabase/server';
-import { logger } from '@/lib/logger';
 import { detectNextActions } from '@/lib/ai/agents/next-action-suggester';
+import { logger } from '@/lib/logger';
+import { createServiceClient } from '@/lib/supabase/server';
 
 const mockCreateServiceClient = vi.mocked(createServiceClient);
 
@@ -49,7 +48,9 @@ describe('detectNextActions', () => {
 
     const result = await detectNextActions(ORG_ID);
     expect(result).toEqual([]);
-    expect(logger.warn).toHaveBeenCalledWith('Next action detection failed', { error: 'connection timeout' });
+    expect(logger.warn).toHaveBeenCalledWith('Next action detection failed', {
+      error: 'connection timeout',
+    });
   });
 
   it('skips opportunities whose stage has no config', async () => {
@@ -149,7 +150,9 @@ describe('detectNextActions', () => {
     };
 
     const chainJust = mockChain([oppJustOver]);
-    mockCreateServiceClient.mockReturnValueOnce({ from: vi.fn().mockReturnValue(chainJust) } as any);
+    mockCreateServiceClient.mockReturnValueOnce({
+      from: vi.fn().mockReturnValue(chainJust),
+    } as any);
     const resultJust = await detectNextActions(ORG_ID);
 
     const chainWay = mockChain([oppWayOver]);

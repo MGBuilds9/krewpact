@@ -86,6 +86,16 @@ export class ErpClient {
     return base;
   }
 
+  private shouldRetryError(err: Error, attempt: number, url: string): boolean {
+    if (err.name === 'TimeoutError' || err.name === 'AbortError') {
+      logger.warn('ERPNext request timed out', { url, attempt });
+      return attempt < MAX_RETRIES - 1;
+    }
+    if (err.message.includes('circuit breaker')) return false;
+    if (!err.name?.includes('Timeout') && !err.message.includes('fetch')) return false;
+    return attempt < MAX_RETRIES - 1;
+  }
+
   private async _fetch(url: string, init?: RequestInit): Promise<Response> {
     if (isCircuitOpen()) {
       throw new Error('ERPNext circuit breaker is open — skipping request');
@@ -94,10 +104,7 @@ export class ErpClient {
     let lastError: Error | null = null;
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       try {
-        const response = await fetch(url, {
-          ...init,
-          signal: AbortSignal.timeout(TIMEOUT_MS),
-        });
+        const response = await fetch(url, { ...init, signal: AbortSignal.timeout(TIMEOUT_MS) });
 
         if (response.ok) {
           recordSuccess();
@@ -111,28 +118,15 @@ export class ErpClient {
           continue;
         }
 
-        // Non-retryable error or final attempt
         recordFailure();
         throw new Error(`ERPNext API error: ${response.status} ${response.statusText}`);
       } catch (err) {
         lastError = err instanceof Error ? err : new Error(String(err));
-        if (lastError.name === 'TimeoutError' || lastError.name === 'AbortError') {
-          logger.warn('ERPNext request timed out', { url, attempt });
-          if (attempt < MAX_RETRIES - 1) {
-            await sleep(1000 * Math.pow(2, attempt));
-            continue;
-          }
-        }
-        if (
-          lastError.message.includes('circuit breaker') ||
-          (!lastError.name?.includes('Timeout') && !lastError.message.includes('fetch'))
-        ) {
-          throw lastError;
-        }
-        if (attempt < MAX_RETRIES - 1) {
+        if (this.shouldRetryError(lastError, attempt, url)) {
           await sleep(1000 * Math.pow(2, attempt));
           continue;
         }
+        throw lastError;
       }
     }
 

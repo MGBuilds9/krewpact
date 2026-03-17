@@ -1,6 +1,7 @@
 'use client';
 
-import { Camera, FileText, DollarSign, FolderPlus } from 'lucide-react';
+import { Camera, DollarSign, FileText, FolderPlus } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { cn } from '@/lib/utils';

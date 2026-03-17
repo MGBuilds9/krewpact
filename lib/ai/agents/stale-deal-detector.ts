@@ -1,9 +1,12 @@
-import { createServiceClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
+import { createServiceClient } from '@/lib/supabase/server';
+
 import { generateWithGemini } from '../providers/gemini';
 import type { GeneratedInsight } from '../types';
 
-export async function detectStaleDeals(orgId: string): Promise<Array<{ entityId: string; insight: GeneratedInsight }>> {
+export async function detectStaleDeals(
+  orgId: string,
+): Promise<Array<{ entityId: string; insight: GeneratedInsight }>> {
   const supabase = createServiceClient();
   const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
 
@@ -24,7 +27,9 @@ export async function detectStaleDeals(orgId: string): Promise<Array<{ entityId:
   const results: Array<{ entityId: string; insight: GeneratedInsight }> = [];
 
   for (const opp of staleOpps) {
-    const daysSinceUpdate = Math.floor((Date.now() - new Date(opp.updated_at).getTime()) / (1000 * 60 * 60 * 24));
+    const daysSinceUpdate = Math.floor(
+      (Date.now() - new Date(opp.updated_at).getTime()) / (1000 * 60 * 60 * 24),
+    );
 
     let content: string;
     try {

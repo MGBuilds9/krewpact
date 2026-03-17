@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServiceClient } from '@/lib/supabase/server';
-import { summarizeEnrichment } from '@/lib/integrations/enrichment-summarizer';
+
 import { verifyCronAuth } from '@/lib/api/cron-auth';
 import { createCronLogger } from '@/lib/api/cron-logger';
+import { summarizeEnrichment } from '@/lib/integrations/enrichment-summarizer';
 import { logger } from '@/lib/logger';
+import { createServiceClient } from '@/lib/supabase/server';
 
 const BATCH_SIZE = 15; // Process 15 per call (Gemini rate limit)
 const FETCH_LIMIT = 200; // Fetch enough to find all pending leads

@@ -1,18 +1,19 @@
 'use client';
 
+import type { ColumnDef } from '@tanstack/react-table';
+import { Mail, Phone, Plus, Search, Users } from 'lucide-react';
 import { useState } from 'react';
-import { useOrgRouter } from '@/hooks/useOrgRouter';
-import { Card, CardContent } from '@/components/ui/card';
+
+import { DataTable, type SortState } from '@/components/CRM/DataTable';
+import { useViewMode, ViewToggle } from '@/components/CRM/ViewToggle';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, Plus, Users, Mail, Phone } from 'lucide-react';
-import { useContacts, type Contact } from '@/hooks/useCRM';
+import { type Contact, useContacts } from '@/hooks/useCRM';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
-import { DataTable, type SortState } from '@/components/CRM/DataTable';
-import { ViewToggle, useViewMode } from '@/components/CRM/ViewToggle';
-import type { ColumnDef } from '@tanstack/react-table';
+import { useOrgRouter } from '@/hooks/useOrgRouter';
 
 const contactColumns: ColumnDef<Contact, unknown>[] = [
   {
@@ -59,6 +60,102 @@ const contactColumns: ColumnDef<Contact, unknown>[] = [
   },
 ];
 
+interface ContactCardProps {
+  contact: Contact;
+  onNavigate: (id: string) => void;
+}
+function ContactCard({ contact, onNavigate }: ContactCardProps) {
+  return (
+    <Card
+      className="cursor-pointer hover:shadow-md transition-shadow"
+      onClick={() => onNavigate(contact.id)}
+    >
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-semibold truncate">
+                {contact.first_name} {contact.last_name}
+              </h3>
+              {contact.is_primary && (
+                <span className="text-xs text-primary font-medium">Primary</span>
+              )}
+            </div>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+              {contact.role_title && <span>{contact.role_title}</span>}
+              {contact.email && (
+                <span className="flex items-center gap-1">
+                  <Mail className="h-3 w-3" />
+                  {contact.email}
+                </span>
+              )}
+              {contact.phone && (
+                <span className="flex items-center gap-1">
+                  <Phone className="h-3 w-3" />
+                  {contact.phone}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+interface CardViewProps {
+  contacts: Contact[];
+  total: number;
+  page: number;
+  pageSize: number;
+  onNavigate: (id: string) => void;
+  onPageChange: (p: number) => void;
+}
+function ContactCardView({
+  contacts,
+  total,
+  page,
+  pageSize,
+  onNavigate,
+  onPageChange,
+}: CardViewProps) {
+  const pageCount = Math.ceil(total / pageSize);
+  return (
+    <>
+      <div className="grid gap-3">
+        {contacts.map((contact) => (
+          <ContactCard key={contact.id} contact={contact} onNavigate={onNavigate} />
+        ))}
+      </div>
+      <div className="flex items-center justify-between px-2">
+        <span className="text-sm text-muted-foreground">
+          {total > 0
+            ? `Showing ${page * pageSize + 1}-${Math.min((page + 1) * pageSize, total)} of ${total}`
+            : 'No results'}
+        </span>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(page - 1)}
+            disabled={page === 0}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(page + 1)}
+            disabled={page >= pageCount - 1}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
+    </>
+  );
+}
+
 export default function ContactsPage() {
   const { push: orgPush } = useOrgRouter();
   const [search, setSearch] = useState('');
@@ -94,11 +191,12 @@ export default function ContactsPage() {
     );
   }
 
+  const isEmpty = contacts.length === 0 && !isLoading;
+
   return (
     <>
       <title>Contacts — KrewPact</title>
       <div className="space-y-4">
-        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex items-center gap-3">
             <Users className="h-8 w-8 text-primary" />
@@ -111,8 +209,6 @@ export default function ContactsPage() {
           </div>
           <ViewToggle mode={viewMode} onChange={setViewMode} />
         </div>
-
-        {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -131,9 +227,7 @@ export default function ContactsPage() {
             New Contact
           </Button>
         </div>
-
-        {/* Content */}
-        {contacts.length === 0 && !isLoading ? (
+        {isEmpty ? (
           <Card>
             <CardContent className="py-12 text-center">
               <Users className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
@@ -158,73 +252,14 @@ export default function ContactsPage() {
             isLoading={isLoading}
           />
         ) : (
-          <>
-            <div className="grid gap-3">
-              {contacts.map((contact) => (
-                <Card
-                  key={contact.id}
-                  className="cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => orgPush(`/crm/contacts/${contact.id}`)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold truncate">
-                            {contact.first_name} {contact.last_name}
-                          </h3>
-                          {contact.is_primary && (
-                            <span className="text-xs text-primary font-medium">Primary</span>
-                          )}
-                        </div>
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                          {contact.role_title && <span>{contact.role_title}</span>}
-                          {contact.email && (
-                            <span className="flex items-center gap-1">
-                              <Mail className="h-3 w-3" />
-                              {contact.email}
-                            </span>
-                          )}
-                          {contact.phone && (
-                            <span className="flex items-center gap-1">
-                              <Phone className="h-3 w-3" />
-                              {contact.phone}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-            {/* Card view pagination */}
-            <div className="flex items-center justify-between px-2">
-              <span className="text-sm text-muted-foreground">
-                {total > 0
-                  ? `Showing ${page * pageSize + 1}-${Math.min((page + 1) * pageSize, total)} of ${total}`
-                  : 'No results'}
-              </span>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage(page - 1)}
-                  disabled={page === 0}
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage(page + 1)}
-                  disabled={page >= Math.ceil(total / pageSize) - 1}
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          </>
+          <ContactCardView
+            contacts={contacts}
+            total={total}
+            page={page}
+            pageSize={pageSize}
+            onNavigate={(id) => orgPush(`/crm/contacts/${id}`)}
+            onPageChange={setPage}
+          />
         )}
       </div>
     </>

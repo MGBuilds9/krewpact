@@ -1,8 +1,9 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { getMicrosoftToken, graphFetch, buildGraphUrl } from '@/lib/microsoft/graph';
-import type { GraphMessage } from '@/lib/microsoft/types';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { buildGraphUrl, getMicrosoftToken, graphFetch } from '@/lib/microsoft/graph';
+import type { GraphMessage } from '@/lib/microsoft/types';
 
 type RouteContext = { params: Promise<{ id: string }> };
 

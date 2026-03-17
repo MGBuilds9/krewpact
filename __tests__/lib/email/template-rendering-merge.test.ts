@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest';
-import { renderTemplate, renderEmailTemplate } from '@/lib/email/template-renderer';
+import { describe, expect, it } from 'vitest';
+
 import { BRANDED_TEMPLATES } from '@/lib/email/branded-templates';
+import { renderEmailTemplate, renderTemplate } from '@/lib/email/template-renderer';
 
 describe('renderTemplate with branded templates', () => {
   it('replaces merge fields in project-showcase template', () => {

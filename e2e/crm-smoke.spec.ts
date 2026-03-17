@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 test.describe('CRM smoke tests', () => {
   test('leads page loads without errors', async ({ page }) => {

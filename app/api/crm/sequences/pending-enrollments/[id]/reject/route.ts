@@ -1,8 +1,9 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { rejectEnrollment } from '@/lib/crm/enrollment-engine';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { rejectEnrollment } from '@/lib/crm/enrollment-engine';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 export async function POST(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth();

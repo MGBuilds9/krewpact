@@ -1,8 +1,9 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
 import {
   evaluateOperator,
-  scoreLead,
   getNestedValue,
+  scoreLead,
   type ScoringRule,
 } from '@/lib/crm/scoring-engine';
 
@@ -177,11 +178,15 @@ describe('evaluateOperator', () => {
 
   // --- contains_any ---
   it('contains_any: matches substring from pipe-separated list', () => {
-    expect(evaluateOperator('General Construction', 'contains_any', 'healthcare|construction|retail')).toBe(true);
+    expect(
+      evaluateOperator('General Construction', 'contains_any', 'healthcare|construction|retail'),
+    ).toBe(true);
   });
 
   it('contains_any: returns false when no substring matches', () => {
-    expect(evaluateOperator('Software Engineering', 'contains_any', 'healthcare|construction|retail')).toBe(false);
+    expect(
+      evaluateOperator('Software Engineering', 'contains_any', 'healthcare|construction|retail'),
+    ).toBe(false);
   });
 
   it('contains_any: returns false for null', () => {
@@ -193,7 +198,9 @@ describe('evaluateOperator', () => {
   });
 
   it('contains_any: case-insensitive', () => {
-    expect(evaluateOperator('REAL ESTATE Development', 'contains_any', 'real estate|healthcare')).toBe(true);
+    expect(
+      evaluateOperator('REAL ESTATE Development', 'contains_any', 'real estate|healthcare'),
+    ).toBe(true);
   });
 
   // --- unknown operator ---
@@ -356,7 +363,13 @@ describe('scoreLead', () => {
   it('caps fit score at 40', () => {
     const rules = [
       makeRule({ id: 'r1', score_impact: 30 }),
-      makeRule({ id: 'r2', field_name: 'company_name', operator: 'exists', value: '', score_impact: 20 }),
+      makeRule({
+        id: 'r2',
+        field_name: 'company_name',
+        operator: 'exists',
+        value: '',
+        score_impact: 20,
+      }),
     ];
     const result = scoreLead({ source: 'referral', company_name: 'Test' }, rules);
     // Raw sum would be 50, capped to 40
@@ -366,8 +379,22 @@ describe('scoreLead', () => {
 
   it('caps intent score at 35', () => {
     const rules = [
-      makeRule({ id: 'r1', category: 'intent', field_name: 'a', operator: 'exists', value: '', score_impact: 20 }),
-      makeRule({ id: 'r2', category: 'intent', field_name: 'b', operator: 'exists', value: '', score_impact: 20 }),
+      makeRule({
+        id: 'r1',
+        category: 'intent',
+        field_name: 'a',
+        operator: 'exists',
+        value: '',
+        score_impact: 20,
+      }),
+      makeRule({
+        id: 'r2',
+        category: 'intent',
+        field_name: 'b',
+        operator: 'exists',
+        value: '',
+        score_impact: 20,
+      }),
     ];
     const result = scoreLead({ a: 'x', b: 'y' }, rules);
     expect(result.intent_score).toBe(35);
@@ -376,8 +403,22 @@ describe('scoreLead', () => {
 
   it('caps engagement score at 25', () => {
     const rules = [
-      makeRule({ id: 'r1', category: 'engagement', field_name: 'a', operator: 'exists', value: '', score_impact: 15 }),
-      makeRule({ id: 'r2', category: 'engagement', field_name: 'b', operator: 'exists', value: '', score_impact: 15 }),
+      makeRule({
+        id: 'r1',
+        category: 'engagement',
+        field_name: 'a',
+        operator: 'exists',
+        value: '',
+        score_impact: 15,
+      }),
+      makeRule({
+        id: 'r2',
+        category: 'engagement',
+        field_name: 'b',
+        operator: 'exists',
+        value: '',
+        score_impact: 15,
+      }),
     ];
     const result = scoreLead({ a: 'x', b: 'y' }, rules);
     expect(result.engagement_score).toBe(25);
@@ -386,9 +427,30 @@ describe('scoreLead', () => {
 
   it('total score maxes at 100 when all dimensions capped', () => {
     const rules = [
-      makeRule({ id: 'r1', category: 'fit', field_name: 'a', operator: 'exists', value: '', score_impact: 50 }),
-      makeRule({ id: 'r2', category: 'intent', field_name: 'b', operator: 'exists', value: '', score_impact: 50 }),
-      makeRule({ id: 'r3', category: 'engagement', field_name: 'c', operator: 'exists', value: '', score_impact: 50 }),
+      makeRule({
+        id: 'r1',
+        category: 'fit',
+        field_name: 'a',
+        operator: 'exists',
+        value: '',
+        score_impact: 50,
+      }),
+      makeRule({
+        id: 'r2',
+        category: 'intent',
+        field_name: 'b',
+        operator: 'exists',
+        value: '',
+        score_impact: 50,
+      }),
+      makeRule({
+        id: 'r3',
+        category: 'engagement',
+        field_name: 'c',
+        operator: 'exists',
+        value: '',
+        score_impact: 50,
+      }),
     ];
     const result = scoreLead({ a: '1', b: '2', c: '3' }, rules);
     expect(result.fit_score).toBe(40);

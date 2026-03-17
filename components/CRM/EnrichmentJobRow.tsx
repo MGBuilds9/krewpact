@@ -1,13 +1,17 @@
 'use client';
 
+import { RefreshCw } from 'lucide-react';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { TableCell, TableRow } from '@/components/ui/table';
-import { useRetryEnrichment } from '@/hooks/useCRM';
 import type { EnrichmentJob } from '@/hooks/useCRM';
-import { RefreshCw } from 'lucide-react';
+import { useRetryEnrichment } from '@/hooks/useCRM';
 
-const STATUS_BADGE: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; label: string }> = {
+const STATUS_BADGE: Record<
+  string,
+  { variant: 'default' | 'secondary' | 'destructive' | 'outline'; label: string }
+> = {
   pending: { variant: 'outline', label: 'Pending' },
   in_progress: { variant: 'secondary', label: 'In Progress' },
   completed: { variant: 'default', label: 'Completed' },
@@ -44,7 +48,10 @@ export function EnrichmentJobRow({ job }: EnrichmentJobRowProps) {
       </TableCell>
       <TableCell className="capitalize">{job.source}</TableCell>
       <TableCell className="text-xs text-muted-foreground">{formatDate(job.created_at)}</TableCell>
-      <TableCell className="text-xs text-red-600 max-w-[200px] truncate" title={job.error_message ?? undefined}>
+      <TableCell
+        className="text-xs text-red-600 max-w-[200px] truncate"
+        title={job.error_message ?? undefined}
+      >
         {job.error_message ?? '-'}
       </TableCell>
       <TableCell>

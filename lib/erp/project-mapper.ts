@@ -17,6 +17,11 @@ export interface ProjectMapInput {
 
 /**
  * Map a KrewPact project to an ERPNext Project document.
+ *
+ * IMPORTANT: The sync handler (sync-project.ts) is responsible for resolving
+ * account_id to the ERPNext Customer docname from erp_sync_map before calling
+ * this function. The value passed as account_id must be the ERPNext Customer
+ * docname, NOT the KrewPact UUID, or ERPNext customer field validation will fail.
  */
 export function mapProjectToErp(project: ProjectMapInput): Record<string, unknown> {
   return {

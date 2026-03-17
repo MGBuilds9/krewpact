@@ -1,9 +1,10 @@
-import { describe, it, expect, vi } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { describe, expect, it, vi } from 'vitest';
+
 import {
+  computeEstimatingVelocity,
   computePipelineSummary,
   computeProjectPortfolio,
-  computeEstimatingVelocity,
   computeSubscriptionSummary,
 } from '@/lib/executive/metrics';
 

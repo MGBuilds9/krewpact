@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 process.env.AI_ENABLED = 'true';
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
@@ -11,13 +10,15 @@ vi.mock('@/lib/logger', () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
-import { executeNLQuery } from '@/lib/ai/agents/nl-query';
-import { makeJsonRequest } from '../../helpers/mock-request';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { POST } from '@/app/api/ai/query/route';
+import { executeNLQuery } from '@/lib/ai/agents/nl-query';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { createUserClientSafe } from '@/lib/supabase/server';
+
+import { makeJsonRequest } from '../../helpers/mock-request';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
@@ -27,7 +28,9 @@ const mockRateLimitResponse = vi.mocked(rateLimitResponse);
 
 function mockUserClient(orgId: string | null) {
   const chain: any = {};
-  ['select', 'eq', 'single'].forEach(m => { chain[m] = vi.fn().mockReturnValue(chain); });
+  ['select', 'eq', 'single'].forEach((m) => {
+    chain[m] = vi.fn().mockReturnValue(chain);
+  });
   chain.then = (resolve: any) => resolve({ data: orgId ? { org_id: orgId } : null, error: null });
   return { client: { from: vi.fn().mockReturnValue(chain) }, error: null };
 }

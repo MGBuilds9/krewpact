@@ -1,32 +1,32 @@
 'use client';
 
-import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { apiFetch } from '@/lib/api-client';
-import { queryKeys } from '@/lib/query-keys';
-import { AlertsRibbon } from '@/components/Executive/AlertsRibbon';
-import { MetricsGrid } from '@/components/Executive/MetricsGrid';
-import { DivisionScorecard } from '@/components/Executive/DivisionScorecard';
-import { SubscriptionWidget } from '@/components/Executive/SubscriptionWidget';
-import { ForecastChart } from '@/components/Executive/ForecastChart';
-import { DivisionSelector } from '@/components/Executive/DivisionSelector';
-import type { DivisionId } from '@/components/Executive/DivisionSelector';
-import { Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { Clock } from 'lucide-react';
+import { useState } from 'react';
+
+import type { Alert } from '@/components/Executive/AlertsRibbon';
+import { AlertsRibbon } from '@/components/Executive/AlertsRibbon';
+import { DivisionScorecard } from '@/components/Executive/DivisionScorecard';
+import type { DivisionId } from '@/components/Executive/DivisionSelector';
+import { DivisionSelector } from '@/components/Executive/DivisionSelector';
+import type { ForecastQuarter } from '@/components/Executive/ForecastChart';
+import { ForecastChart } from '@/components/Executive/ForecastChart';
+import { MetricsGrid } from '@/components/Executive/MetricsGrid';
+import { SubscriptionWidget } from '@/components/Executive/SubscriptionWidget';
+import { apiFetch } from '@/lib/api-client';
 import type {
+  EstimatingVelocity,
   PipelineSummary,
   ProjectPortfolio,
-  EstimatingVelocity,
   SubscriptionSummary,
 } from '@/lib/executive/metrics';
-import type { Alert } from '@/components/Executive/AlertsRibbon';
-import type { ForecastQuarter } from '@/components/Executive/ForecastChart';
+import { queryKeys } from '@/lib/query-keys';
 
 interface MetricEntry<T> {
   value: T;
   computed_at: string;
 }
-
 interface OverviewResponse {
   metrics: {
     pipeline_summary?: MetricEntry<PipelineSummary>;
@@ -35,28 +35,59 @@ interface OverviewResponse {
     subscription_summary?: MetricEntry<SubscriptionSummary>;
   };
 }
-
 interface AlertsResponse {
   alerts: Alert[];
 }
-
 interface ForecastResponse {
   forecast: ForecastQuarter[];
 }
 
-function extractMetrics(data: OverviewResponse | undefined) {
-  const metrics = data?.metrics ?? {};
+type MetricsResult = {
+  pipeline: PipelineSummary | undefined;
+  portfolio: ProjectPortfolio | undefined;
+  estimating: EstimatingVelocity | undefined;
+  subscriptions: SubscriptionSummary | undefined;
+  computedAt: string | undefined;
+};
+
+function extractMetrics(data: OverviewResponse | undefined): MetricsResult {
+  const metrics = data ? data.metrics || {} : {};
   return {
-    pipeline: metrics.pipeline_summary?.value,
-    portfolio: metrics.project_portfolio?.value,
-    estimating: metrics.estimating_velocity?.value,
-    subscriptions: metrics.subscription_summary?.value,
+    pipeline: metrics.pipeline_summary ? metrics.pipeline_summary.value : undefined,
+    portfolio: metrics.project_portfolio ? metrics.project_portfolio.value : undefined,
+    estimating: metrics.estimating_velocity ? metrics.estimating_velocity.value : undefined,
+    subscriptions: metrics.subscription_summary ? metrics.subscription_summary.value : undefined,
     computedAt: Object.values(metrics)
-      .map((m) => m?.computed_at)
+      .map((m) => (m ? m.computed_at : undefined))
       .filter(Boolean)
       .sort()
       .at(-1),
   };
+}
+
+interface DivPanelProps {
+  label: string;
+  color: string;
+  metrics: MetricsResult;
+  isLoading: boolean;
+}
+function DivPanel({ label, color, metrics, isLoading }: DivPanelProps) {
+  return (
+    <div className="space-y-4">
+      <p className={`text-xs font-semibold uppercase tracking-wide ${color}`}>{label}</p>
+      <MetricsGrid
+        pipeline={metrics.pipeline}
+        portfolio={metrics.portfolio}
+        estimating={metrics.estimating}
+        subscriptions={metrics.subscriptions}
+        isLoading={isLoading}
+      />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <DivisionScorecard portfolio={metrics.portfolio} isLoading={isLoading} />
+        <SubscriptionWidget summary={metrics.subscriptions} isLoading={isLoading} />
+      </div>
+    </div>
+  );
 }
 
 export default function ExecutiveOverviewPage() {
@@ -66,40 +97,31 @@ export default function ExecutiveOverviewPage() {
 
   function handleToggleCompare() {
     setIsComparing((prev) => {
-      if (prev) {
-        setCompareDivision(null);
-      }
+      if (prev) setCompareDivision(null);
       return !prev;
     });
   }
 
-  // Primary overview — org-wide when no division selected, or division-filtered
+  const divQuery = selectedDivision
+    ? `/api/executive/overview?division=${selectedDivision}`
+    : '/api/executive/overview';
   const { data: overviewData, isLoading: overviewLoading } = useQuery({
     queryKey: selectedDivision
       ? queryKeys.executive.overviewByDivision(selectedDivision)
       : queryKeys.executive.overview(),
-    queryFn: () =>
-      apiFetch<OverviewResponse>(
-        selectedDivision
-          ? `/api/executive/overview?division=${selectedDivision}`
-          : '/api/executive/overview',
-      ),
+    queryFn: () => apiFetch<OverviewResponse>(divQuery),
   });
-
-  // Secondary overview — only when comparing with two divisions selected
   const { data: compareData, isLoading: compareLoading } = useQuery({
-    queryKey: queryKeys.executive.overviewByDivision(compareDivision ?? '__none__'),
+    queryKey: queryKeys.executive.overviewByDivision(compareDivision || '__none__'),
     queryFn: () =>
       apiFetch<OverviewResponse>(`/api/executive/overview?division=${compareDivision}`),
     enabled: isComparing && compareDivision !== null,
   });
-
   const { data: alertsData, isLoading: alertsLoading } = useQuery({
     queryKey: queryKeys.executive.alerts(),
     queryFn: () => apiFetch<AlertsResponse>('/api/executive/alerts'),
-    refetchInterval: 5 * 60 * 1000, // refresh every 5 min
+    refetchInterval: 5 * 60 * 1000,
   });
-
   const { data: forecastData, isLoading: forecastLoading } = useQuery({
     queryKey: queryKeys.executive.forecast(),
     queryFn: () => apiFetch<ForecastResponse>('/api/executive/forecast'),
@@ -107,16 +129,14 @@ export default function ExecutiveOverviewPage() {
 
   const primary = extractMetrics(overviewData);
   const compare = extractMetrics(compareData);
-  const alerts = alertsData?.alerts ?? [];
-  const forecast = forecastData?.forecast;
-
+  const alerts = alertsData ? alertsData.alerts || [] : [];
+  const forecast = forecastData ? forecastData.forecast : undefined;
   const showComparison = isComparing && compareDivision !== null && compareData !== undefined;
 
   return (
     <>
       <title>Command Center — KrewPact</title>
       <div className="space-y-6 p-4 sm:p-6">
-        {/* Page header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Command Center</h1>
@@ -132,8 +152,6 @@ export default function ExecutiveOverviewPage() {
             </div>
           )}
         </div>
-
-        {/* Division selector */}
         <DivisionSelector
           selectedDivision={selectedDivision}
           compareDivision={compareDivision}
@@ -142,50 +160,24 @@ export default function ExecutiveOverviewPage() {
           onSelectCompareDivision={setCompareDivision}
           onToggleCompare={handleToggleCompare}
         />
-
-        {/* Alerts ribbon — full width */}
         <AlertsRibbon alerts={alerts} isLoading={alertsLoading} />
-
-        {/* Metrics — side-by-side when comparing, single column otherwise */}
         {showComparison ? (
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <div className="space-y-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-                Division A — {selectedDivision}
-              </p>
-              <MetricsGrid
-                pipeline={primary.pipeline}
-                portfolio={primary.portfolio}
-                estimating={primary.estimating}
-                subscriptions={primary.subscriptions}
-                isLoading={overviewLoading}
-              />
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <DivisionScorecard portfolio={primary.portfolio} isLoading={overviewLoading} />
-                <SubscriptionWidget summary={primary.subscriptions} isLoading={overviewLoading} />
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-blue-500">
-                Division B — {compareDivision}
-              </p>
-              <MetricsGrid
-                pipeline={compare.pipeline}
-                portfolio={compare.portfolio}
-                estimating={compare.estimating}
-                subscriptions={compare.subscriptions}
-                isLoading={compareLoading}
-              />
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <DivisionScorecard portfolio={compare.portfolio} isLoading={compareLoading} />
-                <SubscriptionWidget summary={compare.subscriptions} isLoading={compareLoading} />
-              </div>
-            </div>
+            <DivPanel
+              label={`Division A — ${selectedDivision}`}
+              color="text-primary"
+              metrics={primary}
+              isLoading={overviewLoading}
+            />
+            <DivPanel
+              label={`Division B — ${compareDivision}`}
+              color="text-blue-500"
+              metrics={compare}
+              isLoading={compareLoading}
+            />
           </div>
         ) : (
           <>
-            {/* Metrics grid — KPI row + stage/status breakdown */}
             <MetricsGrid
               pipeline={primary.pipeline}
               portfolio={primary.portfolio}
@@ -193,11 +185,7 @@ export default function ExecutiveOverviewPage() {
               subscriptions={primary.subscriptions}
               isLoading={overviewLoading}
             />
-
-            {/* Revenue Forecast — full width */}
             <ForecastChart forecast={forecast} isLoading={forecastLoading} />
-
-            {/* Bottom row — division scorecard + subscription widget */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <DivisionScorecard portfolio={primary.portfolio} isLoading={overviewLoading} />
               <SubscriptionWidget summary={primary.subscriptions} isLoading={overviewLoading} />

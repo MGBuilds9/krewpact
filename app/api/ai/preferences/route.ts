@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const prefsSchema = z.object({
   insight_min_confidence: z.number().min(0).max(1).optional(),
@@ -33,7 +34,10 @@ export async function GET(req: NextRequest) {
   };
 
   return NextResponse.json({
-    preferences: { ...defaults, ...((user as { ai_preferences?: Record<string, unknown> } | null)?.ai_preferences ?? {}) },
+    preferences: {
+      ...defaults,
+      ...((user as { ai_preferences?: Record<string, unknown> } | null)?.ai_preferences ?? {}),
+    },
   });
 }
 

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock AI SDK
 vi.mock('ai', () => ({
@@ -9,8 +9,9 @@ vi.mock('@ai-sdk/google', () => ({
   google: vi.fn(() => 'mock-model'),
 }));
 
-import { summarizeEnrichment } from '@/lib/integrations/enrichment-summarizer';
 import { generateText } from 'ai';
+
+import { summarizeEnrichment } from '@/lib/integrations/enrichment-summarizer';
 
 const mockGenerateText = vi.mocked(generateText);
 

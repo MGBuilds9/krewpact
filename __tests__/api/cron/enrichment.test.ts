@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockVerifyCronAuth = vi.fn();
 vi.mock('@/lib/api/cron-auth', () => ({
@@ -21,9 +21,9 @@ vi.mock('@/lib/supabase/server', () => ({
   createServiceClient: vi.fn(),
 }));
 
-import { createServiceClient } from '@/lib/supabase/server';
+import { makeRequest, mockSupabaseClient } from '@/__tests__/helpers';
 import { POST } from '@/app/api/cron/enrichment/route';
-import { mockSupabaseClient, makeRequest } from '@/__tests__/helpers';
+import { createServiceClient } from '@/lib/supabase/server';
 
 const mockCreateServiceClient = vi.mocked(createServiceClient);
 
@@ -74,13 +74,24 @@ describe('POST /api/cron/enrichment', () => {
 
   it('processes leads through enrichment waterfall', async () => {
     const mockLeads = [
-      { id: 'lead-1', domain: 'test.com', enrichment_data: null, enrichment_status: null, company_name: 'Test Co', city: 'Toronto', province: 'Ontario' },
+      {
+        id: 'lead-1',
+        domain: 'test.com',
+        enrichment_data: null,
+        enrichment_status: null,
+        company_name: 'Test Co',
+        city: 'Toronto',
+        province: 'Ontario',
+      },
     ];
 
     const supabase = mockSupabaseClient({
       tables: {
         leads: { data: mockLeads, error: null },
-        contacts: { data: [{ first_name: 'John', last_name: 'Doe', linkedin_url: null }], error: null },
+        contacts: {
+          data: [{ first_name: 'John', last_name: 'Doe', linkedin_url: null }],
+          error: null,
+        },
       },
     });
     mockCreateServiceClient.mockReturnValue(supabase);
@@ -105,7 +116,15 @@ describe('POST /api/cron/enrichment', () => {
 
   it('marks lead as complete when enrichment succeeds', async () => {
     const mockLeads = [
-      { id: 'lead-1', domain: 'test.com', enrichment_data: null, enrichment_status: 'pending', company_name: 'Test Co', city: null, province: null },
+      {
+        id: 'lead-1',
+        domain: 'test.com',
+        enrichment_data: null,
+        enrichment_status: 'pending',
+        company_name: 'Test Co',
+        city: null,
+        province: null,
+      },
     ];
 
     const supabase = mockSupabaseClient({
@@ -131,7 +150,15 @@ describe('POST /api/cron/enrichment', () => {
 
   it('continues processing when AI summary fails (non-critical)', async () => {
     const mockLeads = [
-      { id: 'lead-1', domain: 'test.com', enrichment_data: null, enrichment_status: null, company_name: 'Test Co', city: null, province: null },
+      {
+        id: 'lead-1',
+        domain: 'test.com',
+        enrichment_data: null,
+        enrichment_status: null,
+        company_name: 'Test Co',
+        city: null,
+        province: null,
+      },
     ];
 
     const supabase = mockSupabaseClient({
@@ -157,13 +184,24 @@ describe('POST /api/cron/enrichment', () => {
 
   it('applies side effects (domain, city, contact updates)', async () => {
     const mockLeads = [
-      { id: 'lead-1', domain: null, enrichment_data: null, enrichment_status: null, company_name: 'Test', city: null, province: null },
+      {
+        id: 'lead-1',
+        domain: null,
+        enrichment_data: null,
+        enrichment_status: null,
+        company_name: 'Test',
+        city: null,
+        province: null,
+      },
     ];
 
     const supabase = mockSupabaseClient({
       tables: {
         leads: { data: mockLeads, error: null },
-        contacts: { data: [{ first_name: 'Jane', last_name: 'Doe', linkedin_url: null }], error: null },
+        contacts: {
+          data: [{ first_name: 'Jane', last_name: 'Doe', linkedin_url: null }],
+          error: null,
+        },
       },
     });
     mockCreateServiceClient.mockReturnValue(supabase);
@@ -188,7 +226,15 @@ describe('POST /api/cron/enrichment', () => {
 
   it('counts errors and marks failed leads', async () => {
     const mockLeads = [
-      { id: 'lead-1', domain: null, enrichment_data: null, enrichment_status: null, company_name: 'Bad Co', city: null, province: null },
+      {
+        id: 'lead-1',
+        domain: null,
+        enrichment_data: null,
+        enrichment_status: null,
+        company_name: 'Bad Co',
+        city: null,
+        province: null,
+      },
     ];
 
     const supabase = mockSupabaseClient({

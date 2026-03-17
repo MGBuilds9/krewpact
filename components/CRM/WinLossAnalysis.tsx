@@ -1,8 +1,9 @@
 'use client';
 
+import { BarChart3 } from 'lucide-react';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { BarChart3 } from 'lucide-react';
 import type { WinLossEntry } from '@/lib/crm/pipeline-intelligence';
 
 interface WinLossAnalysisProps {
@@ -11,7 +12,11 @@ interface WinLossAnalysisProps {
   isLoading?: boolean;
 }
 
-export function WinLossAnalysis({ title = 'Win/Loss Analysis', data, isLoading }: WinLossAnalysisProps) {
+export function WinLossAnalysis({
+  title = 'Win/Loss Analysis',
+  data,
+  isLoading,
+}: WinLossAnalysisProps) {
   if (isLoading) {
     return (
       <Card>

@@ -1,10 +1,13 @@
 'use client';
 
+import { AlertCircle, Database, Plus } from 'lucide-react';
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+import { MigrationBatchForm } from '@/components/Migration/MigrationBatchForm';
+import { MigrationConflictForm } from '@/components/Migration/MigrationConflictForm';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -12,10 +15,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Plus, Database, AlertCircle } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useMigrationBatches, useMigrationConflicts } from '@/hooks/useMigration';
-import { MigrationBatchForm } from '@/components/Migration/MigrationBatchForm';
-import { MigrationConflictForm } from '@/components/Migration/MigrationConflictForm';
 
 const STATUS_COLORS: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   queued: 'secondary',
@@ -28,7 +29,6 @@ const STATUS_COLORS: Record<string, 'default' | 'secondary' | 'destructive' | 'o
 function BatchConflicts({ batchId }: { batchId: string }) {
   const { data, isLoading } = useMigrationConflicts(batchId, { resolution_status: 'open' });
   const [resolvingId, setResolvingId] = useState<string | null>(null);
-
   const conflicts = data?.data ?? [];
 
   if (isLoading) return <Skeleton className="h-16 w-full" />;
@@ -73,11 +73,47 @@ function BatchConflicts({ batchId }: { batchId: string }) {
   );
 }
 
+interface BatchRowProps {
+  batch: { id: string; batch_name: string; source_system: string; status: string };
+  expanded: boolean;
+  onToggle: () => void;
+}
+
+function BatchRow({ batch, expanded, onToggle }: BatchRowProps) {
+  return (
+    <Card key={batch.id}>
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-base">{batch.batch_name}</CardTitle>
+            <p className="text-sm text-muted-foreground uppercase">
+              {batch.source_system.replace('_', ' ')}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant={STATUS_COLORS[batch.status] ?? 'outline'} className="capitalize">
+              {batch.status.replace('_', ' ')}
+            </Badge>
+            <Button variant="ghost" size="sm" onClick={onToggle}>
+              <AlertCircle className="h-4 w-4" />
+              Conflicts
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      {expanded && (
+        <CardContent>
+          <BatchConflicts batchId={batch.id} />
+        </CardContent>
+      )}
+    </Card>
+  );
+}
+
 export default function MigrationPage() {
   const { data, isLoading } = useMigrationBatches();
   const [open, setOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-
   const batches = data?.data ?? [];
 
   return (
@@ -107,8 +143,8 @@ export default function MigrationPage() {
 
       {isLoading ? (
         <div className="space-y-3">
-          {[...Array(3)].map((_, i) => (
-            <Skeleton key={i} className="h-24 w-full" />
+          {['sk-1', 'sk-2', 'sk-3'].map((id) => (
+            <Skeleton key={id} className="h-24 w-full" />
           ))}
         </div>
       ) : batches.length === 0 ? (
@@ -119,39 +155,12 @@ export default function MigrationPage() {
       ) : (
         <div className="space-y-3">
           {batches.map((batch) => (
-            <Card key={batch.id}>
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-base">{batch.batch_name}</CardTitle>
-                    <p className="text-sm text-muted-foreground uppercase">
-                      {batch.source_system.replace('_', ' ')}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge
-                      variant={STATUS_COLORS[batch.status] ?? 'outline'}
-                      className="capitalize"
-                    >
-                      {batch.status.replace('_', ' ')}
-                    </Badge>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setExpandedId(expandedId === batch.id ? null : batch.id)}
-                    >
-                      <AlertCircle className="h-4 w-4" />
-                      Conflicts
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              {expandedId === batch.id && (
-                <CardContent>
-                  <BatchConflicts batchId={batch.id} />
-                </CardContent>
-              )}
-            </Card>
+            <BatchRow
+              key={batch.id}
+              batch={batch}
+              expanded={expandedId === batch.id}
+              onToggle={() => setExpandedId(expandedId === batch.id ? null : batch.id)}
+            />
           ))}
         </div>
       )}

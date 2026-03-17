@@ -1,10 +1,13 @@
 'use client';
 
+import { ChevronRight, Database, Plus } from 'lucide-react';
 import { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+
+import { ReferenceDataSetForm } from '@/components/Governance/ReferenceDataSetForm';
+import { ReferenceDataValueForm } from '@/components/Governance/ReferenceDataValueForm';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -12,10 +15,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Plus, Database, ChevronRight } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useReferenceDataSets, useReferenceDataValues } from '@/hooks/useGovernance';
-import { ReferenceDataSetForm } from '@/components/Governance/ReferenceDataSetForm';
-import { ReferenceDataValueForm } from '@/components/Governance/ReferenceDataValueForm';
 
 function SetValues({ setId, setName }: { setId: string; setName: string }) {
   const { data, isLoading } = useReferenceDataValues(setId);
@@ -81,8 +82,8 @@ export default function GovernancePage() {
 
         {isLoading ? (
           <div className="space-y-2">
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full" />
+            {['sk-1', 'sk-2', 'sk-3', 'sk-4'].map((id) => (
+              <Skeleton key={id} className="h-12 w-full" />
             ))}
           </div>
         ) : (

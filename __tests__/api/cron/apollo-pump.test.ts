@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockVerifyCronAuth = vi.fn();
 vi.mock('@/lib/api/cron-auth', () => ({
@@ -96,9 +96,9 @@ vi.mock('@/lib/supabase/server', () => ({
   createServiceClient: vi.fn(),
 }));
 
-import { createServiceClient } from '@/lib/supabase/server';
+import { makeRequest, mockSupabaseClient } from '@/__tests__/helpers';
 import { POST } from '@/app/api/cron/apollo-pump/route';
-import { mockSupabaseClient, makeRequest } from '@/__tests__/helpers';
+import { createServiceClient } from '@/lib/supabase/server';
 
 const mockCreateServiceClient = vi.mocked(createServiceClient);
 
@@ -139,10 +139,16 @@ function makeCronRequest(profileId?: string) {
 }
 
 /** Build a supabase mock that handles all the tables the pump touches. */
-function makeFullSupabaseMock(options: {
-  stateData?: { last_page: number; credits_used_this_month: number; month_reset_at: string } | null;
-  insertedLeads?: { id: string; external_id: string }[];
-} = {}) {
+function makeFullSupabaseMock(
+  options: {
+    stateData?: {
+      last_page: number;
+      credits_used_this_month: number;
+      month_reset_at: string;
+    } | null;
+    insertedLeads?: { id: string; external_id: string }[];
+  } = {},
+) {
   const { stateData = null, insertedLeads = [] } = options;
   return mockSupabaseClient({
     tables: {

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({
   auth: vi.fn(),
@@ -11,8 +11,9 @@ vi.mock('@/lib/pdf/generator', () => ({
   generatePdf: vi.fn(),
 }));
 
-import { POST } from '@/app/api/pdf/generate/route';
 import { auth } from '@clerk/nextjs/server';
+
+import { POST } from '@/app/api/pdf/generate/route';
 import { generatePdf } from '@/lib/pdf/generator';
 
 function makeRequest(body: unknown) {

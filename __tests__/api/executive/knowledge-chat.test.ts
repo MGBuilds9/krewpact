@@ -1,15 +1,15 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/supabase/server', () => ({ createServiceClient: vi.fn() }));
 vi.mock('@/lib/knowledge/embeddings', () => ({ embedChunks: vi.fn() }));
 vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() } }));
 vi.mock('@/lib/api/org', () => ({ getKrewpactRoles: vi.fn(), getKrewpactUserId: vi.fn() }));
 
-import { createServiceClient } from '@/lib/supabase/server';
-import { embedChunks } from '@/lib/knowledge/embeddings';
-import { getKrewpactRoles, getKrewpactUserId } from '@/lib/api/org';
 import { POST } from '@/app/api/executive/knowledge/chat/route';
+import { getKrewpactRoles, getKrewpactUserId } from '@/lib/api/org';
+import { embedChunks } from '@/lib/knowledge/embeddings';
+import { createServiceClient } from '@/lib/supabase/server';
 
 const mockCreateServiceClient = vi.mocked(createServiceClient);
 const mockEmbedChunks = vi.mocked(embedChunks);

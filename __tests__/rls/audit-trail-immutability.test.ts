@@ -9,9 +9,9 @@
  *   - lead_stage_history (from 20260227_003_lead_stage_history.sql)
  *   - lead_score_history (from 20260227_001_rls_lockdown.sql)
  */
-import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { describe, expect, it } from 'vitest';
 
 /**
  * Parse a migration SQL file and extract policy names.

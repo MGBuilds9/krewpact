@@ -1,14 +1,15 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { logger } from '@/lib/logger';
+
+import { getKrewpactRoles } from '@/lib/api/org';
 import {
+  computeEstimatingVelocity,
   computePipelineSummaryForDivision,
   computeProjectPortfolioForDivision,
   computeSubscriptionSummaryForDivision,
-  computeEstimatingVelocity,
 } from '@/lib/executive/metrics';
-import { getKrewpactRoles } from '@/lib/api/org';
+import { logger } from '@/lib/logger';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const EXECUTIVE_ROLES = ['platform_admin', 'executive'];
 

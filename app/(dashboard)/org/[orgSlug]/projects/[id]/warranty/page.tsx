@@ -1,10 +1,12 @@
 'use client';
 
+import { CalendarDays, Plus, ShieldCheck } from 'lucide-react';
 import { use, useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+
+import { WarrantyItemForm } from '@/components/Closeout/WarrantyItemForm';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -12,9 +14,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Plus, ShieldCheck, CalendarDays } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useWarrantyItems } from '@/hooks/useCloseout';
-import { WarrantyItemForm } from '@/components/Closeout/WarrantyItemForm';
 
 export default function WarrantyPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: projectId } = use(params);
@@ -56,8 +57,8 @@ export default function WarrantyPage({ params }: { params: Promise<{ id: string 
 
       {isLoading ? (
         <div className="space-y-3">
-          {[...Array(3)].map((_, i) => (
-            <Skeleton key={i} className="h-20 w-full" />
+          {['sk-1', 'sk-2', 'sk-3'].map((id) => (
+            <Skeleton key={id} className="h-20 w-full" />
           ))}
         </div>
       ) : items.length === 0 ? (

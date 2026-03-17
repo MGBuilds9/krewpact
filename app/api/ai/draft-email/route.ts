@@ -1,10 +1,11 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 import { z } from 'zod';
+
 import { draftEmail } from '@/lib/ai/agents/email-drafter';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 import { logger } from '@/lib/logger';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const draftSchema = z.object({
   entity_type: z.enum(['lead', 'opportunity', 'account']),
@@ -38,11 +39,7 @@ export async function POST(req: NextRequest) {
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
-  const { data: user } = await supabase
-    .from('users')
-    .select('org_id')
-    .eq('id', userId)
-    .single();
+  const { data: user } = await supabase.from('users').select('org_id').eq('id', userId).single();
 
   const orgId = user?.org_id ?? 'unknown';
 
@@ -58,7 +55,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(draft);
   } catch (err) {
-    logger.error('Email draft generation failed', { error: err instanceof Error ? err.message : String(err) });
+    logger.error('Email draft generation failed', {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return NextResponse.json({ error: 'Failed to generate email draft' }, { status: 500 });
   }
 }

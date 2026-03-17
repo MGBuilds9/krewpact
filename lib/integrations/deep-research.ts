@@ -1,11 +1,70 @@
-import { generateText } from 'ai';
 import { google } from '@ai-sdk/google';
+import { generateText } from 'ai';
+
 import { logger } from '@/lib/logger';
 
 interface DeepResearchResult {
   research_report: string;
   sources: string[];
   researched_at: string;
+}
+
+function appendEnrichmentContext(
+  enrichmentData: Record<string, unknown>,
+  contextParts: string[],
+): void {
+  const googleMaps = enrichmentData.google_maps as Record<string, unknown> | undefined;
+  const brave = enrichmentData.brave as Record<string, unknown> | undefined;
+  const apollo = enrichmentData.apollo_match as Record<string, unknown> | undefined;
+  const tavily = enrichmentData.tavily as Record<string, unknown> | undefined;
+
+  if (googleMaps) {
+    const parts: string[] = [];
+    if (googleMaps.address) parts.push(`Address: ${googleMaps.address}`);
+    if (googleMaps.google_rating)
+      parts.push(
+        `Rating: ${googleMaps.google_rating}/5 (${googleMaps.google_reviews_count ?? 0} reviews)`,
+      );
+    if (googleMaps.business_status) parts.push(`Status: ${googleMaps.business_status}`);
+    if (parts.length) contextParts.push(`Google Maps:\n${parts.join('\n')}`);
+  }
+  if (brave?.description) contextParts.push(`Web Description: ${brave.description}`);
+  if (apollo) {
+    const parts: string[] = [];
+    if (apollo.title) parts.push(`Contact Title: ${apollo.title}`);
+    if (apollo.email) parts.push(`Contact Email: ${apollo.email}`);
+    if (parts.length) contextParts.push(`Apollo Contact:\n${parts.join('\n')}`);
+  }
+  if (tavily?.answer) contextParts.push(`Tavily Research: ${tavily.answer}`);
+}
+
+async function extractWebsiteContent(
+  website: string,
+  contextParts: string[],
+  sources: string[],
+): Promise<void> {
+  const tavilyKey = process.env.TAVILY_RESEARCH_API_KEY || process.env.TAVILY_API_KEY;
+  if (!tavilyKey) return;
+  try {
+    const url = website.startsWith('http') ? website : `https://${website}`;
+    const res = await fetch('https://api.tavily.com/extract', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tavilyKey}` },
+      body: JSON.stringify({ urls: [url], extract_depth: 'advanced', format: 'markdown' }),
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    const results = data.results ?? data.data ?? [];
+    for (const r of results) {
+      const content = (r.raw_content || r.content) as string | undefined;
+      if (content) {
+        contextParts.push(`Website Content (${url}):\n${content.slice(0, 3000)}`);
+        sources.push(url);
+      }
+    }
+  } catch (err) {
+    logger.error('Tavily Extract error', { error: err });
+  }
 }
 
 /**
@@ -22,72 +81,11 @@ export async function deepResearchLead(
 
   // 1. Tavily Extract — pull full content from company website
   if (website) {
-    const tavilyKey = process.env.TAVILY_RESEARCH_API_KEY || process.env.TAVILY_API_KEY;
-    if (tavilyKey) {
-      try {
-        const url = website.startsWith('http') ? website : `https://${website}`;
-        const res = await fetch('https://api.tavily.com/extract', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${tavilyKey}`,
-          },
-          body: JSON.stringify({
-            urls: [url],
-            extract_depth: 'advanced',
-            format: 'markdown',
-          }),
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          const results = data.results ?? data.data ?? [];
-          for (const r of results) {
-            if (r.raw_content || r.content) {
-              const content = (r.raw_content || r.content) as string;
-              // Truncate to ~3000 chars to stay within token limits
-              contextParts.push(`Website Content (${url}):\n${content.slice(0, 3000)}`);
-              sources.push(url);
-            }
-          }
-        }
-      } catch (err) {
-        logger.error('Tavily Extract error', { error: err });
-      }
-    }
+    await extractWebsiteContent(website, contextParts, sources);
   }
 
   // 2. Gather existing enrichment context
-  const googleMaps = enrichmentData.google_maps as Record<string, unknown> | undefined;
-  const brave = enrichmentData.brave as Record<string, unknown> | undefined;
-  const apollo = enrichmentData.apollo_match as Record<string, unknown> | undefined;
-  const tavily = enrichmentData.tavily as Record<string, unknown> | undefined;
-
-  if (googleMaps) {
-    const parts = [];
-    if (googleMaps.address) parts.push(`Address: ${googleMaps.address}`);
-    if (googleMaps.google_rating)
-      parts.push(
-        `Rating: ${googleMaps.google_rating}/5 (${googleMaps.google_reviews_count ?? 0} reviews)`,
-      );
-    if (googleMaps.business_status) parts.push(`Status: ${googleMaps.business_status}`);
-    if (parts.length) contextParts.push(`Google Maps:\n${parts.join('\n')}`);
-  }
-
-  if (brave?.description) {
-    contextParts.push(`Web Description: ${brave.description}`);
-  }
-
-  if (apollo) {
-    const parts = [];
-    if (apollo.title) parts.push(`Contact Title: ${apollo.title}`);
-    if (apollo.email) parts.push(`Contact Email: ${apollo.email}`);
-    if (parts.length) contextParts.push(`Apollo Contact:\n${parts.join('\n')}`);
-  }
-
-  if (tavily?.answer) {
-    contextParts.push(`Tavily Research: ${tavily.answer}`);
-  }
+  appendEnrichmentContext(enrichmentData, contextParts);
 
   if (contextParts.length === 0) {
     return {

@@ -1,4 +1,5 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+
 import { checkAccessibility } from './helpers/a11y';
 
 // Krewpact is multi-tenant and routes via orgSlug, so we use /org/demo/ for tests

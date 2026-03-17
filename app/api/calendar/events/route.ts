@@ -1,9 +1,10 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { getMicrosoftToken, graphFetch, buildGraphUrl } from '@/lib/microsoft/graph';
-import { calendarQuerySchema, createEventSchema } from '@/lib/validators/calendar';
-import type { GraphEvent, GraphListResponse, CreateEventPayload } from '@/lib/microsoft/types';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { buildGraphUrl, getMicrosoftToken, graphFetch } from '@/lib/microsoft/graph';
+import type { CreateEventPayload, GraphEvent, GraphListResponse } from '@/lib/microsoft/types';
+import { calendarQuerySchema, createEventSchema } from '@/lib/validators/calendar';
 
 const EVENT_SELECT = [
   'id',

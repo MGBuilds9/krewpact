@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.stubEnv('ERPNEXT_BASE_URL', 'https://erp.test.com');
 vi.stubEnv('ERPNEXT_API_KEY', 'test-key');

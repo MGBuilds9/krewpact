@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({
   auth: vi.fn(),
@@ -9,18 +9,19 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { GET, POST } from '@/app/api/tasks/route';
-import { GET as GET_BY_ID, PATCH, DELETE } from '@/app/api/tasks/[id]/route';
+
 import {
-  mockSupabaseClient,
+  makeJsonRequest,
+  makeRequest,
+  makeTask,
   mockClerkAuth,
   mockClerkUnauth,
-  makeRequest,
-  makeJsonRequest,
-  makeTask,
+  mockSupabaseClient,
   TEST_IDS,
 } from '@/__tests__/helpers';
+import { DELETE, GET as GET_BY_ID, PATCH } from '@/app/api/tasks/[id]/route';
+import { GET, POST } from '@/app/api/tasks/route';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);

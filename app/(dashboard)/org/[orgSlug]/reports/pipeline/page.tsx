@@ -1,9 +1,10 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { BarChart3, DollarSign, TrendingUp, Users } from 'lucide-react';
+
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { TrendingUp, DollarSign, Users, BarChart3 } from 'lucide-react';
 import { useLeads, useOpportunities } from '@/hooks/useCRM';
 
 const OPPORTUNITY_STAGES = [
@@ -14,7 +15,6 @@ const OPPORTUNITY_STAGES = [
   'closed_won',
   'closed_lost',
 ] as const;
-
 const STAGE_COLORS: Record<string, string> = {
   prospecting: 'bg-gray-400',
   qualification: 'bg-blue-400',
@@ -30,7 +30,6 @@ function formatStage(stage: string): string {
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ');
 }
-
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('en-CA', {
     style: 'currency',
@@ -39,13 +38,50 @@ function formatCurrency(value: number): string {
   }).format(value);
 }
 
+function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <Card>
+      <CardContent className="pt-6">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+          {icon}
+          {label}
+        </div>
+        <div className="text-2xl font-bold">{value}</div>
+      </CardContent>
+    </Card>
+  );
+}
+
+type StageItem = { stage: string; count: number; value: number };
+
+function StageBar({ item, maxCount }: { item: StageItem; maxCount: number }) {
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between text-sm">
+        <div className="flex items-center gap-2">
+          <span className="font-medium">{formatStage(item.stage)}</span>
+          <Badge variant="secondary" className="text-xs">
+            {item.count}
+          </Badge>
+        </div>
+        <span className="text-muted-foreground">{formatCurrency(item.value)}</span>
+      </div>
+      <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
+        <div
+          className={`h-3 rounded-full transition-all ${STAGE_COLORS[item.stage] || 'bg-primary'}`}
+          style={{ width: `${(item.count / maxCount) * 100}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function PipelineReportPage() {
   const { data: leadsResponse, isLoading: leadsLoading } = useLeads({ limit: 100 });
   const { data: opportunities, isLoading: oppsLoading } = useOpportunities();
-
   const isLoading = leadsLoading || oppsLoading;
 
-  if (isLoading) {
+  if (isLoading)
     return (
       <div className="space-y-6">
         <Skeleton className="h-10 w-56" />
@@ -57,22 +93,21 @@ export default function PipelineReportPage() {
         <Skeleton className="h-64 rounded-xl" />
       </div>
     );
-  }
 
-  const allLeads = leadsResponse?.data ?? [];
-  const allOpps = opportunities?.data ?? [];
-
-  const totalPipelineValue = allOpps.reduce((sum, opp) => sum + (opp.estimated_revenue ?? 0), 0);
+  const allLeads = leadsResponse ? leadsResponse.data || [] : [];
+  const allOpps = opportunities ? opportunities.data || [] : [];
+  const totalPipelineValue = allOpps.reduce((sum, opp) => sum + (opp.estimated_revenue || 0), 0);
   const wonOpps = allOpps.filter((o) => o.stage === 'closed_won');
   const conversionRate = allOpps.length > 0 ? (wonOpps.length / allOpps.length) * 100 : 0;
   const avgDealSize = allOpps.length > 0 ? totalPipelineValue / allOpps.length : 0;
-
   const stageData = OPPORTUNITY_STAGES.map((stage) => {
     const inStage = allOpps.filter((o) => o.stage === stage);
-    const stageValue = inStage.reduce((sum, o) => sum + (o.estimated_revenue ?? 0), 0);
-    return { stage, count: inStage.length, value: stageValue };
+    return {
+      stage,
+      count: inStage.length,
+      value: inStage.reduce((sum, o) => sum + (o.estimated_revenue || 0), 0),
+    };
   });
-
   const maxCount = Math.max(...stageData.map((s) => s.count), 1);
 
   return (
@@ -84,76 +119,41 @@ export default function PipelineReportPage() {
           <p className="text-muted-foreground">Opportunity funnel and value analysis</p>
         </div>
       </div>
-
-      {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-              <Users className="h-4 w-4" /> Total Leads
-            </div>
-            <div className="text-2xl font-bold">{allLeads.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-              <DollarSign className="h-4 w-4" /> Pipeline Value
-            </div>
-            <div className="text-2xl font-bold">{formatCurrency(totalPipelineValue)}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-              <TrendingUp className="h-4 w-4" /> Conversion Rate
-            </div>
-            <div className="text-2xl font-bold">{conversionRate.toFixed(1)}%</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-              <DollarSign className="h-4 w-4" /> Avg Deal Size
-            </div>
-            <div className="text-2xl font-bold">{formatCurrency(avgDealSize)}</div>
-          </CardContent>
-        </Card>
+        <StatCard
+          icon={<Users className="h-4 w-4" />}
+          label="Total Leads"
+          value={String(allLeads.length)}
+        />
+        <StatCard
+          icon={<DollarSign className="h-4 w-4" />}
+          label="Pipeline Value"
+          value={formatCurrency(totalPipelineValue)}
+        />
+        <StatCard
+          icon={<TrendingUp className="h-4 w-4" />}
+          label="Conversion Rate"
+          value={`${conversionRate.toFixed(1)}%`}
+        />
+        <StatCard
+          icon={<DollarSign className="h-4 w-4" />}
+          label="Avg Deal Size"
+          value={formatCurrency(avgDealSize)}
+        />
       </div>
-
-      {/* Pipeline Funnel */}
       <Card>
         <CardHeader>
           <CardTitle>Pipeline Funnel by Stage</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {stageData.map(({ stage, count, value }) => (
-            <div key={stage} className="space-y-1.5">
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">{formatStage(stage)}</span>
-                  <Badge variant="secondary" className="text-xs">
-                    {count}
-                  </Badge>
-                </div>
-                <span className="text-muted-foreground">{formatCurrency(value)}</span>
-              </div>
-              <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
-                <div
-                  className={`h-3 rounded-full transition-all ${STAGE_COLORS[stage] ?? 'bg-primary'}`}
-                  style={{ width: `${(count / maxCount) * 100}%` }}
-                />
-              </div>
-            </div>
+          {stageData.map((item) => (
+            <StageBar key={item.stage} item={item} maxCount={maxCount} />
           ))}
-
           {allOpps.length === 0 && (
             <p className="text-center text-muted-foreground py-6">No opportunities to display</p>
           )}
         </CardContent>
       </Card>
-
-      {/* Stage Summary Table */}
       <Card>
         <CardHeader>
           <CardTitle>Stage Breakdown</CardTitle>

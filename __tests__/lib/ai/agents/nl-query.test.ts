@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 vi.mock('ai', () => ({ generateText: vi.fn() }));
 vi.mock('@ai-sdk/google', () => ({ google: vi.fn().mockReturnValue('gemini-mock') }));
 vi.mock('@/lib/ai/cost-tracker', () => ({ trackAIAction: vi.fn() }));
@@ -16,11 +15,12 @@ vi.mock('@/lib/logger', () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { generateText } from 'ai';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { executeNLQuery } from '@/lib/ai/agents/nl-query';
 import { trackAIAction } from '@/lib/ai/cost-tracker';
 import { executeToolCall } from '@/lib/ai/tools';
-import { executeNLQuery } from '@/lib/ai/agents/nl-query';
 
 const mockGenerateText = vi.mocked(generateText);
 const mockTrackAIAction = vi.mocked(trackAIAction);
@@ -60,7 +60,11 @@ describe('executeNLQuery', () => {
         usage: { inputTokens: 50, outputTokens: 30 },
       } as any);
 
-    const result = await executeNLQuery({ query: 'Show me deals over $500k', orgId: ORG_ID, userId: USER_ID });
+    const result = await executeNLQuery({
+      query: 'Show me deals over $500k',
+      orgId: ORG_ID,
+      userId: USER_ID,
+    });
 
     expect(mockExecuteToolCall).toHaveBeenCalledWith(
       'search_opportunities',
@@ -86,7 +90,11 @@ describe('executeNLQuery', () => {
 
     const result = await executeNLQuery({ query: 'Find opportunities', orgId: ORG_ID });
 
-    expect(mockExecuteToolCall).toHaveBeenCalledWith('search_opportunities', { min_value: 100000 }, ORG_ID);
+    expect(mockExecuteToolCall).toHaveBeenCalledWith(
+      'search_opportunities',
+      { min_value: 100000 },
+      ORG_ID,
+    );
     expect(result.data).toEqual(mockData);
   });
 
@@ -121,8 +129,14 @@ describe('executeNLQuery', () => {
     await executeNLQuery({ query: 'Pipeline status?', orgId: ORG_ID, userId: USER_ID });
 
     expect(mockTrackAIAction).toHaveBeenCalledTimes(2);
-    expect(mockTrackAIAction).toHaveBeenNthCalledWith(1, expect.objectContaining({ actionType: 'query_planned' }));
-    expect(mockTrackAIAction).toHaveBeenNthCalledWith(2, expect.objectContaining({ actionType: 'query_answered' }));
+    expect(mockTrackAIAction).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ actionType: 'query_planned' }),
+    );
+    expect(mockTrackAIAction).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ actionType: 'query_answered' }),
+    );
   });
 
   it('handles malformed ARGS gracefully and defaults to {}', async () => {

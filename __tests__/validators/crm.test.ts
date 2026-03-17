@@ -1,16 +1,17 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
 import {
   accountCreateSchema,
   accountUpdateSchema,
+  activityCreateSchema,
+  activityUpdateSchema,
   contactCreateSchema,
   contactUpdateSchema,
   leadCreateSchema,
-  leadUpdateSchema,
   leadStageTransitionSchema,
+  leadUpdateSchema,
   opportunityCreateSchema,
   opportunityUpdateSchema,
-  activityCreateSchema,
-  activityUpdateSchema,
 } from '@/lib/validators/crm';
 
 // Valid v4 UUIDs for Zod 4 strict UUID validation

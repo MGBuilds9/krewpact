@@ -1,8 +1,9 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { selectionSheetUpdateSchema } from '@/lib/validators/selections';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { createUserClientSafe } from '@/lib/supabase/server';
+import { selectionSheetUpdateSchema } from '@/lib/validators/selections';
 
 export async function GET(
   _req: NextRequest,

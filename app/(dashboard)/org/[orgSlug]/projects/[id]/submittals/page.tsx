@@ -1,10 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { ClipboardList, Plus, Star } from 'lucide-react';
 import { useParams } from 'next/navigation';
-import { Button } from '@/components/ui/button';
+import { useState } from 'react';
+
+import { SubmittalCreateForm } from '@/components/FieldOps/SubmittalCreateForm';
+import { SubmittalReviewForm } from '@/components/FieldOps/SubmittalReviewForm';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -12,6 +15,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -20,11 +24,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { ClipboardList, Plus, Star } from 'lucide-react';
-import { useSubmittals } from '@/hooks/useFieldOps';
-import { SubmittalCreateForm } from '@/components/FieldOps/SubmittalCreateForm';
-import { SubmittalReviewForm } from '@/components/FieldOps/SubmittalReviewForm';
 import type { Submittal } from '@/hooks/useFieldOps';
+import { useSubmittals } from '@/hooks/useFieldOps';
 
 const STATUS_VARIANT: Record<
   Submittal['status'],
@@ -38,6 +39,29 @@ const STATUS_VARIANT: Record<
   rejected: 'destructive',
 };
 
+function SubRow({ sub, onReview }: { sub: Submittal; onReview: (id: string) => void }) {
+  return (
+    <TableRow>
+      <TableCell className="font-mono font-medium">{sub.submittal_number}</TableCell>
+      <TableCell className="font-medium">{sub.title}</TableCell>
+      <TableCell>
+        <Badge variant={STATUS_VARIANT[sub.status]}>{sub.status.replace(/_/g, ' ')}</Badge>
+      </TableCell>
+      <TableCell className="text-sm text-muted-foreground">
+        {sub.due_at ? new Date(sub.due_at).toLocaleDateString('en-CA') : '—'}
+      </TableCell>
+      <TableCell className="text-right">
+        {sub.status === 'submitted' && (
+          <Button variant="outline" size="sm" onClick={() => onReview(sub.id)}>
+            <Star className="h-4 w-4 mr-1" />
+            Review
+          </Button>
+        )}
+      </TableCell>
+    </TableRow>
+  );
+}
+
 export default function SubmittalsPage() {
   const params = useParams();
   const projectId = params.id as string;
@@ -45,7 +69,7 @@ export default function SubmittalsPage() {
   const [reviewSubId, setReviewSubId] = useState<string | null>(null);
 
   const { data, isLoading } = useSubmittals(projectId);
-  const submittals = data?.data ?? [];
+  const submittals = data ? data.data || [] : [];
 
   return (
     <div className="space-y-6">
@@ -54,7 +78,7 @@ export default function SubmittalsPage() {
           <ClipboardList className="h-6 w-6 text-muted-foreground" />
           <div>
             <h1 className="text-2xl font-bold">Submittals</h1>
-            <p className="text-sm text-muted-foreground">{data?.total ?? 0} submittals</p>
+            <p className="text-sm text-muted-foreground">{data ? data.total || 0 : 0} submittals</p>
           </div>
         </div>
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
@@ -76,11 +100,10 @@ export default function SubmittalsPage() {
           </DialogContent>
         </Dialog>
       </div>
-
       {isLoading ? (
         <div className="space-y-2">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-14 w-full" />
+          {['s-1', 's-2', 's-3', 's-4', 's-5'].map((id) => (
+            <Skeleton key={id} className="h-14 w-full" />
           ))}
         </div>
       ) : submittals.length === 0 ? (
@@ -102,32 +125,17 @@ export default function SubmittalsPage() {
           </TableHeader>
           <TableBody>
             {submittals.map((sub) => (
-              <TableRow key={sub.id}>
-                <TableCell className="font-mono font-medium">{sub.submittal_number}</TableCell>
-                <TableCell className="font-medium">{sub.title}</TableCell>
-                <TableCell>
-                  <Badge variant={STATUS_VARIANT[sub.status]}>
-                    {sub.status.replace(/_/g, ' ')}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {sub.due_at ? new Date(sub.due_at).toLocaleDateString('en-CA') : '—'}
-                </TableCell>
-                <TableCell className="text-right">
-                  {sub.status === 'submitted' && (
-                    <Button variant="outline" size="sm" onClick={() => setReviewSubId(sub.id)}>
-                      <Star className="h-4 w-4 mr-1" />
-                      Review
-                    </Button>
-                  )}
-                </TableCell>
-              </TableRow>
+              <SubRow key={sub.id} sub={sub} onReview={setReviewSubId} />
             ))}
           </TableBody>
         </Table>
       )}
-
-      <Dialog open={!!reviewSubId} onOpenChange={(o) => !o && setReviewSubId(null)}>
+      <Dialog
+        open={!!reviewSubId}
+        onOpenChange={(o) => {
+          if (!o) setReviewSubId(null);
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Review Submittal</DialogTitle>

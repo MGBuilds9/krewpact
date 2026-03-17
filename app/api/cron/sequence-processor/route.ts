@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServiceClient } from '@/lib/supabase/server';
-import { sendEmail } from '@/lib/email/resend';
-import { renderEmailTemplate } from '@/lib/email/template-renderer';
-import { processSequences } from '@/lib/crm/sequence-processor';
-import type { EmailSender, TemplateResolver } from '@/lib/crm/sequence-processor';
+
 import { verifyCronAuth } from '@/lib/api/cron-auth';
 import { createCronLogger } from '@/lib/api/cron-logger';
+import type { EmailSender, TemplateResolver } from '@/lib/crm/sequence-processor';
+import { processSequences } from '@/lib/crm/sequence-processor';
+import { sendEmail } from '@/lib/email/resend';
+import { renderEmailTemplate } from '@/lib/email/template-renderer';
+import { createServiceClient } from '@/lib/supabase/server';
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const { authorized } = await verifyCronAuth(req);
@@ -51,7 +52,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     errors: result.errors.length,
     timestamp: new Date().toISOString(),
   };
-  await cronLog.success({ processed: result.processed, completed: result.completed, errors: result.errors.length });
+  await cronLog.success({
+    processed: result.processed,
+    completed: result.completed,
+    errors: result.errors.length,
+  });
   return NextResponse.json(response);
 }
 

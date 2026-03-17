@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { KnowledgeSearch, type SearchResult } from '@/components/Executive/KnowledgeSearch';
+
 import { DocumentViewer } from '@/components/Executive/DocumentViewer';
+import { KnowledgeSearch, type SearchResult } from '@/components/Executive/KnowledgeSearch';
 
 export default function KnowledgeLibraryPage() {
   const [selectedDoc, setSelectedDoc] = useState<SearchResult | null>(null);

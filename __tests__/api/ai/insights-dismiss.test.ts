@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({
@@ -12,11 +11,13 @@ vi.mock('@/lib/api/rate-limit', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
+
 import { PATCH } from '@/app/api/ai/insights/[id]/dismiss/route';
+import { createUserClientSafe } from '@/lib/supabase/server';
+
 import { mockClerkAuth, mockClerkUnauth } from '../../helpers/mock-auth';
-import { mockSupabaseClient } from '../../helpers/mock-supabase';
 import { makeRequest } from '../../helpers/mock-request';
+import { mockSupabaseClient } from '../../helpers/mock-supabase';
 
 const INSIGHT_ID = '550e8400-e29b-41d4-a716-446655440099';
 

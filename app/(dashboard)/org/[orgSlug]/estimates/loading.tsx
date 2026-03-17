@@ -13,8 +13,8 @@ export default function EstimatesLoading() {
       </div>
       <div className="rounded-lg border">
         <Skeleton className="h-10 w-full" />
-        {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={i} className="h-16 w-full border-t" />
+        {['r-1', 'r-2', 'r-3', 'r-4', 'r-5', 'r-6'].map((id) => (
+          <Skeleton key={id} className="h-16 w-full border-t" />
         ))}
       </div>
     </div>

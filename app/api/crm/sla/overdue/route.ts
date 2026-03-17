@@ -1,8 +1,9 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { LEAD_SLA_CONFIG, OPPORTUNITY_SLA_CONFIG, calculateSLAStatus } from '@/lib/crm/sla-config';
 import { NextRequest, NextResponse } from 'next/server';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { calculateSLAStatus, LEAD_SLA_CONFIG, OPPORTUNITY_SLA_CONFIG } from '@/lib/crm/sla-config';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 export async function GET(req: NextRequest) {
   const { userId } = await auth();

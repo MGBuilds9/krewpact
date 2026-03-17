@@ -1,7 +1,8 @@
 'use client';
 
+import { Briefcase, DollarSign, TrendingUp } from 'lucide-react';
+
 import { Card, CardContent } from '@/components/ui/card';
-import { DollarSign, TrendingUp, Briefcase } from 'lucide-react';
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(value);

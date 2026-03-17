@@ -1,18 +1,19 @@
 'use client';
 
+import { ChevronDown, Home } from 'lucide-react';
+import { useParams, usePathname } from 'next/navigation';
 import React from 'react';
-import { usePathname, useParams } from 'next/navigation';
-import { useOrgRouter } from '@/hooks/useOrgRouter';
-import { Home, ChevronDown } from 'lucide-react';
+
 import {
   Breadcrumb,
-  BreadcrumbList,
   BreadcrumbItem,
   BreadcrumbLink,
+  BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
+import { useOrgRouter } from '@/hooks/useOrgRouter';
 
 const routeLabels: Record<string, string> = {
   '/dashboard': 'Dashboard',
@@ -35,120 +36,126 @@ const routeLabels: Record<string, string> = {
   '/crm/dashboard': 'CRM Dashboard',
 };
 
+const contextLabels: Record<string, string> = {
+  leads: 'Lead Details',
+  opportunities: 'Opportunity Details',
+  projects: 'Project Details',
+  contacts: 'Contact Details',
+  accounts: 'Account Details',
+  estimates: 'Estimate Details',
+};
+
+const UUID_RE = /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i;
+
+function buildBreadcrumbs(
+  strippedPath: string,
+  orgPath: (p: string) => string,
+  params: Record<string, string | string[] | undefined>,
+) {
+  const paths = strippedPath.split('/').filter(Boolean);
+  const crumbs: { label: string; path: string }[] = [
+    { label: 'Dashboard', path: orgPath('/dashboard') },
+  ];
+  let currentPath = '';
+  paths.forEach((segment) => {
+    currentPath += `/${segment}`;
+    let label = routeLabels[currentPath];
+    if (!label) {
+      const paramValue = Object.values(params).find((v) => v === segment);
+      if (paramValue) {
+        if (UUID_RE.test(segment)) {
+          const parentSegment = paths[paths.indexOf(segment) - 1];
+          label = contextLabels[parentSegment] || 'Details';
+        } else {
+          label = segment
+            .split('-')
+            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(' ');
+        }
+      } else {
+        label = segment.charAt(0).toUpperCase() + segment.slice(1);
+      }
+    }
+    crumbs.push({ label, path: orgPath(currentPath) });
+  });
+  return crumbs;
+}
+
+function CrumbList({
+  breadcrumbs,
+  router,
+  className,
+  itemClass,
+  textClass,
+}: {
+  breadcrumbs: { label: string; path: string }[];
+  router: { push: (p: string) => void };
+  className?: string;
+  itemClass?: string;
+  textClass?: string;
+}) {
+  return (
+    <Breadcrumb className={className}>
+      <BreadcrumbList className={itemClass}>
+        {breadcrumbs.map((crumb, index) => (
+          <React.Fragment key={crumb.path}>
+            {index > 0 && <BreadcrumbSeparator />}
+            <BreadcrumbItem
+              className={itemClass?.includes('flex-nowrap') ? 'whitespace-nowrap' : undefined}
+            >
+              {index === breadcrumbs.length - 1 ? (
+                <BreadcrumbPage className={textClass ?? 'font-semibold text-foreground'}>
+                  {crumb.label}
+                </BreadcrumbPage>
+              ) : (
+                <BreadcrumbLink
+                  onClick={() => router.push(crumb.path)}
+                  className={`cursor-pointer hover:text-primary transition-colors ${textClass ?? ''}`}
+                >
+                  {index === 0 && <Home className="h-4 w-4 mr-1 inline" />}
+                  {crumb.label}
+                </BreadcrumbLink>
+              )}
+            </BreadcrumbItem>
+          </React.Fragment>
+        ))}
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
+}
+
 export function Breadcrumbs() {
   const pathname = usePathname();
   const { orgPath, router } = useOrgRouter();
   const params = useParams();
   const [isCollapsed, setIsCollapsed] = React.useState(false);
 
-  // Strip /org/[slug] prefix from pathname for breadcrumb generation
   const orgSlug = params?.orgSlug as string | undefined;
   const orgPrefix = orgSlug ? `/org/${orgSlug}` : '';
   const strippedPath = orgPrefix ? pathname.replace(orgPrefix, '') || '/' : pathname;
 
-  const generateBreadcrumbs = () => {
-    const paths = strippedPath.split('/').filter(Boolean);
-    const breadcrumbs: { label: string; path: string }[] = [
-      { label: 'Dashboard', path: orgPath('/dashboard') },
-    ];
+  if (strippedPath === '/dashboard' || strippedPath === '/' || strippedPath === '') return null;
 
-    let currentPath = '';
-    paths.forEach((segment) => {
-      currentPath += `/${segment}`;
-      let label = routeLabels[currentPath];
-      if (!label) {
-        const paramValue = Object.values(params).find((v) => v === segment);
-        if (paramValue) {
-          // For UUID-like segments, show a contextual label based on parent route
-          const isUUID = /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i.test(
-            segment,
-          );
-          if (isUUID) {
-            const parentSegment = paths[paths.indexOf(segment) - 1];
-            const contextLabels: Record<string, string> = {
-              leads: 'Lead Details',
-              opportunities: 'Opportunity Details',
-              projects: 'Project Details',
-              contacts: 'Contact Details',
-              accounts: 'Account Details',
-              estimates: 'Estimate Details',
-            };
-            label = contextLabels[parentSegment] || 'Details';
-          } else {
-            label = segment
-              .split('-')
-              .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-              .join(' ');
-          }
-        } else {
-          label = segment.charAt(0).toUpperCase() + segment.slice(1);
-        }
-      }
-      breadcrumbs.push({ label, path: orgPath(currentPath) });
-    });
-
-    return breadcrumbs;
-  };
-
-  const breadcrumbs = generateBreadcrumbs();
-
-  if (strippedPath === '/dashboard' || strippedPath === '/' || strippedPath === '') {
-    return null;
-  }
+  const breadcrumbs = buildBreadcrumbs(
+    strippedPath,
+    orgPath,
+    params as Record<string, string | string[] | undefined>,
+  );
 
   return (
     <div className="bg-background border-b">
       <div className="container mx-auto px-4 md:px-6 py-3">
         <div className="flex items-center justify-between">
-          <Breadcrumb className="hidden md:block">
-            <BreadcrumbList>
-              {breadcrumbs.map((crumb, index) => (
-                <React.Fragment key={crumb.path}>
-                  {index > 0 && <BreadcrumbSeparator />}
-                  <BreadcrumbItem>
-                    {index === breadcrumbs.length - 1 ? (
-                      <BreadcrumbPage className="font-semibold text-foreground">
-                        {crumb.label}
-                      </BreadcrumbPage>
-                    ) : (
-                      <BreadcrumbLink
-                        onClick={() => router.push(crumb.path)}
-                        className="cursor-pointer hover:text-primary transition-colors"
-                      >
-                        {index === 0 && <Home className="h-4 w-4 mr-1 inline" />}
-                        {crumb.label}
-                      </BreadcrumbLink>
-                    )}
-                  </BreadcrumbItem>
-                </React.Fragment>
-              ))}
-            </BreadcrumbList>
-          </Breadcrumb>
-
+          <CrumbList breadcrumbs={breadcrumbs} router={router} className="hidden md:block" />
           <div className="md:hidden flex items-center gap-2 w-full">
             {!isCollapsed ? (
-              <Breadcrumb className="flex-1 overflow-x-auto">
-                <BreadcrumbList className="flex-nowrap">
-                  {breadcrumbs.map((crumb, index) => (
-                    <React.Fragment key={crumb.path}>
-                      {index > 0 && <BreadcrumbSeparator />}
-                      <BreadcrumbItem className="whitespace-nowrap">
-                        {index === breadcrumbs.length - 1 ? (
-                          <BreadcrumbPage className="text-sm">{crumb.label}</BreadcrumbPage>
-                        ) : (
-                          <BreadcrumbLink
-                            onClick={() => router.push(crumb.path)}
-                            className="cursor-pointer text-sm"
-                          >
-                            {index === 0 && <Home className="h-3 w-3 mr-1 inline" />}
-                            {crumb.label}
-                          </BreadcrumbLink>
-                        )}
-                      </BreadcrumbItem>
-                    </React.Fragment>
-                  ))}
-                </BreadcrumbList>
-              </Breadcrumb>
+              <CrumbList
+                breadcrumbs={breadcrumbs}
+                router={router}
+                className="flex-1 overflow-x-auto"
+                itemClass="flex-nowrap"
+                textClass="text-sm"
+              />
             ) : (
               <Button
                 variant="ghost"
@@ -160,7 +167,6 @@ export function Breadcrumbs() {
                 {breadcrumbs[breadcrumbs.length - 1].label}
               </Button>
             )}
-
             {!isCollapsed && (
               <Button
                 variant="ghost"

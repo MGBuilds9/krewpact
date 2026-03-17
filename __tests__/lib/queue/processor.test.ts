@@ -3,7 +3,7 @@
  * dispatches to the correct SyncService method.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { mockSyncService } = vi.hoisted(() => ({
   mockSyncService: {
@@ -38,8 +38,8 @@ vi.mock('@/lib/erp/sync-service', () => ({
 }));
 
 import { processJob } from '@/lib/queue/processor';
-import { JobType } from '@/lib/queue/types';
 import type { Job } from '@/lib/queue/types';
+import { JobType } from '@/lib/queue/types';
 
 function makeJob(type: JobType, entityId = 'entity-1', userId = 'user-1'): Job {
   return {

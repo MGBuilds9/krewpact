@@ -8,31 +8,163 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServiceClient } from '@/lib/supabase/server';
-import { logger } from '@/lib/logger';
+
 import { verifyCronAuth } from '@/lib/api/cron-auth';
 import { createCronLogger } from '@/lib/api/cron-logger';
 import {
-  generateICPsFromAccounts,
-  scoreLeadAgainstICP,
   type AccountForICP,
-  type LeadForICP,
+  generateICPsFromAccounts,
   type ICPProfile,
+  type LeadForICP,
+  scoreLeadAgainstICP,
 } from '@/lib/crm/icp-engine';
+import { logger } from '@/lib/logger';
+import { createServiceClient } from '@/lib/supabase/server';
+
+type ServiceClient = ReturnType<typeof createServiceClient>;
+
+interface MatchRow {
+  icp_id: string;
+  lead_id: string;
+  match_score: number;
+  match_details: Record<string, number>;
+}
+
+function buildIcpRow(profile: ICPProfile): Record<string, unknown> {
+  return {
+    name: profile.name,
+    description: profile.description,
+    division_id: profile.division_id,
+    is_auto_generated: true,
+    is_active: true,
+    industry_match: profile.industry_match,
+    geography_match: profile.geography_match,
+    project_value_range: profile.project_value_range,
+    project_types: profile.project_types,
+    repeat_rate_weight: profile.repeat_rate_weight,
+    sample_size: profile.sample_size,
+    confidence_score: profile.confidence_score,
+    avg_deal_value: profile.avg_deal_value,
+    avg_project_duration_days: profile.avg_project_duration_days,
+    top_sources: profile.top_sources,
+    updated_at: new Date().toISOString(),
+  };
+}
+
+async function upsertIcpProfile(supabase: ServiceClient, profile: ICPProfile): Promise<void> {
+  const icpRow = buildIcpRow(profile);
+  const { data: existing } = await supabase
+    .from('ideal_client_profiles')
+    .select('id')
+    .eq('name', profile.name)
+    .eq('is_auto_generated', true)
+    .maybeSingle();
+  if (existing) {
+    await supabase
+      .from('ideal_client_profiles')
+      .update(icpRow)
+      .eq('id', (existing as Record<string, unknown>).id as string);
+  } else {
+    await supabase.from('ideal_client_profiles').insert(icpRow);
+  }
+}
+
+function buildLeadForICP(rawLead: Record<string, unknown>): LeadForICP {
+  const enrichment = rawLead.enrichment_data as Record<string, unknown> | null;
+  const estimatedValue =
+    (enrichment?.estimated_value as number | null) ??
+    (enrichment?.project_value as number | null) ??
+    null;
+  return {
+    id: rawLead.id as string,
+    industry: rawLead.industry as string | null,
+    city: rawLead.city as string | null,
+    province: rawLead.province as string | null,
+    source_channel: rawLead.source_channel as string | null,
+    estimated_value: estimatedValue,
+  };
+}
+
+function buildIcpProfileFromRow(icpData: Record<string, unknown>): ICPProfile {
+  return {
+    name: icpData.name as string,
+    description: '',
+    division_id: null,
+    is_auto_generated: true,
+    industry_match: (icpData.industry_match as string[]) ?? [],
+    geography_match: (icpData.geography_match as { cities: string[]; provinces: string[] }) ?? {
+      cities: [],
+      provinces: [],
+    },
+    project_value_range: (icpData.project_value_range as { min: number; max: number }) ?? {
+      min: 0,
+      max: 0,
+    },
+    project_types: (icpData.project_types as string[]) ?? [],
+    repeat_rate_weight: (icpData.repeat_rate_weight as number) ?? 0,
+    sample_size: 0,
+    confidence_score: 0,
+    avg_deal_value: 0,
+    avg_project_duration_days: 0,
+    top_sources: (icpData.top_sources as string[]) ?? [],
+  };
+}
+
+function buildLeadMatchRows(
+  leads: Array<Record<string, unknown>>,
+  activeICPs: Array<Record<string, unknown>>,
+): MatchRow[] {
+  const rows: MatchRow[] = [];
+  leads.forEach((rawLead) => {
+    const lead = buildLeadForICP(rawLead);
+    activeICPs.forEach((icp) => {
+      const icpData = icp as Record<string, unknown>;
+      const profile = buildIcpProfileFromRow(icpData);
+      const { score, details } = scoreLeadAgainstICP(lead, profile);
+      if (score > 0) {
+        rows.push({
+          icp_id: icpData.id as string,
+          lead_id: lead.id,
+          match_score: score,
+          match_details: details,
+        });
+      }
+    });
+  });
+  return rows;
+}
+
+async function persistMatchRows(
+  supabase: ServiceClient,
+  matchRows: MatchRow[],
+  leads: Array<Record<string, unknown>>,
+): Promise<void> {
+  if (matchRows.length === 0) return;
+  const leadIds = leads.map((l) => l.id as string);
+  await supabase.from('icp_lead_matches').delete().in('lead_id', leadIds);
+  const CHUNK = 200;
+  for (let i = 0; i < matchRows.length; i += CHUNK) {
+    const chunk = matchRows.slice(i, i + CHUNK);
+    const { error: insertErr } = await supabase.from('icp_lead_matches').insert(chunk);
+    if (insertErr)
+      logger.error('ICP refresh: failed to insert icp_lead_matches chunk', {
+        error: insertErr.message,
+      });
+  }
+}
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
   const { authorized } = await verifyCronAuth(req);
-  if (!authorized) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!authorized) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const cronLog = createCronLogger('icp-refresh');
   const supabase = createServiceClient();
 
-  // --- Step 1: Fetch accounts with at least 1 project ---
   const { data: rawAccounts, error: accErr } = await supabase
     .from('accounts')
-    .select('id, industry, address, total_projects, lifetime_revenue, is_repeat_client, source, tags')
+    .select(
+      'id, industry, address, total_projects, lifetime_revenue, is_repeat_client, source, tags',
+    )
     .gte('total_projects', 1)
     .is('deleted_at', null);
 
@@ -42,7 +174,6 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   }
 
   const accounts = (rawAccounts ?? []) as AccountForICP[];
-
   if (accounts.length === 0) {
     return NextResponse.json({
       success: true,
@@ -52,9 +183,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     });
   }
 
-  // --- Step 2: Generate ICPs from accounts ---
   const newProfiles: ICPProfile[] = generateICPsFromAccounts(accounts);
-
   if (newProfiles.length === 0) {
     return NextResponse.json({
       success: true,
@@ -64,50 +193,11 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     });
   }
 
-  let icpsUpdated = 0;
-
-  // Upsert each generated ICP by name (auto-generated ICPs only)
   for (const profile of newProfiles) {
-    const icpRow: Record<string, unknown> = {
-      name: profile.name,
-      description: profile.description,
-      division_id: profile.division_id,
-      is_auto_generated: true,
-      is_active: true,
-      industry_match: profile.industry_match,
-      geography_match: profile.geography_match,
-      project_value_range: profile.project_value_range,
-      project_types: profile.project_types,
-      repeat_rate_weight: profile.repeat_rate_weight,
-      sample_size: profile.sample_size,
-      confidence_score: profile.confidence_score,
-      avg_deal_value: profile.avg_deal_value,
-      avg_project_duration_days: profile.avg_project_duration_days,
-      top_sources: profile.top_sources,
-      updated_at: new Date().toISOString(),
-    };
-
-    // Check if an auto-generated ICP with this name already exists
-    const { data: existing } = await supabase
-      .from('ideal_client_profiles')
-      .select('id')
-      .eq('name', profile.name)
-      .eq('is_auto_generated', true)
-      .maybeSingle();
-
-    if (existing) {
-      await supabase
-        .from('ideal_client_profiles')
-        .update(icpRow)
-        .eq('id', (existing as Record<string, unknown>).id as string);
-    } else {
-      await supabase.from('ideal_client_profiles').insert(icpRow);
-    }
-
-    icpsUpdated++;
+    await upsertIcpProfile(supabase, profile);
   }
+  const icpsUpdated = newProfiles.length;
 
-  // --- Step 3: Fetch all active ICPs (including any manually created ones) ---
   const { data: activeICPs, error: icpFetchErr } = await supabase
     .from('ideal_client_profiles')
     .select(
@@ -121,15 +211,13 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       success: true,
       icps_updated: icpsUpdated,
       leads_rescored: 0,
-      warning: 'ICP upsert succeeded but lead re-scoring skipped: ' + icpFetchErr.message,
+      warning: 'Lead re-scoring skipped: ' + icpFetchErr.message,
     });
   }
-
   if (!activeICPs || activeICPs.length === 0) {
     return NextResponse.json({ success: true, icps_updated: icpsUpdated, leads_rescored: 0 });
   }
 
-  // --- Step 4: Re-score all active leads against updated ICPs ---
   const { data: rawLeads, error: leadsErr } = await supabase
     .from('leads')
     .select('id, industry, city, province, source_channel, enrichment_data')
@@ -147,94 +235,17 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   }
 
   const leads = (rawLeads ?? []) as Array<Record<string, unknown>>;
-  let leadsRescored = 0;
-  const matchRows: Array<{
-    icp_id: string;
-    lead_id: string;
-    match_score: number;
-    match_details: Record<string, number>;
-  }> = [];
+  const matchRows = buildLeadMatchRows(leads, activeICPs as Array<Record<string, unknown>>);
+  await persistMatchRows(supabase, matchRows, leads);
 
-  for (const rawLead of leads) {
-    // Extract estimated_value from enrichment_data if not a direct column
-    const enrichment = rawLead.enrichment_data as Record<string, unknown> | null;
-    const estimatedValue =
-      (enrichment?.estimated_value as number | null) ??
-      (enrichment?.project_value as number | null) ??
-      null;
-
-    const lead: LeadForICP = {
-      id: rawLead.id as string,
-      industry: rawLead.industry as string | null,
-      city: rawLead.city as string | null,
-      province: rawLead.province as string | null,
-      source_channel: rawLead.source_channel as string | null,
-      estimated_value: estimatedValue,
-    };
-
-    for (const icp of activeICPs) {
-      const icpData = icp as Record<string, unknown>;
-      const icpProfile: ICPProfile = {
-        name: icpData.name as string,
-        description: '',
-        division_id: null,
-        is_auto_generated: true,
-        industry_match: (icpData.industry_match as string[]) ?? [],
-        geography_match: (icpData.geography_match as { cities: string[]; provinces: string[] }) ?? {
-          cities: [],
-          provinces: [],
-        },
-        project_value_range: (icpData.project_value_range as { min: number; max: number }) ?? {
-          min: 0,
-          max: 0,
-        },
-        project_types: (icpData.project_types as string[]) ?? [],
-        repeat_rate_weight: (icpData.repeat_rate_weight as number) ?? 0,
-        sample_size: 0,
-        confidence_score: 0,
-        avg_deal_value: 0,
-        avg_project_duration_days: 0,
-        top_sources: (icpData.top_sources as string[]) ?? [],
-      };
-
-      const { score, details } = scoreLeadAgainstICP(lead, icpProfile);
-
-      if (score > 0) {
-        matchRows.push({
-          icp_id: icpData.id as string,
-          lead_id: lead.id,
-          match_score: score,
-          match_details: details,
-        });
-      }
-    }
-
-    leadsRescored++;
-  }
-
-  // Upsert match rows — delete old auto-scored matches first, then batch insert
-  if (matchRows.length > 0) {
-    const leadIds = leads.map((l) => l.id as string);
-
-    // Delete existing ICP match rows for these leads (will be replaced)
-    await supabase.from('icp_lead_matches').delete().in('lead_id', leadIds);
-
-    // Batch insert new scores in chunks of 200
-    const CHUNK = 200;
-    for (let i = 0; i < matchRows.length; i += CHUNK) {
-      const chunk = matchRows.slice(i, i + CHUNK);
-      const { error: insertErr } = await supabase.from('icp_lead_matches').insert(chunk);
-      if (insertErr) {
-        logger.error('ICP refresh: failed to insert icp_lead_matches chunk', {
-          error: insertErr.message,
-        });
-      }
-    }
-  }
-
+  const leadsRescored = leads.length;
   logger.info('ICP refresh complete', { icps_updated: icpsUpdated, leads_rescored: leadsRescored });
-
-  const result = { success: true, icps_updated: icpsUpdated, leads_rescored: leadsRescored, timestamp: new Date().toISOString() };
+  const result = {
+    success: true,
+    icps_updated: icpsUpdated,
+    leads_rescored: leadsRescored,
+    timestamp: new Date().toISOString(),
+  };
   await cronLog.success({ icps_updated: icpsUpdated, leads_rescored: leadsRescored });
   return NextResponse.json(result);
 }

@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
 import type { Database } from '@/types/supabase';
 
 type Tables = Database['public']['Tables'];

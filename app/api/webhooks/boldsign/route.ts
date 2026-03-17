@@ -54,50 +54,154 @@ function verifyBoldSignSignature(payload: string, signature: string, secret: str
 }
 
 // ============================================================
+// Notification helpers
+// ============================================================
+
+async function notifyContractSigned(
+  supabase: ReturnType<typeof createServiceClient>,
+  contractId: string,
+  projectName: string,
+  clientName: string,
+): Promise<void> {
+  const { data: members } = await supabase
+    .from('project_members')
+    .select('user_id')
+    .in('member_role', ['project_manager', 'accounting']);
+
+  const memberUserIds = (members ?? []).map((m) => m.user_id);
+  if (memberUserIds.length === 0) return;
+
+  const { data: users } = await supabase
+    .from('users')
+    .select('email, first_name, last_name')
+    .in('id', memberUserIds);
+
+  const recipients = (users ?? []).map((u) => ({
+    email: u.email,
+    name: `${u.first_name} ${u.last_name}`.trim(),
+  }));
+
+  if (recipients.length === 0) return;
+
+  dispatchNotification({
+    type: 'contract_signed',
+    recipients,
+    contract_id: contractId,
+    project_name: projectName,
+    client_name: clientName,
+    signed_at: new Date().toISOString(),
+  }).catch((err) =>
+    logger.error('Contract signed notification failed', {
+      error: err instanceof Error ? err.message : String(err),
+    }),
+  );
+}
+
+// ============================================================
 // Event handlers
 // ============================================================
+
+async function downloadSignedPdf(documentId: string): Promise<Buffer | null> {
+  const boldSign = new BoldSignClient();
+  try {
+    return await boldSign.downloadDocument(documentId);
+  } catch (err) {
+    logger.error('BoldSign webhook: failed to download signed PDF', {
+      documentId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return null;
+  }
+}
+
+async function uploadSignedPdf(
+  supabase: ReturnType<typeof createServiceClient>,
+  documentId: string,
+  pdf: Buffer,
+): Promise<string | null> {
+  const fileName = `signed-contracts/${documentId}/${Date.now()}-signed.pdf`;
+  const { error: uploadError } = await supabase.storage
+    .from('contracts')
+    .upload(fileName, pdf, { contentType: 'application/pdf', upsert: true });
+  if (uploadError) {
+    logger.error('BoldSign webhook: failed to upload signed PDF to storage', {
+      documentId,
+      error: uploadError.message,
+    });
+    return null;
+  }
+  return fileName;
+}
+
+async function finalizeEnvelopeRecords(
+  supabase: ReturnType<typeof createServiceClient>,
+  envelope: { id: string; contract_id: string },
+  documentId: string,
+  storagePath: string | null,
+): Promise<void> {
+  const docInsert: Record<string, unknown> = {
+    envelope_id: envelope.id,
+    signed_at: new Date().toISOString(),
+  };
+  if (storagePath) docInsert.file_id = storagePath;
+
+  const { error: docError } = await supabase.from('esign_documents').insert(docInsert);
+  if (docError)
+    logger.error('BoldSign webhook: failed to create esign_document', {
+      documentId,
+      error: docError.message,
+    });
+
+  const { error: contractError } = await supabase
+    .from('contract_terms')
+    .update({ contract_status: 'signed', signed_at: new Date().toISOString() })
+    .eq('id', envelope.contract_id);
+  if (contractError)
+    logger.error('BoldSign webhook: failed to update contract status', {
+      documentId,
+      contractId: envelope.contract_id,
+      error: contractError.message,
+    });
+
+  try {
+    const { data: project } = await supabase
+      .from('projects')
+      .select('id, project_name, account_id')
+      .eq('contract_id', envelope.contract_id)
+      .single();
+    if (project) {
+      const accountResult = project.account_id
+        ? await supabase
+            .from('accounts')
+            .select('account_name')
+            .eq('id', project.account_id)
+            .single()
+        : { data: null };
+      const clientName = accountResult.data?.account_name ?? 'Client';
+      await notifyContractSigned(supabase, envelope.contract_id, project.project_name, clientName);
+    }
+  } catch (notifErr) {
+    logger.error('BoldSign webhook: notification lookup failed', {
+      documentId,
+      error: notifErr instanceof Error ? notifErr.message : String(notifErr),
+    });
+  }
+}
 
 async function handleCompleted(
   documentId: string,
   event: BoldSignWebhookEvent,
   supabase: ReturnType<typeof createServiceClient>,
 ): Promise<void> {
-  // Download the signed PDF
-  const boldSign = new BoldSignClient();
-  let signedPdf: Buffer | null = null;
+  const signedPdf = await downloadSignedPdf(documentId);
+  const storagePath = signedPdf ? await uploadSignedPdf(supabase, documentId, signedPdf) : null;
 
-  try {
-    signedPdf = await boldSign.downloadDocument(documentId);
-  } catch (err) {
-    logger.error('BoldSign webhook: failed to download signed PDF', {
-      documentId,
-      error: err instanceof Error ? err.message : String(err),
-    });
-    // Continue updating status even if download fails
-  }
+  const { data: envelope } = await supabase
+    .from('esign_envelopes')
+    .select('id, contract_id')
+    .eq('provider_envelope_id', documentId)
+    .single();
 
-  // Store signed PDF in Supabase Storage if downloaded
-  let storagePath: string | null = null;
-  if (signedPdf) {
-    const fileName = `signed-contracts/${documentId}/${Date.now()}-signed.pdf`;
-    const { error: uploadError } = await supabase.storage
-      .from('contracts')
-      .upload(fileName, signedPdf, {
-        contentType: 'application/pdf',
-        upsert: true,
-      });
-
-    if (uploadError) {
-      logger.error('BoldSign webhook: failed to upload signed PDF to storage', {
-        documentId,
-        error: uploadError.message,
-      });
-    } else {
-      storagePath = fileName;
-    }
-  }
-
-  // Update envelope status
   const { error: updateError } = await supabase
     .from('esign_envelopes')
     .update({
@@ -106,7 +210,6 @@ async function handleCompleted(
       payload: event,
     })
     .eq('provider_envelope_id', documentId);
-
   if (updateError) {
     logger.error('BoldSign webhook: failed to update envelope status', {
       documentId,
@@ -115,106 +218,7 @@ async function handleCompleted(
     return;
   }
 
-  // Look up the envelope to get the contract_id
-  const { data: envelope } = await supabase
-    .from('esign_envelopes')
-    .select('id, contract_id')
-    .eq('provider_envelope_id', documentId)
-    .single();
-
-  if (envelope) {
-    // Create esign_document record
-    const docInsert: Record<string, unknown> = {
-      envelope_id: envelope.id,
-      signed_at: new Date().toISOString(),
-    };
-
-    if (storagePath) {
-      docInsert.file_id = storagePath;
-    }
-
-    const { error: docError } = await supabase.from('esign_documents').insert(docInsert);
-
-    if (docError) {
-      logger.error('BoldSign webhook: failed to create esign_document', {
-        documentId,
-        error: docError.message,
-      });
-    }
-
-    // Update contract_terms status to 'signed'
-    const { error: contractError } = await supabase
-      .from('contract_terms')
-      .update({
-        contract_status: 'signed',
-        signed_at: new Date().toISOString(),
-      })
-      .eq('id', envelope.contract_id);
-
-    if (contractError) {
-      logger.error('BoldSign webhook: failed to update contract status', {
-        documentId,
-        contractId: envelope.contract_id,
-        error: contractError.message,
-      });
-    }
-
-    // Fire-and-forget: notify PM and accounting that contract was signed
-    try {
-      const { data: project } = await supabase
-        .from('projects')
-        .select('id, project_name, account_id')
-        .eq('contract_id', envelope.contract_id)
-        .single();
-
-      if (project) {
-        const [accountResult, membersResult] = await Promise.all([
-          project.account_id
-            ? supabase.from('accounts').select('account_name').eq('id', project.account_id).single()
-            : Promise.resolve({ data: null }),
-          supabase
-            .from('project_members')
-            .select('user_id, member_role')
-            .eq('project_id', project.id)
-            .in('member_role', ['project_manager', 'accounting']),
-        ]);
-
-        const memberUserIds = (membersResult.data ?? []).map((m) => m.user_id);
-
-        if (memberUserIds.length > 0) {
-          const { data: users } = await supabase
-            .from('users')
-            .select('email, first_name, last_name')
-            .in('id', memberUserIds);
-
-          const recipients = (users ?? []).map((u) => ({
-            email: u.email,
-            name: `${u.first_name} ${u.last_name}`.trim(),
-          }));
-
-          if (recipients.length > 0) {
-            dispatchNotification({
-              type: 'contract_signed',
-              recipients,
-              contract_id: envelope.contract_id,
-              project_name: project.project_name,
-              client_name: accountResult.data?.account_name ?? 'Client',
-              signed_at: new Date().toISOString(),
-            }).catch((err) =>
-              logger.error('Contract signed notification failed', {
-                error: err instanceof Error ? err.message : String(err),
-              }),
-            );
-          }
-        }
-      }
-    } catch (notifErr) {
-      logger.error('BoldSign webhook: notification lookup failed', {
-        documentId,
-        error: notifErr instanceof Error ? notifErr.message : String(notifErr),
-      });
-    }
-  }
+  if (envelope) await finalizeEnvelopeRecords(supabase, envelope, documentId, storagePath);
 
   logger.info('BoldSign webhook: envelope completed', {
     documentId,

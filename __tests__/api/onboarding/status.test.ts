@@ -2,7 +2,7 @@
  * Tests for GET /api/onboarding/status
  * Checks onboarding completion based on org profile, divisions, and team members.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
@@ -15,14 +15,15 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { GET } from '@/app/api/onboarding/status/route';
+
 import {
-  mockSupabaseClient,
+  makeRequest,
   mockClerkAuth,
   mockClerkUnauth,
-  makeRequest,
+  mockSupabaseClient,
 } from '@/__tests__/helpers';
+import { GET } from '@/app/api/onboarding/status/route';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);

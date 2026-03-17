@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
@@ -9,11 +8,13 @@ vi.mock('@/lib/api/rate-limit', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
+
 import { GET } from '@/app/api/ai/suggest/route';
+import { createUserClientSafe } from '@/lib/supabase/server';
+
 import { mockClerkAuth, mockClerkUnauth } from '../../helpers/mock-auth';
-import { mockSupabaseClient } from '../../helpers/mock-supabase';
 import { makeRequest } from '../../helpers/mock-request';
+import { mockSupabaseClient } from '../../helpers/mock-supabase';
 
 const mockAuth = vi.mocked(auth);
 
@@ -26,7 +27,8 @@ describe('GET /api/ai/suggest', () => {
   it('returns 401 when unauthenticated', async () => {
     mockClerkUnauth(mockAuth);
     const req = makeRequest(
-      '/api/ai/suggest?field=estimated_value&context=' + encodeURIComponent(JSON.stringify({ project_type: 'renovation' })),
+      '/api/ai/suggest?field=estimated_value&context=' +
+        encodeURIComponent(JSON.stringify({ project_type: 'renovation' })),
     );
     const res = await GET(req);
     expect(res.status).toBe(401);

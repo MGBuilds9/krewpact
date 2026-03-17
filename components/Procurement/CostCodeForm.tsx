@@ -1,18 +1,19 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+
+import { Button } from '@/components/ui/button';
 import {
   Form,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormControl,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 
 const formSchema = z.object({
@@ -51,10 +52,7 @@ export function CostCodeForm({
   });
 
   function handleSubmit(values: FormValues) {
-    onSubmit({
-      ...values,
-      parent_cost_code_id: values.parent_cost_code_id || undefined,
-    });
+    onSubmit({ ...values, parent_cost_code_id: values.parent_cost_code_id || undefined });
   }
 
   return (

@@ -1,5 +1,6 @@
-import { generateText } from 'ai';
 import { google } from '@ai-sdk/google';
+import { generateText } from 'ai';
+
 import { trackAIAction } from '../cost-tracker';
 import type { CostEntry } from '../types';
 
@@ -9,7 +10,11 @@ interface GeminiGenerateOptions {
   costContext?: Omit<CostEntry, 'modelUsed'>;
 }
 
-export async function generateWithGemini({ prompt, maxTokens = 200, costContext }: GeminiGenerateOptions): Promise<string> {
+export async function generateWithGemini({
+  prompt,
+  maxTokens = 200,
+  costContext,
+}: GeminiGenerateOptions): Promise<string> {
   const start = Date.now();
 
   const { text, usage } = await generateText({

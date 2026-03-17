@@ -1,22 +1,23 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+
+import { Button } from '@/components/ui/button';
 import {
   Form,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormControl,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { useCreateDailyLog, useUpdateDailyLog } from '@/hooks/useProjectExtended';
 import type { DailyLog } from '@/hooks/useProjectExtended';
-import { Loader2 } from 'lucide-react';
+import { useCreateDailyLog, useUpdateDailyLog } from '@/hooks/useProjectExtended';
 
 const formSchema = z.object({
   log_date: z.string().min(1, 'Date is required'),
@@ -37,39 +38,60 @@ export interface DailyLogFormProps {
   onCancel?: () => void;
 }
 
+function buildWeather(values: FormValues): Record<string, unknown> | null {
+  const weather: Record<string, unknown> = {};
+  if (values.weather_condition) weather.condition = values.weather_condition;
+  if (values.weather_temp) weather.temp = parseFloat(values.weather_temp);
+  return Object.keys(weather).length > 0 ? weather : null;
+}
+
+function buildWeatherDefaults(initialData?: DailyLog) {
+  const w = initialData?.weather as Record<string, string> | null;
+  return { weather_condition: w?.condition ?? '', weather_temp: w?.temp?.toString() ?? '' };
+}
+
+function buildDefaultValues(initialData?: DailyLog) {
+  return {
+    log_date: initialData?.log_date ?? new Date().toISOString().split('T')[0],
+    crew_count: initialData?.crew_count?.toString() ?? '',
+    work_summary: initialData?.work_summary ?? '',
+    delays: initialData?.delays ?? '',
+    safety_notes: initialData?.safety_notes ?? '',
+    ...buildWeatherDefaults(initialData),
+  };
+}
+
+function parseCrewCount(raw: string | undefined): number | undefined {
+  if (!raw) return undefined;
+  const n = parseInt(raw, 10);
+  return isNaN(n) ? undefined : n;
+}
+
 export function DailyLogForm({ projectId, initialData, onSuccess, onCancel }: DailyLogFormProps) {
   const createLog = useCreateDailyLog(projectId);
   const updateLog = useUpdateDailyLog(projectId);
   const isEditing = !!initialData;
-
-  const weatherInit = initialData?.weather as Record<string, string> | null;
+  const cb = {
+    onSuccess: () => {
+      form.reset();
+      onSuccess?.();
+    },
+  };
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      log_date: initialData?.log_date ?? new Date().toISOString().split('T')[0],
-      crew_count: initialData?.crew_count?.toString() ?? '',
-      work_summary: initialData?.work_summary ?? '',
-      delays: initialData?.delays ?? '',
-      safety_notes: initialData?.safety_notes ?? '',
-      weather_condition: weatherInit?.condition ?? '',
-      weather_temp: weatherInit?.temp?.toString() ?? '',
-    },
+    defaultValues: buildDefaultValues(initialData),
   });
 
   const isPending = createLog.isPending || updateLog.isPending;
 
   function onSubmit(values: FormValues) {
-    const crewCount = values.crew_count ? parseInt(values.crew_count, 10) : undefined;
-    if (values.crew_count && isNaN(crewCount!)) {
+    const crewCount = parseCrewCount(values.crew_count);
+    if (values.crew_count && crewCount === undefined) {
       form.setError('crew_count', { message: 'Must be a valid integer' });
       return;
     }
-
-    const weather: Record<string, unknown> = {};
-    if (values.weather_condition) weather.condition = values.weather_condition;
-    if (values.weather_temp) weather.temp = parseFloat(values.weather_temp);
-
+    const weather = buildWeather(values);
     if (isEditing) {
       updateLog.mutate(
         {
@@ -78,14 +100,9 @@ export function DailyLogForm({ projectId, initialData, onSuccess, onCancel }: Da
           work_summary: values.work_summary || null,
           delays: values.delays || null,
           safety_notes: values.safety_notes || null,
-          weather: Object.keys(weather).length > 0 ? weather : null,
+          weather,
         },
-        {
-          onSuccess: () => {
-            form.reset();
-            onSuccess?.();
-          },
-        },
+        cb,
       );
     } else {
       createLog.mutate(
@@ -95,14 +112,9 @@ export function DailyLogForm({ projectId, initialData, onSuccess, onCancel }: Da
           work_summary: values.work_summary || undefined,
           delays: values.delays || undefined,
           safety_notes: values.safety_notes || undefined,
-          weather: Object.keys(weather).length > 0 ? weather : undefined,
+          weather: weather ?? undefined,
         },
-        {
-          onSuccess: () => {
-            form.reset();
-            onSuccess?.();
-          },
-        },
+        cb,
       );
     }
   }
@@ -124,7 +136,6 @@ export function DailyLogForm({ projectId, initialData, onSuccess, onCancel }: Da
               </FormItem>
             )}
           />
-
           <FormField
             control={form.control}
             name="crew_count"
@@ -139,7 +150,6 @@ export function DailyLogForm({ projectId, initialData, onSuccess, onCancel }: Da
             )}
           />
         </div>
-
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -154,7 +164,6 @@ export function DailyLogForm({ projectId, initialData, onSuccess, onCancel }: Da
               </FormItem>
             )}
           />
-
           <FormField
             control={form.control}
             name="weather_temp"
@@ -169,7 +178,6 @@ export function DailyLogForm({ projectId, initialData, onSuccess, onCancel }: Da
             )}
           />
         </div>
-
         <FormField
           control={form.control}
           name="work_summary"
@@ -183,7 +191,6 @@ export function DailyLogForm({ projectId, initialData, onSuccess, onCancel }: Da
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="delays"
@@ -197,7 +204,6 @@ export function DailyLogForm({ projectId, initialData, onSuccess, onCancel }: Da
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="safety_notes"
@@ -215,7 +221,6 @@ export function DailyLogForm({ projectId, initialData, onSuccess, onCancel }: Da
             </FormItem>
           )}
         />
-
         <div className="flex gap-2 justify-end pt-2">
           {onCancel && (
             <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>

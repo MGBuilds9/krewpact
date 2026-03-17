@@ -1,19 +1,20 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+
+import { Button } from '@/components/ui/button';
 import {
   Form,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormControl,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -21,8 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { useCreateActivity } from '@/hooks/useCRM';
-import { Loader2 } from 'lucide-react';
 
 const activityTypes = ['call', 'email', 'meeting', 'note', 'task'] as const;
 
@@ -48,7 +49,6 @@ const entityKeyMap = {
   account: 'account_id',
   contact: 'contact_id',
 } as const;
-
 const activityTypeLabels: Record<string, string> = {
   call: 'Call',
   email: 'Email',
@@ -62,29 +62,24 @@ export function ActivityForm({ entityType, entityId, onSuccess, onCancel }: Acti
 
   const form = useForm<ActivityFormValues>({
     resolver: zodResolver(activityFormSchema),
-    defaultValues: {
-      activity_type: 'call',
-      title: '',
-      details: '',
-      due_at: '',
-    },
+    defaultValues: { activity_type: 'call', title: '', details: '', due_at: '' },
   });
 
   function onSubmit(values: ActivityFormValues) {
-    const entityKey = entityKeyMap[entityType];
-    const payload = {
-      ...values,
-      details: values.details || undefined,
-      due_at: values.due_at || undefined,
-      [entityKey]: entityId,
-    };
-
-    createActivity.mutate(payload, {
-      onSuccess: () => {
-        form.reset();
-        onSuccess?.();
+    createActivity.mutate(
+      {
+        ...values,
+        details: values.details || undefined,
+        due_at: values.due_at || undefined,
+        [entityKeyMap[entityType]]: entityId,
       },
-    });
+      {
+        onSuccess: () => {
+          form.reset();
+          onSuccess?.();
+        },
+      },
+    );
   }
 
   return (
@@ -114,7 +109,6 @@ export function ActivityForm({ entityType, entityId, onSuccess, onCancel }: Acti
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="title"
@@ -128,7 +122,6 @@ export function ActivityForm({ entityType, entityId, onSuccess, onCancel }: Acti
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="details"
@@ -142,7 +135,6 @@ export function ActivityForm({ entityType, entityId, onSuccess, onCancel }: Acti
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="due_at"
@@ -156,7 +148,6 @@ export function ActivityForm({ entityType, entityId, onSuccess, onCancel }: Acti
             </FormItem>
           )}
         />
-
         <div className="flex gap-2 justify-end pt-2">
           {onCancel && (
             <Button

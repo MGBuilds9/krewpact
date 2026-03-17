@@ -1,18 +1,19 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+
+import { Button } from '@/components/ui/button';
 import {
   Form,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormControl,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 
 const formSchema = z.object({
   division_id: z.string().uuid('Must be a valid division ID'),
@@ -46,10 +47,7 @@ export function CostCodeMappingForm({
   });
 
   function handleSubmit(values: FormValues) {
-    onSubmit({
-      ...values,
-      adp_labor_code: values.adp_labor_code || undefined,
-    });
+    onSubmit({ ...values, adp_labor_code: values.adp_labor_code || undefined });
   }
 
   return (

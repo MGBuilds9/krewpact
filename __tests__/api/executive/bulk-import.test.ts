@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockStat = vi.hoisted(() => vi.fn());
 const mockReadFile = vi.hoisted(() => vi.fn());
@@ -17,8 +17,9 @@ vi.mock('fs/promises', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createServiceClient } from '@/lib/supabase/server';
+
 import { POST } from '@/app/api/executive/staging/bulk-import/route';
+import { createServiceClient } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateServiceClient = vi.mocked(createServiceClient);

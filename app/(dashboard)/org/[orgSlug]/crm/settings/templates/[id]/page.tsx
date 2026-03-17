@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
-import { useOrgRouter } from '@/hooks/useOrgRouter';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { useState } from 'react';
+
 import { EmailAnalyticsCard } from '@/components/CRM/EmailAnalyticsCard';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useOrgRouter } from '@/hooks/useOrgRouter';
 
 const CATEGORIES = [
   { value: 'outreach', label: 'Outreach' },
@@ -33,27 +34,145 @@ const MERGE_FIELDS = [
   'unsubscribe_url',
 ];
 
-export default function TemplateDetailPage() {
-  const { id } = useParams<{ id: string }>();
+interface EditFormProps {
+  name: string;
+  setName: (v: string) => void;
+  category: string;
+  setCategory: (v: string) => void;
+  subject: string;
+  setSubject: (v: string) => void;
+  bodyHtml: string;
+  setBodyHtml: (v: string) => void;
+  bodyText: string;
+  setBodyText: (v: string) => void;
+  isPending: boolean;
+  onSubmit: () => void;
+}
 
-  const { data: template, isLoading } = useQuery({
-    queryKey: ['email-template', id],
-    queryFn: async () => {
-      const res = await fetch(`/api/crm/email-templates/${id}`);
-      const json = await res.json();
-      return json.data;
-    },
-  });
+function TemplateEditForm({
+  name,
+  setName,
+  category,
+  setCategory,
+  subject,
+  setSubject,
+  bodyHtml,
+  setBodyHtml,
+  bodyText,
+  setBodyText,
+  isPending,
+  onSubmit,
+}: EditFormProps) {
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSubmit();
+      }}
+      className="space-y-4"
+    >
+      <div>
+        <label className="text-sm font-medium" htmlFor="tpl-name">
+          Template Name
+        </label>
+        <input
+          id="tpl-name"
+          type="text"
+          className="w-full mt-1 rounded-md border px-3 py-2 text-sm"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+        />
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className="text-sm font-medium" htmlFor="tpl-category">
+            Category
+          </label>
+          <select
+            id="tpl-category"
+            className="w-full mt-1 rounded-md border px-3 py-2 text-sm"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+          >
+            {CATEGORIES.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="text-sm font-medium" htmlFor="tpl-subject">
+            Subject Line
+          </label>
+          <input
+            id="tpl-subject"
+            type="text"
+            className="w-full mt-1 rounded-md border px-3 py-2 text-sm"
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            required
+          />
+        </div>
+      </div>
+      <div>
+        <label className="text-sm font-medium" htmlFor="tpl-html">
+          Body HTML
+        </label>
+        <textarea
+          id="tpl-html"
+          rows={16}
+          className="w-full mt-1 rounded-md border px-3 py-2 text-sm font-mono"
+          value={bodyHtml}
+          onChange={(e) => setBodyHtml(e.target.value)}
+          required
+        />
+      </div>
+      <div>
+        <label className="text-sm font-medium" htmlFor="tpl-text">
+          Body Text
+        </label>
+        <textarea
+          id="tpl-text"
+          rows={6}
+          className="w-full mt-1 rounded-md border px-3 py-2 text-sm font-mono"
+          value={bodyText}
+          onChange={(e) => setBodyText(e.target.value)}
+        />
+      </div>
+      <div className="flex justify-end">
+        <Button type="submit" disabled={isPending}>
+          {isPending ? 'Saving...' : 'Save Changes'}
+        </Button>
+      </div>
+    </form>
+  );
+}
 
-  if (isLoading) {
-    return <div className="p-6">Loading template...</div>;
-  }
-
-  if (!template) {
-    return <div className="p-6">Template not found.</div>;
-  }
-
-  return <TemplateForm key={template.id} template={template} id={id!} />;
+function MergeFieldsPanel() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Merge Fields</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-xs text-muted-foreground mb-3">Click to copy. Use in subject or body.</p>
+        <div className="flex flex-wrap gap-1.5">
+          {MERGE_FIELDS.map((field) => (
+            <button
+              key={field}
+              type="button"
+              className="rounded border px-2 py-0.5 text-xs font-mono hover:bg-muted transition-colors"
+              onClick={() => navigator.clipboard.writeText(`{{${field}}}`)}
+            >
+              {`{{${field}}}`}
+            </button>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
 
 function TemplateForm({ template, id }: { template: Record<string, string>; id: string }) {
@@ -110,18 +229,14 @@ function TemplateForm({ template, id }: { template: Record<string, string>; id: 
           <Button
             variant="destructive"
             onClick={() => {
-              if (confirm('Delete this template?')) {
-                deleteMutation.mutate();
-              }
+              if (confirm('Delete this template?')) deleteMutation.mutate();
             }}
           >
             Delete
           </Button>
         </div>
       </div>
-
       <EmailAnalyticsCard templateId={id} />
-
       {showPreview ? (
         <Card>
           <CardHeader>
@@ -143,119 +258,44 @@ function TemplateForm({ template, id }: { template: Record<string, string>; id: 
           <div className="col-span-2">
             <Card>
               <CardContent className="pt-6">
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    updateMutation.mutate();
-                  }}
-                  className="space-y-4"
-                >
-                  <div>
-                    <label className="text-sm font-medium" htmlFor="tpl-name">
-                      Template Name
-                    </label>
-                    <input
-                      id="tpl-name"
-                      type="text"
-                      className="w-full mt-1 rounded-md border px-3 py-2 text-sm"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium" htmlFor="tpl-category">
-                        Category
-                      </label>
-                      <select
-                        id="tpl-category"
-                        className="w-full mt-1 rounded-md border px-3 py-2 text-sm"
-                        value={category}
-                        onChange={(e) => setCategory(e.target.value)}
-                      >
-                        {CATEGORIES.map((c) => (
-                          <option key={c.value} value={c.value}>
-                            {c.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium" htmlFor="tpl-subject">
-                        Subject Line
-                      </label>
-                      <input
-                        id="tpl-subject"
-                        type="text"
-                        className="w-full mt-1 rounded-md border px-3 py-2 text-sm"
-                        value={subject}
-                        onChange={(e) => setSubject(e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium" htmlFor="tpl-html">
-                      Body HTML
-                    </label>
-                    <textarea
-                      id="tpl-html"
-                      rows={16}
-                      className="w-full mt-1 rounded-md border px-3 py-2 text-sm font-mono"
-                      value={bodyHtml}
-                      onChange={(e) => setBodyHtml(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium" htmlFor="tpl-text">
-                      Body Text
-                    </label>
-                    <textarea
-                      id="tpl-text"
-                      rows={6}
-                      className="w-full mt-1 rounded-md border px-3 py-2 text-sm font-mono"
-                      value={bodyText}
-                      onChange={(e) => setBodyText(e.target.value)}
-                    />
-                  </div>
-                  <div className="flex justify-end">
-                    <Button type="submit" disabled={updateMutation.isPending}>
-                      {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
-                    </Button>
-                  </div>
-                </form>
+                <TemplateEditForm
+                  name={name}
+                  setName={setName}
+                  category={category}
+                  setCategory={setCategory}
+                  subject={subject}
+                  setSubject={setSubject}
+                  bodyHtml={bodyHtml}
+                  setBodyHtml={setBodyHtml}
+                  bodyText={bodyText}
+                  setBodyText={setBodyText}
+                  isPending={updateMutation.isPending}
+                  onSubmit={() => updateMutation.mutate()}
+                />
               </CardContent>
             </Card>
           </div>
-
           <div>
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Merge Fields</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-xs text-muted-foreground mb-3">
-                  Click to copy. Use in subject or body.
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {MERGE_FIELDS.map((field) => (
-                    <button
-                      key={field}
-                      type="button"
-                      className="rounded border px-2 py-0.5 text-xs font-mono hover:bg-muted transition-colors"
-                      onClick={() => navigator.clipboard.writeText(`{{${field}}}`)}
-                    >
-                      {`{{${field}}}`}
-                    </button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <MergeFieldsPanel />
           </div>
         </div>
       )}
     </div>
   );
+}
+
+export default function TemplateDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const { data: template, isLoading } = useQuery({
+    queryKey: ['email-template', id],
+    queryFn: async () => {
+      const res = await fetch(`/api/crm/email-templates/${id}`);
+      const json = await res.json();
+      return json.data;
+    },
+  });
+
+  if (isLoading) return <div className="p-6">Loading template...</div>;
+  if (!template) return <div className="p-6">Template not found.</div>;
+  return <TemplateForm key={template.id} template={template} id={id!} />;
 }

@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
@@ -9,8 +8,18 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('next/link', () => ({
-  default: ({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) => (
-    <a href={href} className={className}>{children}</a>
+  default: ({
+    href,
+    children,
+    className,
+  }: {
+    href: string;
+    children: React.ReactNode;
+    className?: string;
+  }) => (
+    <a href={href} className={className}>
+      {children}
+    </a>
   ),
 }));
 
@@ -92,9 +101,7 @@ describe('AiInsightBanner', () => {
     // Make fetch never resolve so component stays in the "fetching" state.
     global.fetch = vi.fn(() => new Promise(() => {})) as any;
 
-    const { container } = render(
-      <AiInsightBanner entityType="lead" entityId="lead-1" />,
-    );
+    const { container } = render(<AiInsightBanner entityType="lead" entityId="lead-1" />);
 
     // The component returns null when visibleInsights.length === 0 (initial empty state).
     expect(container.firstChild).toBeNull();
@@ -186,9 +193,7 @@ describe('AiInsightBanner', () => {
   it('renders nothing when API returns an empty insights array', async () => {
     mockFetch({ insights: [] });
 
-    const { container } = render(
-      <AiInsightBanner entityType="lead" entityId="lead-1" />,
-    );
+    const { container } = render(<AiInsightBanner entityType="lead" entityId="lead-1" />);
 
     // Give effects a tick to settle.
     await act(async () => {
@@ -201,9 +206,7 @@ describe('AiInsightBanner', () => {
   it('renders nothing when API returns null data', async () => {
     mockFetch(null);
 
-    const { container } = render(
-      <AiInsightBanner entityType="lead" entityId="lead-1" />,
-    );
+    const { container } = render(<AiInsightBanner entityType="lead" entityId="lead-1" />);
 
     await act(async () => {
       await new Promise((r) => setTimeout(r, 0));
@@ -248,19 +251,16 @@ describe('AiInsightBanner', () => {
       fireEvent.click(dismissButton);
     });
 
-    expect(global.fetch).toHaveBeenCalledWith(
-      '/api/ai/insights/insight-xyz/dismiss',
-      { method: 'PATCH' },
-    );
+    expect(global.fetch).toHaveBeenCalledWith('/api/ai/insights/insight-xyz/dismiss', {
+      method: 'PATCH',
+    });
   });
 
   it('removing last insight hides the container', async () => {
     const insight = makeInsight({ id: 'only-one', title: 'Only insight' });
     mockFetch({ insights: [insight] });
 
-    const { container } = render(
-      <AiInsightBanner entityType="lead" entityId="lead-1" />,
-    );
+    const { container } = render(<AiInsightBanner entityType="lead" entityId="lead-1" />);
 
     await waitFor(() => {
       expect(screen.getByText('Only insight')).toBeDefined();
@@ -325,14 +325,15 @@ describe('AiInsightBanner', () => {
     global.fetch = vi.fn(async (url: string | URL | Request) => {
       const urlStr = typeof url === 'string' ? url : url.toString();
       if (urlStr.includes('/api/ai/preferences')) {
-        return { ok: true, json: async () => ({ preferences: { insight_min_confidence: 0.7 } }) } as Response;
+        return {
+          ok: true,
+          json: async () => ({ preferences: { insight_min_confidence: 0.7 } }),
+        } as Response;
       }
       throw new Error('Network error');
     });
 
-    const { container } = render(
-      <AiInsightBanner entityType="lead" entityId="lead-1" />,
-    );
+    const { container } = render(<AiInsightBanner entityType="lead" entityId="lead-1" />);
 
     await act(async () => {
       await new Promise((r) => setTimeout(r, 0));
@@ -344,9 +345,7 @@ describe('AiInsightBanner', () => {
   it('renders nothing when insights API returns non-ok response', async () => {
     mockFetch(null);
 
-    const { container } = render(
-      <AiInsightBanner entityType="lead" entityId="lead-1" />,
-    );
+    const { container } = render(<AiInsightBanner entityType="lead" entityId="lead-1" />);
 
     await act(async () => {
       await new Promise((r) => setTimeout(r, 0));
@@ -360,7 +359,10 @@ describe('AiInsightBanner', () => {
     global.fetch = vi.fn(async (url: string | URL | Request, _init?: RequestInit) => {
       const urlStr = typeof url === 'string' ? url : url.toString();
       if (urlStr.includes('/api/ai/preferences')) {
-        return { ok: true, json: async () => ({ preferences: { insight_min_confidence: 0.7 } }) } as Response;
+        return {
+          ok: true,
+          json: async () => ({ preferences: { insight_min_confidence: 0.7 } }),
+        } as Response;
       }
       if (urlStr.includes('/dismiss')) {
         throw new Error('PATCH failed');
@@ -479,7 +481,10 @@ describe('AiInsightBanner', () => {
     global.fetch = vi.fn(async (url: string | URL | Request) => {
       const urlStr = typeof url === 'string' ? url : url.toString();
       if (urlStr.includes('/api/ai/preferences')) {
-        return { ok: true, json: async () => ({ preferences: { insight_min_confidence: 0.7 } }) } as Response;
+        return {
+          ok: true,
+          json: async () => ({ preferences: { insight_min_confidence: 0.7 } }),
+        } as Response;
       }
       // Should never reach here when entityType is empty
       throw new Error(`Unexpected fetch call: ${urlStr}`);
@@ -501,7 +506,10 @@ describe('AiInsightBanner', () => {
     global.fetch = vi.fn(async (url: string | URL | Request) => {
       const urlStr = typeof url === 'string' ? url : url.toString();
       if (urlStr.includes('/api/ai/preferences')) {
-        return { ok: true, json: async () => ({ preferences: { insight_min_confidence: 0.7 } }) } as Response;
+        return {
+          ok: true,
+          json: async () => ({ preferences: { insight_min_confidence: 0.7 } }),
+        } as Response;
       }
       // Should never reach here when entityId is empty
       throw new Error(`Unexpected fetch call: ${urlStr}`);

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 test.describe('Admin Reference Data', () => {
   test('navigate to admin governance page', async ({ page }) => {

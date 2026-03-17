@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { mapApolloToLead, mapApolloToContact, type ApolloPerson } from '@/lib/integrations/apollo';
+import { describe, expect, it } from 'vitest';
+
+import { type ApolloPerson, mapApolloToContact, mapApolloToLead } from '@/lib/integrations/apollo';
 
 const mockPerson: ApolloPerson = {
   id: 'apollo-123',

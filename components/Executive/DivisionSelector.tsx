@@ -1,7 +1,7 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 export const DIVISIONS = [
@@ -24,6 +24,50 @@ interface DivisionSelectorProps {
   onToggleCompare: () => void;
 }
 
+function getDivisionSlot(
+  id: DivisionId,
+  selectedDivision: DivisionId | null,
+  compareDivision: DivisionId | null,
+): 'primary' | 'compare' | null {
+  if (selectedDivision === id) return 'primary';
+  if (compareDivision === id) return 'compare';
+  return null;
+}
+
+interface ClickHandlerOpts {
+  id: DivisionId;
+  isComparing: boolean;
+  selectedDivision: DivisionId | null;
+  compareDivision: DivisionId | null;
+  onSelectDivision: (d: DivisionId | null) => void;
+  onSelectCompareDivision: (d: DivisionId | null) => void;
+}
+
+function handleDivisionClick({
+  id,
+  isComparing,
+  selectedDivision,
+  compareDivision,
+  onSelectDivision,
+  onSelectCompareDivision,
+}: ClickHandlerOpts) {
+  if (!isComparing) {
+    onSelectDivision(selectedDivision === id ? null : id);
+    return;
+  }
+  if (selectedDivision === id) {
+    onSelectDivision(null);
+  } else if (compareDivision === id) {
+    onSelectCompareDivision(null);
+  } else if (selectedDivision === null) {
+    onSelectDivision(id);
+  } else if (compareDivision === null) {
+    onSelectCompareDivision(id);
+  } else {
+    onSelectCompareDivision(id);
+  }
+}
+
 export function DivisionSelector({
   selectedDivision,
   compareDivision,
@@ -32,35 +76,8 @@ export function DivisionSelector({
   onSelectCompareDivision,
   onToggleCompare,
 }: DivisionSelectorProps) {
-  function handleDivisionClick(id: DivisionId) {
-    if (!isComparing) {
-      onSelectDivision(selectedDivision === id ? null : id);
-      return;
-    }
-    // Compare mode: first slot = selectedDivision, second slot = compareDivision
-    if (selectedDivision === id) {
-      onSelectDivision(null);
-    } else if (compareDivision === id) {
-      onSelectCompareDivision(null);
-    } else if (selectedDivision === null) {
-      onSelectDivision(id);
-    } else if (compareDivision === null) {
-      onSelectCompareDivision(id);
-    } else {
-      // Both slots taken — replace compare slot
-      onSelectCompareDivision(id);
-    }
-  }
-
-  function getDivisionSlot(id: DivisionId): 'primary' | 'compare' | null {
-    if (selectedDivision === id) return 'primary';
-    if (compareDivision === id) return 'compare';
-    return null;
-  }
-
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {/* All button */}
       <Button
         variant={!isComparing && selectedDivision === null ? 'default' : 'outline'}
         size="sm"
@@ -72,14 +89,21 @@ export function DivisionSelector({
       >
         All
       </Button>
-
-      {/* Division chips */}
       {DIVISIONS.map(({ id, label }) => {
-        const slot = getDivisionSlot(id);
+        const slot = getDivisionSlot(id, selectedDivision, compareDivision);
         return (
           <button
             key={id}
-            onClick={() => handleDivisionClick(id)}
+            onClick={() =>
+              handleDivisionClick({
+                id,
+                isComparing,
+                selectedDivision,
+                compareDivision,
+                onSelectDivision,
+                onSelectCompareDivision,
+              })
+            }
             className={cn(
               'inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors',
               slot === 'primary' &&
@@ -104,8 +128,6 @@ export function DivisionSelector({
           </button>
         );
       })}
-
-      {/* Compare toggle */}
       <div className="ml-auto flex items-center gap-2">
         {isComparing && (
           <span className="text-xs text-muted-foreground">

@@ -1,9 +1,10 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
-import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const addMemberSchema = z.object({
   user_id: z.string().uuid(),

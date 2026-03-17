@@ -1,7 +1,7 @@
-import { createClient } from '@supabase/supabase-js';
 import { auth } from '@clerk/nextjs/server';
+import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
-import { DEMO_MODE } from '@/lib/demo-mode';
+
 import type { Database } from '@/types/supabase';
 
 export type { Database };
@@ -35,16 +35,6 @@ export function createScopedServiceClient(context: string) {
 }
 
 export async function createUserClient() {
-  // In demo mode, use anon client without auth headers (anon RLS policies enabled)
-  if (DEMO_MODE) {
-    return createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-      },
-    });
-  }
-
   const { getToken } = await auth();
   // Use Clerk session token (Third-Party Auth) — not the deprecated JWT template
   const token = await getToken();

@@ -1,10 +1,11 @@
 import { auth } from '@clerk/nextjs/server';
+import { NextRequest, NextResponse } from 'next/server';
+
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { type OpportunityStage, validateTransition } from '@/lib/crm/opportunity-stages';
+import { logger } from '@/lib/logger';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { opportunityStageTransitionSchema } from '@/lib/validators/crm';
-import { validateTransition, type OpportunityStage } from '@/lib/crm/opportunity-stages';
-import { NextRequest, NextResponse } from 'next/server';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
-import { logger } from '@/lib/logger';
 
 type RouteContext = { params: Promise<{ id: string }> };
 

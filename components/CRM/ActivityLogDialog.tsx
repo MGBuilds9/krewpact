@@ -3,10 +3,11 @@
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from '@/components/ui/dialog';
+
 import { ActivityForm } from './ActivityForm';
 
 export interface ActivityLogDialogProps {

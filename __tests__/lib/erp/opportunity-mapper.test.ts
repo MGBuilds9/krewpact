@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
 import { mapOpportunityToErp, type OpportunityMapInput } from '@/lib/erp/opportunity-mapper';
 
 function makeInput(overrides: Partial<OpportunityMapInput> = {}): OpportunityMapInput {

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock Clerk auth
 vi.mock('@clerk/nextjs/server', () => ({
@@ -11,19 +11,20 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { GET as GET_PROPOSALS, POST as POST_PROPOSALS } from '@/app/api/proposals/route';
-import { GET as GET_PROPOSAL_ID, PATCH as PATCH_PROPOSAL_ID } from '@/app/api/proposals/[id]/route';
-import { GET as GET_CONTRACTS, POST as POST_CONTRACTS } from '@/app/api/contracts/route';
-import { GET as GET_ESIGN, POST as POST_ESIGN } from '@/app/api/esign/route';
+
 import {
-  mockSupabaseClient,
+  makeJsonRequest,
+  makeRequest,
   mockClerkAuth,
   mockClerkUnauth,
-  makeRequest,
-  makeJsonRequest,
+  mockSupabaseClient,
   resetFixtureCounter,
 } from '@/__tests__/helpers';
+import { GET as GET_CONTRACTS, POST as POST_CONTRACTS } from '@/app/api/contracts/route';
+import { GET as GET_ESIGN, POST as POST_ESIGN } from '@/app/api/esign/route';
+import { GET as GET_PROPOSAL_ID, PATCH as PATCH_PROPOSAL_ID } from '@/app/api/proposals/[id]/route';
+import { GET as GET_PROPOSALS, POST as POST_PROPOSALS } from '@/app/api/proposals/route';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const VALID_UUID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 

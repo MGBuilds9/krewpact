@@ -1,8 +1,9 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Users } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { RepPerformance } from '@/lib/crm/pipeline-intelligence';
 
 function formatCurrency(value: number): string {
@@ -65,10 +66,7 @@ export function RepPerformanceCard({ data, isLoading }: RepPerformanceCardProps)
                 </div>
                 <div className="text-right shrink-0">
                   <p className="text-sm font-bold">{formatCurrency(rep.revenue_closed)}</p>
-                  <Badge
-                    variant="outline"
-                    className="text-xs"
-                  >
+                  <Badge variant="outline" className="text-xs">
                     {Math.round(rep.conversion_rate * 100)}% win rate
                   </Badge>
                 </div>

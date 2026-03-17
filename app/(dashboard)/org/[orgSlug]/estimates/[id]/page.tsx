@@ -1,31 +1,32 @@
 'use client';
 
-import { useState } from 'react';
+import { ArrowLeft, CheckCircle, FileText, Plus, Save, Send, XCircle } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useParams } from 'next/navigation';
-import { useOrgRouter } from '@/hooks/useOrgRouter';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState } from 'react';
+
+import { ExportPdfButton } from '@/components/Estimates/ExportPdfButton';
+import { LineItemEditor } from '@/components/Estimates/LineItemEditor';
+import { TotalsPanel } from '@/components/Estimates/TotalsPanel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ArrowLeft, Send, Save, CheckCircle, XCircle, Plus, FileText } from 'lucide-react';
-import { ExportPdfButton } from '@/components/Estimates/ExportPdfButton';
-import type { EstimatePdfData } from '@/lib/pdf/types';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
+  useAddEstimateLine,
+  useCreateEstimateVersion,
+  useDeleteEstimateLine,
   useEstimate,
   useEstimateLines,
   useEstimateVersions,
   useUpdateEstimate,
-  useAddEstimateLine,
-  useDeleteEstimateLine,
-  useCreateEstimateVersion,
 } from '@/hooks/useEstimates';
 import { useEstimateAllowances, useEstimateAlternates } from '@/hooks/useEstimating';
-import { LineItemEditor } from '@/components/Estimates/LineItemEditor';
-import { TotalsPanel } from '@/components/Estimates/TotalsPanel';
-import { ALLOWED_STATUS_TRANSITIONS } from '@/lib/estimating/estimate-status';
+import { useOrgRouter } from '@/hooks/useOrgRouter';
 import type { EstimateStatus } from '@/lib/estimating/estimate-status';
+import { ALLOWED_STATUS_TRANSITIONS } from '@/lib/estimating/estimate-status';
+import type { EstimatePdfData } from '@/lib/pdf/types';
 import { cn } from '@/lib/utils';
 
 const VersionHistory = dynamic(
@@ -50,7 +51,6 @@ const STATUS_BADGE_COLORS: Record<string, string> = {
   rejected: 'bg-red-100 text-red-700 border-red-200',
   superseded: 'bg-purple-100 text-purple-700 border-purple-200',
 };
-
 const STATUS_TRANSITION_LABELS: Record<string, string> = {
   review: 'Submit for Review',
   sent: 'Mark as Sent',
@@ -58,7 +58,6 @@ const STATUS_TRANSITION_LABELS: Record<string, string> = {
   approved: 'Approve',
   rejected: 'Reject',
 };
-
 const STATUS_TRANSITION_ICONS: Record<string, typeof Send> = {
   review: Send,
   sent: Send,
@@ -67,15 +66,199 @@ const STATUS_TRANSITION_ICONS: Record<string, typeof Send> = {
   rejected: XCircle,
 };
 
-function formatStatus(status: string): string {
-  return status.charAt(0).toUpperCase() + status.slice(1);
+function formatStatus(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+function fmtCAD(n: number) {
+  return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(n);
+}
+
+type Estimate = NonNullable<ReturnType<typeof useEstimate>['data']>;
+type Lines = NonNullable<ReturnType<typeof useEstimateLines>['data']>;
+type Allowances = NonNullable<ReturnType<typeof useEstimateAllowances>['data']>;
+type Alternates = NonNullable<ReturnType<typeof useEstimateAlternates>['data']>;
+
+interface EstimateHeaderProps {
+  estimate: Estimate;
+  lines: Lines;
+  allowedTransitions: EstimateStatus[];
+  isPending: boolean;
+  isVersionPending: boolean;
+  onTransition: (s: EstimateStatus) => void;
+  onSaveVersion: () => void;
+  onProposal: () => void;
+  onBack: () => void;
+}
+function EstimateHeader({
+  estimate,
+  lines,
+  allowedTransitions,
+  isPending,
+  isVersionPending,
+  onTransition,
+  onSaveVersion,
+  onProposal,
+  onBack,
+}: EstimateHeaderProps) {
+  return (
+    <div className="flex items-start gap-4">
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={onBack}
+        className="mt-1"
+        aria-label="Back to estimates"
+      >
+        <ArrowLeft className="h-5 w-5" />
+      </Button>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold tracking-tight">{estimate.estimate_number}</h1>
+          <Badge
+            variant="outline"
+            className={cn('border', STATUS_BADGE_COLORS[estimate.status] || '')}
+          >
+            {formatStatus(estimate.status)}
+          </Badge>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Revision {estimate.revision_no} &middot; {estimate.currency_code}
+        </p>
+      </div>
+      <div className="flex gap-2 flex-shrink-0">
+        {allowedTransitions.map((status) => {
+          const Icon = STATUS_TRANSITION_ICONS[status] || Send;
+          return (
+            <Button
+              key={status}
+              size="sm"
+              variant={status === 'rejected' ? 'destructive' : 'default'}
+              onClick={() => onTransition(status)}
+              disabled={isPending}
+            >
+              <Icon className="h-4 w-4 mr-1" />
+              {STATUS_TRANSITION_LABELS[status] || formatStatus(status)}
+            </Button>
+          );
+        })}
+        <Button size="sm" variant="outline" onClick={onSaveVersion} disabled={isVersionPending}>
+          <Save className="h-4 w-4 mr-1" />
+          Save Version
+        </Button>
+        <ExportPdfButton
+          estimateNumber={estimate.estimate_number}
+          estimateData={
+            {
+              companyName: 'MDM Group Inc.',
+              estimateNumber: estimate.estimate_number,
+              date: new Date().toISOString().split('T')[0],
+              lineItems: lines.map((l) => ({
+                description: l.description,
+                quantity: l.quantity,
+                unit: l.unit || undefined,
+                unitCost: l.unit_cost,
+                markup: l.markup_pct || undefined,
+              })),
+              subtotal: estimate.subtotal_amount,
+              taxAmount: estimate.tax_amount,
+              total: estimate.total_amount,
+            } satisfies EstimatePdfData
+          }
+        />
+        <Button size="sm" variant="outline" onClick={onProposal}>
+          <FileText className="h-4 w-4 mr-1" />
+          Generate Proposal
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+interface AllowancesSectionProps {
+  allowances: Allowances;
+  isEditable: boolean;
+  onAdd: () => void;
+}
+function AllowancesSection({ allowances, isEditable, onAdd }: AllowancesSectionProps) {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle>Allowances</CardTitle>
+        {isEditable && (
+          <Button size="sm" variant="outline" onClick={onAdd}>
+            <Plus className="h-4 w-4 mr-1" />
+            Add Allowance
+          </Button>
+        )}
+      </CardHeader>
+      <CardContent>
+        {allowances.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No allowances added.</p>
+        ) : (
+          <div className="space-y-2">
+            {allowances.map((a) => (
+              <div
+                key={a.id}
+                className="flex items-center justify-between text-sm border rounded-lg p-3"
+              >
+                <span className="font-medium">{a.allowance_name}</span>
+                <span className="text-muted-foreground">{fmtCAD(a.allowance_amount)}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+interface AlternatesSectionProps {
+  alternates: Alternates;
+  isEditable: boolean;
+  onAdd: () => void;
+}
+function AlternatesSection({ alternates, isEditable, onAdd }: AlternatesSectionProps) {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle>Alternates</CardTitle>
+        {isEditable && (
+          <Button size="sm" variant="outline" onClick={onAdd}>
+            <Plus className="h-4 w-4 mr-1" />
+            Add Alternate
+          </Button>
+        )}
+      </CardHeader>
+      <CardContent>
+        {alternates.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No alternates added.</p>
+        ) : (
+          <div className="space-y-2">
+            {alternates.map((a) => (
+              <div
+                key={a.id}
+                className="flex items-center justify-between text-sm border rounded-lg p-3"
+              >
+                <span className="font-medium">{a.title}</span>
+                <div className="flex items-center gap-3">
+                  <Badge variant={a.selected ? 'default' : 'outline'}>
+                    {a.selected ? 'Selected' : 'Not selected'}
+                  </Badge>
+                  <span className="text-muted-foreground">{fmtCAD(a.amount)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
 
 export default function EstimateBuilderPage() {
   const params = useParams();
   const { push: orgPush } = useOrgRouter();
   const estimateId = params.id as string;
-
   const [allowanceDialogOpen, setAllowanceDialogOpen] = useState(false);
   const [alternateDialogOpen, setAlternateDialogOpen] = useState(false);
   const [proposalDialogOpen, setProposalDialogOpen] = useState(false);
@@ -99,7 +282,6 @@ export default function EstimateBuilderPage() {
       </div>
     );
   }
-
   if (!estimate) {
     return (
       <div className="text-center py-12">
@@ -118,135 +300,49 @@ export default function EstimateBuilderPage() {
   const currentStatus = estimate.status as EstimateStatus;
   const allowedTransitions = ALLOWED_STATUS_TRANSITIONS[currentStatus] || [];
   const isEditable = currentStatus === 'draft' || currentStatus === 'review';
-
-  function handleStatusTransition(newStatus: EstimateStatus) {
-    updateEstimate.mutate({ id: estimateId, status: newStatus });
-  }
-
-  function handleAddLine() {
-    addLine.mutate({
-      estimateId,
-      description: 'New line item',
-      quantity: 1,
-      unit_cost: 0,
-      markup_pct: 0,
-      sort_order: (lines?.length ?? 0) + 1,
-    });
-  }
-
-  function handleUpdateLine(lineId: string, field: string, value: string | number | boolean) {
-    updateEstimate.mutate({ id: estimateId });
-    // Line update handled via individual PATCH — simplified for component
-    void lineId;
-    void field;
-    void value;
-  }
-
-  function handleDeleteLine(lineId: string) {
-    deleteLine.mutate({ estimateId, lineId });
-  }
-
-  function handleSaveVersion() {
-    const reason = window.prompt('Version reason (optional):');
-    createVersion.mutate({ estimateId, reason: reason || undefined });
-  }
+  const safeLines = lines || [];
+  const allowances = allowancesData || [];
+  const alternates = alternatesData || [];
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-start gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => orgPush('/estimates')}
-          className="mt-1"
-          aria-label="Back to estimates"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold tracking-tight">{estimate.estimate_number}</h1>
-            <Badge
-              variant="outline"
-              className={cn('border', STATUS_BADGE_COLORS[estimate.status] || '')}
-            >
-              {formatStatus(estimate.status)}
-            </Badge>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Revision {estimate.revision_no} &middot; {estimate.currency_code}
-          </p>
-        </div>
-        <div className="flex gap-2 flex-shrink-0">
-          {allowedTransitions.map((status) => {
-            const Icon = STATUS_TRANSITION_ICONS[status] || Send;
-            return (
-              <Button
-                key={status}
-                size="sm"
-                variant={status === 'rejected' ? 'destructive' : 'default'}
-                onClick={() => handleStatusTransition(status)}
-                disabled={updateEstimate.isPending}
-              >
-                <Icon className="h-4 w-4 mr-1" />
-                {STATUS_TRANSITION_LABELS[status] || formatStatus(status)}
-              </Button>
-            );
-          })}
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleSaveVersion}
-            disabled={createVersion.isPending}
-          >
-            <Save className="h-4 w-4 mr-1" />
-            Save Version
-          </Button>
-          <ExportPdfButton
-            estimateNumber={estimate.estimate_number}
-            estimateData={
-              {
-                companyName: 'MDM Group Inc.',
-                estimateNumber: estimate.estimate_number,
-                date: new Date().toISOString().split('T')[0],
-                lineItems: (lines ?? []).map((l) => ({
-                  description: l.description,
-                  quantity: l.quantity,
-                  unit: l.unit || undefined,
-                  unitCost: l.unit_cost,
-                  markup: l.markup_pct || undefined,
-                })),
-                subtotal: estimate.subtotal_amount,
-                taxAmount: estimate.tax_amount,
-                total: estimate.total_amount,
-              } satisfies EstimatePdfData
-            }
-          />
-          <Button size="sm" variant="outline" onClick={() => setProposalDialogOpen(true)}>
-            <FileText className="h-4 w-4 mr-1" />
-            Generate Proposal
-          </Button>
-        </div>
-      </div>
-
-      {/* Line Items */}
+      <EstimateHeader
+        estimate={estimate}
+        lines={safeLines}
+        allowedTransitions={allowedTransitions}
+        isPending={updateEstimate.isPending}
+        isVersionPending={createVersion.isPending}
+        onTransition={(s) => updateEstimate.mutate({ id: estimateId, status: s })}
+        onSaveVersion={() => {
+          const r = window.prompt('Version reason (optional):');
+          createVersion.mutate({ estimateId, reason: r || undefined });
+        }}
+        onProposal={() => setProposalDialogOpen(true)}
+        onBack={() => orgPush('/estimates')}
+      />
       <Card>
         <CardHeader>
           <CardTitle>Line Items</CardTitle>
         </CardHeader>
         <CardContent>
           <LineItemEditor
-            lines={lines ?? []}
-            onAddLine={handleAddLine}
-            onUpdateLine={handleUpdateLine}
-            onDeleteLine={handleDeleteLine}
+            lines={safeLines}
+            onAddLine={() =>
+              addLine.mutate({
+                estimateId,
+                description: 'New line item',
+                quantity: 1,
+                unit_cost: 0,
+                markup_pct: 0,
+                sort_order: safeLines.length + 1,
+              })
+            }
+            onUpdateLine={() => updateEstimate.mutate({ id: estimateId })}
+            onDeleteLine={(lineId) => deleteLine.mutate({ estimateId, lineId })}
             isReadOnly={!isEditable}
           />
         </CardContent>
       </Card>
-
-      {/* Totals */}
       <Card>
         <CardHeader>
           <CardTitle>Totals</CardTitle>
@@ -259,92 +355,24 @@ export default function EstimateBuilderPage() {
           />
         </CardContent>
       </Card>
-
-      {/* Version History */}
       <Card>
         <CardHeader>
           <CardTitle>Version History</CardTitle>
         </CardHeader>
         <CardContent>
-          <VersionHistory versions={versions ?? []} />
+          <VersionHistory versions={versions || []} />
         </CardContent>
       </Card>
-
-      {/* Allowances */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Allowances</CardTitle>
-          {isEditable && (
-            <Button size="sm" variant="outline" onClick={() => setAllowanceDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-1" />
-              Add Allowance
-            </Button>
-          )}
-        </CardHeader>
-        <CardContent>
-          {(allowancesData ?? []).length === 0 ? (
-            <p className="text-sm text-muted-foreground">No allowances added.</p>
-          ) : (
-            <div className="space-y-2">
-              {(allowancesData ?? []).map((a) => (
-                <div
-                  key={a.id}
-                  className="flex items-center justify-between text-sm border rounded-lg p-3"
-                >
-                  <span className="font-medium">{a.allowance_name}</span>
-                  <span className="text-muted-foreground">
-                    {new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(
-                      a.allowance_amount,
-                    )}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Alternates */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Alternates</CardTitle>
-          {isEditable && (
-            <Button size="sm" variant="outline" onClick={() => setAlternateDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-1" />
-              Add Alternate
-            </Button>
-          )}
-        </CardHeader>
-        <CardContent>
-          {(alternatesData ?? []).length === 0 ? (
-            <p className="text-sm text-muted-foreground">No alternates added.</p>
-          ) : (
-            <div className="space-y-2">
-              {(alternatesData ?? []).map((a) => (
-                <div
-                  key={a.id}
-                  className="flex items-center justify-between text-sm border rounded-lg p-3"
-                >
-                  <span className="font-medium">{a.title}</span>
-                  <div className="flex items-center gap-3">
-                    <Badge variant={a.selected ? 'default' : 'outline'}>
-                      {a.selected ? 'Selected' : 'Not selected'}
-                    </Badge>
-                    <span className="text-muted-foreground">
-                      {new Intl.NumberFormat('en-CA', {
-                        style: 'currency',
-                        currency: 'CAD',
-                      }).format(a.amount)}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Allowance Dialog */}
+      <AllowancesSection
+        allowances={allowances}
+        isEditable={isEditable}
+        onAdd={() => setAllowanceDialogOpen(true)}
+      />
+      <AlternatesSection
+        alternates={alternates}
+        isEditable={isEditable}
+        onAdd={() => setAlternateDialogOpen(true)}
+      />
       <Dialog open={allowanceDialogOpen} onOpenChange={setAllowanceDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -357,8 +385,6 @@ export default function EstimateBuilderPage() {
           />
         </DialogContent>
       </Dialog>
-
-      {/* Alternate Dialog */}
       <Dialog open={alternateDialogOpen} onOpenChange={setAlternateDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -371,8 +397,6 @@ export default function EstimateBuilderPage() {
           />
         </DialogContent>
       </Dialog>
-
-      {/* Generate Proposal Dialog */}
       <Dialog open={proposalDialogOpen} onOpenChange={setProposalDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -380,7 +404,6 @@ export default function EstimateBuilderPage() {
           </DialogHeader>
           <ProposalGenerationForm
             estimateId={estimateId}
-            estimateNumber={estimate?.estimate_number}
             onSuccess={() => setProposalDialogOpen(false)}
             onCancel={() => setProposalDialogOpen(false)}
           />

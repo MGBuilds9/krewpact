@@ -1,10 +1,11 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { ArrowLeft, Zap } from 'lucide-react';
-import { useOrgRouter } from '@/hooks/useOrgRouter';
+
 import SequenceDefaultsForm from '@/components/CRM/SequenceDefaultsForm';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useOrgRouter } from '@/hooks/useOrgRouter';
 
 export default function SequenceDefaultsPage() {
   const { push: orgPush } = useOrgRouter();

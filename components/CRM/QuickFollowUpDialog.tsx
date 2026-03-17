@@ -1,26 +1,27 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from '@/components/ui/dialog';
 import {
   Form,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormControl,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -28,8 +29,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { useCreateActivity } from '@/hooks/useCRM';
-import { Loader2 } from 'lucide-react';
 
 const quickFollowUpSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200),
@@ -55,6 +56,12 @@ const entityKeyMap = {
   account: 'account_id',
   contact: 'contact_id',
 } as const;
+const QUICK_PRESETS = [
+  { label: 'Tomorrow', days: 1 },
+  { label: 'In 3 days', days: 3 },
+  { label: 'Next week', days: 7 },
+  { label: 'In 2 weeks', days: 14 },
+];
 
 function getDefaultDueDate(): string {
   const tomorrow = new Date();
@@ -62,13 +69,6 @@ function getDefaultDueDate(): string {
   tomorrow.setHours(9, 0, 0, 0);
   return tomorrow.toISOString().slice(0, 16);
 }
-
-const QUICK_PRESETS = [
-  { label: 'Tomorrow', days: 1 },
-  { label: 'In 3 days', days: 3 },
-  { label: 'Next week', days: 7 },
-  { label: 'In 2 weeks', days: 14 },
-];
 
 export function QuickFollowUpDialog({
   open,
@@ -98,20 +98,20 @@ export function QuickFollowUpDialog({
   }
 
   function onSubmit(values: FormValues) {
-    const entityKey = entityKeyMap[entityType];
-    const payload = {
-      ...values,
-      details: values.details || undefined,
-      due_at: new Date(values.due_at).toISOString(),
-      [entityKey]: entityId,
-    };
-
-    createActivity.mutate(payload, {
-      onSuccess: () => {
-        form.reset();
-        onOpenChange(false);
+    createActivity.mutate(
+      {
+        ...values,
+        details: values.details || undefined,
+        due_at: new Date(values.due_at).toISOString(),
+        [entityKeyMap[entityType]]: entityId,
       },
-    });
+      {
+        onSuccess: () => {
+          form.reset();
+          onOpenChange(false);
+        },
+      },
+    );
   }
 
   return (
@@ -123,7 +123,6 @@ export function QuickFollowUpDialog({
             {entityName ? `For ${entityName}` : `Create a follow-up ${entityType}`}
           </DialogDescription>
         </DialogHeader>
-
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -139,7 +138,6 @@ export function QuickFollowUpDialog({
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
               name="activity_type"
@@ -163,7 +161,6 @@ export function QuickFollowUpDialog({
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
               name="due_at"
@@ -191,7 +188,6 @@ export function QuickFollowUpDialog({
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
               name="details"
@@ -205,7 +201,6 @@ export function QuickFollowUpDialog({
                 </FormItem>
               )}
             />
-
             <div className="flex justify-end gap-2 pt-2">
               <Button
                 type="button"

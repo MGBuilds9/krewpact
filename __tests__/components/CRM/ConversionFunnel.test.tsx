@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
+import { describe, expect, it } from 'vitest';
+
 import { ConversionFunnel } from '@/components/CRM/ConversionFunnel';
 import { ConversionFunnelChart } from '@/components/CRM/ConversionFunnelChart';
 import type { ConversionMetrics } from '@/lib/crm/metrics';

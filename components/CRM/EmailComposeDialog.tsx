@@ -1,6 +1,9 @@
 'use client';
 
+import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
+
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -10,11 +13,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { useSendEmail } from '@/hooks/useCRM';
-import { Loader2 } from 'lucide-react';
 
 export interface EmailComposeDialogProps {
   open: boolean;
@@ -44,7 +45,6 @@ export function EmailComposeDialog({
 
   const handleSubmit = async () => {
     if (!to || !subject || !body) return;
-
     try {
       await sendEmail.mutateAsync({
         to: [{ address: to, name: recipientName }],
@@ -72,7 +72,6 @@ export function EmailComposeDialog({
             Send an email from the CRM. Activity will be auto-logged.
           </DialogDescription>
         </DialogHeader>
-
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email-to">To</Label>
@@ -84,7 +83,6 @@ export function EmailComposeDialog({
               placeholder="recipient@example.com"
             />
           </div>
-
           <div className="space-y-2">
             <Label htmlFor="email-subject">Subject</Label>
             <Input
@@ -94,7 +92,6 @@ export function EmailComposeDialog({
               placeholder="Email subject"
             />
           </div>
-
           <div className="space-y-2">
             <Label htmlFor="email-body">Body</Label>
             <Textarea
@@ -106,7 +103,6 @@ export function EmailComposeDialog({
             />
           </div>
         </div>
-
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel

@@ -1,8 +1,9 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { apiFetch } from '@/lib/api-client';
+
 import { useDivision } from '@/contexts/DivisionContext';
+import { apiFetch } from '@/lib/api-client';
 import { queryKeys } from '@/lib/query-keys';
 
 interface AtAGlance {

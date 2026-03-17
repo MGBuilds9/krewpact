@@ -58,6 +58,60 @@ function topN<T extends string>(items: T[], n: number): T[] {
     .map(([value]) => value);
 }
 
+function buildICPProfile(
+  group: AccountForICP[],
+  industry: string,
+  divisionId: string | null,
+): ICPProfile {
+  const sampleSize = group.length;
+  const avgDealValues = group
+    .filter((a) => a.total_projects > 0)
+    .map((a) => a.lifetime_revenue / a.total_projects);
+  const avgDealValue =
+    avgDealValues.length > 0
+      ? avgDealValues.reduce((sum, v) => sum + v, 0) / avgDealValues.length
+      : 0;
+  const minValue = avgDealValues.length > 0 ? Math.min(...avgDealValues) : 0;
+  const maxValue = avgDealValues.length > 0 ? Math.max(...avgDealValues) : 0;
+
+  const cities: string[] = [];
+  const provinces: string[] = [];
+  for (const account of group) {
+    if (!account.address) continue;
+    const city = account.address['city'] ?? account.address['City'];
+    const province =
+      account.address['province'] ??
+      account.address['Province'] ??
+      account.address['state'] ??
+      account.address['State'];
+    if (city && typeof city === 'string') cities.push(city.trim());
+    if (province && typeof province === 'string') provinces.push(province.trim());
+  }
+
+  const repeatRate = group.filter((a) => a.is_repeat_client).length / sampleSize;
+  const topSources = topN(
+    group.map((a) => a.source).filter((s): s is string => !!s),
+    3,
+  );
+
+  return {
+    name: `${industry} Client Profile`,
+    description: `Auto-generated ICP based on ${sampleSize} ${industry} accounts. Avg deal value: $${Math.round(avgDealValue).toLocaleString()}.`,
+    division_id: divisionId,
+    is_auto_generated: true,
+    industry_match: [industry],
+    geography_match: { cities: topN(cities, 5), provinces: topN(provinces, 3) },
+    project_value_range: { min: Math.round(minValue), max: Math.round(maxValue) },
+    project_types: [],
+    repeat_rate_weight: Math.round(repeatRate * 100) / 100,
+    sample_size: sampleSize,
+    confidence_score: Math.min(100, sampleSize * 10),
+    avg_deal_value: Math.round(avgDealValue),
+    avg_project_duration_days: 0,
+    top_sources: topSources,
+  };
+}
+
 /**
  * Generate ICPs from a set of accounts.
  *
@@ -86,68 +140,9 @@ export function generateICPsFromAccounts(accounts: AccountForICP[]): ICPProfile[
 
   for (const [groupKey, group] of groups) {
     if (group.length < 3) continue;
-
     const [divisionKey, industry] = groupKey.split('::');
     const divisionId = divisionKey === '__no_division__' ? null : divisionKey;
-    const sampleSize = group.length;
-
-    // Avg deal value: lifetime_revenue / total_projects (guard against div-by-zero)
-    const avgDealValues = group
-      .filter((a) => a.total_projects > 0)
-      .map((a) => a.lifetime_revenue / a.total_projects);
-    const avgDealValue =
-      avgDealValues.length > 0
-        ? avgDealValues.reduce((sum, v) => sum + v, 0) / avgDealValues.length
-        : 0;
-
-    // Project value range (min/max of avg deal values)
-    const minValue = avgDealValues.length > 0 ? Math.min(...avgDealValues) : 0;
-    const maxValue = avgDealValues.length > 0 ? Math.max(...avgDealValues) : 0;
-
-    // Geography: extract cities and provinces from address JSONB
-    const cities: string[] = [];
-    const provinces: string[] = [];
-    for (const account of group) {
-      if (!account.address) continue;
-      const city = account.address['city'] ?? account.address['City'];
-      const province =
-        account.address['province'] ??
-        account.address['Province'] ??
-        account.address['state'] ??
-        account.address['State'];
-      if (city && typeof city === 'string') cities.push(city.trim());
-      if (province && typeof province === 'string') provinces.push(province.trim());
-    }
-    const topCities = topN(cities, 5);
-    const topProvinces = topN(provinces, 3);
-
-    // Repeat rate: % of accounts with is_repeat_client = true
-    const repeatCount = group.filter((a) => a.is_repeat_client).length;
-    const repeatRate = repeatCount / sampleSize;
-
-    // Top sources
-    const sources = group.map((a) => a.source).filter((s): s is string => !!s);
-    const topSources = topN(sources, 3);
-
-    // Confidence = min(100, sample_size * 10)
-    const confidenceScore = Math.min(100, sampleSize * 10);
-
-    profiles.push({
-      name: `${industry} Client Profile`,
-      description: `Auto-generated ICP based on ${sampleSize} ${industry} accounts. Avg deal value: $${Math.round(avgDealValue).toLocaleString()}.`,
-      division_id: divisionId,
-      is_auto_generated: true,
-      industry_match: [industry],
-      geography_match: { cities: topCities, provinces: topProvinces },
-      project_value_range: { min: Math.round(minValue), max: Math.round(maxValue) },
-      project_types: [],
-      repeat_rate_weight: Math.round(repeatRate * 100) / 100,
-      sample_size: sampleSize,
-      confidence_score: confidenceScore,
-      avg_deal_value: Math.round(avgDealValue),
-      avg_project_duration_days: 0,
-      top_sources: topSources,
-    });
+    profiles.push(buildICPProfile(group, industry, divisionId));
   }
 
   // Sort by confidence score descending

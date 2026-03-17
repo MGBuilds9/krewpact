@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('ai', () => ({
   generateText: vi.fn(),
@@ -11,8 +10,9 @@ vi.mock('@/lib/ai/cost-tracker', () => ({
   trackAIAction: vi.fn(),
 }));
 
-import { generateText } from 'ai';
 import { google } from '@ai-sdk/google';
+import { generateText } from 'ai';
+
 import { trackAIAction } from '@/lib/ai/cost-tracker';
 import { generateWithGemini } from '@/lib/ai/providers/gemini';
 
@@ -137,9 +137,12 @@ describe('generateWithGemini', () => {
   it('does not call trackAIAction when generateText throws', async () => {
     mockGenerateText.mockRejectedValue(new Error('Network error'));
 
-    await expect(generateWithGemini({ prompt: 'Error path', costContext: { orgId: 'org-1', actionType: 'draft' } })).rejects.toThrow(
-      'Network error',
-    );
+    await expect(
+      generateWithGemini({
+        prompt: 'Error path',
+        costContext: { orgId: 'org-1', actionType: 'draft' },
+      }),
+    ).rejects.toThrow('Network error');
 
     expect(mockTrackAIAction).not.toHaveBeenCalled();
   });

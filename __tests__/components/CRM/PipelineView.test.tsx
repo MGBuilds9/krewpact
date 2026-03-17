@@ -1,8 +1,8 @@
 'use client';
 
-import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
+import { describe, expect, it, vi } from 'vitest';
 
 // Mock next/navigation
 vi.mock('next/navigation', () => ({
@@ -13,7 +13,7 @@ vi.mock('next/navigation', () => ({
 }));
 
 import { PipelineView } from '@/components/CRM/PipelineView';
-import type { PipelineData, Opportunity } from '@/hooks/useCRM';
+import type { Opportunity, PipelineData } from '@/hooks/useCRM';
 
 function makeOpp(overrides: Partial<Opportunity> = {}): Opportunity {
   return {

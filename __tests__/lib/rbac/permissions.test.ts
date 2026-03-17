@@ -1,15 +1,16 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
+import type { KrewpactRole, Permission } from '@/lib/rbac/permissions.shared';
 import {
   ALL_PERMISSIONS,
-  ROLE_PERMISSIONS,
-  hasPermission,
   getPermissions,
+  hasPermission,
   isAdmin,
-  isInternalRole,
   isExternalRole,
+  isInternalRole,
+  ROLE_PERMISSIONS,
   roleHasPermission,
 } from '@/lib/rbac/permissions.shared';
-import type { KrewpactRole, Permission } from '@/lib/rbac/permissions.shared';
 
 describe('isInternalRole', () => {
   it('returns true for all internal roles', () => {
@@ -186,7 +187,12 @@ describe('ROLE_PERMISSIONS matrix', () => {
 
   it('external roles have restricted permissions', () => {
     // External roles should not have admin or finance permissions
-    const restricted: Permission[] = ['admin.system', 'finance.admin', 'roles.manage', 'users.manage'];
+    const restricted: Permission[] = [
+      'admin.system',
+      'finance.admin',
+      'roles.manage',
+      'users.manage',
+    ];
     const externalRoles: KrewpactRole[] = [
       'client_owner',
       'client_delegate',

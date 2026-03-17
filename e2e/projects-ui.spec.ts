@@ -1,4 +1,5 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+
 import { checkAccessibility } from './helpers/a11y';
 
 // Verify the projects list page renders the new Bento Cards correctly on Mobile and Desktop

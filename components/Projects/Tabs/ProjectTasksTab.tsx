@@ -1,11 +1,12 @@
 'use client';
 
+import { Calendar, Plus, User } from 'lucide-react';
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -13,6 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -20,14 +22,81 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, Calendar, User } from 'lucide-react';
-import { useTasks, useCreateTask, useUpdateTask } from '@/hooks/useTasks';
+import { Textarea } from '@/components/ui/textarea';
+import { useCreateTask, useTasks, useUpdateTask } from '@/hooks/useTasks';
 import { useUsers } from '@/hooks/useUsers';
-import { toast } from 'sonner';
 
 interface ProjectTasksTabProps {
   projectId: string;
 }
+
+type Task = ReturnType<typeof useTasks>['data'] extends (infer T)[] | undefined ? T : never;
+type ColumnDef = { id: string; title: string; status: string };
+
+function TaskCard({
+  task,
+  column,
+  users,
+  onStatusChange,
+}: {
+  task: Task;
+  column: ColumnDef;
+  users: ReturnType<typeof useUsers>['data'];
+  onStatusChange: (id: string, status: string) => void;
+}) {
+  const assignedUser = users?.find((u) => u.id === task.assigned_user_id);
+  return (
+    <Card className="p-4 hover:shadow-md transition-shadow">
+      <h4 className="font-medium mb-2">{task.title}</h4>
+      {task.description && (
+        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{task.description}</p>
+      )}
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        {task.due_at && (
+          <div className="flex items-center gap-1">
+            <Calendar className="h-3 w-3" />
+            {new Date(task.due_at).toLocaleDateString()}
+          </div>
+        )}
+        {task.assigned_user_id && (
+          <div className="flex items-center gap-1">
+            <User className="h-3 w-3" />
+            {assignedUser?.first_name || 'Assigned'}
+          </div>
+        )}
+      </div>
+      <div className="mt-3 flex gap-2">
+        {column.status !== 'todo' && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() =>
+              onStatusChange(task.id, column.status === 'in_progress' ? 'todo' : 'in_progress')
+            }
+          >
+            Back
+          </Button>
+        )}
+        {column.status !== 'done' && (
+          <Button
+            size="sm"
+            onClick={() =>
+              onStatusChange(task.id, column.status === 'todo' ? 'in_progress' : 'done')
+            }
+          >
+            {column.status === 'todo' ? 'Start' : 'Complete'}
+          </Button>
+        )}
+      </div>
+    </Card>
+  );
+}
+
+const COLUMNS: ColumnDef[] = [
+  { id: 'todo', title: 'To Do', status: 'todo' },
+  { id: 'in_progress', title: 'In Progress', status: 'in_progress' },
+  { id: 'done', title: 'Done', status: 'done' },
+];
 
 export function ProjectTasksTab({ projectId }: ProjectTasksTabProps) {
   const { data: tasks = [] } = useTasks(projectId);
@@ -35,11 +104,7 @@ export function ProjectTasksTab({ projectId }: ProjectTasksTabProps) {
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
   const [isOpen, setIsOpen] = useState(false);
-  const [newTask, setNewTask] = useState({
-    title: '',
-    description: '',
-    assigned_user_id: '',
-  });
+  const [newTask, setNewTask] = useState({ title: '', description: '', assigned_user_id: '' });
 
   const handleCreateTask = async () => {
     try {
@@ -66,12 +131,6 @@ export function ProjectTasksTab({ projectId }: ProjectTasksTabProps) {
       toast.error('Error updating task');
     }
   };
-
-  const columns = [
-    { id: 'todo', title: 'To Do', status: 'todo' },
-    { id: 'in_progress', title: 'In Progress', status: 'in_progress' },
-    { id: 'done', title: 'Done', status: 'done' },
-  ];
 
   return (
     <div className="space-y-6">
@@ -130,83 +189,36 @@ export function ProjectTasksTab({ projectId }: ProjectTasksTabProps) {
           </DialogContent>
         </Dialog>
       </div>
-
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {columns.map((column) => (
-          <Card key={column.id}>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>{column.title}</span>
-                <Badge variant="secondary">
-                  {tasks.filter((t) => t.status === column.status).length}
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {tasks
-                .filter((task) => task.status === column.status)
-                .map((task) => (
-                  <Card key={task.id} className="p-4 hover:shadow-md transition-shadow">
-                    <h4 className="font-medium mb-2">{task.title}</h4>
-                    {task.description && (
-                      <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                        {task.description}
-                      </p>
-                    )}
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      {task.due_at && (
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {new Date(task.due_at).toLocaleDateString()}
-                        </div>
-                      )}
-                      {task.assigned_user_id && (
-                        <div className="flex items-center gap-1">
-                          <User className="h-3 w-3" />
-                          {users?.find((u) => u.id === task.assigned_user_id)?.first_name ||
-                            'Assigned'}
-                        </div>
-                      )}
-                    </div>
-                    <div className="mt-3 flex gap-2">
-                      {column.status !== 'todo' && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() =>
-                            handleStatusChange(
-                              task.id,
-                              column.status === 'in_progress' ? 'todo' : 'in_progress',
-                            )
-                          }
-                        >
-                          Back
-                        </Button>
-                      )}
-                      {column.status !== 'done' && (
-                        <Button
-                          size="sm"
-                          onClick={() =>
-                            handleStatusChange(
-                              task.id,
-                              column.status === 'todo' ? 'in_progress' : 'done',
-                            )
-                          }
-                        >
-                          {column.status === 'todo' ? 'Start' : 'Complete'}
-                        </Button>
-                      )}
-                    </div>
-                  </Card>
+        {COLUMNS.map((column) => {
+          const colTasks = tasks.filter((t) => t.status === column.status);
+          return (
+            <Card key={column.id}>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>{column.title}</span>
+                  <Badge variant="secondary">{colTasks.length}</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {colTasks.map((task) => (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    column={column}
+                    users={users}
+                    onStatusChange={handleStatusChange}
+                  />
                 ))}
-              {tasks.filter((t) => t.status === column.status).length === 0 && (
-                <p className="text-center text-sm text-muted-foreground py-8">
-                  No tasks in this column
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+                {colTasks.length === 0 && (
+                  <p className="text-center text-sm text-muted-foreground py-8">
+                    No tasks in this column
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );

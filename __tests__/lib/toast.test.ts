@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('sonner', () => ({
   toast: Object.assign(vi.fn(), {
@@ -9,6 +9,7 @@ vi.mock('sonner', () => ({
 }));
 
 import { toast } from 'sonner';
+
 import { showToast } from '@/lib/toast';
 
 const mockToast = vi.mocked(toast);

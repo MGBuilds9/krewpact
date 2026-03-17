@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({
@@ -8,16 +7,17 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { GET as getCompliance } from '@/app/api/portal/trade/compliance/route';
-import { GET as getBids, POST as postBid } from '@/app/api/portal/trade/bids/route';
+
 import {
+  makeJsonRequest,
+  makeRequest,
   mockClerkAuth,
   mockClerkUnauth,
-  makeRequest,
-  makeJsonRequest,
   TEST_IDS,
 } from '@/__tests__/helpers';
+import { GET as getBids, POST as postBid } from '@/app/api/portal/trade/bids/route';
+import { GET as getCompliance } from '@/app/api/portal/trade/compliance/route';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);

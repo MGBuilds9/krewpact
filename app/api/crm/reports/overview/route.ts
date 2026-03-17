@@ -1,29 +1,87 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+type SupabaseClient = Awaited<ReturnType<typeof createUserClientSafe>>['client'];
+
+function aggregateLeads(leads: Array<Record<string, unknown>>) {
+  const byStatus: Record<string, number> = {};
+  const bySource: Record<string, number> = {};
+  const byDivision: Record<string, number> = {};
+  for (const lead of leads) {
+    const s = lead.status as string;
+    byStatus[s] = (byStatus[s] ?? 0) + 1;
+    if (lead.source_channel) {
+      const src = lead.source_channel as string;
+      bySource[src] = (bySource[src] ?? 0) + 1;
+    }
+    if (lead.division_id) {
+      const div = lead.division_id as string;
+      byDivision[div] = (byDivision[div] ?? 0) + 1;
+    }
   }
+  return { byStatus, bySource, byDivision };
+}
 
-  const rl = await rateLimit(req, { limit: 30, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
+function aggregateOpportunities(opportunities: Array<Record<string, unknown>>) {
+  const byStage: Record<string, { count: number; revenue: number }> = {};
+  let totalRevenue = 0;
+  for (const opp of opportunities) {
+    const stage = opp.stage as string;
+    if (!byStage[stage]) byStage[stage] = { count: 0, revenue: 0 };
+    byStage[stage].count++;
+    byStage[stage].revenue += (opp.estimated_revenue as number) ?? 0;
+    totalRevenue += (opp.estimated_revenue as number) ?? 0;
+  }
+  return { byStage, totalRevenue };
+}
 
-  const { client: supabase, error: authError } = await createUserClientSafe();
+function aggregateActivities(activities: Array<Record<string, unknown>>) {
+  const byType: Record<string, number> = {};
+  for (const act of activities) {
+    const t = act.activity_type as string;
+    byType[t] = (byType[t] ?? 0) + 1;
+  }
+  return byType;
+}
 
-  if (authError) return authError;
+function aggregateBids(bids: Array<Record<string, unknown>>) {
+  const byStatus: Record<string, number> = {};
+  let totalValue = 0;
+  for (const bid of bids) {
+    const s = bid.status as string;
+    byStatus[s] = (byStatus[s] ?? 0) + 1;
+    totalValue += (bid.estimated_value as number) ?? 0;
+  }
+  return { byStatus, totalValue };
+}
 
-  const [
-    leadsResult,
-    contactsResult,
-    accountsResult,
-    opportunitiesResult,
-    activitiesResult,
-    biddingResult,
-  ] = await Promise.all([
+type CountResults = [
+  { count: number | null },
+  { count: number | null },
+  { count: number | null },
+  { count: number | null },
+  { count: number | null },
+  { count: number | null },
+];
+
+function extractCounts(results: CountResults) {
+  const [leads, contacts, accounts, opportunities, activities, bidding] = results;
+  return {
+    totalLeads: leads.count ?? 0,
+    totalContacts: contacts.count ?? 0,
+    totalAccounts: accounts.count ?? 0,
+    totalOpportunities: opportunities.count ?? 0,
+    totalBids: bidding.count ?? 0,
+    activitiesLast30Days: activities.count ?? 0,
+  };
+}
+
+async function fetchOverviewData(supabase: SupabaseClient) {
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  return Promise.all([
     supabase
       .from('leads')
       .select('id, status, division_id, source_channel, lead_score, created_at', {
@@ -37,76 +95,62 @@ export async function GET(req: NextRequest) {
     supabase
       .from('activities')
       .select('id, activity_type, created_at', { count: 'exact' })
-      .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
+      .gte('created_at', thirtyDaysAgo),
     supabase
       .from('bidding_opportunities')
       .select('id, status, estimated_value', { count: 'exact' }),
   ]);
+}
 
-  // Lead funnel
-  const leads = leadsResult.data ?? [];
-  const leadsByStatus: Record<string, number> = {};
-  const leadsBySource: Record<string, number> = {};
-  const leadsByDivision: Record<string, number> = {};
-  for (const lead of leads) {
-    leadsByStatus[lead.status] = (leadsByStatus[lead.status] ?? 0) + 1;
-    if (lead.source_channel) {
-      leadsBySource[lead.source_channel] = (leadsBySource[lead.source_channel] ?? 0) + 1;
-    }
-    if (lead.division_id) {
-      leadsByDivision[lead.division_id] = (leadsByDivision[lead.division_id] ?? 0) + 1;
-    }
-  }
+async function computeOverview(supabase: SupabaseClient) {
+  const rawResults = await fetchOverviewData(supabase);
+  const [leadsResult, , , opportunitiesResult, activitiesResult, biddingResult] = rawResults;
 
-  // Opportunity pipeline
-  const opportunities = opportunitiesResult.data ?? [];
-  const oppByStage: Record<string, { count: number; revenue: number }> = {};
-  let totalPipelineRevenue = 0;
-  for (const opp of opportunities) {
-    if (!oppByStage[opp.stage]) oppByStage[opp.stage] = { count: 0, revenue: 0 };
-    oppByStage[opp.stage].count++;
-    oppByStage[opp.stage].revenue += opp.estimated_revenue ?? 0;
-    totalPipelineRevenue += opp.estimated_revenue ?? 0;
-  }
+  const {
+    byStatus: leadsByStatus,
+    bySource: leadsBySource,
+    byDivision: leadsByDivision,
+  } = aggregateLeads((leadsResult.data ?? []) as Array<Record<string, unknown>>);
+  const { byStage: pipeline, totalRevenue: totalPipelineRevenue } = aggregateOpportunities(
+    (opportunitiesResult.data ?? []) as Array<Record<string, unknown>>,
+  );
+  const activityVolume = aggregateActivities(
+    (activitiesResult.data ?? []) as Array<Record<string, unknown>>,
+  );
+  const { byStatus: bidding, totalValue: totalBidValue } = aggregateBids(
+    (biddingResult.data ?? []) as Array<Record<string, unknown>>,
+  );
 
-  // Activity volume (last 30 days)
-  const activities = activitiesResult.data ?? [];
-  const activityByType: Record<string, number> = {};
-  for (const act of activities) {
-    activityByType[act.activity_type] = (activityByType[act.activity_type] ?? 0) + 1;
-  }
-
-  // Bidding summary
-  const bids = biddingResult.data ?? [];
-  const bidsByStatus: Record<string, number> = {};
-  let totalBidValue = 0;
-  for (const bid of bids) {
-    bidsByStatus[bid.status] = (bidsByStatus[bid.status] ?? 0) + 1;
-    totalBidValue += bid.estimated_value ?? 0;
-  }
-
-  // Conversion rate
+  const counts = extractCounts(rawResults);
   const wonLeads = leadsByStatus['won'] ?? 0;
-  const totalLeads = leadsResult.count ?? 0;
-  const conversionRate = totalLeads > 0 ? (wonLeads / totalLeads) * 100 : 0;
+  const conversionRate = counts.totalLeads > 0 ? (wonLeads / counts.totalLeads) * 100 : 0;
 
-  return NextResponse.json({
+  return {
     summary: {
-      totalLeads: leadsResult.count ?? 0,
-      totalContacts: contactsResult.count ?? 0,
-      totalAccounts: accountsResult.count ?? 0,
-      totalOpportunities: opportunitiesResult.count ?? 0,
+      ...counts,
       totalPipelineRevenue,
       conversionRate: Math.round(conversionRate * 10) / 10,
-      activitiesLast30Days: activitiesResult.count ?? 0,
-      totalBids: biddingResult.count ?? 0,
       totalBidValue,
     },
     leadFunnel: leadsByStatus,
     leadsBySource,
     leadsByDivision,
-    pipeline: oppByStage,
-    activityVolume: activityByType,
-    bidding: bidsByStatus,
-  });
+    pipeline,
+    activityVolume,
+    bidding,
+  };
+}
+
+export async function GET(req: NextRequest) {
+  const { userId } = await auth();
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const rl = await rateLimit(req, { limit: 30, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
+
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
+
+  const overview = await computeOverview(supabase);
+  return NextResponse.json(overview);
 }

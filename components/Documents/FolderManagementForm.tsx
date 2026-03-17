@@ -1,8 +1,11 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
+
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -20,10 +23,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2 } from 'lucide-react';
-import { folderCreateSchema } from '@/lib/validators/documents';
 import { useCreateFolder } from '@/hooks/useDocuments';
-import { toast } from 'sonner';
+import { folderCreateSchema } from '@/lib/validators/documents';
 
 type FormValues = z.infer<typeof folderCreateSchema>;
 

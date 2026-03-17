@@ -1,7 +1,8 @@
-import { createServiceClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+
 import { verifyCronAuth } from '@/lib/api/cron-auth';
 import { createCronLogger } from '@/lib/api/cron-logger';
+import { createServiceClient } from '@/lib/supabase/server';
 
 export async function POST(req: NextRequest) {
   const { authorized } = await verifyCronAuth(req);

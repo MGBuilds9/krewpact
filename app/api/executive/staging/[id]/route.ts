@@ -1,9 +1,10 @@
 import { auth } from '@clerk/nextjs/server';
-import { createServiceClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
-import { stagingUpdateSchema } from '@/lib/validators/executive';
+
 import { getKrewpactRoles, getKrewpactUserId } from '@/lib/api/org';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { createServiceClient } from '@/lib/supabase/server';
+import { stagingUpdateSchema } from '@/lib/validators/executive';
 
 const READ_ROLES = ['executive', 'platform_admin'];
 const WRITE_ROLES = ['platform_admin'];

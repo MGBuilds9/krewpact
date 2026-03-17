@@ -12,8 +12,8 @@
  *   }
  */
 
-import { createServiceClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
+import { createServiceClient } from '@/lib/supabase/server';
 
 export interface CronLogger {
   success(result?: Record<string, unknown>): Promise<void>;

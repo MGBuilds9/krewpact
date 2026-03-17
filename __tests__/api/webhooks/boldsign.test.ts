@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createHmac } from 'crypto';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
@@ -36,9 +36,10 @@ vi.mock('@sentry/nextjs', () => ({
   captureMessage: vi.fn(),
 }));
 
-import { createServiceClient } from '@/lib/supabase/server';
-import { POST } from '@/app/api/webhooks/boldsign/route';
 import { NextRequest } from 'next/server';
+
+import { POST } from '@/app/api/webhooks/boldsign/route';
+import { createServiceClient } from '@/lib/supabase/server';
 
 const WEBHOOK_SECRET = 'test-webhook-secret-12345';
 const mockCreateServiceClient = vi.mocked(createServiceClient);

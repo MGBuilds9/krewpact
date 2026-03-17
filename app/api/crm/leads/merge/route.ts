@@ -1,20 +1,60 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { computeLeadMerge } from '@/lib/crm/duplicate-detector';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { computeLeadMerge } from '@/lib/crm/duplicate-detector';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mergeSchema = z.object({
   primary_id: z.string().uuid(),
   secondary_id: z.string().uuid(),
 });
 
+const LEAD_FIELDS =
+  'id, company_name, status, lost_reason, lead_score, fit_score, intent_score, engagement_score, source_channel, utm_campaign, source_detail, assigned_to, division_id, created_at, updated_at, city, province, address, postal_code, industry, next_followup_at, last_touch_at, is_qualified, automation_paused, current_sequence_id, domain, enrichment_status, enrichment_data, deleted_at';
+
+type SupabaseClient = Awaited<ReturnType<typeof createUserClientSafe>>['client'];
+
+async function reassignLeadRelations(
+  supabase: SupabaseClient,
+  primaryId: string,
+  secondaryId: string,
+): Promise<string[]> {
+  const [contactErr, activityErr, outreachErr, enrollmentErr] = await Promise.all([
+    supabase
+      .from('contacts')
+      .update({ lead_id: primaryId })
+      .eq('lead_id', secondaryId)
+      .then((r) => r.error),
+    supabase
+      .from('activities')
+      .update({ lead_id: primaryId })
+      .eq('lead_id', secondaryId)
+      .then((r) => r.error),
+    supabase
+      .from('outreach')
+      .update({ lead_id: primaryId })
+      .eq('lead_id', secondaryId)
+      .then((r) => r.error),
+    supabase
+      .from('sequence_enrollments')
+      .update({ lead_id: primaryId })
+      .eq('lead_id', secondaryId)
+      .then((r) => r.error),
+  ]);
+
+  const reassigned: string[] = [];
+  if (!contactErr) reassigned.push('contacts');
+  if (!activityErr) reassigned.push('activities');
+  if (!outreachErr) reassigned.push('outreach');
+  if (!enrollmentErr) reassigned.push('sequence_enrollments');
+  return reassigned;
+}
+
 export async function POST(req: NextRequest) {
   const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
   if (!rl.success) return rateLimitResponse(rl);
@@ -27,97 +67,39 @@ export async function POST(req: NextRequest) {
   }
 
   const parsed = mergeSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
   const { primary_id, secondary_id } = parsed.data;
-
-  if (primary_id === secondary_id) {
+  if (primary_id === secondary_id)
     return NextResponse.json({ error: 'Cannot merge a lead with itself' }, { status: 400 });
-  }
 
   const { client: supabase, error: authError } = await createUserClientSafe();
-
   if (authError) return authError;
 
-  // Fetch both leads
   const [primaryResult, secondaryResult] = await Promise.all([
-    supabase
-      .from('leads')
-      .select(
-        'id, company_name, status, lost_reason, lead_score, fit_score, intent_score, engagement_score, source_channel, utm_campaign, source_detail, assigned_to, division_id, created_at, updated_at, city, province, address, postal_code, industry, next_followup_at, last_touch_at, is_qualified, automation_paused, current_sequence_id, domain, enrichment_status, enrichment_data, deleted_at',
-      )
-      .eq('id', primary_id)
-      .single(),
-    supabase
-      .from('leads')
-      .select(
-        'id, company_name, status, lost_reason, lead_score, fit_score, intent_score, engagement_score, source_channel, utm_campaign, source_detail, assigned_to, division_id, created_at, updated_at, city, province, address, postal_code, industry, next_followup_at, last_touch_at, is_qualified, automation_paused, current_sequence_id, domain, enrichment_status, enrichment_data, deleted_at',
-      )
-      .eq('id', secondary_id)
-      .single(),
+    supabase.from('leads').select(LEAD_FIELDS).eq('id', primary_id).single(),
+    supabase.from('leads').select(LEAD_FIELDS).eq('id', secondary_id).single(),
   ]);
 
-  if (primaryResult.error) {
+  if (primaryResult.error)
     return NextResponse.json(
       { error: `Primary lead not found: ${primaryResult.error.message}` },
       { status: 404 },
     );
-  }
-
-  if (secondaryResult.error) {
+  if (secondaryResult.error)
     return NextResponse.json(
       { error: `Secondary lead not found: ${secondaryResult.error.message}` },
       { status: 404 },
     );
-  }
 
-  const primary = primaryResult.data;
-  const secondary = secondaryResult.data;
-
-  // Compute merge
   const { updates, mergedFields } = computeLeadMerge(
-    primary as Record<string, unknown>,
-    secondary as Record<string, unknown>,
+    primaryResult.data as Record<string, unknown>,
+    secondaryResult.data as Record<string, unknown>,
   );
+  const reassignedRelations = await reassignLeadRelations(supabase, primary_id, secondary_id);
 
-  // Reassign contacts from secondary to primary
-  const { error: contactError } = await supabase
-    .from('contacts')
-    .update({ lead_id: primary_id })
-    .eq('lead_id', secondary_id);
-
-  // Reassign activities from secondary to primary
-  const { error: activityError } = await supabase
-    .from('activities')
-    .update({ lead_id: primary_id })
-    .eq('lead_id', secondary_id);
-
-  // Reassign outreach log from secondary to primary
-  const { error: outreachError } = await supabase
-    .from('outreach')
-    .update({ lead_id: primary_id })
-    .eq('lead_id', secondary_id);
-
-  // Reassign sequence enrollments from secondary to primary
-  const { error: enrollmentError } = await supabase
-    .from('sequence_enrollments')
-    .update({ lead_id: primary_id })
-    .eq('lead_id', secondary_id);
-
-  const reassignedRelations: string[] = [];
-  if (!contactError) reassignedRelations.push('contacts');
-  if (!activityError) reassignedRelations.push('activities');
-  if (!outreachError) reassignedRelations.push('outreach');
-  if (!enrollmentError) reassignedRelations.push('sequence_enrollments');
-
-  // Update primary with merged fields
-  if (Object.keys(updates).length > 0) {
+  if (Object.keys(updates).length > 0)
     await supabase.from('leads').update(updates).eq('id', primary_id);
-  }
-
-  // Soft-delete secondary
   await supabase
     .from('leads')
     .update({ deleted_at: new Date().toISOString() })

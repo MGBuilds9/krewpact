@@ -1,8 +1,11 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
+
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -14,10 +17,8 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2 } from 'lucide-react';
-import { rfiCreateSchema } from '@/lib/validators/field-ops';
 import { useCreateRFI } from '@/hooks/useFieldOps';
-import { toast } from 'sonner';
+import { rfiCreateSchema } from '@/lib/validators/field-ops';
 
 type FormValues = z.infer<typeof rfiCreateSchema>;
 
@@ -29,7 +30,6 @@ interface RFICreateFormProps {
 
 export function RFICreateForm({ projectId, onSuccess, onCancel }: RFICreateFormProps) {
   const createRFI = useCreateRFI(projectId);
-
   const form = useForm<FormValues>({
     resolver: zodResolver(rfiCreateSchema),
     defaultValues: {

@@ -1,8 +1,8 @@
 'use client';
 
 import { Badge } from '@/components/ui/badge';
-import { getStatusColor } from '@/lib/crm/bidding';
 import type { BiddingOpportunity } from '@/hooks/useCRM';
+import { getStatusColor } from '@/lib/crm/bidding';
 
 interface BiddingStatusBadgeProps {
   status: BiddingOpportunity['status'];

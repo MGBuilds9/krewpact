@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Define mock methods at module level so they're accessible in tests
 const mockSyncAccount = vi.fn();
@@ -32,17 +32,18 @@ vi.mock('@/lib/erp/sync-service', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { POST } from '@/app/api/erp/sync/route';
-import { GET as GET_JOB } from '@/app/api/erp/sync/[jobId]/route';
+
 import {
-  mockSupabaseClient,
+  makeJsonRequest,
+  makeRequest,
   mockClerkAuth,
   mockClerkUnauth,
-  makeRequest,
-  makeJsonRequest,
+  mockSupabaseClient,
   resetFixtureCounter,
 } from '@/__tests__/helpers';
+import { GET as GET_JOB } from '@/app/api/erp/sync/[jobId]/route';
+import { POST } from '@/app/api/erp/sync/route';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);

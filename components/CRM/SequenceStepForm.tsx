@@ -1,19 +1,20 @@
 'use client';
 
-import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
+import { type Resolver, useForm } from 'react-hook-form';
 import { z } from 'zod';
+
+import { Button } from '@/components/ui/button';
 import {
   Form,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormControl,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -21,31 +22,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useCreateSequenceStep } from '@/hooks/useCRM';
-import { Loader2 } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 import type { SequenceStep } from '@/hooks/useCRM';
+import { useCreateSequenceStep } from '@/hooks/useCRM';
 
 const actionTypes = ['email', 'task', 'wait'] as const;
-
-const stepFormSchema = z.object({
-  action_type: z.enum(actionTypes),
-  delay_days: z.number().int().min(0),
-  delay_hours: z.number().int().min(0).max(23),
-  // Email config
-  email_subject: z.string().optional(),
-  email_body: z.string().optional(),
-  // Task config
-  task_title: z.string().optional(),
-  task_description: z.string().optional(),
-});
-
-type StepFormValues = z.infer<typeof stepFormSchema>;
-
 const actionTypeLabels: Record<string, string> = {
   email: 'Send Email',
   task: 'Create Task',
   wait: 'Wait',
 };
+
+const stepFormSchema = z.object({
+  action_type: z.enum(actionTypes),
+  delay_days: z.number().int().min(0),
+  delay_hours: z.number().int().min(0).max(23),
+  email_subject: z.string().optional(),
+  email_body: z.string().optional(),
+  task_title: z.string().optional(),
+  task_description: z.string().optional(),
+});
+
+type StepFormValues = z.infer<typeof stepFormSchema>;
 
 export interface SequenceStepFormProps {
   sequenceId: string;
@@ -68,6 +66,17 @@ function extractFormDefaults(initialData?: Partial<SequenceStep>): StepFormValue
   };
 }
 
+function buildActionConfig(values: StepFormValues): Record<string, unknown> {
+  if (values.action_type === 'email')
+    return { subject: values.email_subject || undefined, body: values.email_body || undefined };
+  if (values.action_type === 'task')
+    return {
+      title: values.task_title || undefined,
+      description: values.task_description || undefined,
+    };
+  return {};
+}
+
 export function SequenceStepForm({
   sequenceId,
   initialData,
@@ -85,32 +94,13 @@ export function SequenceStepForm({
   // eslint-disable-next-line react-hooks/incompatible-library
   const actionType = form.watch('action_type');
 
-  function buildActionConfig(values: StepFormValues): Record<string, unknown> {
-    if (values.action_type === 'email') {
-      return {
-        subject: values.email_subject || undefined,
-        body: values.email_body || undefined,
-      };
-    }
-    if (values.action_type === 'task') {
-      return {
-        title: values.task_title || undefined,
-        description: values.task_description || undefined,
-      };
-    }
-    return {};
-  }
-
   function onSubmit(values: StepFormValues) {
-    const stepNumber = initialData?.step_number ?? nextStepNumber;
-    const actionConfig = buildActionConfig(values);
-
     createStep.mutate(
       {
         sequenceId,
-        step_number: stepNumber,
+        step_number: initialData?.step_number ?? nextStepNumber,
         action_type: values.action_type,
-        action_config: actionConfig,
+        action_config: buildActionConfig(values),
         delay_days: values.delay_days,
         delay_hours: values.delay_hours,
       },
@@ -151,7 +141,6 @@ export function SequenceStepForm({
           )}
         />
 
-        {/* Email config fields */}
         {actionType === 'email' && (
           <>
             <FormField
@@ -183,7 +172,6 @@ export function SequenceStepForm({
           </>
         )}
 
-        {/* Task config fields */}
         {actionType === 'task' && (
           <>
             <FormField

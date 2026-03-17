@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock Clerk auth
 vi.mock('@clerk/nextjs/server', () => ({
@@ -11,31 +11,28 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-
-// Account routes
-import { DELETE as accountDELETE } from '@/app/api/crm/accounts/[id]/route';
-import { GET as contactsGET } from '@/app/api/crm/contacts/route';
-
-// Estimate routes
-import { DELETE as estimateDELETE } from '@/app/api/estimates/[id]/route';
-import { GET as linesGET } from '@/app/api/estimates/[id]/lines/route';
-import { GET as versionsGET, POST as versionPOST } from '@/app/api/estimates/[id]/versions/route';
-
-// Opportunity routes — only GET and PATCH/POST exist, no stage history PATCH/DELETE
-import { GET as opportunityGET } from '@/app/api/crm/opportunities/[id]/route';
 
 import {
-  mockSupabaseClient,
-  mockClerkAuth,
-  makeRequest,
-  makeJsonRequest,
   makeEstimate,
   makeEstimateLine,
+  makeJsonRequest,
   makeOpportunity,
+  makeRequest,
+  mockClerkAuth,
+  mockSupabaseClient,
   resetFixtureCounter,
   TEST_IDS,
 } from '@/__tests__/helpers';
+// Account routes
+import { DELETE as accountDELETE } from '@/app/api/crm/accounts/[id]/route';
+import { GET as contactsGET } from '@/app/api/crm/contacts/route';
+// Opportunity routes — only GET and PATCH/POST exist, no stage history PATCH/DELETE
+import { GET as opportunityGET } from '@/app/api/crm/opportunities/[id]/route';
+import { GET as linesGET } from '@/app/api/estimates/[id]/lines/route';
+// Estimate routes
+import { DELETE as estimateDELETE } from '@/app/api/estimates/[id]/route';
+import { GET as versionsGET, POST as versionPOST } from '@/app/api/estimates/[id]/versions/route';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);

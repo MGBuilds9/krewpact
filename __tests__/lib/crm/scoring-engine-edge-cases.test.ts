@@ -1,8 +1,9 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
 import {
   evaluateOperator,
-  scoreLead,
   getNestedValue,
+  scoreLead,
   type ScoringRule,
 } from '@/lib/crm/scoring-engine';
 

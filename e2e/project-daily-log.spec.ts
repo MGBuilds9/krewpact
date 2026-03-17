@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 test.describe('Project Daily Log', () => {
   test('navigate to projects list', async ({ page }) => {

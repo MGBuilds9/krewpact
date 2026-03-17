@@ -1,10 +1,11 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AlertTriangle, Clock } from 'lucide-react';
+
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
-import { Clock, AlertTriangle } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { PipelineAgingEntry } from '@/lib/crm/pipeline-intelligence';
+import { cn } from '@/lib/utils';
 
 const stageLabels: Record<string, string> = {
   intake: 'Intake',

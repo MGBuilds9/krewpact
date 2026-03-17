@@ -1,9 +1,10 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 import { logger } from '@/lib/logger';
-import { z } from 'zod';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -88,7 +89,10 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 
   const parsed = PatchICPSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Validation error', issues: parsed.error.issues }, { status: 400 });
+    return NextResponse.json(
+      { error: 'Validation error', issues: parsed.error.issues },
+      { status: 400 },
+    );
   }
 
   try {

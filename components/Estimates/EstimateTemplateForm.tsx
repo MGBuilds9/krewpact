@@ -1,23 +1,24 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+
+import { Button } from '@/components/ui/button';
 import {
   Form,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormControl,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { useCreateEstimateTemplate, useUpdateEstimateTemplate } from '@/hooks/useEstimating';
+import { Textarea } from '@/components/ui/textarea';
 import type { EstimateTemplate } from '@/hooks/useEstimating';
-import { Loader2 } from 'lucide-react';
+import { useCreateEstimateTemplate, useUpdateEstimateTemplate } from '@/hooks/useEstimating';
 
 const formSchema = z.object({
   template_name: z.string().min(1, 'Name is required').max(200),
@@ -45,7 +46,7 @@ export function EstimateTemplateForm({
   const createTemplate = useCreateEstimateTemplate();
   const updateTemplate = useUpdateEstimateTemplate();
   const isEditing = !!template;
-
+  const isPending = createTemplate.isPending || updateTemplate.isPending;
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -57,8 +58,6 @@ export function EstimateTemplateForm({
     },
   });
 
-  const isPending = createTemplate.isPending || updateTemplate.isPending;
-
   function onSubmit(values: FormValues) {
     let payload: Record<string, unknown>;
     try {
@@ -67,7 +66,6 @@ export function EstimateTemplateForm({
       form.setError('payload_json', { message: 'Invalid JSON' });
       return;
     }
-
     const data = {
       template_name: values.template_name,
       project_type: values.project_type || undefined,
@@ -75,24 +73,16 @@ export function EstimateTemplateForm({
       is_default: values.is_default,
       division_id: values.division_id,
     };
-
+    const cb = {
+      onSuccess: () => {
+        form.reset();
+        onSuccess?.();
+      },
+    };
     if (isEditing) {
-      updateTemplate.mutate(
-        { id: template.id, ...data },
-        {
-          onSuccess: () => {
-            form.reset();
-            onSuccess?.();
-          },
-        },
-      );
+      updateTemplate.mutate({ id: template.id, ...data }, cb);
     } else {
-      createTemplate.mutate(data, {
-        onSuccess: () => {
-          form.reset();
-          onSuccess?.();
-        },
-      });
+      createTemplate.mutate(data, cb);
     }
   }
 
@@ -112,7 +102,6 @@ export function EstimateTemplateForm({
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="project_type"
@@ -126,7 +115,6 @@ export function EstimateTemplateForm({
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="payload_json"
@@ -145,7 +133,6 @@ export function EstimateTemplateForm({
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="is_default"
@@ -159,7 +146,6 @@ export function EstimateTemplateForm({
             </FormItem>
           )}
         />
-
         <div className="flex gap-2 justify-end pt-2">
           {onCancel && (
             <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>

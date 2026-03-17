@@ -1,10 +1,11 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
 import {
+  allowanceReconciliationSchema,
+  selectionChoiceSchema,
+  selectionOptionSchema,
   selectionSheetCreateSchema,
   selectionSheetUpdateSchema,
-  selectionOptionSchema,
-  selectionChoiceSchema,
-  allowanceReconciliationSchema,
 } from '@/lib/validators/selections';
 
 const VALID_UUID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';

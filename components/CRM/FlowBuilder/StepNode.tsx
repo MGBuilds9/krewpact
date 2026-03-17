@@ -1,6 +1,7 @@
 'use client';
 
-import { Mail, CheckSquare, Clock, GitBranch, X } from 'lucide-react';
+import { CheckSquare, Clock, GitBranch, Mail, X } from 'lucide-react';
+
 import { FlowStep } from './types';
 
 const iconMap = {

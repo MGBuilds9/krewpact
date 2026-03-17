@@ -1,8 +1,9 @@
 'use client';
 
-import { Card, CardContent } from '@/components/ui/card';
+import { FolderOpen, Upload } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
-import { Upload, FolderOpen } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface ProjectFilesTabProps {
   projectId: string;

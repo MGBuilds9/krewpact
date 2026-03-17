@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/supabase/server', () => ({
   createServiceClient: vi.fn(),
@@ -8,8 +7,8 @@ vi.mock('@/lib/logger', () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 
-import { createServiceClient } from '@/lib/supabase/server';
 import { trackAIAction } from '@/lib/ai/cost-tracker';
+import { createServiceClient } from '@/lib/supabase/server';
 
 describe('trackAIAction', () => {
   const mockInsert = vi.fn().mockResolvedValue({ error: null });
@@ -63,9 +62,7 @@ describe('trackAIAction', () => {
       modelUsed: 'gemini-2.0-flash',
       costCents: 42,
     });
-    expect(mockInsert).toHaveBeenCalledWith(
-      expect.objectContaining({ cost_cents: 42 }),
-    );
+    expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({ cost_cents: 42 }));
   });
 
   it('estimates cost from token counts when costCents not provided', async () => {
@@ -77,9 +74,7 @@ describe('trackAIAction', () => {
       outputTokens: 1_000_000,
     });
     // gemini-2.0-flash: input 8 cents/1M + output 30 cents/1M = 38 cents
-    expect(mockInsert).toHaveBeenCalledWith(
-      expect.objectContaining({ cost_cents: 38 }),
-    );
+    expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({ cost_cents: 38 }));
   });
 
   it('does not throw on insert failure', async () => {

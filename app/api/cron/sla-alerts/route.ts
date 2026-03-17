@@ -1,8 +1,9 @@
-import { createServiceClient } from '@/lib/supabase/server';
-import { LEAD_SLA_CONFIG, OPPORTUNITY_SLA_CONFIG, isOverdue } from '@/lib/crm/sla-config';
 import { NextRequest, NextResponse } from 'next/server';
+
 import { verifyCronAuth } from '@/lib/api/cron-auth';
 import { createCronLogger } from '@/lib/api/cron-logger';
+import { isOverdue, LEAD_SLA_CONFIG, OPPORTUNITY_SLA_CONFIG } from '@/lib/crm/sla-config';
+import { createServiceClient } from '@/lib/supabase/server';
 
 export async function POST(req: NextRequest) {
   const { authorized } = await verifyCronAuth(req);
@@ -71,7 +72,11 @@ export async function POST(req: NextRequest) {
 
   const alertsCreated = notifications.length;
 
-  const result = { alertsCreated, checkedLeads: leads?.length ?? 0, checkedOpportunities: opportunities?.length ?? 0 };
+  const result = {
+    alertsCreated,
+    checkedLeads: leads?.length ?? 0,
+    checkedOpportunities: opportunities?.length ?? 0,
+  };
   await cronLog.success(result);
   return NextResponse.json(result);
 }

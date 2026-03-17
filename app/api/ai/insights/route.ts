@@ -1,8 +1,9 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 import { z } from 'zod';
+
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const querySchema = z.object({
   entity_type: z.enum(['lead', 'opportunity', 'project', 'account', 'task']),
@@ -25,7 +26,9 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await supabase
     .from('ai_insights')
-    .select('id, insight_type, title, content, confidence, action_url, action_label, metadata, created_at')
+    .select(
+      'id, insight_type, title, content, confidence, action_url, action_label, metadata, created_at',
+    )
     .eq('entity_type', parsed.data.entity_type)
     .eq('entity_id', parsed.data.entity_id)
     .is('dismissed_at', null)

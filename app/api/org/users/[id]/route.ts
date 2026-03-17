@@ -1,7 +1,10 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { requirePermission } from '@/lib/rbac/permissions';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth();
@@ -9,6 +12,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
   if (!rl.success) return rateLimitResponse(rl);
+
+  const denied = await requirePermission('users.manage');
+  if (denied) return denied;
+
   const { id } = await params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
@@ -19,9 +26,24 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     )
     .eq('id', id)
     .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 404 });
+  if (error) {
+    return NextResponse.json(
+      { error: error.message },
+      { status: error.code === 'PGRST116' ? 404 : 500 },
+    );
+  }
   return NextResponse.json(data);
 }
+
+const userPatchSchema = z.object({
+  first_name: z.string().min(1).max(100).optional(),
+  last_name: z.string().min(1).max(100).optional(),
+  phone: z.string().max(30).optional().nullable(),
+  avatar_url: z.string().url().max(2048).optional().nullable(),
+  locale: z.string().max(10).optional(),
+  timezone: z.string().max(50).optional(),
+  status: z.enum(['active', 'inactive', 'archived']).optional(),
+});
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth();
@@ -29,6 +51,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
   if (!rl.success) return rateLimitResponse(rl);
+
+  const denied = await requirePermission('users.manage');
+  if (denied) return denied;
+
   const { id } = await params;
   let body: unknown;
   try {
@@ -37,16 +63,26 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const { client: supabase, error: authError } = await createUserClientSafe();
+  const parsed = userPatchSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
 
+  const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
+
   const { data, error } = await supabase
     .from('users')
-    .update({ ...(body as Record<string, unknown>), updated_at: new Date().toISOString() })
+    .update({ ...parsed.data, updated_at: new Date().toISOString() })
     .eq('id', id)
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    return NextResponse.json(
+      { error: error.message },
+      { status: error.code === 'PGRST116' ? 404 : 500 },
+    );
+  }
   return NextResponse.json(data);
 }

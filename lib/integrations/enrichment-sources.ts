@@ -53,6 +53,53 @@ export interface GoogleMapsResult {
 
 // ─── Apollo People Match ─────────────────────────────────────────────────────
 
+const NULL_APOLLO_RESULT: ApolloMatchResult = {
+  email: null,
+  phone: null,
+  website_url: null,
+  linkedin_url: null,
+  title: null,
+  seniority: null,
+  departments: null,
+  employees: null,
+  annual_revenue: null,
+  founded_year: null,
+  technologies: null,
+  org_linkedin: null,
+  org_industry: null,
+  org_city: null,
+  org_state: null,
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapApolloOrg(rawOrg: any) {
+  const org = rawOrg ?? {};
+  return {
+    website_url: org.website_url ?? null,
+    employees: org.estimated_num_employees ?? null,
+    annual_revenue: org.annual_revenue ?? null,
+    founded_year: org.founded_year ?? null,
+    technologies: org.technologies ?? null,
+    org_linkedin: org.linkedin_url ?? null,
+    org_industry: org.industry ?? null,
+    org_city: org.city ?? null,
+    org_state: org.state ?? null,
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapApolloPerson(person: any): ApolloMatchResult {
+  return {
+    email: person.email ?? null,
+    phone: person.phone_numbers?.[0]?.raw_number ?? null,
+    linkedin_url: person.linkedin_url ?? null,
+    title: person.title ?? null,
+    seniority: person.seniority ?? null,
+    departments: person.departments ?? null,
+    ...mapApolloOrg(person.organization),
+  };
+}
+
 export async function enrichFromApolloMatch(input: ApolloMatchInput): Promise<ApolloMatchResult> {
   const apiKey = process.env.APOLLO_API_KEY;
   if (!apiKey) throw new Error('APOLLO_API_KEY not configured');
@@ -62,9 +109,7 @@ export async function enrichFromApolloMatch(input: ApolloMatchInput): Promise<Ap
     last_name: input.last_name,
     organization_name: input.organization_name,
   };
-  if (input.linkedin_url) {
-    body.linkedin_url = input.linkedin_url;
-  }
+  if (input.linkedin_url) body.linkedin_url = input.linkedin_url;
 
   const res = await fetch('https://api.apollo.io/api/v1/people/match', {
     method: 'POST',
@@ -83,31 +128,7 @@ export async function enrichFromApolloMatch(input: ApolloMatchInput): Promise<Ap
 
   const data = await res.json();
   const person = data.person;
-  if (!person)
-    return {
-      email: null, phone: null, website_url: null, linkedin_url: null, title: null,
-      seniority: null, departments: null, employees: null, annual_revenue: null,
-      founded_year: null, technologies: null, org_linkedin: null, org_industry: null,
-      org_city: null, org_state: null,
-    };
-
-  return {
-    email: person.email ?? null,
-    phone: person.phone_numbers?.[0]?.raw_number ?? null,
-    website_url: person.organization?.website_url ?? null,
-    linkedin_url: person.linkedin_url ?? null,
-    title: person.title ?? null,
-    seniority: person.seniority ?? null,
-    departments: person.departments ?? null,
-    employees: person.organization?.estimated_num_employees ?? null,
-    annual_revenue: person.organization?.annual_revenue ?? null,
-    founded_year: person.organization?.founded_year ?? null,
-    technologies: person.organization?.technologies ?? null,
-    org_linkedin: person.organization?.linkedin_url ?? null,
-    org_industry: person.organization?.industry ?? null,
-    org_city: person.organization?.city ?? null,
-    org_state: person.organization?.state ?? null,
-  };
+  return person ? mapApolloPerson(person) : NULL_APOLLO_RESULT;
 }
 
 // ─── Brave Web Search ────────────────────────────────────────────────────────
@@ -201,46 +222,19 @@ export async function enrichFromTavily(
 
 // ─── Google Maps Places ──────────────────────────────────────────────────────
 
-export async function enrichFromGoogleMaps(
-  companyName: string,
-  city: string | null,
-): Promise<GoogleMapsResult> {
-  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
-  if (!apiKey) throw new Error('GOOGLE_MAPS_API_KEY not configured');
+const NULL_MAPS_RESULT: GoogleMapsResult = {
+  address: null,
+  city: null,
+  google_rating: null,
+  google_reviews_count: null,
+  business_types: null,
+  business_status: null,
+};
 
-  const query = city ? `"${companyName}" ${city} Ontario` : `"${companyName}" Ontario`;
-
-  const url = new URL('https://maps.googleapis.com/maps/api/place/findplacefromtext/json');
-  url.searchParams.set('input', query);
-  url.searchParams.set('inputtype', 'textquery');
-  url.searchParams.set(
-    'fields',
-    'formatted_address,name,rating,user_ratings_total,types,business_status',
-  );
-  url.searchParams.set('key', apiKey);
-
-  const res = await fetch(url.toString());
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Google Maps API error ${res.status}: ${text}`);
-  }
-
-  const data = await res.json();
-  const place = data.candidates?.[0];
-  if (!place)
-    return {
-      address: null,
-      city: null,
-      google_rating: null,
-      google_reviews_count: null,
-      business_types: null,
-      business_status: null,
-    };
-
-  // Try to extract city from formatted_address (e.g. "123 Main St, Mississauga, ON L5B 1M2")
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapGooglePlace(place: any): GoogleMapsResult {
   const addressParts = place.formatted_address?.split(',') ?? [];
   const extractedCity = addressParts.length >= 2 ? (addressParts[1]?.trim() ?? null) : null;
-
   return {
     address: place.formatted_address ?? null,
     city: extractedCity,
@@ -249,4 +243,35 @@ export async function enrichFromGoogleMaps(
     business_types: place.types ?? null,
     business_status: place.business_status ?? null,
   };
+}
+
+function buildMapsUrl(query: string, apiKey: string): string {
+  const url = new URL('https://maps.googleapis.com/maps/api/place/findplacefromtext/json');
+  url.searchParams.set('input', query);
+  url.searchParams.set('inputtype', 'textquery');
+  url.searchParams.set(
+    'fields',
+    'formatted_address,name,rating,user_ratings_total,types,business_status',
+  );
+  url.searchParams.set('key', apiKey);
+  return url.toString();
+}
+
+export async function enrichFromGoogleMaps(
+  companyName: string,
+  city: string | null,
+): Promise<GoogleMapsResult> {
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+  if (!apiKey) throw new Error('GOOGLE_MAPS_API_KEY not configured');
+
+  const query = city ? `"${companyName}" ${city} Ontario` : `"${companyName}" Ontario`;
+  const res = await fetch(buildMapsUrl(query, apiKey));
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Google Maps API error ${res.status}: ${text}`);
+  }
+
+  const data = await res.json();
+  const place = data.candidates?.[0];
+  return place ? mapGooglePlace(place) : NULL_MAPS_RESULT;
 }

@@ -1,9 +1,10 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
+import { describe, expect, it, vi } from 'vitest';
+
+import { ConditionNode } from '@/components/CRM/FlowBuilder/ConditionNode';
 import { FlowToolbar } from '@/components/CRM/FlowBuilder/FlowToolbar';
 import { StepNode } from '@/components/CRM/FlowBuilder/StepNode';
-import { ConditionNode } from '@/components/CRM/FlowBuilder/ConditionNode';
 import type { FlowStep } from '@/components/CRM/FlowBuilder/types';
 
 const emailStep: FlowStep = {

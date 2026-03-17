@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+
 import type { DuplicateMatch } from '@/lib/crm/duplicate-detector';
 
 interface DuplicateWarningDialogProps {

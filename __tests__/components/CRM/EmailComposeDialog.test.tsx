@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock useCRM hooks
 const mockMutateAsync = vi.fn();
@@ -12,8 +12,9 @@ vi.mock('@/hooks/useCRM', () => ({
   })),
 }));
 
-import { EmailComposeDialog } from '@/components/CRM/EmailComposeDialog';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+import { EmailComposeDialog } from '@/components/CRM/EmailComposeDialog';
 
 function Wrapper({ children }: { children: React.ReactNode }) {
   const queryClient = new QueryClient({

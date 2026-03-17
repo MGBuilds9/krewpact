@@ -1,9 +1,10 @@
 'use client';
 
+import { Search } from 'lucide-react';
 import { useForm } from 'react-hook-form';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
 
 export interface AuditLogQuery {
   entity_type?: string;

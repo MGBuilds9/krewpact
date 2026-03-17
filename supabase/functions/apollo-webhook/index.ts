@@ -1,5 +1,5 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { timingSafeEqual } from 'https://deno.land/std@0.208.0/crypto/timing_safe_equal.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const WEBHOOK_SECRET = Deno.env.get('APOLLO_WEBHOOK_SECRET');
 
@@ -105,7 +105,8 @@ Deno.serve(async (req) => {
   if (payload.data.email || payload.data.phone_numbers?.length) {
     const contactUpdate: Record<string, unknown> = {};
     if (payload.data.email) contactUpdate.email = payload.data.email;
-    if (payload.data.phone_numbers?.[0]) contactUpdate.phone = payload.data.phone_numbers[0].raw_number;
+    if (payload.data.phone_numbers?.[0])
+      contactUpdate.phone = payload.data.phone_numbers[0].raw_number;
     if (payload.data.title) contactUpdate.title = payload.data.title;
 
     await supabase

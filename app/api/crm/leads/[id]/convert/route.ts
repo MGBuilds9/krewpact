@@ -1,9 +1,10 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { validateConversion } from '@/lib/crm/lead-conversion';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { validateConversion } from '@/lib/crm/lead-conversion';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 type RouteContext = { params: Promise<{ id: string }> };
 

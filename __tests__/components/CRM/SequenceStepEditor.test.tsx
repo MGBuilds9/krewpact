@@ -1,8 +1,9 @@
 'use client';
 
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
+import { describe, expect, it, vi } from 'vitest';
+
 import { SequenceStepEditor } from '@/components/CRM/SequenceStepEditor';
 import type { SequenceStep } from '@/hooks/useCRM';
 

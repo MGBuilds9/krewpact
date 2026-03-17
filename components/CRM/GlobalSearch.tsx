@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { useRouter, useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { Search, X } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
 import { Badge } from '@/components/ui/badge';
 
 interface SearchResult {
@@ -19,13 +20,43 @@ const TYPE_COLORS: Record<string, string> = {
   account: 'bg-purple-100 text-purple-700',
   opportunity: 'bg-amber-100 text-amber-700',
 };
-
 const TYPE_PATHS: Record<string, string> = {
   lead: '/crm/leads',
   contact: '/crm/contacts',
   account: '/crm/accounts',
   opportunity: '/crm/opportunities',
 };
+
+function SearchResultItem({
+  result,
+  isSelected,
+  onSelect,
+  onHover,
+}: {
+  result: SearchResult;
+  isSelected: boolean;
+  onSelect: () => void;
+  onHover: () => void;
+}) {
+  return (
+    <button
+      key={`${result.type}-${result.id}`}
+      className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-left transition-colors ${isSelected ? 'bg-muted' : 'hover:bg-muted/50'}`}
+      onClick={onSelect}
+      onMouseEnter={onHover}
+    >
+      <Badge variant="secondary" className={`${TYPE_COLORS[result.type] ?? ''} text-xs`}>
+        {result.type}
+      </Badge>
+      <div className="flex-1 min-w-0">
+        <p className="font-medium truncate">{result.title}</p>
+        {result.subtitle && (
+          <p className="text-xs text-muted-foreground truncate">{result.subtitle}</p>
+        )}
+      </div>
+    </button>
+  );
+}
 
 export function GlobalSearch() {
   const router = useRouter();
@@ -51,17 +82,14 @@ export function GlobalSearch() {
     setQuery('');
     setSelectedIndex(0);
   }, []);
-
   const handleClose = useCallback(() => {
     setOpen(false);
     setQuery('');
   }, []);
-
   const handleSelect = useCallback(
     (result: SearchResult) => {
       handleClose();
-      const basePath = TYPE_PATHS[result.type] ?? '/crm';
-      router.push(`/org/${orgSlug}${basePath}/${result.id}`);
+      router.push(`/org/${orgSlug}${TYPE_PATHS[result.type] ?? '/crm'}/${result.id}`);
     },
     [handleClose, router, orgSlug],
   );
@@ -72,18 +100,14 @@ export function GlobalSearch() {
         e.preventDefault();
         handleOpen();
       }
-      if (e.key === 'Escape' && open) {
-        handleClose();
-      }
+      if (e.key === 'Escape' && open) handleClose();
     }
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [open, handleOpen, handleClose]);
 
   useEffect(() => {
-    if (open) {
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
+    if (open) setTimeout(() => inputRef.current?.focus(), 50);
   }, [open]);
 
   function handleQueryChange(value: string) {
@@ -98,9 +122,7 @@ export function GlobalSearch() {
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       setSelectedIndex((i) => Math.max(i - 1, 0));
-    } else if (e.key === 'Enter' && results[selectedIndex]) {
-      handleSelect(results[selectedIndex]);
-    }
+    } else if (e.key === 'Enter' && results[selectedIndex]) handleSelect(results[selectedIndex]);
   }
 
   if (!open) {
@@ -117,7 +139,11 @@ export function GlobalSearch() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh]" role="dialog" aria-label="CRM Search">
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh]"
+      role="dialog"
+      aria-label="CRM Search"
+    >
       <div className="fixed inset-0 bg-black/50" onClick={handleClose} aria-hidden="true" />
       <div className="relative z-10 w-full max-w-lg rounded-lg border bg-background shadow-xl">
         <div className="flex items-center border-b px-4">
@@ -136,38 +162,24 @@ export function GlobalSearch() {
             <X className="h-4 w-4 text-muted-foreground" />
           </button>
         </div>
-
         {results.length > 0 && (
           <div className="max-h-64 overflow-y-auto p-2">
             {results.map((result, i) => (
-              <button
+              <SearchResultItem
                 key={`${result.type}-${result.id}`}
-                className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-left transition-colors ${
-                  i === selectedIndex ? 'bg-muted' : 'hover:bg-muted/50'
-                }`}
-                onClick={() => handleSelect(result)}
-                onMouseEnter={() => setSelectedIndex(i)}
-              >
-                <Badge variant="secondary" className={`${TYPE_COLORS[result.type] ?? ''} text-xs`}>
-                  {result.type}
-                </Badge>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{result.title}</p>
-                  {result.subtitle && (
-                    <p className="text-xs text-muted-foreground truncate">{result.subtitle}</p>
-                  )}
-                </div>
-              </button>
+                result={result}
+                isSelected={i === selectedIndex}
+                onSelect={() => handleSelect(result)}
+                onHover={() => setSelectedIndex(i)}
+              />
             ))}
           </div>
         )}
-
         {query.length >= 2 && results.length === 0 && (
           <div className="p-6 text-center text-sm text-muted-foreground">
             No results found for &ldquo;{query}&rdquo;
           </div>
         )}
-
         {query.length < 2 && (
           <div className="p-6 text-center text-sm text-muted-foreground">
             Type at least 2 characters to search

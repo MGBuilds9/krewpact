@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({
@@ -11,9 +10,11 @@ vi.mock('@/lib/api/rate-limit', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { rateLimit } from '@/lib/api/rate-limit';
+
 import { GET } from '@/app/api/ai/analytics/route';
+import { rateLimit } from '@/lib/api/rate-limit';
+import { createUserClientSafe } from '@/lib/supabase/server';
+
 import { makeRequest } from '../../helpers/mock-request';
 
 function mockAnalyticsClient(opts: {
@@ -26,7 +27,7 @@ function mockAnalyticsClient(opts: {
   let callIndex = 0;
   const fromFn = vi.fn().mockImplementation((table: string) => {
     const chain: any = {};
-    ['select', 'eq', 'not', 'limit'].forEach(m => {
+    ['select', 'eq', 'not', 'limit'].forEach((m) => {
       chain[m] = vi.fn().mockReturnValue(chain);
     });
 
@@ -42,12 +43,10 @@ function mockAnalyticsClient(opts: {
         chain.then = (resolve: any) =>
           resolve({ count: opts.totalActedOn ?? 0, data: null, error: null });
       } else {
-        chain.then = (resolve: any) =>
-          resolve({ data: opts.allInsights ?? [], error: null });
+        chain.then = (resolve: any) => resolve({ data: opts.allInsights ?? [], error: null });
       }
     } else if (table === 'ai_actions') {
-      chain.then = (resolve: any) =>
-        resolve({ data: opts.costData ?? [], error: null });
+      chain.then = (resolve: any) => resolve({ data: opts.costData ?? [], error: null });
     }
 
     return chain;
@@ -127,7 +126,11 @@ describe('GET /api/ai/analytics', () => {
     const res = await GET(req);
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.analytics.by_type.stale_deal).toMatchObject({ total: 2, dismissed: 1, acted_on: 1 });
+    expect(body.analytics.by_type.stale_deal).toMatchObject({
+      total: 2,
+      dismissed: 1,
+      acted_on: 1,
+    });
     expect(body.analytics.by_type.bid_match).toMatchObject({ total: 1, dismissed: 0, acted_on: 0 });
   });
 

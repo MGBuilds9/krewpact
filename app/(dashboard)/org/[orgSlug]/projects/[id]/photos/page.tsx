@@ -1,17 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { Camera, MessageSquare, Plus } from 'lucide-react';
 import { useParams } from 'next/navigation';
-import { Button } from '@/components/ui/button';
+import { useState } from 'react';
+
+import { PhotoAnnotationForm } from '@/components/Documents/PhotoAnnotationForm';
+import { PhotoCaptureForm } from '@/components/Documents/PhotoCaptureForm';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -19,10 +15,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Camera, Plus, MessageSquare } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import { usePhotos } from '@/hooks/useDocuments';
-import { PhotoCaptureForm } from '@/components/Documents/PhotoCaptureForm';
-import { PhotoAnnotationForm } from '@/components/Documents/PhotoAnnotationForm';
 
 const CATEGORIES = [
   'all',
@@ -34,6 +35,37 @@ const CATEGORIES = [
   'other',
 ] as const;
 
+function formatCat(cat: string): string {
+  return cat === 'all'
+    ? 'All Categories'
+    : cat.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+type Photo = { id: string; category?: string | null; taken_at?: string | null; file_id: string };
+
+function PhotoCard({ photo, onAnnotate }: { photo: Photo; onAnnotate: (id: string) => void }) {
+  return (
+    <div className="group relative rounded-xl border bg-muted/30 p-4 space-y-2">
+      <div className="flex items-center justify-between">
+        <Badge variant="secondary">{photo.category || 'other'}</Badge>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+          onClick={() => onAnnotate(photo.id)}
+          aria-label="Annotate photo"
+        >
+          <MessageSquare className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        {photo.taken_at ? new Date(photo.taken_at).toLocaleDateString('en-CA') : 'No date'}
+      </p>
+      <p className="text-xs font-mono text-muted-foreground truncate">{photo.file_id}</p>
+    </div>
+  );
+}
+
 export default function PhotosPage() {
   const params = useParams();
   const projectId = params.id as string;
@@ -42,9 +74,8 @@ export default function PhotosPage() {
   const [addPhotoOpen, setAddPhotoOpen] = useState(false);
 
   const { data: photosData, isLoading } = usePhotos(projectId);
-  const photos = (photosData?.data ?? []).filter(
-    (p) => category === 'all' || p.category === category,
-  );
+  const rawPhotos = photosData ? photosData.data || [] : [];
+  const photos = rawPhotos.filter((p) => category === 'all' || p.category === category);
 
   return (
     <div className="space-y-6">
@@ -53,7 +84,9 @@ export default function PhotosPage() {
           <Camera className="h-6 w-6 text-muted-foreground" />
           <div>
             <h1 className="text-2xl font-bold">Site Photos</h1>
-            <p className="text-sm text-muted-foreground">{photosData?.total ?? 0} photos</p>
+            <p className="text-sm text-muted-foreground">
+              {photosData ? photosData.total || 0 : 0} photos
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -64,9 +97,7 @@ export default function PhotosPage() {
             <SelectContent>
               {CATEGORIES.map((cat) => (
                 <SelectItem key={cat} value={cat}>
-                  {cat === 'all'
-                    ? 'All Categories'
-                    : cat.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+                  {formatCat(cat)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -91,11 +122,10 @@ export default function PhotosPage() {
           </Dialog>
         </div>
       </div>
-
       {isLoading ? (
         <div className="grid grid-cols-3 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-48 w-full rounded-xl" />
+          {['p-1', 'p-2', 'p-3', 'p-4', 'p-5', 'p-6'].map((id) => (
+            <Skeleton key={id} className="h-48 w-full rounded-xl" />
           ))}
         </div>
       ) : photos.length === 0 ? (
@@ -107,32 +137,16 @@ export default function PhotosPage() {
       ) : (
         <div className="grid grid-cols-3 gap-4">
           {photos.map((photo) => (
-            <div
-              key={photo.id}
-              className="group relative rounded-xl border bg-muted/30 p-4 space-y-2"
-            >
-              <div className="flex items-center justify-between">
-                <Badge variant="secondary">{photo.category ?? 'other'}</Badge>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => setAnnotatePhotoId(photo.id)}
-                  aria-label="Annotate photo"
-                >
-                  <MessageSquare className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {photo.taken_at ? new Date(photo.taken_at).toLocaleDateString('en-CA') : 'No date'}
-              </p>
-              <p className="text-xs font-mono text-muted-foreground truncate">{photo.file_id}</p>
-            </div>
+            <PhotoCard key={photo.id} photo={photo as Photo} onAnnotate={setAnnotatePhotoId} />
           ))}
         </div>
       )}
-
-      <Dialog open={!!annotatePhotoId} onOpenChange={(o) => !o && setAnnotatePhotoId(null)}>
+      <Dialog
+        open={!!annotatePhotoId}
+        onOpenChange={(o) => {
+          if (!o) setAnnotatePhotoId(null);
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add Annotation</DialogTitle>

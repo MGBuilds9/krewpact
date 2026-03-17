@@ -1,18 +1,19 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+
+import { Button } from '@/components/ui/button';
 import {
   Form,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormControl,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 
 const formSchema = z.object({
   snapshot_date: z.string().min(1, 'Snapshot date is required'),
@@ -31,6 +32,14 @@ interface JobCostSnapshotFormProps {
   onSubmit: (data: Record<string, unknown>) => void;
   isLoading?: boolean;
 }
+
+const COST_FIELDS: { name: keyof FormValues; label: string }[] = [
+  { name: 'baseline_budget', label: 'Baseline Budget (CAD)' },
+  { name: 'revised_budget', label: 'Revised Budget (CAD)' },
+  { name: 'committed_cost', label: 'Committed Cost (CAD)' },
+  { name: 'actual_cost', label: 'Actual Cost (CAD)' },
+  { name: 'forecast_cost', label: 'Forecast Cost (CAD)' },
+];
 
 export function JobCostSnapshotForm({
   defaultValues,
@@ -83,71 +92,22 @@ export function JobCostSnapshotForm({
           )}
         />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="baseline_budget"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Baseline Budget (CAD)</FormLabel>
-                <FormControl>
-                  <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="revised_budget"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Revised Budget (CAD)</FormLabel>
-                <FormControl>
-                  <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="committed_cost"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Committed Cost (CAD)</FormLabel>
-                <FormControl>
-                  <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="actual_cost"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Actual Cost (CAD)</FormLabel>
-                <FormControl>
-                  <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="forecast_cost"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Forecast Cost (CAD)</FormLabel>
-                <FormControl>
-                  <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {COST_FIELDS.map(({ name, label }) => (
+            <FormField
+              key={name}
+              control={form.control}
+              name={name}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{label}</FormLabel>
+                  <FormControl>
+                    <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          ))}
           <FormField
             control={form.control}
             name="forecast_margin_pct"

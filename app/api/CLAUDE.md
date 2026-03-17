@@ -9,11 +9,34 @@ All API routes follow the BFF (Backend for Frontend) pattern:
 - Authorize via Clerk `auth()` — every route starts with auth check
 - Validate input with Zod schemas on all mutating routes
 
+## Size Limits
+
+- **Max 200 lines** per route file (ESLint enforced at 300, aim for 200)
+- Extract business logic to `lib/<domain>/` — routes are thin orchestrators
+- Extract query builders to `lib/<domain>/<entity>-queries.ts`
+- Extract webhook handlers to `lib/<domain>/webhook-handlers.ts`
+
 ## Auth
 
 ```typescript
 const { userId } = await auth();
 if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+```
+
+## Performance: Avoid Async Waterfalls
+
+```typescript
+// BAD: sequential fetches
+const user = await getUser(userId);
+const projects = await getProjects(userId);
+const stats = await getStats(userId);
+
+// GOOD: parallel fetches
+const [user, projects, stats] = await Promise.all([
+  getUser(userId),
+  getProjects(userId),
+  getStats(userId),
+]);
 ```
 
 ## Supabase Client

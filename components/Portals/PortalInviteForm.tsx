@@ -1,10 +1,12 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
+
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Form,
   FormControl,
@@ -13,6 +15,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -20,10 +23,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2 } from 'lucide-react';
 import { useInvitePortalAccount } from '@/hooks/usePortals';
 import { portalAccountInviteSchema } from '@/lib/validators/portals';
-import { toast } from 'sonner';
 
 type FormValues = z.infer<typeof portalAccountInviteSchema>;
 
@@ -34,7 +35,6 @@ interface PortalInviteFormProps {
 
 export function PortalInviteForm({ onSuccess, onCancel }: PortalInviteFormProps) {
   const invite = useInvitePortalAccount();
-
   const form = useForm<FormValues>({
     resolver: zodResolver(portalAccountInviteSchema),
     defaultValues: {
@@ -46,7 +46,6 @@ export function PortalInviteForm({ onSuccess, onCancel }: PortalInviteFormProps)
       phone: '',
     },
   });
-
   // eslint-disable-next-line react-hooks/incompatible-library
   const actorType = form.watch('actor_type');
 
@@ -85,7 +84,6 @@ export function PortalInviteForm({ onSuccess, onCancel }: PortalInviteFormProps)
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="role"
@@ -121,7 +119,6 @@ export function PortalInviteForm({ onSuccess, onCancel }: PortalInviteFormProps)
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="email"
@@ -135,7 +132,6 @@ export function PortalInviteForm({ onSuccess, onCancel }: PortalInviteFormProps)
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="company_name"
@@ -149,7 +145,6 @@ export function PortalInviteForm({ onSuccess, onCancel }: PortalInviteFormProps)
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="contact_name"
@@ -163,7 +158,6 @@ export function PortalInviteForm({ onSuccess, onCancel }: PortalInviteFormProps)
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="phone"
@@ -177,7 +171,6 @@ export function PortalInviteForm({ onSuccess, onCancel }: PortalInviteFormProps)
             </FormItem>
           )}
         />
-
         <div className="flex gap-3 pt-2">
           <Button type="submit" disabled={invite.isPending}>
             {invite.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

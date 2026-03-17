@@ -1,7 +1,8 @@
 'use client';
 
+import { Calendar, DollarSign } from 'lucide-react';
+
 import { Card, CardContent } from '@/components/ui/card';
-import { DollarSign, Calendar } from 'lucide-react';
 import type { Opportunity } from '@/hooks/useCRM';
 
 function formatCurrency(value: number | null): string {

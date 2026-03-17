@@ -1,9 +1,10 @@
 import { auth } from '@clerk/nextjs/server';
+import { NextRequest, NextResponse } from 'next/server';
+
+import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { sequenceStepCreateSchema } from '@/lib/validators/crm';
-import { NextRequest, NextResponse } from 'next/server';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
-import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 
 type RouteContext = { params: Promise<{ id: string }> };
 

@@ -1,7 +1,8 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
 import {
-  calculateRepPerformance,
   calculatePipelineAging,
+  calculateRepPerformance,
   calculateWinLossAnalysis,
   RepOpportunityData,
 } from '@/lib/crm/pipeline-intelligence';
@@ -59,7 +60,12 @@ describe('calculateRepPerformance', () => {
   it('sorts by revenue descending', () => {
     const opps: RepOpportunityData[] = [
       makeOpp({ id: '1', stage: 'contracted', owner_user_id: 'rep-low', estimated_revenue: 50000 }),
-      makeOpp({ id: '2', stage: 'contracted', owner_user_id: 'rep-high', estimated_revenue: 500000 }),
+      makeOpp({
+        id: '2',
+        stage: 'contracted',
+        owner_user_id: 'rep-high',
+        estimated_revenue: 500000,
+      }),
     ];
 
     const result = calculateRepPerformance(opps);

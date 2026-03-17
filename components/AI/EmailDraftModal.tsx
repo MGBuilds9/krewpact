@@ -1,6 +1,9 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { Copy, Loader2, RefreshCw, Send } from 'lucide-react';
+import { useCallback, useState } from 'react';
+
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -9,10 +12,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { Loader2, RefreshCw, Copy, Send } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 
 interface EmailDraftModalProps {
   open: boolean;
@@ -22,13 +23,101 @@ interface EmailDraftModalProps {
   draftType?: 'follow_up' | 'introduction' | 'proposal' | 'custom';
 }
 
-export function EmailDraftModal({
-  open,
-  onOpenChange,
-  entityType,
-  entityId,
-  draftType = 'follow_up',
-}: EmailDraftModalProps) {
+function DraftFormFields({
+  to,
+  subject,
+  body,
+  error,
+  onToChange,
+  onSubjectChange,
+  onBodyChange,
+}: {
+  to: string;
+  subject: string;
+  body: string;
+  error: string | null;
+  onToChange: (v: string) => void;
+  onSubjectChange: (v: string) => void;
+  onBodyChange: (v: string) => void;
+}) {
+  return (
+    <div className="space-y-4">
+      {error && <p className="text-sm text-destructive">{error}</p>}
+      <div className="space-y-2">
+        <Label htmlFor="draft-to">To</Label>
+        <Input
+          id="draft-to"
+          type="email"
+          value={to}
+          onChange={(e) => onToChange(e.target.value)}
+          placeholder="recipient@example.com"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="draft-subject">Subject</Label>
+        <Input
+          id="draft-subject"
+          value={subject}
+          onChange={(e) => onSubjectChange(e.target.value)}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="draft-body">Body</Label>
+        <Textarea
+          id="draft-body"
+          value={body}
+          onChange={(e) => onBodyChange(e.target.value)}
+          rows={8}
+          className="resize-y"
+        />
+      </div>
+    </div>
+  );
+}
+
+function DraftFooter({
+  loading,
+  copied,
+  canSend,
+  onGenerate,
+  onCopy,
+  onSend,
+}: {
+  loading: boolean;
+  copied: boolean;
+  canSend: boolean;
+  onGenerate: () => void;
+  onCopy: () => void;
+  onSend: () => void;
+}) {
+  return (
+    <DialogFooter className="flex-col gap-2 sm:flex-row">
+      <Button type="button" variant="outline" size="sm" onClick={onGenerate} disabled={loading}>
+        <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+        Regenerate
+      </Button>
+      <Button type="button" variant="outline" size="sm" onClick={onCopy}>
+        <Copy className="mr-1.5 h-3.5 w-3.5" />
+        {copied ? 'Copied!' : 'Copy'}
+      </Button>
+      <Button type="button" size="sm" onClick={onSend} disabled={loading || !canSend}>
+        {loading ? (
+          <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+        ) : (
+          <Send className="mr-1.5 h-3.5 w-3.5" />
+        )}
+        Send
+      </Button>
+    </DialogFooter>
+  );
+}
+
+function useEmailDraft(
+  entityType: string,
+  entityId: string,
+  draftType: string,
+  onClose: () => void,
+) {
   const [to, setTo] = useState('');
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
@@ -64,20 +153,6 @@ export function EmailDraftModal({
     }
   }, [entityType, entityId, draftType]);
 
-  // Generate on first open
-  const handleOpenChange = (isOpen: boolean) => {
-    if (isOpen && !subject && !body && !loading) {
-      generateDraft();
-    }
-    if (!isOpen) {
-      setSubject('');
-      setBody('');
-      setTo('');
-      setError(null);
-    }
-    onOpenChange(isOpen);
-  };
-
   const handleCopy = async () => {
     await navigator.clipboard.writeText(`Subject: ${subject}\n\n${body}`);
     setCopied(true);
@@ -101,7 +176,7 @@ export function EmailDraftModal({
         }),
       });
       if (res.ok) {
-        onOpenChange(false);
+        onClose();
       } else {
         setError('Failed to send email');
       }
@@ -112,88 +187,88 @@ export function EmailDraftModal({
     }
   };
 
+  const reset = () => {
+    setSubject('');
+    setBody('');
+    setTo('');
+    setError(null);
+  };
+  return {
+    to,
+    subject,
+    body,
+    loading,
+    error,
+    copied,
+    setTo,
+    setSubject,
+    setBody,
+    generateDraft,
+    handleCopy,
+    handleSend,
+    reset,
+  };
+}
+
+export function EmailDraftModal({
+  open,
+  onOpenChange,
+  entityType,
+  entityId,
+  draftType = 'follow_up',
+}: EmailDraftModalProps) {
+  const {
+    to,
+    subject,
+    body,
+    loading,
+    error,
+    copied,
+    setTo,
+    setSubject,
+    setBody,
+    generateDraft,
+    handleCopy,
+    handleSend,
+    reset,
+  } = useEmailDraft(entityType, entityId, draftType, () => onOpenChange(false));
+
+  const handleOpenChange = (isOpen: boolean) => {
+    if (isOpen && !subject && !body && !loading) generateDraft();
+    if (!isOpen) reset();
+    onOpenChange(isOpen);
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>AI Email Draft</DialogTitle>
         </DialogHeader>
-
         {loading && !subject ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             <span className="ml-2 text-sm text-muted-foreground">Generating draft...</span>
           </div>
         ) : (
-          <div className="space-y-4">
-            {error && (
-              <p className="text-sm text-destructive">{error}</p>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="draft-to">To</Label>
-              <Input
-                id="draft-to"
-                type="email"
-                value={to}
-                onChange={(e) => setTo(e.target.value)}
-                placeholder="recipient@example.com"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="draft-subject">Subject</Label>
-              <Input
-                id="draft-subject"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="draft-body">Body</Label>
-              <Textarea
-                id="draft-body"
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                rows={8}
-                className="resize-y"
-              />
-            </div>
-          </div>
+          <DraftFormFields
+            to={to}
+            subject={subject}
+            body={body}
+            error={error}
+            onToChange={setTo}
+            onSubjectChange={setSubject}
+            onBodyChange={setBody}
+          />
         )}
-
-        <DialogFooter className="flex-col gap-2 sm:flex-row">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={generateDraft}
-            disabled={loading}
-          >
-            <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
-            Regenerate
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleCopy}
-          >
-            <Copy className="mr-1.5 h-3.5 w-3.5" />
-            {copied ? 'Copied!' : 'Copy'}
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            onClick={handleSend}
-            disabled={loading || !to || !subject || !body}
-          >
-            {loading ? (
-              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Send className="mr-1.5 h-3.5 w-3.5" />
-            )}
-            Send
-          </Button>
-        </DialogFooter>
+        <DraftFooter
+          loading={loading}
+          copied={copied}
+          canSend={!!(to && subject && body)}
+          onGenerate={generateDraft}
+          onCopy={handleCopy}
+          onSend={handleSend}
+        />
       </DialogContent>
     </Dialog>
   );

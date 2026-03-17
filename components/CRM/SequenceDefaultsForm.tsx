@@ -1,12 +1,13 @@
 'use client';
 
+import { Loader2, Save } from 'lucide-react';
 import { useState } from 'react';
-import { useSequenceDefaults, useUpdateSequenceDefaults } from '@/hooks/useCRM';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, Save } from 'lucide-react';
+import { useSequenceDefaults, useUpdateSequenceDefaults } from '@/hooks/useCRM';
 
 interface SeqFormState {
   maxEnrollments: number;
@@ -26,10 +27,64 @@ const INITIAL_STATE: SeqFormState = {
   _syncKey: '',
 };
 
+function NumberField({
+  id,
+  label,
+  hint,
+  min,
+  max,
+  value,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  hint: string;
+  min: number;
+  max: number;
+  value: number;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id}>{label}</Label>
+      <Input
+        id={id}
+        type="number"
+        min={min}
+        max={max}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+      <p className="text-xs text-muted-foreground">{hint}</p>
+    </div>
+  );
+}
+
+function TimeField({
+  id,
+  label,
+  hint,
+  value,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  hint: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id}>{label}</Label>
+      <Input id={id} type="time" value={value} onChange={(e) => onChange(e.target.value)} />
+      <p className="text-xs text-muted-foreground">{hint}</p>
+    </div>
+  );
+}
+
 export default function SequenceDefaultsForm() {
   const { data: defaults, isLoading } = useSequenceDefaults();
   const updateDefaults = useUpdateSequenceDefaults();
-
   const [form, setForm] = useState<SeqFormState>(INITIAL_STATE);
 
   const dataKey = JSON.stringify(defaults);
@@ -56,74 +111,49 @@ export default function SequenceDefaultsForm() {
     });
   }
 
-  if (isLoading) {
+  if (isLoading)
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
-  }
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <Label htmlFor="max-enrollments">Max Enrollments Per Day</Label>
-          <Input
-            id="max-enrollments"
-            type="number"
-            min={1}
-            max={500}
-            value={maxEnrollments}
-            onChange={(e) => setForm((p) => ({ ...p, maxEnrollments: parseInt(e.target.value, 10) || 1 }))}
-          />
-          <p className="text-xs text-muted-foreground">
-            Maximum number of contacts that can be enrolled into sequences per day.
-          </p>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="throttle">Throttle Per Hour</Label>
-          <Input
-            id="throttle"
-            type="number"
-            min={1}
-            max={200}
-            value={throttlePerHour}
-            onChange={(e) => setForm((p) => ({ ...p, throttlePerHour: parseInt(e.target.value, 10) || 1 }))}
-          />
-          <p className="text-xs text-muted-foreground">
-            Maximum emails sent per hour across all sequences.
-          </p>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="send-start">Send Window Start</Label>
-          <Input
-            id="send-start"
-            type="time"
-            value={sendWindowStart}
-            onChange={(e) => setForm((p) => ({ ...p, sendWindowStart: e.target.value }))}
-          />
-          <p className="text-xs text-muted-foreground">
-            Earliest time emails can be sent (recipient local time).
-          </p>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="send-end">Send Window End</Label>
-          <Input
-            id="send-end"
-            type="time"
-            value={sendWindowEnd}
-            onChange={(e) => setForm((p) => ({ ...p, sendWindowEnd: e.target.value }))}
-          />
-          <p className="text-xs text-muted-foreground">
-            Latest time emails can be sent (recipient local time).
-          </p>
-        </div>
+        <NumberField
+          id="max-enrollments"
+          label="Max Enrollments Per Day"
+          hint="Maximum number of contacts that can be enrolled into sequences per day."
+          min={1}
+          max={500}
+          value={maxEnrollments}
+          onChange={(v) => setForm((p) => ({ ...p, maxEnrollments: parseInt(v, 10) || 1 }))}
+        />
+        <NumberField
+          id="throttle"
+          label="Throttle Per Hour"
+          hint="Maximum emails sent per hour across all sequences."
+          min={1}
+          max={200}
+          value={throttlePerHour}
+          onChange={(v) => setForm((p) => ({ ...p, throttlePerHour: parseInt(v, 10) || 1 }))}
+        />
+        <TimeField
+          id="send-start"
+          label="Send Window Start"
+          hint="Earliest time emails can be sent (recipient local time)."
+          value={sendWindowStart}
+          onChange={(v) => setForm((p) => ({ ...p, sendWindowStart: v }))}
+        />
+        <TimeField
+          id="send-end"
+          label="Send Window End"
+          hint="Latest time emails can be sent (recipient local time)."
+          value={sendWindowEnd}
+          onChange={(v) => setForm((p) => ({ ...p, sendWindowEnd: v }))}
+        />
       </div>
-
       <div className="flex items-center justify-between rounded-lg border p-4">
         <div className="space-y-0.5">
           <Label htmlFor="auto-unenroll">Auto-Unenroll on Reply</Label>
@@ -137,7 +167,6 @@ export default function SequenceDefaultsForm() {
           onCheckedChange={(v) => setForm((p) => ({ ...p, autoUnenroll: v }))}
         />
       </div>
-
       <div className="flex justify-end">
         <Button onClick={handleSave} disabled={updateDefaults.isPending}>
           {updateDefaults.isPending ? (
@@ -148,7 +177,6 @@ export default function SequenceDefaultsForm() {
           Save Sequence Defaults
         </Button>
       </div>
-
       {updateDefaults.isSuccess && (
         <p className="text-sm text-green-600">Sequence defaults saved successfully.</p>
       )}

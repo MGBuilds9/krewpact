@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { logger } from '@/lib/logger';
+
 import { verifyCronAuth } from '@/lib/api/cron-auth';
-import { createServiceClient } from '@/lib/supabase/server';
 import { sendEmail } from '@/lib/email/resend';
+import { logger } from '@/lib/logger';
+import { createServiceClient } from '@/lib/supabase/server';
 
 /**
  * Cron Watchdog — checks that all registered crons have run recently.
@@ -39,6 +40,69 @@ interface WatchdogResult {
   minutes_since_last_run?: number;
 }
 
+type ServiceClient = ReturnType<typeof createServiceClient>;
+
+async function shouldSendWatchdogAlert(
+  supabase: ServiceClient,
+  currentOverdueKey: string,
+): Promise<boolean> {
+  try {
+    const { data: lastWatchdog } = await supabase
+      .from('cron_runs')
+      .select('result')
+      .eq('cron_name', 'watchdog')
+      .eq('status', 'alerted')
+      .order('started_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!lastWatchdog) return true;
+    const lastOverdueKey = (lastWatchdog.result as Record<string, unknown>)?.overdue_key as
+      | string
+      | undefined;
+    if (lastOverdueKey === currentOverdueKey) {
+      logger.info('Watchdog alert suppressed (same overdue set as last alert)');
+      return false;
+    }
+  } catch {
+    // Fail open — send the alert if dedup check fails
+  }
+  return true;
+}
+
+async function sendWatchdogAlert(
+  supabase: ServiceClient,
+  overdue: WatchdogResult[],
+  overdueKey: string,
+): Promise<void> {
+  const alertEmail = process.env.ALERT_EMAIL ?? 'michael@mdmgroupinc.ca';
+  const overdueList = overdue
+    .map(
+      (r) =>
+        `- ${r.cron_name}: last ran ${r.minutes_since_last_run}min ago (expected every ${r.expected_interval_min}min, threshold ${r.expected_interval_min * ALERT_MULTIPLIER}min)`,
+    )
+    .join('\n');
+
+  await sendEmail({
+    to: alertEmail,
+    subject: `[KrewPact] Cron Watchdog: ${overdue.length} job(s) overdue`,
+    html: `
+      <h2>KrewPact Cron Watchdog Alert</h2>
+      <p><strong>Time:</strong> ${new Date().toISOString()}</p>
+      <p><strong>Overdue crons:</strong></p>
+      <pre>${overdueList}</pre>
+      <p>Check <a href="${process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.krewpact.com'}/api/health?deep=true">deep health</a> for full status.</p>
+    `,
+  });
+
+  await supabase.from('cron_runs').insert({
+    cron_name: 'watchdog',
+    status: 'alerted',
+    result: { overdue_key: overdueKey, overdue: overdue.map((r) => r.cron_name) },
+    started_at: new Date().toISOString(),
+  });
+}
+
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const { authorized } = await verifyCronAuth(req);
   if (!authorized) {
@@ -50,7 +114,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const results: WatchdogResult[] = [];
   const overdue: WatchdogResult[] = [];
 
-  // Get the latest run for each cron
   const { data: allRuns, error } = await supabase
     .from('cron_runs')
     .select('cron_name, status, started_at')
@@ -65,32 +128,27 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // Group by cron_name, take latest
   const latestRuns = new Map<string, { status: string; started_at: string }>();
   if (allRuns) {
-    for (const run of allRuns) {
+    allRuns.forEach((run) => {
       if (!latestRuns.has(run.cron_name)) {
         latestRuns.set(run.cron_name, { status: run.status, started_at: run.started_at });
       }
-    }
+    });
   }
 
   for (const [cronName, expectedIntervalMin] of Object.entries(CRON_SCHEDULE)) {
     const lastRun = latestRuns.get(cronName);
 
     if (!lastRun) {
-      const result: WatchdogResult = {
+      results.push({
         cron_name: cronName,
         status: 'never_ran',
         expected_interval_min: expectedIntervalMin,
-      };
-      results.push(result);
-      // Only alert for never_ran if cron logging has been active for > 1 day
-      // (avoids false alarms on first deploy)
+      });
       continue;
     }
 
     const minutesSinceLastRun = Math.round((now - new Date(lastRun.started_at).getTime()) / 60_000);
-    const threshold = expectedIntervalMin * ALERT_MULTIPLIER;
-
-    const isOverdue = minutesSinceLastRun > threshold;
+    const isOverdue = minutesSinceLastRun > expectedIntervalMin * ALERT_MULTIPLIER;
     const result: WatchdogResult = {
       cron_name: cronName,
       status: isOverdue ? 'overdue' : 'ok',
@@ -100,79 +158,24 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       minutes_since_last_run: minutesSinceLastRun,
     };
     results.push(result);
-
-    if (isOverdue) {
-      overdue.push(result);
-    }
+    if (isOverdue) overdue.push(result);
   }
 
-  // Alert if any crons are overdue — with deduplication to prevent repeated alerts
   if (overdue.length > 0) {
     logger.warn('Watchdog: overdue crons detected', {
       overdueCount: overdue.length,
       overdue: overdue.map((r) => r.cron_name),
     });
 
-    // Check if the overdue set has changed since last alert (stored in smoke_test_results)
-    let shouldAlert = true;
     const currentOverdueKey = overdue
       .map((r) => r.cron_name)
       .sort()
       .join(',');
-
-    try {
-      // Use a cron_runs entry to track the last watchdog alert
-      const { data: lastWatchdog } = await supabase
-        .from('cron_runs')
-        .select('result')
-        .eq('cron_name', 'watchdog')
-        .eq('status', 'alerted')
-        .order('started_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (lastWatchdog) {
-        const lastOverdueKey = (lastWatchdog.result as Record<string, unknown>)?.overdue_key as
-          | string
-          | undefined;
-        if (lastOverdueKey === currentOverdueKey) {
-          shouldAlert = false;
-          logger.info('Watchdog alert suppressed (same overdue set as last alert)');
-        }
-      }
-    } catch {
-      // Fail open — send the alert if dedup check fails
-    }
+    const shouldAlert = await shouldSendWatchdogAlert(supabase, currentOverdueKey);
 
     if (shouldAlert) {
       try {
-        const alertEmail = process.env.ALERT_EMAIL ?? 'michael@mdmgroupinc.ca';
-        const overdueList = overdue
-          .map(
-            (r) =>
-              `- ${r.cron_name}: last ran ${r.minutes_since_last_run}min ago (expected every ${r.expected_interval_min}min, threshold ${r.expected_interval_min * ALERT_MULTIPLIER}min)`,
-          )
-          .join('\n');
-
-        await sendEmail({
-          to: alertEmail,
-          subject: `[KrewPact] Cron Watchdog: ${overdue.length} job(s) overdue`,
-          html: `
-            <h2>KrewPact Cron Watchdog Alert</h2>
-            <p><strong>Time:</strong> ${new Date().toISOString()}</p>
-            <p><strong>Overdue crons:</strong></p>
-            <pre>${overdueList}</pre>
-            <p>Check <a href="${process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.krewpact.com'}/api/health?deep=true">deep health</a> for full status.</p>
-          `,
-        });
-
-        // Record that we alerted with this overdue set
-        await supabase.from('cron_runs').insert({
-          cron_name: 'watchdog',
-          status: 'alerted',
-          result: { overdue_key: currentOverdueKey, overdue: overdue.map((r) => r.cron_name) },
-          started_at: new Date().toISOString(),
-        });
+        await sendWatchdogAlert(supabase, overdue, currentOverdueKey);
       } catch (err) {
         logger.error('Watchdog: failed to send alert email', {
           error: err instanceof Error ? err : undefined,

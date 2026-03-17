@@ -1,18 +1,19 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+
+import { Button } from '@/components/ui/button';
 import {
   Form,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormControl,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -39,6 +40,12 @@ interface POSnapshotReviewFormProps {
   onSubmit: (data: Record<string, unknown>) => void;
   isLoading?: boolean;
 }
+
+const PO_AMOUNT_FIELDS: { name: keyof FormValues; label: string }[] = [
+  { name: 'subtotal_amount', label: 'Subtotal (CAD)' },
+  { name: 'tax_amount', label: 'Tax / HST (CAD)' },
+  { name: 'total_amount', label: 'Total Amount (CAD)' },
+];
 
 export function POSnapshotReviewForm({
   defaultValues,
@@ -137,45 +144,22 @@ export function POSnapshotReviewForm({
               </FormItem>
             )}
           />
-          <FormField
-            control={form.control}
-            name="subtotal_amount"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Subtotal (CAD)</FormLabel>
-                <FormControl>
-                  <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="tax_amount"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Tax / HST (CAD)</FormLabel>
-                <FormControl>
-                  <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="total_amount"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Total Amount (CAD)</FormLabel>
-                <FormControl>
-                  <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {PO_AMOUNT_FIELDS.map(({ name, label }) => (
+            <FormField
+              key={name}
+              control={form.control}
+              name={name}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{label}</FormLabel>
+                  <FormControl>
+                    <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          ))}
           <FormField
             control={form.control}
             name="erp_docname"

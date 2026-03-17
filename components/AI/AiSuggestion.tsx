@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { Check } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface AiSuggestionProps {
   field: string;
@@ -36,7 +36,7 @@ export function AiSuggestion({ field, context, onApply }: AiSuggestionProps) {
       clearTimeout(timeout);
       controller.abort();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [field, JSON.stringify(context)]);
 
   if (!suggestion) return null;

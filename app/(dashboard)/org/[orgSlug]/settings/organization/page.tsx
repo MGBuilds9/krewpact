@@ -1,10 +1,13 @@
 'use client';
 
+import { Building2, Plus } from 'lucide-react';
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+
+import { NotificationPreferenceForm } from '@/components/Notifications/NotificationPreferenceForm';
+import { DivisionSetupForm } from '@/components/Org/DivisionSetupForm';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -12,11 +15,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Plus, Building2 } from 'lucide-react';
-import { useDivisions } from '@/hooks/useOrg';
-import { DivisionSetupForm } from '@/components/Org/DivisionSetupForm';
-import { NotificationPreferenceForm } from '@/components/Notifications/NotificationPreferenceForm';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useDivisions } from '@/hooks/useOrg';
 
 export default function OrganizationSettingsPage() {
   const { data, isLoading } = useDivisions();
@@ -62,8 +63,8 @@ export default function OrganizationSettingsPage() {
 
           {isLoading ? (
             <div className="space-y-3">
-              {[...Array(4)].map((_, i) => (
-                <Skeleton key={i} className="h-20 w-full" />
+              {['sk-1', 'sk-2', 'sk-3', 'sk-4'].map((id) => (
+                <Skeleton key={id} className="h-20 w-full" />
               ))}
             </div>
           ) : (

@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChevronDown, ChevronUp, Newspaper } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 interface DigestSection {
@@ -55,12 +56,15 @@ export function DailyDigestWidget() {
 
         {expanded && (
           <div className="mt-4 space-y-4">
-            {digest.sections.map((section, i) => (
-              <div key={i}>
+            {digest.sections.map((section) => (
+              <div key={section.title}>
                 <h4 className="text-sm font-semibold">{section.title}</h4>
                 <ul className="mt-1 space-y-1">
-                  {section.items.map((item, j) => (
-                    <li key={j} className="flex items-baseline justify-between gap-2 text-sm">
+                  {section.items.map((item) => (
+                    <li
+                      key={item.label}
+                      className="flex items-baseline justify-between gap-2 text-sm"
+                    >
                       <span className="truncate text-muted-foreground">{item.label}</span>
                       <span className={cn('shrink-0 font-medium')}>{item.value}</span>
                     </li>

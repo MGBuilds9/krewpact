@@ -1,6 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
-import { assignLead } from '@/lib/crm/lead-assignment';
+import { describe, expect, it, vi } from 'vitest';
+
 import { mockSupabaseClient } from '@/__tests__/helpers';
+import { assignLead } from '@/lib/crm/lead-assignment';
 
 /**
  * Tests for lead-assignment.ts — rule-based + round-robin assignment.

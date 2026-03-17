@@ -1,5 +1,6 @@
-import { createServiceClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
+import { createServiceClient } from '@/lib/supabase/server';
+
 import { generateWithGemini } from '../providers/gemini';
 
 interface DigestSection {
@@ -15,13 +16,19 @@ interface DigestResult {
 type UserRole = 'sales' | 'pm' | 'executive' | 'other';
 
 function categorizeRole(roleKeys: string[]): UserRole {
-  if (roleKeys.some(r => ['executive', 'platform_admin'].includes(r))) return 'executive';
-  if (roleKeys.some(r => ['project_manager', 'project_coordinator', 'field_supervisor'].includes(r))) return 'pm';
-  if (roleKeys.some(r => ['operations_manager', 'estimator'].includes(r))) return 'sales';
+  if (roleKeys.some((r) => ['executive', 'platform_admin'].includes(r))) return 'executive';
+  if (
+    roleKeys.some((r) => ['project_manager', 'project_coordinator', 'field_supervisor'].includes(r))
+  )
+    return 'pm';
+  if (roleKeys.some((r) => ['operations_manager', 'estimator'].includes(r))) return 'sales';
   return 'other';
 }
 
-async function fetchSalesSections(supabase: ReturnType<typeof createServiceClient>, orgId: string): Promise<DigestSection[]> {
+async function fetchSalesSections(
+  supabase: ReturnType<typeof createServiceClient>,
+  orgId: string,
+): Promise<DigestSection[]> {
   const sections: DigestSection[] = [];
 
   // Pipeline summary
@@ -34,8 +41,15 @@ async function fetchSalesSections(supabase: ReturnType<typeof createServiceClien
     .limit(10);
 
   if (opps?.length) {
-    const totalValue = opps.reduce((sum: number, o: { value: number | null }) => sum + (o.value ?? 0), 0);
-    const formatted = new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(totalValue);
+    const totalValue = opps.reduce(
+      (sum: number, o: { value: number | null }) => sum + (o.value ?? 0),
+      0,
+    );
+    const formatted = new Intl.NumberFormat('en-CA', {
+      style: 'currency',
+      currency: 'CAD',
+      maximumFractionDigits: 0,
+    }).format(totalValue);
     sections.push({
       title: 'Active Pipeline',
       items: [
@@ -63,7 +77,9 @@ async function fetchSalesSections(supabase: ReturnType<typeof createServiceClien
     sections.push({
       title: 'Needs Attention',
       items: stale.map((o: { name: string; updated_at: string }) => {
-        const days = Math.floor((Date.now() - new Date(o.updated_at).getTime()) / (1000 * 60 * 60 * 24));
+        const days = Math.floor(
+          (Date.now() - new Date(o.updated_at).getTime()) / (1000 * 60 * 60 * 24),
+        );
         return { label: o.name, value: `${days} days without activity` };
       }),
     });
@@ -92,7 +108,10 @@ async function fetchSalesSections(supabase: ReturnType<typeof createServiceClien
   return sections;
 }
 
-async function fetchPMSections(supabase: ReturnType<typeof createServiceClient>, orgId: string): Promise<DigestSection[]> {
+async function fetchPMSections(
+  supabase: ReturnType<typeof createServiceClient>,
+  orgId: string,
+): Promise<DigestSection[]> {
   const sections: DigestSection[] = [];
 
   // Tasks due today
@@ -128,17 +147,22 @@ async function fetchPMSections(supabase: ReturnType<typeof createServiceClient>,
   if (projects?.length) {
     sections.push({
       title: 'Active Projects',
-      items: projects.map((p: { name: string; budget: number | null; actual_cost: number | null }) => {
-        const pct = p.budget ? Math.round(((p.actual_cost ?? 0) / p.budget) * 100) : 0;
-        return { label: p.name, value: `${pct}% of budget used` };
-      }),
+      items: projects.map(
+        (p: { name: string; budget: number | null; actual_cost: number | null }) => {
+          const pct = p.budget ? Math.round(((p.actual_cost ?? 0) / p.budget) * 100) : 0;
+          return { label: p.name, value: `${pct}% of budget used` };
+        },
+      ),
     });
   }
 
   return sections;
 }
 
-async function fetchExecutiveSections(supabase: ReturnType<typeof createServiceClient>, orgId: string): Promise<DigestSection[]> {
+async function fetchExecutiveSections(
+  supabase: ReturnType<typeof createServiceClient>,
+  orgId: string,
+): Promise<DigestSection[]> {
   const sections: DigestSection[] = [];
 
   // Won/lost this month
@@ -162,9 +186,20 @@ async function fetchExecutiveSections(supabase: ReturnType<typeof createServiceC
     .gte('updated_at', monthStart.toISOString())
     .limit(10);
 
-  const wonTotal = (won ?? []).reduce((s: number, o: { value: number | null }) => s + (o.value ?? 0), 0);
-  const lostTotal = (lost ?? []).reduce((s: number, o: { value: number | null }) => s + (o.value ?? 0), 0);
-  const fmt = (n: number) => new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(n);
+  const wonTotal = (won ?? []).reduce(
+    (s: number, o: { value: number | null }) => s + (o.value ?? 0),
+    0,
+  );
+  const lostTotal = (lost ?? []).reduce(
+    (s: number, o: { value: number | null }) => s + (o.value ?? 0),
+    0,
+  );
+  const fmt = (n: number) =>
+    new Intl.NumberFormat('en-CA', {
+      style: 'currency',
+      currency: 'CAD',
+      maximumFractionDigits: 0,
+    }).format(n);
 
   sections.push({
     title: 'Month-to-Date',
@@ -181,7 +216,11 @@ async function fetchExecutiveSections(supabase: ReturnType<typeof createServiceC
   return sections;
 }
 
-export async function buildDigest(userId: string, orgId: string, roleKeys: string[]): Promise<DigestResult> {
+export async function buildDigest(
+  userId: string,
+  orgId: string,
+  roleKeys: string[],
+): Promise<DigestResult> {
   const supabase = createServiceClient();
   const role = categorizeRole(roleKeys);
 
@@ -208,9 +247,9 @@ export async function buildDigest(userId: string, orgId: string, roleKeys: strin
   }
 
   // Generate 2-sentence summary with Gemini
-  const sectionsSummary = sections.map(s =>
-    `${s.title}: ${s.items.map(i => `${i.label} (${i.value})`).join(', ')}`
-  ).join('. ');
+  const sectionsSummary = sections
+    .map((s) => `${s.title}: ${s.items.map((i) => `${i.label} (${i.value})`).join(', ')}`)
+    .join('. ');
 
   let summary: string;
   try {

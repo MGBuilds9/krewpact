@@ -1,24 +1,24 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { GET as getProjects } from '@/app/api/portal/projects/route';
-import { GET as getProject } from '@/app/api/portal/projects/[id]/route';
-import { GET as _getDocs } from '@/app/api/portal/projects/[id]/documents/route';
-import { GET as _getCOs } from '@/app/api/portal/projects/[id]/change-orders/route';
-import { POST as approveCO } from '@/app/api/portal/projects/[id]/change-orders/[coId]/approve/route';
-import { GET as getInvoices } from '@/app/api/portal/projects/[id]/invoices/route';
+
 import {
+  makeJsonRequest,
+  makeRequest,
   mockClerkAuth,
   mockClerkUnauth,
-  makeRequest,
-  makeJsonRequest,
   TEST_IDS,
 } from '@/__tests__/helpers';
+import { POST as approveCO } from '@/app/api/portal/projects/[id]/change-orders/[coId]/approve/route';
+import { GET as _getCOs } from '@/app/api/portal/projects/[id]/change-orders/route';
+import { GET as _getDocs } from '@/app/api/portal/projects/[id]/documents/route';
+import { GET as getInvoices } from '@/app/api/portal/projects/[id]/invoices/route';
+import { GET as getProject } from '@/app/api/portal/projects/[id]/route';
+import { GET as getProjects } from '@/app/api/portal/projects/route';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);

@@ -1,19 +1,24 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { ProjectHealthCard } from '@/components/Dashboard/ProjectHealthCard';
-import { apiFetch } from '@/lib/api-client';
-import { useUserRBAC } from '@/hooks/useRBAC';
 import { AlertTriangle, Calendar, FolderKanban } from 'lucide-react';
+
 import type { PMDashboardResponse } from '@/app/api/dashboard/pm/route';
+import { ProjectHealthCard } from '@/components/Dashboard/ProjectHealthCard';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useUserRBAC } from '@/hooks/useRBAC';
+import { apiFetch } from '@/lib/api-client';
+
+const PM_ROLES = ['project_manager', 'operations_manager', 'executive', 'platform_admin'];
 
 function daysSince(dateStr: string | null): number | null {
   if (!dateStr) return null;
-  const diff = Date.now() - new Date(dateStr).getTime();
-  return Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)));
+  return Math.max(
+    0,
+    Math.floor((Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24)),
+  );
 }
 
 function PMDashboardSkeleton() {
@@ -33,6 +38,91 @@ function PMDashboardSkeleton() {
   );
 }
 
+type MilestoneItem = PMDashboardResponse['upcomingMilestones'][number];
+type TaskItem = PMDashboardResponse['overdueTasks'][number];
+
+function MilestoneRow({ ms }: { ms: MilestoneItem }) {
+  return (
+    <div className="flex items-center justify-between text-sm border-b last:border-0 pb-2 last:pb-0">
+      <div className="min-w-0">
+        <p className="font-medium truncate">{ms.milestone_name}</p>
+        <p className="text-xs text-muted-foreground">{ms.project_name}</p>
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        <Badge variant="outline" className="text-xs">
+          {ms.status}
+        </Badge>
+        <span className="text-xs text-muted-foreground">{ms.planned_date}</span>
+      </div>
+    </div>
+  );
+}
+
+function OverdueTaskRow({ task }: { task: TaskItem }) {
+  return (
+    <div className="flex items-center justify-between text-sm border-b last:border-0 pb-2 last:pb-0">
+      <div className="min-w-0">
+        <p className="font-medium truncate">{task.title}</p>
+        <p className="text-xs text-muted-foreground">{task.project_name}</p>
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        <Badge variant={task.priority === 'high' ? 'destructive' : 'secondary'} className="text-xs">
+          {task.priority}
+        </Badge>
+        <span className="text-xs text-red-600">Due {task.due_at.slice(0, 10)}</span>
+      </div>
+    </div>
+  );
+}
+
+function MilestonesCard({ milestones }: { milestones: MilestoneItem[] }) {
+  return (
+    <Card className="rounded-2xl border-0 shadow-sm">
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2">
+          <Calendar className="h-4 w-4" />
+          Upcoming Milestones (7 days)
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {milestones.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No upcoming milestones.</p>
+        ) : (
+          <div className="space-y-3">
+            {milestones.map((ms) => (
+              <MilestoneRow key={ms.id} ms={ms} />
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function OverdueTasksCard({ tasks }: { tasks: TaskItem[] }) {
+  return (
+    <Card className="rounded-2xl border-0 shadow-sm">
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2">
+          <AlertTriangle className="h-4 w-4 text-red-500" />
+          Overdue Tasks
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {tasks.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No overdue tasks. Great work!</p>
+        ) : (
+          <div className="space-y-3">
+            {tasks.map((task) => (
+              <OverdueTaskRow key={task.id} task={task} />
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function PMDashboardPage() {
   const { hasRole, isLoading: rbacLoading } = useUserRBAC();
 
@@ -43,16 +133,9 @@ export default function PMDashboardPage() {
     enabled: !rbacLoading,
   });
 
-  const canView =
-    hasRole('project_manager') ||
-    hasRole('operations_manager') ||
-    hasRole('executive') ||
-    hasRole('platform_admin');
+  if (rbacLoading || isLoading) return <PMDashboardSkeleton />;
 
-  if (rbacLoading || isLoading) {
-    return <PMDashboardSkeleton />;
-  }
-
+  const canView = PM_ROLES.some((r) => hasRole(r));
   if (!canView) {
     return (
       <div className="max-w-7xl mx-auto text-center py-20">
@@ -77,7 +160,6 @@ export default function PMDashboardPage() {
           <h1 className="text-2xl font-bold tracking-tight">Project Manager Dashboard</h1>
         </div>
 
-        {/* Project Health Cards Grid */}
         {projects.length === 0 ? (
           <Card className="rounded-2xl border-0 shadow-sm">
             <CardContent className="p-12 text-center">
@@ -102,80 +184,9 @@ export default function PMDashboardPage() {
           </div>
         )}
 
-        {/* Bottom sections: Upcoming Milestones + Overdue Tasks */}
         <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
-          {/* Upcoming Milestones */}
-          <Card className="rounded-2xl border-0 shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                Upcoming Milestones (7 days)
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {upcomingMilestones.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No upcoming milestones.</p>
-              ) : (
-                <div className="space-y-3">
-                  {upcomingMilestones.map((ms) => (
-                    <div
-                      key={ms.id}
-                      className="flex items-center justify-between text-sm border-b last:border-0 pb-2 last:pb-0"
-                    >
-                      <div className="min-w-0">
-                        <p className="font-medium truncate">{ms.milestone_name}</p>
-                        <p className="text-xs text-muted-foreground">{ms.project_name}</p>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <Badge variant="outline" className="text-xs">
-                          {ms.status}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">{ms.planned_date}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Overdue Tasks */}
-          <Card className="rounded-2xl border-0 shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-red-500" />
-                Overdue Tasks
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {overdueTasks.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No overdue tasks. Great work!</p>
-              ) : (
-                <div className="space-y-3">
-                  {overdueTasks.map((task) => (
-                    <div
-                      key={task.id}
-                      className="flex items-center justify-between text-sm border-b last:border-0 pb-2 last:pb-0"
-                    >
-                      <div className="min-w-0">
-                        <p className="font-medium truncate">{task.title}</p>
-                        <p className="text-xs text-muted-foreground">{task.project_name}</p>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <Badge
-                          variant={task.priority === 'high' ? 'destructive' : 'secondary'}
-                          className="text-xs"
-                        >
-                          {task.priority}
-                        </Badge>
-                        <span className="text-xs text-red-600">Due {task.due_at.slice(0, 10)}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <MilestonesCard milestones={upcomingMilestones} />
+          <OverdueTasksCard tasks={overdueTasks} />
         </div>
       </div>
     </>

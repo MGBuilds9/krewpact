@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock AI SDK
 vi.mock('ai', () => ({
@@ -13,8 +13,9 @@ vi.mock('@ai-sdk/google', () => ({
 const mockFetch = vi.fn();
 vi.stubGlobal('fetch', mockFetch);
 
-import { deepResearchLead } from '@/lib/integrations/deep-research';
 import { generateText } from 'ai';
+
+import { deepResearchLead } from '@/lib/integrations/deep-research';
 
 const mockGenerateText = vi.mocked(generateText);
 

@@ -1,19 +1,20 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+
+import { Button } from '@/components/ui/button';
 import {
   Form,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormControl,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -21,9 +22,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useCreateSiteDiaryEntry, useUpdateSiteDiaryEntry } from '@/hooks/useProjectExtended';
+import { Textarea } from '@/components/ui/textarea';
 import type { SiteDiaryEntry } from '@/hooks/useProjectExtended';
-import { Loader2 } from 'lucide-react';
+import { useCreateSiteDiaryEntry, useUpdateSiteDiaryEntry } from '@/hooks/useProjectExtended';
 
 const entryTypes = [
   'observation',
@@ -69,6 +70,12 @@ export function SiteDiaryEntryForm({
   const createEntry = useCreateSiteDiaryEntry(projectId);
   const updateEntry = useUpdateSiteDiaryEntry(projectId);
   const isEditing = !!initialData;
+  const cb = {
+    onSuccess: () => {
+      form.reset();
+      onSuccess?.();
+    },
+  };
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -85,22 +92,9 @@ export function SiteDiaryEntryForm({
 
   function onSubmit(values: FormValues) {
     if (isEditing) {
-      updateEntry.mutate(
-        { entryId: initialData.id, ...values },
-        {
-          onSuccess: () => {
-            form.reset();
-            onSuccess?.();
-          },
-        },
-      );
+      updateEntry.mutate({ entryId: initialData.id, ...values }, cb);
     } else {
-      createEntry.mutate(values, {
-        onSuccess: () => {
-          form.reset();
-          onSuccess?.();
-        },
-      });
+      createEntry.mutate(values, cb);
     }
   }
 
@@ -121,7 +115,6 @@ export function SiteDiaryEntryForm({
               </FormItem>
             )}
           />
-
           <FormField
             control={form.control}
             name="entry_type"
@@ -147,7 +140,6 @@ export function SiteDiaryEntryForm({
             )}
           />
         </div>
-
         <FormField
           control={form.control}
           name="entry_text"
@@ -165,7 +157,6 @@ export function SiteDiaryEntryForm({
             </FormItem>
           )}
         />
-
         <div className="flex gap-2 justify-end pt-2">
           {onCancel && (
             <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>

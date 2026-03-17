@@ -1,11 +1,12 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { BoldSignClient } from '@/lib/esign/boldsign-client';
-import { esignEnvelopeCreateSchema } from '@/lib/validators/contracting';
-import { logger } from '@/lib/logger';
-import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { BoldSignClient } from '@/lib/esign/boldsign-client';
+import { logger } from '@/lib/logger';
+import { createUserClientSafe } from '@/lib/supabase/server';
+import { esignEnvelopeCreateSchema } from '@/lib/validators/contracting';
 
 const querySchema = z.object({
   contract_id: z.string().uuid().optional(),
@@ -13,20 +14,25 @@ const querySchema = z.object({
   offset: z.coerce.number().int().min(0).optional(),
 });
 
+const sendForSigningSchema = z.object({
+  proposal_id: z.string().uuid(),
+  message: z.string().optional(),
+  expiry_days: z.number().int().min(1).max(365).optional(),
+});
+
+type SendParams = z.infer<typeof sendForSigningSchema>;
+type SupabaseClient = Awaited<ReturnType<typeof createUserClientSafe>>['client'];
+
 export async function GET(req: NextRequest) {
   const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
   if (!rl.success) return rateLimitResponse(rl);
 
   const params = Object.fromEntries(req.nextUrl.searchParams);
   const parsed = querySchema.safeParse(params);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
   const { contract_id, limit, offset } = parsed.data;
   const { client: supabase, error: authError } = await createUserClientSafe();
@@ -34,7 +40,6 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from('esign_envelopes')
-    /* excluded from list: payload */
     .select(
       'id, contract_id, provider, provider_envelope_id, status, signer_count, webhook_last_event_at, created_at, updated_at',
       { count: 'exact' },
@@ -42,17 +47,12 @@ export async function GET(req: NextRequest) {
     .order('created_at', { ascending: false });
 
   if (contract_id) query = query.eq('contract_id', contract_id);
-
   const effectiveLimit = limit ?? 25;
   const effectiveOffset = offset ?? 0;
   query = query.range(effectiveOffset, effectiveOffset + effectiveLimit - 1);
 
   const { data, error, count } = await query;
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({
     data: data ?? [],
     total: count ?? 0,
@@ -60,24 +60,9 @@ export async function GET(req: NextRequest) {
   });
 }
 
-// ============================================================
-// POST /api/esign — Send a proposal/contract for e-signing
-// ============================================================
-
-const sendForSigningSchema = z.object({
-  /** ID of the proposal to send for signing */
-  proposal_id: z.string().uuid(),
-  /** Optional override for the signing email message */
-  message: z.string().optional(),
-  /** Number of days before the envelope expires (default: 30) */
-  expiry_days: z.number().int().min(1).max(365).optional(),
-});
-
 export async function POST(req: NextRequest) {
   const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
   if (!rl.success) return rateLimitResponse(rl);
@@ -89,129 +74,94 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  // Support both flows: direct envelope create or proposal-based send
   const sendParsed = sendForSigningSchema.safeParse(body);
+  if (sendParsed.success) return handleProposalSend(sendParsed.data, userId);
 
-  if (sendParsed.success) {
-    // Proposal-based flow: look up proposal, contract, contacts, then send via BoldSign
-    return handleProposalSend(sendParsed.data, userId);
-  }
-
-  // Fallback: direct envelope creation (existing CRUD pattern)
   const directParsed = esignEnvelopeCreateSchema.safeParse(body);
-  if (!directParsed.success) {
+  if (!directParsed.success)
     return NextResponse.json({ error: directParsed.error.flatten() }, { status: 400 });
-  }
 
   const { client: supabase, error: authError } = await createUserClientSafe();
-
   if (authError) return authError;
   const { data, error } = await supabase
     .from('esign_envelopes')
     .insert(directParsed.data)
     .select()
     .single();
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data, { status: 201 });
 }
 
-// ============================================================
-// Proposal-based e-sign flow
-// ============================================================
-
-async function handleProposalSend(params: z.infer<typeof sendForSigningSchema>, userId: string) {
-  const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
-
-  // 1. Look up the proposal
-  const { data: proposal, error: proposalError } = await supabase
-    .from('proposals')
-    .select('*, estimate:estimates(*, account:accounts(*, contacts:contacts(*)))')
-    .eq('id', params.proposal_id)
-    .single();
-
-  if (proposalError || !proposal) {
-    return NextResponse.json(
-      { error: proposalError?.message ?? 'Proposal not found' },
-      { status: proposalError?.code === 'PGRST116' ? 404 : 500 },
-    );
-  }
-
-  // 2. Get or create contract_terms for this proposal
-  let { data: contract } = await supabase
+async function resolveContractId(
+  supabase: SupabaseClient,
+  proposalId: string,
+  proposalPayload: unknown,
+): Promise<string | NextResponse> {
+  const { data: contract } = await supabase
     .from('contract_terms')
-    .select(
-      'id, proposal_id, contract_status, legal_text_version, terms_payload, signed_at, supersedes_contract_id, created_at, updated_at',
-    )
-    .eq('proposal_id', params.proposal_id)
+    .select('id, contract_status')
+    .eq('proposal_id', proposalId)
     .eq('contract_status', 'draft')
     .order('created_at', { ascending: false })
     .limit(1)
     .single();
 
   if (!contract) {
-    const { data: newContract, error: createError } = await supabase
+    const { data: newContract, error } = await supabase
       .from('contract_terms')
       .insert({
-        proposal_id: params.proposal_id,
+        proposal_id: proposalId,
         contract_status: 'pending_signature',
         legal_text_version: 'v1.0',
-        terms_payload: proposal.proposal_payload ?? {},
+        terms_payload: proposalPayload ?? {},
       })
-      .select()
+      .select('id')
       .single();
-
-    if (createError || !newContract) {
+    if (error || !newContract)
       return NextResponse.json(
-        { error: createError?.message ?? 'Failed to create contract' },
+        { error: error?.message ?? 'Failed to create contract' },
         { status: 500 },
       );
-    }
-    contract = newContract;
-  } else {
-    // Update existing draft to pending_signature
-    await supabase
-      .from('contract_terms')
-      .update({ contract_status: 'pending_signature' })
-      .eq('id', contract.id);
+    return newContract.id;
   }
 
-  // After the if/else above, contract is guaranteed non-null (early return on failure)
-  const contractId = contract!.id;
+  await supabase
+    .from('contract_terms')
+    .update({ contract_status: 'pending_signature' })
+    .eq('id', contract.id);
+  return contract.id;
+}
 
-  // 3. Gather signer info from contacts
+function extractSigners(
+  proposal: Record<string, unknown>,
+): Array<{ name: string; emailAddress: string }> {
   const estimate = proposal.estimate as Record<string, unknown> | null;
   const account = estimate?.account as Record<string, unknown> | null;
   const contacts = (account?.contacts ?? []) as Array<Record<string, unknown>>;
-
-  // Use the first contact as the primary signer, or fall back to account info
   const signers: Array<{ name: string; emailAddress: string }> = [];
-  if (contacts.length > 0) {
-    for (const contact of contacts) {
-      const email = contact.email as string | undefined;
-      const name = contact.full_name as string | undefined;
-      if (email && name) {
-        signers.push({ name, emailAddress: email });
-      }
-    }
-  }
+  contacts.forEach((contact) => {
+    const email = contact.email as string | undefined;
+    const name = contact.full_name as string | undefined;
+    if (email && name) signers.push({ name, emailAddress: email });
+  });
+  return signers;
+}
 
-  if (signers.length === 0) {
-    return NextResponse.json(
-      { error: 'No signers found. Ensure the account has contacts with email addresses.' },
-      { status: 422 },
-    );
-  }
+interface EnvelopeContext {
+  contractId: string;
+  signers: Array<{ name: string; emailAddress: string }>;
+  accountName: string;
+  proposalNumber: string;
+  userId: string;
+}
 
-  // 4. Create envelope via BoldSign
+async function createBoldSignEnvelope(
+  supabase: SupabaseClient,
+  params: SendParams,
+  ctx: EnvelopeContext,
+): Promise<NextResponse> {
+  const { contractId, signers, accountName, proposalNumber, userId } = ctx;
   const boldSign = new BoldSignClient();
-  const accountName = (account?.account_name as string) ?? 'Unknown Account';
-  const proposalNumber = proposal.proposal_number as string;
-
   try {
     const { documentId } = await boldSign.createEnvelope({
       title: `Contract - ${proposalNumber} - ${accountName}`,
@@ -222,7 +172,6 @@ async function handleProposalSend(params: z.infer<typeof sendForSigningSchema>, 
       enableSigningOrder: false,
     });
 
-    // 5. Store envelope record
     const { data: envelope, error: envelopeError } = await supabase
       .from('esign_envelopes')
       .insert({
@@ -242,19 +191,14 @@ async function handleProposalSend(params: z.infer<typeof sendForSigningSchema>, 
       .single();
 
     if (envelopeError) {
-      logger.error('Failed to store esign envelope', {
-        error: envelopeError.message,
-        documentId,
-      });
+      logger.error('Failed to store esign envelope', { error: envelopeError.message, documentId });
       return NextResponse.json({ error: envelopeError.message }, { status: 500 });
     }
 
-    // 6. Update proposal status to 'sent'
     await supabase
       .from('proposals')
       .update({ status: 'sent', sent_at: new Date().toISOString() })
       .eq('id', params.proposal_id);
-
     logger.info('E-sign envelope sent', {
       envelopeId: envelope.id,
       documentId,
@@ -282,4 +226,51 @@ async function handleProposalSend(params: z.infer<typeof sendForSigningSchema>, 
     });
     return NextResponse.json({ error: 'Failed to create e-sign envelope' }, { status: 502 });
   }
+}
+
+async function handleProposalSend(params: SendParams, userId: string): Promise<NextResponse> {
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
+
+  const { data: proposal, error: proposalError } = await supabase
+    .from('proposals')
+    .select('*, estimate:estimates(*, account:accounts(*, contacts:contacts(*)))')
+    .eq('id', params.proposal_id)
+    .single();
+
+  if (proposalError || !proposal) {
+    return NextResponse.json(
+      { error: proposalError?.message ?? 'Proposal not found' },
+      { status: proposalError?.code === 'PGRST116' ? 404 : 500 },
+    );
+  }
+
+  const contractIdResult = await resolveContractId(
+    supabase,
+    params.proposal_id,
+    proposal.proposal_payload,
+  );
+  if (contractIdResult instanceof NextResponse) return contractIdResult;
+  const contractId = contractIdResult;
+
+  const signers = extractSigners(proposal as Record<string, unknown>);
+  if (signers.length === 0) {
+    return NextResponse.json(
+      { error: 'No signers found. Ensure the account has contacts with email addresses.' },
+      { status: 422 },
+    );
+  }
+
+  const estimate = (proposal as Record<string, unknown>).estimate as Record<string, unknown> | null;
+  const account = estimate?.account as Record<string, unknown> | null;
+  const accountName = (account?.account_name as string) ?? 'Unknown Account';
+  const proposalNumber = (proposal as Record<string, unknown>).proposal_number as string;
+
+  return createBoldSignEnvelope(supabase, params, {
+    contractId,
+    signers,
+    accountName,
+    proposalNumber,
+    userId,
+  });
 }

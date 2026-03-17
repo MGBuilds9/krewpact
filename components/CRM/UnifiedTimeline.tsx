@@ -1,21 +1,22 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
 import {
-  Phone,
-  Mail,
-  Calendar,
-  StickyNote,
-  ListTodo,
-  Send,
-  MessageCircle,
-  Bot,
   ArrowDownLeft,
   ArrowUpRight,
+  Bot,
+  Calendar,
+  ListTodo,
+  Mail,
+  MessageCircle,
+  Phone,
+  Send,
+  StickyNote,
 } from 'lucide-react';
-import { useTimeline } from '@/hooks/useCRM';
+
 import type { TimelineEntry } from '@/app/api/crm/activities/timeline/route';
+import { Badge } from '@/components/ui/badge';
+import { useTimeline } from '@/hooks/useCRM';
+import { cn } from '@/lib/utils';
 
 const sourceIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   call: Phone,
@@ -62,7 +63,9 @@ function TimelineItem({ entry }: TimelineItemProps) {
   return (
     <div className="flex gap-3">
       <div className="flex-shrink-0 mt-1">
-        <div className={cn('w-8 h-8 rounded-full flex items-center justify-center border', colorClass)}>
+        <div
+          className={cn('w-8 h-8 rounded-full flex items-center justify-center border', colorClass)}
+        >
           <Icon className="h-4 w-4" />
         </div>
       </div>

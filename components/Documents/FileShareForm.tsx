@@ -1,8 +1,11 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
+
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -20,10 +23,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2 } from 'lucide-react';
-import { fileShareCreateSchema } from '@/lib/validators/documents';
 import { useCreateFileShare } from '@/hooks/useDocuments';
-import { toast } from 'sonner';
+import { fileShareCreateSchema } from '@/lib/validators/documents';
 
 type FormValues = z.infer<typeof fileShareCreateSchema>;
 
@@ -36,14 +37,9 @@ interface FileShareFormProps {
 
 export function FileShareForm({ projectId, fileId, onSuccess, onCancel }: FileShareFormProps) {
   const createShare = useCreateFileShare(projectId, fileId);
-
   const form = useForm<FormValues>({
     resolver: zodResolver(fileShareCreateSchema),
-    defaultValues: {
-      shared_with_user_id: '',
-      permission_level: 'view',
-      expires_at: '',
-    },
+    defaultValues: { shared_with_user_id: '', permission_level: 'view', expires_at: '' },
   });
 
   async function onSubmit(values: FormValues) {

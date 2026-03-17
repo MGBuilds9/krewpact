@@ -1,10 +1,11 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 import { exportToCSV } from '@/lib/csv/exporter';
 import { logger } from '@/lib/logger';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const bulkSchema = z.object({
   action: z.enum(['assign', 'delete', 'export']),
@@ -42,7 +43,10 @@ export async function POST(req: NextRequest) {
       if (!value) {
         return NextResponse.json({ error: 'value is required for assign action' }, { status: 400 });
       }
-      const { error } = await supabase.from('contacts').update({ assigned_to: value }).in('id', ids);
+      const { error } = await supabase
+        .from('contacts')
+        .update({ assigned_to: value })
+        .in('id', ids);
       if (error) {
         logger.error('Bulk contact assign failed', { error: error.message });
         return NextResponse.json({ error: error.message }, { status: 500 });
@@ -71,14 +75,7 @@ export async function POST(req: NextRequest) {
         logger.error('Bulk contact export failed', { error: error.message });
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
-      const columns = [
-        'first_name',
-        'last_name',
-        'email',
-        'phone',
-        'title',
-        'created_at',
-      ];
+      const columns = ['first_name', 'last_name', 'email', 'phone', 'title', 'created_at'];
       const csv = exportToCSV((data ?? []) as Record<string, unknown>[], columns);
       return new NextResponse(csv, {
         status: 200,

@@ -2,8 +2,8 @@
 // Use this for page-level or section-level access control in Server Components.
 
 import { getKrewpactRoles } from '@/lib/api/org';
-import { hasPermission, isInternalRole, isExternalRole } from '@/lib/rbac/permissions.shared';
 import type { KrewpactRole, Permission } from '@/lib/rbac/permissions.shared';
+import { hasPermission, isExternalRole, isInternalRole } from '@/lib/rbac/permissions.shared';
 
 interface RoleGuardProps {
   permission: Permission;

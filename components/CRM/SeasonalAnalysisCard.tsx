@@ -1,7 +1,8 @@
 'use client';
 
+import { Calendar, Minus, TrendingDown, TrendingUp } from 'lucide-react';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import type { QuarterlyData } from '@/lib/crm/construction-intelligence';
 
 function formatCurrency(value: number): string {
@@ -67,9 +68,7 @@ export function SeasonalAnalysisCard({ quarters }: SeasonalAnalysisCardProps) {
                   <span>{q.created} created</span>
                   <span className="text-green-600">{q.won} won</span>
                   <span className="text-red-500">{q.lost} lost</span>
-                  <span className="font-medium text-foreground">
-                    {formatCurrency(q.revenue)}
-                  </span>
+                  <span className="font-medium text-foreground">{formatCurrency(q.revenue)}</span>
                 </div>
               </div>
               <div className="h-2 bg-muted rounded-full overflow-hidden">

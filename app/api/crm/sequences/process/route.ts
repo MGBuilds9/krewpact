@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe, createServiceClient } from '@/lib/supabase/server';
-import { processSequences } from '@/lib/crm/sequence-processor';
+import { NextRequest, NextResponse } from 'next/server';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { processSequences } from '@/lib/crm/sequence-processor';
+import { createServiceClient, createUserClientSafe } from '@/lib/supabase/server';
 
 /**
  * POST /api/crm/sequences/process

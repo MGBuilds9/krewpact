@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useEffect, useCallback } from 'react';
 import { Keyboard } from 'lucide-react';
+import React, { useCallback, useEffect } from 'react';
+
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from '@/components/ui/dialog';
 
 export interface ShortcutEntry {
@@ -91,14 +92,14 @@ export function ShortcutsHelpOverlay({ isOpen, onClose }: ShortcutsHelpOverlayPr
                   <div key={shortcut.description} className="flex items-center justify-between">
                     <span className="text-sm">{shortcut.description}</span>
                     <div className="flex items-center gap-1">
-                      {shortcut.keys.map((key, idx) => (
-                        <React.Fragment key={idx}>
-                          {idx > 0 &&
+                      {shortcut.keys.map((key, keyIdx) => (
+                        <React.Fragment key={key}>
+                          {keyIdx > 0 &&
                             shortcut.keys.length === 2 &&
                             !['Cmd', 'Ctrl', 'Shift', 'Alt'].includes(shortcut.keys[0]) && (
                               <span className="text-xs text-muted-foreground mx-0.5">then</span>
                             )}
-                          {idx > 0 &&
+                          {keyIdx > 0 &&
                             ['Cmd', 'Ctrl', 'Shift', 'Alt'].includes(shortcut.keys[0]) && (
                               <span className="text-xs text-muted-foreground mx-0.5">+</span>
                             )}

@@ -1,20 +1,19 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { safetyIncidentCreateSchema } from '@/lib/validators/safety';
+
+import { Button } from '@/components/ui/button';
 import {
   Form,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormControl,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -22,6 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { safetyIncidentCreateSchema } from '@/lib/validators/safety';
 
 type FormValues = z.infer<typeof safetyIncidentCreateSchema>;
 
@@ -57,7 +58,6 @@ export function SafetyIncidentForm({ onSubmit, isLoading }: SafetyIncidentFormPr
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="severity"
@@ -82,7 +82,6 @@ export function SafetyIncidentForm({ onSubmit, isLoading }: SafetyIncidentFormPr
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="summary"
@@ -96,7 +95,6 @@ export function SafetyIncidentForm({ onSubmit, isLoading }: SafetyIncidentFormPr
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="details"
@@ -117,7 +115,6 @@ export function SafetyIncidentForm({ onSubmit, isLoading }: SafetyIncidentFormPr
             </FormItem>
           )}
         />
-
         <Button type="submit" disabled={isLoading}>
           {isLoading ? 'Saving...' : 'Report Incident'}
         </Button>

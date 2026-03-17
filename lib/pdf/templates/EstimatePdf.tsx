@@ -1,4 +1,4 @@
-import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
+import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
 import React from 'react';
 
 import type { EstimatePdfData } from '../types';
@@ -6,6 +6,8 @@ import type { EstimatePdfData } from '../types';
 const styles = StyleSheet.create({
   page: { padding: 40, fontFamily: 'Helvetica', fontSize: 10 },
   header: { marginBottom: 20 },
+  logoRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  logo: { width: 60, height: 34, marginRight: 10 },
   companyName: { fontSize: 18, fontWeight: 'bold', marginBottom: 4 },
   estimateInfo: { fontSize: 10, color: '#666', marginBottom: 2 },
   section: { marginBottom: 16 },
@@ -51,20 +53,48 @@ function formatCurrency(amount: number | undefined): string {
   return `$${amount.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+function EstimateTotals({ data }: { data: EstimatePdfData }) {
+  return (
+    <View style={styles.totalsSection} wrap={false}>
+      <View style={styles.totalRow}>
+        <Text style={styles.totalLabel}>Subtotal:</Text>
+        <Text style={styles.totalValue}>{formatCurrency(data.subtotal)}</Text>
+      </View>
+      {data.markupTotal !== undefined && data.markupTotal > 0 && (
+        <View style={styles.totalRow}>
+          <Text style={styles.totalLabel}>Markup:</Text>
+          <Text style={styles.totalValue}>{formatCurrency(data.markupTotal)}</Text>
+        </View>
+      )}
+      {data.taxRate !== undefined && (
+        <View style={styles.totalRow}>
+          <Text style={styles.totalLabel}>Tax ({data.taxRate}%):</Text>
+          <Text style={styles.totalValue}>{formatCurrency(data.taxAmount)}</Text>
+        </View>
+      )}
+      <View style={[styles.totalRow, styles.grandTotal]}>
+        <Text style={styles.totalLabel}>Total:</Text>
+        <Text style={styles.totalValue}>{formatCurrency(data.total)}</Text>
+      </View>
+    </View>
+  );
+}
+
 export function EstimatePdf({ data }: { data: EstimatePdfData }) {
   return (
     <Document>
       <Page size="LETTER" style={styles.page}>
-        {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.companyName}>{data.companyName}</Text>
+          <View style={styles.logoRow}>
+            <Image style={styles.logo} src="/mdm-logo.svg" alt="MDM Group logo" />
+            <Text style={styles.companyName}>{data.companyName}</Text>
+          </View>
           {data.estimateNumber && (
             <Text style={styles.estimateInfo}>Estimate #{data.estimateNumber}</Text>
           )}
           {data.date && <Text style={styles.estimateInfo}>Date: {data.date}</Text>}
         </View>
 
-        {/* Client Info */}
         {data.client && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Client</Text>
@@ -74,7 +104,6 @@ export function EstimatePdf({ data }: { data: EstimatePdfData }) {
           </View>
         )}
 
-        {/* Line Items Table */}
         {data.lineItems && data.lineItems.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Line Items</Text>
@@ -88,8 +117,9 @@ export function EstimatePdf({ data }: { data: EstimatePdfData }) {
             </View>
             {data.lineItems.map((item, i) => {
               const lineTotal = item.quantity * item.unitCost * (1 + (item.markup || 0) / 100);
+              const itemKey = item.description ? `${item.description}-${i}` : String(i);
               return (
-                <View key={i} style={styles.tableRow} wrap={false} minPresenceAhead={20}>
+                <View key={itemKey} style={styles.tableRow} wrap={false} minPresenceAhead={20}>
                   <Text style={styles.colDesc}>{item.description}</Text>
                   <Text style={styles.colQty}>{item.quantity}</Text>
                   <Text style={styles.colUnit}>{item.unit || '-'}</Text>
@@ -102,31 +132,8 @@ export function EstimatePdf({ data }: { data: EstimatePdfData }) {
           </View>
         )}
 
-        {/* Totals */}
-        <View style={styles.totalsSection} wrap={false}>
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Subtotal:</Text>
-            <Text style={styles.totalValue}>{formatCurrency(data.subtotal)}</Text>
-          </View>
-          {data.markupTotal !== undefined && data.markupTotal > 0 && (
-            <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Markup:</Text>
-              <Text style={styles.totalValue}>{formatCurrency(data.markupTotal)}</Text>
-            </View>
-          )}
-          {data.taxRate !== undefined && (
-            <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Tax ({data.taxRate}%):</Text>
-              <Text style={styles.totalValue}>{formatCurrency(data.taxAmount)}</Text>
-            </View>
-          )}
-          <View style={[styles.totalRow, styles.grandTotal]}>
-            <Text style={styles.totalLabel}>Total:</Text>
-            <Text style={styles.totalValue}>{formatCurrency(data.total)}</Text>
-          </View>
-        </View>
+        <EstimateTotals data={data} />
 
-        {/* Terms */}
         {data.terms && (
           <View style={styles.terms}>
             <Text style={styles.termsTitle}>Terms & Conditions</Text>

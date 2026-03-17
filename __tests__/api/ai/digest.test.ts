@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
@@ -9,11 +8,13 @@ vi.mock('@/lib/api/rate-limit', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
+
 import { GET } from '@/app/api/ai/digest/route';
+import { createUserClientSafe } from '@/lib/supabase/server';
+
 import { mockClerkAuth, mockClerkUnauth } from '../../helpers/mock-auth';
-import { mockSupabaseClient } from '../../helpers/mock-supabase';
 import { makeRequest } from '../../helpers/mock-request';
+import { mockSupabaseClient } from '../../helpers/mock-supabase';
 
 describe('GET /api/ai/digest', () => {
   const mockAuth = vi.mocked(auth);
@@ -101,9 +102,9 @@ describe('GET /api/ai/digest', () => {
         for (const m of methods) {
           chain[m] = vi.fn().mockReturnValue(chain);
         }
-        chain.single = vi.fn().mockImplementation(() =>
-          Promise.resolve({ data: digestData, error: null })
-        );
+        chain.single = vi
+          .fn()
+          .mockImplementation(() => Promise.resolve({ data: digestData, error: null }));
         chain.update = vi.fn().mockImplementation(() => {
           updateCalled = true;
           return updateChain;

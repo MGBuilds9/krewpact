@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { matchEmailToEntities } from '@/lib/crm/email-activity-matcher';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { mockSupabaseClient } from '@/__tests__/helpers';
+import { matchEmailToEntities } from '@/lib/crm/email-activity-matcher';
 
 describe('matchEmailToEntities', () => {
   beforeEach(() => {

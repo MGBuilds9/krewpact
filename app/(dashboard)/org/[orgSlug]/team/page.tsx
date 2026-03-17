@@ -1,19 +1,62 @@
 'use client';
 
+import { Mail, Search, Users } from 'lucide-react';
 import { useState } from 'react';
+
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Users, Search, Mail } from 'lucide-react';
 import { useTeamMembers } from '@/hooks/useTeam';
+
+type Member = {
+  id: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  email?: string | null;
+  avatar_url?: string | null;
+  status: string;
+};
+
+function MemberCard({ member }: { member: Member }) {
+  return (
+    <Card className="hover:shadow-sm transition-shadow">
+      <CardContent className="pt-6">
+        <div className="flex items-start gap-3">
+          <Avatar className="h-12 w-12">
+            <AvatarImage src={member.avatar_url || undefined} />
+            <AvatarFallback>
+              {member.first_name?.[0]}
+              {member.last_name?.[0]}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold truncate">
+              {member.first_name} {member.last_name}
+            </p>
+            <div className="flex items-center gap-1 text-sm text-muted-foreground mt-0.5">
+              <Mail className="h-3 w-3 flex-shrink-0" />
+              <span className="truncate">{member.email}</span>
+            </div>
+            <div className="mt-2">
+              <Badge variant={member.status === 'active' ? 'default' : 'secondary'}>
+                {member.status === 'active' ? 'Active' : 'Inactive'}
+              </Badge>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function TeamPage() {
   const [search, setSearch] = useState('');
   const { data: members, isLoading } = useTeamMembers();
 
-  const filteredMembers = (members ?? []).filter((m) => {
+  const allMembers = members || [];
+  const filteredMembers = allMembers.filter((m) => {
     if (!search) return true;
     const term = search.toLowerCase();
     return (
@@ -23,7 +66,7 @@ export default function TeamPage() {
     );
   });
 
-  if (isLoading) {
+  if (isLoading)
     return (
       <div className="space-y-6">
         <Skeleton className="h-10 w-48" />
@@ -35,7 +78,6 @@ export default function TeamPage() {
         </div>
       </div>
     );
-  }
 
   return (
     <>
@@ -48,7 +90,6 @@ export default function TeamPage() {
             <p className="text-muted-foreground">{filteredMembers.length} team members</p>
           </div>
         </div>
-
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -58,14 +99,13 @@ export default function TeamPage() {
             className="pl-10"
           />
         </div>
-
         {filteredMembers.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
               <Users className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
               <h3 className="text-lg font-medium mb-2">No team members found</h3>
               <p className="text-muted-foreground">
-                {members?.length === 0
+                {allMembers.length === 0
                   ? 'No internal users in the system'
                   : 'Try a different search term'}
               </p>
@@ -74,33 +114,7 @@ export default function TeamPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredMembers.map((member) => (
-              <Card key={member.id} className="hover:shadow-sm transition-shadow">
-                <CardContent className="pt-6">
-                  <div className="flex items-start gap-3">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={member.avatar_url || undefined} />
-                      <AvatarFallback>
-                        {member.first_name?.[0]}
-                        {member.last_name?.[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold truncate">
-                        {member.first_name} {member.last_name}
-                      </p>
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground mt-0.5">
-                        <Mail className="h-3 w-3 flex-shrink-0" />
-                        <span className="truncate">{member.email}</span>
-                      </div>
-                      <div className="mt-2">
-                        <Badge variant={member.status === 'active' ? 'default' : 'secondary'}>
-                          {member.status === 'active' ? 'Active' : 'Inactive'}
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <MemberCard key={member.id} member={member as Member} />
             ))}
           </div>
         )}

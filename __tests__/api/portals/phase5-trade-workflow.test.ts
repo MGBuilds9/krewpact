@@ -1,25 +1,25 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { GET as getTasks } from '@/app/api/portal/trade/tasks/route';
-import { PATCH as patchTaskStatus } from '@/app/api/portal/trade/tasks/[id]/status/route';
+
+import {
+  makeJsonRequest,
+  makeRequest,
+  mockClerkAuth,
+  mockClerkUnauth,
+  TEST_IDS,
+} from '@/__tests__/helpers';
+import { GET as _getSiteLogs, POST as postSiteLog } from '@/app/api/portal/trade/site-logs/route';
 import {
   GET as _getSubmittals,
   POST as postSubmittal,
 } from '@/app/api/portal/trade/submittals/route';
-import { GET as _getSiteLogs, POST as postSiteLog } from '@/app/api/portal/trade/site-logs/route';
-import {
-  mockClerkAuth,
-  mockClerkUnauth,
-  makeRequest,
-  makeJsonRequest,
-  TEST_IDS,
-} from '@/__tests__/helpers';
+import { PATCH as patchTaskStatus } from '@/app/api/portal/trade/tasks/[id]/status/route';
+import { GET as getTasks } from '@/app/api/portal/trade/tasks/route';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);

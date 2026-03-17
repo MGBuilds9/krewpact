@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock Clerk auth
 vi.mock('@clerk/nextjs/server', () => ({
@@ -11,24 +11,22 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-
-// Estimate line routes
-import { PUT as linesPUT } from '@/app/api/estimates/[id]/lines/route';
-import { DELETE as lineDELETE } from '@/app/api/estimates/[id]/lines/[lineId]/route';
 
 import {
-  mockSupabaseClient,
-  mockClerkAuth,
-  makeRequest,
-  makeJsonRequest,
   makeEstimate,
   makeEstimateLine,
+  makeJsonRequest,
+  makeRequest,
+  mockClerkAuth,
+  mockSupabaseClient,
   resetFixtureCounter,
 } from '@/__tests__/helpers';
-
+import { DELETE as lineDELETE } from '@/app/api/estimates/[id]/lines/[lineId]/route';
+// Estimate line routes
+import { PUT as linesPUT } from '@/app/api/estimates/[id]/lines/route';
 // Pure calculation functions
-import { calculateLineTotal, calculateEstimateTotals } from '@/lib/estimating/calculations';
+import { calculateEstimateTotals, calculateLineTotal } from '@/lib/estimating/calculations';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);

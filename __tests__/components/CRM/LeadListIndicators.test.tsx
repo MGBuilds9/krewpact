@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
+
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
@@ -60,7 +60,11 @@ function StaleIndicator({ lastTouchAt }: { lastTouchAt: string | null }) {
 }
 
 function ContactCount({ count }: { count: number }) {
-  return <span data-testid="contact-count">{count} contact{count !== 1 ? 's' : ''}</span>;
+  return (
+    <span data-testid="contact-count">
+      {count} contact{count !== 1 ? 's' : ''}
+    </span>
+  );
 }
 
 // ---------------------------------------------------------------------------

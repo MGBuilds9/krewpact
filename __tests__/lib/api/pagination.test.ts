@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
+import { describe, expect, it } from 'vitest';
+
+import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
 
 describe('parsePagination', () => {
   it('returns defaults when no params', () => {

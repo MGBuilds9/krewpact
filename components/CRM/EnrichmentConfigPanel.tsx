@@ -1,12 +1,13 @@
 'use client';
 
+import { ArrowDown, ArrowUp, Save } from 'lucide-react';
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { useEnrichmentConfig, useUpdateEnrichmentConfig } from '@/hooks/useCRM';
 import type { EnrichmentConfig } from '@/hooks/useCRM';
-import { ArrowUp, ArrowDown, Save } from 'lucide-react';
+import { useEnrichmentConfig, useUpdateEnrichmentConfig } from '@/hooks/useCRM';
 
 const SOURCE_LABELS: Record<string, string> = {
   apollo: 'Apollo',
@@ -24,10 +25,12 @@ interface EnrichmentFormState {
 export function EnrichmentConfigPanel() {
   const { data: config, isLoading } = useEnrichmentConfig();
   const updateConfig = useUpdateEnrichmentConfig();
+  const [state, setState] = useState<EnrichmentFormState>({
+    localSources: [],
+    dirty: false,
+    _syncKey: '',
+  });
 
-  const [state, setState] = useState<EnrichmentFormState>({ localSources: [], dirty: false, _syncKey: '' });
-
-  // Sync from server when config changes
   const configJson = JSON.stringify(config?.sources);
   if (config?.sources && state._syncKey !== configJson) {
     setState({
@@ -42,25 +45,19 @@ export function EnrichmentConfigPanel() {
   function handleToggle(name: string) {
     setState((prev) => ({
       ...prev,
-      localSources: prev.localSources.map((s) => (s.name === name ? { ...s, enabled: !s.enabled } : s)),
+      localSources: prev.localSources.map((s) =>
+        s.name === name ? { ...s, enabled: !s.enabled } : s,
+      ),
       dirty: true,
     }));
   }
 
-  function handleMoveUp(index: number) {
-    if (index === 0) return;
+  function handleMove(index: number, dir: 'up' | 'down') {
+    const target = dir === 'up' ? index - 1 : index + 1;
+    if (target < 0 || target >= localSources.length) return;
     setState((prev) => {
       const next = [...prev.localSources];
-      [next[index - 1], next[index]] = [next[index], next[index - 1]];
-      return { ...prev, localSources: next.map((s, i) => ({ ...s, order: i + 1 })), dirty: true };
-    });
-  }
-
-  function handleMoveDown(index: number) {
-    if (index >= localSources.length - 1) return;
-    setState((prev) => {
-      const next = [...prev.localSources];
-      [next[index], next[index + 1]] = [next[index + 1], next[index]];
+      [next[index], next[target]] = [next[target], next[index]];
       return { ...prev, localSources: next.map((s, i) => ({ ...s, order: i + 1 })), dirty: true };
     });
   }
@@ -70,7 +67,7 @@ export function EnrichmentConfigPanel() {
     setState((prev) => ({ ...prev, dirty: false }));
   }
 
-  if (isLoading) {
+  if (isLoading)
     return (
       <Card>
         <CardContent className="pt-6">
@@ -78,7 +75,6 @@ export function EnrichmentConfigPanel() {
         </CardContent>
       </Card>
     );
-  }
 
   return (
     <Card>
@@ -106,7 +102,7 @@ export function EnrichmentConfigPanel() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handleMoveUp(index)}
+                onClick={() => handleMove(index, 'up')}
                 disabled={index === 0}
                 aria-label={`Move ${source.name} up`}
               >
@@ -115,7 +111,7 @@ export function EnrichmentConfigPanel() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handleMoveDown(index)}
+                onClick={() => handleMove(index, 'down')}
                 disabled={index === localSources.length - 1}
                 aria-label={`Move ${source.name} down`}
               >
@@ -129,7 +125,6 @@ export function EnrichmentConfigPanel() {
             </div>
           </div>
         ))}
-
         <Button
           onClick={handleSave}
           disabled={!dirty || updateConfig.isPending}

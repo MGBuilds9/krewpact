@@ -1,5 +1,5 @@
-import { generateText } from 'ai';
 import { google } from '@ai-sdk/google';
+import { generateText } from 'ai';
 
 /**
  * Summarize enrichment data into a 2-3 sentence company brief

@@ -10,18 +10,16 @@
  * - PATCH [msgId] updates is_read status
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 
 const mockFrom = vi.fn();
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClientSafe: vi
-    .fn()
-    .mockResolvedValue({
-      client: { from: (...args: unknown[]) => mockFrom(...args) },
-      error: null,
-    }),
+  createUserClientSafe: vi.fn().mockResolvedValue({
+    client: { from: (...args: unknown[]) => mockFrom(...args) },
+    error: null,
+  }),
 }));
 
 vi.mock('@/lib/api/rate-limit', () => ({
@@ -30,9 +28,10 @@ vi.mock('@/lib/api/rate-limit', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { GET, POST } from '@/app/api/portal/projects/[id]/messages/route';
+
+import { makeJsonRequest, makeRequest, mockClerkAuth, mockClerkUnauth } from '@/__tests__/helpers';
 import { GET as GET_SINGLE, PATCH } from '@/app/api/portal/projects/[id]/messages/[msgId]/route';
-import { mockClerkAuth, mockClerkUnauth, makeRequest, makeJsonRequest } from '@/__tests__/helpers';
+import { GET, POST } from '@/app/api/portal/projects/[id]/messages/route';
 
 const mockAuth = vi.mocked(auth);
 

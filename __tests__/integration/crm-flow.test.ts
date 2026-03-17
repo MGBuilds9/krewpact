@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock Clerk auth
 vi.mock('@clerk/nextjs/server', () => ({
@@ -11,46 +11,41 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
 
+import {
+  makeAccount,
+  makeActivity,
+  makeContact,
+  makeJsonRequest,
+  makeLead,
+  makeOpportunity,
+  makeRequest,
+  mockClerkAuth,
+  mockClerkUnauth,
+  mockSupabaseClient,
+  resetFixtureCounter,
+  TEST_IDS,
+} from '@/__tests__/helpers';
+import { DELETE as accountDELETE } from '@/app/api/crm/accounts/[id]/route';
 // Account routes
 import { GET as accountsGET, POST as accountsPOST } from '@/app/api/crm/accounts/route';
-import { DELETE as accountDELETE } from '@/app/api/crm/accounts/[id]/route';
-
+// Activity routes
+import { POST as activitiesPOST } from '@/app/api/crm/activities/route';
 // Contact routes
 import { GET as contactsGET, POST as contactsPOST } from '@/app/api/crm/contacts/route';
-
+import { POST as leadStagePOST } from '@/app/api/crm/leads/[id]/stage/route';
 // Lead routes
 import { GET as leadsGET, POST as leadsPOST } from '@/app/api/crm/leads/route';
-import { POST as leadStagePOST } from '@/app/api/crm/leads/[id]/stage/route';
-
+import {
+  GET as opportunityGET,
+  PATCH as opportunityPATCH,
+} from '@/app/api/crm/opportunities/[id]/route';
 // Opportunity routes
 import {
   GET as opportunitiesGET,
   POST as opportunitiesPOST,
 } from '@/app/api/crm/opportunities/route';
-import {
-  GET as opportunityGET,
-  PATCH as opportunityPATCH,
-} from '@/app/api/crm/opportunities/[id]/route';
-
-// Activity routes
-import { POST as activitiesPOST } from '@/app/api/crm/activities/route';
-
-import {
-  mockSupabaseClient,
-  mockClerkAuth,
-  mockClerkUnauth,
-  makeRequest,
-  makeJsonRequest,
-  makeAccount,
-  makeContact,
-  makeLead,
-  makeOpportunity,
-  makeActivity,
-  resetFixtureCounter,
-  TEST_IDS,
-} from '@/__tests__/helpers';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);

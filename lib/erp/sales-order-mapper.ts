@@ -21,6 +21,11 @@ export interface SalesOrderMapInput {
 
 /**
  * Map a won opportunity (with optional estimate line items) to an ERPNext Sales Order.
+ *
+ * IMPORTANT: The sync handler (sync-opportunity.ts) is responsible for resolving
+ * accountId to the ERPNext Customer docname from erp_sync_map before calling
+ * this function. The value passed as accountId must be the ERPNext Customer
+ * docname, NOT the KrewPact UUID, or ERPNext customer field validation will fail.
  */
 export function mapWonDealToSalesOrder(input: SalesOrderMapInput): Record<string, unknown> {
   return {

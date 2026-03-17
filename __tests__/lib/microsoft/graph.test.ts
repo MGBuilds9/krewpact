@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { buildGraphUrl, getMicrosoftToken, graphFetch } from '@/lib/microsoft/graph';
 
 const mockFetch = vi.fn();

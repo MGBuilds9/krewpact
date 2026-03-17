@@ -4,7 +4,7 @@
  * /api/privacy/requests/[id]/events (GET + POST).
  * Tables: privacy_requests, privacy_request_events
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
@@ -14,20 +14,21 @@ vi.mock('@/lib/api/rate-limit', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { GET as GET_LIST, POST as POST_CREATE } from '@/app/api/privacy/requests/route';
-import { GET as GET_DETAIL, PATCH } from '@/app/api/privacy/requests/[id]/route';
+
+import {
+  makeJsonRequest,
+  makeRequest,
+  mockClerkAuth,
+  mockClerkUnauth,
+  mockSupabaseClient,
+} from '@/__tests__/helpers';
 import {
   GET as GET_EVENTS,
   POST as POST_EVENT,
 } from '@/app/api/privacy/requests/[id]/events/route';
-import {
-  mockSupabaseClient,
-  mockClerkAuth,
-  mockClerkUnauth,
-  makeRequest,
-  makeJsonRequest,
-} from '@/__tests__/helpers';
+import { GET as GET_DETAIL, PATCH } from '@/app/api/privacy/requests/[id]/route';
+import { GET as GET_LIST, POST as POST_CREATE } from '@/app/api/privacy/requests/route';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);

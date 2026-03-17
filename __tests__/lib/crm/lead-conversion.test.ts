@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest';
-import { validateConversion } from '@/lib/crm/lead-conversion';
+import { describe, expect, it } from 'vitest';
+
 import type { ConversionInput } from '@/lib/crm/lead-conversion';
+import { validateConversion } from '@/lib/crm/lead-conversion';
 
 function makeInput(overrides: Partial<ConversionInput> = {}): ConversionInput {
   return {

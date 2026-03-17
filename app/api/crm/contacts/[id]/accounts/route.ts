@@ -1,9 +1,10 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
-import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const linkSchema = z.object({
   account_id: z.string().uuid(),

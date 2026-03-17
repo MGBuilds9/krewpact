@@ -1,6 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 process.env.AI_ENABLED = 'true';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/api/cron-auth', () => ({ verifyCronAuth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createServiceClient: vi.fn() }));
@@ -10,12 +9,13 @@ vi.mock('@/lib/logger', () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 
-import { verifyCronAuth } from '@/lib/api/cron-auth';
-import { createServiceClient } from '@/lib/supabase/server';
+import { POST } from '@/app/api/cron/daily-digest/route';
 import { buildDigest } from '@/lib/ai/agents/digest-builder';
+import { verifyCronAuth } from '@/lib/api/cron-auth';
 import { sendEmail } from '@/lib/email/resend';
 import { logger } from '@/lib/logger';
-import { POST } from '@/app/api/cron/daily-digest/route';
+import { createServiceClient } from '@/lib/supabase/server';
+
 import { makeRequest } from '../../helpers/mock-request';
 
 const mockVerifyCronAuth = vi.mocked(verifyCronAuth);
@@ -30,8 +30,21 @@ function makeCronRequest() {
 function mockChain(data: unknown, error: unknown = null) {
   const chain: any = {};
   const methods = [
-    'select', 'eq', 'neq', 'not', 'is', 'lt', 'lte', 'gt', 'gte',
-    'or', 'ilike', 'order', 'limit', 'insert', 'update',
+    'select',
+    'eq',
+    'neq',
+    'not',
+    'is',
+    'lt',
+    'lte',
+    'gt',
+    'gte',
+    'or',
+    'ilike',
+    'order',
+    'limit',
+    'insert',
+    'update',
   ];
   for (const m of methods) {
     chain[m] = vi.fn().mockReturnValue(chain);

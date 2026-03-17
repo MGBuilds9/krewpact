@@ -1,8 +1,10 @@
-import { generateText } from 'ai';
 import { google } from '@ai-sdk/google';
-import { trackAIAction } from '../cost-tracker';
-import { queryTools, executeToolCall } from '../tools';
+import { generateText } from 'ai';
+
 import { logger } from '@/lib/logger';
+
+import { trackAIAction } from '../cost-tracker';
+import { executeToolCall, queryTools } from '../tools';
 
 interface NLQueryInput {
   query: string;
@@ -16,13 +18,40 @@ interface NLQueryOutput {
   toolUsed?: string;
 }
 
+async function generateAnswer(input: NLQueryInput, summary: string): Promise<string> {
+  const start = Date.now();
+  const { text: answer, usage } = await generateText({
+    model: google('gemini-2.0-flash'),
+    prompt: `You are a helpful assistant for a construction company's CRM. The user asked: "${input.query}"
+
+Here is the data retrieved:
+${summary}
+
+Write a concise, helpful answer (2-4 sentences max). Use specific numbers from the data. If the data is empty, say so clearly.`,
+    maxOutputTokens: 200,
+  });
+  await trackAIAction({
+    orgId: input.orgId,
+    userId: input.userId,
+    actionType: 'query_answered',
+    modelUsed: 'gemini-2.0-flash',
+    inputTokens: usage?.inputTokens ?? undefined,
+    outputTokens: usage?.outputTokens ?? undefined,
+    latencyMs: Date.now() - start,
+  });
+  return answer.trim();
+}
+
 export async function executeNLQuery(input: NLQueryInput): Promise<NLQueryOutput> {
   const start = Date.now();
 
   // Step 1: Use Gemini to determine which tool to call and with what args
-  const toolDescriptions = queryTools.map(t =>
-    `Tool: ${t.name}\nDescription: ${t.description}\nParameters: ${JSON.stringify(t.parameters)}`
-  ).join('\n\n');
+  const toolDescriptions = queryTools
+    .map(
+      (t) =>
+        `Tool: ${t.name}\nDescription: ${t.description}\nParameters: ${JSON.stringify(t.parameters)}`,
+    )
+    .join('\n\n');
 
   const { text: toolCallText, usage } = await generateText({
     model: google('gemini-2.0-flash'),
@@ -60,7 +89,10 @@ ARGS: {}`,
 
   const toolName = toolMatch?.[1];
   if (!toolName || toolName === 'none') {
-    return { answer: "I can help with pipeline metrics, lead searches, project status, and deal analysis. Try asking something like 'Show me stalled deals over $500k' or 'What\\'s our win rate?'" };
+    return {
+      answer:
+        "I can help with pipeline metrics, lead searches, project status, and deal analysis. Try asking something like 'Show me stalled deals over $500k' or 'What\\'s our win rate?'",
+    };
   }
 
   let args: Record<string, unknown> = {};
@@ -73,28 +105,6 @@ ARGS: {}`,
   // Step 3: Execute the tool
   const { data, summary } = await executeToolCall(toolName, args, input.orgId);
 
-  // Step 4: Generate natural language answer
-  const answerStart = Date.now();
-  const { text: answer, usage: answerUsage } = await generateText({
-    model: google('gemini-2.0-flash'),
-    prompt: `You are a helpful assistant for a construction company's CRM. The user asked: "${input.query}"
-
-Here is the data retrieved:
-${summary}
-
-Write a concise, helpful answer (2-4 sentences max). Use specific numbers from the data. If the data is empty, say so clearly.`,
-    maxOutputTokens: 200,
-  });
-
-  await trackAIAction({
-    orgId: input.orgId,
-    userId: input.userId,
-    actionType: 'query_answered',
-    modelUsed: 'gemini-2.0-flash',
-    inputTokens: answerUsage?.inputTokens ?? undefined,
-    outputTokens: answerUsage?.outputTokens ?? undefined,
-    latencyMs: Date.now() - answerStart,
-  });
-
-  return { answer: answer.trim(), data, toolUsed: toolName };
+  const answer = await generateAnswer(input, summary);
+  return { answer, data, toolUsed: toolName };
 }

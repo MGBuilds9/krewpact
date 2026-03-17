@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { useState } from 'react';
+
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { useOrgRouter } from '@/hooks/useOrgRouter';
 
 const CATEGORIES = [
   { value: '', label: 'All' },
@@ -33,19 +34,52 @@ interface EmailTemplate {
   updated_at: string;
 }
 
+async function fetchTemplates(category: string): Promise<EmailTemplate[]> {
+  const params = new URLSearchParams();
+  if (category) params.set('category', category);
+  const res = await fetch(`/api/crm/email-templates?${params}`);
+  const json = await res.json();
+  return json.data ?? [];
+}
+
+interface TemplateCardProps {
+  template: EmailTemplate;
+  onNavigate: (id: string) => void;
+}
+function TemplateCard({ template, onNavigate }: TemplateCardProps) {
+  return (
+    <Card
+      className="cursor-pointer transition-shadow hover:shadow-md"
+      onClick={() => onNavigate(template.id)}
+    >
+      <CardContent className="p-6">
+        <div className="flex items-center justify-between mb-3">
+          <Badge variant="secondary" className={CATEGORY_COLORS[template.category] || ''}>
+            {template.category.replace('_', ' ')}
+          </Badge>
+          {!template.is_active && (
+            <Badge variant="outline" className="text-muted-foreground">
+              Draft
+            </Badge>
+          )}
+        </div>
+        <h3 className="font-semibold text-sm mb-1 line-clamp-1">{template.name}</h3>
+        <p className="text-xs text-muted-foreground line-clamp-1">{template.subject}</p>
+        <p className="text-xs text-muted-foreground mt-3">
+          Updated {new Date(template.updated_at).toLocaleDateString()}
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function TemplatesPage() {
   const { push: orgPush } = useOrgRouter();
   const [category, setCategory] = useState('');
 
   const { data: templates = [], isLoading } = useQuery<EmailTemplate[]>({
     queryKey: ['email-templates', category],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (category) params.set('category', category);
-      const res = await fetch(`/api/crm/email-templates?${params}`);
-      const json = await res.json();
-      return json.data ?? [];
-    },
+    queryFn: () => fetchTemplates(category),
   });
 
   return (
@@ -97,29 +131,11 @@ export default function TemplatesPage() {
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {templates.map((template) => (
-            <Card
+            <TemplateCard
               key={template.id}
-              className="cursor-pointer transition-shadow hover:shadow-md"
-              onClick={() => orgPush(`/crm/settings/templates/${template.id}`)}
-            >
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-3">
-                  <Badge variant="secondary" className={CATEGORY_COLORS[template.category] ?? ''}>
-                    {template.category.replace('_', ' ')}
-                  </Badge>
-                  {!template.is_active && (
-                    <Badge variant="outline" className="text-muted-foreground">
-                      Draft
-                    </Badge>
-                  )}
-                </div>
-                <h3 className="font-semibold text-sm mb-1 line-clamp-1">{template.name}</h3>
-                <p className="text-xs text-muted-foreground line-clamp-1">{template.subject}</p>
-                <p className="text-xs text-muted-foreground mt-3">
-                  Updated {new Date(template.updated_at).toLocaleDateString()}
-                </p>
-              </CardContent>
-            </Card>
+              template={template}
+              onNavigate={(id) => orgPush(`/crm/settings/templates/${id}`)}
+            />
           ))}
         </div>
       )}

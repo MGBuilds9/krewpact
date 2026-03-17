@@ -1,11 +1,12 @@
 'use client';
 
-import { useRouter, useParams } from 'next/navigation';
-import { Badge } from '@/components/ui/badge';
+import { Briefcase } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
+
 import { OpportunityCard } from '@/components/CRM/OpportunityCard';
 import { WeightedPipelineHeader } from '@/components/CRM/WeightedPipelineHeader';
-import { Briefcase } from 'lucide-react';
-import type { PipelineData, Opportunity } from '@/hooks/useCRM';
+import { Badge } from '@/components/ui/badge';
+import type { Opportunity, PipelineData } from '@/hooks/useCRM';
 
 const STAGE_ORDER = [
   'intake',

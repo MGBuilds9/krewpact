@@ -1,9 +1,10 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { divisionSetupCreateSchema } from '@/lib/validators/org';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { createUserClientSafe } from '@/lib/supabase/server';
+import { divisionSetupCreateSchema } from '@/lib/validators/org';
 
 const querySchema = z.object({
   search: z.string().optional(),

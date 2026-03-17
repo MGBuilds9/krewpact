@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock logger to suppress output in tests
 vi.mock('@/lib/logger', () => ({
@@ -10,10 +10,7 @@ vi.mock('@/lib/logger', () => ({
   },
 }));
 
-import {
-  BoldSignClient,
-  type CreateEnvelopeParams,
-} from '@/lib/esign/boldsign-client';
+import { BoldSignClient, type CreateEnvelopeParams } from '@/lib/esign/boldsign-client';
 
 describe('BoldSignClient', () => {
   let originalEnv: NodeJS.ProcessEnv;
@@ -72,9 +69,7 @@ describe('BoldSignClient', () => {
     it('createEnvelope returns a mock documentId', async () => {
       const params: CreateEnvelopeParams = {
         title: 'Test Contract',
-        signers: [
-          { name: 'John Doe', emailAddress: 'john@example.com' },
-        ],
+        signers: [{ name: 'John Doe', emailAddress: 'john@example.com' }],
       };
 
       const result = await client.createEnvelope(params);

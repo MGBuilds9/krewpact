@@ -1,9 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import {
-  toErpCustomer,
-  fromErpCustomer,
-  type CustomerMapInput,
-} from '@/lib/erp/customer-mapper';
+import { describe, expect, it } from 'vitest';
+
+import { type CustomerMapInput, fromErpCustomer, toErpCustomer } from '@/lib/erp/customer-mapper';
 
 function makeInput(overrides: Partial<CustomerMapInput> = {}): CustomerMapInput {
   return {
@@ -93,9 +90,7 @@ describe('toErpCustomer', () => {
   });
 
   it('handles special characters in account_name', () => {
-    const result = toErpCustomer(
-      makeInput({ account_name: "O'Brien & Sons (Canada) Ltd." }),
-    );
+    const result = toErpCustomer(makeInput({ account_name: "O'Brien & Sons (Canada) Ltd." }));
     expect(result.customer_name).toBe("O'Brien & Sons (Canada) Ltd.");
   });
 

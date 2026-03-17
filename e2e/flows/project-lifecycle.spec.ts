@@ -1,5 +1,6 @@
-import { test, expect } from '@playwright/test';
-import { signIn, assertAuthenticated } from '../helpers/auth';
+import { expect, test } from '@playwright/test';
+
+import { assertAuthenticated, signIn } from '../helpers/auth';
 import { fixtures, orgUrl } from '../helpers/fixtures';
 
 test.describe('Project Lifecycle', () => {
@@ -69,7 +70,8 @@ test.describe('Project Lifecycle', () => {
     await firstProject.click();
 
     // Find and click "Daily Logs" tab or link
-    const dailyLogLink = page.getByRole('link', { name: /daily log/i })
+    const dailyLogLink = page
+      .getByRole('link', { name: /daily log/i })
       .or(page.getByRole('tab', { name: /daily log/i }))
       .or(page.getByText(/daily log/i));
     if (await dailyLogLink.isVisible({ timeout: 5000 }).catch(() => false)) {

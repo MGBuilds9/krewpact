@@ -1,12 +1,12 @@
 'use client';
 
+import { Calculator, DollarSign, Plus, Search } from 'lucide-react';
 import { useState } from 'react';
-import { useOrgRouter } from '@/hooks/useOrgRouter';
-import { Card, CardContent } from '@/components/ui/card';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
   SelectContent,
@@ -14,9 +14,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search, Plus, Calculator, DollarSign } from 'lucide-react';
-import { useEstimates } from '@/hooks/useEstimates';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useDivision } from '@/contexts/DivisionContext';
+import { useEstimates } from '@/hooks/useEstimates';
+import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { cn } from '@/lib/utils';
 
 const STATUS_BADGE_COLORS: Record<string, string> = {
@@ -31,9 +32,48 @@ const STATUS_BADGE_COLORS: Record<string, string> = {
 function formatStatus(status: string): string {
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
-
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(value);
+}
+
+type Estimate = NonNullable<ReturnType<typeof useEstimates>['data']>[number];
+interface EstimateCardProps {
+  estimate: Estimate;
+  onClick: () => void;
+}
+function EstimateCard({ estimate, onClick }: EstimateCardProps) {
+  return (
+    <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
+      <CardContent className="p-4">
+        <div className="flex items-center gap-2 mb-1">
+          <h3 className="font-semibold truncate">{estimate.estimate_number}</h3>
+          <Badge
+            variant="outline"
+            className={cn(
+              'text-xs flex-shrink-0 border',
+              STATUS_BADGE_COLORS[estimate.status] || '',
+            )}
+          >
+            {formatStatus(estimate.status)}
+          </Badge>
+        </div>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <DollarSign className="h-3 w-3" />
+            {formatCurrency(estimate.total_amount)}
+          </span>
+          <span>Rev. {estimate.revision_no}</span>
+          <span>
+            {new Date(estimate.created_at).toLocaleDateString('en-CA', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+            })}
+          </span>
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
 
 export default function EstimatesListPage() {
@@ -41,9 +81,9 @@ export default function EstimatesListPage() {
   const { activeDivision } = useDivision();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-
+  const divId = activeDivision ? activeDivision.id : undefined;
   const { data: estimates, isLoading } = useEstimates({
-    divisionId: activeDivision?.id,
+    divisionId: divId,
     status: statusFilter !== 'all' ? statusFilter : undefined,
   });
 
@@ -55,7 +95,7 @@ export default function EstimatesListPage() {
           <Skeleton className="h-10 w-36 animate-pulse" />
         </div>
         <div className="grid gap-4">
-          {[1, 2, 3].map((i) => (
+          {['e1', 'e2', 'e3'].map((i) => (
             <Skeleton key={i} className="h-20 rounded-xl animate-pulse" />
           ))}
         </div>
@@ -63,17 +103,14 @@ export default function EstimatesListPage() {
     );
   }
 
-  const filtered = (estimates ?? []).filter((est) => {
-    if (!search) return true;
-    const q = search.toLowerCase();
-    return est.estimate_number.toLowerCase().includes(q);
-  });
+  const filtered = (estimates || []).filter(
+    (est) => !search || est.estimate_number.toLowerCase().includes(search.toLowerCase()),
+  );
 
   return (
     <>
       <title>Estimates — KrewPact</title>
       <div className="space-y-4">
-        {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -102,8 +139,6 @@ export default function EstimatesListPage() {
             New Estimate
           </Button>
         </div>
-
-        {/* Estimates List */}
         {filtered.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
@@ -117,44 +152,11 @@ export default function EstimatesListPage() {
         ) : (
           <div className="grid gap-3">
             {filtered.map((estimate) => (
-              <Card
+              <EstimateCard
                 key={estimate.id}
-                className="cursor-pointer hover:shadow-md transition-shadow"
+                estimate={estimate}
                 onClick={() => orgPush(`/estimates/${estimate.id}`)}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold truncate">{estimate.estimate_number}</h3>
-                        <Badge
-                          variant="outline"
-                          className={cn(
-                            'text-xs flex-shrink-0 border',
-                            STATUS_BADGE_COLORS[estimate.status] || '',
-                          )}
-                        >
-                          {formatStatus(estimate.status)}
-                        </Badge>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <DollarSign className="h-3 w-3" />
-                          {formatCurrency(estimate.total_amount)}
-                        </span>
-                        <span>Rev. {estimate.revision_no}</span>
-                        <span>
-                          {new Date(estimate.created_at).toLocaleDateString('en-CA', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              />
             ))}
           </div>
         )}

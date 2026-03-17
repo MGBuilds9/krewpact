@@ -1,18 +1,19 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+
 import {
-  UNAUTHORIZED,
-  INVALID_JSON,
-  validationError,
   dbError,
-  notFound,
   errorResponse,
+  INVALID_JSON,
+  notFound,
+  UNAUTHORIZED,
+  validationError,
 } from '@/lib/api/errors';
+import { getKrewpactUserId } from '@/lib/api/org';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 import { logger } from '@/lib/logger';
-import { getKrewpactUserId } from '@/lib/api/org';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 type RouteContext = { params: Promise<{ id: string }> };
 

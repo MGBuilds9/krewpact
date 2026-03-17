@@ -1,7 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { DailyDigestWidget } from '@/components/AI/DailyDigestWidget';
 
 const mockDigest = {
@@ -58,7 +59,9 @@ describe('DailyDigestWidget', () => {
     render(<DailyDigestWidget />);
 
     expect(
-      await screen.findByText('You have 3 active projects and 2 overdue tasks requiring attention.'),
+      await screen.findByText(
+        'You have 3 active projects and 2 overdue tasks requiring attention.',
+      ),
     ).toBeInTheDocument();
     expect(screen.getByText('Daily Brief')).toBeInTheDocument();
   });
@@ -138,9 +141,9 @@ describe('DailyDigestWidget', () => {
   });
 
   it('fetches from the correct endpoint', async () => {
-    const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({ digest: mockDigest }), { status: 200 }),
-    );
+    const fetchSpy = vi
+      .spyOn(global, 'fetch')
+      .mockResolvedValue(new Response(JSON.stringify({ digest: mockDigest }), { status: 200 }));
 
     render(<DailyDigestWidget />);
     await screen.findByText('Daily Brief');

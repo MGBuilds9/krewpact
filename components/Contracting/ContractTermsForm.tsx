@@ -1,22 +1,23 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+
+import { Button } from '@/components/ui/button';
 import {
   Form,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormControl,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { useCreateContractTerms, useUpdateContractTerms } from '@/hooks/useContracting';
 import type { ContractTerms } from '@/hooks/useContracting';
-import { Loader2 } from 'lucide-react';
+import { useCreateContractTerms, useUpdateContractTerms } from '@/hooks/useContracting';
 
 const formSchema = z.object({
   legal_text_version: z.string().min(1, 'Legal text version is required').max(50),
@@ -41,7 +42,7 @@ export function ContractTermsForm({
   const createTerms = useCreateContractTerms();
   const updateTerms = useUpdateContractTerms();
   const isEditing = !!contractTerms;
-
+  const isPending = createTerms.isPending || updateTerms.isPending;
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -52,8 +53,6 @@ export function ContractTermsForm({
     },
   });
 
-  const isPending = createTerms.isPending || updateTerms.isPending;
-
   function onSubmit(values: FormValues) {
     let parsedPayload: Record<string, unknown>;
     try {
@@ -62,30 +61,21 @@ export function ContractTermsForm({
       form.setError('terms_payload', { message: 'Must be valid JSON' });
       return;
     }
-
     const payload = {
       legal_text_version: values.legal_text_version,
       terms_payload: parsedPayload,
       proposal_id: proposalId,
     };
-
+    const cb = {
+      onSuccess: () => {
+        form.reset();
+        onSuccess?.();
+      },
+    };
     if (isEditing) {
-      updateTerms.mutate(
-        { id: contractTerms.id, ...payload },
-        {
-          onSuccess: () => {
-            form.reset();
-            onSuccess?.();
-          },
-        },
-      );
+      updateTerms.mutate({ id: contractTerms.id, ...payload }, cb);
     } else {
-      createTerms.mutate(payload, {
-        onSuccess: () => {
-          form.reset();
-          onSuccess?.();
-        },
-      });
+      createTerms.mutate(payload, cb);
     }
   }
 
@@ -105,7 +95,6 @@ export function ContractTermsForm({
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="terms_payload"
@@ -124,7 +113,6 @@ export function ContractTermsForm({
             </FormItem>
           )}
         />
-
         <div className="flex gap-2 justify-end pt-2">
           {onCancel && (
             <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>

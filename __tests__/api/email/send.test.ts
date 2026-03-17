@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock Clerk auth
 vi.mock('@clerk/nextjs/server', () => ({
@@ -18,15 +18,16 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { getMicrosoftToken, graphFetch, buildGraphUrl } from '@/lib/microsoft/graph';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { POST } from '@/app/api/email/send/route';
+
 import {
+  makeJsonRequest,
   mockClerkAuth,
   mockClerkUnauth,
   mockSupabaseClient,
-  makeJsonRequest,
 } from '@/__tests__/helpers';
+import { POST } from '@/app/api/email/send/route';
+import { buildGraphUrl, getMicrosoftToken, graphFetch } from '@/lib/microsoft/graph';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockGetToken = vi.mocked(getMicrosoftToken);

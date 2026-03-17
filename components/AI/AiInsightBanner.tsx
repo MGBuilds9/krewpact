@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { Lightbulb, X } from 'lucide-react';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+
 import { cn } from '@/lib/utils';
 
 interface Insight {
@@ -28,7 +29,7 @@ export function AiInsightBanner({ entityType, entityId }: AiInsightBannerProps) 
 
   useEffect(() => {
     fetch('/api/ai/preferences')
-      .then(res => res.ok ? res.json() : null)
+      .then((res) => (res.ok ? res.json() : null))
       .then((data: { preferences?: { insight_min_confidence?: number } } | null) => {
         if (data?.preferences?.insight_min_confidence !== undefined) {
           setMinConfidence(data.preferences.insight_min_confidence);
@@ -40,7 +41,9 @@ export function AiInsightBanner({ entityType, entityId }: AiInsightBannerProps) 
   useEffect(() => {
     if (!entityType || !entityId) return;
 
-    fetch(`/api/ai/insights?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}`)
+    fetch(
+      `/api/ai/insights?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}`,
+    )
       .then((res) => (res.ok ? res.json() : null))
       .then((data: { insights?: Insight[] } | null) => {
         if (data?.insights) {
@@ -63,7 +66,7 @@ export function AiInsightBanner({ entityType, entityId }: AiInsightBannerProps) 
     }
   };
 
-  const visibleInsights = insights.filter(i => i.confidence >= minConfidence);
+  const visibleInsights = insights.filter((i) => i.confidence >= minConfidence);
   if (visibleInsights.length === 0) return null;
 
   return (

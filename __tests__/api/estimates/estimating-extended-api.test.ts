@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock Clerk auth
 vi.mock('@clerk/nextjs/server', () => ({
@@ -11,31 +11,32 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { GET as GET_CATALOG, POST as POST_CATALOG } from '@/app/api/cost-catalog/route';
+
 import {
+  makeJsonRequest,
+  makeRequest,
+  mockClerkAuth,
+  mockClerkUnauth,
+  mockSupabaseClient,
+  resetFixtureCounter,
+} from '@/__tests__/helpers';
+import { GET as GET_ASSEMBLIES, POST as POST_ASSEMBLIES } from '@/app/api/assemblies/route';
+import {
+  DELETE as DELETE_CATALOG_ID,
   GET as GET_CATALOG_ID,
   PATCH as PATCH_CATALOG_ID,
-  DELETE as DELETE_CATALOG_ID,
 } from '@/app/api/cost-catalog/[id]/route';
-import { GET as GET_ASSEMBLIES, POST as POST_ASSEMBLIES } from '@/app/api/assemblies/route';
+import { GET as GET_CATALOG, POST as POST_CATALOG } from '@/app/api/cost-catalog/route';
 import { GET as GET_TEMPLATES, POST as POST_TEMPLATES } from '@/app/api/estimate-templates/route';
-import {
-  GET as GET_ALTERNATES,
-  POST as POST_ALTERNATES,
-} from '@/app/api/estimates/[id]/alternates/route';
 import {
   GET as GET_ALLOWANCES,
   POST as POST_ALLOWANCES,
 } from '@/app/api/estimates/[id]/allowances/route';
 import {
-  mockSupabaseClient,
-  mockClerkAuth,
-  mockClerkUnauth,
-  makeRequest,
-  makeJsonRequest,
-  resetFixtureCounter,
-} from '@/__tests__/helpers';
+  GET as GET_ALTERNATES,
+  POST as POST_ALTERNATES,
+} from '@/app/api/estimates/[id]/alternates/route';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const VALID_UUID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 

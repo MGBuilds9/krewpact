@@ -1,8 +1,9 @@
 'use client';
 
+import { AlertCircle, DollarSign, TrendingDown, TrendingUp } from 'lucide-react';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { DollarSign, TrendingUp, TrendingDown, AlertCircle } from 'lucide-react';
 import { Project } from '@/hooks/useProjects';
 
 interface ProjectBudgetTabProps {
@@ -19,7 +20,6 @@ export function ProjectBudgetTab({ project }: ProjectBudgetTabProps) {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Budget Overview</h2>
-
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -31,7 +31,6 @@ export function ProjectBudgetTab({ project }: ProjectBudgetTabProps) {
             <p className="text-xs text-muted-foreground mt-1">Allocated funds</p>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Spent</CardTitle>
@@ -50,7 +49,6 @@ export function ProjectBudgetTab({ project }: ProjectBudgetTabProps) {
             </p>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Remaining</CardTitle>
@@ -70,7 +68,6 @@ export function ProjectBudgetTab({ project }: ProjectBudgetTabProps) {
           </CardContent>
         </Card>
       </div>
-
       <Card>
         <CardHeader>
           <CardTitle>Budget Progress</CardTitle>

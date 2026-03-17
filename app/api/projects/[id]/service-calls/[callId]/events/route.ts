@@ -1,9 +1,10 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { NextRequest, NextResponse } from 'next/server';
-import { serviceEventCreateSchema } from '@/lib/validators/closeout';
+
+import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { createUserClientSafe } from '@/lib/supabase/server';
+import { serviceEventCreateSchema } from '@/lib/validators/closeout';
 
 export async function GET(
   req: NextRequest,

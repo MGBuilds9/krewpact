@@ -33,16 +33,24 @@ export function mapTimesheetToErp(timesheet: TimesheetMapInput): Record<string, 
     total_hours: timesheet.total_hours,
     currency: timesheet.currency_code || 'CAD',
     krewpact_id: timesheet.id,
-    time_logs: timesheet.entries.map((entry, idx) => ({
-      idx: idx + 1,
-      activity_type: 'Execution',
-      from_time: `${entry.entry_date}T08:00:00`,
-      to_time: `${entry.entry_date}T${String(8 + Math.floor(entry.hours)).padStart(2, '0')}:00:00`,
-      hours: entry.hours,
-      project: entry.project_id || '',
-      task: entry.task_id || '',
-      description: entry.description || '',
-      krewpact_time_entry_id: entry.id,
-    })),
+    time_logs: timesheet.entries.map((entry, idx) => {
+      // Calculate to_time from a fixed start of 08:00, capped at 23:59:59
+      const startMinutes = 8 * 60;
+      const durationMinutes = Math.round(entry.hours * 60);
+      const endMinutes = Math.min(startMinutes + durationMinutes, 23 * 60 + 59);
+      const endHH = String(Math.floor(endMinutes / 60)).padStart(2, '0');
+      const endMM = String(endMinutes % 60).padStart(2, '0');
+      return {
+        idx: idx + 1,
+        activity_type: 'Execution',
+        from_time: `${entry.entry_date}T08:00:00`,
+        to_time: `${entry.entry_date}T${endHH}:${endMM}:00`,
+        hours: entry.hours,
+        project: entry.project_id || '',
+        task: entry.task_id || '',
+        description: entry.description || '',
+        krewpact_time_entry_id: entry.id,
+      };
+    }),
   };
 }

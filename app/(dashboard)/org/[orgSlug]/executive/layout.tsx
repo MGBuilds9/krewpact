@@ -1,9 +1,10 @@
 'use client';
 
-import { useUserRBAC } from '@/hooks/useRBAC';
+import { ShieldAlert } from 'lucide-react';
+
 import { ExecutiveNav } from '@/components/Executive/ExecutiveNav';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ShieldAlert } from 'lucide-react';
+import { useUserRBAC } from '@/hooks/useRBAC';
 
 const EXECUTIVE_ROLES = ['executive', 'platform_admin'];
 

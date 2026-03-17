@@ -1,9 +1,10 @@
 import { auth } from '@clerk/nextjs/server';
-import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from 'next/server';
-import { dispatchNotification } from '@/lib/notifications/dispatcher';
-import type { NotificationEvent } from '@/lib/notifications/dispatcher';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { logger } from '@/lib/logger';
+import type { NotificationEvent } from '@/lib/notifications/dispatcher';
+import { dispatchNotification } from '@/lib/notifications/dispatcher';
 
 /**
  * POST /api/notifications/dispatch

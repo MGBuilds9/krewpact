@@ -1,9 +1,10 @@
 'use client';
 
+import { Calendar, ListTodo, Mail, Phone, StickyNote } from 'lucide-react';
+
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
-import { Phone, Mail, Calendar, StickyNote, ListTodo } from 'lucide-react';
 import type { Activity } from '@/hooks/useCRM';
+import { cn } from '@/lib/utils';
 
 const activityIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   call: Phone,

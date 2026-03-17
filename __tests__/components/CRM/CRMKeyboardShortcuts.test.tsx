@@ -1,8 +1,8 @@
 'use client';
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from '@testing-library/react';
 import React from 'react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockPush = vi.fn();
 

@@ -1,7 +1,9 @@
 'use client';
 
+import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -10,6 +12,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -17,11 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useAccounts, useContacts, useConvertLead } from '@/hooks/useCRM';
 import type { Lead } from '@/hooks/useCRM';
+import { useAccounts, useContacts, useConvertLead } from '@/hooks/useCRM';
 
 interface ConvertLeadDialogProps {
   lead: Lead;
@@ -35,12 +36,12 @@ export function ConvertLeadDialog({ lead, open, onOpenChange }: ConvertLeadDialo
   const [accountId, setAccountId] = useState<string>('');
   const [contactId, setContactId] = useState<string>('');
   const [opportunityName, setOpportunityName] = useState(lead.company_name);
-
   const { data: accountsResponse } = useAccounts();
   const { data: contactsResponse } = useContacts();
   const accounts = accountsResponse?.data ?? [];
   const contacts = contactsResponse?.data ?? [];
   const convertLead = useConvertLead();
+  const canConvert = lead.status === 'won';
 
   const handleSubmit = async () => {
     try {
@@ -57,8 +58,6 @@ export function ConvertLeadDialog({ lead, open, onOpenChange }: ConvertLeadDialo
     }
   };
 
-  const canConvert = lead.status === 'won';
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -69,14 +68,12 @@ export function ConvertLeadDialog({ lead, open, onOpenChange }: ConvertLeadDialo
             account and contact.
           </DialogDescription>
         </DialogHeader>
-
         {!canConvert && (
           <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
             Lead must be in &quot;won&quot; stage to convert. Current stage: &quot;{lead.status}
             &quot;
           </div>
         )}
-
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="opportunity-name">Opportunity Name</Label>
@@ -87,7 +84,6 @@ export function ConvertLeadDialog({ lead, open, onOpenChange }: ConvertLeadDialo
               placeholder={lead.company_name}
             />
           </div>
-
           <div className="space-y-2">
             <Label htmlFor="account-select">Account (optional)</Label>
             <Select value={accountId} onValueChange={setAccountId}>
@@ -103,7 +99,6 @@ export function ConvertLeadDialog({ lead, open, onOpenChange }: ConvertLeadDialo
               </SelectContent>
             </Select>
           </div>
-
           <div className="space-y-2">
             <Label htmlFor="contact-select">Contact (optional)</Label>
             <Select value={contactId} onValueChange={setContactId}>
@@ -120,7 +115,6 @@ export function ConvertLeadDialog({ lead, open, onOpenChange }: ConvertLeadDialo
             </Select>
           </div>
         </div>
-
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel

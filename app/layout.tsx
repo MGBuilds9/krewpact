@@ -1,10 +1,12 @@
+import './globals.css';
+
+import { ClerkProvider } from '@clerk/nextjs';
 import type { Metadata } from 'next';
 import { Atkinson_Hyperlegible } from 'next/font/google';
-import { ClerkProvider } from '@clerk/nextjs';
+import { Toaster } from 'sonner';
+
 import { ThemeProvider } from '@/components/theme-provider';
 import { QueryProvider } from '@/lib/query-client';
-import { Toaster } from 'sonner';
-import './globals.css';
 
 // Clerk requires valid keys at render time — force dynamic rendering
 export const dynamic = 'force-dynamic';

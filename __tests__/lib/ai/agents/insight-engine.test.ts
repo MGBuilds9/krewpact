@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/supabase/server', () => ({
   createServiceClient: vi.fn(),
@@ -20,13 +19,13 @@ vi.mock('@/lib/ai/agents/budget-anomaly', () => ({
   detectBudgetAnomalies: vi.fn(),
 }));
 
-import { createServiceClient } from '@/lib/supabase/server';
-import { logger } from '@/lib/logger';
-import { detectStaleDeals } from '@/lib/ai/agents/stale-deal-detector';
 import { detectBidMatches } from '@/lib/ai/agents/bid-matcher';
-import { detectNextActions } from '@/lib/ai/agents/next-action-suggester';
 import { detectBudgetAnomalies } from '@/lib/ai/agents/budget-anomaly';
 import { generateInsights } from '@/lib/ai/agents/insight-engine';
+import { detectNextActions } from '@/lib/ai/agents/next-action-suggester';
+import { detectStaleDeals } from '@/lib/ai/agents/stale-deal-detector';
+import { logger } from '@/lib/logger';
+import { createServiceClient } from '@/lib/supabase/server';
 
 const mockCreateServiceClient = vi.mocked(createServiceClient);
 const mockDetectStaleDeals = vi.mocked(detectStaleDeals);
@@ -38,7 +37,19 @@ const ORG_ID = '00000000-0000-4000-a000-000000000000';
 
 function mockChain(data: unknown[], error: unknown = null) {
   const chain: any = {};
-  const methods = ['select', 'eq', 'not', 'lt', 'gt', 'gte', 'is', 'or', 'order', 'limit', 'insert'];
+  const methods = [
+    'select',
+    'eq',
+    'not',
+    'lt',
+    'gt',
+    'gte',
+    'is',
+    'or',
+    'order',
+    'limit',
+    'insert',
+  ];
   for (const m of methods) {
     chain[m] = vi.fn().mockReturnValue(chain);
   }
@@ -139,7 +150,7 @@ describe('generateInsights', () => {
     const result = await generateInsights(ORG_ID);
 
     expect(result.generated).toBe(1); // lead-1 bid_match is new
-    expect(result.skipped).toBe(1);   // opp-1 stale_deal is duplicate
+    expect(result.skipped).toBe(1); // opp-1 stale_deal is duplicate
     expect(result.errors).toBe(0);
   });
 
@@ -234,6 +245,8 @@ describe('generateInsights', () => {
 
     expect(result.generated).toBe(0);
     expect(result.errors).toBe(1);
-    expect(logger.error).toHaveBeenCalledWith('Failed to insert insights', { error: 'insert failed' });
+    expect(logger.error).toHaveBeenCalledWith('Failed to insert insights', {
+      error: 'insert failed',
+    });
   });
 });

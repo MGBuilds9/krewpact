@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 export interface ShortcutConfig {
   key: string;
@@ -33,94 +33,98 @@ function isInputElement(target: EventTarget | null): boolean {
 /** Timeout (ms) for the second key in a chord sequence */
 const CHORD_TIMEOUT = 1000;
 
+type TimeoutRef = ReturnType<typeof setTimeout> | null;
+type PendingChord = { key: string; timestamp: number } | null;
+
+function clearChordState(
+  pendingRef: React.MutableRefObject<PendingChord>,
+  timeoutRef: React.MutableRefObject<TimeoutRef>,
+) {
+  pendingRef.current = null;
+  if (timeoutRef.current) {
+    clearTimeout(timeoutRef.current);
+    timeoutRef.current = null;
+  }
+}
+
+function tryCompleteChord(
+  e: KeyboardEvent,
+  chords: ChordShortcutConfig[],
+  pendingKey: string,
+  inInput: boolean,
+): ChordShortcutConfig | null {
+  if (e.metaKey || e.ctrlKey || e.altKey) return null;
+  for (const chord of chords) {
+    const keyMatch =
+      pendingKey === chord.firstKey.toLowerCase() &&
+      e.key.toLowerCase() === chord.secondKey.toLowerCase();
+    if (keyMatch && !(chord.ignoreInputs !== false && inInput)) return chord;
+  }
+  return null;
+}
+
+function trySingleShortcut(
+  e: KeyboardEvent,
+  shortcuts: ShortcutConfig[],
+  inInput: boolean,
+): ShortcutConfig | null {
+  for (const shortcut of shortcuts) {
+    const metaMatch = shortcut.metaKey ? e.metaKey || e.ctrlKey : true;
+    const shiftMatch = shortcut.shiftKey !== undefined ? e.shiftKey === shortcut.shiftKey : true;
+    if (e.key.toLowerCase() !== shortcut.key.toLowerCase() || !metaMatch || !shiftMatch) continue;
+    if (shortcut.ignoreInputs !== false && inInput) continue;
+    return shortcut;
+  }
+  return null;
+}
+
 export function useKeyboardShortcuts(
   shortcuts: ShortcutConfig[],
   chords: ChordShortcutConfig[] = [],
 ) {
-  const pendingChordRef = useRef<{ key: string; timestamp: number } | null>(null);
-  const chordTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingChordRef = useRef<PendingChord>(null);
+  const chordTimeoutRef = useRef<TimeoutRef>(null);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       const inInput = isInputElement(e.target);
 
-      // --- Check for chord completion first ---
       if (pendingChordRef.current) {
-        const pending = pendingChordRef.current;
-        const elapsed = Date.now() - pending.timestamp;
-
+        const { key, timestamp } = pendingChordRef.current;
+        const elapsed = Date.now() - timestamp;
         if (elapsed < CHORD_TIMEOUT) {
-          for (const chord of chords) {
-            if (
-              pending.key === chord.firstKey.toLowerCase() &&
-              e.key.toLowerCase() === chord.secondKey.toLowerCase() &&
-              !e.metaKey &&
-              !e.ctrlKey &&
-              !e.altKey
-            ) {
-              if (chord.ignoreInputs !== false && inInput) {
-                continue;
-              }
-              e.preventDefault();
-              pendingChordRef.current = null;
-              if (chordTimeoutRef.current) {
-                clearTimeout(chordTimeoutRef.current);
-                chordTimeoutRef.current = null;
-              }
-              chord.handler();
-              return;
-            }
+          const matched = tryCompleteChord(e, chords, key, inInput);
+          if (matched) {
+            e.preventDefault();
+            clearChordState(pendingChordRef, chordTimeoutRef);
+            matched.handler();
+            return;
           }
         }
-
-        // Second key didn't match any chord — clear pending
-        pendingChordRef.current = null;
-        if (chordTimeoutRef.current) {
-          clearTimeout(chordTimeoutRef.current);
-          chordTimeoutRef.current = null;
-        }
+        clearChordState(pendingChordRef, chordTimeoutRef);
       }
 
-      // --- Check if this key starts a chord ---
       if (chords.length > 0 && !e.metaKey && !e.ctrlKey && !e.altKey) {
-        const startsChord = chords.some(
-          (chord) => chord.firstKey.toLowerCase() === e.key.toLowerCase(),
+        const chordsWithKey = chords.filter(
+          (c) => c.firstKey.toLowerCase() === e.key.toLowerCase(),
         );
-        if (startsChord) {
-          // Check ignoreInputs for all chords starting with this key
-          const allIgnoreInput = chords
-            .filter((c) => c.firstKey.toLowerCase() === e.key.toLowerCase())
-            .every((c) => c.ignoreInputs !== false);
-          if (allIgnoreInput && inInput) {
-            // All chords with this first key ignore inputs and we're in an input
-            // Fall through to single-key shortcuts
-          } else {
+        if (chordsWithKey.length > 0) {
+          const allIgnoreInput = chordsWithKey.every((c) => c.ignoreInputs !== false);
+          if (!(allIgnoreInput && inInput)) {
             pendingChordRef.current = { key: e.key.toLowerCase(), timestamp: Date.now() };
             chordTimeoutRef.current = setTimeout(() => {
               pendingChordRef.current = null;
               chordTimeoutRef.current = null;
             }, CHORD_TIMEOUT);
-            // Don't preventDefault here — let the first key pass through
-            // (it might be a regular 'g' keypress if the user doesn't follow up)
             return;
           }
         }
       }
 
-      // --- Single-key shortcuts ---
-      for (const shortcut of shortcuts) {
-        const metaMatch = shortcut.metaKey ? e.metaKey || e.ctrlKey : true;
-        const shiftMatch =
-          shortcut.shiftKey !== undefined ? e.shiftKey === shortcut.shiftKey : true;
-
-        if (e.key.toLowerCase() === shortcut.key.toLowerCase() && metaMatch && shiftMatch) {
-          if (shortcut.ignoreInputs !== false && inInput) {
-            continue;
-          }
-          e.preventDefault();
-          shortcut.handler();
-          return;
-        }
+      const matched = trySingleShortcut(e, shortcuts, inInput);
+      if (matched) {
+        e.preventDefault();
+        matched.handler();
       }
     },
     [shortcuts, chords],

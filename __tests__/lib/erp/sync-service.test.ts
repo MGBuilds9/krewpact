@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
@@ -6,17 +6,16 @@ vi.mock('@/lib/supabase/server', () => ({
   createUserClientSafe: vi.fn(),
 }));
 
-import { createUserClient } from '@/lib/supabase/server';
 import {
-  mockSupabaseClient,
   makeAccount,
   makeEstimate,
   makeEstimateLine,
+  mockSupabaseClient,
   resetFixtureCounter,
 } from '@/__tests__/helpers';
-
 // Import AFTER mocks are set up — these will be created in implementation
 import { SyncService } from '@/lib/erp/sync-service';
+import { createUserClient } from '@/lib/supabase/server';
 
 const mockCreateUserClient = vi.mocked(createUserClient);
 

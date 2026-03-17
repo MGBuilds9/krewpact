@@ -1,9 +1,10 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { findContactDuplicates } from '@/lib/crm/duplicate-detector';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { findContactDuplicates } from '@/lib/crm/duplicate-detector';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const checkSchema = z.object({
   first_name: z.string().min(1),

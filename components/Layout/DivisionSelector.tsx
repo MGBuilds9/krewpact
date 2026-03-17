@@ -1,6 +1,8 @@
 'use client';
 
-import { Check, ChevronDown, Building2 } from 'lucide-react';
+import { Building2, Check, ChevronDown } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -10,12 +12,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
 import { useDivision } from '@/contexts/DivisionContext';
 import { cn } from '@/lib/utils';
 
 interface DivisionSelectorProps {
   className?: string;
+}
+
+type BadgeVariant = 'destructive' | 'default' | 'secondary' | 'outline';
+
+function getRoleBadgeVariant(role: string): BadgeVariant {
+  if (role === 'admin') return 'destructive';
+  if (role === 'manager') return 'default';
+  if (role === 'supervisor') return 'secondary';
+  return 'outline';
 }
 
 export function DivisionSelector({ className }: DivisionSelectorProps) {
@@ -28,28 +38,7 @@ export function DivisionSelector({ className }: DivisionSelectorProps) {
     getDivisionRole,
   } = useDivision();
 
-  if (isLoading || !hasMultipleDivisions || !activeDivision) {
-    return null;
-  }
-
-  const handleDivisionChange = (divisionId: string) => {
-    if (divisionId !== activeDivision.id) {
-      setActiveDivision(divisionId);
-    }
-  };
-
-  const getRoleBadgeVariant = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return 'destructive' as const;
-      case 'manager':
-        return 'default' as const;
-      case 'supervisor':
-        return 'secondary' as const;
-      default:
-        return 'outline' as const;
-    }
-  };
+  if (isLoading || !hasMultipleDivisions || !activeDivision) return null;
 
   return (
     <DropdownMenu>
@@ -68,21 +57,20 @@ export function DivisionSelector({ className }: DivisionSelectorProps) {
           <ChevronDown className="h-4 w-4 ml-2" />
         </Button>
       </DropdownMenuTrigger>
-
       <DropdownMenuContent align="end" className="w-80 max-w-[calc(100vw-2rem)]">
         <DropdownMenuLabel className="text-xs text-muted-foreground uppercase tracking-wide">
           Switch Division
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-
         {userDivisions.map((division) => {
           const isActive = division.id === activeDivision.id;
           const role = getDivisionRole(division.id);
-
           return (
             <DropdownMenuItem
               key={division.id}
-              onClick={() => handleDivisionChange(division.id)}
+              onClick={() => {
+                if (division.id !== activeDivision.id) setActiveDivision(division.id);
+              }}
               className={cn(
                 'flex items-center justify-between p-3 cursor-pointer',
                 'hover:bg-accent hover:text-accent-foreground',
@@ -97,7 +85,6 @@ export function DivisionSelector({ className }: DivisionSelectorProps) {
                     <div className="h-4 w-4" />
                   )}
                 </div>
-
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center space-x-2">
                     <p className="text-sm font-medium truncate">{division.name}</p>
@@ -112,7 +99,6 @@ export function DivisionSelector({ className }: DivisionSelectorProps) {
                   )}
                 </div>
               </div>
-
               {role && (
                 <Badge variant={getRoleBadgeVariant(role)} className="ml-2 text-xs">
                   {role}
@@ -121,7 +107,6 @@ export function DivisionSelector({ className }: DivisionSelectorProps) {
             </DropdownMenuItem>
           );
         })}
-
         <DropdownMenuSeparator />
         <div className="p-2">
           <p className="text-xs text-muted-foreground">

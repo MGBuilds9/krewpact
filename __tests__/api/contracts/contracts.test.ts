@@ -3,22 +3,23 @@
  *
  * Covers: auth, pagination, filtering, creation, update, 404, validation.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { GET, POST } from '@/app/api/contracts/route';
-import { GET as GET_ID, PATCH } from '@/app/api/contracts/[id]/route';
+
 import {
-  mockSupabaseClient,
+  makeJsonRequest,
+  makeRequest,
   mockClerkAuth,
   mockClerkUnauth,
-  makeRequest,
-  makeJsonRequest,
+  mockSupabaseClient,
 } from '@/__tests__/helpers';
+import { GET as GET_ID, PATCH } from '@/app/api/contracts/[id]/route';
+import { GET, POST } from '@/app/api/contracts/route';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);

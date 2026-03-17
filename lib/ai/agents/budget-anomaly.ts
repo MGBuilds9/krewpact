@@ -1,8 +1,11 @@
-import { createServiceClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
+import { createServiceClient } from '@/lib/supabase/server';
+
 import type { GeneratedInsight } from '../types';
 
-export async function detectBudgetAnomalies(orgId: string): Promise<Array<{ entityId: string; insight: GeneratedInsight }>> {
+export async function detectBudgetAnomalies(
+  orgId: string,
+): Promise<Array<{ entityId: string; insight: GeneratedInsight }>> {
   const supabase = createServiceClient();
 
   // Query projects where actual spending > 110% of budget
@@ -39,7 +42,12 @@ export async function detectBudgetAnomalies(orgId: string): Promise<Array<{ enti
         confidence: Math.min(0.95, 0.75 + (ratio - 1.1) * 0.5),
         actionUrl: null,
         actionLabel: null,
-        metadata: { budget: p.budget, actual_cost: p.actual_cost, ratio: Math.round(ratio * 100) / 100, over_amount: overAmount },
+        metadata: {
+          budget: p.budget,
+          actual_cost: p.actual_cost,
+          ratio: Math.round(ratio * 100) / 100,
+          over_amount: overAmount,
+        },
       },
     });
   }

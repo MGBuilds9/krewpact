@@ -11,6 +11,6 @@
 
 export { Queue, queue } from './client';
 export { processJob } from './processor';
-export { verifyQStashSignature } from './verify';
-export { JobType } from './types';
 export type { Job, JobPayload, JobStatus, QueueStats } from './types';
+export { JobType } from './types';
+export { verifyQStashSignature } from './verify';

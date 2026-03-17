@@ -1,8 +1,9 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { fileShareCreateSchema } from '@/lib/validators/documents';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { createUserClientSafe } from '@/lib/supabase/server';
+import { fileShareCreateSchema } from '@/lib/validators/documents';
 
 type RouteContext = { params: Promise<{ id: string; fileId: string }> };
 

@@ -1,21 +1,21 @@
-export { mockSupabaseClient } from './mock-supabase';
-export { mockClerkAuth, mockClerkUnauth } from './mock-auth';
-export { makeRequest, makeJsonRequest } from './mock-request';
 export {
   makeAccount,
-  makeContact,
-  makeLead,
-  makeOpportunity,
   makeActivity,
+  makeBiddingOpportunity,
+  makeContact,
+  makeDailyLog,
+  makeEnrichmentJob,
   makeEstimate,
   makeEstimateLine,
+  makeExpenseClaim,
+  makeLead,
+  makeNotification,
+  makeOpportunity,
   makeProject,
   makeTask,
-  makeExpenseClaim,
-  makeNotification,
-  makeDailyLog,
-  makeBiddingOpportunity,
-  makeEnrichmentJob,
   resetFixtureCounter,
   TEST_IDS,
 } from './fixtures';
+export { mockClerkAuth, mockClerkUnauth } from './mock-auth';
+export { makeJsonRequest, makeRequest } from './mock-request';
+export { mockSupabaseClient } from './mock-supabase';

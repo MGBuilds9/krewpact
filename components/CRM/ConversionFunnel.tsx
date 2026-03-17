@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { ConversionMetrics } from '@/lib/crm/metrics';
 
@@ -17,8 +18,8 @@ function ChartSkeleton() {
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-10 animate-pulse rounded bg-muted" />
+          {[0, 1, 2, 3].map((n) => (
+            <div key={n} className="h-10 animate-pulse rounded bg-muted" />
           ))}
         </div>
       </CardContent>

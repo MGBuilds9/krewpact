@@ -1,19 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServiceClient } from '@/lib/supabase/server';
-import {
-  searchPeople,
-  mapApolloToLead,
-  mapApolloToContact,
-} from '@/lib/integrations/apollo';
+
+import { verifyCronAuth } from '@/lib/api/cron-auth';
+import { createCronLogger } from '@/lib/api/cron-logger';
+import type { ApolloPerson } from '@/lib/integrations/apollo';
+import { mapApolloToContact, mapApolloToLead, searchPeople } from '@/lib/integrations/apollo';
+import type { ApolloSearchProfile } from '@/lib/integrations/apollo-profiles';
 import {
   getProfileById,
   getProfilesForWeek,
   getWeekNumber,
 } from '@/lib/integrations/apollo-profiles';
-import type { ApolloSearchProfile } from '@/lib/integrations/apollo-profiles';
-import { verifyCronAuth } from '@/lib/api/cron-auth';
-import { createCronLogger } from '@/lib/api/cron-logger';
 import { logger } from '@/lib/logger';
+import { createServiceClient } from '@/lib/supabase/server';
 
 interface ProfileRunResult {
   profileId: string;
@@ -50,35 +48,38 @@ async function getProfileState(
   return { lastPage: data.last_page, creditsUsedThisMonth: data.credits_used_this_month };
 }
 
+interface UpdateProfileStateParams {
+  profileId: string;
+  divisionCode: string;
+  lastPage: number;
+  imported: number;
+  resetPage: boolean;
+}
+
 /**
  * Update the pagination watermark and credit tracking after a profile run.
  */
 async function updateProfileState(
   supabase: ReturnType<typeof createServiceClient>,
-  profileId: string,
-  divisionCode: string,
-  lastPage: number,
-  imported: number,
-  resetPage: boolean,
+  params: UpdateProfileStateParams,
 ): Promise<void> {
+  const { profileId, divisionCode, lastPage, imported, resetPage } = params;
   const now = new Date().toISOString();
   const pageToStore = resetPage ? 0 : lastPage;
 
-  const { error } = await supabase
-    .from('apollo_pump_state')
-    .upsert(
-      {
-        profile_id: profileId,
-        division_code: divisionCode,
-        last_page: pageToStore,
-        last_run_at: now,
-        total_imported: imported, // Will be incremented by trigger or next read
-        credits_used_this_month: imported, // Approximate: 1 credit per imported lead
-        month_reset_at: now,
-        updated_at: now,
-      },
-      { onConflict: 'profile_id' },
-    );
+  const { error } = await supabase.from('apollo_pump_state').upsert(
+    {
+      profile_id: profileId,
+      division_code: divisionCode,
+      last_page: pageToStore,
+      last_run_at: now,
+      total_imported: imported, // Will be incremented by trigger or next read
+      credits_used_this_month: imported, // Approximate: 1 credit per imported lead
+      month_reset_at: now,
+      updated_at: now,
+    },
+    { onConflict: 'profile_id' },
+  );
 
   if (error) {
     logger.error('Failed to update apollo_pump_state', { profileId, error: error.message });
@@ -103,8 +104,56 @@ async function recordProfileRun(
   });
 
   if (error) {
-    logger.error('Failed to record apollo_profile_run', { profileId: result.profileId, error: error.message });
+    logger.error('Failed to record apollo_profile_run', {
+      profileId: result.profileId,
+      error: error.message,
+    });
   }
+}
+
+/**
+ * Insert new leads and their contacts for a batch of Apollo people.
+ * Returns the number of leads imported.
+ */
+async function insertLeadsAndContacts(
+  supabase: ReturnType<typeof createServiceClient>,
+  newPeople: ApolloPerson[],
+  profileId: string,
+): Promise<number> {
+  const leadsToInsert = newPeople.map((p) => ({
+    ...mapApolloToLead(p),
+    external_id: p.id,
+    source_detail: profileId,
+  }));
+
+  const { data: insertedLeads, error: leadError } = await supabase
+    .from('leads')
+    .insert(leadsToInsert)
+    .select('id, external_id');
+
+  if (leadError) {
+    logger.error('Apollo bulk lead insert error', { profile: profileId, error: leadError.message });
+    return 0;
+  }
+
+  if (!insertedLeads || insertedLeads.length === 0) return 0;
+
+  const leadIdMap = new Map(insertedLeads.map((l) => [l.external_id, l.id]));
+  const contactsToInsert = newPeople
+    .filter((p) => leadIdMap.has(p.id))
+    .map((p) => mapApolloToContact(p, leadIdMap.get(p.id)!));
+
+  if (contactsToInsert.length > 0) {
+    const { error: contactError } = await supabase.from('contacts').insert(contactsToInsert);
+    if (contactError) {
+      logger.error('Apollo bulk contact insert error', {
+        profile: profileId,
+        error: contactError.message,
+      });
+    }
+  }
+
+  return insertedLeads.length;
 }
 
 /**
@@ -149,42 +198,20 @@ async function runProfile(
     totalDupes += people.length - newPeople.length;
 
     if (newPeople.length > 0) {
-      const leadsToInsert = newPeople.map((p) => ({
-        ...mapApolloToLead(p),
-        external_id: p.id,
-        source_detail: profile.id,
-      }));
-
-      const { data: insertedLeads, error: leadError } = await supabase
-        .from('leads')
-        .insert(leadsToInsert)
-        .select('id, external_id');
-
-      if (leadError) {
-        logger.error('Apollo bulk lead insert error', { profile: profile.id, error: leadError.message });
-      } else if (insertedLeads) {
-        const leadIdMap = new Map(insertedLeads.map((l) => [l.external_id, l.id]));
-        const contactsToInsert = newPeople
-          .filter((p) => leadIdMap.has(p.id))
-          .map((p) => mapApolloToContact(p, leadIdMap.get(p.id)!));
-
-        if (contactsToInsert.length > 0) {
-          const { error: contactError } = await supabase
-            .from('contacts')
-            .insert(contactsToInsert);
-          if (contactError) {
-            logger.error('Apollo bulk contact insert error', { profile: profile.id, error: contactError.message });
-          }
-        }
-        totalImported += insertedLeads.length;
-      }
+      totalImported += await insertLeadsAndContacts(supabase, newPeople, profile.id);
     }
 
     currentPage++;
   }
 
   // Update watermark — reset to 0 if we reached the end of results
-  await updateProfileState(supabase, profile.id, profile.divisionCode, currentPage - 1, totalImported, reachedEnd);
+  await updateProfileState(supabase, {
+    profileId: profile.id,
+    divisionCode: profile.divisionCode,
+    lastPage: currentPage - 1,
+    imported: totalImported,
+    resetPage: reachedEnd,
+  });
 
   const result: ProfileRunResult = {
     profileId: profile.id,
@@ -281,9 +308,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   };
 
   if (errors.length > 0 && results.length === 0) {
-    await cronLog.failure(new Error(errors.map(e => e.error).join('; ')));
+    await cronLog.failure(new Error(errors.map((e) => e.error).join('; ')));
   } else {
-    await cronLog.success({ profilesRun: results.length, totalImported, totalDuplicates, errors: errors.length });
+    await cronLog.success({
+      profilesRun: results.length,
+      totalImported,
+      totalDuplicates,
+      errors: errors.length,
+    });
   }
 
   return NextResponse.json(response);

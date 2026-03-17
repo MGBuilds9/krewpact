@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /**
  * KrewPact Health Check Script
  *
@@ -59,7 +58,7 @@ function requireEnv(key: string, serviceName: string): string | null {
 async function fetchWithTimeout(
   url: string,
   options: RequestInit = {},
-  timeoutMs = 10_000
+  timeoutMs = 10_000,
 ): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -98,15 +97,14 @@ async function checkSupabaseRest() {
   if (DEEP) {
     const rlsName = 'Supabase RLS (anon blocked)';
     try {
-      const res = await fetchWithTimeout(
-        `${url}/rest/v1/leads?select=id&limit=1`,
-        { headers: { apikey: key, Authorization: `Bearer ${key}` } },
-      );
+      const res = await fetchWithTimeout(`${url}/rest/v1/leads?select=id&limit=1`, {
+        headers: { apikey: key, Authorization: `Bearer ${key}` },
+      });
       // Anon should get 0 rows or a 4xx — NOT full data
       if (res.status === 401 || res.status === 403) {
         pass(rlsName, `Blocked with ${res.status}`);
       } else if (res.ok) {
-        const body = await res.json() as unknown[];
+        const body = (await res.json()) as unknown[];
         if (body.length === 0) {
           pass(rlsName, 'RLS returned 0 rows (correct)');
         } else {
@@ -128,17 +126,14 @@ async function checkSupabaseServiceRole() {
   if (!url || !key) return;
 
   try {
-    const res = await fetchWithTimeout(
-      `${url}/rest/v1/leads?select=count&limit=1`,
-      {
-        headers: {
-          apikey: key,
-          Authorization: `Bearer ${key}`,
-          'Content-Type': 'application/json',
-          Prefer: 'count=exact',
-        },
-      }
-    );
+    const res = await fetchWithTimeout(`${url}/rest/v1/leads?select=count&limit=1`, {
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        'Content-Type': 'application/json',
+        Prefer: 'count=exact',
+      },
+    });
     if (res.ok) {
       pass(name, `HTTP ${res.status}`);
     } else {
@@ -155,16 +150,13 @@ async function checkSupabaseServiceRole() {
     for (const table of tables) {
       const checkName = `Supabase Data (${table})`;
       try {
-        const res = await fetchWithTimeout(
-          `${url}/rest/v1/${table}?select=count`,
-          {
-            headers: {
-              apikey: key,
-              Authorization: `Bearer ${key}`,
-              Prefer: 'count=exact',
-            },
+        const res = await fetchWithTimeout(`${url}/rest/v1/${table}?select=count`, {
+          headers: {
+            apikey: key,
+            Authorization: `Bearer ${key}`,
+            Prefer: 'count=exact',
           },
-        );
+        });
         if (res.ok) {
           const count = res.headers.get('content-range')?.split('/')?.[1] ?? '?';
           if (count !== '0' && count !== '?') {
@@ -198,17 +190,18 @@ async function checkClerk() {
       if (DEEP) {
         const jwtName = 'Clerk JWT Template';
         try {
-          const jwtRes = await fetchWithTimeout(
-            'https://api.clerk.com/v1/jwt_templates',
-            { headers: { Authorization: `Bearer ${key}` } },
-          );
+          const jwtRes = await fetchWithTimeout('https://api.clerk.com/v1/jwt_templates', {
+            headers: { Authorization: `Bearer ${key}` },
+          });
           if (jwtRes.ok) {
             const templates = (await jwtRes.json()) as Array<{
               name: string;
               claims: Record<string, unknown>;
             }>;
             const supabase = templates.find(
-              (t) => t.name.toLowerCase().includes('supabase') || t.name.toLowerCase().includes('krewpact'),
+              (t) =>
+                t.name.toLowerCase().includes('supabase') ||
+                t.name.toLowerCase().includes('krewpact'),
             );
             if (supabase) {
               const claimsStr = JSON.stringify(supabase.claims);
@@ -337,7 +330,7 @@ async function checkERPNext() {
       {
         headers: { Authorization: `token ${apiKey}:${apiSecret}` },
       },
-      12_000 // slightly longer — Cloudflare Tunnel can be slow to wake
+      12_000, // slightly longer — Cloudflare Tunnel can be slow to wake
     );
     if (res.ok) {
       pass(name, `HTTP ${res.status}`);
@@ -415,17 +408,14 @@ async function checkSentry() {
   }
 
   // Validate format: https://<key>@<host>.ingest.<tld>/project-id
-  const isValid =
-    dsn.startsWith('https://') &&
-    dsn.includes('@') &&
-    dsn.includes('.ingest.');
+  const isValid = dsn.startsWith('https://') && dsn.includes('@') && dsn.includes('.ingest.');
 
   if (isValid) {
     pass(name, 'DSN format valid (no API call needed)');
   } else {
     fail(
       name,
-      `DSN format invalid — expected https://<key>@<host>.ingest.<tld>/…, got: ${dsn.slice(0, 60)}`
+      `DSN format invalid — expected https://<key>@<host>.ingest.<tld>/…, got: ${dsn.slice(0, 60)}`,
     );
   }
 }
@@ -469,7 +459,7 @@ async function checkBraveSearch() {
       'https://api.search.brave.com/res/v1/web/search?q=test&count=1',
       {
         headers: { 'X-Subscription-Token': key },
-      }
+      },
     );
     if (res.ok) {
       pass(name, `HTTP ${res.status}`);
@@ -489,7 +479,7 @@ async function checkGoogleMaps() {
 
   try {
     const res = await fetchWithTimeout(
-      `https://maps.googleapis.com/maps/api/geocode/json?address=Toronto&key=${key}`
+      `https://maps.googleapis.com/maps/api/geocode/json?address=Toronto&key=${key}`,
     );
     if (res.ok) {
       const data = (await res.json()) as { status?: string; error_message?: string };
@@ -532,10 +522,14 @@ async function checkTavily() {
 
 async function main() {
   console.log();
-  console.log(`${BOLD}KrewPact Service Health Check${RESET}${DEEP ? ` ${YELLOW}(deep mode)${RESET}` : ''}`);
+  console.log(
+    `${BOLD}KrewPact Service Health Check${RESET}${DEEP ? ` ${YELLOW}(deep mode)${RESET}` : ''}`,
+  );
   console.log(`${'─'.repeat(50)}`);
   if (DEEP) {
-    console.log(`  ${YELLOW}Deep checks enabled — testing data paths, not just connectivity${RESET}`);
+    console.log(
+      `  ${YELLOW}Deep checks enabled — testing data paths, not just connectivity${RESET}`,
+    );
   }
   console.log();
 
@@ -561,12 +555,10 @@ async function main() {
   console.log(`${'─'.repeat(50)}`);
 
   if (failed === 0) {
-    console.log(
-      `${GREEN}${BOLD}All ${total}/${total} services connected.${RESET}`
-    );
+    console.log(`${GREEN}${BOLD}All ${total}/${total} services connected.${RESET}`);
   } else {
     console.log(
-      `${BOLD}Summary: ${GREEN}${passed} passed${RESET} / ${RED}${failed} failed${RESET} (${total} total)`
+      `${BOLD}Summary: ${GREEN}${passed} passed${RESET} / ${RED}${failed} failed${RESET} (${total} total)`,
     );
     console.log();
     console.log(`${RED}Failed services:${RESET}`);

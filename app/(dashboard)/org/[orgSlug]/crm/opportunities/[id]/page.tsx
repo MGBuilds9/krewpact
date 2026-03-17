@@ -1,44 +1,289 @@
 'use client';
 
-import { useState } from 'react';
-import { useParams } from 'next/navigation';
-import { useOrgRouter } from '@/hooks/useOrgRouter';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   ArrowLeft,
   ArrowRight,
-  XCircle,
-  Pencil,
   FileText,
-  Plus,
   MessageSquarePlus,
+  Pencil,
+  Plus,
   Trophy,
+  XCircle,
 } from 'lucide-react';
+import { useParams } from 'next/navigation';
+import { useState } from 'react';
+
+import { AiInsightBanner } from '@/components/AI';
+import { ActivityLogDialog } from '@/components/CRM/ActivityLogDialog';
+import { ActivityTimeline } from '@/components/CRM/ActivityTimeline';
+import { LinkedEstimateCard } from '@/components/CRM/LinkedEstimateCard';
+import { LostDealDialog } from '@/components/CRM/LostDealDialog';
+import { NotesPanel } from '@/components/CRM/NotesPanel';
+import { OpportunityForm } from '@/components/CRM/OpportunityForm';
+import { OpportunityStageProgressBar } from '@/components/CRM/OpportunityStageProgressBar';
+import { WonDealDialog } from '@/components/CRM/WonDealDialog';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
-  useOpportunity,
   useActivities,
-  useOpportunityStageTransition,
-  useOpportunityEstimates,
   useCreateLinkedEstimate,
+  useOpportunity,
+  useOpportunityEstimates,
+  useOpportunityStageTransition,
   useProposalData,
 } from '@/hooks/useCRM';
-import { LinkedEstimateCard } from '@/components/CRM/LinkedEstimateCard';
-import { OpportunityStageProgressBar } from '@/components/CRM/OpportunityStageProgressBar';
-import { OpportunityForm } from '@/components/CRM/OpportunityForm';
-import { ActivityTimeline } from '@/components/CRM/ActivityTimeline';
-import { ActivityLogDialog } from '@/components/CRM/ActivityLogDialog';
-import { NotesPanel } from '@/components/CRM/NotesPanel';
-import { WonDealDialog } from '@/components/CRM/WonDealDialog';
-import { LostDealDialog } from '@/components/CRM/LostDealDialog';
-import { ALLOWED_TRANSITIONS } from '@/lib/crm/opportunity-stages';
+import { useOrgRouter } from '@/hooks/useOrgRouter';
 import type { OpportunityStage } from '@/lib/crm/opportunity-stages';
-import { AiInsightBanner } from '@/components/AI';
+import { ALLOWED_TRANSITIONS } from '@/lib/crm/opportunity-stages';
 
 function formatCurrency(value: number | null): string {
   if (value == null) return '-';
   return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(value);
+}
+
+type OppData = NonNullable<ReturnType<typeof useOpportunity>['data']>;
+type ActivityItem = NonNullable<ReturnType<typeof useActivities>['data']>['data'][number];
+
+interface OppInfoCardProps {
+  opp: OppData;
+  isEditing: boolean;
+  setIsEditing: (v: boolean) => void;
+  currentStage: OpportunityStage;
+}
+function OppInfoCard({ opp, isEditing, setIsEditing, currentStage }: OppInfoCardProps) {
+  const closeDate = opp.target_close_date
+    ? new Date(opp.target_close_date).toLocaleDateString('en-CA', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    : '-';
+  const createdDate = new Date(opp.created_at).toLocaleDateString('en-CA', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{isEditing ? 'Edit Opportunity' : 'Opportunity Information'}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {isEditing ? (
+          <OpportunityForm
+            opportunity={opp}
+            onSuccess={() => setIsEditing(false)}
+            onCancel={() => setIsEditing(false)}
+          />
+        ) : (
+          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <dt className="text-sm font-medium text-muted-foreground">Stage</dt>
+              <dd className="text-sm capitalize">{currentStage.replace(/_/g, ' ')}</dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-muted-foreground">Estimated Revenue</dt>
+              <dd className="text-sm">{formatCurrency(opp.estimated_revenue)}</dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-muted-foreground">Probability</dt>
+              <dd className="text-sm">
+                {opp.probability_pct != null ? `${opp.probability_pct}%` : '-'}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-muted-foreground">Target Close</dt>
+              <dd className="text-sm">{closeDate}</dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-muted-foreground">Created</dt>
+              <dd className="text-sm">{createdDate}</dd>
+            </div>
+          </dl>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+interface DealSummaryProps {
+  opp: OppData;
+  currentStage: OpportunityStage;
+  activityCount: number;
+  estimateCount: number;
+}
+function DealSummaryCard({ opp, currentStage, activityCount, estimateCount }: DealSummaryProps) {
+  const weightedValue = (opp.estimated_revenue ?? 0) * ((opp.probability_pct ?? 0) / 100);
+  const targetClose = opp.target_close_date
+    ? new Date(opp.target_close_date).toLocaleDateString('en-CA', {
+        month: 'short',
+        day: 'numeric',
+      })
+    : '-';
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base">Deal Summary</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3 text-sm">
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Revenue</span>
+          <span className="font-medium">{formatCurrency(opp.estimated_revenue)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Weighted Value</span>
+          <span className="font-medium">{formatCurrency(weightedValue)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Probability</span>
+          <span>{opp.probability_pct ?? 0}%</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Target Close</span>
+          <span>{targetClose}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Stage</span>
+          <span className="capitalize">{currentStage.replace(/_/g, ' ')}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Activities</span>
+          <span>{activityCount}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Estimates</span>
+          <span>{estimateCount}</span>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+interface StageActionsProps {
+  nextRegularStage: string | undefined;
+  nextStageLabel: string;
+  canMarkWon: boolean;
+  canMarkLost: boolean;
+  isPending: boolean;
+  onNext: (stage: string) => void;
+  onWon: () => void;
+  onLost: () => void;
+}
+function StageActions({
+  nextRegularStage,
+  nextStageLabel,
+  canMarkWon,
+  canMarkLost,
+  isPending,
+  onNext,
+  onWon,
+  onLost,
+}: StageActionsProps) {
+  return (
+    <div className="flex gap-2 mt-4 justify-end">
+      {nextRegularStage && (
+        <Button size="sm" onClick={() => onNext(nextRegularStage)} disabled={isPending}>
+          <ArrowRight className="h-4 w-4 mr-1" />
+          {nextStageLabel}
+        </Button>
+      )}
+      {canMarkWon && (
+        <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={onWon}>
+          <Trophy className="h-4 w-4 mr-1" />
+          Mark Won
+        </Button>
+      )}
+      {canMarkLost && (
+        <Button size="sm" variant="destructive" onClick={onLost} disabled={isPending}>
+          <XCircle className="h-4 w-4 mr-1" />
+          Mark Lost
+        </Button>
+      )}
+    </div>
+  );
+}
+
+interface ProposalCardProps {
+  isFetching: boolean;
+  onGenerate: () => void;
+}
+function ProposalCard({ isFetching, onGenerate }: ProposalCardProps) {
+  return (
+    <Card>
+      <CardContent className="pt-6 flex items-center justify-between">
+        <div>
+          <h3 className="text-sm font-semibold">Proposal</h3>
+          <p className="text-sm text-muted-foreground">
+            Generate proposal data from this opportunity and linked estimates.
+          </p>
+        </div>
+        <Button size="sm" variant="outline" onClick={onGenerate} disabled={isFetching}>
+          <FileText className="h-4 w-4 mr-1" />
+          {isFetching ? 'Generating...' : 'Generate Proposal'}
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+interface StageHistoryEntry {
+  id: string;
+  from_stage: string;
+  to_stage: string;
+  created_at: string;
+}
+function StageHistoryCard({ history }: { history: StageHistoryEntry[] }) {
+  if (!history.length) return null;
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base">Stage History</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2">
+          {history.map((entry) => (
+            <div key={entry.id} className="flex items-center justify-between text-sm">
+              <div>
+                <span className="capitalize text-muted-foreground">
+                  {entry.from_stage.replace(/_/g, ' ')}
+                </span>
+                <span className="mx-1.5 text-muted-foreground">&rarr;</span>
+                <span className="capitalize font-medium">{entry.to_stage.replace(/_/g, ' ')}</span>
+              </div>
+              <span className="text-xs text-muted-foreground">
+                {new Date(entry.created_at).toLocaleDateString('en-CA', {
+                  month: 'short',
+                  day: 'numeric',
+                })}
+              </span>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+interface ActivityCardProps {
+  activities: ActivityItem[];
+  onLogActivity: () => void;
+}
+function OppActivityCard({ activities, onLogActivity }: ActivityCardProps) {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle>Activity Timeline</CardTitle>
+        <Button size="sm" variant="outline" onClick={onLogActivity}>
+          <Plus className="h-4 w-4 mr-1" />
+          Log Activity
+        </Button>
+      </CardHeader>
+      <CardContent>
+        <ActivityTimeline activities={activities} />
+      </CardContent>
+    </Card>
+  );
 }
 
 export default function OpportunityDetailPage() {
@@ -47,7 +292,7 @@ export default function OpportunityDetailPage() {
   const opportunityId = params.id as string;
   const { data: opportunity, isLoading } = useOpportunity(opportunityId);
   const { data: activitiesResponse } = useActivities({ opportunityId });
-  const activities = activitiesResponse?.data ?? [];
+  const activities = activitiesResponse ? activitiesResponse.data || [] : [];
   const { data: estimates } = useOpportunityEstimates(opportunityId);
   const createLinkedEstimate = useCreateLinkedEstimate();
   const proposalQuery = useProposalData(opportunityId);
@@ -57,7 +302,7 @@ export default function OpportunityDetailPage() {
   const [wonDialogOpen, setWonDialogOpen] = useState(false);
   const [lostDialogOpen, setLostDialogOpen] = useState(false);
 
-  if (isLoading) {
+  if (isLoading)
     return (
       <div className="space-y-6">
         <Skeleton className="h-8 w-64" />
@@ -65,9 +310,7 @@ export default function OpportunityDetailPage() {
         <Skeleton className="h-48 w-full rounded-xl" />
       </div>
     );
-  }
-
-  if (!opportunity) {
+  if (!opportunity)
     return (
       <div className="text-center py-12">
         <h2 className="text-2xl font-bold mb-2">Opportunity not found</h2>
@@ -80,22 +323,24 @@ export default function OpportunityDetailPage() {
         </Button>
       </div>
     );
-  }
 
   const currentStage = opportunity.stage as OpportunityStage;
   const nextStages = ALLOWED_TRANSITIONS[currentStage] || [];
   const nextRegularStage = nextStages.find((s) => s !== 'closed_lost');
   const canMarkLost = nextStages.includes('closed_lost');
   const canMarkWon = currentStage === 'contracted';
-
-  function handleNextStage() {
-    if (!nextRegularStage) return;
-    stageTransition.mutate({ id: opportunityId, stage: nextRegularStage });
-  }
+  const nextStageLabel = nextRegularStage
+    ? nextRegularStage
+        .split('_')
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ')
+    : '';
+  const stageHistory = (opportunity.opportunity_stage_history || []) as StageHistoryEntry[];
+  const estimateCount = estimates ? estimates.length : 0;
+  const probPct = opportunity.probability_pct || 0;
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-start gap-4">
         <Button
           variant="ghost"
@@ -111,8 +356,7 @@ export default function OpportunityDetailPage() {
             {opportunity.opportunity_name}
           </h1>
           <p className="text-muted-foreground">
-            {formatCurrency(opportunity.estimated_revenue)} | {opportunity.probability_pct ?? 0}%
-            probability
+            {formatCurrency(opportunity.estimated_revenue)} | {probPct}% probability
           </p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -131,109 +375,33 @@ export default function OpportunityDetailPage() {
 
       <AiInsightBanner entityType="opportunity" entityId={opportunityId} />
 
-      {/* Stage Progress */}
       <Card>
         <CardContent className="pt-6">
           <OpportunityStageProgressBar currentStage={currentStage} />
-          <div className="flex gap-2 mt-4 justify-end">
-            {nextRegularStage && (
-              <Button size="sm" onClick={handleNextStage} disabled={stageTransition.isPending}>
-                <ArrowRight className="h-4 w-4 mr-1" />
-                {nextRegularStage
-                  .split('_')
-                  .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                  .join(' ')}
-              </Button>
-            )}
-            {canMarkWon && (
-              <Button
-                size="sm"
-                className="bg-green-600 hover:bg-green-700"
-                onClick={() => setWonDialogOpen(true)}
-              >
-                <Trophy className="h-4 w-4 mr-1" />
-                Mark Won
-              </Button>
-            )}
-            {canMarkLost && (
-              <Button
-                size="sm"
-                variant="destructive"
-                onClick={() => setLostDialogOpen(true)}
-                disabled={stageTransition.isPending}
-              >
-                <XCircle className="h-4 w-4 mr-1" />
-                Mark Lost
-              </Button>
-            )}
-          </div>
+          <StageActions
+            nextRegularStage={nextRegularStage}
+            nextStageLabel={nextStageLabel}
+            canMarkWon={canMarkWon}
+            canMarkLost={canMarkLost}
+            isPending={stageTransition.isPending}
+            onNext={(stage) => stageTransition.mutate({ id: opportunityId, stage })}
+            onWon={() => setWonDialogOpen(true)}
+            onLost={() => setLostDialogOpen(true)}
+          />
         </CardContent>
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main content */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Info Card / Edit Form */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{isEditing ? 'Edit Opportunity' : 'Opportunity Information'}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isEditing ? (
-                <OpportunityForm
-                  opportunity={opportunity}
-                  onSuccess={() => setIsEditing(false)}
-                  onCancel={() => setIsEditing(false)}
-                />
-              ) : (
-                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <dt className="text-sm font-medium text-muted-foreground">Stage</dt>
-                    <dd className="text-sm capitalize">{currentStage.replace(/_/g, ' ')}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-sm font-medium text-muted-foreground">Estimated Revenue</dt>
-                    <dd className="text-sm">{formatCurrency(opportunity.estimated_revenue)}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-sm font-medium text-muted-foreground">Probability</dt>
-                    <dd className="text-sm">
-                      {opportunity.probability_pct != null
-                        ? `${opportunity.probability_pct}%`
-                        : '-'}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-sm font-medium text-muted-foreground">Target Close</dt>
-                    <dd className="text-sm">
-                      {opportunity.target_close_date
-                        ? new Date(opportunity.target_close_date).toLocaleDateString('en-CA', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })
-                        : '-'}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-sm font-medium text-muted-foreground">Created</dt>
-                    <dd className="text-sm">
-                      {new Date(opportunity.created_at).toLocaleDateString('en-CA', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
-                    </dd>
-                  </div>
-                </dl>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Linked Estimates */}
+          <OppInfoCard
+            opp={opportunity}
+            isEditing={isEditing}
+            setIsEditing={setIsEditing}
+            currentStage={currentStage}
+          />
           <LinkedEstimateCard
             opportunityId={opportunityId}
-            estimates={estimates ?? []}
+            estimates={estimates || []}
             onCreateEstimate={() => {
               const number = `EST-${Date.now().toString(36).toUpperCase()}`;
               createLinkedEstimate.mutate({
@@ -244,132 +412,27 @@ export default function OpportunityDetailPage() {
               });
             }}
           />
-
-          {/* Generate Proposal */}
-          <Card>
-            <CardContent className="pt-6 flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-semibold">Proposal</h3>
-                <p className="text-sm text-muted-foreground">
-                  Generate proposal data from this opportunity and linked estimates.
-                </p>
-              </div>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => proposalQuery.refetch()}
-                disabled={proposalQuery.isFetching}
-              >
-                <FileText className="h-4 w-4 mr-1" />
-                {proposalQuery.isFetching ? 'Generating...' : 'Generate Proposal'}
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Notes Panel */}
+          <ProposalCard
+            isFetching={proposalQuery.isFetching}
+            onGenerate={() => proposalQuery.refetch()}
+          />
           <NotesPanel entityType="opportunity" entityId={opportunityId} />
-
-          {/* Activity Timeline */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Activity Timeline</CardTitle>
-              <Button size="sm" variant="outline" onClick={() => setActivityDialogOpen(true)}>
-                <Plus className="h-4 w-4 mr-1" />
-                Log Activity
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <ActivityTimeline activities={activities} />
-            </CardContent>
-          </Card>
+          <OppActivityCard
+            activities={activities}
+            onLogActivity={() => setActivityDialogOpen(true)}
+          />
         </div>
-
-        {/* Sidebar */}
         <div className="space-y-6">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Deal Summary</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Revenue</span>
-                <span className="font-medium">{formatCurrency(opportunity.estimated_revenue)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Weighted Value</span>
-                <span className="font-medium">
-                  {formatCurrency(
-                    (opportunity.estimated_revenue ?? 0) *
-                      ((opportunity.probability_pct ?? 0) / 100),
-                  )}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Probability</span>
-                <span>{opportunity.probability_pct ?? 0}%</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Target Close</span>
-                <span>
-                  {opportunity.target_close_date
-                    ? new Date(opportunity.target_close_date).toLocaleDateString('en-CA', {
-                        month: 'short',
-                        day: 'numeric',
-                      })
-                    : '-'}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Stage</span>
-                <span className="capitalize">{currentStage.replace(/_/g, ' ')}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Activities</span>
-                <span>{activities.length}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Estimates</span>
-                <span>{estimates?.length ?? 0}</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Stage History */}
-          {opportunity.opportunity_stage_history &&
-            opportunity.opportunity_stage_history.length > 0 && (
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Stage History</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {opportunity.opportunity_stage_history.map((entry) => (
-                      <div key={entry.id} className="flex items-center justify-between text-sm">
-                        <div>
-                          <span className="capitalize text-muted-foreground">
-                            {entry.from_stage.replace(/_/g, ' ')}
-                          </span>
-                          <span className="mx-1.5 text-muted-foreground">&rarr;</span>
-                          <span className="capitalize font-medium">
-                            {entry.to_stage.replace(/_/g, ' ')}
-                          </span>
-                        </div>
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(entry.created_at).toLocaleDateString('en-CA', {
-                            month: 'short',
-                            day: 'numeric',
-                          })}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+          <DealSummaryCard
+            opp={opportunity}
+            currentStage={currentStage}
+            activityCount={activities.length}
+            estimateCount={estimateCount}
+          />
+          <StageHistoryCard history={stageHistory} />
         </div>
       </div>
 
-      {/* Dialogs */}
       <ActivityLogDialog
         open={activityDialogOpen}
         onOpenChange={setActivityDialogOpen}

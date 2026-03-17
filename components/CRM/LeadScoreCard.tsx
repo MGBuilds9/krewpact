@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { ChevronDown, ChevronRight } from 'lucide-react';
+import { useState } from 'react';
+
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { RuleResultDisplay } from '@/hooks/useCRM';
 
 interface LeadScoreCardProps {
@@ -40,6 +41,32 @@ const CATEGORY_LABELS: Record<string, string> = {
   engagement: 'Engagement',
 };
 
+function ScoreBreakdown({ grouped }: { grouped: Record<string, RuleResultDisplay[]> }) {
+  return (
+    <div className="mt-3 space-y-3">
+      {(['fit', 'intent', 'engagement'] as const).map((cat) => {
+        const catRules = grouped[cat];
+        if (!catRules || catRules.length === 0) return null;
+        return (
+          <div key={cat}>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+              {CATEGORY_LABELS[cat]}
+            </p>
+            <div className="space-y-1">
+              {catRules.map((rule) => (
+                <div key={rule.rule_id} className="flex justify-between items-center text-xs">
+                  <span className="text-foreground truncate pr-2">{rule.rule_name}</span>
+                  <span className="font-medium text-green-600 shrink-0">+{rule.score_impact}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export function LeadScoreCard({
   score,
   fitScore = 0,
@@ -53,9 +80,8 @@ export function LeadScoreCard({
 
   const matchedRules = ruleResults?.filter((r) => r.matched) ?? [];
   const grouped = matchedRules.reduce<Record<string, RuleResultDisplay[]>>((acc, rule) => {
-    const cat = rule.category;
-    if (!acc[cat]) acc[cat] = [];
-    acc[cat].push(rule);
+    if (!acc[rule.category]) acc[rule.category] = [];
+    acc[rule.category].push(rule);
     return acc;
   }, {});
 
@@ -77,7 +103,6 @@ export function LeadScoreCard({
           </span>
           <span className="text-muted-foreground text-sm ml-1">/ 100</span>
         </div>
-
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
             <span className="text-muted-foreground">Fit</span>
@@ -92,7 +117,6 @@ export function LeadScoreCard({
             <span className="font-medium">{engagementScore}</span>
           </div>
         </div>
-
         {matchedRules.length > 0 && (
           <div className="mt-4">
             <button
@@ -106,38 +130,9 @@ export function LeadScoreCard({
               )}
               {breakdownOpen ? 'Hide Breakdown' : 'View Breakdown'}
             </button>
-
-            {breakdownOpen && (
-              <div className="mt-3 space-y-3">
-                {(['fit', 'intent', 'engagement'] as const).map((cat) => {
-                  const catRules = grouped[cat];
-                  if (!catRules || catRules.length === 0) return null;
-                  return (
-                    <div key={cat}>
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
-                        {CATEGORY_LABELS[cat]}
-                      </p>
-                      <div className="space-y-1">
-                        {catRules.map((rule) => (
-                          <div
-                            key={rule.rule_id}
-                            className="flex justify-between items-center text-xs"
-                          >
-                            <span className="text-foreground truncate pr-2">{rule.rule_name}</span>
-                            <span className="font-medium text-green-600 shrink-0">
-                              +{rule.score_impact}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+            {breakdownOpen && <ScoreBreakdown grouped={grouped} />}
           </div>
         )}
-
         {onRecalculate && (
           <button
             onClick={onRecalculate}

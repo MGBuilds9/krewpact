@@ -1,7 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import React from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
+import { fireEvent, render, screen } from '@testing-library/react';
+import React from 'react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { DataTable } from '@/components/CRM/DataTable';
 
 type Row = { id: string; name: string; status: string };

@@ -1,8 +1,43 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 import { logger } from '@/lib/logger';
+import { createUserClientSafe } from '@/lib/supabase/server';
+
+type SupabaseClient = Awaited<ReturnType<typeof createUserClientSafe>>['client'];
+
+async function calcIcpAccuracy(supabase: SupabaseClient, monthStart: string): Promise<number> {
+  const { data: wonWithLeads, error: wonLeadsErr } = await supabase
+    .from('opportunities')
+    .select('lead_id')
+    .eq('stage', 'contracted')
+    .gte('updated_at', monthStart)
+    .not('lead_id', 'is', null);
+
+  if (wonLeadsErr) {
+    logger.error('closed-loop: won_with_leads failed', { error: wonLeadsErr.message });
+    return 0;
+  }
+  if (!wonWithLeads || wonWithLeads.length === 0) return 0;
+
+  const leadIds = wonWithLeads
+    .map((r) => (r as Record<string, unknown>).lead_id as string)
+    .filter(Boolean);
+  const { data: matched, error: matchErr } = await supabase
+    .from('icp_lead_matches')
+    .select('lead_id')
+    .in('lead_id', leadIds)
+    .gte('match_score', 50);
+
+  if (matchErr) {
+    logger.error('closed-loop: icp_lead_matches failed', { error: matchErr.message });
+    return 0;
+  }
+  if (!matched) return 0;
+  const matchedSet = new Set(matched.map((r) => (r as Record<string, unknown>).lead_id as string));
+  return Math.round((matchedSet.size / leadIds.length) * 100);
+}
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
   const { userId } = await auth();
@@ -59,44 +94,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
     // 4. ICP accuracy: of won deals this month with a lead_id,
     //    what % had an icp_lead_matches row with match_score >= 50?
-    const { data: wonWithLeads, error: wonLeadsErr } = await supabase
-      .from('opportunities')
-      .select('lead_id')
-      .eq('stage', 'contracted')
-      .gte('updated_at', monthStart)
-      .not('lead_id', 'is', null);
-
-    if (wonLeadsErr) {
-      logger.error('closed-loop stats: won_with_leads query failed', { error: wonLeadsErr.message });
-      return NextResponse.json({ error: wonLeadsErr.message }, { status: 500 });
-    }
-
-    let icpAccuracyPct = 0;
-
-    if (wonWithLeads && wonWithLeads.length > 0) {
-      const leadIds = wonWithLeads
-        .map((r) => (r as Record<string, unknown>).lead_id as string)
-        .filter(Boolean);
-
-      const { data: matchedLeads, error: matchErr } = await supabase
-        .from('icp_lead_matches')
-        .select('lead_id')
-        .in('lead_id', leadIds)
-        .gte('match_score', 50);
-
-      if (matchErr) {
-        logger.error('closed-loop stats: icp_lead_matches query failed', {
-          error: matchErr.message,
-        });
-        // Non-fatal — return 0 accuracy
-      } else if (matchedLeads) {
-        // Deduplicate — a lead may match multiple ICPs, count it once
-        const matchedSet = new Set(
-          matchedLeads.map((r) => (r as Record<string, unknown>).lead_id as string),
-        );
-        icpAccuracyPct = Math.round((matchedSet.size / leadIds.length) * 100);
-      }
-    }
+    const icpAccuracyPct = await calcIcpAccuracy(supabase, monthStart);
 
     return NextResponse.json({
       won_deals_this_month: wonCount ?? 0,

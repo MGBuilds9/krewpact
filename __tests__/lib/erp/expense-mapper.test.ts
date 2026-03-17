@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { mapExpenseToErp, type ExpenseMapInput } from '@/lib/erp/expense-mapper';
+import { describe, expect, it } from 'vitest';
+
+import { type ExpenseMapInput, mapExpenseToErp } from '@/lib/erp/expense-mapper';
 
 function makeInput(overrides: Partial<ExpenseMapInput> = {}): ExpenseMapInput {
   return {

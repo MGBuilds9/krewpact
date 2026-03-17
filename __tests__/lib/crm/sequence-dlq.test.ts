@@ -1,11 +1,12 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { vi as _vitestVi } from 'vitest';
+
 import {
   checkAndMoveToDLQ,
   getDLQEntries,
-  retryDLQEntry,
   MAX_RETRIES,
+  retryDLQEntry,
 } from '@/lib/crm/sequence-dlq';
-import { vi as _vitestVi } from 'vitest';
 
 // ---------------------------------------------------------------------------
 // Helpers

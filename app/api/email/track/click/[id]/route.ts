@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServiceClient } from '@/lib/supabase/server';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { createServiceClient } from '@/lib/supabase/server';
 
 /**
  * Email click tracking redirect.

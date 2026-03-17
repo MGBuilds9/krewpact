@@ -8,23 +8,22 @@
  * - View logging works
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 
 const mockFrom = vi.fn();
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClientSafe: vi
-    .fn()
-    .mockResolvedValue({
-      client: { from: (...args: unknown[]) => mockFrom(...args) },
-      error: null,
-    }),
+  createUserClientSafe: vi.fn().mockResolvedValue({
+    client: { from: (...args: unknown[]) => mockFrom(...args) },
+    error: null,
+  }),
 }));
 
 import { auth } from '@clerk/nextjs/server';
+
+import { makeRequest, mockClerkAuth, mockClerkUnauth } from '@/__tests__/helpers';
 import { GET } from '@/app/api/portal/projects/route';
-import { mockClerkAuth, mockClerkUnauth, makeRequest } from '@/__tests__/helpers';
 
 const mockAuth = vi.mocked(auth);
 

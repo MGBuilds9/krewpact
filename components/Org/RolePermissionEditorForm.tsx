@@ -1,10 +1,12 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
+
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
 import {
   Form,
   FormControl,
@@ -13,10 +15,9 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Loader2 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { useSetRolePermission } from '@/hooks/useOrg';
 import { rolePermissionEditorSchema } from '@/lib/validators/org';
-import { toast } from 'sonner';
 
 type FormValues = z.infer<typeof rolePermissionEditorSchema>;
 

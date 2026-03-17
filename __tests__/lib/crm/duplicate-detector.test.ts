@@ -1,13 +1,14 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
 import {
-  trigramSimilarity,
-  normalizePhone,
-  normalizeEmail,
-  extractDomain,
-  findLeadDuplicates,
-  findContactDuplicates,
-  findAccountDuplicates,
   computeLeadMerge,
+  extractDomain,
+  findAccountDuplicates,
+  findContactDuplicates,
+  findLeadDuplicates,
+  normalizeEmail,
+  normalizePhone,
+  trigramSimilarity,
 } from '@/lib/crm/duplicate-detector';
 
 // =====================================================

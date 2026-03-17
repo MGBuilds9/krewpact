@@ -1,10 +1,12 @@
 'use client';
 
-import { Card, CardContent } from '@/components/ui/card';
-import { BiddingStatusBadge } from './BiddingStatusBadge';
-import { getDeadlineAlert, getSourceLabel } from '@/lib/crm/bidding';
 import { Clock, DollarSign, ExternalLink } from 'lucide-react';
+
+import { Card, CardContent } from '@/components/ui/card';
 import type { BiddingOpportunity } from '@/hooks/useCRM';
+import { getDeadlineAlert, getSourceLabel } from '@/lib/crm/bidding';
+
+import { BiddingStatusBadge } from './BiddingStatusBadge';
 
 interface BiddingCardProps {
   bid: BiddingOpportunity;
@@ -15,10 +17,7 @@ export function BiddingCard({ bid, onClick }: BiddingCardProps) {
   const deadlineAlert = getDeadlineAlert(bid.deadline);
 
   return (
-    <Card
-      className="cursor-pointer hover:shadow-md transition-shadow"
-      onClick={onClick}
-    >
+    <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
       <CardContent className="p-4 space-y-3">
         <div className="flex items-start justify-between gap-2">
           <h3 className="font-semibold text-sm line-clamp-2">{bid.title}</h3>
@@ -26,9 +25,7 @@ export function BiddingCard({ bid, onClick }: BiddingCardProps) {
         </div>
 
         <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-          <span className="inline-flex items-center gap-1">
-            {getSourceLabel(bid.source)}
-          </span>
+          <span className="inline-flex items-center gap-1">{getSourceLabel(bid.source)}</span>
 
           {bid.estimated_value != null && (
             <span className="inline-flex items-center gap-1">

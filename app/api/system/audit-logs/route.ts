@@ -1,19 +1,23 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { auditLogQuerySchema } from '@/lib/validators/system';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { createUserClientSafe } from '@/lib/supabase/server';
+import { auditLogQuerySchema } from '@/lib/validators/system';
 
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+type SupabaseClient = Awaited<ReturnType<typeof createUserClientSafe>>['client'];
+type AuditQueryParams = {
+  entity_type?: string;
+  entity_id?: string;
+  actor_user_id?: string;
+  action?: string;
+  from_date?: string;
+  to_date?: string;
+  limit?: number;
+  offset?: number;
+};
 
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-  const params = Object.fromEntries(req.nextUrl.searchParams);
-  const parsed = auditLogQuerySchema.safeParse(params);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-
+function buildAuditQuery(supabase: SupabaseClient, params: AuditQueryParams) {
   const {
     entity_type,
     entity_id,
@@ -23,19 +27,16 @@ export async function GET(req: NextRequest) {
     to_date,
     limit = 50,
     offset = 0,
-  } = parsed.data;
-  const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
+  } = params;
 
   let query = supabase
     .from('audit_logs')
-    /* excluded from list: old_data, new_data, context */
     .select(
       'id, entity_type, entity_id, action, actor_user_id, actor_portal_id, ip_address, user_agent, created_at',
       { count: 'exact' },
     )
     .order('created_at', { ascending: false })
-    .range(offset, offset + (limit ?? 50) - 1);
+    .range(offset, offset + limit - 1);
 
   if (entity_type) query = query.eq('entity_type', entity_type);
   if (entity_id) query = query.eq('entity_id', entity_id);
@@ -44,9 +45,27 @@ export async function GET(req: NextRequest) {
   if (from_date) query = query.gte('created_at', from_date);
   if (to_date) query = query.lte('created_at', to_date);
 
+  return { query, limit, offset };
+}
+
+export async function GET(req: NextRequest) {
+  const { userId } = await auth();
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
+
+  const params = Object.fromEntries(req.nextUrl.searchParams);
+  const parsed = auditLogQuerySchema.safeParse(params);
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
+
+  const { query, limit, offset } = buildAuditQuery(supabase, parsed.data);
   const { data, error, count } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   const total = count ?? 0;
-  return NextResponse.json({ data, total, hasMore: offset + (limit ?? 50) < total });
+  return NextResponse.json({ data, total, hasMore: offset + limit < total });
 }

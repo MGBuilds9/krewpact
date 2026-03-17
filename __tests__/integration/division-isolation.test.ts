@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock Clerk auth
 vi.mock('@clerk/nextjs/server', () => ({
@@ -11,25 +11,23 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-
-// CRM routes
-import { GET as leadsGET } from '@/app/api/crm/leads/route';
-import { GET as accountsGET, POST as accountsPOST } from '@/app/api/crm/accounts/route';
-
-// Estimate routes
-import { GET as estimatesGET } from '@/app/api/estimates/route';
 
 import {
-  mockSupabaseClient,
-  mockClerkAuth,
-  makeRequest,
-  makeJsonRequest,
-  makeLead,
   makeAccount,
   makeEstimate,
+  makeJsonRequest,
+  makeLead,
+  makeRequest,
+  mockClerkAuth,
+  mockSupabaseClient,
   resetFixtureCounter,
 } from '@/__tests__/helpers';
+import { GET as accountsGET, POST as accountsPOST } from '@/app/api/crm/accounts/route';
+// CRM routes
+import { GET as leadsGET } from '@/app/api/crm/leads/route';
+// Estimate routes
+import { GET as estimatesGET } from '@/app/api/estimates/route';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);

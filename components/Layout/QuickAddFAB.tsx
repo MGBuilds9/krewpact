@@ -1,6 +1,8 @@
 'use client';
 
-import { Plus, FileText, Briefcase, DollarSign, ClipboardList } from 'lucide-react';
+import { Briefcase, ClipboardList, DollarSign, FileText, Plus } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -8,9 +10,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { usePathname } from 'next/navigation';
-import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useOrgRouter } from '@/hooks/useOrgRouter';
 
 export function QuickAddFAB() {
   const { push: orgPush } = useOrgRouter();

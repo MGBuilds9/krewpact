@@ -1,8 +1,9 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe, createUserClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
+
+import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { createUserClient, createUserClientSafe } from '@/lib/supabase/server';
 
 async function resolvePortalAccess(
   supabase: Awaited<ReturnType<typeof createUserClient>>,
@@ -119,15 +120,25 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // Fire-and-forget notification
+  // Fire-and-forget notification to project managers for this project
   try {
-    await supabase.from('notifications').insert({
-      user_id: userId,
-      type: 'portal_message',
-      title: 'New portal message',
-      body: `Message on project: ${typeof subject === 'string' ? subject : '(no subject)'}`,
-      data: { project_id: projectId, message_id: data.id },
-    });
+    const { data: members } = await supabase
+      .from('project_members')
+      .select('user_id')
+      .eq('project_id', projectId)
+      .in('member_role', ['project_manager', 'project_coordinator']);
+
+    if (members && members.length > 0) {
+      await supabase.from('notifications').insert(
+        members.map((m) => ({
+          user_id: m.user_id,
+          type: 'portal_message',
+          title: 'New portal message',
+          body: `Message on project: ${typeof subject === 'string' ? subject : '(no subject)'}`,
+          data: { project_id: projectId, message_id: data.id },
+        })),
+      );
+    }
   } catch {
     /* fire-and-forget */
   }

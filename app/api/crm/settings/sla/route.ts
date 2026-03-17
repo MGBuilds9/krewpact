@@ -1,10 +1,11 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { getOrgIdFromAuth } from '@/lib/api/org';
-import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { getOrgIdFromAuth } from '@/lib/api/org';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 import { logger } from '@/lib/logger';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const stageSchema = z.object({
   stage: z.string().min(1),

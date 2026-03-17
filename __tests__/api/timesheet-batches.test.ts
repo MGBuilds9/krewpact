@@ -4,7 +4,7 @@
  * /api/timesheet-batches/[batchId]/approve (POST).
  * Table: timesheet_batches
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
@@ -14,18 +14,19 @@ vi.mock('@/lib/api/rate-limit', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { GET as GET_LIST, POST as POST_CREATE } from '@/app/api/timesheet-batches/route';
-import { GET as GET_DETAIL, DELETE } from '@/app/api/timesheet-batches/[batchId]/route';
-import { POST as POST_APPROVE } from '@/app/api/timesheet-batches/[batchId]/approve/route';
+
 import {
-  mockSupabaseClient,
+  makeJsonRequest,
+  makeRequest,
   mockClerkAuth,
   mockClerkUnauth,
-  makeRequest,
-  makeJsonRequest,
+  mockSupabaseClient,
   TEST_IDS,
 } from '@/__tests__/helpers';
+import { POST as POST_APPROVE } from '@/app/api/timesheet-batches/[batchId]/approve/route';
+import { DELETE, GET as GET_DETAIL } from '@/app/api/timesheet-batches/[batchId]/route';
+import { GET as GET_LIST, POST as POST_CREATE } from '@/app/api/timesheet-batches/route';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);

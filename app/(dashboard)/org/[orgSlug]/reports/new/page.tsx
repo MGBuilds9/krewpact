@@ -1,12 +1,13 @@
 'use client';
 
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useState } from 'react';
-import { useOrgRouter } from '@/hooks/useOrgRouter';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from 'sonner';
+
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -14,16 +15,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ArrowLeft, Loader2 } from 'lucide-react';
-import { useCreateReport } from '@/hooks/useReports';
-import { useProjects } from '@/hooks/useProjects';
+import { Textarea } from '@/components/ui/textarea';
 import { useDivision } from '@/contexts/DivisionContext';
-import { toast } from 'sonner';
+import { useOrgRouter } from '@/hooks/useOrgRouter';
+import { useProjects } from '@/hooks/useProjects';
+import { useCreateReport } from '@/hooks/useReports';
+
+function FormField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <Label>{label}</Label>
+      {children}
+    </div>
+  );
+}
 
 export default function NewReportPage() {
   const { push: orgPush } = useOrgRouter();
   const { activeDivision } = useDivision();
-  const { data: projects } = useProjects({ divisionId: activeDivision?.id });
+  const divId = activeDivision ? activeDivision.id : undefined;
+  const { data: projects } = useProjects({ divisionId: divId });
   const createReport = useCreateReport();
 
   const [logDate, setLogDate] = useState(new Date().toISOString().split('T')[0]);
@@ -34,7 +45,7 @@ export default function NewReportPage() {
   const [safetyNotes, setSafetyNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async () => {
+  async function handleSubmit() {
     if (!projectId) {
       toast.error('Please select a project');
       return;
@@ -56,7 +67,7 @@ export default function NewReportPage() {
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
@@ -71,71 +82,58 @@ export default function NewReportPage() {
         </Button>
         <h1 className="text-3xl font-bold tracking-tight">New Daily Log</h1>
       </div>
-
       <Card>
         <CardHeader>
           <CardTitle>Daily Log Details</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <Label>Project *</Label>
+          <FormField label="Project *">
             <Select value={projectId} onValueChange={setProjectId}>
               <SelectTrigger>
                 <SelectValue placeholder="Select project" />
               </SelectTrigger>
               <SelectContent>
-                {projects?.map((p) => (
+                {(projects || []).map((p) => (
                   <SelectItem key={p.id} value={p.id}>
                     {p.project_name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-          </div>
-
-          <div>
-            <Label>Log Date</Label>
+          </FormField>
+          <FormField label="Log Date">
             <Input type="date" value={logDate} onChange={(e) => setLogDate(e.target.value)} />
-          </div>
-
-          <div>
-            <Label>Work Summary</Label>
+          </FormField>
+          <FormField label="Work Summary">
             <Textarea
               placeholder="Describe the work performed today..."
               className="min-h-[100px]"
               value={workSummary}
               onChange={(e) => setWorkSummary(e.target.value)}
             />
-          </div>
-
-          <div>
-            <Label>Crew Count</Label>
+          </FormField>
+          <FormField label="Crew Count">
             <Input
               type="number"
               placeholder="Number of workers on site"
               value={crewCount}
               onChange={(e) => setCrewCount(e.target.value)}
             />
-          </div>
-
-          <div>
-            <Label>Delays</Label>
+          </FormField>
+          <FormField label="Delays">
             <Textarea
               placeholder="Any delays or issues encountered..."
               value={delays}
               onChange={(e) => setDelays(e.target.value)}
             />
-          </div>
-
-          <div>
-            <Label>Safety Notes</Label>
+          </FormField>
+          <FormField label="Safety Notes">
             <Textarea
               placeholder="Safety observations or incidents..."
               value={safetyNotes}
               onChange={(e) => setSafetyNotes(e.target.value)}
             />
-          </div>
-
+          </FormField>
           <div className="flex justify-end gap-3 pt-4">
             <Button variant="outline" onClick={() => orgPush('/reports')}>
               Cancel

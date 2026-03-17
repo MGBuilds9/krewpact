@@ -1,8 +1,9 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { submittalUpdateSchema } from '@/lib/validators/field-ops';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { createUserClientSafe } from '@/lib/supabase/server';
+import { submittalUpdateSchema } from '@/lib/validators/field-ops';
 
 type RouteContext = { params: Promise<{ id: string; subId: string }> };
 

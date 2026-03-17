@@ -36,6 +36,76 @@ export interface ScoringResult {
   rule_results: RuleResult[];
 }
 
+function toStr(fieldValue: unknown): string | null {
+  if (fieldValue === null || fieldValue === undefined) return null;
+  return String(fieldValue).toLowerCase();
+}
+
+function toNum(fieldValue: unknown, ruleValue: string): { num: number; ruleNum: number } | null {
+  if (fieldValue === null || fieldValue === undefined) return null;
+  const num = Number(fieldValue);
+  const ruleNum = Number(ruleValue);
+  if (isNaN(num) || isNaN(ruleNum)) return null;
+  return { num, ruleNum };
+}
+
+type OperatorFn = (fieldValue: unknown, ruleValue: string) => boolean;
+
+const OPERATOR_MAP: Record<string, OperatorFn> = {
+  equals: (f, r) => {
+    const s = toStr(f);
+    return s !== null && s === r.toLowerCase();
+  },
+  not_equals: (f, r) => {
+    const s = toStr(f);
+    return s === null || s !== r.toLowerCase();
+  },
+  contains: (f, r) => {
+    const s = toStr(f);
+    return s !== null && s.includes(r.toLowerCase());
+  },
+  not_contains: (f, r) => {
+    const s = toStr(f);
+    return s === null || !s.includes(r.toLowerCase());
+  },
+  greater_than: (f, r) => {
+    const n = toNum(f, r);
+    return n !== null && n.num > n.ruleNum;
+  },
+  less_than: (f, r) => {
+    const n = toNum(f, r);
+    return n !== null && n.num < n.ruleNum;
+  },
+  greater_than_or_equal: (f, r) => {
+    const n = toNum(f, r);
+    return n !== null && n.num >= n.ruleNum;
+  },
+  less_than_or_equal: (f, r) => {
+    const n = toNum(f, r);
+    return n !== null && n.num <= n.ruleNum;
+  },
+  exists: (f) => f !== null && f !== undefined && f !== '',
+  not_exists: (f) => f === null || f === undefined || f === '',
+  starts_with: (f, r) => {
+    const s = toStr(f);
+    return s !== null && s.startsWith(r.toLowerCase());
+  },
+  ends_with: (f, r) => {
+    const s = toStr(f);
+    return s !== null && s.endsWith(r.toLowerCase());
+  },
+  in_set: (f, r) => {
+    if (f === null || f === undefined || f === '') return false;
+    const strField = String(f).toLowerCase().trim();
+    return r.split('|').some((item) => item.toLowerCase().trim() === strField);
+  },
+  contains_any: (f, r) => {
+    if (f === null || f === undefined || f === '') return false;
+    const strField = String(f).toLowerCase();
+    return r.split('|').some((item) => strField.includes(item.toLowerCase().trim()));
+  },
+};
+
 /**
  * Evaluate a single operator against field value.
  * All comparisons are case-insensitive for string values.
@@ -45,102 +115,8 @@ export function evaluateOperator(
   operator: string,
   ruleValue: string,
 ): boolean {
-  switch (operator) {
-    case 'equals': {
-      if (fieldValue === null || fieldValue === undefined) return false;
-      const strField = String(fieldValue).toLowerCase();
-      return strField === ruleValue.toLowerCase();
-    }
-
-    case 'not_equals': {
-      if (fieldValue === null || fieldValue === undefined) return true;
-      const strField = String(fieldValue).toLowerCase();
-      return strField !== ruleValue.toLowerCase();
-    }
-
-    case 'contains': {
-      if (fieldValue === null || fieldValue === undefined) return false;
-      const strField = String(fieldValue).toLowerCase();
-      return strField.includes(ruleValue.toLowerCase());
-    }
-
-    case 'not_contains': {
-      if (fieldValue === null || fieldValue === undefined) return true;
-      const strField = String(fieldValue).toLowerCase();
-      return !strField.includes(ruleValue.toLowerCase());
-    }
-
-    case 'greater_than': {
-      if (fieldValue === null || fieldValue === undefined) return false;
-      const num = Number(fieldValue);
-      const ruleNum = Number(ruleValue);
-      if (isNaN(num) || isNaN(ruleNum)) return false;
-      return num > ruleNum;
-    }
-
-    case 'less_than': {
-      if (fieldValue === null || fieldValue === undefined) return false;
-      const num = Number(fieldValue);
-      const ruleNum = Number(ruleValue);
-      if (isNaN(num) || isNaN(ruleNum)) return false;
-      return num < ruleNum;
-    }
-
-    case 'greater_than_or_equal': {
-      if (fieldValue === null || fieldValue === undefined) return false;
-      const num = Number(fieldValue);
-      const ruleNum = Number(ruleValue);
-      if (isNaN(num) || isNaN(ruleNum)) return false;
-      return num >= ruleNum;
-    }
-
-    case 'less_than_or_equal': {
-      if (fieldValue === null || fieldValue === undefined) return false;
-      const num = Number(fieldValue);
-      const ruleNum = Number(ruleValue);
-      if (isNaN(num) || isNaN(ruleNum)) return false;
-      return num <= ruleNum;
-    }
-
-    case 'exists': {
-      return fieldValue !== null && fieldValue !== undefined && fieldValue !== '';
-    }
-
-    case 'not_exists': {
-      return fieldValue === null || fieldValue === undefined || fieldValue === '';
-    }
-
-    case 'starts_with': {
-      if (fieldValue === null || fieldValue === undefined) return false;
-      const strField = String(fieldValue).toLowerCase();
-      return strField.startsWith(ruleValue.toLowerCase());
-    }
-
-    case 'ends_with': {
-      if (fieldValue === null || fieldValue === undefined) return false;
-      const strField = String(fieldValue).toLowerCase();
-      return strField.endsWith(ruleValue.toLowerCase());
-    }
-
-    case 'in_set': {
-      if (fieldValue === null || fieldValue === undefined || fieldValue === '') return false;
-      const strField = String(fieldValue).toLowerCase().trim();
-      return ruleValue
-        .split('|')
-        .some((item) => item.toLowerCase().trim() === strField);
-    }
-
-    case 'contains_any': {
-      if (fieldValue === null || fieldValue === undefined || fieldValue === '') return false;
-      const strField = String(fieldValue).toLowerCase();
-      return ruleValue
-        .split('|')
-        .some((item) => strField.includes(item.toLowerCase().trim()));
-    }
-
-    default:
-      return false;
-  }
+  const fn = OPERATOR_MAP[operator];
+  return fn ? fn(fieldValue, ruleValue) : false;
 }
 
 /**

@@ -1,10 +1,11 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { invoiceSnapshotSchema } from '@/lib/validators/finance';
+
+import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { createUserClientSafe } from '@/lib/supabase/server';
+import { invoiceSnapshotSchema } from '@/lib/validators/finance';
 
 const querySchema = z.object({
   project_id: z.string().uuid().optional(),

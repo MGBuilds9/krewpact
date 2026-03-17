@@ -1,6 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 process.env.AI_ENABLED = 'true';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
@@ -14,12 +13,14 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
+
 import { POST } from '@/app/api/ai/draft-email/route';
 import { draftEmail } from '@/lib/ai/agents/email-drafter';
+import { createUserClientSafe } from '@/lib/supabase/server';
+
 import { mockClerkAuth, mockClerkUnauth } from '../../helpers/mock-auth';
-import { mockSupabaseClient } from '../../helpers/mock-supabase';
 import { makeJsonRequest } from '../../helpers/mock-request';
+import { mockSupabaseClient } from '../../helpers/mock-supabase';
 
 const mockAuth = vi.mocked(auth);
 const mockDraftEmail = vi.mocked(draftEmail);

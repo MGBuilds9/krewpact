@@ -1,10 +1,10 @@
-/* eslint-disable no-console */
-import { createClient } from '@supabase/supabase-js';
-import OpenAI from 'openai';
-import fs from 'fs/promises';
-import path from 'path';
-import matter from 'gray-matter';
 import 'dotenv/config';
+
+import { createClient } from '@supabase/supabase-js';
+import fs from 'fs/promises';
+import matter from 'gray-matter';
+import OpenAI from 'openai';
+import path from 'path';
 
 // Configuration
 const BOOK_REL_PATH = '../MDM-Book-Internal';

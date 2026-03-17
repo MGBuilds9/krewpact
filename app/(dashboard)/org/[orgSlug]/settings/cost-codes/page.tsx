@@ -1,11 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { useCostCodes, useCreateCostCode } from '@/hooks/useProcurement';
+
 import { CostCodeForm } from '@/components/Procurement/CostCodeForm';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Dialog,
   DialogContent,
@@ -13,6 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import {
   Table,
   TableBody,
@@ -22,6 +22,32 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { useCostCodes, useCreateCostCode } from '@/hooks/useProcurement';
+
+type CostCode = {
+  id: string;
+  cost_code: string;
+  cost_code_name: string;
+  division_id: string;
+  is_active: boolean;
+};
+
+function CodeRow({ code }: { code: CostCode }) {
+  return (
+    <TableRow key={code.id}>
+      <TableCell className="font-mono text-sm">{code.cost_code}</TableCell>
+      <TableCell>{code.cost_code_name}</TableCell>
+      <TableCell className="font-mono text-xs text-muted-foreground">
+        {code.division_id.slice(0, 8)}...
+      </TableCell>
+      <TableCell>
+        <Badge variant={code.is_active ? 'default' : 'outline'}>
+          {code.is_active ? 'Active' : 'Inactive'}
+        </Badge>
+      </TableCell>
+    </TableRow>
+  );
+}
 
 export default function CostCodesPage() {
   const [open, setOpen] = useState(false);
@@ -39,7 +65,8 @@ export default function CostCodesPage() {
   if (isLoading) return <div className="p-6 text-muted-foreground">Loading cost codes...</div>;
   if (error) return <div className="p-6 text-destructive">Failed to load cost codes.</div>;
 
-  const codes = (data?.data ?? []).filter(
+  const rawCodes = data ? data.data || [] : [];
+  const codes = rawCodes.filter(
     (c) =>
       !debouncedSearch ||
       c.cost_code.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
@@ -52,7 +79,7 @@ export default function CostCodesPage() {
         <div>
           <h1 className="text-2xl font-semibold">Cost Code Dictionary</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            {data?.total ?? 0} cost codes across all divisions
+            {data ? data.total || 0 : 0} cost codes across all divisions
           </p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
@@ -95,20 +122,7 @@ export default function CostCodesPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              codes.map((code) => (
-                <TableRow key={code.id}>
-                  <TableCell className="font-mono text-sm">{code.cost_code}</TableCell>
-                  <TableCell>{code.cost_code_name}</TableCell>
-                  <TableCell className="font-mono text-xs text-muted-foreground">
-                    {code.division_id.slice(0, 8)}...
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={code.is_active ? 'default' : 'outline'}>
-                      {code.is_active ? 'Active' : 'Inactive'}
-                    </Badge>
-                  </TableCell>
-                </TableRow>
-              ))
+              codes.map((code) => <CodeRow key={code.id} code={code as CostCode} />)
             )}
           </TableBody>
         </Table>

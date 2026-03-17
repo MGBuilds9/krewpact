@@ -1,20 +1,21 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+
+import { Button } from '@/components/ui/button';
 import {
   Form,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormControl,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
 import { useUpdateContractTerms } from '@/hooks/useContracting';
 
 const formSchema = z.object({
@@ -37,16 +38,10 @@ export function ContractAmendmentForm({
   onCancel,
 }: ContractAmendmentFormProps) {
   const updateContract = useUpdateContractTerms();
-
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      legal_text_version: '',
-      terms_payload: '',
-      amendment_reason: '',
-    },
+    defaultValues: { legal_text_version: '', terms_payload: '', amendment_reason: '' },
   });
-
   const isPending = updateContract.isPending;
 
   function onSubmit(values: FormValues) {
@@ -57,7 +52,6 @@ export function ContractAmendmentForm({
       form.setError('terms_payload', { message: 'Must be valid JSON' });
       return;
     }
-
     updateContract.mutate(
       {
         id: contractId,
@@ -90,7 +84,6 @@ export function ContractAmendmentForm({
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="terms_payload"
@@ -109,7 +102,6 @@ export function ContractAmendmentForm({
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="amendment_reason"
@@ -127,7 +119,6 @@ export function ContractAmendmentForm({
             </FormItem>
           )}
         />
-
         <div className="flex gap-2 justify-end pt-2">
           {onCancel && (
             <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>

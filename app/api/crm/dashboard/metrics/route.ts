@@ -1,15 +1,16 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import {
-  calculatePipelineMetrics,
-  calculateConversionMetrics,
-  calculateVelocityMetrics,
-  calculateSourceMetrics,
-  calculateForecastMetrics,
-} from '@/lib/crm/metrics';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import {
+  calculateConversionMetrics,
+  calculateForecastMetrics,
+  calculatePipelineMetrics,
+  calculateSourceMetrics,
+  calculateVelocityMetrics,
+} from '@/lib/crm/metrics';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const querySchema = z.object({
   division_id: z.string().min(1).optional(),
@@ -44,85 +45,79 @@ function getPeriodStart(period: string): string {
   }
 }
 
+function buildOwnership(
+  leads: Array<{
+    id: string;
+    company_name: string;
+    status: string;
+    source_channel: string;
+    created_at: string;
+  }>,
+) {
+  const openLeads = leads.filter((l) => !['won', 'lost'].includes(l.status));
+  const convertedLeads = leads.filter((l) => l.status === 'won');
+  const recentlyConverted = convertedLeads
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, 5)
+    .map((l) => ({
+      id: l.id,
+      company_name: l.company_name,
+      source_channel: l.source_channel,
+      created_at: l.created_at,
+    }));
+
+  return {
+    openLeadCount: openLeads.length,
+    convertedLeadCount: convertedLeads.length,
+    recentlyConverted,
+  };
+}
+
 export async function GET(req: NextRequest) {
   const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
   if (!rl.success) return rateLimitResponse(rl);
 
   const params = Object.fromEntries(req.nextUrl.searchParams);
   const parsed = querySchema.safeParse(params);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
   const { division_id, period = 'month' } = parsed.data;
   const periodStart = getPeriodStart(period);
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
-  // Fetch opportunities (all for pipeline, filtered by period for velocity)
   let oppQuery = supabase
     .from('opportunities')
     .select(
       'id, opportunity_name, stage, estimated_revenue, probability_pct, target_close_date, account_id, contact_id, lead_id, division_id, owner_user_id, notes, created_at, updated_at, opportunity_stage_history(*)',
     );
+  if (division_id) oppQuery = oppQuery.eq('division_id', division_id);
 
-  if (division_id) {
-    oppQuery = oppQuery.eq('division_id', division_id);
-  }
-
-  const { data: opportunities, error: oppError } = await oppQuery;
-
-  if (oppError) {
-    return NextResponse.json({ error: oppError.message }, { status: 500 });
-  }
-
-  // Fetch leads filtered by period
   let leadQuery = supabase
     .from('leads')
     .select(
       'id, company_name, status, lead_score, fit_score, intent_score, engagement_score, source_channel, utm_campaign, source_detail, assigned_to, division_id, created_at, updated_at, city, province, industry, next_followup_at, last_touch_at, is_qualified, domain, enrichment_status, deleted_at',
     )
     .gte('created_at', periodStart);
+  if (division_id) leadQuery = leadQuery.eq('division_id', division_id);
 
-  if (division_id) {
-    leadQuery = leadQuery.eq('division_id', division_id);
-  }
+  const [{ data: opportunities, error: oppError }, { data: leads, error: leadError }] =
+    await Promise.all([oppQuery, leadQuery]);
 
-  const { data: leads, error: leadError } = await leadQuery;
+  if (oppError) return NextResponse.json({ error: oppError.message }, { status: 500 });
+  if (leadError) return NextResponse.json({ error: leadError.message }, { status: 500 });
 
-  if (leadError) {
-    return NextResponse.json({ error: leadError.message }, { status: 500 });
-  }
-
-  const pipeline = calculatePipelineMetrics(opportunities ?? []);
-  const conversion = calculateConversionMetrics(leads ?? []);
-  const velocity = calculateVelocityMetrics(opportunities ?? []);
-  const sources = calculateSourceMetrics(leads ?? []);
-  const forecast = calculateForecastMetrics(opportunities ?? []);
-
-  // Compute "My Leads" vs "My Accounts" summary for dashboard split
-  const allLeads = leads ?? [];
-  const openLeads = allLeads.filter((l) => !['won', 'lost'].includes(l.status));
-  const convertedLeads = allLeads.filter((l) => l.status === 'won');
-  const recentlyConverted = convertedLeads
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    .slice(0, 5);
-
-  const ownership = {
-    openLeadCount: openLeads.length,
-    convertedLeadCount: convertedLeads.length,
-    recentlyConverted: recentlyConverted.map((l) => ({
-      id: l.id,
-      company_name: l.company_name,
-      source_channel: l.source_channel,
-      created_at: l.created_at,
-    })),
-  };
+  const opps = opportunities ?? [];
+  const leadList = leads ?? [];
+  const pipeline = calculatePipelineMetrics(opps);
+  const conversion = calculateConversionMetrics(leadList);
+  const velocity = calculateVelocityMetrics(opps);
+  const sources = calculateSourceMetrics(leadList);
+  const forecast = calculateForecastMetrics(opps);
+  const ownership = buildOwnership(leadList);
 
   return NextResponse.json({ pipeline, conversion, velocity, sources, forecast, ownership });
 }

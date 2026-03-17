@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock Clerk auth
 vi.mock('@clerk/nextjs/server', () => ({
@@ -13,10 +13,11 @@ vi.mock('@/lib/microsoft/graph', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { getMicrosoftToken, graphFetch, buildGraphUrl } from '@/lib/microsoft/graph';
-import { GET } from '@/app/api/email/messages/route';
+
+import { makeRequest, mockClerkAuth, mockClerkUnauth } from '@/__tests__/helpers';
 import { GET as GET_BY_ID } from '@/app/api/email/messages/[id]/route';
-import { mockClerkAuth, mockClerkUnauth, makeRequest } from '@/__tests__/helpers';
+import { GET } from '@/app/api/email/messages/route';
+import { buildGraphUrl, getMicrosoftToken, graphFetch } from '@/lib/microsoft/graph';
 import type { GraphListResponse, GraphMessage } from '@/lib/microsoft/types';
 
 const mockAuth = vi.mocked(auth);

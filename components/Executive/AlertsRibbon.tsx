@@ -1,9 +1,10 @@
 'use client';
 
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
 import { AlertTriangle, CheckCircle } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
 export interface Alert {
@@ -62,11 +63,11 @@ export function AlertsRibbon({ alerts, isLoading }: AlertsRibbonProps) {
 
   return (
     <div className="flex gap-3 overflow-x-auto pb-1">
-      {alerts.map((alert, idx) => {
+      {alerts.map((alert) => {
         const config = severityConfig[alert.severity];
         return (
           <Card
-            key={idx}
+            key={`${alert.type}-${alert.created_at}`}
             className={cn(
               'rounded-2xl border-0 shadow-sm bg-white dark:bg-card flex-shrink-0 w-72 border-l-4',
               config.border,

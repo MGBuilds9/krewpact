@@ -1,23 +1,24 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+
+import { Button } from '@/components/ui/button';
 import {
   Form,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormControl,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { useCreateEstimateAlternate, useUpdateEstimateAlternate } from '@/hooks/useEstimating';
+import { Textarea } from '@/components/ui/textarea';
 import type { EstimateAlternate } from '@/hooks/useEstimating';
-import { Loader2 } from 'lucide-react';
+import { useCreateEstimateAlternate, useUpdateEstimateAlternate } from '@/hooks/useEstimating';
 
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200),
@@ -39,7 +40,7 @@ export function AlternateForm({ estimateId, alternate, onSuccess, onCancel }: Al
   const createAlternate = useCreateEstimateAlternate();
   const updateAlternate = useUpdateEstimateAlternate();
   const isEditing = !!alternate;
-
+  const isPending = createAlternate.isPending || updateAlternate.isPending;
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -50,42 +51,28 @@ export function AlternateForm({ estimateId, alternate, onSuccess, onCancel }: Al
     },
   });
 
-  const isPending = createAlternate.isPending || updateAlternate.isPending;
-
   function onSubmit(values: FormValues) {
     const parsedAmount = parseFloat(values.amount);
     if (isNaN(parsedAmount)) {
       form.setError('amount', { message: 'Must be a valid number' });
       return;
     }
-
     const payload = {
       title: values.title,
       description: values.description || undefined,
       amount: parsedAmount,
       selected: values.selected,
     };
-
+    const cb = {
+      onSuccess: () => {
+        form.reset();
+        onSuccess?.();
+      },
+    };
     if (isEditing) {
-      updateAlternate.mutate(
-        { estimateId, alternateId: alternate.id, ...payload },
-        {
-          onSuccess: () => {
-            form.reset();
-            onSuccess?.();
-          },
-        },
-      );
+      updateAlternate.mutate({ estimateId, alternateId: alternate.id, ...payload }, cb);
     } else {
-      createAlternate.mutate(
-        { estimateId, ...payload },
-        {
-          onSuccess: () => {
-            form.reset();
-            onSuccess?.();
-          },
-        },
-      );
+      createAlternate.mutate({ estimateId, ...payload }, cb);
     }
   }
 
@@ -105,7 +92,6 @@ export function AlternateForm({ estimateId, alternate, onSuccess, onCancel }: Al
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="description"
@@ -119,7 +105,6 @@ export function AlternateForm({ estimateId, alternate, onSuccess, onCancel }: Al
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="amount"
@@ -133,7 +118,6 @@ export function AlternateForm({ estimateId, alternate, onSuccess, onCancel }: Al
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="selected"
@@ -147,7 +131,6 @@ export function AlternateForm({ estimateId, alternate, onSuccess, onCancel }: Al
             </FormItem>
           )}
         />
-
         <div className="flex gap-2 justify-end pt-2">
           {onCancel && (
             <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>

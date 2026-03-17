@@ -1,30 +1,59 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { apiFetch } from '@/lib/api-client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import ReactMarkdown from 'react-markdown';
 import { Send } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { apiFetch } from '@/lib/api-client';
 
 interface ChatSource {
   doc_id: string;
   title: string;
   similarity: number;
 }
-
 interface Message {
+  id?: string;
   role: string;
   content: string;
   sources?: ChatSource[];
 }
-
 interface ChatResponse {
   sessionId: string;
   message: Message;
+}
+
+function AssistantMessage({ msg }: { msg: Message }) {
+  return (
+    <Card className="max-w-[85%] shadow-sm">
+      <CardContent className="p-4 space-y-3">
+        <div className="prose prose-sm dark:prose-invert max-w-none">
+          <ReactMarkdown>{msg.content}</ReactMarkdown>
+        </div>
+        {msg.sources && msg.sources.length > 0 && (
+          <div className="border-t pt-3 space-y-1">
+            <p className="text-xs text-muted-foreground font-medium">Sources</p>
+            <div className="flex flex-wrap gap-1.5">
+              {msg.sources.map((source) => (
+                <Badge
+                  key={source.doc_id}
+                  variant="outline"
+                  className="text-xs font-normal"
+                  title={`Similarity: ${(source.similarity * 100).toFixed(0)}%`}
+                >
+                  {source.title}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
 
 export function ChatInterface() {
@@ -41,27 +70,20 @@ export function ChatInterface() {
   async function handleSend() {
     const trimmed = input.trim();
     if (!trimmed || isLoading) return;
-
-    const userMessage: Message = { role: 'user', content: trimmed };
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages((prev) => [...prev, { id: `u-${Date.now()}`, role: 'user', content: trimmed }]);
     setInput('');
     setIsLoading(true);
-
     try {
       const data = await apiFetch<ChatResponse>('/api/executive/knowledge/chat', {
         method: 'POST',
         body: { message: trimmed, sessionId },
       });
-
       setSessionId(data.sessionId);
       setMessages((prev) => [...prev, data.message]);
     } catch {
       setMessages((prev) => [
         ...prev,
-        {
-          role: 'assistant',
-          content: 'Sorry, something went wrong. Please try again.',
-        },
+        { role: 'assistant', content: 'Sorry, something went wrong. Please try again.' },
       ]);
     } finally {
       setIsLoading(false);
@@ -77,15 +99,12 @@ export function ChatInterface() {
 
   return (
     <div className="flex flex-col h-full max-w-4xl mx-auto">
-      {/* Header */}
       <div className="flex items-center gap-2 mb-4">
         <h1 className="text-xl font-semibold">AI Knowledge Chat</h1>
         <Badge variant="secondary" className="text-xs">
           GPT-4o-mini
         </Badge>
       </div>
-
-      {/* Messages area */}
       <div className="flex-1 overflow-y-auto space-y-4 pr-1 pb-4">
         {messages.length === 0 && !isLoading && (
           <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
@@ -95,10 +114,9 @@ export function ChatInterface() {
             </div>
           </div>
         )}
-
         {messages.map((msg, idx) => (
           <div
-            key={idx}
+            key={msg.id ?? `msg-${idx}`}
             className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             {msg.role === 'user' ? (
@@ -106,34 +124,10 @@ export function ChatInterface() {
                 {msg.content}
               </div>
             ) : (
-              <Card className="max-w-[85%] shadow-sm">
-                <CardContent className="p-4 space-y-3">
-                  <div className="prose prose-sm dark:prose-invert max-w-none">
-                    <ReactMarkdown>{msg.content}</ReactMarkdown>
-                  </div>
-                  {msg.sources && msg.sources.length > 0 && (
-                    <div className="border-t pt-3 space-y-1">
-                      <p className="text-xs text-muted-foreground font-medium">Sources</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {msg.sources.map((source) => (
-                          <Badge
-                            key={source.doc_id}
-                            variant="outline"
-                            className="text-xs font-normal"
-                            title={`Similarity: ${(source.similarity * 100).toFixed(0)}%`}
-                          >
-                            {source.title}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              <AssistantMessage msg={msg} />
             )}
           </div>
         ))}
-
         {isLoading && (
           <div className="flex justify-start">
             <Card className="max-w-[85%] shadow-sm">
@@ -145,11 +139,8 @@ export function ChatInterface() {
             </Card>
           </div>
         )}
-
         <div ref={messagesEndRef} />
       </div>
-
-      {/* Input bar */}
       <div className="flex gap-2 pt-4 border-t">
         <Input
           value={input}

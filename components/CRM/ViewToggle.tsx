@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { LayoutGrid, LayoutList } from 'lucide-react';
+import { useCallback, useState } from 'react';
+
 import { Button } from '@/components/ui/button';
-import { LayoutList, LayoutGrid } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export type ViewMode = 'table' | 'card';

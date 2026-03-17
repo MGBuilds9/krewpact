@@ -1,8 +1,8 @@
 'use client';
 
-import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
+import { describe, expect, it, vi } from 'vitest';
 
 // Mock next/navigation
 vi.mock('next/navigation', () => ({

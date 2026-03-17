@@ -4,7 +4,7 @@
  * /api/governance/reference-data/[setId]/values (GET + POST).
  * Tables: reference_data_sets, reference_data_values
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
@@ -14,20 +14,21 @@ vi.mock('@/lib/api/rate-limit', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { GET as GET_LIST, POST as POST_CREATE } from '@/app/api/governance/reference-data/route';
+
+import {
+  makeJsonRequest,
+  makeRequest,
+  mockClerkAuth,
+  mockClerkUnauth,
+  mockSupabaseClient,
+} from '@/__tests__/helpers';
 import { GET as GET_DETAIL, PATCH } from '@/app/api/governance/reference-data/[setId]/route';
 import {
   GET as GET_VALUES,
   POST as POST_VALUE,
 } from '@/app/api/governance/reference-data/[setId]/values/route';
-import {
-  mockSupabaseClient,
-  mockClerkAuth,
-  mockClerkUnauth,
-  makeRequest,
-  makeJsonRequest,
-} from '@/__tests__/helpers';
+import { GET as GET_LIST, POST as POST_CREATE } from '@/app/api/governance/reference-data/route';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);

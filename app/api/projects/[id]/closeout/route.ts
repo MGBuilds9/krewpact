@@ -1,10 +1,11 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { closeoutPackageCreateSchema } from '@/lib/validators/closeout';
+
+import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { createUserClientSafe } from '@/lib/supabase/server';
+import { closeoutPackageCreateSchema } from '@/lib/validators/closeout';
 
 const querySchema = z.object({
   status: z.string().optional(),

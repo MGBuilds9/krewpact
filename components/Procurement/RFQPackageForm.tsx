@@ -1,19 +1,19 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+
+import { Button } from '@/components/ui/button';
 import {
   Form,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormControl,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 
 const formSchema = z.object({
   rfq_number: z.string().min(1, 'RFQ number is required'),
@@ -47,13 +48,7 @@ export function RFQPackageForm({
 }: RFQPackageFormProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      rfq_number: '',
-      title: '',
-      scope_summary: '',
-      due_at: '',
-      ...defaultValues,
-    },
+    defaultValues: { rfq_number: '', title: '', scope_summary: '', due_at: '', ...defaultValues },
   });
 
   return (

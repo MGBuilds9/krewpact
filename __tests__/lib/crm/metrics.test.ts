@@ -1,13 +1,14 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
 import {
-  calculatePipelineMetrics,
   calculateConversionMetrics,
-  calculateVelocityMetrics,
-  calculateSourceMetrics,
   calculateForecastMetrics,
-  type OpportunityData,
-  type LeadData,
+  calculatePipelineMetrics,
+  calculateSourceMetrics,
+  calculateVelocityMetrics,
   type ForecastOpportunityData,
+  type LeadData,
+  type OpportunityData,
 } from '@/lib/crm/metrics';
 
 function makeOpp(overrides: Partial<OpportunityData> = {}): OpportunityData {

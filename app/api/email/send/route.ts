@@ -1,10 +1,11 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { sendEmailSchema } from '@/lib/validators/email';
-import { getMicrosoftToken, graphFetch, buildGraphUrl } from '@/lib/microsoft/graph';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import type { SendMessagePayload } from '@/lib/microsoft/types';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { buildGraphUrl, getMicrosoftToken, graphFetch } from '@/lib/microsoft/graph';
+import type { SendMessagePayload } from '@/lib/microsoft/types';
+import { createUserClientSafe } from '@/lib/supabase/server';
+import { sendEmailSchema } from '@/lib/validators/email';
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const { userId } = await auth();

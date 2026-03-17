@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
 import { mapProjectToErp, type ProjectMapInput } from '@/lib/erp/project-mapper';
 
 function makeInput(overrides: Partial<ProjectMapInput> = {}): ProjectMapInput {

@@ -1,6 +1,7 @@
 'use client';
 
-import { Mail, CheckSquare, Clock, GitBranch, Save, Loader2 } from 'lucide-react';
+import { CheckSquare, Clock, GitBranch, Loader2, Mail, Save } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 
 interface FlowToolbarProps {

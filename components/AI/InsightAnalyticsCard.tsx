@@ -1,8 +1,9 @@
 'use client';
 
+import { BarChart3, CheckCircle2, TrendingUp, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart3, TrendingUp, XCircle, CheckCircle2 } from 'lucide-react';
 
 interface Analytics {
   total_generated: number;
@@ -19,7 +20,7 @@ export function InsightAnalyticsCard() {
 
   useEffect(() => {
     fetch('/api/ai/analytics')
-      .then(res => (res.ok ? res.json() : null))
+      .then((res) => (res.ok ? res.json() : null))
       .then((data: { analytics?: Analytics } | null) => {
         if (data?.analytics) setAnalytics(data.analytics);
       })
@@ -59,7 +60,9 @@ export function InsightAnalyticsCard() {
             </div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold">${(analytics.total_ai_cost_cents / 100).toFixed(2)}</div>
+            <div className="text-2xl font-bold">
+              ${(analytics.total_ai_cost_cents / 100).toFixed(2)}
+            </div>
             <div className="text-xs text-muted-foreground">Total AI Cost</div>
           </div>
         </div>

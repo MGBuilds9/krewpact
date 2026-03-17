@@ -1,10 +1,11 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
 import {
-  isValidTransition,
   getAvailableTransitions,
   getDeadlineAlert,
-  getStatusColor,
   getSourceLabel,
+  getStatusColor,
+  isValidTransition,
 } from '@/lib/crm/bidding';
 
 describe('isValidTransition', () => {

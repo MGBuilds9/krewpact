@@ -5,7 +5,7 @@
  * - Realtime subscription lifecycle (subscribe, event, cache invalidation, unsubscribe)
  * - PDF generation pipeline (estimate, project-status, invalid type)
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // --- Realtime mocks ---
 const mockOn = vi.fn().mockReturnThis();
@@ -37,12 +37,13 @@ vi.mock('@/lib/api/rate-limit', () => ({
   rateLimitResponse: vi.fn(),
 }));
 
-import { renderHook, act } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import React from 'react';
-import { useRealtimeSubscription } from '@/hooks/useRealtimeSubscription';
-import { POST } from '@/app/api/pdf/generate/route';
 import { auth } from '@clerk/nextjs/server';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { act, renderHook } from '@testing-library/react';
+import React from 'react';
+
+import { POST } from '@/app/api/pdf/generate/route';
+import { useRealtimeSubscription } from '@/hooks/useRealtimeSubscription';
 import { generatePdf } from '@/lib/pdf/generator';
 
 function createWrapper() {

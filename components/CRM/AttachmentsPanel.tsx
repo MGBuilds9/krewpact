@@ -1,8 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface AttachmentFile {
   name: string;
@@ -21,6 +22,32 @@ function formatFileSize(bytes: number | null): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function FileItem({ file, onDelete }: { file: AttachmentFile; onDelete: (name: string) => void }) {
+  return (
+    <li className="flex items-center justify-between rounded-md border p-2 text-sm">
+      <div className="min-w-0 flex-1">
+        <a
+          href={file.public_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="truncate font-medium text-primary hover:underline"
+        >
+          {file.name}
+        </a>
+        <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
+      </div>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="ml-2 text-destructive hover:text-destructive"
+        onClick={() => onDelete(file.name)}
+      >
+        Remove
+      </Button>
+    </li>
+  );
 }
 
 export function AttachmentsPanel({ opportunityId }: AttachmentsPanelProps) {
@@ -50,32 +77,25 @@ export function AttachmentsPanel({ opportunityId }: AttachmentsPanelProps) {
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     setUploading(true);
     setError(null);
-
     try {
       const formData = new FormData();
       formData.append('file', file);
-
       const res = await fetch(`/api/crm/opportunities/${opportunityId}/attachments`, {
         method: 'POST',
         body: formData,
       });
-
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || 'Upload failed');
       }
-
       await fetchFiles();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed');
     } finally {
       setUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -118,10 +138,7 @@ export function AttachmentsPanel({ opportunityId }: AttachmentsPanelProps) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {error && (
-          <p className="mb-3 text-sm text-destructive">{error}</p>
-        )}
-
+        {error && <p className="mb-3 text-sm text-destructive">{error}</p>}
         {loading ? (
           <p className="text-sm text-muted-foreground">Loading attachments...</p>
         ) : files.length === 0 ? (
@@ -129,32 +146,7 @@ export function AttachmentsPanel({ opportunityId }: AttachmentsPanelProps) {
         ) : (
           <ul className="space-y-2">
             {files.map((file) => (
-              <li
-                key={file.path}
-                className="flex items-center justify-between rounded-md border p-2 text-sm"
-              >
-                <div className="min-w-0 flex-1">
-                  <a
-                    href={file.public_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="truncate font-medium text-primary hover:underline"
-                  >
-                    {file.name}
-                  </a>
-                  <p className="text-xs text-muted-foreground">
-                    {formatFileSize(file.size)}
-                  </p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="ml-2 text-destructive hover:text-destructive"
-                  onClick={() => handleDelete(file.name)}
-                >
-                  Remove
-                </Button>
-              </li>
+              <FileItem key={file.path} file={file} onDelete={handleDelete} />
             ))}
           </ul>
         )}

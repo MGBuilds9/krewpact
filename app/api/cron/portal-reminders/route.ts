@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { runPortalReminderJob } from '@/lib/jobs/portalReminders';
+
 import { verifyCronAuth } from '@/lib/api/cron-auth';
 import { createCronLogger } from '@/lib/api/cron-logger';
+import { runPortalReminderJob } from '@/lib/jobs/portalReminders';
 
 /**
  * GET /api/cron/portal-reminders

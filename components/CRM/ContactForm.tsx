@@ -1,26 +1,27 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  contactCreateSchema,
-  contactUpdateSchema,
-  type ContactCreate,
-  type ContactUpdate,
-} from '@/lib/validators/crm';
+import { Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+
+import { Button } from '@/components/ui/button';
 import {
   Form,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormControl,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { useCreateContact, useUpdateContact, type Contact } from '@/hooks/useCRM';
-import { Loader2 } from 'lucide-react';
+import { type Contact, useCreateContact, useUpdateContact } from '@/hooks/useCRM';
+import {
+  type ContactCreate,
+  contactCreateSchema,
+  type ContactUpdate,
+  contactUpdateSchema,
+} from '@/lib/validators/crm';
 
 interface ContactFormProps {
   contact?: Contact;
@@ -28,6 +29,31 @@ interface ContactFormProps {
   defaultLeadId?: string;
   onSuccess?: (contact: Contact) => void;
   onCancel?: () => void;
+}
+
+function cleanValues(raw: ContactCreate | ContactUpdate): ContactCreate | ContactUpdate {
+  return Object.fromEntries(Object.entries(raw).map(([k, v]) => [k, v === '' ? undefined : v])) as
+    | ContactCreate
+    | ContactUpdate;
+}
+
+function buildNames(contact?: Contact) {
+  return {
+    first_name: contact?.first_name ?? '',
+    last_name: contact?.last_name ?? '',
+    is_primary: contact?.is_primary ?? false,
+  };
+}
+
+function buildDefaultValues(contact?: Contact, defaultAccountId?: string, defaultLeadId?: string) {
+  return {
+    ...buildNames(contact),
+    email: contact?.email ?? undefined,
+    phone: contact?.phone ?? undefined,
+    role_title: contact?.role_title ?? undefined,
+    account_id: contact?.account_id ?? defaultAccountId ?? undefined,
+    lead_id: contact?.lead_id ?? defaultLeadId ?? undefined,
+  };
 }
 
 export function ContactForm({
@@ -40,43 +66,20 @@ export function ContactForm({
   const isEdit = !!contact;
   const createContact = useCreateContact();
   const updateContact = useUpdateContact();
+  const isPending = createContact.isPending || updateContact.isPending;
 
   const form = useForm<ContactCreate | ContactUpdate>({
     resolver: zodResolver(isEdit ? contactUpdateSchema : contactCreateSchema),
-    defaultValues: {
-      first_name: contact?.first_name ?? '',
-      last_name: contact?.last_name ?? '',
-      email: contact?.email ?? undefined,
-      phone: contact?.phone ?? undefined,
-      role_title: contact?.role_title ?? undefined,
-      account_id: contact?.account_id ?? defaultAccountId ?? undefined,
-      lead_id: contact?.lead_id ?? defaultLeadId ?? undefined,
-      is_primary: contact?.is_primary ?? false,
-    },
+    defaultValues: buildDefaultValues(contact, defaultAccountId, defaultLeadId),
   });
 
-  const isPending = createContact.isPending || updateContact.isPending;
-
   function onSubmit(raw: ContactCreate | ContactUpdate) {
-    const values = Object.fromEntries(
-      Object.entries(raw).map(([k, v]) => [k, v === '' ? undefined : v]),
-    ) as ContactCreate | ContactUpdate;
-
+    const values = cleanValues(raw);
+    const cb = { onSuccess: (data: unknown) => onSuccess?.(data as Contact) };
     if (isEdit && contact) {
-      updateContact.mutate(
-        { id: contact.id, ...values },
-        {
-          onSuccess: (data) => {
-            onSuccess?.(data as Contact);
-          },
-        },
-      );
+      updateContact.mutate({ id: contact.id, ...values }, cb);
     } else {
-      createContact.mutate(values as ContactCreate, {
-        onSuccess: (data) => {
-          onSuccess?.(data as Contact);
-        },
-      });
+      createContact.mutate(values as ContactCreate, cb);
     }
   }
 
@@ -97,7 +100,6 @@ export function ContactForm({
               </FormItem>
             )}
           />
-
           <FormField
             control={form.control}
             name="last_name"
@@ -112,7 +114,6 @@ export function ContactForm({
             )}
           />
         </div>
-
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -132,7 +133,6 @@ export function ContactForm({
               </FormItem>
             )}
           />
-
           <FormField
             control={form.control}
             name="phone"
@@ -147,7 +147,6 @@ export function ContactForm({
             )}
           />
         </div>
-
         <FormField
           control={form.control}
           name="role_title"
@@ -161,7 +160,6 @@ export function ContactForm({
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="is_primary"
@@ -175,7 +173,6 @@ export function ContactForm({
             </FormItem>
           )}
         />
-
         <div className="flex gap-2 justify-end pt-2">
           {onCancel && (
             <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>

@@ -1,14 +1,15 @@
 'use client';
 
+import { Plus, TrendingUp } from 'lucide-react';
 import { useMemo } from 'react';
-import { useOrgRouter } from '@/hooks/useOrgRouter';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
-import { usePipeline } from '@/hooks/useCRM';
-import { useDivision } from '@/contexts/DivisionContext';
+
 import { PipelineKanban } from '@/components/CRM/PipelineKanban';
 import { WeightedPipelineHeader } from '@/components/CRM/WeightedPipelineHeader';
-import { TrendingUp, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useDivision } from '@/contexts/DivisionContext';
+import { usePipeline } from '@/hooks/useCRM';
+import { useOrgRouter } from '@/hooks/useOrgRouter';
 
 export default function OpportunitiesPage() {
   const { activeDivision } = useDivision();

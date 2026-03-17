@@ -1,8 +1,9 @@
 'use client';
 
+import { Activity, AlertTriangle, CheckCircle2, Clock, Loader2 } from 'lucide-react';
+
 import { Card, CardContent } from '@/components/ui/card';
 import { useEnrichmentStats } from '@/hooks/useCRM';
-import { Activity, Clock, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
 
 function formatRelativeTime(iso: string | null): string {
   if (!iso) return 'Never';
@@ -29,8 +30,8 @@ export function EnrichmentStatsCards() {
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        {[...Array(5)].map((_, i) => (
-          <Card key={i}>
+        {[0, 1, 2, 3, 4].map((n) => (
+          <Card key={n}>
             <CardContent className="pt-6">
               <div className="h-16 bg-muted/50 rounded animate-pulse" />
             </CardContent>

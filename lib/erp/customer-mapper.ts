@@ -48,9 +48,11 @@ export function toErpCustomer(account: CustomerMapInput): Record<string, unknown
     custom_division: account.division_id || '',
     website: account.website || '',
     industry: account.industry || '',
-    primary_address: account.billing_address
-      ? JSON.stringify(account.billing_address)
-      : null,
+    // Note: billing_address is serialised as JSON here for storage reference, but
+    // ERPNext Address is a separate linked doctype. This field will be silently
+    // ignored by ERPNext on Customer creation. A follow-up Address document POST
+    // is required to link the address properly. See TODO: ADDR-SYNC.
+    primary_address: account.billing_address ? JSON.stringify(account.billing_address) : null,
   };
 }
 
@@ -72,9 +74,7 @@ function mapStatus(disabled: unknown): string {
 /**
  * Map an ERPNext Customer document to a KrewPact account partial (inbound).
  */
-export function fromErpCustomer(
-  erpCustomer: Record<string, unknown>,
-): Record<string, unknown> {
+export function fromErpCustomer(erpCustomer: Record<string, unknown>): Record<string, unknown> {
   return {
     account_name: erpCustomer.customer_name || '',
     account_type: mapAccountType(erpCustomer.customer_type as string | undefined),

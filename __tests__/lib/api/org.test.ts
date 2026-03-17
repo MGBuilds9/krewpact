@@ -1,12 +1,13 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({
   auth: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { getOrgIdFromAuth, getOrgFromHeaders } from '@/lib/api/org';
 import { NextRequest } from 'next/server';
+
+import { getOrgFromHeaders, getOrgIdFromAuth } from '@/lib/api/org';
 
 const mockAuth = vi.mocked(auth);
 

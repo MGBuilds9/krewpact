@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { createBrowserClient } from '@/lib/supabase/client';
 import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef, useState } from 'react';
+
+import { createBrowserClient } from '@/lib/supabase/client';
 
 export type RealtimeEvent = RealtimePostgresChangesPayload<Record<string, unknown>>;
 
@@ -23,6 +24,7 @@ export interface UseRealtimeSubscriptionOptions {
 const RECONNECT_DELAY_MS = 3000;
 const MAX_RECONNECT_ATTEMPTS = 5;
 
+// eslint-disable-next-line max-lines-per-function
 export function useRealtimeSubscription({
   table,
   filter,

@@ -1,8 +1,9 @@
 'use client';
 
-import { useOrgRouter } from '@/hooks/useOrgRouter';
+import { Clock, Database, Mail, Settings, Target, Zap } from 'lucide-react';
+
 import { Card, CardContent } from '@/components/ui/card';
-import { Settings, Target, Mail, Clock, Zap, Database } from 'lucide-react';
+import { useOrgRouter } from '@/hooks/useOrgRouter';
 
 const settingsItems = [
   {
@@ -20,15 +21,13 @@ const settingsItems = [
   },
   {
     title: 'SLA Configuration',
-    description:
-      'Set maximum time allowed in each pipeline stage before overdue alerts trigger.',
+    description: 'Set maximum time allowed in each pipeline stage before overdue alerts trigger.',
     icon: Clock,
     href: '/crm/settings/sla',
   },
   {
     title: 'Sequence Defaults',
-    description:
-      'Configure global defaults for enrollment limits, send windows, and throttling.',
+    description: 'Configure global defaults for enrollment limits, send windows, and throttling.',
     icon: Zap,
     href: '/crm/settings/sequences',
   },

@@ -1,17 +1,18 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import {
-  mockSupabaseClient,
-  mockClerkAuth,
-  mockClerkUnauth,
-  makeRequest,
-  makeJsonRequest,
   makeAccount,
-  makeContact,
-  makeLead,
-  makeOpportunity,
   makeActivity,
+  makeContact,
   makeEstimate,
   makeEstimateLine,
+  makeJsonRequest,
+  makeLead,
+  makeOpportunity,
+  makeRequest,
+  mockClerkAuth,
+  mockClerkUnauth,
+  mockSupabaseClient,
   resetFixtureCounter,
   TEST_IDS,
 } from './index';
@@ -68,7 +69,7 @@ describe('mockSupabaseClient', () => {
     const client = mockSupabaseClient({
       defaultResponse: { data: created, error: null },
     });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const from = client.from('accounts') as any;
     const result = await from.insert({ account_name: 'New' }).select().single();
     expect(result).toEqual({ data: created, error: null });
@@ -79,7 +80,7 @@ describe('mockSupabaseClient', () => {
     const client = mockSupabaseClient({
       defaultResponse: { data: updated, error: null },
     });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const from = client.from('accounts') as any;
     const result = await from.update({ account_name: 'Updated' }).eq('id', '1').select().single();
     expect(result).toEqual({ data: updated, error: null });

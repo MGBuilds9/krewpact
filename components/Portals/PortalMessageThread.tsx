@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+
 import { PortalMessageForm } from '@/components/Portals/PortalMessageForm';
 
 interface Message {
@@ -17,6 +18,33 @@ interface Message {
 interface Props {
   projectId: string;
   portalAccountId: string;
+}
+
+function MessageBubble({ msg }: { msg: Message }): React.ReactElement {
+  const isFromPortal = msg.direction === 'inbound';
+  return (
+    <div className={`flex ${isFromPortal ? 'justify-end' : 'justify-start'}`}>
+      <div
+        className={`max-w-[75%] rounded-2xl px-4 py-3 shadow-sm ${isFromPortal ? 'bg-blue-600 text-white rounded-br-sm' : 'bg-white border border-gray-200 text-gray-800 rounded-bl-sm'}`}
+      >
+        {msg.subject && (
+          <p
+            className={`text-xs font-semibold mb-1 ${isFromPortal ? 'text-blue-100' : 'text-gray-500'}`}
+          >
+            {msg.subject}
+          </p>
+        )}
+        <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.body}</p>
+        <p className={`text-[10px] mt-1.5 ${isFromPortal ? 'text-blue-200' : 'text-gray-400'}`}>
+          {new Date(msg.created_at).toLocaleString('en-CA', {
+            timeStyle: 'short',
+            dateStyle: 'short',
+          })}
+          {isFromPortal && msg.read_at && ' · Read'}
+        </p>
+      </div>
+    </div>
+  );
 }
 
 export default function PortalMessageThread({ projectId, portalAccountId }: Props) {
@@ -46,7 +74,6 @@ export default function PortalMessageThread({ projectId, portalAccountId }: Prop
   }, [projectId, portalAccountId, refreshKey]);
 
   useEffect(() => {
-    // Mark unread outbound messages as read and scroll to bottom
     messages
       .filter((m) => m.direction === 'outbound' && !m.read_at)
       .forEach((m) => {
@@ -55,13 +82,11 @@ export default function PortalMessageThread({ projectId, portalAccountId }: Prop
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  if (loading) {
+  if (loading)
     return <div className="flex justify-center py-12 text-gray-400 text-sm">Loading messages…</div>;
-  }
 
   return (
     <div className="flex flex-col h-full">
-      {/* Message thread */}
       <div className="flex-1 overflow-y-auto space-y-3 pb-4 mb-4">
         {messages.length === 0 && (
           <div className="text-center py-12 text-gray-400">
@@ -69,43 +94,11 @@ export default function PortalMessageThread({ projectId, portalAccountId }: Prop
             <p className="text-sm">No messages yet. Send a message to your project team.</p>
           </div>
         )}
-
-        {messages.map((msg) => {
-          const isFromPortal = msg.direction === 'inbound';
-          return (
-            <div key={msg.id} className={`flex ${isFromPortal ? 'justify-end' : 'justify-start'}`}>
-              <div
-                className={`max-w-[75%] rounded-2xl px-4 py-3 shadow-sm ${
-                  isFromPortal
-                    ? 'bg-blue-600 text-white rounded-br-sm'
-                    : 'bg-white border border-gray-200 text-gray-800 rounded-bl-sm'
-                }`}
-              >
-                {msg.subject && (
-                  <p
-                    className={`text-xs font-semibold mb-1 ${isFromPortal ? 'text-blue-100' : 'text-gray-500'}`}
-                  >
-                    {msg.subject}
-                  </p>
-                )}
-                <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.body}</p>
-                <p
-                  className={`text-[10px] mt-1.5 ${isFromPortal ? 'text-blue-200' : 'text-gray-400'}`}
-                >
-                  {new Date(msg.created_at).toLocaleString('en-CA', {
-                    timeStyle: 'short',
-                    dateStyle: 'short',
-                  })}
-                  {isFromPortal && msg.read_at && ' · Read'}
-                </p>
-              </div>
-            </div>
-          );
-        })}
+        {messages.map((msg) => (
+          <MessageBubble key={msg.id} msg={msg} />
+        ))}
         <div ref={bottomRef} />
       </div>
-
-      {/* Reply form */}
       <div className="border-t border-gray-200 pt-4">
         <PortalMessageForm
           portalAccountId={portalAccountId}

@@ -1,11 +1,12 @@
 'use client';
 
+import { Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2 } from 'lucide-react';
 import { useCreateAllowance } from '@/hooks/useSelections';
-import { toast } from 'sonner';
 
 interface FormState {
   category_name: string;

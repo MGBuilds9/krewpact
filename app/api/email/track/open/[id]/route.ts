@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServiceClient } from '@/lib/supabase/server';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { createServiceClient } from '@/lib/supabase/server';
 
 // 1x1 transparent GIF
 const TRACKING_PIXEL = Buffer.from(

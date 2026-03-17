@@ -4,7 +4,7 @@
  * /api/projects/[id]/photos/[photoId]/annotations (GET + POST).
  * Tables: photo_assets, photo_annotations
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
@@ -14,21 +14,22 @@ vi.mock('@/lib/api/rate-limit', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { GET as GET_LIST, POST as POST_PHOTO } from '@/app/api/projects/[id]/photos/route';
-import { GET as GET_DETAIL } from '@/app/api/projects/[id]/photos/[photoId]/route';
+
+import {
+  makeJsonRequest,
+  makeRequest,
+  mockClerkAuth,
+  mockClerkUnauth,
+  mockSupabaseClient,
+  TEST_IDS,
+} from '@/__tests__/helpers';
 import {
   GET as GET_ANNOTATIONS,
   POST as POST_ANNOTATION,
 } from '@/app/api/projects/[id]/photos/[photoId]/annotations/route';
-import {
-  mockSupabaseClient,
-  mockClerkAuth,
-  mockClerkUnauth,
-  makeRequest,
-  makeJsonRequest,
-  TEST_IDS,
-} from '@/__tests__/helpers';
+import { GET as GET_DETAIL } from '@/app/api/projects/[id]/photos/[photoId]/route';
+import { GET as GET_LIST, POST as POST_PHOTO } from '@/app/api/projects/[id]/photos/route';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);

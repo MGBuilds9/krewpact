@@ -1,8 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-  calculateAccountHealth,
-  determineLifecycleStage,
-} from '@/lib/crm/account-health';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { calculateAccountHealth, determineLifecycleStage } from '@/lib/crm/account-health';
 
 describe('calculateAccountHealth', () => {
   beforeEach(() => {

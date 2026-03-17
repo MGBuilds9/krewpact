@@ -1,20 +1,55 @@
 import { auth } from '@clerk/nextjs/server';
+import { NextRequest, NextResponse } from 'next/server';
+
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import type { EstimateStatus } from '@/lib/estimating/estimate-status';
+import { validateStatusTransition } from '@/lib/estimating/estimate-status';
+import { logger } from '@/lib/logger';
+import { dispatchNotification } from '@/lib/notifications/dispatcher';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { estimateUpdateSchema } from '@/lib/validators/estimating';
-import { validateStatusTransition } from '@/lib/estimating/estimate-status';
-import type { EstimateStatus } from '@/lib/estimating/estimate-status';
-import { dispatchNotification } from '@/lib/notifications/dispatcher';
-import { NextRequest, NextResponse } from 'next/server';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
-import { logger } from '@/lib/logger';
 
 type RouteContext = { params: Promise<{ id: string }> };
+type SupabaseClient = Awaited<ReturnType<typeof createUserClientSafe>>['client'];
+
+function fireApprovalNotification(record: Record<string, unknown>, id: string): void {
+  dispatchNotification({
+    type: 'estimate_approved',
+    owner_email: (record.owner_email as string) || '',
+    owner_name: (record.owner_name as string) || 'Team Member',
+    estimate_number: (record.estimate_number as string) || id,
+    estimate_id: id,
+    opportunity_name: (record.opportunity_name as string) || 'Opportunity',
+    approved_by_name: 'A team member',
+  }).catch((err) => logger.error('Estimate approval notification failed', { error: err }));
+}
+
+async function validateEstimateStatus(
+  supabase: SupabaseClient,
+  id: string,
+  newStatus: string,
+): Promise<NextResponse | null> {
+  const { data: current, error: fetchError } = await supabase
+    .from('estimates')
+    .select('status')
+    .eq('id', id)
+    .single();
+
+  if (fetchError) {
+    const status = fetchError.code === 'PGRST116' ? 404 : 500;
+    return NextResponse.json({ error: fetchError.message }, { status });
+  }
+
+  const currentStatus = (current as Record<string, unknown>).status as EstimateStatus;
+  const result = validateStatusTransition(currentStatus, newStatus as EstimateStatus);
+  if (!result.valid) return NextResponse.json({ error: result.reason }, { status: 400 });
+
+  return null;
+}
 
 export async function GET(req: NextRequest, context: RouteContext) {
   const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
   if (!rl.success) return rateLimitResponse(rl);
@@ -22,6 +57,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
   const { id } = await context.params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
+
   const { data, error } = await supabase
     .from('estimates')
     .select(
@@ -40,9 +76,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
 export async function PATCH(req: NextRequest, context: RouteContext) {
   const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { id } = await context.params;
 
@@ -53,39 +87,19 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  // Allow status in the update body for status transitions
   const statusField = (body as Record<string, unknown>)?.status as string | undefined;
   const parsed = estimateUpdateSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
   const { client: supabase, error: authError } = await createUserClientSafe();
-
   if (authError) return authError;
 
-  // If status is being changed, validate the transition
   if (statusField) {
-    const { data: current, error: fetchError } = await supabase
-      .from('estimates')
-      .select('status')
-      .eq('id', id)
-      .single();
-
-    if (fetchError) {
-      const status = fetchError.code === 'PGRST116' ? 404 : 500;
-      return NextResponse.json({ error: fetchError.message }, { status });
-    }
-
-    const currentStatus = (current as Record<string, unknown>).status as EstimateStatus;
-    const result = validateStatusTransition(currentStatus, statusField as EstimateStatus);
-    if (!result.valid) {
-      return NextResponse.json({ error: result.reason }, { status: 400 });
-    }
+    const validationError = await validateEstimateStatus(supabase, id, statusField);
+    if (validationError) return validationError;
   }
 
   const updateData = { ...parsed.data, ...(statusField ? { status: statusField } : {}) };
-
   const { data, error } = await supabase
     .from('estimates')
     .update(updateData)
@@ -98,18 +112,8 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: error.message }, { status });
   }
 
-  // Fire-and-forget: notify owner when estimate is approved
   if (statusField === 'approved' && data) {
-    const record = data as Record<string, unknown>;
-    dispatchNotification({
-      type: 'estimate_approved',
-      owner_email: (record.owner_email as string) ?? '',
-      owner_name: (record.owner_name as string) ?? 'Team Member',
-      estimate_number: (record.estimate_number as string) ?? id,
-      estimate_id: id,
-      opportunity_name: (record.opportunity_name as string) ?? 'Opportunity',
-      approved_by_name: 'A team member',
-    }).catch((err) => logger.error('Estimate approval notification failed', { error: err }));
+    fireApprovalNotification(data as Record<string, unknown>, id);
   }
 
   return NextResponse.json(data);
@@ -117,18 +121,14 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 
 export async function DELETE(req: NextRequest, context: RouteContext) {
   const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { id } = await context.params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
-  const { error } = await supabase.from('estimates').delete().eq('id', id);
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  const { error } = await supabase.from('estimates').delete().eq('id', id);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   return NextResponse.json({ success: true });
 }

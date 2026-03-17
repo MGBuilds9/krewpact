@@ -1,22 +1,23 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+
+import { Button } from '@/components/ui/button';
 import {
   Form,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormControl,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { useCreateEstimateAllowance, useUpdateEstimateAllowance } from '@/hooks/useEstimating';
 import type { EstimateAllowance } from '@/hooks/useEstimating';
-import { Loader2 } from 'lucide-react';
+import { useCreateEstimateAllowance, useUpdateEstimateAllowance } from '@/hooks/useEstimating';
 
 const formSchema = z.object({
   allowance_name: z.string().min(1, 'Name is required').max(200),
@@ -37,7 +38,7 @@ export function AllowanceForm({ estimateId, allowance, onSuccess, onCancel }: Al
   const createAllowance = useCreateEstimateAllowance();
   const updateAllowance = useUpdateEstimateAllowance();
   const isEditing = !!allowance;
-
+  const isPending = createAllowance.isPending || updateAllowance.isPending;
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -47,41 +48,27 @@ export function AllowanceForm({ estimateId, allowance, onSuccess, onCancel }: Al
     },
   });
 
-  const isPending = createAllowance.isPending || updateAllowance.isPending;
-
   function onSubmit(values: FormValues) {
     const parsedAmount = parseFloat(values.allowance_amount);
     if (isNaN(parsedAmount) || parsedAmount < 0) {
       form.setError('allowance_amount', { message: 'Must be a valid non-negative number' });
       return;
     }
-
     const payload = {
       allowance_name: values.allowance_name,
       allowance_amount: parsedAmount,
       notes: values.notes || undefined,
     };
-
+    const cb = {
+      onSuccess: () => {
+        form.reset();
+        onSuccess?.();
+      },
+    };
     if (isEditing) {
-      updateAllowance.mutate(
-        { estimateId, allowanceId: allowance.id, ...payload },
-        {
-          onSuccess: () => {
-            form.reset();
-            onSuccess?.();
-          },
-        },
-      );
+      updateAllowance.mutate({ estimateId, allowanceId: allowance.id, ...payload }, cb);
     } else {
-      createAllowance.mutate(
-        { estimateId, ...payload },
-        {
-          onSuccess: () => {
-            form.reset();
-            onSuccess?.();
-          },
-        },
-      );
+      createAllowance.mutate({ estimateId, ...payload }, cb);
     }
   }
 
@@ -101,7 +88,6 @@ export function AllowanceForm({ estimateId, allowance, onSuccess, onCancel }: Al
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="allowance_amount"
@@ -115,7 +101,6 @@ export function AllowanceForm({ estimateId, allowance, onSuccess, onCancel }: Al
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="notes"
@@ -129,7 +114,6 @@ export function AllowanceForm({ estimateId, allowance, onSuccess, onCancel }: Al
             </FormItem>
           )}
         />
-
         <div className="flex gap-2 justify-end pt-2">
           {onCancel && (
             <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>

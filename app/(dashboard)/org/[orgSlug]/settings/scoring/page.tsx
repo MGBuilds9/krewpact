@@ -1,13 +1,14 @@
 'use client';
 
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Check, Pencil, Plus, Sliders, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
   SelectContent,
@@ -15,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Sliders, Plus, Pencil, Trash2, X, Check } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { apiFetch } from '@/lib/api-client';
 
 interface ScoringRule {
@@ -31,7 +32,6 @@ interface ScoringRule {
   division_id: string | null;
   created_at: string;
 }
-
 interface RuleFormState {
   name: string;
   category: 'fit' | 'intent' | 'engagement';
@@ -51,13 +51,11 @@ const EMPTY_FORM: RuleFormState = {
   score_impact: '0',
   is_active: true,
 };
-
 const CATEGORY_COLORS: Record<string, string> = {
   fit: 'bg-blue-100 text-blue-700 border-blue-200',
   intent: 'bg-purple-100 text-purple-700 border-purple-200',
   engagement: 'bg-green-100 text-green-700 border-green-200',
 };
-
 const OPERATORS = [
   'equals',
   'not_equals',
@@ -75,55 +73,226 @@ function useScoringRules() {
   });
 }
 
+interface RuleFormFieldsProps {
+  form: RuleFormState;
+  onChange: (f: RuleFormState) => void;
+}
+function RuleFormFields({ form, onChange }: RuleFormFieldsProps) {
+  function set(field: keyof RuleFormState, value: string | boolean) {
+    onChange({ ...form, [field]: value });
+  }
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="sm:col-span-2">
+        <Label className="text-xs">Rule Name</Label>
+        <Input
+          value={form.name}
+          onChange={(e) => set('name', e.target.value)}
+          placeholder="e.g. High revenue industry"
+        />
+      </div>
+      <div>
+        <Label className="text-xs">Category</Label>
+        <Select value={form.category} onValueChange={(v) => set('category', v)}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="fit">Fit</SelectItem>
+            <SelectItem value="intent">Intent</SelectItem>
+            <SelectItem value="engagement">Engagement</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label className="text-xs">Field Name</Label>
+        <Input
+          value={form.field_name}
+          onChange={(e) => set('field_name', e.target.value)}
+          placeholder="e.g. industry, company_size"
+        />
+      </div>
+      <div>
+        <Label className="text-xs">Operator</Label>
+        <Select value={form.operator} onValueChange={(v) => set('operator', v)}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {OPERATORS.map((op) => (
+              <SelectItem key={op} value={op}>
+                {op.replace(/_/g, ' ')}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label className="text-xs">Value</Label>
+        <Input
+          value={form.value}
+          onChange={(e) => set('value', e.target.value)}
+          placeholder="e.g. construction"
+        />
+      </div>
+      <div>
+        <Label className="text-xs">Score Impact</Label>
+        <Input
+          type="number"
+          value={form.score_impact}
+          onChange={(e) => set('score_impact', e.target.value)}
+          placeholder="e.g. 10 or -5"
+        />
+      </div>
+      <div>
+        <Label className="text-xs">Status</Label>
+        <Select
+          value={form.is_active ? 'active' : 'inactive'}
+          onValueChange={(v) => set('is_active', v === 'active')}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="inactive">Inactive</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  );
+}
+
+interface RuleFormProps {
+  form: RuleFormState;
+  onChange: (f: RuleFormState) => void;
+  onSubmit: () => void;
+  onCancel: () => void;
+  isSubmitting: boolean;
+  submitLabel: string;
+}
+function RuleForm({
+  form,
+  onChange,
+  onSubmit,
+  onCancel,
+  isSubmitting,
+  submitLabel,
+}: RuleFormProps) {
+  return (
+    <div className="space-y-4">
+      <RuleFormFields form={form} onChange={onChange} />
+      <div className="flex gap-2 justify-end">
+        <Button variant="outline" size="sm" onClick={onCancel} disabled={isSubmitting}>
+          <X className="h-3.5 w-3.5 mr-1" />
+          Cancel
+        </Button>
+        <Button
+          size="sm"
+          onClick={onSubmit}
+          disabled={isSubmitting || !form.name || !form.field_name || !form.value}
+        >
+          <Check className="h-3.5 w-3.5 mr-1" />
+          {isSubmitting ? 'Saving...' : submitLabel}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+interface RuleRowProps {
+  rule: ScoringRule;
+  onEdit: (r: ScoringRule) => void;
+  onDelete: (id: string) => void;
+  isDeleting: boolean;
+}
+function RuleRow({ rule, onEdit, onDelete, isDeleting }: RuleRowProps) {
+  return (
+    <div className="flex items-center justify-between py-2.5 px-3 rounded-lg border hover:bg-muted/30 transition-colors">
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        <Badge
+          variant="outline"
+          className={`text-xs flex-shrink-0 border ${CATEGORY_COLORS[rule.category] || ''}`}
+        >
+          {rule.category}
+        </Badge>
+        <div className="min-w-0">
+          <p className="font-medium text-sm truncate">{rule.name}</p>
+          <p className="text-xs text-muted-foreground">
+            {rule.field_name} {rule.operator} &quot;{rule.value}&quot;
+          </p>
+        </div>
+      </div>
+      <div className="flex items-center gap-3 flex-shrink-0 ml-4">
+        <span
+          className={`text-sm font-bold tabular-nums ${rule.score_impact >= 0 ? 'text-green-600' : 'text-red-600'}`}
+        >
+          {rule.score_impact >= 0 ? '+' : ''}
+          {rule.score_impact}
+        </span>
+        <Badge variant={rule.is_active ? 'default' : 'secondary'} className="text-xs">
+          {rule.is_active ? 'Active' : 'Inactive'}
+        </Badge>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => onEdit(rule)}
+            aria-label="Edit scoring rule"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-destructive hover:text-destructive"
+            onClick={() => onDelete(rule.id)}
+            disabled={isDeleting}
+            aria-label="Delete scoring rule"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ScoringRulesPage() {
   const queryClient = useQueryClient();
   const { data: rules, isLoading } = useScoringRules();
-
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<RuleFormState>(EMPTY_FORM);
 
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['scoring-rules'] });
+  const parseImpact = (f: RuleFormState) => ({
+    ...f,
+    score_impact: parseInt(f.score_impact, 10) || 0,
+  });
+
   const createRule = useMutation({
-    mutationFn: (data: Omit<RuleFormState, 'score_impact'> & { score_impact: number }) =>
+    mutationFn: (data: ReturnType<typeof parseImpact>) =>
       apiFetch<ScoringRule>('/api/crm/scoring-rules', { method: 'POST', body: data }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['scoring-rules'] });
+      invalidate();
       setShowAddForm(false);
       setForm(EMPTY_FORM);
     },
   });
-
   const updateRule = useMutation({
-    mutationFn: ({
-      id,
-      ...data
-    }: { id: string } & Omit<RuleFormState, 'score_impact'> & { score_impact: number }) =>
+    mutationFn: ({ id, ...data }: { id: string } & ReturnType<typeof parseImpact>) =>
       apiFetch<ScoringRule>(`/api/crm/scoring-rules/${id}`, { method: 'PUT', body: data }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['scoring-rules'] });
+      invalidate();
       setEditingId(null);
     },
   });
-
   const deleteRule = useMutation({
     mutationFn: (id: string) => apiFetch(`/api/crm/scoring-rules/${id}`, { method: 'DELETE' }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['scoring-rules'] });
-    },
+    onSuccess: invalidate,
   });
-
-  function handleSubmitAdd() {
-    createRule.mutate({ ...form, score_impact: parseInt(form.score_impact, 10) || 0 });
-  }
-
-  function handleSubmitEdit() {
-    if (!editingId) return;
-    updateRule.mutate({
-      id: editingId,
-      ...form,
-      score_impact: parseInt(form.score_impact, 10) || 0,
-    });
-  }
 
   function startEdit(rule: ScoringRule) {
     setEditingId(rule.id);
@@ -139,17 +308,6 @@ export default function ScoringRulesPage() {
     });
   }
 
-  function cancelEdit() {
-    setEditingId(null);
-    setForm(EMPTY_FORM);
-  }
-
-  function openAddForm() {
-    setEditingId(null);
-    setForm(EMPTY_FORM);
-    setShowAddForm(true);
-  }
-
   if (isLoading) {
     return (
       <div className="space-y-6 max-w-4xl">
@@ -160,8 +318,7 @@ export default function ScoringRulesPage() {
     );
   }
 
-  const allRules = rules ?? [];
-
+  const allRules = rules || [];
   return (
     <div className="space-y-6 max-w-4xl">
       <div className="flex items-center gap-3">
@@ -173,13 +330,17 @@ export default function ScoringRulesPage() {
           </p>
         </div>
       </div>
-
-      <Button onClick={openAddForm} disabled={showAddForm}>
+      <Button
+        onClick={() => {
+          setEditingId(null);
+          setForm(EMPTY_FORM);
+          setShowAddForm(true);
+        }}
+        disabled={showAddForm}
+      >
         <Plus className="h-4 w-4 mr-2" />
         Add Rule
       </Button>
-
-      {/* Add Rule Form */}
       {showAddForm && (
         <Card className="border-primary/30">
           <CardHeader className="pb-3">
@@ -189,7 +350,7 @@ export default function ScoringRulesPage() {
             <RuleForm
               form={form}
               onChange={setForm}
-              onSubmit={handleSubmitAdd}
+              onSubmit={() => createRule.mutate(parseImpact(form))}
               onCancel={() => {
                 setShowAddForm(false);
                 setForm(EMPTY_FORM);
@@ -200,8 +361,6 @@ export default function ScoringRulesPage() {
           </CardContent>
         </Card>
       )}
-
-      {/* Rules Table */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
@@ -223,64 +382,22 @@ export default function ScoringRulesPage() {
                       <RuleForm
                         form={form}
                         onChange={setForm}
-                        onSubmit={handleSubmitEdit}
-                        onCancel={cancelEdit}
+                        onSubmit={() => updateRule.mutate({ id: rule.id, ...parseImpact(form) })}
+                        onCancel={() => {
+                          setEditingId(null);
+                          setForm(EMPTY_FORM);
+                        }}
                         isSubmitting={updateRule.isPending}
                         submitLabel="Save Changes"
                       />
                     </div>
                   ) : (
-                    <div className="flex items-center justify-between py-2.5 px-3 rounded-lg border hover:bg-muted/30 transition-colors">
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <Badge
-                          variant="outline"
-                          className={`text-xs flex-shrink-0 border ${CATEGORY_COLORS[rule.category] ?? ''}`}
-                        >
-                          {rule.category}
-                        </Badge>
-                        <div className="min-w-0">
-                          <p className="font-medium text-sm truncate">{rule.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {rule.field_name} {rule.operator} &quot;{rule.value}&quot;
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3 flex-shrink-0 ml-4">
-                        <span
-                          className={`text-sm font-bold tabular-nums ${rule.score_impact >= 0 ? 'text-green-600' : 'text-red-600'}`}
-                        >
-                          {rule.score_impact >= 0 ? '+' : ''}
-                          {rule.score_impact}
-                        </span>
-                        <Badge
-                          variant={rule.is_active ? 'default' : 'secondary'}
-                          className="text-xs"
-                        >
-                          {rule.is_active ? 'Active' : 'Inactive'}
-                        </Badge>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() => startEdit(rule)}
-                            aria-label="Edit scoring rule"
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-destructive hover:text-destructive"
-                            onClick={() => deleteRule.mutate(rule.id)}
-                            disabled={deleteRule.isPending}
-                            aria-label="Delete scoring rule"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
+                    <RuleRow
+                      rule={rule}
+                      onEdit={startEdit}
+                      onDelete={(id) => deleteRule.mutate(id)}
+                      isDeleting={deleteRule.isPending}
+                    />
                   )}
                 </div>
               ))}
@@ -288,125 +405,6 @@ export default function ScoringRulesPage() {
           )}
         </CardContent>
       </Card>
-    </div>
-  );
-}
-
-interface RuleFormProps {
-  form: RuleFormState;
-  onChange: (form: RuleFormState) => void;
-  onSubmit: () => void;
-  onCancel: () => void;
-  isSubmitting: boolean;
-  submitLabel: string;
-}
-
-function RuleForm({
-  form,
-  onChange,
-  onSubmit,
-  onCancel,
-  isSubmitting,
-  submitLabel,
-}: RuleFormProps) {
-  function set(field: keyof RuleFormState, value: string | boolean) {
-    onChange({ ...form, [field]: value });
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div className="sm:col-span-2">
-          <Label className="text-xs">Rule Name</Label>
-          <Input
-            value={form.name}
-            onChange={(e) => set('name', e.target.value)}
-            placeholder="e.g. High revenue industry"
-          />
-        </div>
-        <div>
-          <Label className="text-xs">Category</Label>
-          <Select value={form.category} onValueChange={(v) => set('category', v)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="fit">Fit</SelectItem>
-              <SelectItem value="intent">Intent</SelectItem>
-              <SelectItem value="engagement">Engagement</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label className="text-xs">Field Name</Label>
-          <Input
-            value={form.field_name}
-            onChange={(e) => set('field_name', e.target.value)}
-            placeholder="e.g. industry, company_size"
-          />
-        </div>
-        <div>
-          <Label className="text-xs">Operator</Label>
-          <Select value={form.operator} onValueChange={(v) => set('operator', v)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {OPERATORS.map((op) => (
-                <SelectItem key={op} value={op}>
-                  {op.replace(/_/g, ' ')}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label className="text-xs">Value</Label>
-          <Input
-            value={form.value}
-            onChange={(e) => set('value', e.target.value)}
-            placeholder="e.g. construction"
-          />
-        </div>
-        <div>
-          <Label className="text-xs">Score Impact</Label>
-          <Input
-            type="number"
-            value={form.score_impact}
-            onChange={(e) => set('score_impact', e.target.value)}
-            placeholder="e.g. 10 or -5"
-          />
-        </div>
-        <div>
-          <Label className="text-xs">Status</Label>
-          <Select
-            value={form.is_active ? 'active' : 'inactive'}
-            onValueChange={(v) => set('is_active', v === 'active')}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      <div className="flex gap-2 justify-end">
-        <Button variant="outline" size="sm" onClick={onCancel} disabled={isSubmitting}>
-          <X className="h-3.5 w-3.5 mr-1" />
-          Cancel
-        </Button>
-        <Button
-          size="sm"
-          onClick={onSubmit}
-          disabled={isSubmitting || !form.name || !form.field_name || !form.value}
-        >
-          <Check className="h-3.5 w-3.5 mr-1" />
-          {isSubmitting ? 'Saving...' : submitLabel}
-        </Button>
-      </div>
     </div>
   );
 }

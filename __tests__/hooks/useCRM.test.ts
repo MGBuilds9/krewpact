@@ -1,9 +1,9 @@
 'use client';
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { renderHook, waitFor } from '@testing-library/react';
 import React from 'react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock apiFetch before importing hooks
 vi.mock('@/lib/api-client', () => ({
@@ -20,17 +20,17 @@ vi.mock('@/lib/api-client', () => ({
   },
 }));
 
-import { apiFetch } from '@/lib/api-client';
 import {
-  useAccounts,
   useAccount,
+  useAccounts,
+  useActivities,
   useCreateAccount,
+  useCreateActivity,
   useLeads,
   useLeadStageTransition,
   usePipeline,
-  useActivities,
-  useCreateActivity,
 } from '@/hooks/useCRM';
+import { apiFetch } from '@/lib/api-client';
 
 const mockApiFetch = apiFetch as ReturnType<typeof vi.fn>;
 

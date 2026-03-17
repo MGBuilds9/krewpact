@@ -1,16 +1,15 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/knowledge/embeddings', () => ({ embedChunks: vi.fn() }));
 vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() } }));
 vi.mock('@/lib/api/org', () => ({ getKrewpactRoles: vi.fn() }));
 
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { embedChunks } from '@/lib/knowledge/embeddings';
-import { getKrewpactRoles } from '@/lib/api/org';
 import { POST } from '@/app/api/executive/knowledge/search/route';
+import { getKrewpactRoles } from '@/lib/api/org';
+import { embedChunks } from '@/lib/knowledge/embeddings';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 const mockEmbedChunks = vi.mocked(embedChunks);

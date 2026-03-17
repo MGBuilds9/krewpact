@@ -1,5 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
+
 import { PortalHeader } from '@/components/Layout/PortalHeader';
 
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
@@ -11,11 +12,9 @@ export default async function PortalLayout({ children }: { children: React.React
   }
 
   const claims = sessionClaims as Record<string, unknown>;
-  const metadata = (
-    (claims.metadata as Record<string, unknown>)
-    ?? (claims.public_metadata as Record<string, unknown>)
-    ?? claims
-  ) as { role_keys?: string[]; krewpact_roles?: string[] } | undefined;
+  const metadata = ((claims.metadata as Record<string, unknown>) ??
+    (claims.public_metadata as Record<string, unknown>) ??
+    claims) as { role_keys?: string[]; krewpact_roles?: string[] } | undefined;
 
   const roles = metadata?.role_keys ?? metadata?.krewpact_roles ?? [];
 
@@ -23,7 +22,7 @@ export default async function PortalLayout({ children }: { children: React.React
   // Wait, let's redirect to /dashboard if they have NO client/trade roles
   const isPortalUser = roles.some((r) => r.startsWith('client_') || r.startsWith('trade_'));
   const isInternalUser = roles.some((r) =>
-    ['platform_admin', 'project_manager', 'project_coordinator', 'site_superintendent'].includes(r),
+    ['platform_admin', 'project_manager', 'project_coordinator', 'field_supervisor'].includes(r),
   );
 
   if (!isPortalUser && !isInternalUser) {

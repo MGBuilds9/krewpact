@@ -1,11 +1,12 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
 import {
-  MDM_SEARCH_PROFILES,
-  getProfileById,
   getActiveProfiles,
+  getProfileById,
   getProfilesByDivision,
   getProfilesForWeek,
   getWeekNumber,
+  MDM_SEARCH_PROFILES,
 } from '@/lib/integrations/apollo-profiles';
 
 describe('MDM_SEARCH_PROFILES', () => {
@@ -25,31 +26,28 @@ describe('MDM_SEARCH_PROFILES', () => {
     expect(typeof profile.batchSize).toBe('number');
   });
 
-  it.each(MDM_SEARCH_PROFILES)(
-    'profile "$name" has valid searchParams shape',
-    (profile) => {
-      const params = profile.searchParams;
-      if (params.person_titles) {
-        expect(Array.isArray(params.person_titles)).toBe(true);
-        expect(params.person_titles!.length).toBeGreaterThan(0);
+  it.each(MDM_SEARCH_PROFILES)('profile "$name" has valid searchParams shape', (profile) => {
+    const params = profile.searchParams;
+    if (params.person_titles) {
+      expect(Array.isArray(params.person_titles)).toBe(true);
+      expect(params.person_titles!.length).toBeGreaterThan(0);
+    }
+    if (params.organization_locations) {
+      expect(Array.isArray(params.organization_locations)).toBe(true);
+    }
+    if (params.organization_num_employees_ranges) {
+      expect(Array.isArray(params.organization_num_employees_ranges)).toBe(true);
+      for (const range of params.organization_num_employees_ranges!) {
+        expect(range).toMatch(/^\d+,\d+$/);
       }
-      if (params.organization_locations) {
-        expect(Array.isArray(params.organization_locations)).toBe(true);
-      }
-      if (params.organization_num_employees_ranges) {
-        expect(Array.isArray(params.organization_num_employees_ranges)).toBe(true);
-        for (const range of params.organization_num_employees_ranges!) {
-          expect(range).toMatch(/^\d+,\d+$/);
-        }
-      }
-      if (params.person_seniorities) {
-        expect(Array.isArray(params.person_seniorities)).toBe(true);
-      }
-      if (params.q_keywords) {
-        expect(Array.isArray(params.q_keywords)).toBe(true);
-      }
-    },
-  );
+    }
+    if (params.person_seniorities) {
+      expect(Array.isArray(params.person_seniorities)).toBe(true);
+    }
+    if (params.q_keywords) {
+      expect(Array.isArray(params.q_keywords)).toBe(true);
+    }
+  });
 
   it('has unique IDs across all profiles', () => {
     const ids = MDM_SEARCH_PROFILES.map((p) => p.id);

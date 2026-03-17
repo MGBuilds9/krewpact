@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/supabase/server', () => ({
   createServiceClient: vi.fn(),
@@ -8,8 +7,8 @@ vi.mock('@/lib/logger', () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 
-import { createServiceClient } from '@/lib/supabase/server';
 import { executeToolCall, queryTools } from '@/lib/ai/tools';
+import { createServiceClient } from '@/lib/supabase/server';
 
 const mockCreateServiceClient = vi.mocked(createServiceClient);
 
@@ -19,15 +18,14 @@ function mockChainClient(data: any[], error: any = null, count?: number) {
   const chain: any = {};
   const methods = ['select', 'eq', 'not', 'in', 'gte', 'lte', 'lt', 'gt', 'order', 'limit'];
   for (const m of methods) chain[m] = vi.fn().mockReturnValue(chain);
-  chain.then = (resolve: any) =>
-    resolve({ data, error, count: count ?? data?.length ?? 0 });
+  chain.then = (resolve: any) => resolve({ data, error, count: count ?? data?.length ?? 0 });
   return { from: vi.fn().mockReturnValue(chain) };
 }
 
 describe('queryTools', () => {
   it('has 4 tool definitions', () => {
     expect(queryTools).toHaveLength(4);
-    const names = queryTools.map(t => t.name);
+    const names = queryTools.map((t) => t.name);
     expect(names).toContain('search_opportunities');
     expect(names).toContain('search_leads');
     expect(names).toContain('search_projects');
@@ -42,8 +40,20 @@ describe('executeToolCall', () => {
 
   it('search_opportunities returns filtered results with summary', async () => {
     const opportunities = [
-      { id: 'opp-1', name: 'Big Reno', stage: 'proposal', value: 80000, updated_at: new Date().toISOString() },
-      { id: 'opp-2', name: 'Office Fit-Out', stage: 'proposal', value: 40000, updated_at: new Date().toISOString() },
+      {
+        id: 'opp-1',
+        name: 'Big Reno',
+        stage: 'proposal',
+        value: 80000,
+        updated_at: new Date().toISOString(),
+      },
+      {
+        id: 'opp-2',
+        name: 'Office Fit-Out',
+        stage: 'proposal',
+        value: 40000,
+        updated_at: new Date().toISOString(),
+      },
     ];
     mockCreateServiceClient.mockReturnValue(mockChainClient(opportunities) as any);
 
@@ -63,7 +73,15 @@ describe('executeToolCall', () => {
 
   it('search_leads filters by status', async () => {
     const leads = [
-      { id: 'lead-1', first_name: 'Alice', last_name: 'Smith', company_name: 'Acme', status: 'qualified', lead_score: 85, source: 'website' },
+      {
+        id: 'lead-1',
+        first_name: 'Alice',
+        last_name: 'Smith',
+        company_name: 'Acme',
+        status: 'qualified',
+        lead_score: 85,
+        source: 'website',
+      },
     ];
     mockCreateServiceClient.mockReturnValue(mockChainClient(leads) as any);
 
@@ -75,8 +93,20 @@ describe('executeToolCall', () => {
 
   it('search_projects filters over_budget', async () => {
     const projects = [
-      { id: 'proj-1', project_name: 'Tower', status: 'active', budget: 100000, actual_cost: 130000 },
-      { id: 'proj-2', project_name: 'Annex', status: 'active', budget: 200000, actual_cost: 180000 },
+      {
+        id: 'proj-1',
+        project_name: 'Tower',
+        status: 'active',
+        budget: 100000,
+        actual_cost: 130000,
+      },
+      {
+        id: 'proj-2',
+        project_name: 'Annex',
+        status: 'active',
+        budget: 200000,
+        actual_cost: 180000,
+      },
     ];
     mockCreateServiceClient.mockReturnValue(mockChainClient(projects) as any);
 
@@ -88,11 +118,7 @@ describe('executeToolCall', () => {
   });
 
   it('get_metrics pipeline_value sums values', async () => {
-    const opportunities = [
-      { value: 50000 },
-      { value: 75000 },
-      { value: 25000 },
-    ];
+    const opportunities = [{ value: 50000 }, { value: 75000 }, { value: 25000 }];
     mockCreateServiceClient.mockReturnValue(mockChainClient(opportunities) as any);
 
     const result = await executeToolCall('get_metrics', { metric: 'pipeline_value' }, ORG_ID);

@@ -1,10 +1,12 @@
 'use client';
 
+import { Plus, Users } from 'lucide-react';
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+import { PortalInviteForm } from '@/components/Portals/PortalInviteForm';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -12,9 +14,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Plus, Users } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { usePortalAccounts } from '@/hooks/usePortals';
-import { PortalInviteForm } from '@/components/Portals/PortalInviteForm';
 
 function getStatusColor(status: string) {
   switch (status) {
@@ -62,8 +63,8 @@ export default function PortalsPage() {
 
       {isLoading ? (
         <div className="space-y-3">
-          {[...Array(3)].map((_, i) => (
-            <Skeleton key={i} className="h-24 w-full" />
+          {['sk-1', 'sk-2', 'sk-3'].map((id) => (
+            <Skeleton key={id} className="h-24 w-full" />
           ))}
         </div>
       ) : accounts.length === 0 ? (

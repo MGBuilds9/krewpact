@@ -121,6 +121,24 @@ function generateMockStatus(documentId: string): EnvelopeStatus {
   };
 }
 
+function appendFormField(
+  formData: FormData,
+  signerIdx: number,
+  fieldIdx: number,
+  field: FormField,
+): void {
+  const prefix = `Signers[${signerIdx}][FormFields][${fieldIdx}]`;
+  formData.append(`${prefix}[FieldType]`, field.fieldType);
+  formData.append(`${prefix}[PageNumber]`, String(field.pageNumber));
+  formData.append(`${prefix}[Bounds][X]`, String(field.bounds.x));
+  formData.append(`${prefix}[Bounds][Y]`, String(field.bounds.y));
+  formData.append(`${prefix}[Bounds][Width]`, String(field.bounds.width));
+  formData.append(`${prefix}[Bounds][Height]`, String(field.bounds.height));
+  if (field.isRequired != null) {
+    formData.append(`${prefix}[IsRequired]`, String(field.isRequired));
+  }
+}
+
 // ============================================================
 // Client
 // ============================================================
@@ -153,9 +171,7 @@ export class BoldSignClient {
    * BoldSign API: POST /v1/document/send
    * Uses multipart/form-data to upload PDF files along with signer details.
    */
-  async createEnvelope(
-    params: CreateEnvelopeParams,
-  ): Promise<{ documentId: string }> {
+  async createEnvelope(params: CreateEnvelopeParams): Promise<{ documentId: string }> {
     if (this.isMockMode()) {
       const documentId = generateMockDocumentId();
       logger.info('BoldSign mock: created envelope', {
@@ -176,8 +192,7 @@ export class BoldSignClient {
     if (params.brandId) formData.append('BrandId', params.brandId);
 
     // Add signers
-    for (let i = 0; i < params.signers.length; i++) {
-      const signer = params.signers[i];
+    params.signers.forEach((signer, i) => {
       formData.append(`Signers[${i}][Name]`, signer.name);
       formData.append(`Signers[${i}][EmailAddress]`, signer.emailAddress);
       if (signer.signerOrder != null) {
@@ -186,36 +201,10 @@ export class BoldSignClient {
       if (signer.signerType) {
         formData.append(`Signers[${i}][SignerType]`, signer.signerType);
       }
-      if (signer.formFields) {
-        for (let j = 0; j < signer.formFields.length; j++) {
-          const field = signer.formFields[j];
-          formData.append(`Signers[${i}][FormFields][${j}][FieldType]`, field.fieldType);
-          formData.append(`Signers[${i}][FormFields][${j}][PageNumber]`, String(field.pageNumber));
-          formData.append(
-            `Signers[${i}][FormFields][${j}][Bounds][X]`,
-            String(field.bounds.x),
-          );
-          formData.append(
-            `Signers[${i}][FormFields][${j}][Bounds][Y]`,
-            String(field.bounds.y),
-          );
-          formData.append(
-            `Signers[${i}][FormFields][${j}][Bounds][Width]`,
-            String(field.bounds.width),
-          );
-          formData.append(
-            `Signers[${i}][FormFields][${j}][Bounds][Height]`,
-            String(field.bounds.height),
-          );
-          if (field.isRequired != null) {
-            formData.append(
-              `Signers[${i}][FormFields][${j}][IsRequired]`,
-              String(field.isRequired),
-            );
-          }
-        }
-      }
-    }
+      signer.formFields?.forEach((field, j) => {
+        appendFormField(formData, i, j, field);
+      });
+    });
 
     // Add file URLs
     if (params.fileUrls) {
@@ -228,9 +217,7 @@ export class BoldSignClient {
     if (params.files) {
       for (const file of params.files) {
         const content =
-          typeof file.content === 'string'
-            ? Buffer.from(file.content, 'base64')
-            : file.content;
+          typeof file.content === 'string' ? Buffer.from(file.content, 'base64') : file.content;
         const blob = new Blob([new Uint8Array(content)], {
           type: file.contentType || 'application/pdf',
         });
@@ -250,9 +237,7 @@ export class BoldSignClient {
         status: response.status,
         error: errorText,
       });
-      throw new Error(
-        `BoldSign API error: ${response.status} ${response.statusText}`,
-      );
+      throw new Error(`BoldSign API error: ${response.status} ${response.statusText}`);
     }
 
     const result = (await response.json()) as { documentId: string };
@@ -289,9 +274,7 @@ export class BoldSignClient {
         status: response.status,
         error: errorText,
       });
-      throw new Error(
-        `BoldSign API error: ${response.status} ${response.statusText}`,
-      );
+      throw new Error(`BoldSign API error: ${response.status} ${response.statusText}`);
     }
 
     return (await response.json()) as EnvelopeStatus;
@@ -320,9 +303,7 @@ export class BoldSignClient {
         status: response.status,
         error: errorText,
       });
-      throw new Error(
-        `BoldSign API error: ${response.status} ${response.statusText}`,
-      );
+      throw new Error(`BoldSign API error: ${response.status} ${response.statusText}`);
     }
 
     const arrayBuffer = await response.arrayBuffer();
@@ -332,9 +313,7 @@ export class BoldSignClient {
   /**
    * Map BoldSign event status to our internal envelope status.
    */
-  static mapEventStatus(
-    boldSignStatus: string,
-  ): string {
+  static mapEventStatus(boldSignStatus: string): string {
     const statusMap: Record<string, string> = {
       Completed: 'completed',
       Declined: 'declined',

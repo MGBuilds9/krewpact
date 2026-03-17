@@ -1,8 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 
 interface CommunicationPrefs {
   email_opt_in?: boolean;
@@ -51,7 +52,6 @@ export function ContactPreferencesCard({ contactId }: ContactPreferencesCardProp
       setError(null);
       const newPrefs = { ...prefs, ...update };
       setPrefs(newPrefs);
-
       try {
         const res = await fetch(`/api/crm/contacts/${contactId}/preferences`, {
           method: 'PATCH',
@@ -61,7 +61,6 @@ export function ContactPreferencesCard({ contactId }: ContactPreferencesCardProp
         if (!res.ok) throw new Error('Failed to save preferences');
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to save');
-        // Revert optimistic update
         setPrefs(prefs);
       } finally {
         setSaving(false);
@@ -70,7 +69,7 @@ export function ContactPreferencesCard({ contactId }: ContactPreferencesCardProp
     [contactId, prefs],
   );
 
-  if (loading) {
+  if (loading)
     return (
       <Card>
         <CardHeader>
@@ -81,33 +80,28 @@ export function ContactPreferencesCard({ contactId }: ContactPreferencesCardProp
         </CardContent>
       </Card>
     );
-  }
+
+  const disabled = !!prefs.do_not_contact;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           Communication Preferences
-          {saving && (
-            <span className="text-xs font-normal text-muted-foreground">Saving...</span>
-          )}
+          {saving && <span className="text-xs font-normal text-muted-foreground">Saving...</span>}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {error && (
-          <p className="text-sm text-destructive">{error}</p>
-        )}
-
+        {error && <p className="text-sm text-destructive">{error}</p>}
         <div className="flex items-center justify-between">
           <Label htmlFor="email-opt-in">Email Opt-in</Label>
           <Switch
             id="email-opt-in"
             checked={prefs.email_opt_in ?? false}
             onCheckedChange={(checked) => updatePrefs({ email_opt_in: checked })}
-            disabled={prefs.do_not_contact}
+            disabled={disabled}
           />
         </div>
-
         <div className="flex items-center justify-between">
           <Label htmlFor="do-not-contact">Do Not Contact</Label>
           <Switch
@@ -116,7 +110,6 @@ export function ContactPreferencesCard({ contactId }: ContactPreferencesCardProp
             onCheckedChange={(checked) => updatePrefs({ do_not_contact: checked })}
           />
         </div>
-
         <div className="space-y-2">
           <Label htmlFor="preferred-channel">Preferred Channel</Label>
           <Select
@@ -124,7 +117,7 @@ export function ContactPreferencesCard({ contactId }: ContactPreferencesCardProp
             onValueChange={(value) =>
               updatePrefs({ preferred_channel: value as CommunicationPrefs['preferred_channel'] })
             }
-            disabled={prefs.do_not_contact}
+            disabled={disabled}
           >
             <SelectTrigger id="preferred-channel">
               <SelectValue placeholder="Select channel" />
@@ -137,7 +130,6 @@ export function ContactPreferencesCard({ contactId }: ContactPreferencesCardProp
             </SelectContent>
           </Select>
         </div>
-
         <div className="space-y-2">
           <Label htmlFor="frequency">Contact Frequency</Label>
           <Select
@@ -145,7 +137,7 @@ export function ContactPreferencesCard({ contactId }: ContactPreferencesCardProp
             onValueChange={(value) =>
               updatePrefs({ frequency: value as CommunicationPrefs['frequency'] })
             }
-            disabled={prefs.do_not_contact}
+            disabled={disabled}
           >
             <SelectTrigger id="frequency">
               <SelectValue placeholder="Select frequency" />

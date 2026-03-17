@@ -1,9 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { GitBranch, Plus } from 'lucide-react';
 import { useParams } from 'next/navigation';
+import { useState } from 'react';
+
+import { ChangeOrderForm } from '@/components/FieldOps/ChangeOrderForm';
+import { ChangeRequestForm } from '@/components/FieldOps/ChangeRequestForm';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   Dialog,
   DialogContent,
@@ -11,6 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -20,11 +24,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { GitBranch, Plus } from 'lucide-react';
-import { useChangeRequests, useChangeOrders } from '@/hooks/useFieldOps';
-import { ChangeRequestForm } from '@/components/FieldOps/ChangeRequestForm';
-import { ChangeOrderForm } from '@/components/FieldOps/ChangeOrderForm';
-import type { ChangeRequest, ChangeOrder } from '@/hooks/useFieldOps';
+import type { ChangeOrder, ChangeRequest } from '@/hooks/useFieldOps';
+import { useChangeOrders, useChangeRequests } from '@/hooks/useFieldOps';
 
 const CR_STATE_COLORS: Record<ChangeRequest['state'], string> = {
   draft: 'bg-gray-100 text-gray-700',
@@ -34,7 +35,6 @@ const CR_STATE_COLORS: Record<ChangeRequest['state'], string> = {
   rejected: 'bg-red-100 text-red-700',
   void: 'bg-gray-50 text-gray-400',
 };
-
 const CO_STATUS_COLORS: Record<ChangeOrder['status'], string> = {
   draft: 'bg-gray-100 text-gray-700',
   submitted: 'bg-blue-100 text-blue-700',
@@ -49,6 +49,59 @@ function formatCAD(amount: number | null) {
   return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(amount);
 }
 
+function CORow({ co }: { co: ChangeOrder }) {
+  const deltaClass =
+    co.amount_delta && co.amount_delta > 0
+      ? 'text-red-600'
+      : co.amount_delta && co.amount_delta < 0
+        ? 'text-green-600'
+        : '';
+  const daysDelta =
+    co.days_delta != null ? `${co.days_delta > 0 ? '+' : ''}${co.days_delta}d` : '—';
+  return (
+    <TableRow>
+      <TableCell className="font-mono font-medium">{co.co_number}</TableCell>
+      <TableCell>
+        <span
+          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${CO_STATUS_COLORS[co.status]}`}
+        >
+          {co.status.replace(/_/g, ' ')}
+        </span>
+      </TableCell>
+      <TableCell className={`font-medium ${deltaClass}`}>{formatCAD(co.amount_delta)}</TableCell>
+      <TableCell className="text-sm text-muted-foreground">{daysDelta}</TableCell>
+      <TableCell className="text-sm text-muted-foreground">
+        {co.approved_at ? new Date(co.approved_at).toLocaleDateString('en-CA') : '—'}
+      </TableCell>
+    </TableRow>
+  );
+}
+
+function CRRow({ cr }: { cr: ChangeRequest }) {
+  return (
+    <TableRow>
+      <TableCell className="font-mono font-medium">{cr.request_number}</TableCell>
+      <TableCell>
+        <p className="font-medium">{cr.title}</p>
+        <p className="text-xs text-muted-foreground line-clamp-1">{cr.description}</p>
+      </TableCell>
+      <TableCell>
+        <span
+          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${CR_STATE_COLORS[cr.state]}`}
+        >
+          {cr.state.replace(/_/g, ' ')}
+        </span>
+      </TableCell>
+      <TableCell className="text-sm text-muted-foreground">
+        {formatCAD(cr.estimated_cost_impact)}
+      </TableCell>
+      <TableCell className="text-sm text-muted-foreground">
+        {cr.estimated_days_impact != null ? `${cr.estimated_days_impact}d` : '—'}
+      </TableCell>
+    </TableRow>
+  );
+}
+
 export default function ChangeOrdersPage() {
   const params = useParams();
   const projectId = params.id as string;
@@ -57,13 +110,11 @@ export default function ChangeOrdersPage() {
 
   const { data: crData, isLoading: crLoading } = useChangeRequests(projectId);
   const { data: coData, isLoading: coLoading } = useChangeOrders(projectId);
-  const changeRequests = crData?.data ?? [];
-  const changeOrders = coData?.data ?? [];
-
-  // Totals
+  const changeRequests = crData ? crData.data || [] : [];
+  const changeOrders = coData ? coData.data || [] : [];
   const totalDelta = changeOrders
     .filter((co) => co.status === 'approved')
-    .reduce((sum, co) => sum + (co.amount_delta ?? 0), 0);
+    .reduce((sum, co) => sum + (co.amount_delta || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -114,7 +165,6 @@ export default function ChangeOrdersPage() {
           </Dialog>
         </div>
       </div>
-
       <Tabs defaultValue="change-orders">
         <TabsList>
           <TabsTrigger value="change-orders">Change Orders ({changeOrders.length})</TabsTrigger>
@@ -122,12 +172,11 @@ export default function ChangeOrdersPage() {
             Change Requests ({changeRequests.length})
           </TabsTrigger>
         </TabsList>
-
         <TabsContent value="change-orders" className="mt-4">
           {coLoading ? (
             <div className="space-y-2">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-14 w-full" />
+              {['co-1', 'co-2', 'co-3', 'co-4'].map((id) => (
+                <Skeleton key={id} className="h-14 w-full" />
               ))}
             </div>
           ) : changeOrders.length === 0 ? (
@@ -149,40 +198,17 @@ export default function ChangeOrdersPage() {
               </TableHeader>
               <TableBody>
                 {changeOrders.map((co) => (
-                  <TableRow key={co.id}>
-                    <TableCell className="font-mono font-medium">{co.co_number}</TableCell>
-                    <TableCell>
-                      <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${CO_STATUS_COLORS[co.status]}`}
-                      >
-                        {co.status.replace(/_/g, ' ')}
-                      </span>
-                    </TableCell>
-                    <TableCell
-                      className={`font-medium ${co.amount_delta && co.amount_delta > 0 ? 'text-red-600' : co.amount_delta && co.amount_delta < 0 ? 'text-green-600' : ''}`}
-                    >
-                      {formatCAD(co.amount_delta)}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {co.days_delta != null
-                        ? `${co.days_delta > 0 ? '+' : ''}${co.days_delta}d`
-                        : '—'}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {co.approved_at ? new Date(co.approved_at).toLocaleDateString('en-CA') : '—'}
-                    </TableCell>
-                  </TableRow>
+                  <CORow key={co.id} co={co} />
                 ))}
               </TableBody>
             </Table>
           )}
         </TabsContent>
-
         <TabsContent value="change-requests" className="mt-4">
           {crLoading ? (
             <div className="space-y-2">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-14 w-full" />
+              {['cr-1', 'cr-2', 'cr-3', 'cr-4'].map((id) => (
+                <Skeleton key={id} className="h-14 w-full" />
               ))}
             </div>
           ) : changeRequests.length === 0 ? (
@@ -202,26 +228,7 @@ export default function ChangeOrdersPage() {
               </TableHeader>
               <TableBody>
                 {changeRequests.map((cr) => (
-                  <TableRow key={cr.id}>
-                    <TableCell className="font-mono font-medium">{cr.request_number}</TableCell>
-                    <TableCell>
-                      <p className="font-medium">{cr.title}</p>
-                      <p className="text-xs text-muted-foreground line-clamp-1">{cr.description}</p>
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${CR_STATE_COLORS[cr.state]}`}
-                      >
-                        {cr.state.replace(/_/g, ' ')}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {formatCAD(cr.estimated_cost_impact)}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {cr.estimated_days_impact != null ? `${cr.estimated_days_impact}d` : '—'}
-                    </TableCell>
-                  </TableRow>
+                  <CRRow key={cr.id} cr={cr} />
                 ))}
               </TableBody>
             </Table>

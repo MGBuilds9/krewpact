@@ -1,7 +1,7 @@
 'use client';
 
-import { cn } from '@/lib/utils';
 import type { OpportunityStage } from '@/lib/crm/opportunity-stages';
+import { cn } from '@/lib/utils';
 
 const PIPELINE_STAGES: { key: OpportunityStage; label: string }[] = [
   { key: 'intake', label: 'Intake' },

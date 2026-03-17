@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockVerifyCronAuth = vi.fn();
 vi.mock('@/lib/api/cron-auth', () => ({
@@ -24,9 +24,9 @@ vi.mock('@/lib/supabase/server', () => ({
   createServiceClient: vi.fn(),
 }));
 
-import { createServiceClient } from '@/lib/supabase/server';
+import { makeRequest, mockSupabaseClient } from '@/__tests__/helpers';
 import { POST } from '@/app/api/cron/sequence-processor/route';
-import { mockSupabaseClient, makeRequest } from '@/__tests__/helpers';
+import { createServiceClient } from '@/lib/supabase/server';
 
 const mockCreateServiceClient = vi.mocked(createServiceClient);
 
@@ -114,17 +114,24 @@ describe('POST /api/cron/sequence-processor', () => {
 
     mockSendEmail.mockResolvedValue({ success: true });
 
-    mockProcessSequences.mockImplementation(async (_client: unknown, options: { emailSender: { send: (params: Record<string, string>) => Promise<{ success: boolean }> } }) => {
-      const result = await options.emailSender.send({
-        to: 'test@example.com',
-        subject: 'Test',
-        html: '<p>Test</p>',
-        enrollmentId: 'e-1',
-        leadId: 'l-1',
-      });
-      expect(result.success).toBe(true);
-      return { processed: 1, completed: 0, errors: [], deadLettered: 0 };
-    });
+    mockProcessSequences.mockImplementation(
+      async (
+        _client: unknown,
+        options: {
+          emailSender: { send: (params: Record<string, string>) => Promise<{ success: boolean }> };
+        },
+      ) => {
+        const result = await options.emailSender.send({
+          to: 'test@example.com',
+          subject: 'Test',
+          html: '<p>Test</p>',
+          enrollmentId: 'e-1',
+          leadId: 'l-1',
+        });
+        expect(result.success).toBe(true);
+        return { processed: 1, completed: 0, errors: [], deadLettered: 0 };
+      },
+    );
 
     const res = await POST(makeCronRequest());
     expect(res.status).toBe(200);
@@ -164,12 +171,24 @@ describe('POST /api/cron/sequence-processor', () => {
       text: 'Hi John',
     });
 
-    mockProcessSequences.mockImplementation(async (_client: unknown, options: { templateResolver: { resolve: (id: string, vars: Record<string, string>) => Promise<{ subject: string; html: string; text: string } | null> } }) => {
-      const rendered = await options.templateResolver.resolve('tpl-1', { first_name: 'John' });
-      expect(rendered).toBeTruthy();
-      expect(rendered!.subject).toBe('Hello John');
-      return { processed: 1, completed: 0, errors: [], deadLettered: 0 };
-    });
+    mockProcessSequences.mockImplementation(
+      async (
+        _client: unknown,
+        options: {
+          templateResolver: {
+            resolve: (
+              id: string,
+              vars: Record<string, string>,
+            ) => Promise<{ subject: string; html: string; text: string } | null>;
+          };
+        },
+      ) => {
+        const rendered = await options.templateResolver.resolve('tpl-1', { first_name: 'John' });
+        expect(rendered).toBeTruthy();
+        expect(rendered!.subject).toBe('Hello John');
+        return { processed: 1, completed: 0, errors: [], deadLettered: 0 };
+      },
+    );
 
     const res = await POST(makeCronRequest());
     expect(res.status).toBe(200);
@@ -183,11 +202,20 @@ describe('POST /api/cron/sequence-processor', () => {
     });
     mockCreateServiceClient.mockReturnValue(supabase);
 
-    mockProcessSequences.mockImplementation(async (_client: unknown, options: { templateResolver: { resolve: (id: string, vars: Record<string, string>) => Promise<null> } }) => {
-      const rendered = await options.templateResolver.resolve('nonexistent', {});
-      expect(rendered).toBeNull();
-      return { processed: 0, completed: 0, errors: [], deadLettered: 0 };
-    });
+    mockProcessSequences.mockImplementation(
+      async (
+        _client: unknown,
+        options: {
+          templateResolver: {
+            resolve: (id: string, vars: Record<string, string>) => Promise<null>;
+          };
+        },
+      ) => {
+        const rendered = await options.templateResolver.resolve('nonexistent', {});
+        expect(rendered).toBeNull();
+        return { processed: 0, completed: 0, errors: [], deadLettered: 0 };
+      },
+    );
 
     const res = await POST(makeCronRequest());
     expect(res.status).toBe(200);

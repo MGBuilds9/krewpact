@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Test the webhook logic as a unit — the edge function uses Deno.serve
 // so we test the core logic extracted from the handler
@@ -85,7 +85,9 @@ describe('Apollo Webhook', () => {
       }
 
       expect(enrichmentUpdate.enrichment_data).toBeDefined();
-      const apolloData = (enrichmentUpdate.enrichment_data as Record<string, Record<string, unknown>>).apollo_webhook;
+      const apolloData = (
+        enrichmentUpdate.enrichment_data as Record<string, Record<string, unknown>>
+      ).apollo_webhook;
       expect(apolloData.industry).toBe('pharmaceutical');
       expect(apolloData.employees).toBe(30);
     });
@@ -102,7 +104,8 @@ describe('Apollo Webhook', () => {
 
       const contactUpdate: Record<string, unknown> = {};
       if (payload.data.email) contactUpdate.email = payload.data.email;
-      if (payload.data.phone_numbers?.[0]) contactUpdate.phone = payload.data.phone_numbers[0].raw_number;
+      if (payload.data.phone_numbers?.[0])
+        contactUpdate.phone = payload.data.phone_numbers[0].raw_number;
       if (payload.data.title) contactUpdate.title = payload.data.title;
 
       expect(contactUpdate.email).toBe('updated@example.com');

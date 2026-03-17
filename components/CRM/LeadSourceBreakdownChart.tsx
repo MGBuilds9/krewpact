@@ -1,14 +1,15 @@
 'use client';
 
-import { Pie, PieChart, Cell } from 'recharts';
+import { Cell, Pie, PieChart } from 'recharts';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
+  type ChartConfig,
   ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
   ChartLegend,
   ChartLegendContent,
-  type ChartConfig,
+  ChartTooltip,
+  ChartTooltipContent,
 } from '@/components/ui/chart';
 import type { SourceMetrics } from '@/lib/crm/metrics';
 
@@ -92,8 +93,8 @@ export function LeadSourceBreakdownChart({ metrics }: LeadSourceBreakdownChartPr
               strokeWidth={2}
               stroke="hsl(var(--background))"
             >
-              {chartData.map((entry, index) => (
-                <Cell key={index} fill={entry.fill} />
+              {chartData.map((entry) => (
+                <Cell key={entry.name} fill={entry.fill} />
               ))}
             </Pie>
             <ChartLegend

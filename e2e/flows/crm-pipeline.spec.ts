@@ -1,5 +1,6 @@
-import { test, expect } from '@playwright/test';
-import { signIn, assertAuthenticated } from '../helpers/auth';
+import { expect, test } from '@playwright/test';
+
+import { assertAuthenticated, signIn } from '../helpers/auth';
 import { orgUrl } from '../helpers/fixtures';
 
 test.describe('CRM Pipeline', () => {
@@ -27,9 +28,19 @@ test.describe('CRM Pipeline', () => {
     await expect(page.locator('main')).toBeVisible({ timeout: 10_000 });
 
     // Should see either a data table or empty state — not an error
-    const hasTable = await page.locator('table').isVisible({ timeout: 5000 }).catch(() => false);
-    const hasCards = await page.locator('[data-testid="lead-card"]').first().isVisible({ timeout: 2000 }).catch(() => false);
-    const hasEmpty = await page.getByText(/no leads|get started/i).isVisible({ timeout: 2000 }).catch(() => false);
+    const hasTable = await page
+      .locator('table')
+      .isVisible({ timeout: 5000 })
+      .catch(() => false);
+    const hasCards = await page
+      .locator('[data-testid="lead-card"]')
+      .first()
+      .isVisible({ timeout: 2000 })
+      .catch(() => false);
+    const hasEmpty = await page
+      .getByText(/no leads|get started/i)
+      .isVisible({ timeout: 2000 })
+      .catch(() => false);
 
     expect(hasTable || hasCards || hasEmpty).toBe(true);
   });
@@ -39,7 +50,9 @@ test.describe('CRM Pipeline', () => {
     await expect(page.locator('main')).toBeVisible({ timeout: 10_000 });
 
     // Click first lead in the list
-    const firstLead = page.locator('table tbody tr').first()
+    const firstLead = page
+      .locator('table tbody tr')
+      .first()
       .or(page.locator('[data-testid="lead-card"]').first());
 
     if (await firstLead.isVisible({ timeout: 5000 }).catch(() => false)) {
@@ -48,7 +61,9 @@ test.describe('CRM Pipeline', () => {
       // Should navigate to lead detail
       await expect(page.locator('main')).toBeVisible({ timeout: 10_000 });
       // Should show lead info (company name, status, etc.)
-      await expect(page.locator('h1, h2, [data-testid="lead-name"]')).toBeVisible({ timeout: 5000 });
+      await expect(page.locator('h1, h2, [data-testid="lead-name"]')).toBeVisible({
+        timeout: 5000,
+      });
     }
   });
 

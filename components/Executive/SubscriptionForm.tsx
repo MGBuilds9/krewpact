@@ -1,15 +1,15 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiFetch } from '@/lib/api-client';
-import { queryKeys } from '@/lib/query-keys';
-import { subscriptionCreateSchema } from '@/lib/validators/executive';
-import { showToast } from '@/lib/toast';
-import { Input } from '@/components/ui/input';
+import { X } from 'lucide-react';
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -18,13 +18,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { X } from 'lucide-react';
-import { z } from 'zod';
+import { apiFetch } from '@/lib/api-client';
+import { queryKeys } from '@/lib/query-keys';
+import { showToast } from '@/lib/toast';
+import { subscriptionCreateSchema } from '@/lib/validators/executive';
+
 import type { Subscription } from './SubscriptionTable';
 
-// Use input type for form (allows optional currency/billing_cycle with defaults)
-// Use output type for mutation (currency/billing_cycle are always present after Zod parse)
 type SubscriptionFormInput = z.input<typeof subscriptionCreateSchema>;
 type SubscriptionFormOutput = z.output<typeof subscriptionCreateSchema>;
 
@@ -41,16 +41,60 @@ const CATEGORY_OPTIONS = [
   { value: 'communications', label: 'Communications' },
   { value: 'infrastructure', label: 'Infrastructure' },
 ];
-
 const CURRENCY_OPTIONS = [
   { value: 'CAD', label: 'CAD' },
   { value: 'USD', label: 'USD' },
 ];
-
 const BILLING_CYCLE_OPTIONS = [
   { value: 'monthly', label: 'Monthly' },
   { value: 'annual', label: 'Annual' },
 ];
+
+const EMPTY_DEFAULTS: SubscriptionFormInput = {
+  name: '',
+  category: undefined,
+  vendor: '',
+  monthly_cost: undefined,
+  currency: 'CAD',
+  billing_cycle: 'monthly',
+  renewal_date: '',
+  notes: '',
+};
+
+function SelectField({
+  id,
+  label,
+  value,
+  onChange,
+  options,
+  error,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+  error?: string;
+}) {
+  return (
+    <div className="space-y-1">
+      <Label htmlFor={id}>{label}</Label>
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger id={id}>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((opt) => (
+            <SelectItem key={opt.value} value={opt.value}>
+              {opt.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {error && <p className="text-xs text-destructive">{error}</p>}
+    </div>
+  );
+}
 
 export function SubscriptionForm({ subscription, onClose }: SubscriptionFormProps) {
   const queryClient = useQueryClient();
@@ -65,19 +109,9 @@ export function SubscriptionForm({ subscription, onClose }: SubscriptionFormProp
     formState: { errors, isSubmitting },
   } = useForm<SubscriptionFormInput, unknown, SubscriptionFormOutput>({
     resolver: zodResolver(subscriptionCreateSchema),
-    defaultValues: {
-      name: '',
-      category: undefined,
-      vendor: '',
-      monthly_cost: undefined,
-      currency: 'CAD',
-      billing_cycle: 'monthly',
-      renewal_date: '',
-      notes: '',
-    },
+    defaultValues: EMPTY_DEFAULTS,
   });
 
-  // Populate form when editing
   useEffect(() => {
     if (subscription) {
       reset({
@@ -91,46 +125,27 @@ export function SubscriptionForm({ subscription, onClose }: SubscriptionFormProp
         notes: subscription.notes ?? '',
       });
     } else {
-      reset({
-        name: '',
-        category: undefined,
-        vendor: '',
-        monthly_cost: undefined,
-        currency: 'CAD',
-        billing_cycle: 'monthly',
-        renewal_date: '',
-        notes: '',
-      });
+      reset(EMPTY_DEFAULTS);
     }
   }, [subscription, reset]);
 
   const mutation = useMutation({
-    mutationFn: async (data: SubscriptionFormOutput) => {
-      if (isEdit && subscription) {
-        return apiFetch(`/api/executive/subscriptions/${subscription.id}`, {
-          method: 'PATCH',
-          body: data,
-        });
-      }
-      return apiFetch('/api/executive/subscriptions', {
-        method: 'POST',
-        body: data,
-      });
-    },
+    mutationFn: (data: SubscriptionFormOutput) =>
+      isEdit && subscription
+        ? apiFetch(`/api/executive/subscriptions/${subscription.id}`, {
+            method: 'PATCH',
+            body: data,
+          })
+        : apiFetch('/api/executive/subscriptions', { method: 'POST', body: data }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.executive.subscriptions.all });
       showToast.success('Subscription saved');
       onClose();
     },
-    onError: () => {
-      showToast.error('Failed to save subscription');
-    },
+    onError: () => showToast.error('Failed to save subscription'),
   });
 
-  const onSubmit = handleSubmit((data) => {
-    mutation.mutate(data);
-  });
-
+  const onSubmit = handleSubmit((data) => mutation.mutate(data));
   // eslint-disable-next-line react-hooks/incompatible-library -- form.watch() is intentional for reactive form values
   const categoryValue = watch('category') as string | undefined;
   const currencyValue = watch('currency') as string | undefined;
@@ -154,7 +169,6 @@ export function SubscriptionForm({ subscription, onClose }: SubscriptionFormProp
       </CardHeader>
       <CardContent>
         <form onSubmit={onSubmit} className="space-y-4">
-          {/* Name */}
           <div className="space-y-1">
             <Label htmlFor="sub-name">
               Name <span className="text-destructive">*</span>
@@ -167,8 +181,6 @@ export function SubscriptionForm({ subscription, onClose }: SubscriptionFormProp
             />
             {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
           </div>
-
-          {/* Category */}
           <div className="space-y-1">
             <Label htmlFor="sub-category">
               Category <span className="text-destructive">*</span>
@@ -196,14 +208,10 @@ export function SubscriptionForm({ subscription, onClose }: SubscriptionFormProp
               <p className="text-xs text-destructive">{errors.category.message}</p>
             )}
           </div>
-
-          {/* Vendor */}
           <div className="space-y-1">
             <Label htmlFor="sub-vendor">Vendor</Label>
             <Input id="sub-vendor" placeholder="e.g. GitHub Inc." {...register('vendor')} />
           </div>
-
-          {/* Monthly Cost + Currency */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label htmlFor="sub-cost">
@@ -222,57 +230,29 @@ export function SubscriptionForm({ subscription, onClose }: SubscriptionFormProp
                 <p className="text-xs text-destructive">{errors.monthly_cost.message}</p>
               )}
             </div>
-            <div className="space-y-1">
-              <Label htmlFor="sub-currency">Currency</Label>
-              <Select
-                value={currencyValue ?? 'CAD'}
-                onValueChange={(val) => setValue('currency', val, { shouldValidate: true })}
-              >
-                <SelectTrigger id="sub-currency">
-                  <SelectValue placeholder="Currency" />
-                </SelectTrigger>
-                <SelectContent>
-                  {CURRENCY_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <SelectField
+              id="sub-currency"
+              label="Currency"
+              value={currencyValue ?? 'CAD'}
+              onChange={(val) => setValue('currency', val, { shouldValidate: true })}
+              options={CURRENCY_OPTIONS}
+            />
           </div>
-
-          {/* Billing Cycle */}
-          <div className="space-y-1">
-            <Label htmlFor="sub-billing-cycle">Billing Cycle</Label>
-            <Select
-              value={billingCycleValue ?? 'monthly'}
-              onValueChange={(val) =>
-                setValue('billing_cycle', val as SubscriptionFormInput['billing_cycle'], {
-                  shouldValidate: true,
-                })
-              }
-            >
-              <SelectTrigger id="sub-billing-cycle">
-                <SelectValue placeholder="Billing cycle" />
-              </SelectTrigger>
-              <SelectContent>
-                {BILLING_CYCLE_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Renewal Date */}
+          <SelectField
+            id="sub-billing-cycle"
+            label="Billing Cycle"
+            value={billingCycleValue ?? 'monthly'}
+            onChange={(val) =>
+              setValue('billing_cycle', val as SubscriptionFormInput['billing_cycle'], {
+                shouldValidate: true,
+              })
+            }
+            options={BILLING_CYCLE_OPTIONS}
+          />
           <div className="space-y-1">
             <Label htmlFor="sub-renewal">Renewal Date</Label>
             <Input id="sub-renewal" type="date" {...register('renewal_date')} />
           </div>
-
-          {/* Notes */}
           <div className="space-y-1">
             <Label htmlFor="sub-notes">Notes</Label>
             <textarea
@@ -283,8 +263,6 @@ export function SubscriptionForm({ subscription, onClose }: SubscriptionFormProp
               {...register('notes')}
             />
           </div>
-
-          {/* Actions */}
           <div className="flex gap-2 pt-2">
             <Button type="submit" className="flex-1" disabled={isSubmitting || mutation.isPending}>
               {mutation.isPending ? 'Saving...' : isEdit ? 'Save Changes' : 'Add Subscription'}

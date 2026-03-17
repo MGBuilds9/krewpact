@@ -1,7 +1,8 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 export interface SequenceAnalytics {
   sequence_id: string;
@@ -17,60 +18,18 @@ export interface SequenceAnalytics {
   };
 }
 
-export async function GET(req: NextRequest): Promise<NextResponse> {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+type EnrollmentStatus = 'active' | 'completed' | 'paused' | 'failed';
 
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const divisionId = req.nextUrl.searchParams.get('divisionId');
-  const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
-
-  // Fetch sequences with step count
-  let seqQuery = supabase
-    .from('sequences')
-    .select('id, name, is_active, sequence_steps(id)')
-    .order('created_at', { ascending: false });
-
-  if (divisionId) {
-    seqQuery = seqQuery.eq('division_id', divisionId);
-  }
-
-  const { data: sequences, error: seqError } = await seqQuery;
-  if (seqError) {
-    return NextResponse.json({ error: seqError.message }, { status: 500 });
-  }
-
-  if (!sequences || sequences.length === 0) {
-    return NextResponse.json({ data: [] });
-  }
-
-  const seqIds = sequences.map((s) => s.id);
-
-  // Fetch all enrollments for these sequences
-  const { data: enrollments, error: enrollError } = await supabase
-    .from('sequence_enrollments')
-    .select('sequence_id, status')
-    .in('sequence_id', seqIds);
-
-  if (enrollError) {
-    return NextResponse.json({ error: enrollError.message }, { status: 500 });
-  }
-
-  // Aggregate enrollment counts per sequence
+function aggregateEnrollments(enrollments: Array<{ sequence_id: string; status: string }>) {
   const countMap: Record<
     string,
     { active: number; completed: number; paused: number; failed: number }
   > = {};
-  for (const e of enrollments ?? []) {
+  for (const e of enrollments) {
     if (!countMap[e.sequence_id]) {
       countMap[e.sequence_id] = { active: 0, completed: 0, paused: 0, failed: 0 };
     }
-    const status = e.status as string;
+    const status = e.status as EnrollmentStatus;
     if (
       status === 'active' ||
       status === 'completed' ||
@@ -80,6 +39,39 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       countMap[e.sequence_id][status]++;
     }
   }
+  return countMap;
+}
+
+export async function GET(req: NextRequest): Promise<NextResponse> {
+  const { userId } = await auth();
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
+  if (!rl.success) return rateLimitResponse(rl);
+
+  const divisionId = req.nextUrl.searchParams.get('divisionId');
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
+
+  let seqQuery = supabase
+    .from('sequences')
+    .select('id, name, is_active, sequence_steps(id)')
+    .order('created_at', { ascending: false });
+  if (divisionId) seqQuery = seqQuery.eq('division_id', divisionId);
+
+  const { data: sequences, error: seqError } = await seqQuery;
+  if (seqError) return NextResponse.json({ error: seqError.message }, { status: 500 });
+  if (!sequences?.length) return NextResponse.json({ data: [] });
+
+  const seqIds = sequences.map((s) => s.id);
+  const { data: enrollments, error: enrollError } = await supabase
+    .from('sequence_enrollments')
+    .select('sequence_id, status')
+    .in('sequence_id', seqIds);
+
+  if (enrollError) return NextResponse.json({ error: enrollError.message }, { status: 500 });
+
+  const countMap = aggregateEnrollments(enrollments ?? []);
 
   const analytics: SequenceAnalytics[] = sequences.map((seq) => {
     const counts = countMap[seq.id] ?? { active: 0, completed: 0, paused: 0, failed: 0 };
@@ -89,10 +81,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       is_active: seq.is_active,
       total_steps: Array.isArray(seq.sequence_steps) ? seq.sequence_steps.length : 0,
       enrollments: {
-        active: counts.active,
-        completed: counts.completed,
-        paused: counts.paused,
-        failed: counts.failed,
+        ...counts,
         total: counts.active + counts.completed + counts.paused + counts.failed,
       },
     };

@@ -1,10 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { logger } from '@/lib/logger';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+
 import { executeNLQuery } from '@/lib/ai/agents/nl-query';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { logger } from '@/lib/logger';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const querySchema = z.object({
   query: z.string().min(3).max(500),
@@ -24,7 +25,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const body = await req.json();
   const parsed = querySchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Invalid query', details: parsed.error.flatten() }, { status: 400 });
+    return NextResponse.json(
+      { error: 'Invalid query', details: parsed.error.flatten() },
+      { status: 400 },
+    );
   }
 
   const { client, error: clientError } = await createUserClientSafe();
@@ -33,7 +37,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   // Get org_id from user
-  const { data: user } = await client.from('users').select('org_id').eq('clerk_id', userId).single();
+  const { data: user } = await client
+    .from('users')
+    .select('org_id')
+    .eq('clerk_id', userId)
+    .single();
   if (!user?.org_id) {
     return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
   }

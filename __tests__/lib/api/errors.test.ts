@@ -1,12 +1,13 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
 import {
   ApiError,
-  errorResponse,
-  UNAUTHORIZED,
-  INVALID_JSON,
-  validationError,
-  notFound,
   dbError,
+  errorResponse,
+  INVALID_JSON,
+  notFound,
+  UNAUTHORIZED,
+  validationError,
 } from '@/lib/api/errors';
 
 describe('ApiError', () => {

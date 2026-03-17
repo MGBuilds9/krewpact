@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { InsightAnalyticsCard } from '@/components/AI/InsightAnalyticsCard';
 
 const mockAnalytics = {
@@ -129,9 +130,7 @@ describe('InsightAnalyticsCard', () => {
   });
 
   it('renders nothing when API returns no analytics object', async () => {
-    vi.spyOn(global, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({}), { status: 200 }),
-    );
+    vi.spyOn(global, 'fetch').mockResolvedValue(new Response(JSON.stringify({}), { status: 200 }));
 
     const { container } = render(<InsightAnalyticsCard />);
 
@@ -163,9 +162,11 @@ describe('InsightAnalyticsCard', () => {
   });
 
   it('fetches from the correct endpoint', async () => {
-    const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({ analytics: mockAnalytics }), { status: 200 }),
-    );
+    const fetchSpy = vi
+      .spyOn(global, 'fetch')
+      .mockResolvedValue(
+        new Response(JSON.stringify({ analytics: mockAnalytics }), { status: 200 }),
+      );
 
     render(<InsightAnalyticsCard />);
     await screen.findByText('AI Insight Analytics');

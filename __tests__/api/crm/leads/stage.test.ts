@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({
   auth: vi.fn(),
@@ -17,11 +17,12 @@ vi.mock('@/lib/logger', () => ({
   logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
 }));
 
-import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
+import { NextResponse } from 'next/server';
+
+import { makeJsonRequest, mockSupabaseClient } from '@/__tests__/helpers';
 import { POST } from '@/app/api/crm/leads/[id]/stage/route';
-import { mockSupabaseClient, makeJsonRequest } from '@/__tests__/helpers';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
@@ -35,11 +36,17 @@ function makeCtx(id = LEAD_ID) {
 describe('POST /api/crm/leads/[id]/stage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockAuth.mockResolvedValue({ userId: 'user_test123' } as ReturnType<typeof auth> extends Promise<infer T> ? T : never);
+    mockAuth.mockResolvedValue({ userId: 'user_test123' } as ReturnType<
+      typeof auth
+    > extends Promise<infer T>
+      ? T
+      : never);
   });
 
   it('returns 401 when unauthenticated', async () => {
-    mockAuth.mockResolvedValue({ userId: null } as ReturnType<typeof auth> extends Promise<infer T> ? T : never);
+    mockAuth.mockResolvedValue({ userId: null } as ReturnType<typeof auth> extends Promise<infer T>
+      ? T
+      : never);
     const req = makeJsonRequest(`/api/crm/leads/${LEAD_ID}/stage`, { status: 'contacted' });
     const res = await POST(req, makeCtx());
     expect(res.status).toBe(401);
@@ -189,7 +196,10 @@ describe('POST /api/crm/leads/[id]/stage', () => {
       } as unknown as ReturnType<typeof supabase.from>;
     });
     mockCreateUserClientSafe.mockResolvedValue({ client: supabase, error: null });
-    const req = makeJsonRequest(`/api/crm/leads/${LEAD_ID}/stage`, { status: 'lost', lost_reason: 'Budget constraints' });
+    const req = makeJsonRequest(`/api/crm/leads/${LEAD_ID}/stage`, {
+      status: 'lost',
+      lost_reason: 'Budget constraints',
+    });
     const res = await POST(req, makeCtx());
     expect(res.status).toBe(200);
     const body = await res.json();

@@ -1,18 +1,20 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+
+import { Button } from '@/components/ui/button';
 import {
   Form,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormControl,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -20,9 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useCreateCostCatalogItem, useUpdateCostCatalogItem } from '@/hooks/useEstimating';
 import type { CostCatalogItem } from '@/hooks/useEstimating';
-import { Loader2 } from 'lucide-react';
+import { useCreateCostCatalogItem, useUpdateCostCatalogItem } from '@/hooks/useEstimating';
 
 const itemTypes = ['material', 'labor', 'equipment', 'subcontract', 'other'] as const;
 
@@ -55,6 +56,26 @@ const itemTypeLabels: Record<string, string> = {
   other: 'Other',
 };
 
+function buildItemNames(item?: CostCatalogItem) {
+  return {
+    item_code: item?.item_code ?? '',
+    item_name: item?.item_name ?? '',
+    unit: item?.unit ?? '',
+    vendor_name: item?.vendor_name ?? '',
+  };
+}
+
+function buildDefaultValues(item?: CostCatalogItem, divisionId?: string) {
+  return {
+    ...buildItemNames(item),
+    item_type: (item?.item_type as FormValues['item_type']) ?? 'material',
+    base_cost: item?.base_cost?.toString() ?? '0',
+    effective_from: item?.effective_from ?? '',
+    effective_to: item?.effective_to ?? '',
+    division_id: item?.division_id ?? divisionId,
+  };
+}
+
 export function CostCatalogItemForm({
   item,
   divisionId,
@@ -64,20 +85,16 @@ export function CostCatalogItemForm({
   const createItem = useCreateCostCatalogItem();
   const updateItem = useUpdateCostCatalogItem();
   const isEditing = !!item;
+  const cb = {
+    onSuccess: () => {
+      form.reset();
+      onSuccess?.();
+    },
+  };
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      item_code: item?.item_code ?? '',
-      item_name: item?.item_name ?? '',
-      item_type: (item?.item_type as FormValues['item_type']) ?? 'material',
-      unit: item?.unit ?? '',
-      base_cost: item?.base_cost?.toString() ?? '0',
-      vendor_name: item?.vendor_name ?? '',
-      effective_from: item?.effective_from ?? '',
-      effective_to: item?.effective_to ?? '',
-      division_id: item?.division_id ?? divisionId,
-    },
+    defaultValues: buildDefaultValues(item, divisionId),
   });
 
   const isPending = createItem.isPending || updateItem.isPending;
@@ -88,7 +105,6 @@ export function CostCatalogItemForm({
       form.setError('base_cost', { message: 'Must be a valid non-negative number' });
       return;
     }
-
     const payload = {
       item_code: values.item_code || undefined,
       item_name: values.item_name,
@@ -100,24 +116,10 @@ export function CostCatalogItemForm({
       effective_to: values.effective_to || undefined,
       division_id: values.division_id,
     };
-
     if (isEditing) {
-      updateItem.mutate(
-        { id: item.id, ...payload },
-        {
-          onSuccess: () => {
-            form.reset();
-            onSuccess?.();
-          },
-        },
-      );
+      updateItem.mutate({ id: item.id, ...payload }, cb);
     } else {
-      createItem.mutate(payload, {
-        onSuccess: () => {
-          form.reset();
-          onSuccess?.();
-        },
-      });
+      createItem.mutate(payload, cb);
     }
   }
 
@@ -138,7 +140,6 @@ export function CostCatalogItemForm({
               </FormItem>
             )}
           />
-
           <FormField
             control={form.control}
             name="item_type"
@@ -164,7 +165,6 @@ export function CostCatalogItemForm({
             )}
           />
         </div>
-
         <FormField
           control={form.control}
           name="item_name"
@@ -178,7 +178,6 @@ export function CostCatalogItemForm({
             </FormItem>
           )}
         />
-
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -193,7 +192,6 @@ export function CostCatalogItemForm({
               </FormItem>
             )}
           />
-
           <FormField
             control={form.control}
             name="base_cost"
@@ -208,7 +206,6 @@ export function CostCatalogItemForm({
             )}
           />
         </div>
-
         <FormField
           control={form.control}
           name="vendor_name"
@@ -222,7 +219,6 @@ export function CostCatalogItemForm({
             </FormItem>
           )}
         />
-
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -237,7 +233,6 @@ export function CostCatalogItemForm({
               </FormItem>
             )}
           />
-
           <FormField
             control={form.control}
             name="effective_to"
@@ -252,7 +247,6 @@ export function CostCatalogItemForm({
             )}
           />
         </div>
-
         <div className="flex gap-2 justify-end pt-2">
           {onCancel && (
             <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>

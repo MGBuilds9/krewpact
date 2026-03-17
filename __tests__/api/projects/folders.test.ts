@@ -2,7 +2,7 @@
  * Tests for /api/projects/[id]/folders (GET + POST) and /api/projects/[id]/folders/[folderId] (PATCH + DELETE).
  * Table: file_folders
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
@@ -12,17 +12,18 @@ vi.mock('@/lib/api/rate-limit', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { GET, POST } from '@/app/api/projects/[id]/folders/route';
-import { PATCH, DELETE } from '@/app/api/projects/[id]/folders/[folderId]/route';
+
 import {
-  mockSupabaseClient,
+  makeJsonRequest,
+  makeRequest,
   mockClerkAuth,
   mockClerkUnauth,
-  makeRequest,
-  makeJsonRequest,
+  mockSupabaseClient,
   TEST_IDS,
 } from '@/__tests__/helpers';
+import { DELETE, PATCH } from '@/app/api/projects/[id]/folders/[folderId]/route';
+import { GET, POST } from '@/app/api/projects/[id]/folders/route';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);

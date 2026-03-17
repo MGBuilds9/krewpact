@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServiceClient } from '@/lib/supabase/server';
+
 import {
+  computeEstimatingVelocity,
   computePipelineSummary,
   computeProjectPortfolio,
-  computeEstimatingVelocity,
   computeSubscriptionSummary,
 } from '@/lib/executive/metrics';
 import { logger } from '@/lib/logger';
+import { createServiceClient } from '@/lib/supabase/server';
 
 export async function POST(req: NextRequest) {
   // Auth: QStash signature, bearer token, or platform_admin

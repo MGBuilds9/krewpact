@@ -1,6 +1,6 @@
-export { FlowCanvas } from './FlowCanvas';
-export { StepNode } from './StepNode';
 export { ConditionNode } from './ConditionNode';
+export { FlowCanvas } from './FlowCanvas';
 export { FlowToolbar } from './FlowToolbar';
 export { StepConfigPanel } from './StepConfigPanel';
-export type { FlowStep, FlowConnection } from './types';
+export { StepNode } from './StepNode';
+export type { FlowConnection, FlowStep } from './types';

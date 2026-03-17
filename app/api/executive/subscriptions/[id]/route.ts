@@ -1,8 +1,9 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { getOrgIdFromAuth, getKrewpactRoles } from '@/lib/api/org';
 import { NextRequest, NextResponse } from 'next/server';
+
+import { getKrewpactRoles, getOrgIdFromAuth } from '@/lib/api/org';
 import { logger } from '@/lib/logger';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { subscriptionUpdateSchema } from '@/lib/validators/executive';
 
 const READ_ROLES = ['executive', 'platform_admin'];

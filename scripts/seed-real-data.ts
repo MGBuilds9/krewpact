@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /**
  * KrewPact Real Data Seed Script
  *
@@ -20,8 +19,8 @@
 import { config } from 'dotenv';
 config({ path: '.env.local' });
 import { createClient } from '@supabase/supabase-js';
-import * as XLSX from 'xlsx';
 import * as path from 'path';
+import * as XLSX from 'xlsx';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -75,7 +74,6 @@ function isDecisionMaker(seniority: string): boolean {
   return dm.some((s) => lower.includes(s));
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function softInsert(table: string, rows: any[], selectCols = '*'): Promise<any[]> {
   if (!rows.length) return [];
   const results = [];
@@ -93,7 +91,6 @@ async function softInsert(table: string, rows: any[], selectCols = '*'): Promise
   return results;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function readSheet(wb: XLSX.WorkBook, name: string): any[][] {
   const ws = wb.Sheets[name];
   if (!ws) return [];
@@ -170,7 +167,7 @@ async function seed() {
 
   const accountRows = [];
   const customerLeadRows = [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const customerContactData: { pharmacy: string; contact: any }[] = [];
 
   for (let i = 1; i < custRows.length; i++) {
@@ -257,7 +254,7 @@ async function seed() {
   const clinicRows = readSheet(leadsWb, 'Clinics and medical centre owne');
 
   const apolloLeads = [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const apolloContactData: { companyName: string; email: string; contact: any }[] = [];
   const seenEmails = new Set<string>();
 

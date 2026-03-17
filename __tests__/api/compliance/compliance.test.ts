@@ -2,7 +2,7 @@
  * Tests for /api/compliance (GET + POST) and /api/compliance/[docId] (GET + PATCH).
  * Table: trade_partner_compliance_docs
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
@@ -12,16 +12,17 @@ vi.mock('@/lib/api/rate-limit', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { GET as GET_LIST, POST } from '@/app/api/compliance/route';
-import { GET as GET_DETAIL, PATCH } from '@/app/api/compliance/[docId]/route';
+
 import {
-  mockSupabaseClient,
+  makeJsonRequest,
+  makeRequest,
   mockClerkAuth,
   mockClerkUnauth,
-  makeRequest,
-  makeJsonRequest,
+  mockSupabaseClient,
 } from '@/__tests__/helpers';
+import { GET as GET_DETAIL, PATCH } from '@/app/api/compliance/[docId]/route';
+import { GET as GET_LIST, POST } from '@/app/api/compliance/route';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);

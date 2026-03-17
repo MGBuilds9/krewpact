@@ -1,9 +1,10 @@
 'use client';
 
+import { ArrowRight, Merge, Tag, Trash2, Users, X } from 'lucide-react';
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+
 import { Badge } from '@/components/ui/badge';
-import { X, Tag, Trash2, ArrowRight, Users, Merge } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface BulkActionBarProps {
   selectedIds: string[];
@@ -43,9 +44,7 @@ export function BulkActionBar({
 
   async function handleTag() {
     const tagId = prompt('Enter tag ID to add:');
-    if (tagId) {
-      await executeBulk('tag', { tag_id: tagId });
-    }
+    if (tagId) await executeBulk('tag', { tag_id: tagId });
   }
 
   async function handleStageChange() {
@@ -53,15 +52,12 @@ export function BulkActionBar({
     const stage = prompt(
       'Enter new stage (new, contacted, qualified, proposal, negotiation, won, lost):',
     );
-    if (stage) {
-      await executeBulk('stage', { stage });
-    }
+    if (stage) await executeBulk('stage', { stage });
   }
 
   async function handleDelete() {
-    if (confirm(`Delete ${selectedIds.length} ${entityType}(s)? This cannot be undone.`)) {
+    if (confirm(`Delete ${selectedIds.length} ${entityType}(s)? This cannot be undone.`))
       await executeBulk('delete');
-    }
   }
 
   return (
@@ -71,28 +67,24 @@ export function BulkActionBar({
           {selectedIds.length}
         </Badge>
         <span className="text-sm text-muted-foreground">selected</span>
-
         <div className="flex-1" />
-
         <Button variant="outline" size="sm" onClick={handleTag} disabled={loading}>
           <Tag className="mr-1.5 h-3.5 w-3.5" />
           Tag
         </Button>
-
         {entityType === 'lead' && (
           <Button variant="outline" size="sm" onClick={handleStageChange} disabled={loading}>
             <ArrowRight className="mr-1.5 h-3.5 w-3.5" />
             Stage
           </Button>
         )}
-
         {entityType === 'lead' && (
           <Button
             variant="outline"
             size="sm"
             onClick={() => {
-              const userId = prompt('Enter user ID to assign:');
-              if (userId) executeBulk('assign', { assigned_to: userId });
+              const u = prompt('Enter user ID to assign:');
+              if (u) executeBulk('assign', { assigned_to: u });
             }}
             disabled={loading}
           >
@@ -100,19 +92,18 @@ export function BulkActionBar({
             Assign
           </Button>
         )}
-
-        {selectedIds.length === 2 && (entityType === 'account' || entityType === 'contact') && onMerge && (
-          <Button variant="outline" size="sm" onClick={onMerge} disabled={loading}>
-            <Merge className="mr-1.5 h-3.5 w-3.5" />
-            Merge
-          </Button>
-        )}
-
+        {selectedIds.length === 2 &&
+          (entityType === 'account' || entityType === 'contact') &&
+          onMerge && (
+            <Button variant="outline" size="sm" onClick={onMerge} disabled={loading}>
+              <Merge className="mr-1.5 h-3.5 w-3.5" />
+              Merge
+            </Button>
+          )}
         <Button variant="destructive" size="sm" onClick={handleDelete} disabled={loading}>
           <Trash2 className="mr-1.5 h-3.5 w-3.5" />
           Delete
         </Button>
-
         <button
           onClick={onClearSelection}
           className="ml-2 p-1 text-muted-foreground hover:text-foreground"

@@ -1,35 +1,42 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  opportunityCreateSchema,
-  opportunityUpdateSchema,
-  type OpportunityCreate,
-  type OpportunityUpdate,
-} from '@/lib/validators/crm';
+import { Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+
+import { Button } from '@/components/ui/button';
 import {
   Form,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormControl,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { useCreateOpportunity, useUpdateOpportunity, type Opportunity } from '@/hooks/useCRM';
-import { Loader2 } from 'lucide-react';
+import { type Opportunity, useCreateOpportunity, useUpdateOpportunity } from '@/hooks/useCRM';
+import {
+  type OpportunityCreate,
+  opportunityCreateSchema,
+  type OpportunityUpdate,
+  opportunityUpdateSchema,
+} from '@/lib/validators/crm';
 
 interface OpportunityFormProps {
-  /** Existing opportunity for edit mode. Omit for create mode. */
   opportunity?: Opportunity;
-  /** Pre-fill lead_id when creating from a lead */
   leadId?: string;
-  /** Called after successful create/update */
   onSuccess?: (opportunity: Opportunity) => void;
-  /** Called when user cancels */
   onCancel?: () => void;
+}
+
+function buildDefaultValues(opportunity?: Opportunity, leadId?: string) {
+  return {
+    opportunity_name: opportunity?.opportunity_name ?? '',
+    lead_id: opportunity?.lead_id ?? leadId ?? undefined,
+    target_close_date: opportunity?.target_close_date ?? undefined,
+    estimated_revenue: opportunity?.estimated_revenue ?? undefined,
+    probability_pct: opportunity?.probability_pct ?? undefined,
+  };
 }
 
 export function OpportunityForm({
@@ -41,36 +48,19 @@ export function OpportunityForm({
   const isEdit = !!opportunity;
   const createOpportunity = useCreateOpportunity();
   const updateOpportunity = useUpdateOpportunity();
+  const isPending = createOpportunity.isPending || updateOpportunity.isPending;
 
   const form = useForm<OpportunityCreate | OpportunityUpdate>({
     resolver: zodResolver(isEdit ? opportunityUpdateSchema : opportunityCreateSchema),
-    defaultValues: {
-      opportunity_name: opportunity?.opportunity_name ?? '',
-      lead_id: opportunity?.lead_id ?? leadId ?? undefined,
-      target_close_date: opportunity?.target_close_date ?? undefined,
-      estimated_revenue: opportunity?.estimated_revenue ?? undefined,
-      probability_pct: opportunity?.probability_pct ?? undefined,
-    },
+    defaultValues: buildDefaultValues(opportunity, leadId),
   });
 
-  const isPending = createOpportunity.isPending || updateOpportunity.isPending;
-
   function onSubmit(values: OpportunityCreate | OpportunityUpdate) {
+    const cb = { onSuccess: (data: unknown) => onSuccess?.(data as Opportunity) };
     if (isEdit && opportunity) {
-      updateOpportunity.mutate(
-        { id: opportunity.id, ...values },
-        {
-          onSuccess: (data) => {
-            onSuccess?.(data as Opportunity);
-          },
-        },
-      );
+      updateOpportunity.mutate({ id: opportunity.id, ...values }, cb);
     } else {
-      createOpportunity.mutate(values as OpportunityCreate, {
-        onSuccess: (data) => {
-          onSuccess?.(data as Opportunity);
-        },
-      });
+      createOpportunity.mutate(values as OpportunityCreate, cb);
     }
   }
 
@@ -90,7 +80,6 @@ export function OpportunityForm({
             </FormItem>
           )}
         />
-
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -105,7 +94,6 @@ export function OpportunityForm({
               </FormItem>
             )}
           />
-
           <FormField
             control={form.control}
             name="estimated_revenue"
@@ -129,7 +117,6 @@ export function OpportunityForm({
             )}
           />
         </div>
-
         <FormField
           control={form.control}
           name="probability_pct"
@@ -153,7 +140,6 @@ export function OpportunityForm({
             </FormItem>
           )}
         />
-
         <div className="flex gap-2 justify-end pt-2">
           {onCancel && (
             <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>

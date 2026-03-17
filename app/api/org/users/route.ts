@@ -1,9 +1,11 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { userProvisioningSchema } from '@/lib/validators/org';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { requirePermission } from '@/lib/rbac/permissions';
+import { createUserClientSafe } from '@/lib/supabase/server';
+import { userProvisioningSchema } from '@/lib/validators/org';
 
 const querySchema = z.object({
   search: z.string().optional(),
@@ -18,6 +20,10 @@ export async function GET(req: NextRequest) {
 
   const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
   if (!rl.success) return rateLimitResponse(rl);
+
+  const denied = await requirePermission('users.manage');
+  if (denied) return denied;
+
   const params = Object.fromEntries(req.nextUrl.searchParams);
   const parsed = querySchema.safeParse(params);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
@@ -53,6 +59,10 @@ export async function POST(req: NextRequest) {
 
   const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
   if (!rl.success) return rateLimitResponse(rl);
+
+  const denied = await requirePermission('users.manage');
+  if (denied) return denied;
+
   let body: unknown;
   try {
     body = await req.json();

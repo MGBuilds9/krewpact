@@ -1,6 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -9,6 +12,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -16,13 +21,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
-import { useMarkOpportunityLost } from '@/hooks/useCRM';
 import type { Opportunity } from '@/hooks/useCRM';
+import { useMarkOpportunityLost } from '@/hooks/useCRM';
 
 const LOST_REASONS = [
   'Budget',
@@ -44,9 +45,7 @@ export function LostDealDialog({ opportunity, open, onOpenChange }: LostDealDial
   const [lostNotes, setLostNotes] = useState('');
   const [competitor, setCompetitor] = useState('');
   const [reopenAsLead, setReopenAsLead] = useState(false);
-
   const markLost = useMarkOpportunityLost();
-
   const isAlreadyLost = opportunity.stage === 'closed_lost';
   const canMarkLost = !isAlreadyLost && lostReason.length > 0;
 
@@ -74,13 +73,11 @@ export function LostDealDialog({ opportunity, open, onOpenChange }: LostDealDial
             Mark &quot;{opportunity.opportunity_name}&quot; as a lost deal.
           </DialogDescription>
         </DialogHeader>
-
         {isAlreadyLost && (
           <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
             This opportunity is already marked as lost.
           </div>
         )}
-
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="lost-reason">Lost Reason</Label>
@@ -97,7 +94,6 @@ export function LostDealDialog({ opportunity, open, onOpenChange }: LostDealDial
               </SelectContent>
             </Select>
           </div>
-
           <div className="space-y-2">
             <Label htmlFor="lost-notes">Notes</Label>
             <Textarea
@@ -108,7 +104,6 @@ export function LostDealDialog({ opportunity, open, onOpenChange }: LostDealDial
               rows={3}
             />
           </div>
-
           <div className="space-y-2">
             <Label htmlFor="competitor-name">Competitor (optional)</Label>
             <Input
@@ -118,7 +113,6 @@ export function LostDealDialog({ opportunity, open, onOpenChange }: LostDealDial
               placeholder="Name of competing company"
             />
           </div>
-
           <div className="flex items-center space-x-2">
             <Checkbox
               id="reopen-as-lead"
@@ -128,7 +122,6 @@ export function LostDealDialog({ opportunity, open, onOpenChange }: LostDealDial
             <Label htmlFor="reopen-as-lead">Re-open as Lead for re-nurture</Label>
           </div>
         </div>
-
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel

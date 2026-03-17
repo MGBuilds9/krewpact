@@ -1,32 +1,67 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import { Bell, BellOff } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { Button } from '@/components/ui/button';
+import { Bell, BellOff } from 'lucide-react';
+import { useCallback, useState } from 'react';
+
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
-  useNotifications,
-  useMarkNotificationRead,
-  useMarkAllNotificationsRead,
   type Notification,
+  useMarkAllNotificationsRead,
+  useMarkNotificationRead,
+  useNotifications,
 } from '@/hooks/useNotifications';
 import { useRealtimeSubscription } from '@/hooks/useRealtimeSubscription';
+
+function NotificationItem({
+  notification,
+  onClick,
+}: {
+  notification: Notification;
+  onClick: (n: Notification) => void;
+}) {
+  const isUnread = notification.state !== 'read';
+  return (
+    <div
+      key={notification.id}
+      data-notification
+      className={`px-4 py-3 border-b last:border-b-0 cursor-pointer hover:bg-muted/50 transition-colors ${isUnread ? 'bg-blue-50/50 dark:bg-blue-950/20' : ''}`}
+      onClick={() => onClick(notification)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick(notification);
+        }
+      }}
+    >
+      <div className="flex items-start gap-2">
+        {isUnread && <div className="mt-1.5 h-2 w-2 rounded-full bg-blue-500 shrink-0" />}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium truncate">{notification.title}</p>
+          {notification.message && (
+            <p className="text-xs text-muted-foreground truncate mt-0.5">{notification.message}</p>
+          )}
+          <p data-timestamp className="text-xs text-muted-foreground mt-1">
+            {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
   const { data: notifications = [], isLoading } = useNotifications({ unreadOnly: true });
   const { mutate: markRead } = useMarkNotificationRead();
   const { mutate: markAllRead } = useMarkAllNotificationsRead();
-
   const unreadCount = (notifications as Notification[]).filter((n) => n.state !== 'read').length;
 
-  const handleEvent = useCallback(() => {
-    // React Query cache will be invalidated by the hook's queryKeys
-  }, []);
-
-  // Subscribe to live notification updates
+  const handleEvent = useCallback(() => {}, []);
   useRealtimeSubscription({
     table: 'notifications',
     onEvent: handleEvent,
@@ -34,9 +69,7 @@ export function NotificationBell() {
   });
 
   const handleNotificationClick = (notification: Notification) => {
-    if (notification.state !== 'read') {
-      markRead(notification.id);
-    }
+    if (notification.state !== 'read') markRead(notification.id);
   };
 
   return (
@@ -83,41 +116,11 @@ export function NotificationBell() {
             </div>
           ) : (
             (notifications as Notification[]).map((notification) => (
-              <div
+              <NotificationItem
                 key={notification.id}
-                data-notification
-                className={`px-4 py-3 border-b last:border-b-0 cursor-pointer hover:bg-muted/50 transition-colors ${
-                  notification.state !== 'read' ? 'bg-blue-50/50 dark:bg-blue-950/20' : ''
-                }`}
-                onClick={() => handleNotificationClick(notification)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    handleNotificationClick(notification);
-                  }
-                }}
-              >
-                <div className="flex items-start gap-2">
-                  {notification.state !== 'read' && (
-                    <div className="mt-1.5 h-2 w-2 rounded-full bg-blue-500 shrink-0" />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{notification.title}</p>
-                    {notification.message && (
-                      <p className="text-xs text-muted-foreground truncate mt-0.5">
-                        {notification.message}
-                      </p>
-                    )}
-                    <p data-timestamp className="text-xs text-muted-foreground mt-1">
-                      {formatDistanceToNow(new Date(notification.created_at), {
-                        addSuffix: true,
-                      })}
-                    </p>
-                  </div>
-                </div>
-              </div>
+                notification={notification}
+                onClick={handleNotificationClick}
+              />
             ))
           )}
         </div>

@@ -1,9 +1,10 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { portalMessageSchema } from '@/lib/validators/portals';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { createUserClientSafe } from '@/lib/supabase/server';
+import { portalMessageSchema } from '@/lib/validators/portals';
 
 const querySchema = z.object({
   portal_account_id: z.string().uuid().optional(),

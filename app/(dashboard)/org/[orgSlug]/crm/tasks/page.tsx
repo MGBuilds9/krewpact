@@ -1,9 +1,11 @@
 'use client';
 
+import { AlertTriangle, CheckCircle2, Clock, ListTodo } from 'lucide-react';
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
@@ -12,14 +14,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { cn } from '@/lib/utils';
-import { ListTodo, Clock, AlertTriangle, CheckCircle2 } from 'lucide-react';
-import { useMyTasks, useCompleteTask } from '@/hooks/useCRM';
 import type { Activity } from '@/hooks/useCRM';
+import { useCompleteTask, useMyTasks } from '@/hooks/useCRM';
+import { cn } from '@/lib/utils';
 
 type Filter = 'all' | 'overdue' | 'today' | 'upcoming' | 'completed';
 
-const FILTER_OPTIONS: { value: Filter; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+const FILTER_OPTIONS: {
+  value: Filter;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+}[] = [
   { value: 'all', label: 'Active', icon: ListTodo },
   { value: 'overdue', label: 'Overdue', icon: AlertTriangle },
   { value: 'today', label: 'Today', icon: Clock },
@@ -75,14 +80,34 @@ function TaskItem({ task, onComplete }: { task: Activity; onComplete: (id: strin
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium">{task.title}</p>
         {task.details && (
-          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{String(task.details)}</p>
+          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+            {String(task.details)}
+          </p>
         )}
         <div className="flex items-center gap-2 mt-1 flex-wrap">
-          <Badge variant="outline" className="text-xs">{task.activity_type}</Badge>
-          {task.lead_id && <Badge variant="secondary" className="text-xs">Lead</Badge>}
-          {task.opportunity_id && <Badge variant="secondary" className="text-xs">Opportunity</Badge>}
-          {task.account_id && <Badge variant="secondary" className="text-xs">Account</Badge>}
-          {task.contact_id && <Badge variant="secondary" className="text-xs">Contact</Badge>}
+          <Badge variant="outline" className="text-xs">
+            {task.activity_type}
+          </Badge>
+          {task.lead_id && (
+            <Badge variant="secondary" className="text-xs">
+              Lead
+            </Badge>
+          )}
+          {task.opportunity_id && (
+            <Badge variant="secondary" className="text-xs">
+              Opportunity
+            </Badge>
+          )}
+          {task.account_id && (
+            <Badge variant="secondary" className="text-xs">
+              Account
+            </Badge>
+          )}
+          {task.contact_id && (
+            <Badge variant="secondary" className="text-xs">
+              Contact
+            </Badge>
+          )}
         </div>
       </div>
       {task.due_at && (
@@ -95,17 +120,62 @@ function TaskItem({ task, onComplete }: { task: Activity; onComplete: (id: strin
   );
 }
 
+const EMPTY_MESSAGES: Record<string, string> = {
+  overdue: "You're all caught up!",
+  completed: 'No completed tasks',
+};
+
+function TaskListContent({
+  tasks,
+  isLoading,
+  filter,
+  onComplete,
+}: {
+  tasks: Activity[];
+  isLoading: boolean;
+  filter: Filter;
+  onComplete: (id: string) => void;
+}) {
+  if (isLoading) {
+    return (
+      <div className="p-4 space-y-3">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <div key={i} className="h-14 bg-muted/50 rounded animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+  if (tasks.length === 0) {
+    return (
+      <div className="text-center py-12 text-muted-foreground">
+        <CheckCircle2 className="mx-auto h-8 w-8 mb-2 opacity-50" />
+        <p className="font-medium">No tasks</p>
+        <p className="text-sm mt-1">{EMPTY_MESSAGES[filter] ?? 'No upcoming tasks'}</p>
+      </div>
+    );
+  }
+  return (
+    <>
+      {tasks.map((task) => (
+        <TaskItem key={task.id} task={task} onComplete={onComplete} />
+      ))}
+    </>
+  );
+}
+
 export default function CRMTasksPage() {
   const [filter, setFilter] = useState<Filter>('all');
   const [entityType, setEntityType] = useState<string>('all');
+  const completeTask = useCompleteTask();
 
   const { data, isLoading } = useMyTasks({
     filter,
-    entityType: entityType === 'all' ? undefined : entityType as 'lead' | 'opportunity' | 'account' | 'contact',
+    entityType:
+      entityType === 'all'
+        ? undefined
+        : (entityType as 'lead' | 'opportunity' | 'account' | 'contact'),
     limit: 50,
   });
-
-  const completeTask = useCompleteTask();
 
   const tasks = data?.data ?? [];
   const total = data?.total ?? 0;
@@ -121,7 +191,6 @@ export default function CRMTasksPage() {
               {total} task{total !== 1 ? 's' : ''} {filter !== 'all' ? `(${filter})` : ''}
             </p>
           </div>
-
           <div className="flex gap-2">
             <Select value={entityType} onValueChange={setEntityType}>
               <SelectTrigger className="w-[140px]">
@@ -137,8 +206,6 @@ export default function CRMTasksPage() {
             </Select>
           </div>
         </div>
-
-        {/* Filter tabs */}
         <div className="flex gap-1 flex-wrap">
           {FILTER_OPTIONS.map((opt) => {
             const Icon = opt.icon;
@@ -156,40 +223,17 @@ export default function CRMTasksPage() {
             );
           })}
         </div>
-
-        {/* Task list */}
         <Card>
           <CardHeader className="pb-0">
             <CardTitle className="sr-only">Task list</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            {isLoading ? (
-              <div className="p-4 space-y-3">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="h-14 bg-muted/50 rounded animate-pulse" />
-                ))}
-              </div>
-            ) : tasks.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <CheckCircle2 className="mx-auto h-8 w-8 mb-2 opacity-50" />
-                <p className="font-medium">No tasks</p>
-                <p className="text-sm mt-1">
-                  {filter === 'overdue'
-                    ? "You're all caught up!"
-                    : filter === 'completed'
-                      ? 'No completed tasks'
-                      : 'No upcoming tasks'}
-                </p>
-              </div>
-            ) : (
-              tasks.map((task) => (
-                <TaskItem
-                  key={task.id}
-                  task={task}
-                  onComplete={(id) => completeTask.mutate({ id })}
-                />
-              ))
-            )}
+            <TaskListContent
+              tasks={tasks}
+              isLoading={isLoading}
+              filter={filter}
+              onComplete={(id) => completeTask.mutate({ id })}
+            />
           </CardContent>
         </Card>
       </div>

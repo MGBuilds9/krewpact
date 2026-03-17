@@ -1,8 +1,9 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import { Eye, Mail, MousePointerClick, Reply } from 'lucide-react';
+
 import { Card, CardContent } from '@/components/ui/card';
-import { Mail, Eye, MousePointerClick, Reply } from 'lucide-react';
 
 interface EmailAnalyticsCardProps {
   templateId?: string;

@@ -1,7 +1,8 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 export async function GET(req: NextRequest) {
   const { userId } = await auth();
@@ -22,7 +23,8 @@ export async function GET(req: NextRequest) {
     .eq('digest_date', today)
     .single();
 
-  if (error && error.code !== 'PGRST116') { // Not found is OK
+  if (error && error.code !== 'PGRST116') {
+    // Not found is OK
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 

@@ -1,10 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { logger } from '@/lib/logger';
 import { createClient } from '@supabase/supabase-js';
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { routeToDivision, resolveDivisionId } from '@/lib/crm/division-router';
-import { assignLead } from '@/lib/crm/lead-assignment';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { resolveDivisionId, routeToDivision } from '@/lib/crm/division-router';
+import { assignLead } from '@/lib/crm/lead-assignment';
+import { logger } from '@/lib/logger';
 
 // Schema for incoming lead data
 const leadSchema = z.object({
@@ -21,16 +22,95 @@ const leadSchema = z.object({
   utm_campaign: z.string().optional(),
 });
 
+type LeadData = z.infer<typeof leadSchema>;
+type SupabaseAdminClient = ReturnType<typeof createClient>;
+
+async function resolveOwner(
+  supabase: SupabaseAdminClient,
+  divisionId: string | null,
+  source: string,
+): Promise<string | null> {
+  try {
+    const assignment = await assignLead(supabase, {
+      division_id: divisionId,
+      source_channel: source,
+    });
+    return assignment.assigned ? assignment.assigned_to : null;
+  } catch (e) {
+    logger.error('Auto-assign on web lead failed:', { error: e });
+    return null;
+  }
+}
+
+async function insertLeadAndContact(
+  supabase: SupabaseAdminClient,
+  data: LeadData,
+): Promise<NextResponse> {
+  const company = data.companyName || `${data.name}'s Company`;
+
+  const divisionCode = routeToDivision({
+    project_type: data.projectType,
+    project_description: data.message,
+    company_name: company,
+  });
+  const divisionId = await resolveDivisionId(supabase, divisionCode);
+  const ownerId = await resolveOwner(supabase, divisionId, data.source);
+
+  const { data: lead, error: leadError } = await supabase
+    .from('leads')
+    .insert({
+      company_name: company,
+      source_channel: data.source,
+      status: 'new',
+      project_description: data.message,
+      project_type: data.projectType,
+      division_id: divisionId,
+      assigned_to: ownerId,
+      utm_source: data.utm_source,
+      utm_medium: data.utm_medium,
+      utm_campaign: data.utm_campaign,
+    })
+    .select('id')
+    .single();
+
+  if (leadError) {
+    logger.error('Lead Insert Error:', { error: leadError });
+    return NextResponse.json(
+      { error: 'Failed to create lead', details: leadError.message },
+      { status: 500 },
+    );
+  }
+
+  const nameParts = data.name.trim().split(' ');
+  const { error: contactError } = await supabase.from('contacts').insert({
+    lead_id: lead.id,
+    full_name: data.name,
+    first_name: nameParts[0],
+    last_name: nameParts.slice(1).join(' ') || '',
+    email: data.email,
+    phone: data.phone,
+    title: data.role,
+    is_primary: true,
+  });
+
+  if (contactError) {
+    logger.error('Contact Insert Error:', { error: contactError });
+  }
+
+  return NextResponse.json({
+    success: true,
+    lead_id: lead.id,
+    message: 'Lead captured successfully',
+  });
+}
+
 export async function POST(req: NextRequest) {
-  // Rate limit: public route — stricter limits
   const rl = await rateLimit(req, { limit: 10, window: '1 m' });
   if (!rl.success) return rateLimitResponse(rl);
 
   try {
-    // 1. Security Check
     const signature = req.headers.get('x-webhook-secret');
     const secret = process.env.WEBHOOK_SIGNING_SECRET;
-
     if (!secret || signature !== secret) {
       return NextResponse.json(
         { error: 'Unauthorized: Invalid or missing secret' },
@@ -38,10 +118,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 2. Parse & Validate Body
     const body = await req.json();
     const result = leadSchema.safeParse(body);
-
     if (!result.success) {
       return NextResponse.json(
         { error: 'Validation Failed', details: result.error.flatten() },
@@ -49,100 +127,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const data = result.data;
-
-    // 3. Init Supabase Admin
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
     if (!supabaseUrl || !supabaseServiceKey) {
       logger.error('Missing Supabase credentials');
       return NextResponse.json({ error: 'Server Configuration Error' }, { status: 500 });
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // 4. Insert Logic
-    // Strategy: Create Lead -> Create Contact
-
-    // Default company name if missing (common for B2C/Sole props)
-    const company = data.companyName || `${data.name}'s Company`;
-
-    // Auto-route to division based on lead content
-    const divisionCode = routeToDivision({
-      project_type: data.projectType,
-      project_description: data.message,
-      company_name: company,
-    });
-    const divisionId = await resolveDivisionId(supabase, divisionCode);
-
-    // Auto-assign owner via round-robin
-    let ownerId: string | null = null;
-    try {
-      const assignment = await assignLead(supabase, {
-        division_id: divisionId,
-        source_channel: data.source,
-      });
-      if (assignment.assigned) {
-        ownerId = assignment.assigned_to;
-      }
-    } catch (e) {
-      logger.error('Auto-assign on web lead failed:', { error: e });
-    }
-
-    // A. Insert Lead
-    const { data: lead, error: leadError } = await supabase
-      .from('leads')
-      .insert({
-        company_name: company,
-        source_channel: data.source,
-        status: 'new',
-        project_description: data.message,
-        project_type: data.projectType,
-        division_id: divisionId,
-        assigned_to: ownerId,
-        utm_source: data.utm_source,
-        utm_medium: data.utm_medium,
-        utm_campaign: data.utm_campaign,
-      })
-      .select('id')
-      .single();
-
-    if (leadError) {
-      logger.error('Lead Insert Error:', { error: leadError });
-      return NextResponse.json(
-        { error: 'Failed to create lead', details: leadError.message },
-        { status: 500 },
-      );
-    }
-
-    // B. Insert Contact
-    // Split name strictly for storage
-    const nameParts = data.name.trim().split(' ');
-    const firstName = nameParts[0];
-    const lastName = nameParts.slice(1).join(' ') || '';
-
-    const { error: contactError } = await supabase.from('contacts').insert({
-      lead_id: lead.id,
-      full_name: data.name,
-      first_name: firstName,
-      last_name: lastName,
-      email: data.email,
-      phone: data.phone,
-      title: data.role,
-      is_primary: true,
-    });
-
-    if (contactError) {
-      logger.error('Contact Insert Error:', { error: contactError });
-      // Non-fatal, return success with warning or just log
-    }
-
-    return NextResponse.json({
-      success: true,
-      lead_id: lead.id,
-      message: 'Lead captured successfully',
-    });
+    return await insertLeadAndContact(supabase, result.data);
   } catch (err: unknown) {
     logger.error('API Error:', { error: err });
     const message = err instanceof Error ? err.message : 'Unknown error';

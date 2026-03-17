@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
 import { ChevronRight, Shield } from 'lucide-react';
-import { useRoles, useRolePermissions } from '@/hooks/useOrg';
+import { useState } from 'react';
+
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useRolePermissions, useRoles } from '@/hooks/useOrg';
 
 function RoleDetail({ roleId, roleName }: { roleId: string; roleName: string }) {
   const { data: permissions, isLoading } = useRolePermissions(roleId);
@@ -50,8 +51,8 @@ export default function RolesPage() {
         <h1 className="text-2xl font-bold">Roles</h1>
         {isLoading ? (
           <div className="space-y-2">
-            {[...Array(5)].map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full" />
+            {['sk-1', 'sk-2', 'sk-3', 'sk-4', 'sk-5'].map((id) => (
+              <Skeleton key={id} className="h-12 w-full" />
             ))}
           </div>
         ) : (

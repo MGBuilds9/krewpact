@@ -1,8 +1,9 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { safetyFormUpdateSchema } from '@/lib/validators/safety';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { createUserClientSafe } from '@/lib/supabase/server';
+import { safetyFormUpdateSchema } from '@/lib/validators/safety';
 
 type RouteContext = { params: Promise<{ id: string; formId: string }> };
 

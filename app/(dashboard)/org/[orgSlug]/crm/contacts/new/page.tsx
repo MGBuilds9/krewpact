@@ -1,12 +1,13 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useOrgRouter } from '@/hooks/useOrgRouter';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+
 import { ContactForm } from '@/components/CRM/ContactForm';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { Contact } from '@/hooks/useCRM';
+import { useOrgRouter } from '@/hooks/useOrgRouter';
 
 export default function NewContactPage() {
   const router = useRouter();

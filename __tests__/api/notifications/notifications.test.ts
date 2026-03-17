@@ -5,7 +5,7 @@
  * /api/notifications/dispatch (POST).
  * Tables: notifications, notification_preferences
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
@@ -21,20 +21,21 @@ vi.mock('@/lib/notifications/dispatcher', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { dispatchNotification } from '@/lib/notifications/dispatcher';
-import { GET as GET_LIST, POST as POST_ACTION } from '@/app/api/notifications/route';
-import { PATCH, DELETE } from '@/app/api/notifications/[id]/route';
-import { GET as GET_PREFS, PATCH as PATCH_PREFS } from '@/app/api/notifications/preferences/route';
-import { POST as POST_DISPATCH } from '@/app/api/notifications/dispatch/route';
+
 import {
-  mockSupabaseClient,
+  makeJsonRequest,
+  makeRequest,
   mockClerkAuth,
   mockClerkUnauth,
-  makeRequest,
-  makeJsonRequest,
+  mockSupabaseClient,
   TEST_IDS,
 } from '@/__tests__/helpers';
+import { DELETE, PATCH } from '@/app/api/notifications/[id]/route';
+import { POST as POST_DISPATCH } from '@/app/api/notifications/dispatch/route';
+import { GET as GET_PREFS, PATCH as PATCH_PREFS } from '@/app/api/notifications/preferences/route';
+import { GET as GET_LIST, POST as POST_ACTION } from '@/app/api/notifications/route';
+import { dispatchNotification } from '@/lib/notifications/dispatcher';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);

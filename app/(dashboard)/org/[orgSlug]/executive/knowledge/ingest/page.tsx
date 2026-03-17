@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { StagingTable } from '@/components/Executive/StagingTable';
+
 import { StagingReviewPanel } from '@/components/Executive/StagingReviewPanel';
+import { StagingTable } from '@/components/Executive/StagingTable';
 
 export default function KnowledgeIngestPage() {
   const [selectedId, setSelectedId] = useState<string | undefined>();

@@ -4,25 +4,26 @@
  * Tests the complete lead-to-deal lifecycle through API routes.
  * These simulate E2E flows at the API level.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { POST as createLead } from '@/app/api/crm/leads/route';
-import { POST as createContact } from '@/app/api/crm/contacts/route';
-import { POST as createOpportunity } from '@/app/api/crm/opportunities/route';
-import { POST as bulkLeads } from '@/app/api/crm/leads/bulk/route';
-import { POST as importData } from '@/app/api/crm/import/route';
-import { GET as searchCRM } from '@/app/api/crm/search/route';
+
 import {
-  mockClerkAuth,
-  mockSupabaseClient,
   makeJsonRequest,
   makeRequest,
+  mockClerkAuth,
+  mockSupabaseClient,
 } from '@/__tests__/helpers';
+import { POST as createContact } from '@/app/api/crm/contacts/route';
+import { POST as importData } from '@/app/api/crm/import/route';
+import { POST as bulkLeads } from '@/app/api/crm/leads/bulk/route';
+import { POST as createLead } from '@/app/api/crm/leads/route';
+import { POST as createOpportunity } from '@/app/api/crm/opportunities/route';
+import { GET as searchCRM } from '@/app/api/crm/search/route';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);

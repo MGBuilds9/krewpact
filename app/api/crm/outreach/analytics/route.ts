@@ -1,13 +1,50 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { createUserClientSafe } from '@/lib/supabase/server';
+
+type SupabaseClient = Awaited<ReturnType<typeof createUserClientSafe>>['client'];
+
+function buildOutreachQuery(
+  supabase: SupabaseClient,
+  since: string,
+  templateId: string | null,
+  sequenceId: string | null,
+) {
+  let q = supabase
+    .from('outreach')
+    .select('*', { count: 'exact', head: true })
+    .eq('channel', 'email')
+    .gte('occurred_at', since);
+  if (templateId) q = q.eq('template_id', templateId);
+  if (sequenceId) q = q.eq('sequence_id', sequenceId);
+  return q;
+}
+
+async function fetchOutreachCounts(
+  supabase: SupabaseClient,
+  since: string,
+  templateId: string | null,
+  sequenceId: string | null,
+) {
+  const [sentRes, openedRes, clickedRes, repliedRes] = await Promise.all([
+    buildOutreachQuery(supabase, since, templateId, sequenceId),
+    buildOutreachQuery(supabase, since, templateId, sequenceId).not('opened_at', 'is', null),
+    buildOutreachQuery(supabase, since, templateId, sequenceId).not('clicked_at', 'is', null),
+    buildOutreachQuery(supabase, since, templateId, sequenceId).not('replied_at', 'is', null),
+  ]);
+  return {
+    sent: sentRes.count ?? 0,
+    opened: openedRes.count ?? 0,
+    clicked: clickedRes.count ?? 0,
+    replied: repliedRes.count ?? 0,
+  };
+}
 
 export async function GET(req: NextRequest) {
   const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
   if (!rl.success) return rateLimitResponse(rl);
@@ -22,64 +59,14 @@ export async function GET(req: NextRequest) {
   const since = sinceDate.toISOString();
 
   const { client: supabase, error: authError } = await createUserClientSafe();
-
   if (authError) return authError;
 
-  let baseQuery = supabase
-    .from('outreach')
-    .select('*', { count: 'exact', head: true })
-    .eq('channel', 'email')
-    .gte('occurred_at', since);
-
-  if (templateId) {
-    baseQuery = baseQuery.eq('template_id', templateId);
-  }
-  if (sequenceId) {
-    baseQuery = baseQuery.eq('sequence_id', sequenceId);
-  }
-
-  const { count: totalSent } = await baseQuery;
-
-  let openedQuery = supabase
-    .from('outreach')
-    .select('*', { count: 'exact', head: true })
-    .eq('channel', 'email')
-    .gte('occurred_at', since)
-    .not('opened_at', 'is', null);
-
-  if (templateId) openedQuery = openedQuery.eq('template_id', templateId);
-  if (sequenceId) openedQuery = openedQuery.eq('sequence_id', sequenceId);
-
-  const { count: totalOpened } = await openedQuery;
-
-  let clickedQuery = supabase
-    .from('outreach')
-    .select('*', { count: 'exact', head: true })
-    .eq('channel', 'email')
-    .gte('occurred_at', since)
-    .not('clicked_at', 'is', null);
-
-  if (templateId) clickedQuery = clickedQuery.eq('template_id', templateId);
-  if (sequenceId) clickedQuery = clickedQuery.eq('sequence_id', sequenceId);
-
-  const { count: totalClicked } = await clickedQuery;
-
-  let repliedQuery = supabase
-    .from('outreach')
-    .select('*', { count: 'exact', head: true })
-    .eq('channel', 'email')
-    .gte('occurred_at', since)
-    .not('replied_at', 'is', null);
-
-  if (templateId) repliedQuery = repliedQuery.eq('template_id', templateId);
-  if (sequenceId) repliedQuery = repliedQuery.eq('sequence_id', sequenceId);
-
-  const { count: totalReplied } = await repliedQuery;
-
-  const sent = totalSent ?? 0;
-  const opened = totalOpened ?? 0;
-  const clicked = totalClicked ?? 0;
-  const replied = totalReplied ?? 0;
+  const { sent, opened, clicked, replied } = await fetchOutreachCounts(
+    supabase,
+    since,
+    templateId,
+    sequenceId,
+  );
 
   return NextResponse.json({
     data: {

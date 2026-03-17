@@ -1,18 +1,20 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+
+import { Button } from '@/components/ui/button';
 import {
   Form,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormControl,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -21,13 +23,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useCreateESignEnvelope } from '@/hooks/useContracting';
-import { Loader2 } from 'lucide-react';
 
 const providers = ['boldsign'] as const;
-
-const providerLabels: Record<string, string> = {
-  boldsign: 'BoldSign',
-};
+const providerLabels: Record<string, string> = { boldsign: 'BoldSign' };
 
 const formSchema = z.object({
   signer_count: z.string().min(1, 'Signer count is required'),
@@ -44,15 +42,10 @@ export interface ESignEnvelopeFormProps {
 
 export function ESignEnvelopeForm({ contractId, onSuccess, onCancel }: ESignEnvelopeFormProps) {
   const createEnvelope = useCreateESignEnvelope();
-
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      signer_count: '1',
-      provider: 'boldsign',
-    },
+    defaultValues: { signer_count: '1', provider: 'boldsign' },
   });
-
   const isPending = createEnvelope.isPending;
 
   function onSubmit(values: FormValues) {
@@ -61,13 +54,8 @@ export function ESignEnvelopeForm({ contractId, onSuccess, onCancel }: ESignEnve
       form.setError('signer_count', { message: 'Must be a valid positive integer' });
       return;
     }
-
     createEnvelope.mutate(
-      {
-        contract_id: contractId,
-        provider: values.provider,
-        signer_count: signerCount,
-      },
+      { contract_id: contractId, provider: values.provider, signer_count: signerCount },
       {
         onSuccess: () => {
           form.reset();
@@ -104,7 +92,6 @@ export function ESignEnvelopeForm({ contractId, onSuccess, onCancel }: ESignEnve
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="signer_count"
@@ -118,7 +105,6 @@ export function ESignEnvelopeForm({ contractId, onSuccess, onCancel }: ESignEnve
             </FormItem>
           )}
         />
-
         <div className="flex gap-2 justify-end pt-2">
           {onCancel && (
             <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>

@@ -1,8 +1,9 @@
 'use client';
 
+import { Calendar, ClipboardList, User } from 'lucide-react';
+
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ClipboardList, Calendar, User } from 'lucide-react';
 import { useProjectReports } from '@/hooks/useProjectReports';
 
 interface ProjectReportsTabProps {

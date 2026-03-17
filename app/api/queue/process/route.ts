@@ -11,10 +11,11 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+
 import { logger } from '@/lib/logger';
 import { processJob } from '@/lib/queue/processor';
-import { verifyQStashSignature } from '@/lib/queue/verify';
 import { JobType } from '@/lib/queue/types';
+import { verifyQStashSignature } from '@/lib/queue/verify';
 
 const JOB_TYPE_VALUES = Object.values(JobType) as [string, ...string[]];
 
@@ -83,9 +84,6 @@ export async function POST(request: NextRequest) {
       error: err instanceof Error ? err : undefined,
     });
     // Return 500 so QStash retries
-    return NextResponse.json(
-      { error: 'Job processing failed', jobId },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: 'Job processing failed', jobId }, { status: 500 });
   }
 }

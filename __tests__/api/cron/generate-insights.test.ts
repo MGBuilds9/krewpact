@@ -1,6 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 process.env.AI_ENABLED = 'true';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/api/cron-auth', () => ({
   verifyCronAuth: vi.fn(),
@@ -15,11 +14,12 @@ vi.mock('@/lib/logger', () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 
-import { verifyCronAuth } from '@/lib/api/cron-auth';
-import { createServiceClient } from '@/lib/supabase/server';
-import { generateInsights } from '@/lib/ai/agents/insight-engine';
-import { logger } from '@/lib/logger';
 import { POST } from '@/app/api/cron/generate-insights/route';
+import { generateInsights } from '@/lib/ai/agents/insight-engine';
+import { verifyCronAuth } from '@/lib/api/cron-auth';
+import { logger } from '@/lib/logger';
+import { createServiceClient } from '@/lib/supabase/server';
+
 import { makeRequest } from '../../helpers/mock-request';
 
 const mockVerifyCronAuth = vi.mocked(verifyCronAuth);

@@ -1,8 +1,9 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
 import {
   ALLOWED_STATUS_TRANSITIONS,
-  validateStatusTransition,
   type EstimateStatus,
+  validateStatusTransition,
 } from '@/lib/estimating/estimate-status';
 
 describe('ALLOWED_STATUS_TRANSITIONS', () => {

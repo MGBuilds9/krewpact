@@ -1,9 +1,9 @@
 'use client';
 
-import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock next/navigation
 vi.mock('next/navigation', () => ({

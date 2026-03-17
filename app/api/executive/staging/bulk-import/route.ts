@@ -1,12 +1,13 @@
 import { auth } from '@clerk/nextjs/server';
-import { createServiceClient } from '@/lib/supabase/server';
-import { NextRequest, NextResponse } from 'next/server';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
-import { stagingBulkImportSchema } from '@/lib/validators/executive';
-import { readFile, stat } from 'fs/promises';
 import { createHash } from 'crypto';
+import { readFile, stat } from 'fs/promises';
+import { NextRequest, NextResponse } from 'next/server';
 import path from 'path';
+
 import { getKrewpactRoles, getOrgIdFromAuth } from '@/lib/api/org';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { createServiceClient } from '@/lib/supabase/server';
+import { stagingBulkImportSchema } from '@/lib/validators/executive';
 
 const ADMIN_ROLES = ['platform_admin'];
 
@@ -14,6 +15,81 @@ interface FileDetail {
   path: string;
   status: 'imported' | 'skipped' | 'error';
   reason?: string;
+}
+
+interface FileInput {
+  path: string;
+  category?: string;
+  division_id?: string;
+  tags?: string[];
+}
+
+type SupabaseClient = Awaited<ReturnType<typeof createServiceClient>>;
+
+interface ProcessResult {
+  status: 'imported' | 'skipped' | 'error';
+  reason?: string;
+}
+
+async function processOneFile(
+  supabase: SupabaseClient,
+  file: FileInput,
+  orgId: string,
+): Promise<ProcessResult> {
+  const filePath = file.path;
+
+  let isFile = false;
+  try {
+    const fileStats = await stat(filePath);
+    isFile = fileStats.isFile();
+  } catch {
+    return { status: 'error', reason: 'File not found or inaccessible' };
+  }
+
+  if (!isFile) return { status: 'error', reason: 'Path is not a file' };
+
+  let rawContent: string;
+  try {
+    rawContent = await readFile(filePath, 'utf-8');
+  } catch {
+    return { status: 'error', reason: 'Failed to read file' };
+  }
+
+  if (!rawContent.trim()) return { status: 'skipped', reason: 'File is empty' };
+
+  const headingMatch = rawContent.match(/^#\s+(.+)$/m);
+  const title = headingMatch
+    ? headingMatch[1].trim()
+    : path.basename(filePath, path.extname(filePath));
+
+  const contentChecksum = createHash('sha256').update(rawContent).digest('hex');
+
+  const { data: existing } = await supabase
+    .from('knowledge_staging')
+    .select('id')
+    .eq('org_id', orgId)
+    .eq('content_checksum', contentChecksum);
+
+  if (existing && existing.length > 0) return { status: 'skipped', reason: 'duplicate checksum' };
+
+  const strippedContent = rawContent.replace(/^---[\s\S]*?---\n*/m, '');
+
+  const { error: insertError } = await supabase.from('knowledge_staging').insert({
+    title,
+    raw_content: strippedContent,
+    source_type: 'vault_import',
+    source_path: filePath,
+    content_checksum: contentChecksum,
+    org_id: orgId,
+    status: 'pending_review',
+    ...(file.category && { category: file.category }),
+    ...(file.division_id && { division_id: file.division_id }),
+    ...(file.tags && { tags: file.tags }),
+  });
+
+  if (insertError) return { status: 'error', reason: 'Database insert failed' };
+
+  return { status: 'imported' };
 }
 
 export async function POST(req: NextRequest) {
@@ -50,89 +126,11 @@ export async function POST(req: NextRequest) {
   const details: FileDetail[] = [];
 
   for (const file of parsed.data.files) {
-    const filePath = file.path;
-
-    // 1. Check file exists and is a regular file
-    let isFile = false;
-    try {
-      const fileStats = await stat(filePath);
-      isFile = fileStats.isFile();
-    } catch {
-      errors++;
-      details.push({ path: filePath, status: 'error', reason: 'File not found or inaccessible' });
-      continue;
-    }
-
-    if (!isFile) {
-      errors++;
-      details.push({ path: filePath, status: 'error', reason: 'Path is not a file' });
-      continue;
-    }
-
-    // 2. Read content
-    let rawContent: string;
-    try {
-      rawContent = await readFile(filePath, 'utf-8');
-    } catch {
-      errors++;
-      details.push({ path: filePath, status: 'error', reason: 'Failed to read file' });
-      continue;
-    }
-
-    // 3. Skip empty files
-    if (!rawContent.trim()) {
-      skipped++;
-      details.push({ path: filePath, status: 'skipped', reason: 'File is empty' });
-      continue;
-    }
-
-    // 4. Extract title from first # heading or fall back to filename
-    const headingMatch = rawContent.match(/^#\s+(.+)$/m);
-    const title = headingMatch
-      ? headingMatch[1].trim()
-      : path.basename(filePath, path.extname(filePath));
-
-    // 5. Compute SHA-256 checksum of raw content
-    const contentChecksum = createHash('sha256').update(rawContent).digest('hex');
-
-    // 6. Check for existing staging doc with same checksum + org_id (dedup)
-    const { data: existing } = await supabase
-      .from('knowledge_staging')
-      .select('id')
-      .eq('org_id', orgId)
-      .eq('content_checksum', contentChecksum);
-
-    if (existing && existing.length > 0) {
-      skipped++;
-      details.push({ path: filePath, status: 'skipped', reason: 'duplicate checksum' });
-      continue;
-    }
-
-    // 7. Strip YAML frontmatter before storing
-    const strippedContent = rawContent.replace(/^---[\s\S]*?---\n*/m, '');
-
-    // 8. Insert into knowledge_staging
-    const { error: insertError } = await supabase.from('knowledge_staging').insert({
-      title,
-      raw_content: strippedContent,
-      source_type: 'vault_import',
-      source_path: filePath,
-      content_checksum: contentChecksum,
-      org_id: orgId,
-      status: 'pending_review',
-      ...(file.category && { category: file.category }),
-      ...(file.division_id && { division_id: file.division_id }),
-      ...(file.tags && { tags: file.tags }),
-    });
-
-    if (insertError) {
-      errors++;
-      details.push({ path: filePath, status: 'error', reason: 'Database insert failed' });
-      continue;
-    }
-
-    imported++;
-    details.push({ path: filePath, status: 'imported' });
+    const result = await processOneFile(supabase, file, orgId);
+    details.push({ path: file.path, status: result.status, reason: result.reason });
+    if (result.status === 'imported') imported++;
+    else if (result.status === 'skipped') skipped++;
+    else errors++;
   }
 
   return NextResponse.json({ imported, skipped, errors, details });

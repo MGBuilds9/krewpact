@@ -1,5 +1,6 @@
-import { createServiceClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
+import { createServiceClient } from '@/lib/supabase/server';
+
 import type { GeneratedInsight } from '../types';
 
 // Stage-based action recommendations — no LLM needed, pure templates
@@ -8,10 +9,15 @@ const STAGE_ACTIONS: Record<string, { action: string; threshold_days: number }> 
   site_visit: { action: 'Create an estimate based on the site visit findings', threshold_days: 7 },
   estimating: { action: 'Finalize the estimate and prepare a proposal', threshold_days: 10 },
   proposal: { action: 'Follow up on the proposal — ask if they have questions', threshold_days: 5 },
-  negotiation: { action: 'Push for contract signing — address any remaining concerns', threshold_days: 7 },
+  negotiation: {
+    action: 'Push for contract signing — address any remaining concerns',
+    threshold_days: 7,
+  },
 };
 
-export async function detectNextActions(orgId: string): Promise<Array<{ entityId: string; insight: GeneratedInsight }>> {
+export async function detectNextActions(
+  orgId: string,
+): Promise<Array<{ entityId: string; insight: GeneratedInsight }>> {
   const supabase = createServiceClient();
 
   const { data: opps, error } = await supabase
@@ -33,7 +39,9 @@ export async function detectNextActions(orgId: string): Promise<Array<{ entityId
     const stageConfig = STAGE_ACTIONS[opp.stage];
     if (!stageConfig) continue;
 
-    const daysInStage = Math.floor((Date.now() - new Date(opp.updated_at).getTime()) / (1000 * 60 * 60 * 24));
+    const daysInStage = Math.floor(
+      (Date.now() - new Date(opp.updated_at).getTime()) / (1000 * 60 * 60 * 24),
+    );
     if (daysInStage < stageConfig.threshold_days) continue;
 
     results.push({

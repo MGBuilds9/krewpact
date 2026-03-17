@@ -1,10 +1,11 @@
 'use client';
 
-import { describe, it, expect, vi } from 'vitest';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import type { PipelineData, Opportunity } from '@/hooks/useCRM';
+import { describe, expect, it, vi } from 'vitest';
+
+import type { Opportunity, PipelineData } from '@/hooks/useCRM';
 
 // Mock next/navigation
 vi.mock('next/navigation', () => ({

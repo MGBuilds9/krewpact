@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock useCRM hooks
 const mockMutateAsync = vi.fn();
@@ -18,8 +18,9 @@ vi.mock('@/hooks/useCRM', () => ({
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
-import { BulkEmailDialog } from '@/components/CRM/BulkEmailDialog';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+import { BulkEmailDialog } from '@/components/CRM/BulkEmailDialog';
 
 const mockTemplates = [
   { id: 'tpl-1', name: 'Welcome Template', subject: 'Welcome!', html: '<p>Welcome aboard</p>' },

@@ -5,7 +5,8 @@
  * QStash integration is tested via the /api/queue/process endpoint tests.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
+
 import { Queue } from '@/lib/queue/client';
 import { JobType } from '@/lib/queue/types';
 

@@ -1,18 +1,85 @@
 'use client';
 
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Bell, CheckCheck, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
-  useNotifications,
-  useMarkNotificationRead,
-  useMarkAllNotificationsRead,
   useDeleteNotification,
+  useMarkAllNotificationsRead,
+  useMarkNotificationRead,
+  useNotifications,
 } from '@/hooks/useNotifications';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
+
+type Notification = {
+  id: string;
+  state: string;
+  title: string;
+  message?: string | null;
+  created_at: string;
+  channel: string;
+};
+
+function NotificationCard({
+  notification,
+  onMark,
+  onDelete,
+}: {
+  notification: Notification;
+  onMark: (n: Notification) => void;
+  onDelete: (id: string) => void;
+}) {
+  const unread = notification.state !== 'read';
+  return (
+    <Card
+      className={cn(
+        'cursor-pointer hover:shadow-sm transition-shadow',
+        unread && 'border-l-4 border-l-primary bg-primary/5',
+      )}
+      onClick={() => onMark(notification)}
+    >
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className={cn('text-sm truncate', unread ? 'font-semibold' : 'font-medium')}>
+                {notification.title}
+              </h3>
+              {unread && <Badge className="h-2 w-2 p-0 rounded-full flex-shrink-0" />}
+            </div>
+            {notification.message && (
+              <p className="text-sm text-muted-foreground line-clamp-2">{notification.message}</p>
+            )}
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+              <span>{new Date(notification.created_at).toLocaleString()}</span>
+              <Badge variant="outline" className="text-xs capitalize">
+                {notification.channel}
+              </Badge>
+            </div>
+          </div>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(notification.id);
+              }}
+              aria-label="Delete notification"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function NotificationsPage() {
   const { data: notifications, isLoading } = useNotifications();
@@ -20,24 +87,23 @@ export default function NotificationsPage() {
   const markAllRead = useMarkAllNotificationsRead();
   const deleteNotification = useDeleteNotification();
 
-  const unreadCount = notifications?.filter((n) => n.state !== 'read').length ?? 0;
+  const allNotifications = notifications || [];
+  const unreadCount = allNotifications.filter((n) => n.state !== 'read').length;
 
-  const handleMarkAllRead = async () => {
+  async function handleMarkAllRead() {
     try {
       await markAllRead.mutateAsync();
       toast.success('All notifications marked as read');
     } catch {
       toast.error('Failed to mark notifications as read');
     }
-  };
+  }
 
-  const handleClick = async (notification: NonNullable<typeof notifications>[number]) => {
-    if (notification.state !== 'read') {
-      await markRead.mutateAsync(notification.id);
-    }
-  };
+  async function handleMark(notification: Notification) {
+    if (notification.state !== 'read') await markRead.mutateAsync(notification.id);
+  }
 
-  if (isLoading) {
+  if (isLoading)
     return (
       <div className="space-y-6">
         <Skeleton className="h-10 w-48" />
@@ -48,7 +114,6 @@ export default function NotificationsPage() {
         </div>
       </div>
     );
-  }
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
@@ -69,8 +134,7 @@ export default function NotificationsPage() {
           </Button>
         )}
       </div>
-
-      {!notifications?.length ? (
+      {allNotifications.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
             <Bell className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
@@ -80,60 +144,13 @@ export default function NotificationsPage() {
         </Card>
       ) : (
         <div className="space-y-2">
-          {notifications.map((notification) => (
-            <Card
-              key={notification.id}
-              className={cn(
-                'cursor-pointer hover:shadow-sm transition-shadow',
-                notification.state !== 'read' && 'border-l-4 border-l-primary bg-primary/5',
-              )}
-              onClick={() => handleClick(notification)}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3
-                        className={cn(
-                          'text-sm truncate',
-                          notification.state !== 'read' ? 'font-semibold' : 'font-medium',
-                        )}
-                      >
-                        {notification.title}
-                      </h3>
-                      {notification.state !== 'read' && (
-                        <Badge className="h-2 w-2 p-0 rounded-full flex-shrink-0" />
-                      )}
-                    </div>
-                    {notification.message && (
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {notification.message}
-                      </p>
-                    )}
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                      <span>{new Date(notification.created_at).toLocaleString()}</span>
-                      <Badge variant="outline" className="text-xs capitalize">
-                        {notification.channel}
-                      </Badge>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteNotification.mutate(notification.id);
-                      }}
-                      aria-label="Delete notification"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          {allNotifications.map((n) => (
+            <NotificationCard
+              key={n.id}
+              notification={n as Notification}
+              onMark={handleMark}
+              onDelete={(id) => deleteNotification.mutate(id)}
+            />
           ))}
         </div>
       )}

@@ -1,11 +1,12 @@
 'use client';
 
-import { useOrgRouter } from '@/hooks/useOrgRouter';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
+
 import { OpportunityForm } from '@/components/CRM/OpportunityForm';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { Opportunity } from '@/hooks/useCRM';
+import { useOrgRouter } from '@/hooks/useOrgRouter';
 
 export default function NewOpportunityPage() {
   const { push: orgPush } = useOrgRouter();

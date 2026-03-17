@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { ALLOWED_TRANSITIONS, validateTransition, type LeadStage } from '@/lib/crm/lead-stages';
+import { describe, expect, it } from 'vitest';
+
+import { ALLOWED_TRANSITIONS, type LeadStage, validateTransition } from '@/lib/crm/lead-stages';
 
 describe('ALLOWED_TRANSITIONS', () => {
   it('defines transitions for all 8 stages', () => {
@@ -53,7 +54,14 @@ describe('validateTransition', () => {
   });
 
   it('allows any non-terminal stage → lost', () => {
-    const stagesWithLost: LeadStage[] = ['new', 'contacted', 'qualified', 'proposal', 'negotiation', 'nurture'];
+    const stagesWithLost: LeadStage[] = [
+      'new',
+      'contacted',
+      'qualified',
+      'proposal',
+      'negotiation',
+      'nurture',
+    ];
     for (const stage of stagesWithLost) {
       const result = validateTransition(stage, 'lost');
       expect(result).toEqual({ valid: true });

@@ -3,9 +3,11 @@
 // Do NOT import this file from client components — use permissions.shared.ts instead.
 
 import { NextResponse } from 'next/server';
+
 import { getKrewpactRoles } from '@/lib/api/org';
-import { isInternalRole, isExternalRole, hasPermission } from './permissions.shared';
+
 import type { KrewpactRole, Permission } from './permissions.shared';
+import { hasPermission, isExternalRole, isInternalRole } from './permissions.shared';
 
 export * from './permissions.shared';
 

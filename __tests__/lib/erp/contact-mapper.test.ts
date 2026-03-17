@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { mapContactToErp, type ContactMapInput } from '@/lib/erp/contact-mapper';
+import { describe, expect, it } from 'vitest';
+
+import { type ContactMapInput, mapContactToErp } from '@/lib/erp/contact-mapper';
 
 function makeInput(overrides: Partial<ContactMapInput> = {}): ContactMapInput {
   return {

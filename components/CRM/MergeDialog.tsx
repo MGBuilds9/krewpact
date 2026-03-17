@@ -1,6 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -9,10 +12,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useMergeAccounts, useMergeContacts } from '@/hooks/useCRM';
 
 interface MergeDialogProps {
@@ -43,6 +44,43 @@ function formatValue(value: unknown): string {
   return String(value);
 }
 
+type FieldDef = { key: string; label: string };
+
+function EntityCard({
+  entity,
+  isPrimary,
+  fields,
+}: {
+  entity: { id: string; [key: string]: unknown };
+  isPrimary: boolean;
+  fields: readonly FieldDef[];
+}): React.ReactElement {
+  return (
+    <div
+      className={`rounded-lg border p-4 transition-colors ${isPrimary ? 'border-primary bg-primary/5' : 'border-border'}`}
+    >
+      <div className="mb-3 flex items-center gap-2">
+        <RadioGroupItem value={entity.id} id={`primary-${entity.id}`} />
+        <Label htmlFor={`primary-${entity.id}`} className="cursor-pointer font-medium">
+          {isPrimary ? (
+            <Badge variant="default">Primary</Badge>
+          ) : (
+            <Badge variant="secondary">Secondary</Badge>
+          )}
+        </Label>
+      </div>
+      <dl className="space-y-2">
+        {fields.map((field) => (
+          <div key={field.key}>
+            <dt className="text-xs font-medium text-muted-foreground">{field.label}</dt>
+            <dd className="text-sm">{formatValue(entity[field.key])}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
+
 export function MergeDialog({
   open,
   onOpenChange,
@@ -53,19 +91,17 @@ export function MergeDialog({
   const [primaryId, setPrimaryId] = useState<string>('');
   const mergeAccounts = useMergeAccounts();
   const mergeContacts = useMergeContacts();
-
   const fields = entityType === 'account' ? ACCOUNT_FIELDS : CONTACT_FIELDS;
   const mutation = entityType === 'account' ? mergeAccounts : mergeContacts;
+  const entityLabel = entityType === 'account' ? 'Account' : 'Contact';
+
+  if (entities.length !== 2) return null;
 
   const handleMerge = async () => {
     const secondaryId = entities.find((e) => e.id !== primaryId)?.id;
     if (!primaryId || !secondaryId) return;
-
     try {
-      await mutation.mutateAsync({
-        primary_id: primaryId,
-        secondary_id: secondaryId,
-      });
+      await mutation.mutateAsync({ primary_id: primaryId, secondary_id: secondaryId });
       onMergeComplete();
       onOpenChange(false);
       setPrimaryId('');
@@ -74,77 +110,39 @@ export function MergeDialog({
     }
   };
 
-  const handleCancel = () => {
-    onOpenChange(false);
-    setPrimaryId('');
-  };
-
-  if (entities.length !== 2) return null;
-
-  const entityLabel = entityType === 'account' ? 'Account' : 'Contact';
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Merge {entityLabel}s</DialogTitle>
           <DialogDescription>
-            Select the primary record to keep. The secondary record will be merged
-            into it and then removed. All related data will be reassigned to the
-            primary record.
+            Select the primary record to keep. The secondary record will be merged into it and then
+            removed. All related data will be reassigned to the primary record.
           </DialogDescription>
         </DialogHeader>
-
         <RadioGroup value={primaryId} onValueChange={setPrimaryId}>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {entities.map((entity) => (
-              <div
+              <EntityCard
                 key={entity.id}
-                className={`rounded-lg border p-4 transition-colors ${
-                  primaryId === entity.id
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border'
-                }`}
-              >
-                <div className="mb-3 flex items-center gap-2">
-                  <RadioGroupItem value={entity.id} id={`primary-${entity.id}`} />
-                  <Label
-                    htmlFor={`primary-${entity.id}`}
-                    className="cursor-pointer font-medium"
-                  >
-                    {primaryId === entity.id ? (
-                      <Badge variant="default">Primary</Badge>
-                    ) : (
-                      <Badge variant="secondary">Secondary</Badge>
-                    )}
-                  </Label>
-                </div>
-
-                <dl className="space-y-2">
-                  {fields.map((field) => (
-                    <div key={field.key}>
-                      <dt className="text-xs font-medium text-muted-foreground">
-                        {field.label}
-                      </dt>
-                      <dd className="text-sm">
-                        {formatValue(entity[field.key])}
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
-              </div>
+                entity={entity}
+                isPrimary={primaryId === entity.id}
+                fields={fields}
+              />
             ))}
           </div>
         </RadioGroup>
-
         <DialogFooter>
-          <Button variant="outline" onClick={handleCancel}>
+          <Button
+            variant="outline"
+            onClick={() => {
+              onOpenChange(false);
+              setPrimaryId('');
+            }}
+          >
             Cancel
           </Button>
-          <Button
-            onClick={handleMerge}
-            disabled={!primaryId || mutation.isPending}
-          >
+          <Button onClick={handleMerge} disabled={!primaryId || mutation.isPending}>
             {mutation.isPending ? 'Merging...' : `Merge ${entityLabel}s`}
           </Button>
         </DialogFooter>

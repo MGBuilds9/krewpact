@@ -1,9 +1,10 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { emailQuerySchema } from '@/lib/validators/email';
-import { getMicrosoftToken, graphFetch, buildGraphUrl } from '@/lib/microsoft/graph';
-import type { GraphListResponse, GraphMessage } from '@/lib/microsoft/types';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { buildGraphUrl, getMicrosoftToken, graphFetch } from '@/lib/microsoft/graph';
+import type { GraphListResponse, GraphMessage } from '@/lib/microsoft/types';
+import { emailQuerySchema } from '@/lib/validators/email';
 
 const MESSAGE_SELECT = [
   'id',

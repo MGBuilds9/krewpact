@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { useInvoiceSnapshots } from '@/hooks/useFinance';
+
+import { InvoiceSnapshotReviewForm } from '@/components/Finance/InvoiceSnapshotReviewForm';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   Table,
   TableBody,
@@ -11,8 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { InvoiceSnapshotReviewForm } from '@/components/Finance/InvoiceSnapshotReviewForm';
+import { useInvoiceSnapshots } from '@/hooks/useFinance';
 
 const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   paid: 'default',
@@ -27,21 +28,70 @@ function formatCAD(amount: number | null) {
   return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(amount);
 }
 
+type Invoice = {
+  id: string;
+  invoice_number: string;
+  customer_name?: string | null;
+  invoice_date?: string | null;
+  due_date?: string | null;
+  status?: string | null;
+  total_amount?: number | null;
+  amount_paid?: number | null;
+  subtotal_amount?: number | null;
+  tax_amount?: number | null;
+  erp_docname?: string | null;
+};
+
+function InvoiceRow({ inv, onClick }: { inv: Invoice; onClick: () => void }) {
+  return (
+    <TableRow className="cursor-pointer hover:bg-muted/50" onClick={onClick}>
+      <TableCell className="font-mono text-sm">{inv.invoice_number}</TableCell>
+      <TableCell>{inv.customer_name || '—'}</TableCell>
+      <TableCell>{inv.invoice_date || '—'}</TableCell>
+      <TableCell>{inv.due_date || '—'}</TableCell>
+      <TableCell>
+        {inv.status ? (
+          <Badge variant={STATUS_VARIANT[inv.status] || 'outline'}>{inv.status}</Badge>
+        ) : (
+          '—'
+        )}
+      </TableCell>
+      <TableCell className="text-right">{formatCAD(inv.total_amount || null)}</TableCell>
+      <TableCell className="text-right">{formatCAD(inv.amount_paid || null)}</TableCell>
+    </TableRow>
+  );
+}
+
+function buildInvoiceFormValues(inv: Invoice) {
+  return {
+    invoice_number: inv.invoice_number || '',
+    customer_name: inv.customer_name || '',
+    invoice_date: inv.invoice_date || '',
+    due_date: inv.due_date || '',
+    status: inv.status as 'draft' | 'submitted' | 'paid' | 'overdue' | 'cancelled' | undefined,
+    subtotal_amount: inv.subtotal_amount != null ? String(inv.subtotal_amount) : '',
+    tax_amount: inv.tax_amount != null ? String(inv.tax_amount) : '',
+    total_amount: inv.total_amount != null ? String(inv.total_amount) : '',
+    amount_paid: inv.amount_paid != null ? String(inv.amount_paid) : '',
+    erp_docname: inv.erp_docname || '',
+  };
+}
+
 export default function InvoicesPage() {
   const { data, isLoading, error } = useInvoiceSnapshots();
-  const [selectedInvoice, setSelectedInvoice] = useState<Record<string, unknown> | null>(null);
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
 
   if (isLoading) return <div className="p-6 text-muted-foreground">Loading invoices...</div>;
   if (error) return <div className="p-6 text-destructive">Failed to load invoices.</div>;
 
-  const invoices = data?.data ?? [];
+  const invoices = data ? data.data || [] : [];
 
   return (
     <div className="space-y-6 p-6">
       <div>
         <h1 className="text-2xl font-semibold">Invoice Snapshots</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          {data?.total ?? 0} invoice snapshots synced from ERPNext
+          {data ? data.total || 0 : 0} invoice snapshots synced from ERPNext
         </p>
       </div>
       <div className="bg-white dark:bg-card border shadow-sm rounded-2xl overflow-x-auto w-full">
@@ -66,62 +116,29 @@ export default function InvoicesPage() {
               </TableRow>
             ) : (
               invoices.map((inv) => (
-                <TableRow
+                <InvoiceRow
                   key={inv.id}
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => setSelectedInvoice(inv as unknown as Record<string, unknown>)}
-                >
-                  <TableCell className="font-mono text-sm">{inv.invoice_number}</TableCell>
-                  <TableCell>{inv.customer_name ?? '—'}</TableCell>
-                  <TableCell>{inv.invoice_date ?? '—'}</TableCell>
-                  <TableCell>{inv.due_date ?? '—'}</TableCell>
-                  <TableCell>
-                    {inv.status ? (
-                      <Badge variant={STATUS_VARIANT[inv.status] ?? 'outline'}>{inv.status}</Badge>
-                    ) : (
-                      '—'
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">{formatCAD(inv.total_amount)}</TableCell>
-                  <TableCell className="text-right">{formatCAD(inv.amount_paid)}</TableCell>
-                </TableRow>
+                  inv={inv as Invoice}
+                  onClick={() => setSelectedInvoice(inv as Invoice)}
+                />
               ))
             )}
           </TableBody>
         </Table>
       </div>
-
-      <Dialog open={!!selectedInvoice} onOpenChange={(open) => !open && setSelectedInvoice(null)}>
+      <Dialog
+        open={!!selectedInvoice}
+        onOpenChange={(open) => {
+          if (!open) setSelectedInvoice(null);
+        }}
+      >
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Invoice Detail</DialogTitle>
           </DialogHeader>
           {selectedInvoice && (
             <InvoiceSnapshotReviewForm
-              defaultValues={{
-                invoice_number: (selectedInvoice.invoice_number as string) ?? '',
-                customer_name: (selectedInvoice.customer_name as string) ?? '',
-                invoice_date: (selectedInvoice.invoice_date as string) ?? '',
-                due_date: (selectedInvoice.due_date as string) ?? '',
-                status: selectedInvoice.status as
-                  | 'draft'
-                  | 'submitted'
-                  | 'paid'
-                  | 'overdue'
-                  | 'cancelled'
-                  | undefined,
-                subtotal_amount:
-                  selectedInvoice.subtotal_amount != null
-                    ? String(selectedInvoice.subtotal_amount)
-                    : '',
-                tax_amount:
-                  selectedInvoice.tax_amount != null ? String(selectedInvoice.tax_amount) : '',
-                total_amount:
-                  selectedInvoice.total_amount != null ? String(selectedInvoice.total_amount) : '',
-                amount_paid:
-                  selectedInvoice.amount_paid != null ? String(selectedInvoice.amount_paid) : '',
-                erp_docname: (selectedInvoice.erp_docname as string) ?? '',
-              }}
+              defaultValues={buildInvoiceFormValues(selectedInvoice)}
               onSubmit={() => setSelectedInvoice(null)}
             />
           )}

@@ -1,6 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
-import { evaluateCondition, processSequences } from '@/lib/crm/sequence-processor';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { describe, expect, it, vi } from 'vitest';
+
+import { evaluateCondition, processSequences } from '@/lib/crm/sequence-processor';
 
 /**
  * Creates a deeply chainable supabase mock where every method returns itself.

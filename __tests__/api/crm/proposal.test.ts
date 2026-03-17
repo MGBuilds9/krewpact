@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock Clerk auth
 vi.mock('@clerk/nextjs/server', () => ({
@@ -16,20 +16,21 @@ vi.mock('@/lib/crm/proposal-generator', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { composeProposalData } from '@/lib/crm/proposal-generator';
-import { GET } from '@/app/api/crm/opportunities/[id]/proposal/route';
+
 import {
-  mockSupabaseClient,
-  mockClerkAuth,
-  mockClerkUnauth,
-  makeRequest,
-  makeOpportunity,
   makeAccount,
   makeContact,
   makeEstimate,
+  makeOpportunity,
+  makeRequest,
+  mockClerkAuth,
+  mockClerkUnauth,
+  mockSupabaseClient,
   resetFixtureCounter,
 } from '@/__tests__/helpers';
+import { GET } from '@/app/api/crm/opportunities/[id]/proposal/route';
+import { composeProposalData } from '@/lib/crm/proposal-generator';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);

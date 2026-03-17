@@ -1,5 +1,6 @@
-import { test, expect } from '@playwright/test';
-import { signIn, assertAuthenticated } from '../helpers/auth';
+import { expect, test } from '@playwright/test';
+
+import { assertAuthenticated, signIn } from '../helpers/auth';
 import { fixtures, orgUrl } from '../helpers/fixtures';
 
 test.describe('Estimate Creation', () => {
@@ -19,7 +20,9 @@ test.describe('Estimate Creation', () => {
     await expect(page.locator('main')).toBeVisible({ timeout: 10_000 });
 
     // Click create button
-    const createBtn = page.getByRole('button', { name: /new estimate|create estimate|add estimate/i });
+    const createBtn = page.getByRole('button', {
+      name: /new estimate|create estimate|add estimate/i,
+    });
     if (!(await createBtn.isVisible({ timeout: 5000 }).catch(() => false))) {
       test.skip();
       return;
@@ -35,22 +38,26 @@ test.describe('Estimate Creation', () => {
 
     // Add first line item
     const firstLineItem = fixtures.estimate.lineItems[0];
-    const descInput = page.locator(
-      'input[name="line_items.0.description"], input[name="items.0.description"], input[placeholder*="description"]',
-    ).first();
+    const descInput = page
+      .locator(
+        'input[name="line_items.0.description"], input[name="items.0.description"], input[placeholder*="description"]',
+      )
+      .first();
     if (await descInput.isVisible({ timeout: 5000 }).catch(() => false)) {
       await descInput.fill(firstLineItem.description);
 
-      const qtyInput = page.locator(
-        'input[name="line_items.0.qty"], input[name="items.0.quantity"]',
-      ).first().or(page.locator('input[type="number"]').nth(0));
+      const qtyInput = page
+        .locator('input[name="line_items.0.qty"], input[name="items.0.quantity"]')
+        .first()
+        .or(page.locator('input[type="number"]').nth(0));
       if (await qtyInput.isVisible({ timeout: 2000 }).catch(() => false)) {
         await qtyInput.fill(firstLineItem.qty.toString());
       }
 
-      const rateInput = page.locator(
-        'input[name="line_items.0.rate"], input[name="items.0.rate"]',
-      ).first().or(page.locator('input[type="number"]').nth(1));
+      const rateInput = page
+        .locator('input[name="line_items.0.rate"], input[name="items.0.rate"]')
+        .first()
+        .or(page.locator('input[type="number"]').nth(1));
       if (await rateInput.isVisible({ timeout: 2000 }).catch(() => false)) {
         await rateInput.fill(firstLineItem.rate.toString());
       }
@@ -62,8 +69,10 @@ test.describe('Estimate Creation', () => {
 
     // Verify estimate was created
     const created =
-      (await page.getByText(/success|created|saved/i).isVisible({ timeout: 5000 }).catch(() => false)) ||
-      page.url().includes('/estimates/');
+      (await page
+        .getByText(/success|created|saved/i)
+        .isVisible({ timeout: 5000 })
+        .catch(() => false)) || page.url().includes('/estimates/');
 
     expect(created).toBe(true);
   });
@@ -73,7 +82,9 @@ test.describe('Estimate Creation', () => {
     await expect(page.locator('main')).toBeVisible({ timeout: 10_000 });
 
     // Click first estimate
-    const firstEstimate = page.locator('table tbody tr').first()
+    const firstEstimate = page
+      .locator('table tbody tr')
+      .first()
       .or(page.locator('[data-testid="estimate-card"]').first());
 
     if (await firstEstimate.isVisible({ timeout: 5000 }).catch(() => false)) {

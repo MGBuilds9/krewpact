@@ -1,10 +1,11 @@
-import { describe, it, expect, vi } from 'vitest';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { describe, expect, it, vi } from 'vitest';
+
 import {
-  matchesConditions,
   approveEnrollment,
+  matchesConditions,
   rejectEnrollment,
 } from '@/lib/crm/enrollment-engine';
-import type { SupabaseClient } from '@supabase/supabase-js';
 
 // ---------------------------------------------------------------------------
 // matchesConditions — pure function, no mocks needed

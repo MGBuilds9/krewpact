@@ -1,32 +1,34 @@
 'use client';
 
-import React from 'react';
-import { usePathname } from 'next/navigation';
-import { useOrgRouter } from '@/hooks/useOrgRouter';
+import { useClerk, useUser } from '@clerk/nextjs';
 import {
-  Home,
-  FolderOpen,
-  FileText,
-  Calendar,
-  Users,
-  Shield,
-  X,
-  User,
-  Settings,
-  LogOut,
   Bell,
-  DollarSign,
-  ClipboardList,
   Building2,
   Calculator,
+  Calendar,
+  ClipboardList,
+  DollarSign,
+  FileText,
+  FolderOpen,
+  Home,
+  LogOut,
+  Settings,
+  Shield,
+  User,
+  Users,
+  X,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { usePathname } from 'next/navigation';
+import React from 'react';
+import { toast } from 'sonner';
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
-import { useUser, useClerk } from '@clerk/nextjs';
-import { toast } from 'sonner';
+import { useOrgRouter } from '@/hooks/useOrgRouter';
+
 import { DivisionSelector } from './DivisionSelector';
 
 interface MobileNavigationDrawerProps {
@@ -46,6 +48,32 @@ const navigationItems = [
   { icon: ClipboardList, label: 'Reports', path: '/reports' },
   { icon: Shield, label: 'Admin', path: '/admin', adminOnly: true },
 ];
+
+function NavButton({
+  icon: Icon,
+  label,
+  path,
+  isActive,
+  onClick,
+}: {
+  icon: React.ElementType;
+  label: string;
+  path: string;
+  isActive: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <Button
+      key={path}
+      variant={isActive ? 'default' : 'ghost'}
+      className={`w-full justify-start touch-target h-12 transition-colors duration-200 ${isActive ? 'bg-primary text-primary-foreground shadow-md' : 'text-foreground hover:bg-accent hover:text-accent-foreground'}`}
+      onClick={onClick}
+    >
+      <Icon className="h-5 w-5 mr-3" />
+      {label}
+    </Button>
+  );
+}
 
 export function MobileNavigationDrawer({ isOpen, onClose }: MobileNavigationDrawerProps) {
   const pathname = usePathname();
@@ -70,7 +98,6 @@ export function MobileNavigationDrawer({ isOpen, onClose }: MobileNavigationDraw
     orgPush(path);
     onClose();
   };
-
   const filteredItems = navigationItems.filter(
     (item) => !item.adminOnly || currentUser?.role === 'admin',
   );
@@ -94,9 +121,7 @@ export function MobileNavigationDrawer({ isOpen, onClose }: MobileNavigationDraw
             </Button>
           </div>
         </SheetHeader>
-
         <div className="flex-1 overflow-y-auto px-6">
-          {/* User Profile Section */}
           <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-xl p-4 mb-6 border border-primary/20">
             <div className="flex items-center gap-3 mb-3">
               <Avatar className="h-12 w-12">
@@ -116,42 +141,26 @@ export function MobileNavigationDrawer({ isOpen, onClose }: MobileNavigationDraw
                 </div>
               </div>
             </div>
-
-            {/* Online Status */}
             <div className="flex items-center gap-2">
               <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shadow-sm" />
               <span className="text-sm text-green-600 dark:text-green-400 font-medium">Online</span>
             </div>
           </div>
-
-          {/* Division Selector */}
           <div className="mb-6">
             <DivisionSelector className="w-full" />
           </div>
-
-          {/* Navigation Items */}
           <nav className="space-y-2 mb-6">
-            {filteredItems.map((item) => {
-              const isActive = pathname.includes(item.path);
-              return (
-                <Button
-                  key={item.label}
-                  variant={isActive ? 'default' : 'ghost'}
-                  className={`w-full justify-start touch-target h-12 transition-colors duration-200 ${
-                    isActive
-                      ? 'bg-primary text-primary-foreground shadow-md'
-                      : 'text-foreground hover:bg-accent hover:text-accent-foreground'
-                  }`}
-                  onClick={() => handleNavigation(item.path)}
-                >
-                  <item.icon className="h-5 w-5 mr-3" />
-                  {item.label}
-                </Button>
-              );
-            })}
+            {filteredItems.map((item) => (
+              <NavButton
+                key={item.label}
+                icon={item.icon}
+                label={item.label}
+                path={item.path}
+                isActive={pathname.includes(item.path)}
+                onClick={() => handleNavigation(item.path)}
+              />
+            ))}
           </nav>
-
-          {/* Quick Actions */}
           <div className="space-y-2 mb-6">
             <div className="text-sm font-medium text-muted-foreground mb-2">Quick Actions</div>
             <Button
@@ -175,8 +184,6 @@ export function MobileNavigationDrawer({ isOpen, onClose }: MobileNavigationDraw
             </Button>
           </div>
         </div>
-
-        {/* Footer Actions */}
         <div className="p-6 pt-4 border-t">
           <div className="space-y-2">
             <Button

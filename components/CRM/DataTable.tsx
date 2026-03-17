@@ -1,14 +1,8 @@
 'use client';
 
-import { flexRender, getCoreRowModel, useReactTable, type ColumnDef } from '@tanstack/react-table';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { type ColumnDef, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -18,7 +12,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 
 export interface SortState {
@@ -38,6 +39,11 @@ interface DataTableProps<T> {
   currentSort?: SortState | null;
   onRowClick?: (row: T) => void;
   isLoading?: boolean;
+}
+
+function getSortIcon(field: string, currentSort?: SortState | null) {
+  if (currentSort?.field !== field) return ArrowUpDown;
+  return currentSort.direction === 'asc' ? ArrowUp : ArrowDown;
 }
 
 export function DataTable<T>({
@@ -62,7 +68,6 @@ export function DataTable<T>({
     manualPagination: true,
     pageCount: Math.ceil(total / pageSize),
   });
-
   const totalPages = Math.ceil(total / pageSize);
   const startRow = page * pageSize + 1;
   const endRow = Math.min((page + 1) * pageSize, total);
@@ -70,11 +75,7 @@ export function DataTable<T>({
   function handleHeaderClick(columnId: string) {
     if (!onSortChange) return;
     if (currentSort?.field === columnId) {
-      if (currentSort.direction === 'asc') {
-        onSortChange({ field: columnId, direction: 'desc' });
-      } else {
-        onSortChange(null);
-      }
+      onSortChange(currentSort.direction === 'asc' ? { field: columnId, direction: 'desc' } : null);
     } else {
       onSortChange({ field: columnId, direction: 'asc' });
     }
@@ -83,8 +84,8 @@ export function DataTable<T>({
   if (isLoading) {
     return (
       <div className="space-y-2">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="h-12 w-full rounded" />
+        {[0, 1, 2, 3, 4].map((n) => (
+          <Skeleton key={n} className="h-12 w-full rounded" />
         ))}
       </div>
     );
@@ -99,27 +100,21 @@ export function DataTable<T>({
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   const canSort = onSortChange && header.column.getCanSort();
-                  const sortIcon =
+                  const SortIcon = getSortIcon(header.column.id, currentSort);
+                  const ariaSortVal =
                     currentSort?.field === header.column.id
                       ? currentSort.direction === 'asc'
-                        ? ArrowUp
-                        : ArrowDown
-                      : ArrowUpDown;
-                  const SortIcon = sortIcon;
+                        ? 'ascending'
+                        : 'descending'
+                      : canSort
+                        ? 'none'
+                        : undefined;
                   return (
                     <TableHead
                       key={header.id}
                       className={cn(canSort && 'cursor-pointer select-none')}
                       onClick={() => canSort && handleHeaderClick(header.column.id)}
-                      aria-sort={
-                        currentSort?.field === header.column.id
-                          ? currentSort.direction === 'asc'
-                            ? 'ascending'
-                            : 'descending'
-                          : canSort
-                            ? 'none'
-                            : undefined
-                      }
+                      aria-sort={ariaSortVal}
                     >
                       <div className="flex items-center gap-1">
                         {header.isPlaceholder
@@ -170,8 +165,6 @@ export function DataTable<T>({
           </TableBody>
         </Table>
       </div>
-
-      {/* Pagination */}
       <div className="flex items-center justify-between px-2">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <span>{total > 0 ? `Showing ${startRow}-${endRow} of ${total}` : 'No results'}</span>

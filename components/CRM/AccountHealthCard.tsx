@@ -1,11 +1,12 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Activity, DollarSign, Heart, TrendingUp, Trophy } from 'lucide-react';
+
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { cn } from '@/lib/utils';
-import { Heart, TrendingUp, Activity, DollarSign, Trophy } from 'lucide-react';
 import { useAccountHealth } from '@/hooks/useCRM';
+import { cn } from '@/lib/utils';
 
 const gradeColors: Record<string, string> = {
   excellent: 'bg-green-100 text-green-700 border-green-200',
@@ -43,10 +44,56 @@ function formatCurrency(value: number): string {
 interface AccountHealthCardProps {
   accountId: string;
 }
+type HealthData = NonNullable<ReturnType<typeof useAccountHealth>['data']>;
+
+function HealthFactors({ factors }: { factors: HealthData['health']['factors'] }) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="flex items-center gap-2 text-sm">
+        <Activity className="h-3.5 w-3.5 text-muted-foreground" />
+        <span className="text-muted-foreground">Recency</span>
+        <span className="ml-auto font-medium">{factors.recency}</span>
+      </div>
+      <div className="flex items-center gap-2 text-sm">
+        <TrendingUp className="h-3.5 w-3.5 text-muted-foreground" />
+        <span className="text-muted-foreground">Engagement</span>
+        <span className="ml-auto font-medium">{factors.engagement}</span>
+      </div>
+      <div className="flex items-center gap-2 text-sm">
+        <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
+        <span className="text-muted-foreground">Revenue</span>
+        <span className="ml-auto font-medium">{factors.revenue}</span>
+      </div>
+      <div className="flex items-center gap-2 text-sm">
+        <Trophy className="h-3.5 w-3.5 text-muted-foreground" />
+        <span className="text-muted-foreground">Win Rate</span>
+        <span className="ml-auto font-medium">{factors.winRate}</span>
+      </div>
+    </div>
+  );
+}
+
+function QuickStats({ stats }: { stats: HealthData['stats'] }) {
+  return (
+    <div className="border-t pt-3 grid grid-cols-1 sm:grid-cols-3 gap-2 text-center">
+      <div>
+        <p className="text-lg font-bold">{stats.total_opportunities}</p>
+        <p className="text-xs text-muted-foreground">Opportunities</p>
+      </div>
+      <div>
+        <p className="text-lg font-bold">{stats.won_opportunities}</p>
+        <p className="text-xs text-muted-foreground">Won</p>
+      </div>
+      <div>
+        <p className="text-lg font-bold">{formatCurrency(stats.total_revenue)}</p>
+        <p className="text-xs text-muted-foreground">Revenue</p>
+      </div>
+    </div>
+  );
+}
 
 export function AccountHealthCard({ accountId }: AccountHealthCardProps) {
   const { data, isLoading } = useAccountHealth(accountId);
-
   if (isLoading) {
     return (
       <Card>
@@ -60,11 +107,8 @@ export function AccountHealthCard({ accountId }: AccountHealthCardProps) {
       </Card>
     );
   }
-
   if (!data) return null;
-
   const { health, lifecycle_stage, stats } = data;
-
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -79,7 +123,6 @@ export function AccountHealthCard({ accountId }: AccountHealthCardProps) {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Overall score */}
         <div>
           <div className="flex items-center justify-between mb-1">
             <span className="text-sm font-medium">Health Score</span>
@@ -89,46 +132,8 @@ export function AccountHealthCard({ accountId }: AccountHealthCardProps) {
           </div>
           <Progress value={health.score} className="h-2" />
         </div>
-
-        {/* Factor breakdown */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="flex items-center gap-2 text-sm">
-            <Activity className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-muted-foreground">Recency</span>
-            <span className="ml-auto font-medium">{health.factors.recency}</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <TrendingUp className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-muted-foreground">Engagement</span>
-            <span className="ml-auto font-medium">{health.factors.engagement}</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-muted-foreground">Revenue</span>
-            <span className="ml-auto font-medium">{health.factors.revenue}</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <Trophy className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-muted-foreground">Win Rate</span>
-            <span className="ml-auto font-medium">{health.factors.winRate}</span>
-          </div>
-        </div>
-
-        {/* Quick stats */}
-        <div className="border-t pt-3 grid grid-cols-1 sm:grid-cols-3 gap-2 text-center">
-          <div>
-            <p className="text-lg font-bold">{stats.total_opportunities}</p>
-            <p className="text-xs text-muted-foreground">Opportunities</p>
-          </div>
-          <div>
-            <p className="text-lg font-bold">{stats.won_opportunities}</p>
-            <p className="text-xs text-muted-foreground">Won</p>
-          </div>
-          <div>
-            <p className="text-lg font-bold">{formatCurrency(stats.total_revenue)}</p>
-            <p className="text-xs text-muted-foreground">Revenue</p>
-          </div>
-        </div>
+        <HealthFactors factors={health.factors} />
+        <QuickStats stats={stats} />
       </CardContent>
     </Card>
   );

@@ -1,18 +1,19 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
-import { Search, Eye } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { Eye, Search } from 'lucide-react';
+import React, { useCallback, useState } from 'react';
+
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
-import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api-client';
 
 interface OrgUser {
@@ -27,6 +28,35 @@ interface OrgUser {
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+}
+
+function UserButton({ user, onSelect }: { user: OrgUser; onSelect: (user: OrgUser) => void }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(user)}
+      className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-accent transition-colors text-left"
+    >
+      <Avatar className="h-8 w-8">
+        <AvatarImage src={user.avatar_url ?? ''} />
+        <AvatarFallback className="text-xs">
+          {user.first_name[0]}
+          {user.last_name[0]}
+        </AvatarFallback>
+      </Avatar>
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-medium truncate">
+          {user.first_name} {user.last_name}
+        </div>
+        <div className="text-xs text-muted-foreground truncate">{user.email}</div>
+      </div>
+      {user.status !== 'active' && (
+        <span className="text-xs text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
+          {user.status}
+        </span>
+      )}
+    </button>
+  );
 }
 
 export function ImpersonationSelector({ open, onOpenChange }: Props) {
@@ -85,31 +115,7 @@ export function ImpersonationSelector({ open, onOpenChange }: Props) {
             <div className="py-8 text-center text-sm text-muted-foreground">No users found</div>
           )}
           {users.map((user) => (
-            <button
-              key={user.id}
-              type="button"
-              onClick={() => handleSelect(user)}
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-accent transition-colors text-left"
-            >
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={user.avatar_url ?? ''} />
-                <AvatarFallback className="text-xs">
-                  {user.first_name[0]}
-                  {user.last_name[0]}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium truncate">
-                  {user.first_name} {user.last_name}
-                </div>
-                <div className="text-xs text-muted-foreground truncate">{user.email}</div>
-              </div>
-              {user.status !== 'active' && (
-                <span className="text-xs text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
-                  {user.status}
-                </span>
-              )}
-            </button>
+            <UserButton key={user.id} user={user} onSelect={handleSelect} />
           ))}
         </div>
       </DialogContent>

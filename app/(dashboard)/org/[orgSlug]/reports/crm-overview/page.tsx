@@ -1,7 +1,8 @@
 'use client';
 
-import { CRMOverviewReport } from '@/components/CRM/CRMOverviewReport';
 import { BarChart3 } from 'lucide-react';
+
+import { CRMOverviewReport } from '@/components/CRM/CRMOverviewReport';
 
 export default function CRMOverviewReportPage() {
   return (

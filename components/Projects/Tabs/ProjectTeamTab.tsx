@@ -1,10 +1,13 @@
 'use client';
 
+import { Mail, Plus, UserMinus } from 'lucide-react';
 import { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -19,29 +22,66 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, Mail, UserMinus } from 'lucide-react';
 import {
-  useProjectMembers,
   useAddProjectMember,
+  useProjectMembers,
   useRemoveProjectMember,
 } from '@/hooks/useProjectMembers';
 import { useUsers } from '@/hooks/useUsers';
-import { toast } from 'sonner';
 
 interface ProjectTeamTabProps {
   projectId: string;
+}
+
+type Member = ReturnType<typeof useProjectMembers>['data'] extends (infer T)[] | undefined
+  ? T
+  : never;
+
+function MemberCard({ member, onRemove }: { member: Member; onRemove: (id: string) => void }) {
+  return (
+    <Card>
+      <CardContent className="pt-6">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-3">
+            <Avatar>
+              <AvatarImage src={member.user?.avatar_url || undefined} />
+              <AvatarFallback>
+                {member.user?.first_name?.[0]}
+                {member.user?.last_name?.[0]}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="font-medium">
+                {member.user?.first_name} {member.user?.last_name}
+              </p>
+              <Badge variant="secondary" className="mt-1">
+                {member.member_role}
+              </Badge>
+              {member.user?.email && (
+                <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
+                  <Mail className="h-3 w-3" />
+                  {member.user.email}
+                </div>
+              )}
+            </div>
+          </div>
+          <Button variant="ghost" size="sm" onClick={() => onRemove(member.id)}>
+            <UserMinus className="h-4 w-4" />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
 
 export function ProjectTeamTab({ projectId }: ProjectTeamTabProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState('');
   const [selectedRole, setSelectedRole] = useState('worker');
-
   const { data: teamMembers = [] } = useProjectMembers(projectId);
   const { data: allUsers } = useUsers();
   const addMember = useAddProjectMember(projectId);
   const removeMember = useRemoveProjectMember(projectId);
-
   const availableUsers = allUsers?.filter(
     (user) => !teamMembers.find((member) => member.user_id === user.id),
   );
@@ -117,44 +157,11 @@ export function ProjectTeamTab({ projectId }: ProjectTeamTabProps) {
           </DialogContent>
         </Dialog>
       </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {teamMembers.map((member) => (
-          <Card key={member.id}>
-            <CardContent className="pt-6">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <Avatar>
-                    <AvatarImage src={member.user?.avatar_url || undefined} />
-                    <AvatarFallback>
-                      {member.user?.first_name?.[0]}
-                      {member.user?.last_name?.[0]}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-medium">
-                      {member.user?.first_name} {member.user?.last_name}
-                    </p>
-                    <Badge variant="secondary" className="mt-1">
-                      {member.member_role}
-                    </Badge>
-                    {member.user?.email && (
-                      <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-                        <Mail className="h-3 w-3" />
-                        {member.user.email}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <Button variant="ghost" size="sm" onClick={() => handleRemoveMember(member.id)}>
-                  <UserMinus className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <MemberCard key={member.id} member={member} onRemove={handleRemoveMember} />
         ))}
       </div>
-
       {teamMembers.length === 0 && (
         <Card>
           <CardContent className="py-12 text-center">

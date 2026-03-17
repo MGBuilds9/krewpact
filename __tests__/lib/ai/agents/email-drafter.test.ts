@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/supabase/server', () => ({
   createServiceClient: vi.fn(),
@@ -11,9 +10,9 @@ vi.mock('@/lib/logger', () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 
-import { createServiceClient } from '@/lib/supabase/server';
-import { generateWithGemini } from '@/lib/ai/providers/gemini';
 import { draftEmail } from '@/lib/ai/agents/email-drafter';
+import { generateWithGemini } from '@/lib/ai/providers/gemini';
+import { createServiceClient } from '@/lib/supabase/server';
 
 const mockCreateServiceClient = vi.mocked(createServiceClient);
 const mockGenerateWithGemini = vi.mocked(generateWithGemini);
@@ -86,7 +85,9 @@ describe('draftEmail', () => {
       account_id: 'acct-1',
       lead_id: null,
     });
-    const contactsChain = mockChain([{ email: 'buyer@corp.com', first_name: 'Bob', last_name: 'Smith' }]);
+    const contactsChain = mockChain([
+      { email: 'buyer@corp.com', first_name: 'Bob', last_name: 'Smith' },
+    ]);
     const activitiesChain = mockChain([]);
 
     const mockFrom = vi.fn().mockImplementation((table: string) => {
@@ -118,7 +119,9 @@ describe('draftEmail', () => {
       province: 'ON',
       website: 'https://bigbuild.com',
     });
-    const contactsChain = mockChain([{ email: 'ceo@bigbuild.com', first_name: 'Alice', last_name: 'Brown' }]);
+    const contactsChain = mockChain([
+      { email: 'ceo@bigbuild.com', first_name: 'Alice', last_name: 'Brown' },
+    ]);
 
     const mockFrom = vi.fn().mockImplementation((table: string) => {
       if (table === 'accounts') return accountChain;

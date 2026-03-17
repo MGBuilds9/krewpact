@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockVerifyCronAuth = vi.fn();
 vi.mock('@/lib/api/cron-auth', () => ({
@@ -10,14 +9,14 @@ vi.mock('@/lib/supabase/server', () => ({
   createServiceClient: vi.fn(),
 }));
 
-import { createServiceClient } from '@/lib/supabase/server';
-import { POST } from '@/app/api/cron/followup-reminders/route';
 import {
-  mockSupabaseClient,
-  makeRequest,
   makeActivity,
+  makeRequest,
+  mockSupabaseClient,
   resetFixtureCounter,
 } from '@/__tests__/helpers';
+import { POST } from '@/app/api/cron/followup-reminders/route';
+import { createServiceClient } from '@/lib/supabase/server';
 
 const mockCreateServiceClient = vi.mocked(createServiceClient);
 

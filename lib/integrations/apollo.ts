@@ -60,7 +60,15 @@ export async function searchPeople(params: ApolloSearchParams): Promise<ApolloPe
 
 export async function searchPeopleWithPagination(
   params: ApolloSearchParams,
-): Promise<{ pagination: { people: ApolloPerson[]; page: number; per_page: number; total_entries: number; total_pages: number } }> {
+): Promise<{
+  pagination: {
+    people: ApolloPerson[];
+    page: number;
+    per_page: number;
+    total_entries: number;
+    total_pages: number;
+  };
+}> {
   const apiKey = process.env.APOLLO_API_KEY;
   if (!apiKey) throw new Error('APOLLO_API_KEY not configured');
 
@@ -116,32 +124,35 @@ export const MDM_APOLLO_CONFIG = {
   maxPagesPerRun: 8, // 200 leads/week = 8 pages * 25
 };
 
-export function mapApolloToLead(person: ApolloPerson) {
+function mapApolloOrgEnrichment(person: ApolloPerson) {
+  const org = person.organization;
   return {
-    company_name: person.organization?.name ?? `${person.first_name} ${person.last_name}`,
-    domain:
-      person.organization?.website_url?.replace(/^https?:\/\//, '').replace(/\/$/, '') ?? null,
-    industry: person.organization?.industry ?? null,
+    employees: org?.estimated_num_employees ?? null,
+    annual_revenue: org?.annual_revenue ?? null,
+    founded_year: org?.founded_year ?? null,
+    technologies: org?.technologies ?? null,
+    org_keywords: org?.keywords ?? null,
+    org_linkedin: org?.linkedin_url ?? null,
+    seniority: person.seniority ?? null,
+    departments: person.departments ?? null,
+    enriched_at: new Date().toISOString(),
+  };
+}
+
+export function mapApolloToLead(person: ApolloPerson) {
+  const org = person.organization;
+  return {
+    company_name: org?.name ?? `${person.first_name} ${person.last_name}`,
+    domain: org?.website_url?.replace(/^https?:\/\//, '').replace(/\/$/, '') ?? null,
+    industry: org?.industry ?? null,
     source_channel: 'apollo',
     source_detail: person.id,
     status: 'new' as const,
     project_type: null,
-    city: person.organization?.city ?? null,
-    province: person.organization?.state ?? 'Ontario',
+    city: org?.city ?? null,
+    province: org?.state ?? 'Ontario',
     estimated_value: null,
-    enrichment_data: {
-      apollo_search: {
-        employees: person.organization?.estimated_num_employees ?? null,
-        annual_revenue: person.organization?.annual_revenue ?? null,
-        founded_year: person.organization?.founded_year ?? null,
-        technologies: person.organization?.technologies ?? null,
-        org_keywords: person.organization?.keywords ?? null,
-        org_linkedin: person.organization?.linkedin_url ?? null,
-        seniority: person.seniority ?? null,
-        departments: person.departments ?? null,
-        enriched_at: new Date().toISOString(),
-      },
-    },
+    enrichment_data: { apollo_search: mapApolloOrgEnrichment(person) },
   };
 }
 

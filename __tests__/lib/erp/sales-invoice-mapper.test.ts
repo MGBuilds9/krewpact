@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { fromErpSalesInvoice, mapInvoiceStatus } from '@/lib/erp/sales-invoice-mapper';
 
 describe('mapInvoiceStatus', () => {

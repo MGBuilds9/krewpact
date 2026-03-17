@@ -8,8 +8,8 @@ export default function DashboardLoading() {
         <Skeleton className="h-9 w-32" />
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-28 rounded-xl" />
+        {['k-1', 'k-2', 'k-3', 'k-4'].map((id) => (
+          <Skeleton key={id} className="h-28 rounded-xl" />
         ))}
       </div>
       <Skeleton className="h-[400px] rounded-xl" />

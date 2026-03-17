@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-require-imports */
+/* eslint-disable @typescript-eslint/no-require-imports */
 
 // ---------------------------------------------------------------------------
 // vi.mock calls MUST come before all imports
@@ -58,10 +58,11 @@ vi.mock('lucide-react', () => ({
 // Imports
 // ---------------------------------------------------------------------------
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, act } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { EmailDraftModal } from '@/components/AI/EmailDraftModal';
 
 // ---------------------------------------------------------------------------
@@ -168,24 +169,12 @@ describe('EmailDraftModal', () => {
 
   describe('visibility', () => {
     it('renders nothing when open is false', () => {
-      render(
-        <EmailDraftModal
-          {...defaultProps}
-          open={false}
-          onOpenChange={vi.fn()}
-        />,
-      );
+      render(<EmailDraftModal {...defaultProps} open={false} onOpenChange={vi.fn()} />);
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
 
     it('does not call the draft API when open is false', () => {
-      render(
-        <EmailDraftModal
-          {...defaultProps}
-          open={false}
-          onOpenChange={vi.fn()}
-        />,
-      );
+      render(<EmailDraftModal {...defaultProps} open={false} onOpenChange={vi.fn()} />);
       expect(mockFetch).not.toHaveBeenCalled();
     });
 

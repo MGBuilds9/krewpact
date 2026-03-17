@@ -1,13 +1,12 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
 import {
-  toErpQuotation,
   type QuotationEstimateInput,
   type QuotationLineInput,
+  toErpQuotation,
 } from '@/lib/erp/quotation-mapper';
 
-function makeEstimate(
-  overrides: Partial<QuotationEstimateInput> = {},
-): QuotationEstimateInput {
+function makeEstimate(overrides: Partial<QuotationEstimateInput> = {}): QuotationEstimateInput {
   return {
     id: 'est-001',
     estimate_number: 'EST-2026-0042',
@@ -72,18 +71,12 @@ describe('toErpQuotation', () => {
   });
 
   it('prefers erp_customer_name over account_name for party_name', () => {
-    const result = toErpQuotation(
-      makeEstimate({ erp_customer_name: 'CUST-00001' }),
-      makeLines(),
-    );
+    const result = toErpQuotation(makeEstimate({ erp_customer_name: 'CUST-00001' }), makeLines());
     expect(result.party_name).toBe('CUST-00001');
   });
 
   it('falls back to account_name when erp_customer_name is null', () => {
-    const result = toErpQuotation(
-      makeEstimate({ erp_customer_name: null }),
-      makeLines(),
-    );
+    const result = toErpQuotation(makeEstimate({ erp_customer_name: null }), makeLines());
     expect(result.party_name).toBe('Acme Construction Ltd.');
   });
 
@@ -96,18 +89,12 @@ describe('toErpQuotation', () => {
   });
 
   it('defaults currency to CAD when null', () => {
-    const result = toErpQuotation(
-      makeEstimate({ currency_code: null }),
-      makeLines(),
-    );
+    const result = toErpQuotation(makeEstimate({ currency_code: null }), makeLines());
     expect(result.currency).toBe('CAD');
   });
 
   it('defaults revision to 1 when null', () => {
-    const result = toErpQuotation(
-      makeEstimate({ revision_no: null }),
-      makeLines(),
-    );
+    const result = toErpQuotation(makeEstimate({ revision_no: null }), makeLines());
     expect(result.custom_mdm_estimate_version).toBe(1);
   });
 

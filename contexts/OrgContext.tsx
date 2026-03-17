@@ -1,8 +1,9 @@
 'use client';
 
-import React, { createContext, useContext, ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
+import React, { createContext, ReactNode, useContext } from 'react';
+
 import { apiFetch } from '@/lib/api-client';
 
 export interface OrgBranding {

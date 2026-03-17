@@ -1,9 +1,12 @@
 'use client';
 
+import { format } from 'date-fns';
+import { Plus, Users } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
+
+import { MeetingMinutesForm } from '@/components/Projects/MeetingMinutesForm';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   Dialog,
   DialogContent,
@@ -11,10 +14,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { MeetingMinutesForm } from '@/components/Projects/MeetingMinutesForm';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useMeetings } from '@/hooks/useProjectExtended';
-import { Plus, Users } from 'lucide-react';
-import { format } from 'date-fns';
 
 interface MeetingPayload {
   title?: string;
@@ -22,6 +23,71 @@ interface MeetingPayload {
   agenda?: string;
   notes?: string;
   action_items?: Array<{ description: string; assignee?: string; due_date?: string }>;
+}
+type Meeting = { id: string; entry_at: string; entry_text: string };
+
+function MeetingCard({ meeting }: { meeting: Meeting }) {
+  let payload: MeetingPayload = {};
+  try {
+    payload = JSON.parse(meeting.entry_text) as MeetingPayload;
+  } catch {
+    payload = { notes: meeting.entry_text };
+  }
+  return (
+    <div className="rounded-xl border bg-card p-5 space-y-3">
+      <div>
+        <h3 className="font-semibold text-base">{payload.title || 'Meeting'}</h3>
+        <p className="text-sm text-muted-foreground">
+          {format(new Date(meeting.entry_at), 'MMMM d, yyyy')}
+        </p>
+      </div>
+      {payload.attendees && payload.attendees.length > 0 && (
+        <div>
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
+            Attendees
+          </p>
+          <p className="text-sm">{payload.attendees.join(', ')}</p>
+        </div>
+      )}
+      {payload.notes && (
+        <div>
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
+            Notes
+          </p>
+          <p className="text-sm whitespace-pre-wrap">{payload.notes}</p>
+        </div>
+      )}
+      {payload.action_items && payload.action_items.length > 0 && (
+        <div>
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
+            Action Items
+          </p>
+          <ul className="space-y-1">
+            {payload.action_items.map((item) => (
+              <li
+                key={`${item.description}-${item.assignee || ''}`}
+                className="text-sm flex items-start gap-2"
+              >
+                <span className="text-muted-foreground mt-0.5">•</span>
+                <span>
+                  {item.description}
+                  {item.assignee && (
+                    <span className="text-muted-foreground"> — {item.assignee}</span>
+                  )}
+                  {item.due_date && (
+                    <span className="text-muted-foreground">
+                      {' '}
+                      (due {format(new Date(item.due_date), 'MMM d')})
+                    </span>
+                  )}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function ProjectMeetingsPage() {
@@ -32,10 +98,9 @@ export default function ProjectMeetingsPage() {
   const limit = 25;
 
   const { data, isLoading } = useMeetings(projectId, { limit, offset });
-
-  const meetings = data?.data ?? [];
-  const total = data?.total ?? 0;
-  const hasMore = data?.hasMore ?? false;
+  const meetings = data ? data.data || [] : [];
+  const total = data ? data.total || 0 : 0;
+  const hasMore = data ? data.hasMore || false : false;
 
   return (
     <div className="space-y-6">
@@ -49,7 +114,6 @@ export default function ProjectMeetingsPage() {
             {total} {total === 1 ? 'meeting' : 'meetings'}
           </p>
         </div>
-
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -69,11 +133,10 @@ export default function ProjectMeetingsPage() {
           </DialogContent>
         </Dialog>
       </div>
-
       {isLoading ? (
         <div className="space-y-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-32 w-full rounded-xl" />
+          {['m-1', 'm-2', 'm-3'].map((id) => (
+            <Skeleton key={id} className="h-32 w-full rounded-xl" />
           ))}
         </div>
       ) : meetings.length === 0 ? (
@@ -84,73 +147,9 @@ export default function ProjectMeetingsPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {meetings.map((meeting) => {
-            let payload: MeetingPayload = {};
-            try {
-              payload = JSON.parse(meeting.entry_text) as MeetingPayload;
-            } catch {
-              payload = { notes: meeting.entry_text };
-            }
-
-            return (
-              <div key={meeting.id} className="rounded-xl border bg-card p-5 space-y-3">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="font-semibold text-base">{payload.title ?? 'Meeting'}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {format(new Date(meeting.entry_at), 'MMMM d, yyyy')}
-                    </p>
-                  </div>
-                </div>
-
-                {payload.attendees && payload.attendees.length > 0 && (
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
-                      Attendees
-                    </p>
-                    <p className="text-sm">{payload.attendees.join(', ')}</p>
-                  </div>
-                )}
-
-                {payload.notes && (
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
-                      Notes
-                    </p>
-                    <p className="text-sm whitespace-pre-wrap">{payload.notes}</p>
-                  </div>
-                )}
-
-                {payload.action_items && payload.action_items.length > 0 && (
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
-                      Action Items
-                    </p>
-                    <ul className="space-y-1">
-                      {payload.action_items.map((item, idx) => (
-                        <li key={idx} className="text-sm flex items-start gap-2">
-                          <span className="text-muted-foreground mt-0.5">•</span>
-                          <span>
-                            {item.description}
-                            {item.assignee && (
-                              <span className="text-muted-foreground"> — {item.assignee}</span>
-                            )}
-                            {item.due_date && (
-                              <span className="text-muted-foreground">
-                                {' '}
-                                (due {format(new Date(item.due_date), 'MMM d')})
-                              </span>
-                            )}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-
+          {meetings.map((meeting) => (
+            <MeetingCard key={meeting.id} meeting={meeting as Meeting} />
+          ))}
           {(hasMore || offset > 0) && (
             <div className="flex justify-center gap-2 pt-2">
               {offset > 0 && (

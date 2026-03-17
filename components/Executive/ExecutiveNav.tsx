@@ -1,9 +1,10 @@
 'use client';
 
+import { BookOpen, CreditCard, LayoutDashboard, MessageSquare, Upload } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname, useParams } from 'next/navigation';
+import { useParams, usePathname } from 'next/navigation';
+
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, BookOpen, Upload, MessageSquare, CreditCard } from 'lucide-react';
 
 const NAV_ITEMS = [
   { href: '', label: 'Command Center', icon: LayoutDashboard },

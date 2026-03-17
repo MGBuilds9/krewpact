@@ -9,9 +9,9 @@
  *   - entity_tags    -- SELECT/INSERT/DELETE; no UPDATE (junction table)
  *   - notes          -- SELECT/INSERT/UPDATE/DELETE; update/delete restricted to author or admin
  */
-import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { describe, expect, it } from 'vitest';
 
 const migrationsDir = join(process.cwd(), 'supabase/migrations');
 const MIGRATION_FILE = '20260227_004_tags_notes_activities.sql';

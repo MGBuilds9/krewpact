@@ -18,6 +18,11 @@ export interface TaskMapInput {
 
 /**
  * Map a KrewPact task to an ERPNext Task document.
+ *
+ * IMPORTANT: The sync handler (sync-task.ts) is responsible for resolving
+ * project_id to the ERPNext Project docname from erp_sync_map before calling
+ * this function. The value passed as project_id must be the ERPNext Project
+ * docname, NOT the KrewPact UUID, or ERPNext project field validation will fail.
  */
 export function mapTaskToErp(task: TaskMapInput): Record<string, unknown> {
   return {

@@ -1,16 +1,17 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
 import {
-  UNAUTHORIZED,
-  INVALID_JSON,
-  validationError,
   dbError,
   errorResponse,
+  INVALID_JSON,
+  UNAUTHORIZED,
+  validationError,
 } from '@/lib/api/errors';
+import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
-import { parsePagination, paginatedResponse } from '@/lib/api/pagination';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const entityTypes = ['lead', 'contact', 'account', 'opportunity'] as const;
 

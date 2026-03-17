@@ -7,7 +7,7 @@
  * Tables covered: outreach, sequences, sequence_steps, scoring_rules,
  *                 email_templates, lead_score_history, sequence_enrollments
  */
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 // =====================================================
 // Simulate the RLS helper function logic in TypeScript

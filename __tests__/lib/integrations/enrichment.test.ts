@@ -1,8 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import {
-  mergeEnrichmentData,
   enrichLead,
   type EnrichmentResult,
+  mergeEnrichmentData,
 } from '@/lib/integrations/enrichment';
 
 // Mock the enrichment sources module
@@ -16,8 +17,8 @@ vi.mock('@/lib/integrations/enrichment-sources', () => ({
 import {
   enrichFromApolloMatch,
   enrichFromBrave,
-  enrichFromTavily,
   enrichFromGoogleMaps,
+  enrichFromTavily,
 } from '@/lib/integrations/enrichment-sources';
 
 const mockApollo = vi.mocked(enrichFromApolloMatch);

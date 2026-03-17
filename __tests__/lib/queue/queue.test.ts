@@ -6,17 +6,17 @@
  * Supabase or ERPNext.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock the processor so we control success/failure
 vi.mock('@/lib/queue/processor', () => ({
   processJob: vi.fn(),
 }));
 
-import { processJob } from '@/lib/queue/processor';
 import { Queue } from '@/lib/queue/client';
-import { JobType } from '@/lib/queue/types';
+import { processJob } from '@/lib/queue/processor';
 import type { Job } from '@/lib/queue/types';
+import { JobType } from '@/lib/queue/types';
 
 const mockProcessJob = vi.mocked(processJob);
 

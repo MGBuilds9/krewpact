@@ -1,43 +1,12 @@
-import type { NextConfig } from 'next';
-import { withSentryConfig } from '@sentry/nextjs';
 import withBundleAnalyzer from '@next/bundle-analyzer';
-import path from 'path';
+import { withSentryConfig } from '@sentry/nextjs';
+import type { NextConfig } from 'next';
 
 const analyzeBundles = withBundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
 });
 
-const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
-
-// Production guard: never allow demo mode in production builds
-if (process.env.NODE_ENV === 'production' && isDemoMode) {
-  throw new Error(
-    'FATAL: NEXT_PUBLIC_DEMO_MODE=true in production build. ' +
-      'This bypasses Clerk authentication. Remove NEXT_PUBLIC_DEMO_MODE or set to "false".',
-  );
-}
-
 const nextConfig: NextConfig = {
-  turbopack: {
-    ...(isDemoMode
-      ? {
-          resolveAlias: {
-            '@clerk/nextjs/server': './lib/clerk-demo-server.ts',
-            '@clerk/nextjs': './lib/clerk-demo-client.tsx',
-          },
-        }
-      : {}),
-  },
-  webpack: isDemoMode
-    ? (config) => {
-        config.resolve.alias = {
-          ...config.resolve.alias,
-          '@clerk/nextjs/server': path.resolve(__dirname, 'lib/clerk-demo-server.ts'),
-          '@clerk/nextjs': path.resolve(__dirname, 'lib/clerk-demo-client.tsx'),
-        };
-        return config;
-      }
-    : undefined,
   async headers() {
     return [
       {

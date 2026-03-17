@@ -1,10 +1,14 @@
 'use client';
 
+import { format } from 'date-fns';
+import { BookOpen, ClipboardList, Plus } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+
+import { DailyLogForm } from '@/components/Projects/DailyLogForm';
+import { SiteDiaryEntryForm } from '@/components/Projects/SiteDiaryEntryForm';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
@@ -13,11 +17,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { SiteDiaryEntryForm } from '@/components/Projects/SiteDiaryEntryForm';
-import { DailyLogForm } from '@/components/Projects/DailyLogForm';
-import { useSiteDiary, useDailyLogs } from '@/hooks/useProjectExtended';
-import { Plus, BookOpen, ClipboardList } from 'lucide-react';
-import { format } from 'date-fns';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useDailyLogs, useSiteDiary } from '@/hooks/useProjectExtended';
 
 const entryTypeBadgeVariant: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   safety: 'destructive',
@@ -28,6 +29,114 @@ const entryTypeBadgeVariant: Record<string, 'default' | 'secondary' | 'destructi
   delivery: 'secondary',
   other: 'outline',
 };
+
+type DiaryEntry = { id: string; entry_type: string; entry_at: string; entry_text: string };
+type DailyLog = {
+  id: string;
+  log_date: string;
+  crew_count?: number | null;
+  work_summary?: string | null;
+};
+
+function DiaryEntryCard({ entry }: { entry: DiaryEntry }) {
+  const variant = entryTypeBadgeVariant[entry.entry_type] || 'secondary';
+  return (
+    <div className="rounded-xl border bg-card p-4 space-y-2">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <Badge variant={variant}>{entry.entry_type}</Badge>
+          <span className="text-sm text-muted-foreground">
+            {format(new Date(entry.entry_at), 'MMM d, yyyy')}
+          </span>
+        </div>
+      </div>
+      <p className="text-sm whitespace-pre-wrap">{entry.entry_text}</p>
+    </div>
+  );
+}
+
+function DailyLogCard({ log }: { log: DailyLog }) {
+  return (
+    <div className="rounded-lg border bg-muted/30 p-3 text-sm space-y-1">
+      <div className="flex items-center justify-between">
+        <span className="font-medium">{format(new Date(log.log_date), 'MMM d, yyyy')}</span>
+        {log.crew_count != null && (
+          <span className="text-muted-foreground">{log.crew_count} crew</span>
+        )}
+      </div>
+      {log.work_summary && <p className="text-muted-foreground">{log.work_summary}</p>}
+    </div>
+  );
+}
+
+function EntriesList({
+  entries,
+  hasMore,
+  offset,
+  onPrev,
+  onNext,
+}: {
+  entries: DiaryEntry[];
+  hasMore: boolean;
+  offset: number;
+  onPrev: () => void;
+  onNext: () => void;
+}) {
+  if (entries.length === 0) {
+    return (
+      <div className="text-center py-16 text-muted-foreground">
+        <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-30" />
+        <p className="text-lg font-medium">No diary entries yet</p>
+        <p className="text-sm">Start recording site observations, deliveries, and more.</p>
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-3">
+      {entries.map((entry) => (
+        <DiaryEntryCard key={entry.id} entry={entry} />
+      ))}
+      {(hasMore || offset > 0) && (
+        <div className="flex justify-center gap-2 pt-2">
+          {offset > 0 && (
+            <Button variant="outline" onClick={onPrev}>
+              Previous
+            </Button>
+          )}
+          {hasMore && (
+            <Button variant="outline" onClick={onNext}>
+              Load More
+            </Button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LogsSection({ logs, logsLoading }: { logs: DailyLog[]; logsLoading: boolean }) {
+  if (logsLoading) {
+    return (
+      <div className="space-y-2">
+        {[1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-16 w-full rounded-lg" />
+        ))}
+      </div>
+    );
+  }
+  if (logs.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground text-center py-6">No daily logs recorded.</p>
+    );
+  }
+  return (
+    <div className="space-y-2">
+      {logs.map((log) => (
+        <DailyLogCard key={log.id} log={log} />
+      ))}
+    </div>
+  );
+}
 
 export default function ProjectDiaryPage() {
   const params = useParams();
@@ -43,9 +152,10 @@ export default function ProjectDiaryPage() {
     offset: 0,
   });
 
-  const entries = data?.data ?? [];
-  const total = data?.total ?? 0;
-  const hasMore = data?.hasMore ?? false;
+  const entries = data ? data.data || [] : [];
+  const total = data ? data.total || 0 : 0;
+  const hasMore = data ? data.hasMore || false : false;
+  const logs = logsData ? logsData.data || [] : [];
 
   return (
     <div className="space-y-6">
@@ -59,7 +169,6 @@ export default function ProjectDiaryPage() {
             {total} {total === 1 ? 'entry' : 'entries'}
           </p>
         </div>
-
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -82,52 +191,20 @@ export default function ProjectDiaryPage() {
 
       {isLoading ? (
         <div className="space-y-3">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-20 w-full rounded-xl" />
+          {['e-1', 'e-2', 'e-3', 'e-4', 'e-5'].map((id) => (
+            <Skeleton key={id} className="h-20 w-full rounded-xl" />
           ))}
-        </div>
-      ) : entries.length === 0 ? (
-        <div className="text-center py-16 text-muted-foreground">
-          <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-30" />
-          <p className="text-lg font-medium">No diary entries yet</p>
-          <p className="text-sm">Start recording site observations, deliveries, and more.</p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {entries.map((entry) => (
-            <div key={entry.id} className="rounded-xl border bg-card p-4 space-y-2">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-center gap-2">
-                  <Badge variant={entryTypeBadgeVariant[entry.entry_type] ?? 'secondary'}>
-                    {entry.entry_type}
-                  </Badge>
-                  <span className="text-sm text-muted-foreground">
-                    {format(new Date(entry.entry_at), 'MMM d, yyyy')}
-                  </span>
-                </div>
-              </div>
-              <p className="text-sm whitespace-pre-wrap">{entry.entry_text}</p>
-            </div>
-          ))}
-
-          {(hasMore || offset > 0) && (
-            <div className="flex justify-center gap-2 pt-2">
-              {offset > 0 && (
-                <Button variant="outline" onClick={() => setOffset(Math.max(0, offset - limit))}>
-                  Previous
-                </Button>
-              )}
-              {hasMore && (
-                <Button variant="outline" onClick={() => setOffset(offset + limit)}>
-                  Load More
-                </Button>
-              )}
-            </div>
-          )}
-        </div>
+        <EntriesList
+          entries={entries as DiaryEntry[]}
+          hasMore={hasMore}
+          offset={offset}
+          onPrev={() => setOffset(Math.max(0, offset - limit))}
+          onNext={() => setOffset(offset + limit)}
+        />
       )}
 
-      {/* Daily Logs Section */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
@@ -140,37 +217,10 @@ export default function ProjectDiaryPage() {
           </Button>
         </CardHeader>
         <CardContent>
-          {logsLoading ? (
-            <div className="space-y-2">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-16 w-full rounded-lg" />
-              ))}
-            </div>
-          ) : (logsData?.data ?? []).length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6">
-              No daily logs recorded.
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {(logsData?.data ?? []).map((log) => (
-                <div key={log.id} className="rounded-lg border bg-muted/30 p-3 text-sm space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">
-                      {format(new Date(log.log_date), 'MMM d, yyyy')}
-                    </span>
-                    {log.crew_count != null && (
-                      <span className="text-muted-foreground">{log.crew_count} crew</span>
-                    )}
-                  </div>
-                  {log.work_summary && <p className="text-muted-foreground">{log.work_summary}</p>}
-                </div>
-              ))}
-            </div>
-          )}
+          <LogsSection logs={logs as DailyLog[]} logsLoading={logsLoading} />
         </CardContent>
       </Card>
 
-      {/* Daily Log Dialog */}
       <Dialog open={logDialogOpen} onOpenChange={setLogDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>

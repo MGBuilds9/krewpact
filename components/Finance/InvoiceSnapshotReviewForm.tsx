@@ -1,18 +1,19 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+
+import { Button } from '@/components/ui/button';
 import {
   Form,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormControl,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -42,6 +43,13 @@ interface InvoiceSnapshotReviewFormProps {
   onSubmit: (data: Record<string, unknown>) => void;
   isLoading?: boolean;
 }
+
+const AMOUNT_FIELDS: { name: keyof FormValues; label: string }[] = [
+  { name: 'subtotal_amount', label: 'Subtotal (CAD)' },
+  { name: 'tax_amount', label: 'Tax / HST (CAD)' },
+  { name: 'total_amount', label: 'Total (CAD)' },
+  { name: 'amount_paid', label: 'Amount Paid (CAD)' },
+];
 
 export function InvoiceSnapshotReviewForm({
   defaultValues,
@@ -170,72 +178,36 @@ export function InvoiceSnapshotReviewForm({
               </FormItem>
             )}
           />
+          {AMOUNT_FIELDS.map(({ name, label }) => (
+            <FormField
+              key={name}
+              control={form.control}
+              name={name}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{label}</FormLabel>
+                  <FormControl>
+                    <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          ))}
           <FormField
             control={form.control}
-            name="subtotal_amount"
+            name="payment_link_url"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Subtotal (CAD)</FormLabel>
+                <FormLabel>Payment Link URL</FormLabel>
                 <FormControl>
-                  <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="tax_amount"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Tax / HST (CAD)</FormLabel>
-                <FormControl>
-                  <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="total_amount"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Total Amount (CAD)</FormLabel>
-                <FormControl>
-                  <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="amount_paid"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Amount Paid (CAD)</FormLabel>
-                <FormControl>
-                  <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                  <Input type="url" placeholder="https://..." {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
         </div>
-        <FormField
-          control={form.control}
-          name="payment_link_url"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Payment Link URL</FormLabel>
-              <FormControl>
-                <Input type="url" placeholder="https://..." {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
         <div className="flex justify-end">
           <Button type="submit" disabled={isLoading}>
             {isLoading ? 'Saving...' : 'Save Invoice Snapshot'}

@@ -13,6 +13,7 @@
  */
 
 import { logger } from '@/lib/logger';
+
 import { processJob } from './processor';
 import { Job, JobPayload, JobStatus, JobType, QueueStats } from './types';
 

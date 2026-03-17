@@ -1,11 +1,13 @@
 'use client';
 
+import { Clock, Plus, TrendingUp } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+
+import { TimeEntryForm } from '@/components/TimeExpense/TimeEntryForm';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -13,21 +15,50 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Plus, Clock, TrendingUp } from 'lucide-react';
-import { useTimeEntries, useCreateTimeEntry } from '@/hooks/useTimeExpense';
-import { TimeEntryForm } from '@/components/TimeExpense/TimeEntryForm';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useCreateTimeEntry, useTimeEntries } from '@/hooks/useTimeExpense';
+
+type TimeEntry = {
+  id: string;
+  work_date: string;
+  cost_code?: string | null;
+  notes?: string | null;
+  hours_regular: number | string;
+  hours_overtime?: number | string | null;
+};
+
+function EntryCard({ entry }: { entry: TimeEntry }) {
+  const reg = Number(entry.hours_regular || 0);
+  const ot = entry.hours_overtime ? Number(entry.hours_overtime) : 0;
+  return (
+    <Card>
+      <CardContent className="flex items-center justify-between py-3 px-4">
+        <div>
+          <p className="font-medium text-sm">{entry.work_date}</p>
+          <p className="text-xs text-muted-foreground">
+            {entry.cost_code ? `${entry.cost_code} · ` : ''}
+            {entry.notes || ''}
+          </p>
+        </div>
+        <div className="flex gap-2 text-sm">
+          <Badge variant="secondary">{reg.toFixed(1)}h reg</Badge>
+          {ot > 0 && <Badge variant="outline">{ot.toFixed(1)}h OT</Badge>}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function ProjectTimePage() {
   const params = useParams();
   const projectId = params.id as string;
   const [open, setOpen] = useState(false);
   const { data: currentUser } = useCurrentUser();
-
   const { data: res, isLoading } = useTimeEntries(projectId);
   const createEntry = useCreateTimeEntry(projectId);
 
-  const entries = res?.data ?? [];
+  const entries = res ? res.data || [] : [];
   const totalRegular = entries.reduce((s, e) => s + Number(e.hours_regular || 0), 0);
   const totalOT = entries.reduce((s, e) => s + Number(e.hours_overtime || 0), 0);
 
@@ -62,7 +93,6 @@ export default function ProjectTimePage() {
           </DialogContent>
         </Dialog>
       </div>
-
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardContent className="pt-6">
@@ -87,7 +117,6 @@ export default function ProjectTimePage() {
           </CardContent>
         </Card>
       </div>
-
       {isLoading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
@@ -100,23 +129,7 @@ export default function ProjectTimePage() {
             <p className="text-muted-foreground text-sm">No time entries yet.</p>
           )}
           {entries.map((entry) => (
-            <Card key={entry.id}>
-              <CardContent className="flex items-center justify-between py-3 px-4">
-                <div>
-                  <p className="font-medium text-sm">{entry.work_date}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {entry.cost_code ? `${entry.cost_code} · ` : ''}
-                    {entry.notes ?? ''}
-                  </p>
-                </div>
-                <div className="flex gap-2 text-sm">
-                  <Badge variant="secondary">{Number(entry.hours_regular).toFixed(1)}h reg</Badge>
-                  {entry.hours_overtime ? (
-                    <Badge variant="outline">{Number(entry.hours_overtime).toFixed(1)}h OT</Badge>
-                  ) : null}
-                </div>
-              </CardContent>
-            </Card>
+            <EntryCard key={entry.id} entry={entry as TimeEntry} />
           ))}
         </div>
       )}

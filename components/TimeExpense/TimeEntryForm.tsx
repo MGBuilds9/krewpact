@@ -1,19 +1,20 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+
+import { Button } from '@/components/ui/button';
 import {
   Form,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormControl,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
 
 const timeEntryFormSchema = z.object({
   user_id: z.string().uuid(),
@@ -79,7 +80,6 @@ export function TimeEntryForm({ userId, onSubmit, isLoading }: TimeEntryFormProp
             </FormItem>
           )}
         />
-
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -94,7 +94,6 @@ export function TimeEntryForm({ userId, onSubmit, isLoading }: TimeEntryFormProp
               </FormItem>
             )}
           />
-
           <FormField
             control={form.control}
             name="hours_overtime"
@@ -109,7 +108,6 @@ export function TimeEntryForm({ userId, onSubmit, isLoading }: TimeEntryFormProp
             )}
           />
         </div>
-
         <FormField
           control={form.control}
           name="cost_code"
@@ -123,7 +121,6 @@ export function TimeEntryForm({ userId, onSubmit, isLoading }: TimeEntryFormProp
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="notes"
@@ -137,7 +134,6 @@ export function TimeEntryForm({ userId, onSubmit, isLoading }: TimeEntryFormProp
             </FormItem>
           )}
         />
-
         <Button type="submit" disabled={isLoading}>
           {isLoading ? 'Saving...' : 'Log Time'}
         </Button>

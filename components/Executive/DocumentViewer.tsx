@@ -1,9 +1,10 @@
 'use client';
 
+import { X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
 
 interface DocumentViewerProps {
   title: string | null;

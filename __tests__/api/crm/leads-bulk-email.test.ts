@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
@@ -9,9 +9,10 @@ vi.mock('@/lib/api/rate-limit', () => ({
 vi.mock('@/lib/email/resend', () => ({ sendEmail: vi.fn() }));
 
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { sendEmail } from '@/lib/email/resend';
+
 import { POST } from '@/app/api/crm/leads/bulk-email/route';
+import { sendEmail } from '@/lib/email/resend';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 function mockChain(result: { data: unknown; error: unknown }) {
   const chain: Record<string, unknown> = {};

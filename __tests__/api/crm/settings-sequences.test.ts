@@ -6,13 +6,14 @@ vi.mock('@/lib/api/rate-limit', () => ({
 }));
 vi.mock('@/lib/api/org', () => ({ getOrgIdFromAuth: vi.fn() }));
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { getOrgIdFromAuth } from '@/lib/api/org';
-import { mockClerkAuth, mockClerkUnauth, makeRequest, makeJsonRequest } from '@/__tests__/helpers';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { makeJsonRequest, makeRequest, mockClerkAuth, mockClerkUnauth } from '@/__tests__/helpers';
 import { mockSupabaseClient } from '@/__tests__/helpers/mock-supabase';
 import { GET, PATCH } from '@/app/api/crm/settings/sequences/route';
+import { getOrgIdFromAuth } from '@/lib/api/org';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateClient = vi.mocked(createUserClientSafe);

@@ -1,9 +1,11 @@
 'use client';
 
-import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useCurrentUser } from './useCurrentUser';
+import { useMemo } from 'react';
+
 import { apiFetch } from '@/lib/api-client';
+
+import { useCurrentUser } from './useCurrentUser';
 
 export interface UserRBACData {
   roles: { role_name: string; is_primary: boolean }[];

@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { renderHook, waitFor } from '@testing-library/react';
 import React from 'react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('next/navigation', () => ({
   useParams: vi.fn().mockReturnValue({ orgSlug: 'mdm-group' }),
@@ -13,8 +13,9 @@ vi.mock('@/lib/api-client', () => ({
 }));
 
 import { useParams } from 'next/navigation';
-import { apiFetch } from '@/lib/api-client';
+
 import { OrgProvider, useOrg } from '@/contexts/OrgContext';
+import { apiFetch } from '@/lib/api-client';
 
 const mockApiFetch = vi.mocked(apiFetch);
 const mockUseParams = vi.mocked(useParams);

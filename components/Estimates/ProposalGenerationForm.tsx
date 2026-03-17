@@ -1,20 +1,21 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+
+import { Button } from '@/components/ui/button';
 import {
   Form,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormControl,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
 import { useCreateProposal } from '@/hooks/useContracting';
 
 const formSchema = z.object({
@@ -42,7 +43,7 @@ export function ProposalGenerationForm({
   onCancel,
 }: ProposalGenerationFormProps) {
   const createProposal = useCreateProposal();
-
+  const isPending = createProposal.isPending;
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -54,8 +55,6 @@ export function ProposalGenerationForm({
       notes: '',
     },
   });
-
-  const isPending = createProposal.isPending;
 
   function onSubmit(values: FormValues) {
     createProposal.mutate(
@@ -95,7 +94,6 @@ export function ProposalGenerationForm({
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="cover_letter"
@@ -109,7 +107,6 @@ export function ProposalGenerationForm({
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="expires_on"
@@ -123,7 +120,6 @@ export function ProposalGenerationForm({
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="notes"
@@ -137,7 +133,6 @@ export function ProposalGenerationForm({
             </FormItem>
           )}
         />
-
         <div className="flex gap-2 justify-end pt-2">
           {onCancel && (
             <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>

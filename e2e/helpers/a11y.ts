@@ -1,5 +1,5 @@
-import type { Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import type { Page } from '@playwright/test';
 
 export interface A11yCheckOptions {
   /** CSS selectors to exclude from analysis */
@@ -12,10 +12,7 @@ export interface A11yCheckOptions {
  * Run axe-core accessibility analysis on the current page.
  * Returns only violations matching the specified impact levels.
  */
-export async function checkAccessibility(
-  page: Page,
-  options?: A11yCheckOptions
-) {
+export async function checkAccessibility(page: Page, options?: A11yCheckOptions) {
   const impactLevels = options?.impactLevels ?? ['critical', 'serious'];
 
   let builder = new AxeBuilder({ page });
@@ -29,7 +26,7 @@ export async function checkAccessibility(
   const results = await builder.analyze();
 
   const violations = results.violations.filter((v) =>
-    impactLevels.includes(v.impact as typeof impactLevels[number])
+    impactLevels.includes(v.impact as (typeof impactLevels)[number]),
   );
 
   return {

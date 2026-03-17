@@ -1,10 +1,12 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
+
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Form,
   FormControl,
@@ -20,10 +22,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2 } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 import { useResolveMigrationConflict } from '@/hooks/useMigration';
 import { migrationConflictResolutionSchema } from '@/lib/validators/migration';
-import { toast } from 'sonner';
 
 type FormValues = z.infer<typeof migrationConflictResolutionSchema>;
 

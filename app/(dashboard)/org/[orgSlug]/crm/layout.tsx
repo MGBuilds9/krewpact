@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
+
 import { GlobalSearch } from '@/components/CRM/GlobalSearch';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
+import { cn } from '@/lib/utils';
 
 const crmTabs = [
   { label: 'Dashboard', href: '/crm/dashboard' },

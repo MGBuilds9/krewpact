@@ -1,29 +1,29 @@
 'use client';
 
+import {
+  ArrowLeft,
+  ClipboardList,
+  Clock,
+  DollarSign,
+  FileText,
+  LayoutDashboard,
+  ListTodo,
+  Receipt,
+  Users,
+} from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useParams } from 'next/navigation';
-import { useOrgRouter } from '@/hooks/useOrgRouter';
+
+import { AiInsightBanner } from '@/components/AI';
+import { ProjectOverviewTab } from '@/components/Projects/Tabs/ProjectOverviewTab';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  ArrowLeft,
-  LayoutDashboard,
-  ListTodo,
-  Users,
-  DollarSign,
-  Clock,
-  FileText,
-  Receipt,
-  ClipboardList,
-} from 'lucide-react';
+import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { useProject } from '@/hooks/useProjects';
-import { ProjectOverviewTab } from '@/components/Projects/Tabs/ProjectOverviewTab';
-import { AiInsightBanner } from '@/components/AI';
 
 const TabSkeleton = () => <Skeleton className="h-64 w-full rounded-xl" />;
-
 const ProjectTasksTab = dynamic(
   () => import('@/components/Projects/Tabs/ProjectTasksTab').then((m) => m.ProjectTasksTab),
   { loading: TabSkeleton },
@@ -53,13 +53,45 @@ const ProjectReportsTab = dynamic(
   { loading: TabSkeleton },
 );
 
+const TABS = [
+  { value: 'overview', icon: <LayoutDashboard className="h-4 w-4" />, label: 'Overview' },
+  { value: 'tasks', icon: <ListTodo className="h-4 w-4" />, label: 'Tasks' },
+  { value: 'team', icon: <Users className="h-4 w-4" />, label: 'Team' },
+  { value: 'budget', icon: <DollarSign className="h-4 w-4" />, label: 'Budget' },
+  { value: 'timeline', icon: <Clock className="h-4 w-4" />, label: 'Timeline' },
+  { value: 'files', icon: <FileText className="h-4 w-4" />, label: 'Files' },
+  { value: 'expenses', icon: <Receipt className="h-4 w-4" />, label: 'Expenses' },
+  { value: 'reports', icon: <ClipboardList className="h-4 w-4" />, label: 'Reports' },
+];
+
+type Project = NonNullable<ReturnType<typeof useProject>['data']>;
+
+function TabContent({
+  value,
+  project,
+  projectId,
+}: {
+  value: string;
+  project: Project;
+  projectId: string;
+}) {
+  if (value === 'overview') return <ProjectOverviewTab project={project} />;
+  if (value === 'tasks') return <ProjectTasksTab projectId={projectId} />;
+  if (value === 'team') return <ProjectTeamTab projectId={projectId} />;
+  if (value === 'budget') return <ProjectBudgetTab project={project} />;
+  if (value === 'timeline') return <ProjectTimelineTab project={project} />;
+  if (value === 'files') return <ProjectFilesTab projectId={projectId} />;
+  if (value === 'expenses') return <ProjectExpensesTab projectId={projectId} />;
+  return <ProjectReportsTab projectId={projectId} />;
+}
+
 export default function ProjectDetailPage() {
   const params = useParams();
   const { push: orgPush } = useOrgRouter();
   const projectId = params.id as string;
   const { data: project, isLoading } = useProject(projectId);
 
-  if (isLoading) {
+  if (isLoading)
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
@@ -73,9 +105,8 @@ export default function ProjectDetailPage() {
         <Skeleton className="h-96 w-full rounded-xl" />
       </div>
     );
-  }
 
-  if (!project) {
+  if (!project)
     return (
       <div className="text-center py-12">
         <h2 className="text-2xl font-bold mb-2">Project not found</h2>
@@ -88,11 +119,9 @@ export default function ProjectDetailPage() {
         </Button>
       </div>
     );
-  }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-start gap-4">
         <Button
           variant="ghost"
@@ -111,74 +140,25 @@ export default function ProjectDetailPage() {
                 {project.project_number}
               </Badge>
             )}
-            <Badge className="capitalize">{project.status?.replace('_', ' ') || 'planning'}</Badge>
+            <Badge className="capitalize">{(project.status || 'planning').replace('_', ' ')}</Badge>
           </div>
         </div>
       </div>
-
       <AiInsightBanner entityType="project" entityId={projectId} />
-
-      {/* Tabs */}
       <Tabs defaultValue="overview" className="w-full">
         <TabsList className="w-full justify-start overflow-x-auto flex-nowrap">
-          <TabsTrigger value="overview" className="gap-1.5">
-            <LayoutDashboard className="h-4 w-4" />
-            <span className="hidden sm:inline">Overview</span>
-          </TabsTrigger>
-          <TabsTrigger value="tasks" className="gap-1.5">
-            <ListTodo className="h-4 w-4" />
-            <span className="hidden sm:inline">Tasks</span>
-          </TabsTrigger>
-          <TabsTrigger value="team" className="gap-1.5">
-            <Users className="h-4 w-4" />
-            <span className="hidden sm:inline">Team</span>
-          </TabsTrigger>
-          <TabsTrigger value="budget" className="gap-1.5">
-            <DollarSign className="h-4 w-4" />
-            <span className="hidden sm:inline">Budget</span>
-          </TabsTrigger>
-          <TabsTrigger value="timeline" className="gap-1.5">
-            <Clock className="h-4 w-4" />
-            <span className="hidden sm:inline">Timeline</span>
-          </TabsTrigger>
-          <TabsTrigger value="files" className="gap-1.5">
-            <FileText className="h-4 w-4" />
-            <span className="hidden sm:inline">Files</span>
-          </TabsTrigger>
-          <TabsTrigger value="expenses" className="gap-1.5">
-            <Receipt className="h-4 w-4" />
-            <span className="hidden sm:inline">Expenses</span>
-          </TabsTrigger>
-          <TabsTrigger value="reports" className="gap-1.5">
-            <ClipboardList className="h-4 w-4" />
-            <span className="hidden sm:inline">Reports</span>
-          </TabsTrigger>
+          {TABS.map((tab) => (
+            <TabsTrigger key={tab.value} value={tab.value} className="gap-1.5">
+              {tab.icon}
+              <span className="hidden sm:inline">{tab.label}</span>
+            </TabsTrigger>
+          ))}
         </TabsList>
-
-        <TabsContent value="overview" className="mt-6">
-          <ProjectOverviewTab project={project} />
-        </TabsContent>
-        <TabsContent value="tasks" className="mt-6">
-          <ProjectTasksTab projectId={projectId} />
-        </TabsContent>
-        <TabsContent value="team" className="mt-6">
-          <ProjectTeamTab projectId={projectId} />
-        </TabsContent>
-        <TabsContent value="budget" className="mt-6">
-          <ProjectBudgetTab project={project} />
-        </TabsContent>
-        <TabsContent value="timeline" className="mt-6">
-          <ProjectTimelineTab project={project} />
-        </TabsContent>
-        <TabsContent value="files" className="mt-6">
-          <ProjectFilesTab projectId={projectId} />
-        </TabsContent>
-        <TabsContent value="expenses" className="mt-6">
-          <ProjectExpensesTab projectId={projectId} />
-        </TabsContent>
-        <TabsContent value="reports" className="mt-6">
-          <ProjectReportsTab projectId={projectId} />
-        </TabsContent>
+        {TABS.map((tab) => (
+          <TabsContent key={tab.value} value={tab.value} className="mt-6">
+            <TabContent value={tab.value} project={project} projectId={projectId} />
+          </TabsContent>
+        ))}
       </Tabs>
     </div>
   );

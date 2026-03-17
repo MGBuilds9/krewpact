@@ -82,6 +82,26 @@ async function tryRuleBasedAssignment(
   return null;
 }
 
+function pickLeastLoaded(
+  userIds: string[],
+  leadCounts: Array<{ assigned_to: unknown }>,
+): string | null {
+  const countMap = new Map<string, number>(userIds.map((uid) => [uid, 0]));
+  for (const row of leadCounts) {
+    const oid = row.assigned_to as string;
+    if (countMap.has(oid)) countMap.set(oid, (countMap.get(oid) ?? 0) + 1);
+  }
+  let minCount = Infinity;
+  let selected: string | null = null;
+  for (const [uid, count] of countMap.entries()) {
+    if (count < minCount || (count === minCount && uid < (selected ?? ''))) {
+      minCount = count;
+      selected = uid;
+    }
+  }
+  return selected;
+}
+
 /**
  * Round-robin assignment: picks the user in the division with the fewest
  * currently assigned open leads. Ties are broken by user ID for determinism.
@@ -114,9 +134,7 @@ async function roundRobinAssignment(
     return null;
   }
 
-  // Count open leads per user
   const userIds = users.map((u) => u.id as string);
-
   const { data: leadCounts } = await supabase
     .from('leads')
     .select('assigned_to')
@@ -124,30 +142,5 @@ async function roundRobinAssignment(
     .is('deleted_at', null)
     .not('status', 'in', '("won","lost")');
 
-  // Build count map
-  const countMap = new Map<string, number>();
-  for (const uid of userIds) {
-    countMap.set(uid, 0);
-  }
-  if (leadCounts) {
-    for (const row of leadCounts) {
-      const oid = row.assigned_to as string;
-      if (countMap.has(oid)) {
-        countMap.set(oid, (countMap.get(oid) ?? 0) + 1);
-      }
-    }
-  }
-
-  // Pick user with fewest leads, break ties by ID
-  let minCount = Infinity;
-  let selectedUser: string | null = null;
-
-  for (const [uid, count] of countMap.entries()) {
-    if (count < minCount || (count === minCount && uid < (selectedUser ?? ''))) {
-      minCount = count;
-      selectedUser = uid;
-    }
-  }
-
-  return selectedUser;
+  return pickLeastLoaded(userIds, leadCounts ?? []);
 }

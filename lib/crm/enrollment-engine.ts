@@ -20,6 +20,81 @@ export interface EnrollmentResult {
   errors: string[];
 }
 
+async function processSequenceEnrollment(
+  supabase: SupabaseClient,
+  sequence: { id: string; trigger_conditions: unknown },
+  event: TriggerEvent,
+  result: EnrollmentResult,
+): Promise<void> {
+  try {
+    const conditions = sequence.trigger_conditions as Record<string, unknown> | null;
+    if (!matchesConditions(event.type, conditions, event.data)) return;
+
+    const { data: existing, error: existError } = await supabase
+      .from('sequence_enrollments')
+      .select('id')
+      .eq('sequence_id', sequence.id)
+      .eq('lead_id', event.lead_id)
+      .in('status', ['pending_review', 'active', 'paused'])
+      .maybeSingle();
+
+    if (existError) {
+      result.errors.push(
+        `Sequence ${sequence.id}: Failed to check existing enrollment: ${existError.message}`,
+      );
+      return;
+    }
+    if (existing) return;
+
+    const { data: firstStep, error: stepError } = await supabase
+      .from('sequence_steps')
+      .select('id, step_number, delay_days, delay_hours')
+      .eq('sequence_id', sequence.id)
+      .order('step_number', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (stepError) {
+      result.errors.push(
+        `Sequence ${sequence.id}: Failed to fetch first step: ${stepError.message}`,
+      );
+      return;
+    }
+
+    const nextAt = new Date();
+    if (firstStep) {
+      nextAt.setDate(nextAt.getDate() + (firstStep.delay_days ?? 0));
+      nextAt.setHours(nextAt.getHours() + (firstStep.delay_hours ?? 0));
+    }
+
+    const { error: insertError } = await supabase.from('sequence_enrollments').insert({
+      sequence_id: sequence.id,
+      lead_id: event.lead_id,
+      contact_id: event.contact_id ?? null,
+      status: 'pending_review',
+      current_step: firstStep ? firstStep.step_number : 1,
+      current_step_id: firstStep ? firstStep.id : null,
+      next_step_at: nextAt.toISOString(),
+      trigger_type: event.type,
+      trigger_event: event.data,
+      enrolled_at: new Date().toISOString(),
+    });
+
+    if (insertError) {
+      result.errors.push(
+        `Sequence ${sequence.id}: Failed to create enrollment: ${insertError.message}`,
+      );
+      return;
+    }
+
+    result.enrolled++;
+    result.pending_review++;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    result.errors.push(`Sequence ${sequence.id}: ${message}`);
+  }
+}
+
 /**
  * Evaluates a trigger event against all active sequences.
  * If a sequence's trigger_type and trigger_conditions match:
@@ -51,84 +126,7 @@ export async function evaluateTrigger(
   }
 
   for (const sequence of sequences) {
-    try {
-      // 2. Check if trigger_conditions match event.data
-      const conditions = sequence.trigger_conditions as Record<string, unknown> | null;
-      if (!matchesConditions(event.type, conditions, event.data)) {
-        continue;
-      }
-
-      // 3. Check if lead already enrolled in this sequence
-      const { data: existing, error: existError } = await supabase
-        .from('sequence_enrollments')
-        .select('id')
-        .eq('sequence_id', sequence.id)
-        .eq('lead_id', event.lead_id)
-        .in('status', ['pending_review', 'active', 'paused'])
-        .maybeSingle();
-
-      if (existError) {
-        result.errors.push(
-          `Sequence ${sequence.id}: Failed to check existing enrollment: ${existError.message}`,
-        );
-        continue;
-      }
-
-      if (existing) {
-        // Already enrolled — skip
-        continue;
-      }
-
-      // 4. Find first step to calculate next_step_at
-      const { data: firstStep, error: stepError } = await supabase
-        .from('sequence_steps')
-        .select('id, step_number, delay_days, delay_hours')
-        .eq('sequence_id', sequence.id)
-        .order('step_number', { ascending: true })
-        .limit(1)
-        .maybeSingle();
-
-      if (stepError) {
-        result.errors.push(
-          `Sequence ${sequence.id}: Failed to fetch first step: ${stepError.message}`,
-        );
-        continue;
-      }
-
-      // 5. Calculate next_step_at
-      const nextAt = new Date();
-      if (firstStep) {
-        nextAt.setDate(nextAt.getDate() + (firstStep.delay_days ?? 0));
-        nextAt.setHours(nextAt.getHours() + (firstStep.delay_hours ?? 0));
-      }
-
-      // 6. Create enrollment with status='pending_review'
-      const { error: insertError } = await supabase.from('sequence_enrollments').insert({
-        sequence_id: sequence.id,
-        lead_id: event.lead_id,
-        contact_id: event.contact_id ?? null,
-        status: 'pending_review',
-        current_step: firstStep ? firstStep.step_number : 1,
-        current_step_id: firstStep ? firstStep.id : null,
-        next_step_at: nextAt.toISOString(),
-        trigger_type: event.type,
-        trigger_event: event.data,
-        enrolled_at: new Date().toISOString(),
-      });
-
-      if (insertError) {
-        result.errors.push(
-          `Sequence ${sequence.id}: Failed to create enrollment: ${insertError.message}`,
-        );
-        continue;
-      }
-
-      result.enrolled++;
-      result.pending_review++;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      result.errors.push(`Sequence ${sequence.id}: ${message}`);
-    }
+    await processSequenceEnrollment(supabase, sequence, event, result);
   }
 
   return result;

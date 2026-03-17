@@ -1,23 +1,24 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+
+import { Button } from '@/components/ui/button';
 import {
   Form,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormControl,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { useCreateAssembly, useUpdateAssembly } from '@/hooks/useEstimating';
+import { Textarea } from '@/components/ui/textarea';
 import type { Assembly } from '@/hooks/useEstimating';
-import { Loader2 } from 'lucide-react';
+import { useCreateAssembly, useUpdateAssembly } from '@/hooks/useEstimating';
 
 const formSchema = z.object({
   assembly_code: z.string().max(50).optional(),
@@ -37,6 +38,17 @@ export interface AssemblyBuilderFormProps {
   onCancel?: () => void;
 }
 
+function buildDefaultValues(assembly?: Assembly, divisionId?: string) {
+  return {
+    assembly_code: assembly?.assembly_code ?? '',
+    assembly_name: assembly?.assembly_name ?? '',
+    description: assembly?.description ?? '',
+    unit: assembly?.unit ?? '',
+    is_active: assembly?.is_active ?? true,
+    division_id: assembly?.division_id ?? divisionId,
+  };
+}
+
 export function AssemblyBuilderForm({
   assembly,
   divisionId,
@@ -46,17 +58,16 @@ export function AssemblyBuilderForm({
   const createAssembly = useCreateAssembly();
   const updateAssembly = useUpdateAssembly();
   const isEditing = !!assembly;
+  const cb = {
+    onSuccess: () => {
+      form.reset();
+      onSuccess?.();
+    },
+  };
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      assembly_code: assembly?.assembly_code ?? '',
-      assembly_name: assembly?.assembly_name ?? '',
-      description: assembly?.description ?? '',
-      unit: assembly?.unit ?? '',
-      is_active: assembly?.is_active ?? true,
-      division_id: assembly?.division_id ?? divisionId,
-    },
+    defaultValues: buildDefaultValues(assembly, divisionId),
   });
 
   const isPending = createAssembly.isPending || updateAssembly.isPending;
@@ -67,24 +78,10 @@ export function AssemblyBuilderForm({
       assembly_code: values.assembly_code || undefined,
       description: values.description || undefined,
     };
-
     if (isEditing) {
-      updateAssembly.mutate(
-        { id: assembly.id, ...payload },
-        {
-          onSuccess: () => {
-            form.reset();
-            onSuccess?.();
-          },
-        },
-      );
+      updateAssembly.mutate({ id: assembly.id, ...payload }, cb);
     } else {
-      createAssembly.mutate(payload, {
-        onSuccess: () => {
-          form.reset();
-          onSuccess?.();
-        },
-      });
+      createAssembly.mutate(payload, cb);
     }
   }
 
@@ -105,7 +102,6 @@ export function AssemblyBuilderForm({
               </FormItem>
             )}
           />
-
           <FormField
             control={form.control}
             name="unit"
@@ -120,7 +116,6 @@ export function AssemblyBuilderForm({
             )}
           />
         </div>
-
         <FormField
           control={form.control}
           name="assembly_name"
@@ -134,7 +129,6 @@ export function AssemblyBuilderForm({
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="description"
@@ -148,7 +142,6 @@ export function AssemblyBuilderForm({
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="is_active"
@@ -162,7 +155,6 @@ export function AssemblyBuilderForm({
             </FormItem>
           )}
         />
-
         <div className="flex gap-2 justify-end pt-2">
           {onCancel && (
             <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>

@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Set QSTASH_TOKEN before any imports so the route module reads it
 process.env.QSTASH_TOKEN = 'test-qstash-token';
@@ -10,9 +10,9 @@ vi.mock('@/lib/knowledge/embeddings', () => ({
   embedChunks: vi.fn(),
 }));
 
-import { createServiceClient } from '@/lib/supabase/server';
-import { chunkDocument, embedChunks } from '@/lib/knowledge/embeddings';
 import { POST } from '@/app/api/executive/knowledge/embed/route';
+import { chunkDocument, embedChunks } from '@/lib/knowledge/embeddings';
+import { createServiceClient } from '@/lib/supabase/server';
 
 const mockCreateServiceClient = vi.mocked(createServiceClient);
 const mockChunkDocument = vi.mocked(chunkDocument);

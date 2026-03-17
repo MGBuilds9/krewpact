@@ -1,9 +1,10 @@
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 import { logger } from '@/lib/logger';
-import { z } from 'zod';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const CreateICPSchema = z.object({
   name: z.string().min(1).max(200),
@@ -105,7 +106,10 @@ export async function POST(req: NextRequest) {
 
   const parsed = CreateICPSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Validation error', issues: parsed.error.issues }, { status: 400 });
+    return NextResponse.json(
+      { error: 'Validation error', issues: parsed.error.issues },
+      { status: 400 },
+    );
   }
 
   try {

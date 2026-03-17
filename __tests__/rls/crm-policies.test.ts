@@ -7,7 +7,7 @@
  *
  * They do NOT require a live database — they test the policy rules as pure logic.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 // =====================================================
 // Simulate the RLS helper function logic in TypeScript

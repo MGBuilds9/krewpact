@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/supabase/server', () => ({
   createServiceClient: vi.fn(),
@@ -11,10 +10,10 @@ vi.mock('@/lib/ai/providers/gemini', () => ({
   generateWithGemini: vi.fn(),
 }));
 
-import { createServiceClient } from '@/lib/supabase/server';
+import { detectBidMatches } from '@/lib/ai/agents/bid-matcher';
 import { generateWithGemini } from '@/lib/ai/providers/gemini';
 import { logger } from '@/lib/logger';
-import { detectBidMatches } from '@/lib/ai/agents/bid-matcher';
+import { createServiceClient } from '@/lib/supabase/server';
 
 const mockCreateServiceClient = vi.mocked(createServiceClient);
 const mockGenerateWithGemini = vi.mocked(generateWithGemini);
@@ -92,7 +91,9 @@ describe('detectBidMatches', () => {
 
     const result = await detectBidMatches(ORG_ID);
     expect(result).toEqual([]);
-    expect(logger.warn).toHaveBeenCalledWith('Bid match lead fetch failed', { error: 'leads DB error' });
+    expect(logger.warn).toHaveBeenCalledWith('Bid match lead fetch failed', {
+      error: 'leads DB error',
+    });
   });
 
   it('returns empty array and warns when bids query fails', async () => {
@@ -104,7 +105,9 @@ describe('detectBidMatches', () => {
 
     const result = await detectBidMatches(ORG_ID);
     expect(result).toEqual([]);
-    expect(logger.warn).toHaveBeenCalledWith('Bid match bids fetch failed', { error: 'bids DB error' });
+    expect(logger.warn).toHaveBeenCalledWith('Bid match bids fetch failed', {
+      error: 'bids DB error',
+    });
   });
 
   it('matches lead to bid by industry', async () => {

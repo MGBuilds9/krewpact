@@ -4,6 +4,7 @@
  */
 
 import { SyncService } from '@/lib/erp/sync-service';
+
 import { Job, JobType } from './types';
 
 const syncService = new SyncService();

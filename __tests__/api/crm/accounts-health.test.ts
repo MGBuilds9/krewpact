@@ -5,21 +5,22 @@ vi.mock('@/lib/api/rate-limit', () => ({
   rateLimitResponse: vi.fn(),
 }));
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { GET } from '@/app/api/crm/accounts/[id]/health/route';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import {
-  mockSupabaseClient,
+  makeAccount,
+  makeActivity,
+  makeOpportunity,
+  makeRequest,
   mockClerkAuth,
   mockClerkUnauth,
-  makeRequest,
-  makeAccount,
-  makeOpportunity,
-  makeActivity,
+  mockSupabaseClient,
   resetFixtureCounter,
   TEST_IDS,
 } from '@/__tests__/helpers';
+import { GET } from '@/app/api/crm/accounts/[id]/health/route';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);

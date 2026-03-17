@@ -1,15 +1,16 @@
 'use client';
 
+import { AlertTriangle, ChevronRight, Clock, ListTodo } from 'lucide-react';
+import Link from 'next/link';
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { cn } from '@/lib/utils';
-import { ListTodo, Clock, AlertTriangle, ChevronRight } from 'lucide-react';
-import { useMyTasks, useCompleteTask } from '@/hooks/useCRM';
 import type { Activity } from '@/hooks/useCRM';
-import Link from 'next/link';
+import { useCompleteTask, useMyTasks } from '@/hooks/useCRM';
+import { cn } from '@/lib/utils';
 
 interface MyTasksWidgetProps {
   orgSlug: string;
@@ -131,11 +132,7 @@ export function MyTasksWidget({ orgSlug }: MyTasksWidgetProps) {
         ) : (
           <div className="space-y-1">
             {tasks.map((task) => (
-              <TaskRow
-                key={task.id}
-                task={task}
-                onComplete={(id) => completeTask.mutate({ id })}
-              />
+              <TaskRow key={task.id} task={task} onComplete={(id) => completeTask.mutate({ id })} />
             ))}
           </div>
         )}

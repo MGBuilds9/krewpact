@@ -1,8 +1,9 @@
 import { auth } from '@clerk/nextjs/server';
-import { logger } from '@/lib/logger';
-import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { logger } from '@/lib/logger';
 import { generatePdf } from '@/lib/pdf/generator';
 
 const generateSchema = z.object({

@@ -1,4 +1,4 @@
-import type { AITask, AIProviderConfig } from './types';
+import type { AIProviderConfig, AITask } from './types';
 
 export function getAIProvider(task: AITask): AIProviderConfig {
   switch (task) {

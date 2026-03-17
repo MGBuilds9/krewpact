@@ -1,4 +1,4 @@
-import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
+import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
 import React from 'react';
 
 import type { ProjectStatusPdfData } from '../types';
@@ -6,6 +6,8 @@ import type { ProjectStatusPdfData } from '../types';
 const styles = StyleSheet.create({
   page: { padding: 40, fontFamily: 'Helvetica', fontSize: 10 },
   header: { marginBottom: 20 },
+  logoRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  logo: { width: 60, height: 34, marginRight: 10 },
   companyName: { fontSize: 18, fontWeight: 'bold', marginBottom: 4 },
   projectName: { fontSize: 14, fontWeight: 'bold', marginBottom: 2 },
   projectInfo: { fontSize: 10, color: '#666', marginBottom: 2 },
@@ -39,54 +41,63 @@ const styles = StyleSheet.create({
   logSummary: { fontSize: 10 },
 });
 
+function ProjectHeader({ data }: { data: ProjectStatusPdfData }) {
+  return (
+    <View style={styles.header}>
+      <View style={styles.logoRow}>
+        <Image style={styles.logo} src="/mdm-logo.svg" alt="MDM Group logo" />
+        <Text style={styles.companyName}>{data.companyName}</Text>
+      </View>
+      {data.project && (
+        <>
+          <Text style={styles.projectName}>{data.project.name}</Text>
+          {data.project.code && (
+            <Text style={styles.projectInfo}>Project: {data.project.code}</Text>
+          )}
+          {data.project.status && (
+            <Text style={styles.projectInfo}>
+              Status:{' '}
+              {data.project.status.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+            </Text>
+          )}
+          {data.project.startDate && data.project.endDate && (
+            <Text style={styles.projectInfo}>
+              {data.project.startDate} — {data.project.endDate}
+            </Text>
+          )}
+        </>
+      )}
+    </View>
+  );
+}
+
 export function ProjectStatusPdf({ data }: { data: ProjectStatusPdfData }) {
   return (
     <Document>
       <Page size="LETTER" style={styles.page}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.companyName}>{data.companyName}</Text>
-          {data.project && (
-            <>
-              <Text style={styles.projectName}>{data.project.name}</Text>
-              {data.project.code && (
-                <Text style={styles.projectInfo}>Project: {data.project.code}</Text>
-              )}
-              {data.project.status && (
-                <Text style={styles.projectInfo}>
-                  Status:{' '}
-                  {data.project.status.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
-                </Text>
-              )}
-              {data.project.startDate && data.project.endDate && (
-                <Text style={styles.projectInfo}>
-                  {data.project.startDate} — {data.project.endDate}
-                </Text>
-              )}
-            </>
-          )}
-        </View>
+        <ProjectHeader data={data} />
 
-        {/* Milestone Progress */}
         {data.milestones && data.milestones.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Milestone Progress</Text>
-            {data.milestones.map((m, i) => (
-              <View key={i} style={styles.milestoneRow} wrap={false}>
-                <Text style={styles.milestoneName}>{m.name}</Text>
-                <View style={styles.progressBarOuter}>
-                  <View
-                    style={[styles.progressBarInner, { width: `${Math.min(m.progress, 100)}%` }]}
-                  />
+            {data.milestones.map((m, i) => {
+              const mKey = m.name ? `${m.name}-${i}` : String(i);
+              return (
+                <View key={mKey} style={styles.milestoneRow} wrap={false}>
+                  <Text style={styles.milestoneName}>{m.name}</Text>
+                  <View style={styles.progressBarOuter}>
+                    <View
+                      style={[styles.progressBarInner, { width: `${Math.min(m.progress, 100)}%` }]}
+                    />
+                  </View>
+                  <Text style={styles.milestoneProgress}>{m.progress}%</Text>
+                  <Text style={styles.milestoneDue}>{m.dueDate || '-'}</Text>
                 </View>
-                <Text style={styles.milestoneProgress}>{m.progress}%</Text>
-                <Text style={styles.milestoneDue}>{m.dueDate || '-'}</Text>
-              </View>
-            ))}
+              );
+            })}
           </View>
         )}
 
-        {/* Task Summary */}
         {data.taskSummary && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Task Summary</Text>
@@ -123,17 +134,19 @@ export function ProjectStatusPdf({ data }: { data: ProjectStatusPdfData }) {
           </View>
         )}
 
-        {/* Recent Daily Logs */}
         {data.recentLogs && data.recentLogs.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Recent Daily Logs</Text>
-            {data.recentLogs.map((log, i) => (
-              <View key={i} style={styles.logEntry} wrap={false}>
-                <Text style={styles.logDate}>{log.date}</Text>
-                <Text style={styles.logAuthor}>{log.author}</Text>
-                <Text style={styles.logSummary}>{log.summary}</Text>
-              </View>
-            ))}
+            {data.recentLogs.map((log, i) => {
+              const logKey = log.date ? `${log.date}-${i}` : String(i);
+              return (
+                <View key={logKey} style={styles.logEntry} wrap={false}>
+                  <Text style={styles.logDate}>{log.date}</Text>
+                  <Text style={styles.logAuthor}>{log.author}</Text>
+                  <Text style={styles.logSummary}>{log.summary}</Text>
+                </View>
+              );
+            })}
           </View>
         )}
       </Page>

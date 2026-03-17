@@ -25,23 +25,13 @@ Copy `.env.example` to `.env.local` and fill in the values. The example file doc
 
 ### Required Services (5 for full operation)
 
-| Service | Dashboard | What to grab |
-|---------|-----------|--------------|
-| **Supabase** | [Dashboard](https://supabase.com/dashboard) → Project `wmeaabrchkysogmeroye` | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` |
-| **Clerk** | [Dashboard](https://dashboard.clerk.com) → KrewPact app | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`. Domain: `mdmgroupinc.ca` |
-| **ERPNext** | Via Cloudflare Tunnel at `erp-api.mdmgroupinc.ca` | `ERPNEXT_BASE_URL`, `ERPNEXT_API_KEY`, `ERPNEXT_API_SECRET` |
-| **Upstash** | [Console](https://console.upstash.com) → QStash + Redis | QStash: `QSTASH_URL`, `QSTASH_TOKEN`. Redis: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` |
-| **Resend** | [Dashboard](https://resend.com/api-keys) | `RESEND_API_KEY` |
-
-### Demo Mode (no external services needed)
-
-For UI development without configuring external services:
-
-```env
-NEXT_PUBLIC_DEMO_MODE=true
-```
-
-This uses mock data and demo auth. Good for frontend work, but no real data flows.
+| Service      | Dashboard                                                                    | What to grab                                                                                      |
+| ------------ | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| **Supabase** | [Dashboard](https://supabase.com/dashboard) → Project `wmeaabrchkysogmeroye` | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`          |
+| **Clerk**    | [Dashboard](https://dashboard.clerk.com) → KrewPact app                      | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`. Domain: `mdmgroupinc.ca`                 |
+| **ERPNext**  | Via Cloudflare Tunnel at `erp-api.mdmgroupinc.ca`                            | `ERPNEXT_BASE_URL`, `ERPNEXT_API_KEY`, `ERPNEXT_API_SECRET`                                       |
+| **Upstash**  | [Console](https://console.upstash.com) → QStash + Redis                      | QStash: `QSTASH_URL`, `QSTASH_TOKEN`. Redis: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` |
+| **Resend**   | [Dashboard](https://resend.com/api-keys)                                     | `RESEND_API_KEY`                                                                                  |
 
 ### Clerk JWT Template
 
@@ -73,9 +63,6 @@ auth.jwt() -> 'krewpact_divisions'   -- division access (JSONB array)
 ```bash
 # Seed the MDM organization
 npx tsx scripts/seed-org.ts --file supabase/seed/seed-org-mdm.json
-
-# Seed demo/test data
-npx tsx scripts/seed-demo.ts
 
 # Seed test users
 npx tsx scripts/seed-test-users.ts
@@ -116,13 +103,12 @@ CI runs: Lint → Type Check → Unit Test → Build → Integration Test.
 
 ## Common Issues
 
-| Issue | Cause | Fix |
-|-------|-------|-----|
-| Empty data from Supabase | RLS blocking — JWT claims missing or wrong | Check Clerk JWT template is named `comet`, verify user has `krewpact_user_id` in public metadata |
-| Build fails on `NEXT_PUBLIC_DEMO_MODE` | Demo mode guard in middleware | Set to `false` or remove from env |
-| CRLF warnings in git | Windows-origin files | `git config core.autocrlf input` |
-| Type errors after schema change | Stale generated types | Run `npx supabase gen types typescript --project-id wmeaabrchkysogmeroye > types/supabase.ts 2>/dev/null` |
-| Rate limit errors in tests | Rate limit mock missing | Add `vi.mock('@/lib/api/rate-limit', ...)` — see test helpers |
+| Issue                           | Cause                                      | Fix                                                                                                       |
+| ------------------------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| Empty data from Supabase        | RLS blocking — JWT claims missing or wrong | Check Clerk JWT template is named `comet`, verify user has `krewpact_user_id` in public metadata          |
+| CRLF warnings in git            | Windows-origin files                       | `git config core.autocrlf input`                                                                          |
+| Type errors after schema change | Stale generated types                      | Run `npx supabase gen types typescript --project-id wmeaabrchkysogmeroye > types/supabase.ts 2>/dev/null` |
+| Rate limit errors in tests      | Rate limit mock missing                    | Add `vi.mock('@/lib/api/rate-limit', ...)` — see test helpers                                             |
 
 ## Project Structure
 

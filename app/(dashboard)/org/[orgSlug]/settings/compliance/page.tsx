@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useComplianceDocs, useCreateComplianceDoc } from '@/hooks/useProcurement';
+
 import { ComplianceDocUploadForm } from '@/components/Procurement/ComplianceDocUploadForm';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useComplianceDocs, useCreateComplianceDoc } from '@/hooks/useProcurement';
 
 const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   valid: 'default',
@@ -27,6 +28,40 @@ const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | '
   expired: 'destructive',
   rejected: 'destructive',
 };
+
+type Doc = {
+  id: string;
+  compliance_type: string;
+  doc_number: string | null;
+  issued_on: string | null;
+  expires_on: string | null;
+  status: string;
+  verified_at: string | null;
+};
+
+function DocRow({ doc }: { doc: Doc }) {
+  const expired = doc.expires_on ? new Date(doc.expires_on) < new Date() : false;
+  return (
+    <TableRow key={doc.id}>
+      <TableCell>{doc.compliance_type}</TableCell>
+      <TableCell className="font-mono text-sm">{doc.doc_number || '—'}</TableCell>
+      <TableCell>{doc.issued_on || '—'}</TableCell>
+      <TableCell className={expired ? 'text-destructive font-medium' : undefined}>
+        {doc.expires_on || '—'}
+      </TableCell>
+      <TableCell>
+        <Badge variant={STATUS_VARIANT[doc.status] || 'outline'}>{doc.status}</Badge>
+      </TableCell>
+      <TableCell>
+        {doc.verified_at ? (
+          new Date(doc.verified_at).toLocaleDateString('en-CA')
+        ) : (
+          <span className="text-muted-foreground text-sm">Pending</span>
+        )}
+      </TableCell>
+    </TableRow>
+  );
+}
 
 export default function CompliancePage() {
   const [open, setOpen] = useState(false);
@@ -43,7 +78,7 @@ export default function CompliancePage() {
   if (error)
     return <div className="p-6 text-destructive">Failed to load compliance documents.</div>;
 
-  const docs = data?.data ?? [];
+  const docs = data ? data.data || [] : [];
 
   return (
     <div className="space-y-6 p-6">
@@ -51,7 +86,7 @@ export default function CompliancePage() {
         <div>
           <h1 className="text-2xl font-semibold">Trade Partner Compliance</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            {data?.total ?? 0} compliance documents — WSIB, COI, trade licenses, CCDC
+            {data ? data.total || 0 : 0} compliance documents — WSIB, COI, trade licenses, CCDC
           </p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
@@ -86,32 +121,7 @@ export default function CompliancePage() {
                 </TableCell>
               </TableRow>
             ) : (
-              docs.map((doc) => (
-                <TableRow key={doc.id}>
-                  <TableCell>{doc.compliance_type}</TableCell>
-                  <TableCell className="font-mono text-sm">{doc.doc_number ?? '—'}</TableCell>
-                  <TableCell>{doc.issued_on ?? '—'}</TableCell>
-                  <TableCell
-                    className={
-                      doc.expires_on && new Date(doc.expires_on) < new Date()
-                        ? 'text-destructive font-medium'
-                        : undefined
-                    }
-                  >
-                    {doc.expires_on ?? '—'}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={STATUS_VARIANT[doc.status] ?? 'outline'}>{doc.status}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    {doc.verified_at ? (
-                      new Date(doc.verified_at).toLocaleDateString('en-CA')
-                    ) : (
-                      <span className="text-muted-foreground text-sm">Pending</span>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))
+              docs.map((doc) => <DocRow key={doc.id} doc={doc as Doc} />)
             )}
           </TableBody>
         </Table>

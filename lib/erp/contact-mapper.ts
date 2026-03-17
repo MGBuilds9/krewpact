@@ -15,6 +15,11 @@ export interface ContactMapInput {
 
 /**
  * Map a KrewPact contact to an ERPNext Contact document.
+ *
+ * IMPORTANT: The sync handler (sync-contact.ts) is responsible for resolving
+ * account_id to the ERPNext Customer docname from erp_sync_map before calling
+ * this function. The value passed as account_id must be the ERPNext Customer
+ * docname, NOT the KrewPact UUID, or ERPNext link validation will fail.
  */
 export function mapContactToErp(contact: ContactMapInput): Record<string, unknown> {
   return {

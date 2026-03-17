@@ -1,17 +1,61 @@
 import { auth } from '@clerk/nextjs/server';
+import { NextRequest, NextResponse } from 'next/server';
+
+import { getKrewpactUserId } from '@/lib/api/org';
+import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { lostDealSchema } from '@/lib/validators/crm';
-import { NextRequest, NextResponse } from 'next/server';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
-import { getKrewpactUserId } from '@/lib/api/org';
 
 type RouteContext = { params: Promise<{ id: string }> };
+type UserClient = Awaited<ReturnType<typeof createUserClientSafe>>['client'];
+
+function buildUpdatePayload(data: {
+  lost_reason: string;
+  lost_notes?: string;
+  competitor?: string;
+}) {
+  const payload: Record<string, unknown> = { stage: 'closed_lost', lost_reason: data.lost_reason };
+  if (data.lost_notes !== undefined) payload.lost_notes = data.lost_notes;
+  if (data.competitor !== undefined) payload.competitor = data.competitor;
+  return payload;
+}
+
+function buildActivityDetails(data: {
+  lost_reason: string;
+  competitor?: string;
+  lost_notes?: string;
+}) {
+  const parts = [`Lost reason: ${data.lost_reason}`];
+  if (data.competitor) parts.push(`Competitor: ${data.competitor}`);
+  if (data.lost_notes) parts.push(data.lost_notes);
+  return parts.join('. ');
+}
+
+async function maybeReopenAsLead(
+  supabase: UserClient,
+  oppData: Record<string, unknown>,
+  reopen: boolean,
+) {
+  if (!reopen) return null;
+  const { data: leadData } = await supabase
+    .from('leads')
+    .insert({
+      first_name: `${oppData.opportunity_name} (Re-nurture)`,
+      source_channel: 'lost_opportunity',
+      company_name: null,
+      email: null,
+      phone: null,
+      status: 'new',
+      assigned_to: oppData.owner_user_id,
+    })
+    .select()
+    .single();
+  return leadData;
+}
 
 export async function POST(req: NextRequest, context: RouteContext) {
   const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
   if (!rl.success) return rateLimitResponse(rl);
@@ -24,20 +68,15 @@ export async function POST(req: NextRequest, context: RouteContext) {
   }
 
   const parsed = lostDealSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
   const { id } = await context.params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
   const krewpactUserId = await getKrewpactUserId();
-  if (!krewpactUserId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!krewpactUserId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  // Fetch opportunity and verify it's not already closed_lost
   const { data: opportunity, error: fetchError } = await supabase
     .from('opportunities')
     .select(
@@ -47,8 +86,10 @@ export async function POST(req: NextRequest, context: RouteContext) {
     .single();
 
   if (fetchError) {
-    const status = fetchError.code === 'PGRST116' ? 404 : 500;
-    return NextResponse.json({ error: fetchError.message }, { status });
+    return NextResponse.json(
+      { error: fetchError.message },
+      { status: fetchError.code === 'PGRST116' ? 404 : 500 },
+    );
   }
 
   const oppData = opportunity as Record<string, unknown>;
@@ -60,31 +101,14 @@ export async function POST(req: NextRequest, context: RouteContext) {
   }
 
   const previousStage = oppData.stage as string;
-
-  // Update opportunity to closed_lost with metadata
-  const updatePayload: Record<string, unknown> = {
-    stage: 'closed_lost',
-    lost_reason: parsed.data.lost_reason,
-  };
-  if (parsed.data.lost_notes !== undefined) {
-    updatePayload.lost_notes = parsed.data.lost_notes;
-  }
-  if (parsed.data.competitor !== undefined) {
-    updatePayload.competitor = parsed.data.competitor;
-  }
-
   const { data: updated, error: updateError } = await supabase
     .from('opportunities')
-    .update(updatePayload)
+    .update(buildUpdatePayload(parsed.data))
     .eq('id', id)
     .select()
     .single();
+  if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
 
-  if (updateError) {
-    return NextResponse.json({ error: updateError.message }, { status: 500 });
-  }
-
-  // Record stage history
   await supabase.from('opportunity_stage_history').insert({
     opportunity_id: id,
     from_stage: previousStage,
@@ -92,36 +116,14 @@ export async function POST(req: NextRequest, context: RouteContext) {
     changed_by: krewpactUserId,
   });
 
-  // Create activity record for the loss
   await supabase.from('activities').insert({
     activity_type: 'note',
     title: 'Deal Lost',
-    details: `Lost reason: ${parsed.data.lost_reason}${parsed.data.competitor ? `. Competitor: ${parsed.data.competitor}` : ''}${parsed.data.lost_notes ? `. ${parsed.data.lost_notes}` : ''}`,
+    details: buildActivityDetails(parsed.data),
     opportunity_id: id,
     owner_user_id: krewpactUserId,
   });
 
-  // If reopen_as_lead, create a new lead from the opportunity
-  let newLead = null;
-  if (parsed.data.reopen_as_lead) {
-    const { data: leadData } = await supabase
-      .from('leads')
-      .insert({
-        first_name: `${oppData.opportunity_name} (Re-nurture)`,
-        source_channel: 'lost_opportunity',
-        company_name: null,
-        email: null,
-        phone: null,
-        status: 'new',
-        assigned_to: oppData.owner_user_id,
-      })
-      .select()
-      .single();
-    newLead = leadData;
-  }
-
-  return NextResponse.json({
-    ...updated,
-    new_lead: newLead,
-  });
+  const newLead = await maybeReopenAsLead(supabase, oppData, parsed.data.reopen_as_lead ?? false);
+  return NextResponse.json({ ...updated, new_lead: newLead });
 }

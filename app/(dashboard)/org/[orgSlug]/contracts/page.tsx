@@ -1,12 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { FileText, Plus, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent } from '@/components/ui/card';
+import { useState } from 'react';
+
+import { ContractTermsForm } from '@/components/Contracting/ContractTermsForm';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
   SelectContent,
@@ -14,11 +17,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Search, Plus, FileText } from 'lucide-react';
-import { useContractTerms } from '@/hooks/useContracting';
-import { ContractTermsForm } from '@/components/Contracting/ContractTermsForm';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { ContractTerms } from '@/hooks/useContracting';
+import { useContractTerms } from '@/hooks/useContracting';
 
 const CONTRACT_STATUS_COLORS: Record<string, string> = {
   draft: 'bg-gray-100 text-gray-700 border-gray-200',
@@ -27,7 +28,6 @@ const CONTRACT_STATUS_COLORS: Record<string, string> = {
   amended: 'bg-blue-100 text-blue-700 border-blue-200',
   terminated: 'bg-red-100 text-red-700 border-red-200',
 };
-
 const CONTRACT_STATUS_LABELS: Record<string, string> = {
   draft: 'Draft',
   pending_signature: 'Pending Signature',
@@ -35,7 +35,6 @@ const CONTRACT_STATUS_LABELS: Record<string, string> = {
   amended: 'Amended',
   terminated: 'Terminated',
 };
-
 const CONTRACT_STATUSES = [
   'draft',
   'pending_signature',
@@ -44,17 +43,48 @@ const CONTRACT_STATUSES = [
   'terminated',
 ] as const;
 
+interface ContractCardProps {
+  contract: ContractTerms;
+  onClick: () => void;
+}
+function ContractCard({ contract, onClick }: ContractCardProps) {
+  return (
+    <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-semibold truncate">{contract.legal_text_version}</h3>
+              <Badge
+                variant="outline"
+                className={`text-xs flex-shrink-0 border ${CONTRACT_STATUS_COLORS[contract.contract_status] || ''}`}
+              >
+                {CONTRACT_STATUS_LABELS[contract.contract_status] || contract.contract_status}
+              </Badge>
+            </div>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+              <span>Proposal: {contract.proposal_id}</span>
+              {contract.signed_at && (
+                <span>Signed: {new Date(contract.signed_at).toLocaleDateString('en-CA')}</span>
+              )}
+              <span>Created: {new Date(contract.created_at).toLocaleDateString('en-CA')}</span>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function ContractsPage() {
   const router = useRouter();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [dialogOpen, setDialogOpen] = useState(false);
-
   const { data, isLoading } = useContractTerms({
     contractStatus: statusFilter !== 'all' ? statusFilter : undefined,
   });
-
-  const contracts = (data?.data ?? []).filter((c: ContractTerms) => {
+  const contracts = (data ? data.data || [] : []).filter((c: ContractTerms) => {
     if (!search) return true;
     return (
       c.legal_text_version.toLowerCase().includes(search.toLowerCase()) ||
@@ -66,7 +96,7 @@ export default function ContractsPage() {
     return (
       <div className="space-y-4">
         <Skeleton className="h-10 w-48 animate-pulse" />
-        {[1, 2, 3].map((i) => (
+        {['c1', 'c2', 'c3'].map((i) => (
           <Skeleton key={i} className="h-20 rounded-xl animate-pulse" />
         ))}
       </div>
@@ -105,7 +135,6 @@ export default function ContractsPage() {
             New Contract
           </Button>
         </div>
-
         {contracts.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
@@ -119,43 +148,14 @@ export default function ContractsPage() {
         ) : (
           <div className="grid gap-3">
             {contracts.map((contract: ContractTerms) => (
-              <Card
+              <ContractCard
                 key={contract.id}
-                className="cursor-pointer hover:shadow-md transition-shadow"
+                contract={contract}
                 onClick={() => router.push(`/contracts/${contract.id}`)}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold truncate">{contract.legal_text_version}</h3>
-                        <Badge
-                          variant="outline"
-                          className={`text-xs flex-shrink-0 border ${CONTRACT_STATUS_COLORS[contract.contract_status] ?? ''}`}
-                        >
-                          {CONTRACT_STATUS_LABELS[contract.contract_status] ??
-                            contract.contract_status}
-                        </Badge>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                        <span>Proposal: {contract.proposal_id}</span>
-                        {contract.signed_at && (
-                          <span>
-                            Signed: {new Date(contract.signed_at).toLocaleDateString('en-CA')}
-                          </span>
-                        )}
-                        <span>
-                          Created: {new Date(contract.created_at).toLocaleDateString('en-CA')}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              />
             ))}
           </div>
         )}
-
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogContent>
             <DialogHeader>

@@ -15,6 +15,11 @@ export interface OpportunityMapInput {
 
 /**
  * Map a KrewPact opportunity to an ERPNext Opportunity document.
+ *
+ * IMPORTANT: The sync handler (sync-opportunity.ts) is responsible for resolving
+ * account_id to the ERPNext Customer docname from erp_sync_map before calling
+ * this function. The value passed as account_id must be the ERPNext Customer
+ * docname, NOT the KrewPact UUID, or ERPNext party_name validation will fail.
  */
 export function mapOpportunityToErp(opp: OpportunityMapInput): Record<string, unknown> {
   return {

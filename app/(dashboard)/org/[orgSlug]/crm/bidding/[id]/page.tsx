@@ -1,35 +1,88 @@
 'use client';
 
+import { ArrowLeft, Clock, DollarSign, ExternalLink, Trash2 } from 'lucide-react';
 import { use } from 'react';
-import { useOrgRouter } from '@/hooks/useOrgRouter';
-import { useBiddingOpportunity, useUpdateBidding, useDeleteBidding } from '@/hooks/useCRM';
+
 import { BiddingForm } from '@/components/CRM/BiddingForm';
 import { BiddingStatusBadge } from '@/components/CRM/BiddingStatusBadge';
-import { getDeadlineAlert, getSourceLabel } from '@/lib/crm/bidding';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Trash2, Clock, DollarSign, ExternalLink } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useBiddingOpportunity, useDeleteBidding, useUpdateBidding } from '@/hooks/useCRM';
+import { useOrgRouter } from '@/hooks/useOrgRouter';
+import { getDeadlineAlert, getSourceLabel } from '@/lib/crm/bidding';
 
-export default function BiddingDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string; orgSlug: string }>;
-}) {
-  const { id } = use(params);
-  const { push: orgPush } = useOrgRouter();
+type BidType = NonNullable<ReturnType<typeof useBiddingOpportunity>['data']>;
+type DeadlineAlert = ReturnType<typeof getDeadlineAlert>;
+
+function BidMetaCards({ bid, deadlineAlert }: { bid: BidType; deadlineAlert: DeadlineAlert }) {
+  const deadlineColor =
+    deadlineAlert?.level === 'urgent'
+      ? 'text-red-600'
+      : deadlineAlert?.level === 'expired'
+        ? 'text-gray-500'
+        : '';
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {bid.estimated_value != null && (
+        <Card>
+          <CardContent className="p-4 flex items-center gap-3">
+            <DollarSign className="h-5 w-5 text-muted-foreground" />
+            <div>
+              <p className="text-sm text-muted-foreground">Estimated Value</p>
+              <p className="font-semibold">
+                {new Intl.NumberFormat('en-CA', {
+                  style: 'currency',
+                  currency: 'CAD',
+                  maximumFractionDigits: 0,
+                }).format(bid.estimated_value)}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      {deadlineAlert && (
+        <Card>
+          <CardContent className="p-4 flex items-center gap-3">
+            <Clock className="h-5 w-5 text-muted-foreground" />
+            <div>
+              <p className="text-sm text-muted-foreground">Deadline</p>
+              <p className={`font-semibold ${deadlineColor}`}>{deadlineAlert.label}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      {bid.url && (
+        <Card>
+          <CardContent className="p-4 flex items-center gap-3">
+            <ExternalLink className="h-5 w-5 text-muted-foreground" />
+            <div>
+              <p className="text-sm text-muted-foreground">Source Link</p>
+              <a
+                href={bid.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline text-sm"
+              >
+                View listing
+              </a>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+function BiddingDetailView({ id, orgPush }: { id: string; orgPush: (path: string) => void }) {
   const { data: bid, isLoading } = useBiddingOpportunity(id);
   const updateBidding = useUpdateBidding();
   const deleteBidding = useDeleteBidding();
 
-  if (isLoading) {
-    return <div className="animate-pulse h-64 bg-muted rounded-lg" />;
-  }
-
-  if (!bid) {
+  if (isLoading) return <div className="animate-pulse h-64 bg-muted rounded-lg" />;
+  if (!bid)
     return (
       <div className="text-center py-12 text-muted-foreground">Bidding opportunity not found.</div>
     );
-  }
 
   const deadlineAlert = getDeadlineAlert(bid.deadline);
 
@@ -39,7 +92,7 @@ export default function BiddingDetailPage({
         typeof updateBidding.mutateAsync
       >[0]);
     } catch {
-      // Error handled by React Query
+      /* Error handled by React Query */
     }
   };
 
@@ -49,7 +102,7 @@ export default function BiddingDetailPage({
       await deleteBidding.mutateAsync(bid.id);
       orgPush('/crm/bidding');
     } catch {
-      // Error handled by React Query
+      /* Error handled by React Query */
     }
   };
 
@@ -78,62 +131,7 @@ export default function BiddingDetailPage({
           Delete
         </Button>
       </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {bid.estimated_value != null && (
-          <Card>
-            <CardContent className="p-4 flex items-center gap-3">
-              <DollarSign className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm text-muted-foreground">Estimated Value</p>
-                <p className="font-semibold">
-                  {new Intl.NumberFormat('en-CA', {
-                    style: 'currency',
-                    currency: 'CAD',
-                    maximumFractionDigits: 0,
-                  }).format(bid.estimated_value)}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {deadlineAlert && (
-          <Card>
-            <CardContent className="p-4 flex items-center gap-3">
-              <Clock className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm text-muted-foreground">Deadline</p>
-                <p
-                  className={`font-semibold ${deadlineAlert.level === 'urgent' ? 'text-red-600' : deadlineAlert.level === 'expired' ? 'text-gray-500' : ''}`}
-                >
-                  {deadlineAlert.label}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {bid.url && (
-          <Card>
-            <CardContent className="p-4 flex items-center gap-3">
-              <ExternalLink className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm text-muted-foreground">Source Link</p>
-                <a
-                  href={bid.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline text-sm"
-                >
-                  View listing
-                </a>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-
+      <BidMetaCards bid={bid} deadlineAlert={deadlineAlert} />
       <Card>
         <CardHeader>
           <CardTitle>Edit Details</CardTitle>
@@ -149,4 +147,14 @@ export default function BiddingDetailPage({
       </Card>
     </div>
   );
+}
+
+export default function BiddingDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string; orgSlug: string }>;
+}) {
+  const { id } = use(params);
+  const { push: orgPush } = useOrgRouter();
+  return <BiddingDetailView id={id} orgPush={orgPush} />;
 }

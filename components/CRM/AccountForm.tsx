@@ -1,24 +1,19 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  accountCreateSchema,
-  accountUpdateSchema,
-  type AccountCreate,
-  type AccountUpdate,
-} from '@/lib/validators/crm';
+import { Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+
+import { Button } from '@/components/ui/button';
 import {
   Form,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormControl,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -26,9 +21,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useCreateAccount, useUpdateAccount, type Account } from '@/hooks/useCRM';
+import { Textarea } from '@/components/ui/textarea';
 import { useDivision } from '@/contexts/DivisionContext';
-import { Loader2 } from 'lucide-react';
+import { type Account, useCreateAccount, useUpdateAccount } from '@/hooks/useCRM';
+import {
+  type AccountCreate,
+  accountCreateSchema,
+  type AccountUpdate,
+  accountUpdateSchema,
+} from '@/lib/validators/crm';
 
 interface AccountFormProps {
   account?: Account;
@@ -44,6 +45,21 @@ const ACCOUNT_TYPES = [
   { value: 'subcontractor', label: 'Subcontractor' },
 ];
 
+function cleanValues(raw: AccountCreate | AccountUpdate): AccountCreate | AccountUpdate {
+  return Object.fromEntries(Object.entries(raw).map(([k, v]) => [k, v === '' ? undefined : v])) as
+    | AccountCreate
+    | AccountUpdate;
+}
+
+function buildDefaultValues(account?: Account, divisionId?: string) {
+  return {
+    account_name: account?.account_name ?? '',
+    account_type: account?.account_type ?? 'prospect',
+    division_id: account?.division_id ?? divisionId ?? undefined,
+    notes: account?.notes ?? undefined,
+  };
+}
+
 export function AccountForm({ account, onSuccess, onCancel }: AccountFormProps) {
   const isEdit = !!account;
   const createAccount = useCreateAccount();
@@ -52,36 +68,18 @@ export function AccountForm({ account, onSuccess, onCancel }: AccountFormProps) 
 
   const form = useForm<AccountCreate | AccountUpdate>({
     resolver: zodResolver(isEdit ? accountUpdateSchema : accountCreateSchema),
-    defaultValues: {
-      account_name: account?.account_name ?? '',
-      account_type: account?.account_type ?? 'prospect',
-      division_id: account?.division_id ?? activeDivision?.id ?? undefined,
-      notes: account?.notes ?? undefined,
-    },
+    defaultValues: buildDefaultValues(account, activeDivision?.id),
   });
 
   const isPending = createAccount.isPending || updateAccount.isPending;
 
   function onSubmit(raw: AccountCreate | AccountUpdate) {
-    const values = Object.fromEntries(
-      Object.entries(raw).map(([k, v]) => [k, v === '' ? undefined : v]),
-    ) as AccountCreate | AccountUpdate;
-
+    const values = cleanValues(raw);
+    const cb = { onSuccess: (data: unknown) => onSuccess?.(data as Account) };
     if (isEdit && account) {
-      updateAccount.mutate(
-        { id: account.id, ...values },
-        {
-          onSuccess: (data) => {
-            onSuccess?.(data as Account);
-          },
-        },
-      );
+      updateAccount.mutate({ id: account.id, ...values }, cb);
     } else {
-      createAccount.mutate(values as AccountCreate, {
-        onSuccess: (data) => {
-          onSuccess?.(data as Account);
-        },
-      });
+      createAccount.mutate(values as AccountCreate, cb);
     }
   }
 
@@ -101,7 +99,6 @@ export function AccountForm({ account, onSuccess, onCancel }: AccountFormProps) 
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="account_type"
@@ -126,7 +123,6 @@ export function AccountForm({ account, onSuccess, onCancel }: AccountFormProps) 
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="notes"
@@ -145,7 +141,6 @@ export function AccountForm({ account, onSuccess, onCancel }: AccountFormProps) 
             </FormItem>
           )}
         />
-
         <div className="flex gap-2 justify-end pt-2">
           {onCancel && (
             <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
