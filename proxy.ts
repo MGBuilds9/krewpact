@@ -22,7 +22,7 @@ const SKIP_ORG_PATHS = ['/api/', '/auth', '/_next', '/favicon'];
 
 const DEFAULT_ORG_SLUG = 'mdm-group';
 
-export default clerkMiddleware(
+export const proxy = clerkMiddleware(
   async (auth, req) => {
     const { userId, sessionClaims } = await auth();
 
