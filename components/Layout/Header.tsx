@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MDMLogo } from '@/components/ui/MDMLogo';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
@@ -194,10 +195,10 @@ export function Header() {
 
   const { isImpersonating, stopImpersonation } = useImpersonation();
   const { isAdmin, primaryRole } = useUserRBAC();
-  const userName = user ? `${user.firstName} ${user.lastName}` : 'Loading...';
+  const userName = user ? `${user.firstName} ${user.lastName}` : '';
   const userRole = primaryRole
     ? primaryRole.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
-    : 'Team Member';
+    : '';
   const showQuickAccessToolbar = !pathname.endsWith('/dashboard') && pathname !== '/';
 
   const handleSignOut = async () => {
@@ -268,12 +269,21 @@ export function Header() {
                 <MoreHorizontal className="h-5 w-5" />
               </Button>
               <NotificationBell />
-              <div className="hidden lg:flex items-center gap-3 bg-muted/30 rounded-lg px-3 py-2 border border-border/50">
-                <div className="text-right">
-                  <div className="text-sm font-semibold text-foreground">{userName}</div>
-                  <div className="text-xs text-muted-foreground">{userRole}</div>
+              {user ? (
+                <div className="hidden lg:flex items-center gap-3 bg-muted/30 rounded-lg px-3 py-2 border border-border/50">
+                  <div className="text-right">
+                    <div className="text-sm font-semibold text-foreground">{userName}</div>
+                    {userRole && <div className="text-xs text-muted-foreground">{userRole}</div>}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="hidden lg:flex items-center gap-3 bg-muted/30 rounded-lg px-3 py-2 border border-border/50">
+                  <div className="text-right space-y-1">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-3 w-16" />
+                  </div>
+                </div>
+              )}
               <SettingsDropdown
                 isAdmin={isAdmin}
                 onImpersonate={() => setIsImpersonationOpen(true)}

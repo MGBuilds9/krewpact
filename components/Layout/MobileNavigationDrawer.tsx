@@ -82,7 +82,7 @@ export function MobileNavigationDrawer({ isOpen, onClose }: MobileNavigationDraw
   const { user } = useUser();
   const { signOut } = useClerk();
 
-  const userName = user ? `${user.firstName} ${user.lastName}` : 'Loading...';
+  const userName = user ? `${user.firstName} ${user.lastName}` : '';
   const userRole = currentUser?.role || 'User';
 
   const handleSignOut = async () => {

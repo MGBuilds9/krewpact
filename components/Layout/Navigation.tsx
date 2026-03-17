@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  BarChart3,
   Building2,
   Calculator,
   Calendar,
@@ -14,10 +15,12 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useMemo } from 'react';
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
+import { useUserRBAC } from '@/hooks/useRBAC';
+import { type FeatureKey, isFeatureEnabled } from '@/lib/feature-flags';
 import { cn } from '@/lib/utils';
 
 interface NavigationProps {
@@ -30,6 +33,8 @@ interface NavItem {
   path: string;
   description: string;
   adminOnly?: boolean;
+  requiredRoles?: string[];
+  featureFlag?: FeatureKey;
 }
 
 const navigationItems: NavItem[] = [
@@ -58,14 +63,34 @@ const navigationItems: NavItem[] = [
     path: '/documents',
     description: 'SharePoint files & documents',
   },
-  { icon: Calendar, label: 'Schedule', path: '/schedule', description: 'Calendar & events' },
+  {
+    icon: Calendar,
+    label: 'Schedule',
+    path: '/schedule',
+    description: 'Calendar & events',
+    featureFlag: 'schedule',
+  },
   { icon: Users, label: 'Team', path: '/team', description: 'Employee directory' },
-  { icon: DollarSign, label: 'Expenses', path: '/expenses', description: 'Log & manage expenses' },
+  {
+    icon: DollarSign,
+    label: 'Finance',
+    path: '/finance',
+    description: 'Financial overview',
+    featureFlag: 'finance',
+  },
   {
     icon: ClipboardList,
     label: 'Reports',
     path: '/reports',
     description: 'Field & safety reports',
+  },
+  {
+    icon: BarChart3,
+    label: 'Executive',
+    path: '/executive',
+    description: 'Executive dashboard',
+    featureFlag: 'executive',
+    requiredRoles: ['executive', 'platform_admin'],
   },
   {
     icon: Shield,
@@ -81,10 +106,18 @@ export { navigationItems };
 export function Navigation({ isMobile = false }: NavigationProps) {
   const pathname = usePathname();
   const { orgPath } = useOrgRouter();
-  const { data: currentUser } = useCurrentUser();
+  const { isAdmin, hasRole } = useUserRBAC();
 
-  const filteredItems = navigationItems.filter(
-    (item) => !item.adminOnly || currentUser?.role === 'admin',
+  const filteredItems = useMemo(
+    () =>
+      navigationItems.filter((item) => {
+        if (item.featureFlag && !isFeatureEnabled(item.featureFlag)) return false;
+        if (item.adminOnly && !isAdmin) return false;
+        if (item.requiredRoles && !item.requiredRoles.some((r) => hasRole(r)) && !isAdmin)
+          return false;
+        return true;
+      }),
+    [isAdmin, hasRole],
   );
 
   const strippedPath = pathname.replace(/^\/org\/[^/]+/, '');

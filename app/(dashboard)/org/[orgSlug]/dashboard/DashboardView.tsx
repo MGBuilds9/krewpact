@@ -329,9 +329,6 @@ export default function DashboardView() {
           </div>
         </div>
       </div>
-      <p className="text-center text-[10px] text-muted-foreground pt-2 pb-2 tracking-wide select-none">
-        Built by MKG Builds
-      </p>
     </div>
   );
 }

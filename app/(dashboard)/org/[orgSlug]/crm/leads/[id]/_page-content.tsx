@@ -28,6 +28,7 @@ import { StageProgressBar } from '@/components/CRM/StageProgressBar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ConfirmReasonDialog } from '@/components/ui/confirm-reason-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   type RuleResultDisplay,
@@ -464,6 +465,7 @@ export default function LeadDetailPage() {
   const [activityDialogOpen, setActivityDialogOpen] = useState(false);
   const [convertDialogOpen, setConvertDialogOpen] = useState(false);
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [markLostDialogOpen, setMarkLostDialogOpen] = useState(false);
 
   if (isLoading)
     return (
@@ -507,8 +509,7 @@ export default function LeadDetailPage() {
     stageTransition.mutate({ id: leadId, status: nextRegularStage });
   }
   function handleMarkLost() {
-    const reason = window.prompt('Reason for losing this lead:');
-    if (reason) stageTransition.mutate({ id: leadId, status: 'lost', lost_reason: reason });
+    setMarkLostDialogOpen(true);
   }
 
   return (
@@ -571,6 +572,19 @@ export default function LeadDetailPage() {
         recipientEmail={recipientEmail}
         recipientName={recipientName}
         leadId={leadId}
+      />
+      <ConfirmReasonDialog
+        open={markLostDialogOpen}
+        onOpenChange={setMarkLostDialogOpen}
+        title="Mark Lead as Lost"
+        description="Provide a reason for closing this lead as lost."
+        reasonLabel="Reason"
+        reasonRequired={true}
+        confirmLabel="Mark Lost"
+        destructive={true}
+        onConfirm={(reason) => {
+          if (reason) stageTransition.mutate({ id: leadId, status: 'lost', lost_reason: reason });
+        }}
       />
     </div>
   );

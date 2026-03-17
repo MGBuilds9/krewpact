@@ -19,8 +19,8 @@ KrewPact is a construction operations platform for MDM Group Inc. (Mississauga, 
 - **Auth:** Clerk (email + M365 SSO, custom JWT template for Supabase RLS)
 - **E-Sign:** BoldSign (white-label API) — P0 Phase 2 (Week 7+)
 - **Email:** Resend (transactional email) — Microsoft Graph deferred to P2
-- **Queue:** BullMQ + Upstash Redis (REST API, reachable from Vercel serverless)
-- **Workers:** Node.js BullMQ workers co-located on ERPNext host
+- **Queue:** QStash (Upstash) — serverless job queue via HTTP, no persistent workers
+- **Workers:** Vercel serverless `/api/queue/process` — QStash pushes jobs via webhook
 - **Connectivity:** Cloudflare Tunnel (ERPNext ↔ Vercel), Tailscale (SSH admin only)
 - **CI/CD:** GitHub Actions
 - **Testing:** Vitest (unit), Playwright (E2E), @axe-core/playwright (a11y)
@@ -33,16 +33,15 @@ User → Vercel (Next.js app + API routes) → Cloudflare Tunnel → ERPNext
                                           → Supabase Cloud (direct HTTPS)
                                           → Upstash Redis (enqueue jobs)
 
-ERPNext Host → BullMQ Workers → Upstash Redis (dequeue jobs)
-                               → ERPNext (localhost, direct)
-                               → Supabase Cloud (direct HTTPS)
+QStash → Vercel /api/queue/process → ERPNext (via Cloudflare Tunnel)
+                                    → Supabase Cloud (direct HTTPS)
 ```
 
 | Layer          | Technology                              | Responsibility                                             |
 | -------------- | --------------------------------------- | ---------------------------------------------------------- |
 | Web App        | Next.js + React + TypeScript            | Internal UI (online-only for MVP, offline deferred to P2)  |
 | API/BFF        | Next.js API routes (Vercel serverless)  | Domain APIs, orchestration, validation, rate limits        |
-| Sync Workers   | Node.js on ERPNext host                 | BullMQ workers for ERPNext sync, retries, dead-letter      |
+| Job Processing | Vercel serverless + QStash              | QStash pushes jobs to /api/queue/process, retries, DLQ     |
 | Operational DB | Supabase Postgres (managed cloud)       | Workflows, field ops, audit trails, denormalized reporting |
 | ERP Core       | ERPNext (any Linux + cloudflared)       | Accounting, inventory, procurement, invoicing, payments    |
 | Object Storage | Supabase Storage + CDN                  | Documents, photos, signed contracts                        |
@@ -185,6 +184,32 @@ Clerk JWTs drive Supabase RLS. Configured via Clerk JWT template:
 - NEVER commit `console.log` -- use `logger.info/warn/error`
 - NEVER create barrel index files (re-export files) -- they break tree-shaking
 
+## Production Quality Rules (ENFORCED)
+
+### UI Rules
+
+- NEVER ship a page that shows raw IDs, UUIDs, or technical jargon to end users
+- NEVER use `window.prompt()` or `window.confirm()` — always use `ConfirmReasonDialog` or shadcn `Dialog`
+- NEVER leave "Coming Soon", "TODO", or placeholder text in user-visible UI
+- NEVER add a nav item for a feature that isn't fully functional
+- ALWAYS check: "Would a non-technical construction manager understand this screen?"
+- ALWAYS add loading skeletons, never show "Loading..." text or zeros-while-loading
+
+### Feature Gating Rules
+
+- Every new feature MUST be added to `lib/feature-flags.ts` as `false` by default
+- Features are only enabled after: (1) code complete, (2) tested with real data, (3) UX reviewed
+- Navigation items check feature flags — hidden features = invisible nav
+- Pages behind disabled flags show `<FeatureGate>` / `<ComingSoon>` component, not broken UI
+
+### Agent Session Rules
+
+- Before adding ANY UI element, read the existing page to understand context
+- Before wiring a new page, verify: Does the nav make sense? Is the data real? Is the UX coherent?
+- Log all issues found during a session to `docs/issues-log.md` with date, file, description
+- At session end, update `docs/issues-log.md` with resolved/unresolved status
+- NEVER add a feature to the nav without also adding it to `lib/feature-flags.ts`
+
 ## Sales AGI Layer (from LeadForge Merge)
 
 KrewPact's CRM now includes an autonomous sales automation layer:
@@ -225,7 +250,7 @@ src/
 │   ├── supabase/
 │   │   ├── client.ts        # Browser client
 │   │   └── server.ts        # Server client (uses pooler port)
-│   ├── queue/               # BullMQ job definitions
+│   ├── queue/               # QStash job definitions
 │   └── validators/          # Shared Zod schemas
 ├── components/
 │   ├── ui/                  # shadcn/ui components
@@ -271,7 +296,7 @@ Lint → Type Check → Unit Test → Build → Integration Test → Deploy
 | Contracting + Projects | 7-9   | Proposals, BoldSign e-sign, project creation, members, milestones, ERPNext sync (Sales Order, Project) |
 | Execution + Go-Live    | 10-12 | Tasks, daily logs, document upload, invoice snapshots, dashboard, UAT, deploy                          |
 
-**~25 features | ~40 endpoints | ~30 forms | ~12 ERPNext mappings**
+**~25 features | ~314 endpoints | ~30 forms | ~13 ERPNext mappings**
 
 P1 (weeks 13-20): Change orders, RFIs, time/expense, client portal, extended ERPNext sync
 P2 (future): Trade portal, procurement, offline, ADP, closeout, migration, M365, full monitoring
@@ -322,6 +347,15 @@ ERPNext is GPL v3. **Critical:** maintain strict API boundary. No shared code, s
 Run `/scope` to initialize the project. This reads the Resolution doc, confirms pending decisions, scaffolds Next.js, and creates the Phase 0 task list.
 
 ## Session Log
+
+### Mar 17, 2026 — Production Hardening: Feature Gating, UX Coherence, Documentation
+
+- **Phase 1 — Broken UI Fixes (8):** Removed duplicate WeightedPipelineHeader from PipelineKanban (parent page owns it). Replaced "Loading... Team Member" text with skeleton shimmer in Header.tsx. Made QuickAccessToolbar context-aware (CRM/Projects/Estimates/default action sets). Fixed QuickAddFAB path matching to use `.includes()` instead of `.startsWith()`. Fixed Navigation admin check to use `useUserRBAC().isAdmin`. Removed CRM layout double-header (h1 + description removed, tab nav only). Removed "Built by MKG Builds" footer from Dashboard.
+- **Phase 2 — Feature Gating:** Created `lib/feature-flags.ts` (16 flags, all incomplete features off). Created `components/FeatureGate.tsx` wrapper. Created `components/ui/coming-soon.tsx` placeholder. Navigation now reads feature flags — hidden features are invisible.
+- **Phase 3 — UX Fixes:** Created `components/ui/confirm-reason-dialog.tsx` (replaces `window.prompt`). Replaced `window.prompt` in lead mark-lost and estimate version dialogs. Added Executive nav item gated to `executive`/`platform_admin` roles + feature flag.
+- **Phase 4 — Documentation:** Added `## Production Quality Rules (ENFORCED)` section to CLAUDE.md. Fixed queue: BullMQ → QStash. Fixed workers: co-located → serverless `/api/queue/process`. Fixed endpoint count: ~40 → ~314. Fixed ERPNext mappings: 12 → 13. Created `docs/issues-log.md` for agent session logging.
+- **Phase 5 — AI Guardrails:** Added per-session call counter (limit 10) to `AiSuggestion.tsx` with graceful "paused" message. Verified AI killswitch (`AI_ENABLED=false`) already complete and functional.
+- **Tests:** 3,871/3,871 passing (342 files). Updated PipelineKanban test (header now parent's), added `_resetSessionCallCount` to AiSuggestion test. 0 type errors. Build clean.
 
 ### Mar 16, 2026 — Production Hardening: Demo Removal, Coding Standards, File Splits
 

@@ -4,7 +4,6 @@ import { Briefcase } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 
 import { OpportunityCard } from '@/components/CRM/OpportunityCard';
-import { WeightedPipelineHeader } from '@/components/CRM/WeightedPipelineHeader';
 import { Badge } from '@/components/ui/badge';
 import type { Opportunity, PipelineData } from '@/hooks/useCRM';
 
@@ -63,19 +62,8 @@ export function PipelineView({ data }: PipelineViewProps) {
   );
   const allStages = [...orderedStages, ...extraStages];
 
-  // Calculate pipeline metrics
-  const allOpportunities = Object.values(data.stages).flatMap((s) => s.opportunities);
-  const totalValue = Object.values(data.stages).reduce((sum, s) => sum + s.total_value, 0);
-  const weightedValue = calculateWeightedValue(allOpportunities);
-  const opportunityCount = allOpportunities.length;
-
   return (
     <>
-      <WeightedPipelineHeader
-        totalValue={totalValue}
-        weightedValue={weightedValue}
-        opportunityCount={opportunityCount}
-      />
       <div className="flex gap-4 overflow-x-auto pb-4">
         {allStages.map((stage) => {
           const stageData = data.stages[stage];

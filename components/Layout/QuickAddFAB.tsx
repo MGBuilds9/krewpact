@@ -18,13 +18,13 @@ export function QuickAddFAB() {
   const pathname = usePathname();
 
   const getContextAwareActions = () => {
-    if (pathname.startsWith('/projects')) {
+    if (pathname.includes('/projects')) {
       return [
         { label: 'New Project', icon: Briefcase, href: '/projects?new=true' },
         { label: 'Field Report', icon: ClipboardList, href: '/reports/new' },
       ];
     }
-    if (pathname.startsWith('/documents')) {
+    if (pathname.includes('/documents')) {
       return [{ label: 'Upload File', icon: FileText, href: '/documents?upload=true' }];
     }
     return [

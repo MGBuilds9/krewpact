@@ -127,4 +127,21 @@ describe('PipelineView', () => {
     render(<PipelineView data={data} />);
     expect(screen.getByText(/no opportunities/i)).toBeDefined();
   });
+
+  it('does NOT render WeightedPipelineHeader (parent page owns it)', () => {
+    const data: PipelineData = {
+      stages: {
+        intake: {
+          opportunities: [makeOpp({ id: 'opp-1', estimated_revenue: 100000, probability_pct: 50 })],
+          total_value: 100000,
+          count: 1,
+        },
+      },
+    };
+
+    render(<PipelineView data={data} />);
+    expect(screen.queryByText('Total Pipeline')).toBeNull();
+    expect(screen.queryByText('Weighted Pipeline')).toBeNull();
+    expect(screen.queryByText('Opportunities')).toBeNull();
+  });
 });

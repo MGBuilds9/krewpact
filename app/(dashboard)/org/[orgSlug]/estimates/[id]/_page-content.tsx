@@ -11,6 +11,7 @@ import { TotalsPanel } from '@/components/Estimates/TotalsPanel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ConfirmReasonDialog } from '@/components/ui/confirm-reason-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -262,6 +263,7 @@ export default function EstimateBuilderPage() {
   const [allowanceDialogOpen, setAllowanceDialogOpen] = useState(false);
   const [alternateDialogOpen, setAlternateDialogOpen] = useState(false);
   const [proposalDialogOpen, setProposalDialogOpen] = useState(false);
+  const [versionDialogOpen, setVersionDialogOpen] = useState(false);
 
   const { data: estimate, isLoading } = useEstimate(estimateId);
   const { data: lines } = useEstimateLines(estimateId);
@@ -313,10 +315,7 @@ export default function EstimateBuilderPage() {
         isPending={updateEstimate.isPending}
         isVersionPending={createVersion.isPending}
         onTransition={(s) => updateEstimate.mutate({ id: estimateId, status: s })}
-        onSaveVersion={() => {
-          const r = window.prompt('Version reason (optional):');
-          createVersion.mutate({ estimateId, reason: r || undefined });
-        }}
+        onSaveVersion={() => setVersionDialogOpen(true)}
         onProposal={() => setProposalDialogOpen(true)}
         onBack={() => orgPush('/estimates')}
       />
@@ -409,6 +408,16 @@ export default function EstimateBuilderPage() {
           />
         </DialogContent>
       </Dialog>
+      <ConfirmReasonDialog
+        open={versionDialogOpen}
+        onOpenChange={setVersionDialogOpen}
+        title="Save Version"
+        description="Save a snapshot of this estimate. Optionally describe what changed."
+        reasonLabel="Reason"
+        reasonRequired={false}
+        confirmLabel="Save Version"
+        onConfirm={(reason) => createVersion.mutate({ estimateId, reason: reason || undefined })}
+      />
     </div>
   );
 }

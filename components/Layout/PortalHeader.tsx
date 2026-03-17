@@ -100,7 +100,7 @@ export function PortalHeader() {
   const { user } = useUser();
   const { signOut } = useClerk();
   const router = useRouter();
-  const userName = user ? `${user.firstName} ${user.lastName}` : 'Loading...';
+  const userName = user ? `${user.firstName} ${user.lastName}` : '';
   const roles = user?.publicMetadata?.krewpact_roles as string[] | undefined;
   const userRole =
     roles && roles.length > 0

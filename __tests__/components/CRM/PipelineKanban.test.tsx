@@ -136,7 +136,7 @@ describe('PipelineKanban', () => {
     expect(screen.getByText('Beta Deal')).toBeInTheDocument();
   });
 
-  it('displays weighted pipeline header', () => {
+  it('renders opportunities and column values (header is parent responsibility)', () => {
     const opp = makeOpp({
       id: 'opp-1',
       estimated_revenue: 100000,
@@ -156,14 +156,10 @@ describe('PipelineKanban', () => {
       </Wrapper>,
     );
 
-    // WeightedPipelineHeader renders "Total Pipeline", "Weighted Pipeline", "Opportunities"
-    expect(screen.getByText('Total Pipeline')).toBeInTheDocument();
-    expect(screen.getByText('Weighted Pipeline')).toBeInTheDocument();
-    expect(screen.getByText('Opportunities')).toBeInTheDocument();
-    // $100,000.00 appears in header, column, and card — use getAllByText
+    // $100,000.00 appears in column and card — use getAllByText
     const totalMatches = screen.getAllByText('$100,000.00');
     expect(totalMatches.length).toBeGreaterThanOrEqual(1);
-    // Opportunity count shown in header
+    // Opportunity count badge shown in column
     const countMatches = screen.getAllByText('1');
     expect(countMatches.length).toBeGreaterThanOrEqual(1);
   });

@@ -2,7 +2,18 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -140,9 +151,13 @@ export function SubscriptionTable({ onEdit, onAdd }: SubscriptionTableProps) {
     onError: () => showToast.error('Failed to delete subscription'),
   });
 
-  function handleDelete(sub: Subscription) {
-    if (!window.confirm(`Delete "${sub.name}"? This cannot be undone.`)) return;
-    deleteMutation.mutate(sub.id);
+  const [deleteTarget, setDeleteTarget] = useState<Subscription | null>(null);
+
+  function confirmDelete() {
+    if (deleteTarget) {
+      deleteMutation.mutate(deleteTarget.id);
+      setDeleteTarget(null);
+    }
   }
 
   const subscriptions = data?.data ?? [];
@@ -210,7 +225,7 @@ export function SubscriptionTable({ onEdit, onAdd }: SubscriptionTableProps) {
                       key={sub.id}
                       sub={sub}
                       onEdit={onEdit}
-                      onDelete={handleDelete}
+                      onDelete={setDeleteTarget}
                       isDeleting={deleteMutation.isPending}
                     />
                   ))}
@@ -231,6 +246,25 @@ export function SubscriptionTable({ onEdit, onAdd }: SubscriptionTableProps) {
           </>
         )}
       </CardContent>
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Subscription</AlertDialogTitle>
+            <AlertDialogDescription>
+              Delete &ldquo;{deleteTarget?.name}&rdquo;? This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

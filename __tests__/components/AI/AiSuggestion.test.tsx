@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { AiSuggestion } from '@/components/AI/AiSuggestion';
+import { _resetSessionCallCount, AiSuggestion } from '@/components/AI/AiSuggestion';
 
 // Mock fetch globally — must come before component import for correct hoisting
 const mockFetch = vi.fn();
@@ -40,6 +40,7 @@ describe('AiSuggestion', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.clearAllMocks();
+    _resetSessionCallCount();
   });
 
   afterEach(() => {
@@ -385,5 +386,94 @@ describe('AiSuggestion', () => {
 
     const btn = screen.getByRole('button', { name: /Apply suggestion/i });
     expect(btn).toHaveAttribute('type', 'button');
+  });
+});
+
+// ─── Session call limit ───────────────────────────────────────────────────────
+
+describe('session call limit', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.clearAllMocks();
+    _resetSessionCallCount();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  /**
+   * Render a component and advance past the debounce so one fetch fires.
+   * Returns the container for further assertions.
+   */
+  const emptyCtx = defaultProps.context;
+
+  async function renderAndFlush(props = defaultProps) {
+    const result = render(<AiSuggestion {...props} />);
+    await flushDebounce();
+    return result;
+  }
+
+  it('shows the paused message after 10 fetch calls', async () => {
+    mockFetch.mockReturnValue(makeFetchResponse({ suggestion: null }));
+
+    // Exhaust 10 calls — each render + flush increments sessionCallCount by 1
+    for (let i = 0; i < 10; i++) {
+      const { unmount } = await renderAndFlush({ field: `f${i}`, context: emptyCtx });
+      unmount();
+    }
+
+    // The 11th render should see sessionCallCount >= 10 and enter paused state
+    const { container } = render(<AiSuggestion field="extra" context={emptyCtx} />);
+    await flushDebounce();
+
+    expect(container.textContent).toMatch(/AI suggestions paused/i);
+  });
+
+  it('does not call fetch when session limit is already reached', async () => {
+    mockFetch.mockReturnValue(makeFetchResponse({ suggestion: null }));
+
+    // Exhaust the limit
+    for (let i = 0; i < 10; i++) {
+      const { unmount } = await renderAndFlush({ field: `f${i}`, context: emptyCtx });
+      unmount();
+    }
+
+    const callCountAfterExhaustion = mockFetch.mock.calls.length;
+
+    // Render one more — must NOT add another fetch call
+    render(<AiSuggestion field="extra" context={emptyCtx} />);
+    await flushDebounce();
+
+    expect(mockFetch.mock.calls.length).toBe(callCountAfterExhaustion);
+  });
+
+  it('allows fetches again after resetting the counter', async () => {
+    mockFetch.mockReturnValue(makeFetchResponse({ suggestion: null }));
+
+    // Exhaust the limit
+    for (let i = 0; i < 10; i++) {
+      const { unmount } = await renderAndFlush({ field: `f${i}`, context: emptyCtx });
+      unmount();
+    }
+
+    // Confirm paused
+    const { container: pausedContainer, unmount: unmountPaused } = render(
+      <AiSuggestion field="paused-check" context={emptyCtx} />,
+    );
+    await flushDebounce();
+    expect(pausedContainer.textContent).toMatch(/AI suggestions paused/i);
+    unmountPaused();
+
+    // Reset counter
+    _resetSessionCallCount();
+
+    const callsBefore = mockFetch.mock.calls.length;
+
+    // Should fetch again
+    render(<AiSuggestion field="after-reset" context={emptyCtx} />);
+    await flushDebounce();
+
+    expect(mockFetch.mock.calls.length).toBe(callsBefore + 1);
   });
 });

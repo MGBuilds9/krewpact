@@ -18,7 +18,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { OpportunityCard } from '@/components/CRM/OpportunityCard';
-import { WeightedPipelineHeader } from '@/components/CRM/WeightedPipelineHeader';
 import { Badge } from '@/components/ui/badge';
 import type { Opportunity, PipelineData } from '@/hooks/useCRM';
 import { useOpportunityStageTransition } from '@/hooks/useCRM';
@@ -146,8 +145,6 @@ export function PipelineKanban({ data }: PipelineKanbanProps) {
   );
   const allStages = [...orderedStages, ...extraStages];
   const allOpportunities = Object.values(data.stages).flatMap((s) => s.opportunities);
-  const totalValue = Object.values(data.stages).reduce((sum, s) => sum + s.total_value, 0);
-  const weightedValue = calculateWeightedValue(allOpportunities);
 
   function handleDragStart(event: DragStartEvent) {
     setActiveOpp((event.active.data.current?.opportunity as Opportunity | undefined) ?? null);
@@ -164,11 +161,6 @@ export function PipelineKanban({ data }: PipelineKanbanProps) {
 
   return (
     <>
-      <WeightedPipelineHeader
-        totalValue={totalValue}
-        weightedValue={weightedValue}
-        opportunityCount={allOpportunities.length}
-      />
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
