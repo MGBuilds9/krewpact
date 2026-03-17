@@ -11,6 +11,7 @@ import {
   Phone,
   Plus,
   Tag,
+  Trash2,
   User,
 } from 'lucide-react';
 import { useParams } from 'next/navigation';
@@ -27,9 +28,16 @@ import { UnifiedTimeline } from '@/components/CRM/UnifiedTimeline';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ConfirmReasonDialog } from '@/components/ui/confirm-reason-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAccount, useAccountProjects, useContacts, useOpportunities } from '@/hooks/useCRM';
+import {
+  useAccount,
+  useAccountProjects,
+  useContacts,
+  useDeleteAccount,
+  useOpportunities,
+} from '@/hooks/useCRM';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 
 function formatCurrency(value: number | null): string {
@@ -354,9 +362,11 @@ export default function AccountDetailPage() {
   const { data: contactsResponse } = useContacts({ accountId });
   const { data: opportunities } = useOpportunities({ accountId });
   const { data: projectsResponse } = useAccountProjects(accountId);
+  const deleteAccount = useDeleteAccount();
   const [isEditing, setIsEditing] = useState(false);
   const [activityDialogOpen, setActivityDialogOpen] = useState(false);
   const [followUpOpen, setFollowUpOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const accountContacts = contactsResponse ? contactsResponse.data || [] : [];
   const accountOpportunities = opportunities ? opportunities.data || [] : [];
@@ -435,6 +445,15 @@ export default function AccountDetailPage() {
               Edit
             </Button>
           )}
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-destructive hover:bg-destructive/10"
+            onClick={() => setDeleteDialogOpen(true)}
+          >
+            <Trash2 className="h-4 w-4 mr-1" />
+            Delete
+          </Button>
         </div>
       </div>
 
@@ -504,6 +523,21 @@ export default function AccountDetailPage() {
         entityType="account"
         entityId={accountId}
         entityName={account.account_name}
+      />
+      <ConfirmReasonDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Delete Account"
+        description={`Permanently delete "${account.account_name}"? This will remove the account and cannot be undone.`}
+        reasonLabel="Reason"
+        reasonRequired={false}
+        confirmLabel="Delete Account"
+        destructive={true}
+        onConfirm={() => {
+          deleteAccount.mutate(accountId, {
+            onSuccess: () => orgPush('/crm/accounts'),
+          });
+        }}
       />
     </div>
   );
