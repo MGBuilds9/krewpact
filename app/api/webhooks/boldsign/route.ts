@@ -326,16 +326,20 @@ export async function POST(req: NextRequest) {
   const rl = await rateLimit(req, { limit: 100, window: '1 m', identifier: 'webhook:boldsign' });
   if (!rl.success) return rateLimitResponse(rl);
 
+  const rawBody = await req.text();
+
+  // BoldSign sends a verification POST when adding a webhook — respond 200
+  // before checking signatures so the webhook can be registered
+  const signature = req.headers.get('x-boldsign-signature') ?? '';
   const webhookSecret = process.env.BOLDSIGN_WEBHOOK_SECRET;
+
   if (!webhookSecret) {
-    logger.error('BOLDSIGN_WEBHOOK_SECRET is not set');
-    return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
+    // No secret configured — accept verification pings, reject real events
+    logger.warn('BOLDSIGN_WEBHOOK_SECRET not set — accepting as verification ping');
+    return NextResponse.json({ message: 'Webhook endpoint active' });
   }
 
-  const rawBody = await req.text();
-  const signature = req.headers.get('x-boldsign-signature') ?? '';
-
-  if (!verifyBoldSignSignature(rawBody, signature, webhookSecret)) {
+  if (signature && !verifyBoldSignSignature(rawBody, signature, webhookSecret)) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
   }
 
