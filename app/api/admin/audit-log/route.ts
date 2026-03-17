@@ -8,8 +8,6 @@ import { createUserClientSafe } from '@/lib/supabase/server';
 
 const ALLOWED_ROLES = ['platform_admin', 'executive'];
 
-type SupabaseClient = Awaited<ReturnType<typeof createUserClientSafe>>['client'];
-
 interface AuditFilters {
   entityType: string | null;
   actionFilter: string | null;
@@ -18,7 +16,8 @@ interface AuditFilters {
   dateTo: string | null;
 }
 
-function applyAuditFilters(query: ReturnType<SupabaseClient['from']>, filters: AuditFilters) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase query builder type is complex and varies by .select() call
+function applyAuditFilters(query: any, filters: AuditFilters) {
   let q = query;
   if (filters.entityType) q = q.eq('entity_type', filters.entityType);
   if (filters.actionFilter) q = q.eq('action', filters.actionFilter);
