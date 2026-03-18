@@ -107,6 +107,7 @@ export {
   useCreateLinkedEstimate,
   useCreateOpportunity,
   useDashboardMetrics,
+  useDeleteOpportunity,
   useDivisionComparison,
   useMarkOpportunityLost,
   useMarkOpportunityWon,

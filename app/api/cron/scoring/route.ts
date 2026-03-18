@@ -25,7 +25,7 @@ async function fetchLeadsForScoring(supabase: ServiceClient, force: boolean) {
   let query = supabase
     .from('leads')
     .select(
-      'id, company_name, domain, enrichment_status, enrichment_data, lead_score, fit_score, intent_score, engagement_score, source_channel, industry, city, province, postal_code, status, division_id, created_at, updated_at',
+      'id, company_name, domain, enrichment_status, enrichment_data, lead_score, fit_score, intent_score, engagement_score, source_channel, industry, city, province, postal_code, status, division_id, current_sequence_id, created_at, updated_at',
     )
     .eq('enrichment_status', 'complete')
     .is('deleted_at', null)
@@ -77,6 +77,7 @@ async function scoreOneLead(
       triggered_by: 'cron',
     });
     await maybeDeepResearch(supabase, lead, result.total_score);
+    await maybeAutoEnroll(supabase, lead, result.total_score);
     return 'success';
   } catch (err) {
     logger.error(`Scoring error for ${lead.id}:`, { error: err });
@@ -106,6 +107,76 @@ async function maybeDeepResearch(
   } catch (researchErr) {
     logger.error(`Deep research error for ${lead.id}:`, { error: researchErr });
     // Non-critical — scoring still succeeds
+  }
+}
+
+async function maybeAutoEnroll(
+  supabase: ServiceClient,
+  lead: Record<string, unknown>,
+  totalScore: number,
+): Promise<void> {
+  if (totalScore < 60) return;
+  if (lead.current_sequence_id) return;
+  if (lead.status !== 'new') return;
+
+  try {
+    const { data: sequence } = await supabase
+      .from('sequences')
+      .select('id')
+      .eq('trigger_type', 'score_threshold')
+      .eq('is_active', true)
+      .limit(1)
+      .single();
+
+    if (!sequence) return;
+
+    const { data: primaryContact } = await supabase
+      .from('contacts')
+      .select('id')
+      .eq('lead_id', lead.id as string)
+      .eq('is_primary', true)
+      .limit(1)
+      .maybeSingle();
+
+    const { data: firstStep } = await supabase
+      .from('sequence_steps')
+      .select('id, step_number, delay_days, delay_hours')
+      .eq('sequence_id', sequence.id)
+      .order('step_number', { ascending: true })
+      .limit(1)
+      .single();
+
+    if (!firstStep) return;
+
+    const nextAt = new Date();
+    nextAt.setDate(nextAt.getDate() + (firstStep.delay_days ?? 0));
+    nextAt.setHours(nextAt.getHours() + (firstStep.delay_hours ?? 0));
+
+    const { error: enrollError } = await supabase.from('sequence_enrollments').insert({
+      sequence_id: sequence.id,
+      lead_id: lead.id as string,
+      contact_id: primaryContact?.id ?? null,
+      current_step: firstStep.step_number,
+      current_step_id: firstStep.id,
+      status: 'active',
+      enrolled_at: new Date().toISOString(),
+      next_step_at: nextAt.toISOString(),
+      trigger_type: 'score_threshold',
+    });
+
+    if (enrollError) {
+      logger.error(`Auto-enroll error for ${lead.id}:`, { error: enrollError.message });
+      return;
+    }
+
+    await supabase
+      .from('leads')
+      .update({ current_sequence_id: sequence.id })
+      .eq('id', lead.id as string);
+
+    logger.info(`Auto-enrolled lead ${lead.id} in sequence ${sequence.id} (score: ${totalScore})`);
+  } catch (err) {
+    logger.error(`Auto-enroll error for ${lead.id}:`, { error: err });
   }
 }
 

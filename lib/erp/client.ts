@@ -54,8 +54,8 @@ export class ErpClient {
 
   constructor() {
     this.baseUrl = process.env.ERPNEXT_BASE_URL || '';
-    this.apiKey = process.env.ERPNEXT_API_KEY || '';
-    this.apiSecret = process.env.ERPNEXT_API_SECRET || '';
+    this.apiKey = (process.env.ERPNEXT_API_KEY || '').trim();
+    this.apiSecret = (process.env.ERPNEXT_API_SECRET || '').trim();
   }
 
   /** Check if running in mock mode (no real ERPNext instance) */

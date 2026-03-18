@@ -7,6 +7,7 @@ import {
   MessageSquarePlus,
   Pencil,
   Plus,
+  Trash2,
   Trophy,
   XCircle,
 } from 'lucide-react';
@@ -24,10 +25,12 @@ import { OpportunityStageProgressBar } from '@/components/CRM/OpportunityStagePr
 import { WonDealDialog } from '@/components/CRM/WonDealDialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ConfirmReasonDialog } from '@/components/ui/confirm-reason-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   useActivities,
   useCreateLinkedEstimate,
+  useDeleteOpportunity,
   useOpportunity,
   useOpportunityEstimates,
   useOpportunityStageTransition,
@@ -297,10 +300,12 @@ export default function OpportunityDetailPage() {
   const createLinkedEstimate = useCreateLinkedEstimate();
   const proposalQuery = useProposalData(opportunityId);
   const stageTransition = useOpportunityStageTransition();
+  const deleteOpportunity = useDeleteOpportunity();
   const [isEditing, setIsEditing] = useState(false);
   const [activityDialogOpen, setActivityDialogOpen] = useState(false);
   const [wonDialogOpen, setWonDialogOpen] = useState(false);
   const [lostDialogOpen, setLostDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   if (isLoading)
     return (
@@ -370,6 +375,15 @@ export default function OpportunityDetailPage() {
               Edit
             </Button>
           )}
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-destructive hover:text-destructive"
+            onClick={() => setDeleteDialogOpen(true)}
+          >
+            <Trash2 className="h-4 w-4 mr-1" />
+            Delete
+          </Button>
         </div>
       </div>
 
@@ -448,6 +462,21 @@ export default function OpportunityDetailPage() {
         opportunity={opportunity}
         open={lostDialogOpen}
         onOpenChange={setLostDialogOpen}
+      />
+      <ConfirmReasonDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Delete Opportunity"
+        description={`Permanently delete "${opportunity.opportunity_name}"? This will remove the opportunity and cannot be undone.`}
+        reasonLabel="Reason"
+        reasonRequired={false}
+        confirmLabel="Delete Opportunity"
+        destructive={true}
+        onConfirm={() => {
+          deleteOpportunity.mutate(opportunityId, {
+            onSuccess: () => orgPush('/crm/opportunities'),
+          });
+        }}
       />
     </div>
   );

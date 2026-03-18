@@ -91,8 +91,8 @@ async function checkClerk(): Promise<SmokeCheck | null> {
 
 async function checkErpNext(): Promise<SmokeCheck | null> {
   const erpUrl = process.env.ERPNEXT_BASE_URL;
-  const erpKey = process.env.ERPNEXT_API_KEY;
-  const erpSecret = process.env.ERPNEXT_API_SECRET;
+  const erpKey = process.env.ERPNEXT_API_KEY?.trim();
+  const erpSecret = process.env.ERPNEXT_API_SECRET?.trim();
   if (!erpUrl || !erpKey || !erpSecret) return null;
   try {
     const controller = new AbortController();
@@ -154,7 +154,7 @@ async function runChecks(): Promise<SmokeCheck[]> {
 }
 
 async function sendAlertEmail(failedChecks: SmokeCheck[]) {
-  const alertEmail = process.env.ALERT_EMAIL ?? 'michael@mdmgroupinc.ca';
+  const alertEmail = process.env.ALERT_EMAIL ?? 'michael.guirguis@mdmgroupinc.ca';
   const failedList = failedChecks
     .map((c) => `- ${c.name}: ${c.detail ?? 'unknown error'}`)
     .join('\n');

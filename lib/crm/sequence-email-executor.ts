@@ -1,5 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+import { logger } from '@/lib/logger';
+
 import type { ProcessorOptions } from './sequence-processor';
 
 export interface EmailStepParams {
@@ -51,6 +53,12 @@ export async function executeEmailStep(params: EmailStepParams): Promise<void> {
   const contactEmail = ((enrollment.contacts ?? {}) as Record<string, unknown>).email as
     | string
     | undefined;
+  if (options.emailSender && !contactEmail) {
+    logger.warn('Sequence email skipped: no contact email', {
+      enrollmentId: enrollment.id,
+      leadId: enrollment.lead_id,
+    });
+  }
   if (options.emailSender && contactEmail) {
     sendResult = await options.emailSender.send({
       to: contactEmail,

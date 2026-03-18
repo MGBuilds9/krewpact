@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { type FeatureKey,features, isFeatureEnabled } from '@/lib/feature-flags';
+import { type FeatureKey, features, isFeatureEnabled } from '@/lib/feature-flags';
 
 describe('features object', () => {
   it('has all expected keys', () => {
@@ -69,8 +69,8 @@ describe('isFeatureEnabled', () => {
     expect(isFeatureEnabled('enrichment_ui')).toBe(false);
   });
 
-  it('returns false for sequences (disabled)', () => {
-    expect(isFeatureEnabled('sequences')).toBe(false);
+  it('returns true for sequences (enabled)', () => {
+    expect(isFeatureEnabled('sequences')).toBe(true);
   });
 
   it('returns false for migration_tool (disabled)', () => {

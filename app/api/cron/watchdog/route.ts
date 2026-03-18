@@ -25,7 +25,7 @@ const CRON_SCHEDULE: Record<string, number> = {
   'erp-sync': 30, // every 30min
   'followup-reminders': 1440, // daily weekdays
   'icp-refresh': 10080, // weekly (Monday)
-  'smoke-test': 15, // every 15min
+  'smoke-test': 60, // every hour
 };
 
 // 2x multiplier for alerting threshold
@@ -75,7 +75,7 @@ async function sendWatchdogAlert(
   overdue: WatchdogResult[],
   overdueKey: string,
 ): Promise<void> {
-  const alertEmail = process.env.ALERT_EMAIL ?? 'michael@mdmgroupinc.ca';
+  const alertEmail = process.env.ALERT_EMAIL ?? 'michael.guirguis@mdmgroupinc.ca';
   const overdueList = overdue
     .map(
       (r) =>

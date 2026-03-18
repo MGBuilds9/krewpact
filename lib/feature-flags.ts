@@ -15,7 +15,7 @@ export const features = {
   ai_suggestions: true,
   ai_insights: true,
   ai_daily_digest: true,
-  sequences: false,
+  sequences: true,
   migration_tool: false,
   schedule: false,
   documents_upload: false,

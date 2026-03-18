@@ -143,6 +143,17 @@ export function useUpdateOpportunity() {
   });
 }
 
+export function useDeleteOpportunity() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => apiFetch(`/api/crm/opportunities/${id}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.opportunities.all });
+      queryClient.invalidateQueries({ queryKey: ['pipeline'] });
+    },
+  });
+}
+
 export function useOpportunityStageTransition() {
   const queryClient = useQueryClient();
   return useMutation({
