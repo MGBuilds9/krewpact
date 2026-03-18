@@ -348,6 +348,13 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
+### Mar 17, 2026 — Fix Email Pipeline, Smoke Test Spam, and ERPNext Auth
+
+- **Changes:** Fixed 5 compounding issues: (1) sequence auto-enroll now looks up lead's primary contact and sets `contact_id` on enrollment, so emails actually send; (2) `.trim()` on ERPNext API key/secret in `lib/erp/client.ts`, smoke-test, and health routes to prevent newline in auth header; (3) alert email fallback corrected from `michael@mdmgroupinc.ca` to `michael.guirguis@mdmgroupinc.ca` in smoke-test + watchdog; (4) watchdog smoke-test schedule fixed from 15min to 60min to match actual cron; (5) created `smoke_test_results` table for alert cooldown tracking. Added warning log in `sequence-email-executor.ts` for silent email skips. Enabled sequences feature flag. Added opportunity delete button with ConfirmReasonDialog.
+- **Decisions:** Defensive `.trim()` on all ERPNext env var reads (not just Vercel fix) to prevent recurrence. Warning log (not error) for missing contact emails since it's a data issue, not a code failure.
+- **Next steps:** Verify end-to-end: trigger scoring cron → auto-enroll → sequence processor → email actually sent. Monitor smoke test for clean passes.
+- **Tests:** 3,981/3,981 passing (351 files). 0 type errors. 0 lint errors. Build clean.
+
 ### Mar 17, 2026 — Production Hardening: Feature Gating, UX Coherence, Documentation
 
 - **Phase 1 — Broken UI Fixes (8):** Removed duplicate WeightedPipelineHeader from PipelineKanban (parent page owns it). Replaced "Loading... Team Member" text with skeleton shimmer in Header.tsx. Made QuickAccessToolbar context-aware (CRM/Projects/Estimates/default action sets). Fixed QuickAddFAB path matching to use `.includes()` instead of `.startsWith()`. Fixed Navigation admin check to use `useUserRBAC().isAdmin`. Removed CRM layout double-header (h1 + description removed, tab nav only). Removed "Built by MKG Builds" footer from Dashboard.
@@ -357,27 +364,9 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 - **Phase 5 — AI Guardrails:** Added per-session call counter (limit 10) to `AiSuggestion.tsx` with graceful "paused" message. Verified AI killswitch (`AI_ENABLED=false`) already complete and functional.
 - **Tests:** 3,871/3,871 passing (342 files). Updated PipelineKanban test (header now parent's), added `_resetSessionCallCount` to AiSuggestion test. 0 type errors. Build clean.
 
-### Mar 16, 2026 — Production Hardening: Demo Removal, Coding Standards, File Splits
-
-- **Phase 1 — Demo Mode Removal:** Deleted 5 files (`demo-mode.ts`, `clerk-demo-server.ts`, `clerk-demo-client.tsx`, `seed-demo.ts`, `demo-mode-guard.test.ts`). Edited 5 production files to remove demo bypasses (`next.config.ts`, `supabase/server.ts`, `org/[slug]/route.ts`, `playwright.config.ts`, `ci.yml`). Rewrote 3 E2E tests to use real Clerk auth (`auth-smoke.spec.ts`, `auth.spec.ts`, `dashboard-ui.spec.ts`). Updated 5 docs (`local-dev.md`, `runbook.md`, `CONTRIBUTING.md`, `.env.example`, `lib/CLAUDE.md`). ERPNext mock mode (`isMockMode`) kept — separate concern with Sentry alerts.
-- **Phase 2 — Coding Standards:** Installed `eslint-plugin-simple-import-sort`. Added 10 new ESLint rules (`max-lines:300`, `max-lines-per-function:80`, `complexity:15`, `max-depth:4`, `max-params:4`, `simple-import-sort/imports+exports`, `no-explicit-any:error`, `no-console:error`, `react/no-array-index-key`). Auto-fixed 1365 import ordering issues. Added file-specific overrides for `components/ui/`, tests, scripts, generated types. Created `components/CLAUDE.md` with component conventions. Updated `app/api/CLAUDE.md` with size limits and waterfall patterns. Added `## Coding Standards (Enforced)` section to root CLAUDE.md.
-- **Phase 3 — File Splits (8 files):** `hooks/useCRM.ts` (1666L -> 10 files in `hooks/crm/`), `lib/erp/sync-service.ts` (1167L -> 11 handlers in `lib/erp/sync-handlers/`), `lib/email/branded-templates.ts` (802L -> 7 files in `lib/email/templates/`), `components/Layout/CommandPalette.tsx` (583L -> 6 files + hook), `components/Projects/ProjectCreationForm.tsx` (486L -> 9 files + hook), `lib/validators/crm.ts` (482L -> 8 domain files), `hooks/useEstimating.ts` (463L -> 5 files in `hooks/estimating/`), `lib/crm/sequence-processor.ts` (447L -> 3 files).
-- **Phase 4 — Production Checklist:** Verified: `global-error.tsx`, `not-found.tsx`, `next/font`, `.env.local` in `.gitignore`, CSP headers, no raw `<img>` tags, no secret leaks in `NEXT_PUBLIC_` vars. All pass.
-- **Tests:** 3,871/3,871 passing (342 files). 0 type errors. 0 lint errors. 469 lint warnings (from warn-level rules). Build clean.
-
-### Mar 14, 2026 — Scoring Alignment + Full Env Setup + Service Health Check
-
-- **Changes:** Aligned KrewPact scoring engine with lead-workstation.html. Added `in_set` and `contains_any` operators to scoring engine for multi-value matching. Added score caps (fit:40, intent:35, engagement:25, max total:100). Created migration with 15 new scoring rules (GTA city match, core industry match, source channel scoring, project signals, engagement signals). Re-scored all 275 enriched leads via cron. Created `.env.local` with all 35 env vars. Added 11 missing vars to Vercel (QStash, Resend, Sentry, Redis, Clerk domain). Updated ERPNext and Redis credentials. Created `scripts/health-check.ts` — pings all 12 external services. Created `reference/krewpact-architecture-costs.html` — interactive architecture map + monthly cost breakdown ($153-193/mo).
-- **Decisions:** Pipe `|` separator for `in_set`/`contains_any` operators (not comma, since city names might contain commas). Score caps clamp negatives to 0 per dimension. Separate Upstash Redis instance (`present-whale`) for KrewPact vs shared KV (`tender-poodle`).
-- **Services verified:** 12/12 — Supabase, Clerk, Upstash Redis, QStash, ERPNext, Resend, Sentry, Apollo, Brave, Google Maps, Tavily all connected.
-- **New files:** `supabase/migrations/20260314_001_align_scoring_rules.sql`, `scripts/health-check.ts`, `reference/krewpact-architecture-costs.html`
-- **Tests:** 3,866/3,866 passing (340 files). 15 new tests (in_set, contains_any operators + cap behavior). 0 lint. 0 type errors. Build clean.
-
-### Mar 14, 2026 — RBAC Unification: Fix Access Denied for platform_admin
-
-- **Changes:** Fixed Access Denied for platform_admin. Unified RBAC: merged Clerk JWT + Supabase DB permissions. Fixed field name mismatches (`role_keys`/`division_ids` vs `krewpact_roles`/`krewpact_divisions`). Updated 12 test files.
-- **Tests:** 3,866/3,866 passing (340 files).
-
+- Mar 16: Production Hardening — Demo removal, coding standards (10 ESLint rules), 8 file splits. 3,871 tests.
+- Mar 14: Scoring alignment + full env setup + 12/12 service health checks. 3,866 tests.
+- Mar 14: RBAC Unification — fix Access Denied for platform_admin. 3,866 tests.
 - Mar 14: Platform Hardening & Mobile Scaffold (4 phases, 418 files). 3,851 tests.
 - Mar 13: David's Sales Deliverables + CEO Sales Book v2 + Leads folder optimization.
 - Mar 12: AI Agentic Layer (8 agents, Gemini Flash, killswitch). 3,750 tests.
