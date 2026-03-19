@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KrewPact CRM Workflows — MDM Group</title>
+<style>
+  :root {
+    --bg: #0a0a0b;
+    --surface: #141416;
+    --surface-2: #1c1c20;
+    --border: #27272a;
+    --text: #fafafa;
+    --text-muted: #a1a1aa;
+    --text-dim: #71717a;
+    --accent: #3b82f6;
+    --accent-dim: #1e3a5f;
+    --green: #22c55e;
+    --green-dim: #14532d;
+    --red: #ef4444;
+    --red-dim: #450a0a;
+    --amber: #f59e0b;
+    --amber-dim: #451a03;
+    --purple: #a855f7;
+    --purple-dim: #3b0764;
+    --cyan: #06b6d4;
+    --cyan-dim: #083344;
+    --mono: 'SF Mono', 'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace;
+    --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 3rem 2rem;
+  }
+
+  header {
+    margin-bottom: 3rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin-bottom: 0.25rem;
+  }
+
+  header .subtitle {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+  }
+
+  header .meta {
+    margin-top: 1rem;
+    display: flex;
+    gap: 1.5rem;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    font-family: var(--mono);
+  }
+
+  section { margin-bottom: 4rem; }
+
+  h2 {
+    font-size: 1.35rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  h2 .num {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--accent);
+    background: var(--accent-dim);
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+
+  h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin: 2rem 0 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.75rem;
+  }
+
+  p, li {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.7;
+  }
+
+  p { margin-bottom: 1rem; }
+
+  /* ── Pipeline Diagram ── */
+  .pipeline {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    overflow-x: auto;
+    padding: 2rem 0;
+    margin: 1.5rem 0;
+  }
+
+  .stage-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 110px;
+    position: relative;
+  }
+
+  .stage-box {
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    white-space: nowrap;
+    transition: all 0.2s;
+    cursor: default;
+  }
+
+  .stage-box:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);
+  }
+
+  .stage-box.active { border-color: var(--accent); color: var(--accent); }
+  .stage-box.won { border-color: var(--green); color: var(--green); background: var(--green-dim); }
+  .stage-box.lost { border-color: var(--red); color: var(--red); background: var(--red-dim); }
+  .stage-box.nurture { border-color: var(--amber); color: var(--amber); background: var(--amber-dim); }
+
+  .stage-label {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    margin-top: 0.5rem;
+    text-align: center;
+    max-width: 100px;
+  }
+
+  .arrow {
+    color: var(--text-dim);
+    font-size: 1.2rem;
+    margin: 0 0.25rem;
+    flex-shrink: 0;
+  }
+
+  /* ── Nurture Branch ── */
+  .nurture-branch {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0 0 1.5rem;
+  }
+
+  .branch-line {
+    width: 1px;
+    height: 24px;
+    background: var(--amber);
+    opacity: 0.4;
+  }
+
+  .branch-arrow {
+    color: var(--amber);
+    font-size: 0.8rem;
+    opacity: 0.6;
+  }
+
+  /* ── Automation Steps ── */
+  .auto-flow {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 1.5rem 0;
+  }
+
+  .auto-step {
+    background: var(--surface);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    position: relative;
+  }
+
+  .auto-step::after {
+    content: '';
+    position: absolute;
+    right: -1px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+    border-left: 6px solid var(--border);
+    z-index: 1;
+  }
+
+  .auto-step:last-child::after { display: none; }
+
+  .auto-step .step-num {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--purple);
+    font-weight: 600;
+  }
+
+  .auto-step .step-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .auto-step .step-desc {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+
+  /* ── Day Timeline ── */
+  .timeline {
+    position: relative;
+    padding-left: 2.5rem;
+    margin: 1.5rem 0;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 0.75rem;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: linear-gradient(to bottom, var(--accent), var(--green), var(--amber));
+  }
+
+  .time-block {
+    position: relative;
+    margin-bottom: 2rem;
+  }
+
+  .time-block::before {
+    content: '';
+    position: absolute;
+    left: -1.85rem;
+    top: 0.55rem;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 2px solid var(--accent);
+  }
+
+  .time-block:nth-child(2)::before { border-color: var(--cyan); }
+  .time-block:nth-child(3)::before { border-color: var(--green); }
+  .time-block:nth-child(4)::before { border-color: var(--amber); }
+
+  .time-label {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--accent);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+  }
+
+  .time-block:nth-child(2) .time-label { color: var(--cyan); }
+  .time-block:nth-child(3) .time-label { color: var(--green); }
+  .time-block:nth-child(4) .time-label { color: var(--amber); }
+
+  .time-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+  }
+
+  .task-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.5rem;
+  }
+
+  .task-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    transition: border-color 0.2s;
+  }
+
+  .task-card:hover { border-color: var(--text-dim); }
+
+  .task-card .action {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.2rem;
+  }
+
+  .task-card .detail {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+  }
+
+  .task-card .route {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    opacity: 0.6;
+    margin-top: 0.3rem;
+  }
+
+  /* ── Weekly Grid ── */
+  .week-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 1.5rem 0;
+  }
+
+  .day-col {
+    background: var(--surface);
+    padding: 1.25rem;
+  }
+
+  .day-col .day-name {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+  }
+
+  .day-col ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .day-col li {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    padding-left: 0.75rem;
+    position: relative;
+  }
+
+  .day-col li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.5em;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--text-dim);
+  }
+
+  /* ── Comparison Table ── */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 1.5rem 0;
+  }
+
+  .compare-col {
+    background: var(--surface);
+    padding: 1.25rem;
+  }
+
+  .compare-col .col-header {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .compare-col:first-child .col-header { color: var(--purple); }
+  .compare-col:last-child .col-header { color: var(--cyan); }
+
+  .compare-col ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .compare-col li {
+    font-size: 0.75rem;
+    padding-left: 0.75rem;
+    position: relative;
+  }
+
+  .compare-col:first-child li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.5em;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--purple);
+  }
+
+  .compare-col:last-child li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.5em;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--cyan);
+  }
+
+  /* ── Stage Table ── */
+  .stage-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.8rem;
+  }
+
+  .stage-table th {
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    font-weight: 500;
+  }
+
+  .stage-table td {
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-muted);
+    vertical-align: top;
+  }
+
+  .stage-table td:first-child {
+    font-weight: 600;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.75rem;
+  }
+
+  .stage-table tr:hover td { background: var(--surface-2); }
+
+  .tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+    font-weight: 500;
+  }
+
+  .tag.auto { background: var(--purple-dim); color: var(--purple); }
+  .tag.manual { background: var(--cyan-dim); color: var(--cyan); }
+
+  /* ── Footer ── */
+  footer {
+    margin-top: 4rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.75rem;
+  }
+
+  /* ── Print ── */
+  @media print {
+    body { background: #fff; color: #111; }
+    .stage-box, .auto-step, .task-card, .day-col, .compare-col {
+      background: #fff;
+      border-color: #ddd;
+    }
+    .stage-box.won { background: #dcfce7; }
+    .stage-box.lost { background: #fee2e2; }
+    .stage-box.nurture { background: #fef3c7; }
+  }
+
+  @media (max-width: 768px) {
+    .container { padding: 1.5rem 1rem; }
+    .pipeline { flex-wrap: wrap; gap: 0.5rem; justify-content: center; }
+    .arrow { display: none; }
+    .week-grid { grid-template-columns: 1fr; }
+    .task-grid { grid-template-columns: 1fr; }
+    .auto-flow { grid-template-columns: 1fr; }
+    .auto-step::after { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>KrewPact CRM Workflows</h1>
+    <p class="subtitle">Lead lifecycle and sales rep operating rhythm for MDM Group Inc.</p>
+    <div class="meta">
+      <span>krewpact.com</span>
+      <span>v1.1</span>
+      <span>2026-03-19</span>
+    </div>
+  </header>
+
+  <!-- ════════════════════════════════════════════ -->
+  <!-- SECTION 1: LEAD LIFECYCLE                   -->
+  <!-- ════════════════════════════════════════════ -->
+  <section>
+    <h2><span class="num">01</span> Life of a Lead</h2>
+    <p>A lead enters KrewPact from manual entry, website forms, Apollo/Lusha imports, or MERX bid scrapes. It moves through a defined stage pipeline driven by rep actions and automated background processes.</p>
+
+    <h3>Stage Pipeline</h3>
+    <div class="pipeline">
+      <div class="stage-node">
+        <div class="stage-box active">New</div>
+        <div class="stage-label">No outreach yet</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="stage-node">
+        <div class="stage-box">Contacted</div>
+        <div class="stage-label">First touch made</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="stage-node">
+        <div class="stage-box">Qualified</div>
+        <div class="stage-label">Budget + timeline confirmed</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="stage-node">
+        <div class="stage-box">Proposal</div>
+        <div class="stage-label">Quote sent</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="stage-node">
+        <div class="stage-box">Negotiation</div>
+        <div class="stage-label">Terms in discussion</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="stage-node">
+        <div class="stage-box won">Won</div>
+        <div class="stage-label">Converts to Account + Opportunity</div>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:1.5rem; justify-content:center; margin: 0 0 1.5rem;">
+      <div class="stage-node">
+        <div class="stage-box nurture">Nurture</div>
+        <div class="stage-label">Parking lane &mdash; re-enters via Contacted or Qualified</div>
+      </div>
+      <div class="stage-node">
+        <div class="stage-box lost">Lost</div>
+        <div class="stage-label">Terminal &mdash; requires reason</div>
+      </div>
+    </div>
+    <p style="text-align:center; font-size:0.75rem; color:var(--text-dim); margin-top:-0.5rem;">New can skip to Qualified for high-ICP-fit leads</p>
+
+    <h3>Stage Definitions</h3>
+    <table class="stage-table">
+      <thead>
+        <tr><th>Stage</th><th>Meaning</th><th>Moved By</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>New</td><td>Just entered the system. No outreach yet.</td><td><span class="tag auto">auto</span> on creation</td></tr>
+        <tr><td>Contacted</td><td>Rep has made first contact (email, call, LinkedIn).</td><td><span class="tag manual">manual</span></td></tr>
+        <tr><td>Qualified</td><td>Confirmed budget, timeline, decision-maker access.</td><td><span class="tag manual">manual</span></td></tr>
+        <tr><td>Proposal</td><td>Estimate/quote sent. Waiting on client response.</td><td><span class="tag manual">manual</span></td></tr>
+        <tr><td>Negotiation</td><td>Active back-and-forth on pricing, scope, or terms.</td><td><span class="tag manual">manual</span></td></tr>
+        <tr><td>Nurture</td><td>Not ready now, but worth keeping warm.</td><td><span class="tag manual">manual</span></td></tr>
+        <tr><td>Won</td><td>Deal closed. Lead converts to Account + Opportunity.</td><td><span class="tag manual">manual</span> Convert action</td></tr>
+        <tr><td>Lost</td><td>Dead &mdash; no deal. Reason required.</td><td><span class="tag manual">manual</span></td></tr>
+      </tbody>
+    </table>
+
+    <h3>Automated Background Layer</h3>
+    <div class="auto-flow">
+      <div class="auto-step">
+        <span class="step-num">01</span>
+        <span class="step-title">Enrichment</span>
+        <span class="step-desc">Apollo &rarr; Clearbit &rarr; LinkedIn &rarr; Google waterfall fills company data</span>
+      </div>
+      <div class="auto-step">
+        <span class="step-num">02</span>
+        <span class="step-title">Scoring</span>
+        <span class="step-desc">Rules engine: fit + intent + engagement &rarr; score 0&ndash;100</span>
+      </div>
+      <div class="auto-step">
+        <span class="step-num">03</span>
+        <span class="step-title">Account Match</span>
+        <span class="step-desc">Compare against existing customers. &ge;80% = flagged</span>
+      </div>
+      <div class="auto-step">
+        <span class="step-num">04</span>
+        <span class="step-title">Suppression</span>
+        <span class="step-desc">Existing customers blocked from outreach sequences</span>
+      </div>
+      <div class="auto-step">
+        <span class="step-num">05</span>
+        <span class="step-title">Auto-Enroll</span>
+        <span class="step-desc">High-scoring leads enter outreach sequences</span>
+      </div>
+      <div class="auto-step">
+        <span class="step-num">06</span>
+        <span class="step-title">Sequences</span>
+        <span class="step-desc">Multi-step email/call cadence via QStash workers</span>
+      </div>
+      <div class="auto-step">
+        <span class="step-num">07</span>
+        <span class="step-title">AI Insights</span>
+        <span class="step-desc">Gemini Flash generates next-best-action suggestions</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════ -->
+  <!-- SECTION 2: OPPORTUNITY PIPELINE             -->
+  <!-- ════════════════════════════════════════════ -->
+  <section>
+    <h2><span class="num">02</span> Opportunity Pipeline</h2>
+    <p>Once a lead converts to Won, an opportunity enters its own pipeline. This is where construction sales happens &mdash; site visits, estimating, proposals, and contract negotiation.</p>
+
+    <h3>Stage Pipeline</h3>
+    <div class="pipeline">
+      <div class="stage-node">
+        <div class="stage-box active">Intake</div>
+        <div class="stage-label">Gathering requirements</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="stage-node">
+        <div class="stage-box">Site Visit</div>
+        <div class="stage-label">Scope being defined</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="stage-node">
+        <div class="stage-box">Estimating</div>
+        <div class="stage-label">Takeoff in progress</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="stage-node">
+        <div class="stage-box">Proposal</div>
+        <div class="stage-label">Formal quote sent</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="stage-node">
+        <div class="stage-box">Negotiation</div>
+        <div class="stage-label">Terms in discussion</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="stage-node">
+        <div class="stage-box won">Contracted</div>
+        <div class="stage-label">Deal signed &rarr; Project</div>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:1.5rem; justify-content:center; margin: 0 0 1.5rem;">
+      <div class="stage-node">
+        <div class="stage-box lost">Closed Lost</div>
+        <div class="stage-label">Terminal &mdash; from any stage</div>
+      </div>
+    </div>
+
+    <h3>Stage Definitions</h3>
+    <table class="stage-table">
+      <thead>
+        <tr><th>Stage</th><th>Meaning</th><th>Moved By</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Intake</td><td>Opportunity created from lead conversion. Gathering project requirements.</td><td><span class="tag auto">auto</span> on conversion</td></tr>
+        <tr><td>Site Visit</td><td>Rep/estimator visited project site. Scope being defined.</td><td><span class="tag manual">manual</span></td></tr>
+        <tr><td>Estimating</td><td>Estimate/takeoff in progress. Working with estimating team.</td><td><span class="tag manual">manual</span></td></tr>
+        <tr><td>Proposal</td><td>Formal proposal submitted to client. Awaiting response.</td><td><span class="tag manual">manual</span></td></tr>
+        <tr><td>Negotiation</td><td>Active discussion on price, scope, schedule, or terms.</td><td><span class="tag manual">manual</span></td></tr>
+        <tr><td>Contracted</td><td>Deal signed. Project creation begins.</td><td><span class="tag manual">manual</span></td></tr>
+        <tr><td>Closed Lost</td><td>Dead &mdash; reason required. Reachable from any stage.</td><td><span class="tag manual">manual</span></td></tr>
+      </tbody>
+    </table>
+
+    <h3>Lead &rarr; Opportunity Bridge</h3>
+    <div class="auto-flow" style="grid-template-columns: repeat(3, 1fr);">
+      <div class="auto-step">
+        <span class="step-num">LEAD</span>
+        <span class="step-title">Won</span>
+        <span class="step-desc">Rep marks lead as won via Convert action</span>
+      </div>
+      <div class="auto-step">
+        <span class="step-num">CONVERT</span>
+        <span class="step-title">Data Transfer</span>
+        <span class="step-desc">Name, division, source channel, estimated value carry over</span>
+      </div>
+      <div class="auto-step">
+        <span class="step-num">OPPORTUNITY</span>
+        <span class="step-title">Intake</span>
+        <span class="step-desc">New opportunity starts at intake stage</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════ -->
+  <!-- SECTION 3: SALES REP DAY                    -->
+  <!-- ════════════════════════════════════════════ -->
+  <section>
+    <h2><span class="num">03</span> Sales Rep's Day</h2>
+    <p>A rep's day flows through three phases: triage, active selling, and logging. Automated processes handle enrichment, scoring, and sequence sends in the background.</p>
+
+    <div class="timeline">
+      <div class="time-block">
+        <div class="time-label">8:00 AM &mdash; Triage</div>
+        <div class="time-title">Morning: Review & Prioritize</div>
+        <div class="task-grid">
+          <div class="task-card">
+            <div class="action">Check Dashboard</div>
+            <div class="detail">Pipeline value, conversion rate, win rate, division comparison</div>
+            <div class="route">/crm/dashboard</div>
+          </div>
+          <div class="task-card">
+            <div class="action">Review SLA Alerts</div>
+            <div class="detail">Overdue leads auto-flagged (48h new, 72h contacted, 120h qualified)</div>
+            <div class="route">dashboard alerts</div>
+          </div>
+          <div class="task-card">
+            <div class="action">Process New Leads</div>
+            <div class="detail">Review overnight enrichment, score breakdowns, AI suggestions</div>
+            <div class="route">/crm/leads</div>
+          </div>
+          <div class="task-card">
+            <div class="action">Approve Enrollments</div>
+            <div class="detail">Approve or reject auto-enrolled leads before sequences fire</div>
+            <div class="route">pending review queue</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="time-block">
+        <div class="time-label">9:30 AM &mdash; Active Selling</div>
+        <div class="time-title">Midday: Outreach & Pipeline Work</div>
+        <div class="task-grid">
+          <div class="task-card">
+            <div class="action">Outreach</div>
+            <div class="detail">Compose emails, log calls, record LinkedIn touches</div>
+            <div class="route">lead detail page</div>
+          </div>
+          <div class="task-card">
+            <div class="action">Advance Leads</div>
+            <div class="detail">Move leads through stages: contacted &rarr; qualified &rarr; proposal</div>
+            <div class="route">stage buttons</div>
+          </div>
+          <div class="task-card">
+            <div class="action">Work Pipeline</div>
+            <div class="detail">Drag opportunities between stages, update values, add notes</div>
+            <div class="route">/crm/opportunities</div>
+          </div>
+          <div class="task-card">
+            <div class="action">Create Estimates</div>
+            <div class="detail">Build quotes from templates, link to opportunities</div>
+            <div class="route">/estimates</div>
+          </div>
+          <div class="task-card">
+            <div class="action">Track Bids</div>
+            <div class="detail">Monitor MERX imports, bid deadlines, submission status</div>
+            <div class="route">/crm/bidding</div>
+          </div>
+          <div class="task-card">
+            <div class="action">Enrichment</div>
+            <div class="detail">Trigger manual enrichment for high-priority leads</div>
+            <div class="route">/crm/enrichment</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="time-block">
+        <div class="time-label">3:00 PM &mdash; Wrap-up</div>
+        <div class="time-title">End of Day: Log & Review</div>
+        <div class="task-grid">
+          <div class="task-card">
+            <div class="action">Log Activities</div>
+            <div class="detail">Record all calls, meetings, site visits</div>
+            <div class="route">entity detail pages</div>
+          </div>
+          <div class="task-card">
+            <div class="action">Check Sequences</div>
+            <div class="detail">Open rates, reply rates, bounce rates</div>
+            <div class="route">/crm/sequences</div>
+          </div>
+          <div class="task-card">
+            <div class="action">Update Notes</div>
+            <div class="detail">Add context for tomorrow's follow-ups</div>
+            <div class="route">notes panel</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════ -->
+  <!-- SECTION 4: WEEKLY RHYTHM                    -->
+  <!-- ════════════════════════════════════════════ -->
+  <section>
+    <h2><span class="num">04</span> Weekly Rhythm</h2>
+
+    <div class="week-grid">
+      <div class="day-col">
+        <div class="day-name">Monday</div>
+        <ul>
+          <li>Pipeline review</li>
+          <li>Prioritize overdue leads</li>
+          <li>Check enrichment backlog</li>
+          <li>Team standup prep</li>
+        </ul>
+      </div>
+      <div class="day-col">
+        <div class="day-name">Tuesday</div>
+        <ul>
+          <li>Heavy outreach day</li>
+          <li>Process new leads</li>
+          <li>Follow up on proposals</li>
+          <li>Site visits</li>
+        </ul>
+      </div>
+      <div class="day-col">
+        <div class="day-name">Wednesday</div>
+        <ul>
+          <li>Sequence performance check</li>
+          <li>Adjust scoring rules</li>
+          <li>Refresh email templates</li>
+          <li>Mid-week course correction</li>
+        </ul>
+      </div>
+      <div class="day-col">
+        <div class="day-name">Thursday</div>
+        <ul>
+          <li>Pipeline advancement focus</li>
+          <li>Estimate creation</li>
+          <li>Bid tracking deadlines</li>
+          <li>Negotiation follow-ups</li>
+        </ul>
+      </div>
+      <div class="day-col">
+        <div class="day-name">Friday</div>
+        <ul>
+          <li>CRM overview report</li>
+          <li>Win/loss analysis</li>
+          <li>SLA threshold review</li>
+          <li>Forecast updates</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════ -->
+  <!-- SECTION 5: AUTO VS MANUAL                   -->
+  <!-- ════════════════════════════════════════════ -->
+  <section>
+    <h2><span class="num">05</span> Automated vs Manual</h2>
+    <p>The automated layer handles enrichment, scoring, matching, and sequence sends. The rep focuses on human judgment: qualifying leads, composing custom outreach, advancing the pipeline, and closing deals.</p>
+
+    <div class="compare">
+      <div class="compare-col">
+        <div class="col-header">Automated (no rep action)</div>
+        <ul>
+          <li>Lead scoring & re-scoring</li>
+          <li>Data enrichment (Apollo waterfall)</li>
+          <li>Account matching & suppression</li>
+          <li>Sequence email sends</li>
+          <li>SLA overdue flagging</li>
+          <li>AI insight generation</li>
+          <li>Bid board imports (MERX)</li>
+          <li>Smoke test & health monitoring</li>
+        </ul>
+      </div>
+      <div class="compare-col">
+        <div class="col-header">Manual (rep must act)</div>
+        <ul>
+          <li>Stage transitions</li>
+          <li>Custom email composition</li>
+          <li>Activity logging (calls, meetings)</li>
+          <li>Enrollment approval/rejection</li>
+          <li>Pipeline stage advancement</li>
+          <li>Estimate creation</li>
+          <li>Lead conversion (Won)</li>
+          <li>Lost reason documentation</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════ -->
+  <!-- SECTION 6: BACKGROUND AUTOMATIONS           -->
+  <!-- ════════════════════════════════════════════ -->
+  <section>
+    <h2><span class="num">06</span> Background Automations</h2>
+    <p>14 cron jobs run in the background. All times ET.</p>
+
+    <h3>Sales &amp; CRM</h3>
+    <table class="stage-table">
+      <thead>
+        <tr><th>Job</th><th>Schedule</th><th>What It Does</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Scoring</td><td>Every 4 hours</td><td>Re-evaluates fit/intent/engagement scores for all leads</td></tr>
+        <tr><td>Sequence Processor</td><td>Every 15 min</td><td>Fires next step in active outreach sequences</td></tr>
+        <tr><td>Enrichment</td><td>Mon/Wed/Fri 11 AM</td><td>Apollo &rarr; Clearbit &rarr; LinkedIn &rarr; Google waterfall</td></tr>
+        <tr><td>Apollo Pump</td><td>Monday 10 AM</td><td>Imports leads from Apollo saved searches</td></tr>
+        <tr><td>ICP Refresh</td><td>Monday 11 AM</td><td>Regenerates Ideal Customer Profile from won/lost data</td></tr>
+        <tr><td>SLA Alerts</td><td>Weekdays 12 PM</td><td>Flags leads exceeding stage SLA thresholds</td></tr>
+        <tr><td>Follow-ups</td><td>Weekdays 1 PM</td><td>Notifies reps of overdue follow-ups and tasks</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Operations &amp; Sync</h3>
+    <table class="stage-table">
+      <thead>
+        <tr><th>Job</th><th>Schedule</th><th>What It Does</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>ERP Sync</td><td>Every 30 min</td><td>Syncs customers, invoices, projects between Supabase &amp; ERPNext</td></tr>
+        <tr><td>Portal Reminders</td><td>Weekdays 1 PM</td><td>Sends reminders for pending portal actions</td></tr>
+        <tr><td>Smoke Test</td><td>Hourly</td><td>Tests all external service connections</td></tr>
+        <tr><td>Watchdog</td><td>Hourly</td><td>Monitors smoke test results, alerts on consecutive failures</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Intelligence &amp; Reporting</h3>
+    <table class="stage-table">
+      <thead>
+        <tr><th>Job</th><th>Schedule</th><th>What It Does</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Daily Digest</td><td>Weekdays 11 AM</td><td>Pipeline summary email for sales team</td></tr>
+        <tr><td>Generate Insights</td><td>Daily 3 AM</td><td>AI-generated per-lead next-best-action suggestions</td></tr>
+        <tr><td>Summarize</td><td>Weekdays 10 PM</td><td>End-of-day activity summaries and highlights</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer>
+    KrewPact &mdash; MDM Group Inc. &mdash; Internal Reference &mdash; 2026-03-19
+  </footer>
+
+</div>
+</body>
+</html>
