@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { apiFetch } from '@/lib/api-client';
+import { apiFetch, apiFetchList } from '@/lib/api-client';
 
 export interface ProjectMember {
   id: string;
@@ -24,7 +24,7 @@ export interface ProjectMember {
 export function useProjectMembers(projectId: string) {
   return useQuery({
     queryKey: ['project-members', projectId],
-    queryFn: () => apiFetch<ProjectMember[]>(`/api/projects/${projectId}/members`),
+    queryFn: () => apiFetchList<ProjectMember>(`/api/projects/${projectId}/members`),
     enabled: !!projectId,
   });
 }

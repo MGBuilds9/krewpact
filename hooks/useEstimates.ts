@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { apiFetch } from '@/lib/api-client';
+import { apiFetch, apiFetchList } from '@/lib/api-client';
 import { queryKeys } from '@/lib/query-keys';
 
 // --- Types ---
@@ -69,7 +69,7 @@ export function useEstimates(filters?: EstimateFilters) {
   return useQuery({
     queryKey: queryKeys.estimates.list(filters ?? {}),
     queryFn: () =>
-      apiFetch<Estimate[]>('/api/estimates', {
+      apiFetchList<Estimate>('/api/estimates', {
         params: {
           division_id: filters?.divisionId,
           status: filters?.status,
@@ -129,7 +129,7 @@ export function useDeleteEstimate() {
 export function useEstimateLines(estimateId: string) {
   return useQuery({
     queryKey: queryKeys.estimates.lines(estimateId),
-    queryFn: () => apiFetch<EstimateLine[]>(`/api/estimates/${estimateId}/lines`),
+    queryFn: () => apiFetchList<EstimateLine>(`/api/estimates/${estimateId}/lines`),
     enabled: !!estimateId,
     staleTime: 30_000,
   });
@@ -182,7 +182,7 @@ export function useDeleteEstimateLine() {
 export function useEstimateVersions(estimateId: string) {
   return useQuery({
     queryKey: queryKeys.estimates.versions(estimateId),
-    queryFn: () => apiFetch<EstimateVersion[]>(`/api/estimates/${estimateId}/versions`),
+    queryFn: () => apiFetchList<EstimateVersion>(`/api/estimates/${estimateId}/versions`),
     enabled: !!estimateId,
     staleTime: 30_000,
   });

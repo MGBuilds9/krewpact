@@ -70,3 +70,22 @@ export async function apiFetch<T = unknown>(path: string, options: FetchOptions 
 
   return response.json() as Promise<T>;
 }
+
+/**
+ * Shape returned by all API list routes that use paginatedResponse().
+ */
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  hasMore: boolean;
+}
+
+/**
+ * Fetch a paginated list endpoint and unwrap the data array.
+ * Use for any API route that returns paginatedResponse().
+ * For single-object responses (detail, create, update), use apiFetch<T>().
+ */
+export async function apiFetchList<T>(path: string, options?: FetchOptions): Promise<T[]> {
+  const result = await apiFetch<PaginatedResponse<T>>(path, options);
+  return result.data;
+}

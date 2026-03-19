@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { apiFetch } from '@/lib/api-client';
+import { apiFetch, apiFetchList } from '@/lib/api-client';
 
 export interface Expense {
   id: string;
@@ -37,7 +37,7 @@ export function useExpenses(options?: { status?: string; projectId?: string }) {
   return useQuery({
     queryKey: ['expenses', options?.status, options?.projectId],
     queryFn: () =>
-      apiFetch<Expense[]>('/api/expenses', {
+      apiFetchList<Expense>('/api/expenses', {
         params: {
           status: options?.status,
           project_id: options?.projectId,

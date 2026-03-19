@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { apiFetch } from '@/lib/api-client';
+import { apiFetch, apiFetchList } from '@/lib/api-client';
 
 import type { EstimateAllowance, EstimateAlternate } from './types';
 
@@ -11,7 +11,7 @@ import type { EstimateAllowance, EstimateAlternate } from './types';
 export function useEstimateAlternates(estimateId: string) {
   return useQuery({
     queryKey: ['estimate-alternates', estimateId],
-    queryFn: () => apiFetch<EstimateAlternate[]>(`/api/estimates/${estimateId}/alternates`),
+    queryFn: () => apiFetchList<EstimateAlternate>(`/api/estimates/${estimateId}/alternates`),
     enabled: !!estimateId,
   });
 }
@@ -64,7 +64,7 @@ export function useDeleteEstimateAlternate() {
 export function useEstimateAllowances(estimateId: string) {
   return useQuery({
     queryKey: ['estimate-allowances', estimateId],
-    queryFn: () => apiFetch<EstimateAllowance[]>(`/api/estimates/${estimateId}/allowances`),
+    queryFn: () => apiFetchList<EstimateAllowance>(`/api/estimates/${estimateId}/allowances`),
     enabled: !!estimateId,
   });
 }

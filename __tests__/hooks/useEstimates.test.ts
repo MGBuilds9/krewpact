@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/api-client', () => ({
   apiFetch: vi.fn(),
+  apiFetchList: vi.fn(),
   ApiError: class ApiError extends Error {
     status: number;
     data?: unknown;
@@ -27,9 +28,10 @@ import {
   useEstimates,
   useEstimateVersions,
 } from '@/hooks/useEstimates';
-import { apiFetch } from '@/lib/api-client';
+import { apiFetch, apiFetchList } from '@/lib/api-client';
 
 const mockApiFetch = apiFetch as ReturnType<typeof vi.fn>;
+const mockApiFetchList = apiFetchList as ReturnType<typeof vi.fn>;
 
 function createWrapper() {
   const queryClient = new QueryClient({
@@ -50,27 +52,27 @@ describe('useEstimates hooks', () => {
 
   describe('useEstimates', () => {
     it('calls /api/estimates with status filter', async () => {
-      mockApiFetch.mockResolvedValue([]);
+      mockApiFetchList.mockResolvedValue([]);
 
       const { result } = renderHook(() => useEstimates({ status: 'draft' }), {
         wrapper: createWrapper(),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
-      expect(mockApiFetch).toHaveBeenCalledWith('/api/estimates', {
+      expect(mockApiFetchList).toHaveBeenCalledWith('/api/estimates', {
         params: { status: 'draft' },
       });
     });
 
     it('calls /api/estimates with division_id filter', async () => {
-      mockApiFetch.mockResolvedValue([]);
+      mockApiFetchList.mockResolvedValue([]);
 
       const { result } = renderHook(() => useEstimates({ divisionId: 'div-1' }), {
         wrapper: createWrapper(),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
-      expect(mockApiFetch).toHaveBeenCalledWith('/api/estimates', {
+      expect(mockApiFetchList).toHaveBeenCalledWith('/api/estimates', {
         params: { division_id: 'div-1' },
       });
     });
@@ -90,12 +92,12 @@ describe('useEstimates hooks', () => {
 
   describe('useEstimateLines', () => {
     it('calls /api/estimates/:id/lines', async () => {
-      mockApiFetch.mockResolvedValue([]);
+      mockApiFetchList.mockResolvedValue([]);
 
       const { result } = renderHook(() => useEstimateLines('est-1'), { wrapper: createWrapper() });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
-      expect(mockApiFetch).toHaveBeenCalledWith('/api/estimates/est-1/lines');
+      expect(mockApiFetchList).toHaveBeenCalledWith('/api/estimates/est-1/lines');
     });
   });
 
@@ -118,14 +120,14 @@ describe('useEstimates hooks', () => {
 
   describe('useEstimateVersions', () => {
     it('calls /api/estimates/:id/versions', async () => {
-      mockApiFetch.mockResolvedValue([]);
+      mockApiFetchList.mockResolvedValue([]);
 
       const { result } = renderHook(() => useEstimateVersions('est-1'), {
         wrapper: createWrapper(),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
-      expect(mockApiFetch).toHaveBeenCalledWith('/api/estimates/est-1/versions');
+      expect(mockApiFetchList).toHaveBeenCalledWith('/api/estimates/est-1/versions');
     });
   });
 

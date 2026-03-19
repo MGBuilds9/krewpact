@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { apiFetch } from '@/lib/api-client';
+import { apiFetch, apiFetchList } from '@/lib/api-client';
 
 export interface Division {
   id: string;
@@ -147,7 +147,7 @@ export function useRoles() {
 export function useRolePermissions(roleId: string) {
   return useQuery({
     queryKey: ['role-permissions', roleId],
-    queryFn: () => apiFetch<Permission[]>(`/api/org/roles/${roleId}/permissions`),
+    queryFn: () => apiFetchList<Permission>(`/api/org/roles/${roleId}/permissions`),
     enabled: !!roleId,
     staleTime: 30_000,
   });

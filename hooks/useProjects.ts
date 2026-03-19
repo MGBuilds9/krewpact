@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { apiFetch } from '@/lib/api-client';
+import { apiFetch, apiFetchList } from '@/lib/api-client';
 import { queryKeys } from '@/lib/query-keys';
 
 export interface Project {
@@ -38,7 +38,7 @@ export function useProjects(options?: UseProjectsOptions) {
   return useQuery({
     queryKey: queryKeys.projects.list({ divisionId, limit }),
     queryFn: () =>
-      apiFetch<Project[]>('/api/projects', {
+      apiFetchList<Project>('/api/projects', {
         params: {
           division_id: divisionId,
           limit,

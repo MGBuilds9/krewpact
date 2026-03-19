@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { apiFetch } from '@/lib/api-client';
+import { apiFetch, apiFetchList } from '@/lib/api-client';
 
 export interface DailyLog {
   id: string;
@@ -39,7 +39,7 @@ export function useReports(options?: { projectId?: string; submittedBy?: string 
   return useQuery({
     queryKey: ['reports', options?.projectId, options?.submittedBy],
     queryFn: () =>
-      apiFetch<DailyLog[]>('/api/reports', {
+      apiFetchList<DailyLog>('/api/reports', {
         params: {
           project_id: options?.projectId,
           submitted_by: options?.submittedBy,

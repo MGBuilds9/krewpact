@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 
-import { apiFetch } from '@/lib/api-client';
+import { apiFetchList } from '@/lib/api-client';
 
 export interface ProjectExpense {
   id: string;
@@ -18,7 +18,7 @@ export interface ProjectExpense {
 export function useProjectExpenses(projectId: string) {
   return useQuery({
     queryKey: ['project-expenses', projectId],
-    queryFn: () => apiFetch<ProjectExpense[]>(`/api/projects/${projectId}/expenses`),
+    queryFn: () => apiFetchList<ProjectExpense>(`/api/projects/${projectId}/expenses`),
     enabled: !!projectId,
   });
 }

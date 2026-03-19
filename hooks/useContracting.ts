@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { apiFetch } from '@/lib/api-client';
+import { apiFetch, apiFetchList } from '@/lib/api-client';
 
 import type { PaginatedResponse } from './useEstimating';
 
@@ -148,7 +148,7 @@ export function useDeleteProposal() {
 export function useProposalEvents(proposalId: string) {
   return useQuery({
     queryKey: ['proposal-events', proposalId],
-    queryFn: () => apiFetch<ProposalEvent[]>(`/api/proposals/${proposalId}/events`),
+    queryFn: () => apiFetchList<ProposalEvent>(`/api/proposals/${proposalId}/events`),
     enabled: !!proposalId,
   });
 }
@@ -260,7 +260,7 @@ export function useUpdateESignEnvelope() {
 export function useESignDocuments(envelopeId: string) {
   return useQuery({
     queryKey: ['esign-documents', envelopeId],
-    queryFn: () => apiFetch<ESignDocument[]>(`/api/esign/${envelopeId}/documents`),
+    queryFn: () => apiFetchList<ESignDocument>(`/api/esign/${envelopeId}/documents`),
     enabled: !!envelopeId,
   });
 }

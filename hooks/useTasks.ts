@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { apiFetch } from '@/lib/api-client';
+import { apiFetch, apiFetchList } from '@/lib/api-client';
 import { queryKeys } from '@/lib/query-keys';
 
 export interface Task {
@@ -51,7 +51,7 @@ export function useTasks(projectId?: string) {
   return useQuery({
     queryKey: queryKeys.tasks.list({ projectId }),
     queryFn: () =>
-      apiFetch<Task[]>('/api/tasks', {
+      apiFetchList<Task>('/api/tasks', {
         params: projectId ? { project_id: projectId } : undefined,
       }),
     staleTime: 30_000,

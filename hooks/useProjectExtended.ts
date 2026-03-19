@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { apiFetch } from '@/lib/api-client';
+import { apiFetch, apiFetchList } from '@/lib/api-client';
 
 import type { PaginatedResponse } from './useEstimating';
 
@@ -64,7 +64,7 @@ export interface DailyLog {
 export function useTaskDependencies(taskId: string) {
   return useQuery({
     queryKey: ['task-dependencies', taskId],
-    queryFn: () => apiFetch<TaskDependency[]>(`/api/tasks/${taskId}/dependencies`),
+    queryFn: () => apiFetchList<TaskDependency>(`/api/tasks/${taskId}/dependencies`),
     enabled: !!taskId,
     staleTime: 30_000,
     placeholderData: (prev) => prev,

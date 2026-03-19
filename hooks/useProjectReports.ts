@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 
-import { apiFetch } from '@/lib/api-client';
+import { apiFetchList } from '@/lib/api-client';
 
 export interface ProjectDailyLog {
   id: string;
@@ -19,7 +19,7 @@ export interface ProjectDailyLog {
 export function useProjectReports(projectId: string) {
   return useQuery({
     queryKey: ['project-reports', projectId],
-    queryFn: () => apiFetch<ProjectDailyLog[]>(`/api/projects/${projectId}/reports`),
+    queryFn: () => apiFetchList<ProjectDailyLog>(`/api/projects/${projectId}/reports`),
     enabled: !!projectId,
   });
 }

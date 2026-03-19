@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { apiFetch } from '@/lib/api-client';
+import { apiFetch, apiFetchList } from '@/lib/api-client';
 import { queryKeys } from '@/lib/query-keys';
 
 export interface ScoringRule {
@@ -68,7 +68,7 @@ export function useScoringRules(divisionId?: string) {
   return useQuery({
     queryKey: ['scoring-rules', divisionId],
     queryFn: () =>
-      apiFetch<ScoringRule[]>('/api/crm/scoring-rules', {
+      apiFetchList<ScoringRule>('/api/crm/scoring-rules', {
         params: { division_id: divisionId },
       }),
   });
@@ -143,7 +143,7 @@ export function useRecalculateLeadScore() {
 export function useLeadAccountMatches(leadId: string) {
   return useQuery({
     queryKey: ['lead-account-matches', leadId],
-    queryFn: () => apiFetch<LeadAccountMatch[]>(`/api/crm/leads/${leadId}/matches`),
+    queryFn: () => apiFetchList<LeadAccountMatch>(`/api/crm/leads/${leadId}/matches`),
     enabled: !!leadId,
     staleTime: 60_000,
   });

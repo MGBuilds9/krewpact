@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { apiFetch } from '@/lib/api-client';
+import { apiFetch, apiFetchList } from '@/lib/api-client';
 import { queryKeys } from '@/lib/query-keys';
 
 export interface Sequence {
@@ -69,20 +69,15 @@ interface SequenceFilters {
 export function useSequences(filters?: SequenceFilters) {
   return useQuery({
     queryKey: ['sequences', filters],
-    queryFn: async () => {
-      const res = await apiFetch<{ data: Sequence[]; total: number; hasMore: boolean }>(
-        '/api/crm/sequences',
-        {
-          params: {
-            division_id: filters?.divisionId,
-            is_active: filters?.isActive,
-            limit: filters?.limit,
-            offset: filters?.offset,
-          },
+    queryFn: () =>
+      apiFetchList<Sequence>('/api/crm/sequences', {
+        params: {
+          division_id: filters?.divisionId,
+          is_active: filters?.isActive,
+          limit: filters?.limit,
+          offset: filters?.offset,
         },
-      );
-      return res.data;
-    },
+      }),
   });
 }
 
@@ -130,7 +125,7 @@ export function useDeleteSequence() {
 export function useSequenceSteps(sequenceId: string) {
   return useQuery({
     queryKey: ['sequence-steps', sequenceId],
-    queryFn: () => apiFetch<SequenceStep[]>(`/api/crm/sequences/${sequenceId}/steps`),
+    queryFn: () => apiFetchList<SequenceStep>(`/api/crm/sequences/${sequenceId}/steps`),
     enabled: !!sequenceId,
   });
 }
@@ -188,7 +183,7 @@ export function useSequenceEnrollments(sequenceId: string, status?: string) {
   return useQuery({
     queryKey: ['sequence-enrollments', sequenceId, status],
     queryFn: () =>
-      apiFetch<SequenceEnrollment[]>(`/api/crm/sequences/${sequenceId}/enrollments`, {
+      apiFetchList<SequenceEnrollment>(`/api/crm/sequences/${sequenceId}/enrollments`, {
         params: { status },
       }),
     enabled: !!sequenceId,
@@ -237,7 +232,7 @@ export function useOutreachHistory(leadId: string) {
   return useQuery({
     queryKey: ['outreach', leadId],
     queryFn: () =>
-      apiFetch<OutreachEvent[]>('/api/crm/outreach', {
+      apiFetchList<OutreachEvent>('/api/crm/outreach', {
         params: { lead_id: leadId },
       }),
     enabled: !!leadId,

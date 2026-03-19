@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 
-import { apiFetch } from '@/lib/api-client';
+import { apiFetchList } from '@/lib/api-client';
 
 export interface User {
   id: string;
@@ -16,7 +16,7 @@ export interface User {
 export function useUsers() {
   return useQuery({
     queryKey: ['users'],
-    queryFn: () => apiFetch<User[]>('/api/users'),
+    queryFn: () => apiFetchList<User>('/api/users'),
     staleTime: 1000 * 60 * 10, // 10 minutes
   });
 }

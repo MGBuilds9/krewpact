@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { apiFetch } from '@/lib/api-client';
+import { apiFetch, apiFetchList } from '@/lib/api-client';
 
 import type { Assembly, AssemblyFilters, AssemblyItem, PaginatedResponse } from './types';
 
@@ -68,7 +68,7 @@ export function useDeleteAssembly() {
 export function useAssemblyItems(assemblyId: string) {
   return useQuery({
     queryKey: ['assembly-items', assemblyId],
-    queryFn: () => apiFetch<AssemblyItem[]>(`/api/assemblies/${assemblyId}/items`),
+    queryFn: () => apiFetchList<AssemblyItem>(`/api/assemblies/${assemblyId}/items`),
     enabled: !!assemblyId,
   });
 }

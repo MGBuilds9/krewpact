@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 
-import { apiFetch } from '@/lib/api-client';
+import { apiFetchList } from '@/lib/api-client';
 
 export interface TeamMember {
   id: string;
@@ -19,7 +19,7 @@ export function useTeamMembers(search?: string) {
   return useQuery({
     queryKey: ['team', search],
     queryFn: () =>
-      apiFetch<TeamMember[]>('/api/team', {
+      apiFetchList<TeamMember>('/api/team', {
         params: search ? { search } : undefined,
       }),
   });

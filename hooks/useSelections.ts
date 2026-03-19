@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { apiFetch } from '@/lib/api-client';
+import { apiFetch, apiFetchList } from '@/lib/api-client';
 
 export interface SelectionSheet {
   id: string;
@@ -104,7 +104,7 @@ export function useSelectionOptions(projectId: string, sheetId: string) {
   return useQuery({
     queryKey: ['selection-options', projectId, sheetId],
     queryFn: () =>
-      apiFetch<SelectionOption[]>(`/api/projects/${projectId}/selections/${sheetId}/options`),
+      apiFetchList<SelectionOption>(`/api/projects/${projectId}/selections/${sheetId}/options`),
     enabled: !!projectId && !!sheetId,
     staleTime: 30_000,
   });
@@ -128,7 +128,7 @@ export function useSelectionChoices(projectId: string, sheetId: string) {
   return useQuery({
     queryKey: ['selection-choices', projectId, sheetId],
     queryFn: () =>
-      apiFetch<SelectionChoice[]>(`/api/projects/${projectId}/selections/${sheetId}/choices`),
+      apiFetchList<SelectionChoice>(`/api/projects/${projectId}/selections/${sheetId}/choices`),
     enabled: !!projectId && !!sheetId,
     staleTime: 30_000,
   });
