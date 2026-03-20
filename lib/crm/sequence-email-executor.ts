@@ -41,7 +41,9 @@ async function resolveEmailContent(
       first_name: (contact.first_name as string) ?? '',
       last_name: (contact.last_name as string) ?? '',
       company_name: (lead.company_name as string) ?? '',
-      full_name: (contact.full_name as string) ?? '',
+      full_name: [contact.first_name, contact.last_name].filter(Boolean).join(' ') || '',
+      city: (lead.city as string) ?? '',
+      province: (lead.province as string) ?? '',
     },
     outreachEventId,
   );

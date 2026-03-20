@@ -152,7 +152,7 @@ async function maybeAutoEnroll(
     nextAt.setDate(nextAt.getDate() + (firstStep.delay_days ?? 0));
     nextAt.setHours(nextAt.getHours() + (firstStep.delay_hours ?? 0));
 
-    const enrollmentStatus = isInbound ? 'active' : 'pending_review';
+    const enrollmentStatus = 'pending_review';
 
     const { error: enrollError } = await supabase.from('sequence_enrollments').insert({
       sequence_id: sequence.id,
