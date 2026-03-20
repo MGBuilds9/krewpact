@@ -1,8 +1,10 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, CheckCircle2, Clock, ListTodo } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
+import TaskDispositionButtons from '@/components/CRM/TaskDispositionButtons';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -67,7 +69,15 @@ const urgencyBadge: Record<string, string> = {
   none: 'bg-gray-50 text-gray-700 border-gray-200',
 };
 
-function TaskItem({ task, onComplete }: { task: Activity; onComplete: (id: string) => void }) {
+function TaskItem({
+  task,
+  onComplete,
+  onDisposition,
+}: {
+  task: Activity;
+  onComplete: (id: string) => void;
+  onDisposition: () => void;
+}) {
   const urgency = getTaskUrgency(task.due_at);
 
   return (
@@ -109,6 +119,9 @@ function TaskItem({ task, onComplete }: { task: Activity; onComplete: (id: strin
             </Badge>
           )}
         </div>
+        {task.lead_id && (
+          <TaskDispositionButtons activityId={task.id} onDisposition={onDisposition} />
+        )}
       </div>
       {task.due_at && (
         <Badge variant="outline" className={cn('text-xs shrink-0', urgencyBadge[urgency])}>
@@ -116,6 +129,34 @@ function TaskItem({ task, onComplete }: { task: Activity; onComplete: (id: strin
           {formatDueDate(task.due_at)}
         </Badge>
       )}
+    </div>
+  );
+}
+
+function TaskFilterBar({
+  filter,
+  onFilterChange,
+}: {
+  filter: Filter;
+  onFilterChange: (f: Filter) => void;
+}) {
+  return (
+    <div className="flex gap-1 flex-wrap">
+      {FILTER_OPTIONS.map((opt) => {
+        const Icon = opt.icon;
+        return (
+          <Button
+            key={opt.value}
+            variant={filter === opt.value ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => onFilterChange(opt.value)}
+            className="gap-1.5"
+          >
+            <Icon className="h-3.5 w-3.5" />
+            {opt.label}
+          </Button>
+        );
+      })}
     </div>
   );
 }
@@ -130,11 +171,13 @@ function TaskListContent({
   isLoading,
   filter,
   onComplete,
+  onDisposition,
 }: {
   tasks: Activity[];
   isLoading: boolean;
   filter: Filter;
   onComplete: (id: string) => void;
+  onDisposition: () => void;
 }) {
   if (isLoading) {
     return (
@@ -157,7 +200,7 @@ function TaskListContent({
   return (
     <>
       {tasks.map((task) => (
-        <TaskItem key={task.id} task={task} onComplete={onComplete} />
+        <TaskItem key={task.id} task={task} onComplete={onComplete} onDisposition={onDisposition} />
       ))}
     </>
   );
@@ -167,6 +210,13 @@ export default function CRMTasksPage() {
   const [filter, setFilter] = useState<Filter>('all');
   const [entityType, setEntityType] = useState<string>('all');
   const completeTask = useCompleteTask();
+  const queryClient = useQueryClient();
+
+  const handleDisposition = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['my-tasks'] });
+    queryClient.invalidateQueries({ queryKey: ['overdue-tasks'] });
+    queryClient.invalidateQueries({ queryKey: ['activities'] });
+  }, [queryClient]);
 
   const { data, isLoading } = useMyTasks({
     filter,
@@ -206,23 +256,7 @@ export default function CRMTasksPage() {
             </Select>
           </div>
         </div>
-        <div className="flex gap-1 flex-wrap">
-          {FILTER_OPTIONS.map((opt) => {
-            const Icon = opt.icon;
-            return (
-              <Button
-                key={opt.value}
-                variant={filter === opt.value ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setFilter(opt.value)}
-                className="gap-1.5"
-              >
-                <Icon className="h-3.5 w-3.5" />
-                {opt.label}
-              </Button>
-            );
-          })}
-        </div>
+        <TaskFilterBar filter={filter} onFilterChange={setFilter} />
         <Card>
           <CardHeader className="pb-0">
             <CardTitle className="sr-only">Task list</CardTitle>
@@ -233,6 +267,7 @@ export default function CRMTasksPage() {
               isLoading={isLoading}
               filter={filter}
               onComplete={(id) => completeTask.mutate({ id })}
+              onDisposition={handleDisposition}
             />
           </CardContent>
         </Card>
