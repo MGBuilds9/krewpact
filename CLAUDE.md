@@ -348,6 +348,12 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
+### Mar 20, 2026 — Enrollment Approval Gate + Email Template Cleanup
+
+- **Changes:** All sequence enrollments now require `pending_review` approval (inbound leads no longer bypass). Rewrote Initial Outreach and Follow-Up email templates: removed `{{city}}` references, fabricated claims ("active projects in your area"), and personal name signatures — company identity only. Fixed variable resolver to compute `full_name` from first+last and added `city`/`province` vars. Built enrollment approvals UI (CRM Settings → Enrollment Approvals) with approve/reject buttons using existing API endpoints. Updated DB templates via Supabase SQL.
+- **Tests:** 4,029/4,029 passing (356 files). 0 type errors. Build clean.
+- **Next steps:** E2E verification of full loop (score → enroll → approve → send). Estimate builder if CRM automation is stable. Week 7+ contracting features (proposals, BoldSign e-sign) after estimating.
+
 ### Mar 19, 2026 — Header & Dashboard UI Polish
 
 - **Changes:** Collapsed nav overflow into "More" dropdown (MAX_VISIBLE=5 inline, rest in DropdownMenu). Removed header horizontal scroll, "Online" badge, and inline user name/role block. Replaced MoreHorizontal icon with Search for command palette. Dashboard: replaced rainbow gradient quick-action buttons with clean muted cards; tightened welcome card (single row, no decorative blur).
