@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 
-import { dbError, errorResponse, UNAUTHORIZED } from '@/lib/api/errors';
+import { errorResponse, UNAUTHORIZED } from '@/lib/api/errors';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 import { isFeatureEnabled } from '@/lib/feature-flags';
 import { confirmGoodsReceipt } from '@/lib/inventory/goods-receipts';
