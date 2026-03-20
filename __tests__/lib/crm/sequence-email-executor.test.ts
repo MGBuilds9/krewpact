@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { type EmailStepParams,executeEmailStep } from '@/lib/crm/sequence-email-executor';
+import { type EmailStepParams, executeEmailStep } from '@/lib/crm/sequence-email-executor';
 
 describe('executeEmailStep', () => {
   beforeEach(() => {
