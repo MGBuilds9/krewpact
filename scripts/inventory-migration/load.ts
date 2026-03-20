@@ -213,18 +213,32 @@ async function run(): Promise<void> {
   // 1. Categories (no FK dependencies)
   console.log('Step 1/4: inventory_item_categories');
   const categories = loadJSON<TransformedCategory>('categories.json');
-  results.push(await batchInsert(supabase, 'inventory_item_categories', categories));
+  results.push(
+    await batchInsert(
+      supabase,
+      'inventory_item_categories',
+      categories as unknown as Record<string, unknown>[],
+    ),
+  );
 
   // 2. Items (depends on categories)
   console.log('\nStep 2/4: inventory_items');
   const items = loadJSON<TransformedItem>('items.json');
-  results.push(await batchInsert(supabase, 'inventory_items', items));
+  results.push(
+    await batchInsert(supabase, 'inventory_items', items as unknown as Record<string, unknown>[]),
+  );
 
   // 3. Serials (depends on items)
   console.log('\nStep 3/4: inventory_serials');
   const serials = loadJSON<TransformedSerial>('serials.json');
   if (serials.length > 0) {
-    results.push(await batchInsert(supabase, 'inventory_serials', serials));
+    results.push(
+      await batchInsert(
+        supabase,
+        'inventory_serials',
+        serials as unknown as Record<string, unknown>[],
+      ),
+    );
   } else {
     console.log('  No serial records to insert.');
     results.push({ table: 'inventory_serials', attempted: 0, inserted: 0, failed: 0, errors: [] });
@@ -234,7 +248,13 @@ async function run(): Promise<void> {
   console.log('\nStep 4/4: inventory_ledger (initial_stock)');
   const ledger = loadJSON<TransformedLedgerEntry>('initial_stock.json');
   if (ledger.length > 0) {
-    results.push(await batchInsert(supabase, 'inventory_ledger', ledger));
+    results.push(
+      await batchInsert(
+        supabase,
+        'inventory_ledger',
+        ledger as unknown as Record<string, unknown>[],
+      ),
+    );
   } else {
     console.log('  No initial stock entries to insert.');
     results.push({ table: 'inventory_ledger', attempted: 0, inserted: 0, failed: 0, errors: [] });

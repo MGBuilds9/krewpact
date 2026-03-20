@@ -324,18 +324,13 @@ describe('confirmGoodsReceipt', () => {
 
     // Verify the PO line update call
     // The update happens on from('inventory_po_lines').update({ qty_received: 5 })
-    const poLineUpdateCall = mock.from.mock.results.find(
-      (
-        _result: { value: Record<string, { mock: { calls: Array<Array<unknown>> } }> },
-        idx: number,
-      ) => {
-        const call = mock.from.mock.calls[idx];
-        return (
-          call[0] === 'inventory_po_lines' &&
-          mock.from.mock.results[idx].value.update?.mock?.calls?.length > 0
-        );
-      },
-    );
+    const poLineUpdateCall = mock.from.mock.results.find((_result: unknown, idx: number) => {
+      const call = mock.from.mock.calls[idx];
+      return (
+        call[0] === 'inventory_po_lines' &&
+        mock.from.mock.results[idx].value.update?.mock?.calls?.length > 0
+      );
+    });
     expect(poLineUpdateCall).toBeDefined();
   });
 
@@ -361,20 +356,15 @@ describe('confirmGoodsReceipt', () => {
     await confirmGoodsReceipt(mock.client, UUID.gr1, UUID.user1);
 
     // Find the PO status update call
-    const poStatusCall = mock.from.mock.results.find(
-      (
-        _result: { value: Record<string, { mock: { calls: Array<Array<unknown>> } }> },
-        idx: number,
-      ) => {
-        const call = mock.from.mock.calls[idx];
-        if (call[0] !== 'inventory_purchase_orders') return false;
-        const builder = mock.from.mock.results[idx].value;
-        const updateCalls = builder.update?.mock?.calls;
-        return updateCalls?.some(
-          (c: Array<Record<string, unknown>>) => c[0]?.status === 'partially_received',
-        );
-      },
-    );
+    const poStatusCall = mock.from.mock.results.find((_result: unknown, idx: number) => {
+      const call = mock.from.mock.calls[idx];
+      if (call[0] !== 'inventory_purchase_orders') return false;
+      const builder = mock.from.mock.results[idx].value;
+      const updateCalls = builder.update?.mock?.calls;
+      return updateCalls?.some(
+        (c: Array<Record<string, unknown>>) => c[0]?.status === 'partially_received',
+      );
+    });
     expect(poStatusCall).toBeDefined();
   });
 
@@ -399,20 +389,15 @@ describe('confirmGoodsReceipt', () => {
 
     await confirmGoodsReceipt(mock.client, UUID.gr1, UUID.user1);
 
-    const poStatusCall = mock.from.mock.results.find(
-      (
-        _result: { value: Record<string, { mock: { calls: Array<Array<unknown>> } }> },
-        idx: number,
-      ) => {
-        const call = mock.from.mock.calls[idx];
-        if (call[0] !== 'inventory_purchase_orders') return false;
-        const builder = mock.from.mock.results[idx].value;
-        const updateCalls = builder.update?.mock?.calls;
-        return updateCalls?.some(
-          (c: Array<Record<string, unknown>>) => c[0]?.status === 'fully_received',
-        );
-      },
-    );
+    const poStatusCall = mock.from.mock.results.find((_result: unknown, idx: number) => {
+      const call = mock.from.mock.calls[idx];
+      if (call[0] !== 'inventory_purchase_orders') return false;
+      const builder = mock.from.mock.results[idx].value;
+      const updateCalls = builder.update?.mock?.calls;
+      return updateCalls?.some(
+        (c: Array<Record<string, unknown>>) => c[0]?.status === 'fully_received',
+      );
+    });
     expect(poStatusCall).toBeDefined();
   });
 

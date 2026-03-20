@@ -176,7 +176,7 @@ export async function listPurchaseOrders(
   let query = supabase.from('inventory_purchase_orders').select('*', { count: 'exact' });
 
   if (filters.divisionId) query = query.eq('division_id', filters.divisionId);
-  if (filters.status) query = query.eq('status', filters.status);
+  if (filters.status) query = query.eq('status', filters.status as PORow['status']);
   if (filters.supplierId) query = query.eq('supplier_id', filters.supplierId);
   if (filters.search) query = query.ilike('po_number', `%${filters.search}%`);
 

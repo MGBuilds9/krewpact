@@ -1,5 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import {
   dbError,
@@ -14,11 +15,18 @@ import { isFeatureEnabled } from '@/lib/feature-flags';
 import { getLocationWithSpots, updateLocation } from '@/lib/inventory/locations';
 import { logger } from '@/lib/logger';
 import { createUserClientSafe } from '@/lib/supabase/server';
-import { createLocationSchema } from '@/lib/validators/inventory';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-const updateLocationSchema = createLocationSchema.partial();
+const updateLocationSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  location_type: z.enum(['warehouse', 'job_site', 'vehicle']).optional(),
+  address: z.string().optional(),
+  project_id: z.string().uuid().optional().nullable(),
+  parent_location_id: z.string().uuid().optional().nullable(),
+  linked_vehicle_id: z.string().uuid().optional().nullable(),
+  is_active: z.boolean().optional(),
+});
 
 export async function GET(req: NextRequest, context: RouteContext) {
   const { userId } = await auth();

@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { Database } from '@/types/supabase';
+
+type SerialRow = Database['public']['Tables']['inventory_serials']['Row'];
+type LedgerRow = Database['public']['Tables']['inventory_ledger']['Row'];
+
 import {
   checkoutSerial,
   createSerial,
@@ -41,7 +46,7 @@ const UUID = {
   ledger1: '00000000-0000-4000-a100-000000000001',
 };
 
-const BASE_SERIAL = {
+const BASE_SERIAL: SerialRow = {
   id: UUID.serial1,
   item_id: UUID.item1,
   division_id: UUID.div1,
@@ -61,7 +66,7 @@ const BASE_SERIAL = {
   updated_at: '2026-01-01T00:00:00Z',
 };
 
-const BASE_LEDGER = {
+const BASE_LEDGER: LedgerRow = {
   id: UUID.ledger1,
   item_id: UUID.item1,
   division_id: UUID.div1,
@@ -76,6 +81,8 @@ const BASE_LEDGER = {
   project_id: null,
   counterpart_location_id: null,
   reason_code: null,
+  reference_id: null,
+  reference_type: null,
   notes: null,
   transacted_by: UUID.user1,
   transacted_at: '2026-01-01T00:00:00Z',
@@ -215,7 +222,7 @@ describe('checkoutSerial', () => {
 
   it('creates tool_checkout ledger entry with qty_change = -1', async () => {
     setupGetSerial(BASE_SERIAL);
-    const ledger = { ...BASE_LEDGER, transaction_type: 'tool_checkout', qty_change: -1 };
+    const ledger = { ...BASE_LEDGER, transaction_type: 'tool_checkout' as const, qty_change: -1 };
     vi.mocked(createLedgerEntry).mockResolvedValueOnce(ledger);
     const updatedSerial = {
       ...BASE_SERIAL,
@@ -325,7 +332,7 @@ describe('returnSerial', () => {
 
   it('creates tool_return ledger entry with qty_change = +1', async () => {
     setupGetSerial(CHECKED_OUT_SERIAL);
-    const ledger = { ...BASE_LEDGER, transaction_type: 'tool_return', qty_change: 1 };
+    const ledger = { ...BASE_LEDGER, transaction_type: 'tool_return' as const, qty_change: 1 };
     vi.mocked(createLedgerEntry).mockResolvedValueOnce(ledger);
     mock.chainable.single.mockResolvedValueOnce({
       data: { ...BASE_SERIAL, current_location_id: UUID.loc2 },

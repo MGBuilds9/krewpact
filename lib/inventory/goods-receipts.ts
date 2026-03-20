@@ -326,7 +326,7 @@ export async function listGoodsReceipts(
 
   if (filters.poId) query = query.eq('po_id', filters.poId);
   if (filters.divisionId) query = query.eq('division_id', filters.divisionId);
-  if (filters.status) query = query.eq('status', filters.status);
+  if (filters.status) query = query.eq('status', filters.status as GRRow['status']);
 
   const limit = filters.limit ?? 25;
   const offset = filters.offset ?? 0;

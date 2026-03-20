@@ -111,10 +111,10 @@ export async function listVehicles(
     query = query.eq('division_id', filters.divisionId);
   }
   if (filters.vehicleType) {
-    query = query.eq('vehicle_type', filters.vehicleType);
+    query = query.eq('vehicle_type', filters.vehicleType as FleetRow['vehicle_type']);
   }
   if (filters.status) {
-    query = query.eq('status', filters.status);
+    query = query.eq('status', filters.status as FleetRow['status']);
   }
   if (filters.search) {
     query = query.or(

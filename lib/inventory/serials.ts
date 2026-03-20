@@ -82,7 +82,7 @@ export async function listSerials(
 
   if (filters.divisionId) query = query.eq('division_id', filters.divisionId);
   if (filters.itemId) query = query.eq('item_id', filters.itemId);
-  if (filters.status) query = query.eq('status', filters.status);
+  if (filters.status) query = query.eq('status', filters.status as SerialRow['status']);
   if (filters.locationId) query = query.eq('current_location_id', filters.locationId);
   if (filters.checkedOutTo) query = query.eq('checked_out_to', filters.checkedOutTo);
   if (filters.search) query = query.ilike('serial_number', `%${filters.search}%`);
