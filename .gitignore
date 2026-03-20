@@ -53,6 +53,10 @@ frappe_api_keys.csv
 # Ralph loop archives (historical PRDs/progress)
 scripts/ralph/archive/
 
+# Inventory migration data (extracted CSVs and transformed JSON)
+scripts/inventory-migration/exports/
+scripts/inventory-migration/transformed/
+
 # Playwright MCP screenshots
 .playwright-mcp/
 
