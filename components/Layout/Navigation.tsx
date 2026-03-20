@@ -11,6 +11,7 @@ import {
   FileText,
   FolderOpen,
   Home,
+  Package,
   Shield,
   Users,
 } from 'lucide-react';
@@ -72,6 +73,13 @@ const navigationItems: NavItem[] = [
     label: 'Documents',
     path: '/documents',
     description: 'SharePoint files & documents',
+  },
+  {
+    icon: Package,
+    label: 'Inventory',
+    path: '/inventory',
+    description: 'Items, stock & purchasing',
+    featureFlag: 'inventory_management' as FeatureKey,
   },
   {
     icon: Calendar,

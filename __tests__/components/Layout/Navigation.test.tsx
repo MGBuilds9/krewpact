@@ -58,6 +58,7 @@ vi.mock('lucide-react', () => ({
   FileText: () => <span>FileText</span>,
   FolderOpen: () => <span>FolderOpen</span>,
   Home: () => <span>Home</span>,
+  Package: () => <span>Package</span>,
   Shield: () => <span>Shield</span>,
   Users: () => <span>Users</span>,
 }));
