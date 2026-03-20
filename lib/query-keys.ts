@@ -154,4 +154,9 @@ export const queryKeys = {
     details: () => [...queryKeys.serials.all, 'detail'] as const,
     detail: (id: string) => [...queryKeys.serials.details(), id] as const,
   },
+  transactionLedger: {
+    all: ['transaction-ledger'] as const,
+    lists: () => [...queryKeys.transactionLedger.all, 'list'] as const,
+    list: (filters: object) => [...queryKeys.transactionLedger.lists(), filters] as const,
+  },
 } as const;
