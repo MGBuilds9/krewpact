@@ -353,7 +353,7 @@ describe('processSequences', () => {
     };
 
     let singleCallIndex = 0;
-    let insertedActivity: Record<string, unknown> | null = null;
+    const insertedActivities: Record<string, unknown>[] = [];
     const mockClient = {
       from: vi.fn().mockImplementation((table: string) => {
         const createChain = (): Record<string, unknown> => {
@@ -385,7 +385,7 @@ describe('processSequences', () => {
           for (const m of methods) {
             if (m === 'insert') {
               c[m] = vi.fn().mockImplementation((data: Record<string, unknown>) => {
-                if (table === 'activities') insertedActivity = data;
+                if (table === 'activities') insertedActivities.push(data);
                 return createChain();
               });
             } else {
@@ -415,6 +415,10 @@ describe('processSequences', () => {
             if (table === 'sequence_enrollments') {
               return resolve({ data: enrollmentData, error: null });
             }
+            // outreach: no engagement for final disposition check
+            if (table === 'outreach') {
+              return resolve({ data: null, count: 0, error: null });
+            }
             return resolve({ data: [], error: null });
           };
           return c;
@@ -428,19 +432,23 @@ describe('processSequences', () => {
 
     expect(result.processed).toBe(1);
     expect(result.errors).toHaveLength(0);
-    expect(insertedActivity).not.toBeNull();
-    expect(insertedActivity!.assigned_to).toBe('user-david');
-    expect(insertedActivity!.due_at).toBe('2026-02-24T12:00:00.000Z');
-    expect(insertedActivity!.title).toBe('Call prospect');
+    // First activity is the task step action
+    expect(insertedActivities.length).toBeGreaterThanOrEqual(1);
+    const taskActivity = insertedActivities[0];
+    expect(taskActivity.assigned_to).toBe('user-david');
+    expect(taskActivity.due_at).toBe('2026-02-24T12:00:00.000Z');
+    expect(taskActivity.title).toBe('Call prospect');
 
-    expect(onTaskCreated).toHaveBeenCalledTimes(1);
-    expect(onTaskCreated).toHaveBeenCalledWith({
-      assigneeEmail: 'david@mdm.ca',
-      assigneeName: 'David Sales',
-      taskTitle: 'Call prospect',
-      leadCompany: 'BuildRight Inc',
-      leadId: 'lead-task',
-    });
+    // onTaskCreated called for both the task step AND the final disposition
+    expect(onTaskCreated).toHaveBeenCalledWith(
+      expect.objectContaining({
+        assigneeEmail: 'david@mdm.ca',
+        assigneeName: 'David Sales',
+        taskTitle: 'Call prospect',
+        leadCompany: 'BuildRight Inc',
+        leadId: 'lead-task',
+      }),
+    );
   });
 
   it('task step skips notification when lead has no assigned_to', async () => {
@@ -707,5 +715,244 @@ describe('processSequences', () => {
     const result = await processSequences(mockClient as never);
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0]).toContain('Failed to create outreach event');
+  });
+
+  it('creates final disposition task when sequence completes with no engagement', async () => {
+    const enrollmentData = [
+      {
+        id: 'enroll-final-1',
+        sequence_id: 'seq-final',
+        lead_id: 'lead-final',
+        contact_id: 'contact-final',
+        current_step: 3,
+        current_step_id: 'step-final-3',
+        status: 'active',
+        next_step_at: '2026-02-24T11:00:00Z',
+        leads: { assigned_to: 'user-sarah', company_name: 'GhostCo Construction' },
+        contacts: null,
+      },
+    ];
+
+    const lastStep = {
+      id: 'step-final-3',
+      sequence_id: 'seq-final',
+      step_number: 3,
+      action_type: 'wait',
+      action_config: {},
+      delay_days: 0,
+      delay_hours: 0,
+    };
+
+    let singleCallIndex = 0;
+    let insertedActivity: Record<string, unknown> | null = null;
+    const mockClient = {
+      from: vi.fn().mockImplementation((table: string) => {
+        const createChain = (): Record<string, unknown> => {
+          const c: Record<string, unknown> = {};
+          const methods = [
+            'select',
+            'insert',
+            'update',
+            'delete',
+            'eq',
+            'lte',
+            'order',
+            'limit',
+            'range',
+            'neq',
+            'gt',
+            'gte',
+            'lt',
+            'ilike',
+            'is',
+            'or',
+            'not',
+            'contains',
+            'containedBy',
+            'filter',
+            'match',
+            'in',
+          ];
+          for (const m of methods) {
+            if (m === 'insert') {
+              c[m] = vi.fn().mockImplementation((data: Record<string, unknown>) => {
+                if (table === 'activities') insertedActivity = data;
+                return createChain();
+              });
+            } else {
+              c[m] = vi.fn().mockImplementation(() => createChain());
+            }
+          }
+          c.single = vi.fn().mockImplementation(() => {
+            singleCallIndex++;
+            // First sequence_steps call: return the current (last) step
+            if (table === 'sequence_steps' && singleCallIndex === 1) {
+              return Promise.resolve({ data: lastStep, error: null });
+            }
+            // Second sequence_steps call: no next step exists
+            if (table === 'sequence_steps' && singleCallIndex === 2) {
+              return Promise.resolve({
+                data: null,
+                error: { code: 'PGRST116', message: 'not found' },
+              });
+            }
+            // users table: return assignee info
+            if (table === 'users') {
+              return Promise.resolve({
+                data: { email: 'sarah@mdm.ca', full_name: 'Sarah Rep' },
+                error: null,
+              });
+            }
+            return Promise.resolve({ data: null, error: null });
+          });
+          c.then = (resolve: (v: unknown) => void) => {
+            if (table === 'sequence_enrollments') {
+              return resolve({ data: enrollmentData, error: null });
+            }
+            // outreach: return count 0 (no engagement)
+            if (table === 'outreach') {
+              return resolve({ data: null, count: 0, error: null });
+            }
+            return resolve({ data: [], error: null });
+          };
+          return c;
+        };
+        return createChain();
+      }),
+    };
+
+    const onTaskCreated = vi.fn().mockResolvedValue(undefined);
+    const result = await processSequences(mockClient as never, { onTaskCreated });
+
+    expect(result.processed).toBe(1);
+    expect(result.completed).toBe(1);
+    expect(result.errors).toHaveLength(0);
+
+    // Verify final disposition activity was created
+    expect(insertedActivity).not.toBeNull();
+    expect(insertedActivity!.title).toBe('Final disposition: GhostCo Construction');
+    expect(insertedActivity!.activity_type).toBe('task');
+    expect(insertedActivity!.lead_id).toBe('lead-final');
+    expect(insertedActivity!.contact_id).toBe('contact-final');
+    expect(insertedActivity!.assigned_to).toBe('user-sarah');
+    expect(insertedActivity!.details).toContain('no response');
+
+    // Verify onTaskCreated notification was sent
+    expect(onTaskCreated).toHaveBeenCalledTimes(1);
+    expect(onTaskCreated).toHaveBeenCalledWith({
+      assigneeEmail: 'sarah@mdm.ca',
+      assigneeName: 'Sarah Rep',
+      taskTitle: 'Final disposition: GhostCo Construction',
+      leadCompany: 'GhostCo Construction',
+      leadId: 'lead-final',
+    });
+  });
+
+  it('skips final disposition task when sequence completes with engagement', async () => {
+    const enrollmentData = [
+      {
+        id: 'enroll-engaged-1',
+        sequence_id: 'seq-engaged',
+        lead_id: 'lead-engaged',
+        contact_id: null,
+        current_step: 2,
+        current_step_id: 'step-engaged-2',
+        status: 'active',
+        next_step_at: '2026-02-24T11:00:00Z',
+        leads: { assigned_to: 'user-david', company_name: 'ActiveCo' },
+        contacts: null,
+      },
+    ];
+
+    const lastStep = {
+      id: 'step-engaged-2',
+      sequence_id: 'seq-engaged',
+      step_number: 2,
+      action_type: 'wait',
+      action_config: {},
+      delay_days: 0,
+      delay_hours: 0,
+    };
+
+    let singleCallIndex = 0;
+    let insertedActivity: Record<string, unknown> | null = null;
+    const mockClient = {
+      from: vi.fn().mockImplementation((table: string) => {
+        const createChain = (): Record<string, unknown> => {
+          const c: Record<string, unknown> = {};
+          const methods = [
+            'select',
+            'insert',
+            'update',
+            'delete',
+            'eq',
+            'lte',
+            'order',
+            'limit',
+            'range',
+            'neq',
+            'gt',
+            'gte',
+            'lt',
+            'ilike',
+            'is',
+            'or',
+            'not',
+            'contains',
+            'containedBy',
+            'filter',
+            'match',
+            'in',
+          ];
+          for (const m of methods) {
+            if (m === 'insert') {
+              c[m] = vi.fn().mockImplementation((data: Record<string, unknown>) => {
+                if (table === 'activities') insertedActivity = data;
+                return createChain();
+              });
+            } else {
+              c[m] = vi.fn().mockImplementation(() => createChain());
+            }
+          }
+          c.single = vi.fn().mockImplementation(() => {
+            singleCallIndex++;
+            if (table === 'sequence_steps' && singleCallIndex === 1) {
+              return Promise.resolve({ data: lastStep, error: null });
+            }
+            if (table === 'sequence_steps') {
+              return Promise.resolve({
+                data: null,
+                error: { code: 'PGRST116', message: 'not found' },
+              });
+            }
+            return Promise.resolve({ data: null, error: null });
+          });
+          c.then = (resolve: (v: unknown) => void) => {
+            if (table === 'sequence_enrollments') {
+              return resolve({ data: enrollmentData, error: null });
+            }
+            // outreach: return count > 0 (has engagement)
+            if (table === 'outreach') {
+              return resolve({ data: null, count: 2, error: null });
+            }
+            return resolve({ data: [], error: null });
+          };
+          return c;
+        };
+        return createChain();
+      }),
+    };
+
+    const onTaskCreated = vi.fn().mockResolvedValue(undefined);
+    const result = await processSequences(mockClient as never, { onTaskCreated });
+
+    expect(result.processed).toBe(1);
+    expect(result.completed).toBe(1);
+    expect(result.errors).toHaveLength(0);
+
+    // No final disposition activity should be created
+    expect(insertedActivity).toBeNull();
+    // No notification should be sent
+    expect(onTaskCreated).not.toHaveBeenCalled();
   });
 });

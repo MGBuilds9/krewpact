@@ -180,7 +180,7 @@ async function processEnrollment(ctx: EnrollmentCtx): Promise<void> {
   await executeStepAction({ supabase, enrollment, step, actionType, actionConfig, now, options });
 
   const nextStepId = await resolveNextStepId({ supabase, enrollment, step, conditionType });
-  await advanceEnrollment({ supabase, enrollment, step, nextStepId, result });
+  await advanceEnrollment({ supabase, enrollment, step, nextStepId, result, options });
 
   result.processed++;
 }
@@ -294,10 +294,11 @@ interface AdvanceEnrollmentCtx {
   step: Record<string, unknown>;
   nextStepId: string | null;
   result: ProcessorResult;
+  options: ProcessorOptions;
 }
 
 async function advanceEnrollment(ctx: AdvanceEnrollmentCtx): Promise<void> {
-  const { supabase, enrollment, step, nextStepId, result } = ctx;
+  const { supabase, enrollment, step, nextStepId, result, options } = ctx;
   let nextStep: {
     id: string;
     step_number: number;
@@ -342,5 +343,60 @@ async function advanceEnrollment(ctx: AdvanceEnrollmentCtx): Promise<void> {
       .update({ status: 'completed', next_step_at: null })
       .eq('id', enrollment.id);
     result.completed++;
+
+    await createFinalDispositionTask(supabase, enrollment, options);
+  }
+}
+
+/**
+ * Creates a "Final disposition" task when a sequence completes with no engagement.
+ * Checks outreach records for any response (replied, opened, clicked) — if none found,
+ * creates a task so the lead doesn't fall through the cracks.
+ */
+async function createFinalDispositionTask(
+  supabase: SupabaseClient,
+  enrollment: Record<string, unknown>,
+  options: ProcessorOptions,
+): Promise<void> {
+  // Check if any outreach had engagement
+  const { count } = await supabase
+    .from('outreach')
+    .select('id', { count: 'exact', head: true })
+    .eq('lead_id', enrollment.lead_id as string)
+    .eq('sequence_id', enrollment.sequence_id as string)
+    .in('outcome', ['replied', 'opened', 'clicked']);
+
+  if (count && count > 0) return;
+
+  const lead = enrollment.leads as Record<string, unknown> | null;
+  const companyName = (lead?.company_name as string) ?? 'Unknown lead';
+  const assignedToId = lead?.assigned_to as string | null;
+
+  await supabase.from('activities').insert({
+    activity_type: 'task',
+    title: `Final disposition: ${companyName}`,
+    details: 'Sequence completed with no response. Review and decide: follow up or mark as cold.',
+    lead_id: enrollment.lead_id,
+    contact_id: enrollment.contact_id ?? null,
+    assigned_to: assignedToId ?? null,
+    due_at: new Date().toISOString(),
+  });
+
+  if (assignedToId && options.onTaskCreated) {
+    const { data: assignee } = await supabase
+      .from('users')
+      .select('email, full_name')
+      .eq('id', assignedToId)
+      .single();
+
+    if (assignee?.email) {
+      await options.onTaskCreated({
+        assigneeEmail: assignee.email as string,
+        assigneeName: (assignee.full_name as string) ?? 'Team Member',
+        taskTitle: `Final disposition: ${companyName}`,
+        leadCompany: companyName,
+        leadId: enrollment.lead_id as string,
+      });
+    }
   }
 }
