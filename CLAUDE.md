@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-KrewPact is a construction operations platform for MDM Group Inc. (Mississauga, Ontario). It follows a **Hybrid ERPNext-first architecture**: ERPNext is finance/procurement/inventory source-of-truth; KrewPact is UX shell, field operations, portals, orchestration, identity, and reporting.
+KrewPact is a construction operations platform for MDM Group Inc. (Mississauga, Ontario). It follows a **Hybrid ERPNext-first architecture**: ERPNext is finance/procurement source-of-truth; KrewPact is UX shell, field operations, portals, orchestration, identity, inventory, and reporting. **Inventory authority shifted to KrewPact** (Mar 2026) — replaces Almyta, ERPNext gets cost journal summaries only.
 
 **Domain:** krewpact.com
 **Architecture Resolution:** All contradictions resolved in `KrewPact-Architecture-Resolution.md` (Feb 2026).
@@ -346,7 +346,33 @@ ERPNext is GPL v3. **Critical:** maintain strict API boundary. No shared code, s
 
 Run `/scope` to initialize the project. This reads the Resolution doc, confirms pending decisions, scaffolds Next.js, and creates the Phase 0 task list.
 
+## Inventory System (Design Spec: `docs/superpowers/specs/2026-03-20-inventory-system-design.md`)
+
+- **Authority:** KrewPact/Supabase owns inventory (replaces Almyta). ERPNext gets cost journal entries only.
+- **Architecture:** Append-only double-entry ledger. No UPDATE/DELETE on `inventory_ledger`.
+- **Data source:** Almyta Access databases on MDM-Server (374K items across 3 divisions: Telecom 124K, Wood 227K, Contracting 23K).
+- **Key tables:** `inventory_items`, `inventory_ledger`, `inventory_locations`, `inventory_serials`, `inventory_lots`, `inventory_purchase_orders`, `inventory_goods_receipts`, `inventory_bom`, `fleet_vehicles`.
+- **Fleet vehicles** are the source of truth for vehicles; inventory locations of type `vehicle` can only exist when linked to a `fleet_vehicles` record.
+- **Migration:** `mdb-export` from `.data` Access files → CSV → transform → Supabase COPY. Per-division tagged.
+- **Feature flag:** `inventory_management: false` until migration + UAT complete.
+
 ## Session Log
+
+### Mar 20, 2026 — Estimate Builder Phase 2 (P0 Fixes)
+
+- **Changes:** Fixed 3 critical gaps preventing end-to-end estimate builder usage. (1) Fixed inline line editing — `onUpdateLine` was ignoring `lineId`/`field`/`value` and calling `updateEstimate.mutate()` instead of line PATCH; added `useUpdateEstimateLine` hook. (2) Created `/estimates/new` page with form (division auto-fill, opportunity/account selects, currency). (3) Added estimates sub-navigation layout with tabs (Estimates | Assemblies | Catalog | Templates) that auto-hides on detail/creation pages.
+- **Files created:** `estimates/new/page.tsx`, `estimates/new/_page-content.tsx`, `components/Estimates/EstimatesNav.tsx`
+- **Files modified:** `hooks/useEstimates.ts`, `estimates/[id]/_page-content.tsx`, `estimates/layout.tsx`, test mock
+- **Tests:** 4,029/4,029 passing (356 files). 0 type errors. Build clean.
+- **Next steps:** P1 — cost catalog picker in LineItemEditor, ERPNext Quotation sync on status→sent. P2 — assembly insertion, create-from-template flow.
+
+### Mar 20, 2026 — Inventory System Design (Almyta Replacement)
+
+- **Changes:** Designed full inventory system to replace Almyta Control System. Append-only double-entry ledger, 11 new tables, fleet vehicles, serial/lot tracking, PO lifecycle with partial receiving, job costing integration. Verified all FKs and RLS patterns against live Supabase. Discovered Almyta data export was schema-only — located real data in per-company Access `.data` files (374K parts total). Installed `mdbtools` for extraction.
+- **Architecture decision:** Inventory authority moved from ERPNext to KrewPact. ERPNext retains finance/procurement authority but inventory operations (items, stock, POs, receiving, tool checkout) live in Supabase.
+- **Key integration:** Ledger `project_id` feeds job costing alongside `time_entries` + `expense_claims`. POs reference `portal_accounts` (trade partners). Items link to `cost_catalog_items` (estimating rates).
+- **Spec:** `docs/superpowers/specs/2026-03-20-inventory-system-design.md`
+- **Next steps:** Write implementation plan. Extract Almyta data via mdbtools. Build migration script. Schema migration to Supabase. UI (items list, PO creation, receiving, stock views).
 
 ### Mar 20, 2026 — Enrollment Approval Gate + Email Template Cleanup
 
@@ -354,34 +380,13 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 - **Tests:** 4,029/4,029 passing (356 files). 0 type errors. Build clean.
 - **Next steps:** E2E verification of full loop (score → enroll → approve → send). Estimate builder if CRM automation is stable. Week 7+ contracting features (proposals, BoldSign e-sign) after estimating.
 
-### Mar 19, 2026 — Header & Dashboard UI Polish
-
-- **Changes:** Collapsed nav overflow into "More" dropdown (MAX_VISIBLE=5 inline, rest in DropdownMenu). Removed header horizontal scroll, "Online" badge, and inline user name/role block. Replaced MoreHorizontal icon with Search for command palette. Dashboard: replaced rainbow gradient quick-action buttons with clean muted cards; tightened welcome card (single row, no decorative blur).
-- **Decisions:** MAX_VISIBLE=5 covers the most-used items (Dashboard, CRM, Estimates, Projects, Documents). User name/role info already lives in the avatar dropdown — no need to duplicate inline.
-- **Next steps:** Visual verification on production deploy. Consider responsive breakpoint adjustments if needed.
-- **Tests:** 3,986/3,986 passing (352 files). 0 type errors. Build clean.
-
-### Mar 17, 2026 — Fix Email Pipeline, Smoke Test Spam, and ERPNext Auth
-
-- **Changes:** Fixed 5 compounding issues: sequence auto-enroll sets `contact_id`, `.trim()` on ERPNext env vars, alert email corrected, watchdog schedule fixed, `smoke_test_results` table for cooldown.
-- **Tests:** 3,981/3,981 passing (351 files). Build clean.
-
-### Mar 17, 2026 — Production Hardening: Feature Gating, UX Coherence, Documentation
-
-- **Phase 1 — Broken UI Fixes (8):** Removed duplicate WeightedPipelineHeader from PipelineKanban (parent page owns it). Replaced "Loading... Team Member" text with skeleton shimmer in Header.tsx. Made QuickAccessToolbar context-aware (CRM/Projects/Estimates/default action sets). Fixed QuickAddFAB path matching to use `.includes()` instead of `.startsWith()`. Fixed Navigation admin check to use `useUserRBAC().isAdmin`. Removed CRM layout double-header (h1 + description removed, tab nav only). Removed "Built by MKG Builds" footer from Dashboard.
-- **Phase 2 — Feature Gating:** Created `lib/feature-flags.ts` (16 flags, all incomplete features off). Created `components/FeatureGate.tsx` wrapper. Created `components/ui/coming-soon.tsx` placeholder. Navigation now reads feature flags — hidden features are invisible.
-- **Phase 3 — UX Fixes:** Created `components/ui/confirm-reason-dialog.tsx` (replaces `window.prompt`). Replaced `window.prompt` in lead mark-lost and estimate version dialogs. Added Executive nav item gated to `executive`/`platform_admin` roles + feature flag.
-- **Phase 4 — Documentation:** Added `## Production Quality Rules (ENFORCED)` section to CLAUDE.md. Fixed queue: BullMQ → QStash. Fixed workers: co-located → serverless `/api/queue/process`. Fixed endpoint count: ~40 → ~314. Fixed ERPNext mappings: 12 → 13. Created `docs/issues-log.md` for agent session logging.
-- **Phase 5 — AI Guardrails:** Added per-session call counter (limit 10) to `AiSuggestion.tsx` with graceful "paused" message. Verified AI killswitch (`AI_ENABLED=false`) already complete and functional.
-- **Tests:** 3,871/3,871 passing (342 files). Updated PipelineKanban test (header now parent's), added `_resetSessionCallCount` to AiSuggestion test. 0 type errors. Build clean.
-
+- Mar 19: Header & Dashboard UI Polish — Nav overflow dropdown, clean dashboard cards. 3,986 tests.
+- Mar 17: Fix Email Pipeline, Smoke Test Spam, ERPNext Auth — 5 compounding issues. 3,981 tests.
+- Mar 17: Production Hardening — Feature gating (16 flags), UX fixes (8 broken UI items), AI guardrails. 3,871 tests.
 - Mar 16: Production Hardening — Demo removal, coding standards (10 ESLint rules), 8 file splits. 3,871 tests.
-- Mar 14: Scoring alignment + full env setup + 12/12 service health checks. 3,866 tests.
-- Mar 14: RBAC Unification — fix Access Denied for platform_admin. 3,866 tests.
-- Mar 14: Platform Hardening & Mobile Scaffold (4 phases, 418 files). 3,851 tests.
+- Mar 14: Scoring alignment + RBAC Unification + Platform Hardening + Mobile scaffold. 3,866 tests.
 - Mar 13: David's Sales Deliverables + CEO Sales Book v2 + Leads folder optimization.
-- Mar 12: AI Agentic Layer (8 agents, Gemini Flash, killswitch). 3,750 tests.
-- Mar 12: Lusha API Integration + Lead Enrichment. 3,750 tests.
+- Mar 12: AI Agentic Layer (8 agents, Gemini Flash, killswitch) + Lusha Integration. 3,750 tests.
 - Mar 11: Closed-Loop CRM + 7-agent audit (79 files fixed). 3,489 tests.
 - Mar 10: Production Readiness (14 stories). 3,488 tests.
 - Mar 9: Executive Nucleus + Enterprise Phase 2. 3,478 tests.
