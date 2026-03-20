@@ -5,8 +5,10 @@ import { createCronLogger } from '@/lib/api/cron-logger';
 import type { EmailSender, TemplateResolver } from '@/lib/crm/sequence-processor';
 import { processSequences } from '@/lib/crm/sequence-processor';
 import { sendEmail } from '@/lib/email/resend';
-import { renderEmailTemplate } from '@/lib/email/template-renderer';
+import { renderEmailTemplate, type TrackingConfig } from '@/lib/email/template-renderer';
 import { createServiceClient } from '@/lib/supabase/server';
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.krewpact.com';
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const { authorized } = await verifyCronAuth(req);
@@ -26,8 +28,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   };
 
   // Wire template resolution from Supabase email_templates table
+  // When outreachEventId is provided, injects open/click tracking into the HTML
   const templateResolver: TemplateResolver = {
-    async resolve(templateId, variables) {
+    async resolve(templateId, variables, outreachEventId?) {
       const { data: template } = await supabase
         .from('email_templates')
         .select(
@@ -38,7 +41,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
       if (!template) return null;
 
-      return renderEmailTemplate(template, variables);
+      const tracking: TrackingConfig | undefined = outreachEventId
+        ? { outreachEventId, baseUrl: APP_URL }
+        : undefined;
+
+      return renderEmailTemplate(template, variables, tracking);
     },
   };
 

@@ -215,6 +215,10 @@ describe('processSequences', () => {
                 error: { code: 'PGRST116', message: 'not found' },
               });
             }
+            if (table === 'outreach') {
+              // Return created outreach record with ID (create-before-send pattern)
+              return Promise.resolve({ data: { id: 'outreach-1' }, error: null });
+            }
             return Promise.resolve({ data: null, error: null });
           });
           c.then = (resolve: (v: unknown) => void) => {
@@ -473,14 +477,15 @@ describe('processSequences', () => {
             if (table === 'sequence_steps' && singleCallIndex === 1) {
               return Promise.resolve({ data: stepData, error: null });
             }
+            if (table === 'outreach') {
+              // Simulate insert error (create-before-send: insert().select().single())
+              return Promise.resolve({ data: null, error: { message: 'Insert failed' } });
+            }
             return Promise.resolve({ data: null, error: null });
           });
           c.then = (resolve: (v: unknown) => void) => {
             if (table === 'sequence_enrollments') {
               return resolve({ data: enrollmentData, error: null });
-            }
-            if (table === 'outreach') {
-              return resolve({ data: null, error: { message: 'Insert failed' } });
             }
             return resolve({ data: [], error: null });
           };

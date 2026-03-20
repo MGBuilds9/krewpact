@@ -348,12 +348,17 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
+### Mar 19, 2026 — Header & Dashboard UI Polish
+
+- **Changes:** Collapsed nav overflow into "More" dropdown (MAX_VISIBLE=5 inline, rest in DropdownMenu). Removed header horizontal scroll, "Online" badge, and inline user name/role block. Replaced MoreHorizontal icon with Search for command palette. Dashboard: replaced rainbow gradient quick-action buttons with clean muted cards; tightened welcome card (single row, no decorative blur).
+- **Decisions:** MAX_VISIBLE=5 covers the most-used items (Dashboard, CRM, Estimates, Projects, Documents). User name/role info already lives in the avatar dropdown — no need to duplicate inline.
+- **Next steps:** Visual verification on production deploy. Consider responsive breakpoint adjustments if needed.
+- **Tests:** 3,986/3,986 passing (352 files). 0 type errors. Build clean.
+
 ### Mar 17, 2026 — Fix Email Pipeline, Smoke Test Spam, and ERPNext Auth
 
-- **Changes:** Fixed 5 compounding issues: (1) sequence auto-enroll now looks up lead's primary contact and sets `contact_id` on enrollment, so emails actually send; (2) `.trim()` on ERPNext API key/secret in `lib/erp/client.ts`, smoke-test, and health routes to prevent newline in auth header; (3) alert email fallback corrected from `michael@mdmgroupinc.ca` to `michael.guirguis@mdmgroupinc.ca` in smoke-test + watchdog; (4) watchdog smoke-test schedule fixed from 15min to 60min to match actual cron; (5) created `smoke_test_results` table for alert cooldown tracking. Added warning log in `sequence-email-executor.ts` for silent email skips. Enabled sequences feature flag. Added opportunity delete button with ConfirmReasonDialog.
-- **Decisions:** Defensive `.trim()` on all ERPNext env var reads (not just Vercel fix) to prevent recurrence. Warning log (not error) for missing contact emails since it's a data issue, not a code failure.
-- **Next steps:** Verify end-to-end: trigger scoring cron → auto-enroll → sequence processor → email actually sent. Monitor smoke test for clean passes.
-- **Tests:** 3,981/3,981 passing (351 files). 0 type errors. 0 lint errors. Build clean.
+- **Changes:** Fixed 5 compounding issues: sequence auto-enroll sets `contact_id`, `.trim()` on ERPNext env vars, alert email corrected, watchdog schedule fixed, `smoke_test_results` table for cooldown.
+- **Tests:** 3,981/3,981 passing (351 files). Build clean.
 
 ### Mar 17, 2026 — Production Hardening: Feature Gating, UX Coherence, Documentation
 

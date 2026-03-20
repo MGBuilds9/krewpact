@@ -30,11 +30,13 @@ export interface EmailSender {
 
 /**
  * Template resolver — injected by cron route to fetch and render email templates.
+ * @param outreachEventId — when provided, enables open/click tracking pixel injection.
  */
 export interface TemplateResolver {
   resolve(
     templateId: string,
     variables: Record<string, string>,
+    outreachEventId?: string,
   ): Promise<{ subject: string; html: string; text?: string } | null>;
 }
 
