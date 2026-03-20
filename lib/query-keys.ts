@@ -110,4 +110,48 @@ export const queryKeys = {
     details: () => [...queryKeys.icps.all, 'detail'] as const,
     detail: (id: string) => [...queryKeys.icps.details(), id] as const,
   },
+  inventoryItems: {
+    all: ['inventory-items'] as const,
+    lists: () => [...queryKeys.inventoryItems.all, 'list'] as const,
+    list: (filters: object) => [...queryKeys.inventoryItems.lists(), filters] as const,
+    details: () => [...queryKeys.inventoryItems.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.inventoryItems.details(), id] as const,
+  },
+  inventoryStock: {
+    all: ['inventory-stock'] as const,
+    lists: () => [...queryKeys.inventoryStock.all, 'list'] as const,
+    list: (filters: object) => [...queryKeys.inventoryStock.lists(), filters] as const,
+    byProject: (projectId: string) =>
+      [...queryKeys.inventoryStock.all, 'project', projectId] as const,
+    lowStock: (divisionId?: string) =>
+      [...queryKeys.inventoryStock.all, 'low-stock', divisionId] as const,
+  },
+  inventoryLocations: {
+    all: ['inventory-locations'] as const,
+    lists: () => [...queryKeys.inventoryLocations.all, 'list'] as const,
+    list: (filters: object) => [...queryKeys.inventoryLocations.lists(), filters] as const,
+    details: () => [...queryKeys.inventoryLocations.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.inventoryLocations.details(), id] as const,
+  },
+  purchaseOrders: {
+    all: ['purchase-orders'] as const,
+    lists: () => [...queryKeys.purchaseOrders.all, 'list'] as const,
+    list: (filters: object) => [...queryKeys.purchaseOrders.lists(), filters] as const,
+    details: () => [...queryKeys.purchaseOrders.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.purchaseOrders.details(), id] as const,
+  },
+  fleetVehicles: {
+    all: ['fleet-vehicles'] as const,
+    lists: () => [...queryKeys.fleetVehicles.all, 'list'] as const,
+    list: (filters: object) => [...queryKeys.fleetVehicles.lists(), filters] as const,
+    details: () => [...queryKeys.fleetVehicles.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.fleetVehicles.details(), id] as const,
+  },
+  serials: {
+    all: ['serials'] as const,
+    lists: () => [...queryKeys.serials.all, 'list'] as const,
+    list: (filters: object) => [...queryKeys.serials.lists(), filters] as const,
+    details: () => [...queryKeys.serials.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.serials.details(), id] as const,
+  },
 } as const;
