@@ -1,6 +1,6 @@
 'use client';
 
-import { Clock, Database, Mail, Settings, Target, Zap } from 'lucide-react';
+import { Clock, Database, Mail, Settings, ShieldAlert, Target, Zap } from 'lucide-react';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
@@ -37,6 +37,13 @@ const settingsItems = [
       'Manage data enrichment providers and configure the waterfall enrichment pipeline.',
     icon: Database,
     href: '/crm/settings/enrichment',
+  },
+  {
+    title: 'Suppression Log',
+    description:
+      'View leads blocked from outreach sequences because they match existing customer accounts.',
+    icon: ShieldAlert,
+    href: '/crm/settings/suppression',
   },
 ];
 

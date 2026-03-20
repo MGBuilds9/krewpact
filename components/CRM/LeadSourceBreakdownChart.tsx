@@ -11,30 +11,33 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
+import type { SourceCategory } from '@/lib/crm/constants';
 import type { SourceMetrics } from '@/lib/crm/metrics';
 
-const SOURCE_COLORS = [
-  'hsl(210, 80%, 55%)',
-  'hsl(140, 70%, 45%)',
-  'hsl(40, 90%, 55%)',
-  'hsl(25, 90%, 55%)',
-  'hsl(270, 70%, 55%)',
-  'hsl(190, 80%, 50%)',
-  'hsl(340, 75%, 55%)',
-  'hsl(0, 0%, 55%)',
-];
+const CATEGORY_PALETTES: Record<SourceCategory, string[]> = {
+  inbound: ['hsl(210, 80%, 55%)', 'hsl(210, 70%, 65%)', 'hsl(200, 75%, 50%)', 'hsl(220, 70%, 60%)'],
+  outbound: [
+    'hsl(25, 90%, 55%)',
+    'hsl(35, 85%, 55%)',
+    'hsl(15, 85%, 50%)',
+    'hsl(40, 80%, 50%)',
+    'hsl(10, 75%, 55%)',
+    'hsl(45, 80%, 55%)',
+  ],
+  other: ['hsl(0, 0%, 55%)', 'hsl(0, 0%, 65%)', 'hsl(0, 0%, 45%)'],
+};
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('en-CA', {
-    style: 'currency',
-    currency: 'CAD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
+function getColorForSource(category: SourceCategory, indexInCategory: number): string {
+  const palette = CATEGORY_PALETTES[category];
+  return palette[indexInCategory % palette.length];
 }
 
 function formatPct(value: number): string {
   return `${(value * 100).toFixed(0)}%`;
+}
+
+function formatLabel(category: SourceCategory): string {
+  return category === 'inbound' ? 'Inbound' : category === 'outbound' ? 'Outbound' : 'Other';
 }
 
 interface LeadSourceBreakdownChartProps {
@@ -42,18 +45,26 @@ interface LeadSourceBreakdownChartProps {
 }
 
 export function LeadSourceBreakdownChart({ metrics }: LeadSourceBreakdownChartProps) {
-  const chartData = metrics.sources.map((s, i) => ({
-    name: s.source,
-    value: s.count,
-    totalValue: s.value,
-    conversionRate: s.conversionRate,
-    fill: SOURCE_COLORS[i % SOURCE_COLORS.length],
-  }));
+  const categoryCounters: Record<SourceCategory, number> = { inbound: 0, outbound: 0, other: 0 };
+
+  const chartData = metrics.sources.map((s) => {
+    const cat = s.category;
+    const color = getColorForSource(cat, categoryCounters[cat]);
+    categoryCounters[cat]++;
+    return {
+      name: s.source,
+      value: s.count,
+      totalValue: s.value,
+      conversionRate: s.conversionRate,
+      category: cat,
+      fill: color,
+    };
+  });
 
   const chartCfg: ChartConfig = {};
   for (const item of chartData) {
     chartCfg[item.name] = {
-      label: item.name,
+      label: `${item.name} (${formatLabel(item.category)})`,
       color: item.fill,
     };
   }
@@ -73,7 +84,7 @@ export function LeadSourceBreakdownChart({ metrics }: LeadSourceBreakdownChartPr
                     const data = item?.payload;
                     return (
                       <span>
-                        {value} leads &middot; {formatCurrency(data?.totalValue ?? 0)} &middot;
+                        {value} leads &middot; {formatLabel(data?.category ?? 'other')} &middot;
                         Conv: {formatPct(data?.conversionRate ?? 0)}
                       </span>
                     );

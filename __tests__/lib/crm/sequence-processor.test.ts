@@ -399,7 +399,7 @@ describe('processSequences', () => {
             }
             if (table === 'users') {
               return Promise.resolve({
-                data: { email: 'david@mdm.ca', full_name: 'David Sales' },
+                data: { email: 'david@mdm.ca', first_name: 'David', last_name: 'Sales' },
                 error: null,
               });
             }
@@ -435,7 +435,7 @@ describe('processSequences', () => {
     // First activity is the task step action
     expect(insertedActivities.length).toBeGreaterThanOrEqual(1);
     const taskActivity = insertedActivities[0];
-    expect(taskActivity.assigned_to).toBe('user-david');
+    expect(taskActivity.owner_user_id).toBe('user-david');
     expect(taskActivity.due_at).toBe('2026-02-24T12:00:00.000Z');
     expect(taskActivity.title).toBe('Call prospect');
 
@@ -799,7 +799,7 @@ describe('processSequences', () => {
             // users table: return assignee info
             if (table === 'users') {
               return Promise.resolve({
-                data: { email: 'sarah@mdm.ca', full_name: 'Sarah Rep' },
+                data: { email: 'sarah@mdm.ca', first_name: 'Sarah', last_name: 'Rep' },
                 error: null,
               });
             }
@@ -834,7 +834,7 @@ describe('processSequences', () => {
     expect(insertedActivity!.activity_type).toBe('task');
     expect(insertedActivity!.lead_id).toBe('lead-final');
     expect(insertedActivity!.contact_id).toBe('contact-final');
-    expect(insertedActivity!.assigned_to).toBe('user-sarah');
+    expect(insertedActivity!.owner_user_id).toBe('user-sarah');
     expect(insertedActivity!.details).toContain('no response');
 
     // Verify onTaskCreated notification was sent

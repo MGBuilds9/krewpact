@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   approveEnrollment,
+  evaluateTrigger,
   matchesConditions,
   rejectEnrollment,
 } from '@/lib/crm/enrollment-engine';
@@ -131,5 +132,93 @@ describe('rejectEnrollment', () => {
     });
     const result = await rejectEnrollment(supabase, 'enrollment-1');
     expect(result.success).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// evaluateTrigger — existing customer suppression
+// ---------------------------------------------------------------------------
+
+vi.mock('@/lib/logger', () => ({
+  logger: { warn: vi.fn(), info: vi.fn(), error: vi.fn() },
+}));
+
+function createTableAwareMock(tableResults: Record<string, { data: unknown; error: unknown }>) {
+  const makeChain = (tableName: string) => {
+    const result = tableResults[tableName] ?? { data: null, error: null };
+    const chain: Record<string, unknown> = {};
+    const methods = ['select', 'eq', 'gte', 'in', 'limit', 'order', 'insert', 'update', 'delete'];
+    for (const m of methods) {
+      chain[m] = vi.fn().mockReturnValue(chain);
+    }
+    chain.maybeSingle = vi.fn().mockResolvedValue(result);
+    chain.single = vi.fn().mockResolvedValue(result);
+    chain.then = (resolve: (v: unknown) => void) => Promise.resolve(resolve(result));
+    return chain;
+  };
+
+  return {
+    from: vi.fn((table: string) => makeChain(table)),
+  } as unknown as SupabaseClient;
+}
+
+describe('evaluateTrigger — customer suppression', () => {
+  it('skips enrollment when lead matches an existing customer account', async () => {
+    const supabase = createTableAwareMock({
+      sequences: {
+        data: [
+          {
+            id: 'seq-1',
+            trigger_type: 'on_lead_created',
+            trigger_conditions: null,
+            division_id: null,
+          },
+        ],
+        error: null,
+      },
+      lead_account_matches: {
+        data: { account_id: 'acct-pharmacy', match_type: 'exact_email', match_score: 1.0 },
+        error: null,
+      },
+    });
+
+    const result = await evaluateTrigger(supabase, {
+      type: 'on_lead_created',
+      lead_id: 'lead-existing-customer',
+      data: {},
+    });
+
+    expect(result.enrolled).toBe(0);
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it('enrolls lead when no account match exists', async () => {
+    const supabase = createTableAwareMock({
+      sequences: {
+        data: [
+          {
+            id: 'seq-1',
+            trigger_type: 'on_lead_created',
+            trigger_conditions: null,
+            division_id: null,
+          },
+        ],
+        error: null,
+      },
+      lead_account_matches: { data: null, error: null },
+      sequence_enrollments: { data: null, error: null },
+      sequence_steps: {
+        data: { id: 'step-1', step_number: 1, delay_days: 0, delay_hours: 0 },
+        error: null,
+      },
+    });
+
+    const result = await evaluateTrigger(supabase, {
+      type: 'on_lead_created',
+      lead_id: 'lead-new-prospect',
+      data: {},
+    });
+
+    expect(result.enrolled).toBe(1);
   });
 });

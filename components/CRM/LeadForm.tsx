@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/select';
 import { useDivision } from '@/contexts/DivisionContext';
 import { type Lead, useCreateLead, useUpdateLead } from '@/hooks/useCRM';
+import { SOURCE_CHANNELS } from '@/lib/crm/constants';
 import {
   type LeadCreate,
   leadCreateSchema,
@@ -35,17 +36,6 @@ interface LeadFormProps {
   onSuccess?: (lead: Lead) => void;
   onCancel?: () => void;
 }
-
-const SOURCE_CHANNELS = [
-  'referral',
-  'website',
-  'cold_outreach',
-  'linkedin',
-  'trade_show',
-  'bid_board',
-  'repeat_client',
-  'other',
-];
 const INDUSTRIES = [
   'Restaurant & Food Service',
   'Retail',

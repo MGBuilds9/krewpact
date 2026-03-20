@@ -3,6 +3,9 @@
  * No database or auth dependencies.
  */
 
+import type { SourceCategory } from '@/lib/crm/constants';
+import { getSourceCategory } from '@/lib/crm/constants';
+
 // --- Input data interfaces (minimal fields needed for calculations) ---
 
 export interface OpportunityData {
@@ -65,6 +68,7 @@ export interface VelocityMetrics {
 export interface SourceMetrics {
   sources: {
     source: string;
+    category: SourceCategory;
     count: number;
     value: number;
     conversionRate: number;
@@ -274,6 +278,7 @@ export function calculateSourceMetrics(leads: LeadData[]): SourceMetrics {
   const sources = Array.from(sourceMap.entries())
     .map(([source, data]) => ({
       source,
+      category: getSourceCategory(source === 'Unknown' ? null : source),
       count: data.count,
       value: data.value,
       conversionRate: data.count > 0 ? data.converted / data.count : 0,

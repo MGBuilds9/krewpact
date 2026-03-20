@@ -166,38 +166,71 @@ describe('calculateSourceMetrics', () => {
 
   it('groups leads by source and calculates conversion rates', () => {
     const leads = [
-      makeLead({ source_channel: 'Website', status: 'new' }),
-      makeLead({ source_channel: 'Website', status: 'won' }),
-      makeLead({ source_channel: 'Referral', status: 'qualified' }),
+      makeLead({ source_channel: 'website', status: 'new' }),
+      makeLead({ source_channel: 'website', status: 'won' }),
+      makeLead({ source_channel: 'referral', status: 'qualified' }),
     ];
     const result = calculateSourceMetrics(leads);
     expect(result.sources).toHaveLength(2);
 
-    const website = result.sources.find((s) => s.source === 'Website');
+    const website = result.sources.find((s) => s.source === 'website');
     expect(website?.count).toBe(2);
     expect(website?.value).toBe(0);
     expect(website?.conversionRate).toBe(0.5);
 
-    const referral = result.sources.find((s) => s.source === 'Referral');
+    const referral = result.sources.find((s) => s.source === 'referral');
     expect(referral?.count).toBe(1);
     expect(referral?.conversionRate).toBe(0);
   });
 
   it('sorts sources by count descending', () => {
     const leads = [
-      makeLead({ source_channel: 'Low' }),
-      makeLead({ source_channel: 'High' }),
-      makeLead({ source_channel: 'High' }),
+      makeLead({ source_channel: 'other' }),
+      makeLead({ source_channel: 'apollo' }),
+      makeLead({ source_channel: 'apollo' }),
     ];
     const result = calculateSourceMetrics(leads);
-    expect(result.sources[0].source).toBe('High');
-    expect(result.sources[1].source).toBe('Low');
+    expect(result.sources[0].source).toBe('apollo');
+    expect(result.sources[1].source).toBe('other');
   });
 
   it('handles null source as Unknown', () => {
     const leads = [makeLead({ source_channel: null })];
     const result = calculateSourceMetrics(leads);
     expect(result.sources[0].source).toBe('Unknown');
+  });
+
+  it('categorizes inbound sources correctly', () => {
+    const leads = [
+      makeLead({ source_channel: 'website' }),
+      makeLead({ source_channel: 'referral' }),
+      makeLead({ source_channel: 'repeat_client' }),
+    ];
+    const result = calculateSourceMetrics(leads);
+    for (const s of result.sources) {
+      expect(s.category).toBe('inbound');
+    }
+  });
+
+  it('categorizes outbound sources correctly', () => {
+    const leads = [
+      makeLead({ source_channel: 'apollo' }),
+      makeLead({ source_channel: 'cold_outreach' }),
+      makeLead({ source_channel: 'door_knocking' }),
+      makeLead({ source_channel: 'networking' }),
+    ];
+    const result = calculateSourceMetrics(leads);
+    for (const s of result.sources) {
+      expect(s.category).toBe('outbound');
+    }
+  });
+
+  it('categorizes unknown/other sources as other', () => {
+    const leads = [makeLead({ source_channel: 'trade_show' }), makeLead({ source_channel: null })];
+    const result = calculateSourceMetrics(leads);
+    for (const s of result.sources) {
+      expect(s.category).toBe('other');
+    }
   });
 });
 

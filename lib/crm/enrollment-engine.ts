@@ -1,5 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+import { logger } from '@/lib/logger';
+
 export type TriggerType =
   | 'on_stage_change'
   | 'on_tag_added'
@@ -29,6 +31,25 @@ async function processSequenceEnrollment(
   try {
     const conditions = sequence.trigger_conditions as Record<string, unknown> | null;
     if (!matchesConditions(event.type, conditions, event.data)) return;
+
+    // Suppress outreach for leads matching existing customer accounts
+    const { data: accountMatch } = await supabase
+      .from('lead_account_matches')
+      .select('account_id, match_type, match_score')
+      .eq('lead_id', event.lead_id)
+      .gte('match_score', 0.8)
+      .limit(1)
+      .maybeSingle();
+
+    if (accountMatch) {
+      logger.warn('Skipping enrollment — lead matches existing customer account', {
+        lead_id: event.lead_id,
+        account_id: accountMatch.account_id,
+        match_type: accountMatch.match_type,
+        sequence_id: sequence.id,
+      });
+      return;
+    }
 
     const { data: existing, error: existError } = await supabase
       .from('sequence_enrollments')

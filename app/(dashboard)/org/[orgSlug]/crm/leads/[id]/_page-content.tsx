@@ -9,6 +9,7 @@ import {
   Phone,
   Plus,
   Send,
+  ShieldAlert,
   User,
   XCircle,
   Zap,
@@ -25,6 +26,7 @@ import { EmailComposeDialog } from '@/components/CRM/EmailComposeDialog';
 import { LeadScoreCard } from '@/components/CRM/LeadScoreCard';
 import { NotesPanel } from '@/components/CRM/NotesPanel';
 import { StageProgressBar } from '@/components/CRM/StageProgressBar';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,6 +37,7 @@ import {
   useActivities,
   useContacts,
   useLead,
+  useLeadAccountMatches,
   useLeadScoreBreakdown,
   useLeadStageTransition,
   useRecalculateLeadScore,
@@ -461,6 +464,7 @@ export default function LeadDetailPage() {
   const stageTransition = useLeadStageTransition();
   const recalculateScore = useRecalculateLeadScore();
   const { data: scoreBreakdown } = useLeadScoreBreakdown(leadId);
+  const { data: accountMatches } = useLeadAccountMatches(leadId);
   const [isEditing, setIsEditing] = useState(false);
   const [activityDialogOpen, setActivityDialogOpen] = useState(false);
   const [convertDialogOpen, setConvertDialogOpen] = useState(false);
@@ -503,6 +507,7 @@ export default function LeadDetailPage() {
     : undefined;
   const leadLocation = getLeadLocation(lead.city, lead.province);
   const leadTags = lead.tags || [];
+  const customerMatch = accountMatches?.find((m) => m.match_score >= 0.8);
 
   function handleNextStage() {
     if (!nextRegularStage) return;
@@ -524,6 +529,18 @@ export default function LeadDetailPage() {
         orgPush={orgPush}
       />
       <AiInsightBanner entityType="lead" entityId={leadId} />
+      {customerMatch && (
+        <Alert variant="destructive">
+          <ShieldAlert className="h-4 w-4" />
+          <AlertTitle>Existing Customer Match</AlertTitle>
+          <AlertDescription>
+            This lead matches <strong>{customerMatch.account?.account_name}</strong> (
+            {customerMatch.match_type.replace(/_/g, ' ')},{' '}
+            {Math.round(customerMatch.match_score * 100)}% confidence). Outreach sequences are
+            suppressed for existing customers.
+          </AlertDescription>
+        </Alert>
+      )}
       <LeadStageCard
         currentStage={currentStage}
         nextRegularStage={nextRegularStage}
