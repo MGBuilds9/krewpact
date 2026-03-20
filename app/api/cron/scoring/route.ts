@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { verifyCronAuth } from '@/lib/api/cron-auth';
 import { createCronLogger } from '@/lib/api/cron-logger';
+import { INBOUND_SOURCES } from '@/lib/crm/constants';
+import { matchSequenceToLead } from '@/lib/crm/industry-sequence-matcher';
 import type { ScoringRule } from '@/lib/crm/scoring-engine';
 import { scoreLead } from '@/lib/crm/scoring-engine';
 import { deepResearchLead } from '@/lib/integrations/deep-research';
@@ -115,19 +117,17 @@ async function maybeAutoEnroll(
   lead: Record<string, unknown>,
   totalScore: number,
 ): Promise<void> {
-  if (totalScore < 60) return;
   if (lead.current_sequence_id) return;
   if (lead.status !== 'new') return;
 
-  try {
-    const { data: sequence } = await supabase
-      .from('sequences')
-      .select('id')
-      .eq('trigger_type', 'score_threshold')
-      .eq('is_active', true)
-      .limit(1)
-      .single();
+  const source = lead.source_channel as string | null;
+  const isInbound = source !== null && (INBOUND_SOURCES as readonly string[]).includes(source);
+  const scoreThreshold = isInbound ? 60 : 75;
 
+  if (totalScore < scoreThreshold) return;
+
+  try {
+    const sequence = await matchSequenceToLead(supabase, lead.industry as string | null);
     if (!sequence) return;
 
     const { data: primaryContact } = await supabase
@@ -152,13 +152,15 @@ async function maybeAutoEnroll(
     nextAt.setDate(nextAt.getDate() + (firstStep.delay_days ?? 0));
     nextAt.setHours(nextAt.getHours() + (firstStep.delay_hours ?? 0));
 
+    const enrollmentStatus = isInbound ? 'active' : 'pending_review';
+
     const { error: enrollError } = await supabase.from('sequence_enrollments').insert({
       sequence_id: sequence.id,
       lead_id: lead.id as string,
       contact_id: primaryContact?.id ?? null,
       current_step: firstStep.step_number,
       current_step_id: firstStep.id,
-      status: 'active',
+      status: enrollmentStatus,
       enrolled_at: new Date().toISOString(),
       next_step_at: nextAt.toISOString(),
       trigger_type: 'score_threshold',
@@ -174,7 +176,9 @@ async function maybeAutoEnroll(
       .update({ current_sequence_id: sequence.id })
       .eq('id', lead.id as string);
 
-    logger.info(`Auto-enrolled lead ${lead.id} in sequence ${sequence.id} (score: ${totalScore})`);
+    logger.info(
+      `Auto-enrolled lead ${lead.id} in sequence ${sequence.id} (score: ${totalScore}, status: ${enrollmentStatus}, source: ${source ?? 'unknown'})`,
+    );
   } catch (err) {
     logger.error(`Auto-enroll error for ${lead.id}:`, { error: err });
   }
