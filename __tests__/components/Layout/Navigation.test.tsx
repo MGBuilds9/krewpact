@@ -52,6 +52,7 @@ vi.mock('lucide-react', () => ({
   Building2: () => <span>Building2</span>,
   Calculator: () => <span>Calculator</span>,
   Calendar: () => <span>Calendar</span>,
+  ChevronDown: () => <span>ChevronDown</span>,
   ClipboardList: () => <span>ClipboardList</span>,
   DollarSign: () => <span>DollarSign</span>,
   FileText: () => <span>FileText</span>,
@@ -59,6 +60,23 @@ vi.mock('lucide-react', () => ({
   Home: () => <span>Home</span>,
   Shield: () => <span>Shield</span>,
   Users: () => <span>Users</span>,
+}));
+
+// Mock Button to render children directly
+vi.mock('@/components/ui/button', () => ({
+  Button: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => (
+    <button {...props}>{children}</button>
+  ),
+}));
+
+// Mock DropdownMenu primitives to render children directly
+vi.mock('@/components/ui/dropdown-menu', () => ({
+  DropdownMenu: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  DropdownMenuTrigger: ({ children, asChild }: { children: React.ReactNode; asChild?: boolean }) =>
+    asChild ? <>{children}</> : <span>{children}</span>,
+  DropdownMenuContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  DropdownMenuItem: ({ children, asChild }: { children: React.ReactNode; asChild?: boolean }) =>
+    asChild ? <>{children}</> : <div>{children}</div>,
 }));
 
 // Mock Tooltip primitives (Radix) to render children directly

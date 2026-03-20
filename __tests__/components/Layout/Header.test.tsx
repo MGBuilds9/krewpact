@@ -97,7 +97,7 @@ vi.mock('next/dynamic', () => ({
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-import { useClerk,useUser } from '@clerk/nextjs';
+import { useClerk, useUser } from '@clerk/nextjs';
 
 import { useUserRBAC } from '@/hooks/useRBAC';
 
@@ -135,16 +135,7 @@ describe('Header', () => {
     vi.clearAllMocks();
   });
 
-  describe('skeleton loading state (user is null)', () => {
-    it('renders skeleton elements when user is null', () => {
-      setupLoading();
-      const { container } = render(<Header />);
-
-      // The shadcn Skeleton component renders a div with the animate-pulse class
-      const skeletons = container.querySelectorAll('[class*="animate-pulse"]');
-      expect(skeletons.length).toBeGreaterThan(0);
-    });
-
+  describe('loading state (user is null)', () => {
     it('does not show user name text when user is null', () => {
       setupLoading();
       render(<Header />);
@@ -168,31 +159,6 @@ describe('Header', () => {
   });
 
   describe('loaded state (user data available)', () => {
-    it('shows the user full name when user data is loaded', () => {
-      setupLoaded();
-      render(<Header />);
-
-      expect(screen.getByText('John Doe')).toBeInTheDocument();
-    });
-
-    it('shows formatted role text when primaryRole is available', () => {
-      setupLoaded({ primaryRole: 'project_manager' });
-      render(<Header />);
-
-      // role is formatted: underscores → spaces, title-cased
-      expect(screen.getByText('Project Manager')).toBeInTheDocument();
-    });
-
-    it('does not show role text when primaryRole is null', () => {
-      setupLoaded({ primaryRole: undefined });
-      render(<Header />);
-
-      // Username still visible
-      expect(screen.getByText('John Doe')).toBeInTheDocument();
-      // No role line rendered
-      expect(screen.queryByText(/manager|admin|coordinator/i)).toBeNull();
-    });
-
     it('does not render any text saying "Loading..."', () => {
       setupLoaded();
       render(<Header />);

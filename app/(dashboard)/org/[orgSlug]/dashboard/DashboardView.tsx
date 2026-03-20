@@ -56,35 +56,28 @@ interface WelcardProps {
 }
 function WelcomeCard({ userName, roles }: WelcardProps) {
   return (
-    <Card className="col-span-1 md:col-span-4 lg:col-span-4 row-span-2 bg-gradient-to-br from-primary/10 via-background to-secondary/10 border-0 shadow-sm rounded-3xl overflow-hidden relative">
-      <CardContent className="p-8 h-full flex flex-col justify-center">
-        <div className="relative z-10">
-          <h1 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground mb-2">
-            {getTimeGreeting()}, {userName}
-          </h1>
-          <p className="text-muted-foreground text-lg mb-6 max-w-lg">
-            Welcome to Krewpact. Here is an overview of your current operations and pending tasks
-            for today.
-          </p>
-          <div className="flex gap-3 flex-wrap">
-            {roles.length > 0 ? (
-              roles.map((role) => (
-                <Badge
-                  key={role.role_name}
-                  variant={role.is_primary ? 'default' : 'secondary'}
-                  className="text-sm px-3 py-1 rounded-full shadow-sm"
-                >
-                  {role.role_name.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
-                </Badge>
-              ))
-            ) : (
-              <Badge variant="secondary" className="text-sm px-3 py-1 rounded-full shadow-sm">
-                Employee
+    <Card className="col-span-1 md:col-span-4 lg:col-span-4 bg-gradient-to-br from-primary/10 via-background to-secondary/10 border-0 shadow-sm rounded-3xl overflow-hidden">
+      <CardContent className="p-6 flex flex-col justify-center">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-2">
+          {getTimeGreeting()}, {userName}
+        </h1>
+        <div className="flex gap-3 flex-wrap">
+          {roles.length > 0 ? (
+            roles.map((role) => (
+              <Badge
+                key={role.role_name}
+                variant={role.is_primary ? 'default' : 'secondary'}
+                className="text-sm px-3 py-1 rounded-full shadow-sm"
+              >
+                {role.role_name.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
               </Badge>
-            )}
-          </div>
+            ))
+          ) : (
+            <Badge variant="secondary" className="text-sm px-3 py-1 rounded-full shadow-sm">
+              Employee
+            </Badge>
+          )}
         </div>
-        <div className="absolute right-0 bottom-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-16 -mb-16 pointer-events-none" />
       </CardContent>
     </Card>
   );
@@ -276,43 +269,21 @@ export default function DashboardView() {
         </Card>
         <div className="col-span-1 md:col-span-4 lg:col-span-2 grid grid-cols-2 gap-4">
           {[
-            {
-              label: 'Log Expense',
-              path: '/expenses',
-              Icon: DollarSign,
-              from: 'from-green-500',
-              to: 'to-green-600',
-            },
-            {
-              label: 'New Report',
-              path: '/reports/new',
-              Icon: ClipboardList,
-              from: 'from-blue-500',
-              to: 'to-blue-600',
-            },
-            {
-              label: 'Documents',
-              path: '/documents',
-              Icon: FolderOpen,
-              from: 'from-purple-500',
-              to: 'to-purple-600',
-            },
-            {
-              label: 'Projects',
-              path: '/projects',
-              Icon: Briefcase,
-              from: 'from-orange-500',
-              to: 'to-orange-600',
-            },
-          ].map(({ label, path, Icon, from, to }) => (
+            { label: 'Log Expense', path: '/expenses', Icon: DollarSign },
+            { label: 'New Report', path: '/reports/new', Icon: ClipboardList },
+            { label: 'Documents', path: '/documents', Icon: FolderOpen },
+            { label: 'Projects', path: '/projects', Icon: Briefcase },
+          ].map(({ label, path, Icon }) => (
             <Card
               key={label}
-              className={`cursor-pointer hover:shadow-md hover:scale-[1.05] transition-all duration-200 rounded-2xl bg-gradient-to-br ${from} ${to} text-white border-0`}
+              className="cursor-pointer hover:shadow-md transition-all duration-200 rounded-2xl border bg-card"
               onClick={() => orgPush(path)}
             >
-              <CardContent className="p-5 flex flex-col justify-center items-center text-center h-full">
-                <Icon className="h-8 w-8 mb-2 opacity-90" />
-                <p className="font-semibold text-sm">{label}</p>
+              <CardContent className="p-4 flex flex-col items-center text-center gap-2">
+                <div className="p-2 bg-muted rounded-xl">
+                  <Icon className="h-5 w-5 text-foreground" />
+                </div>
+                <p className="text-sm font-medium">{label}</p>
               </CardContent>
             </Card>
           ))}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useClerk, useUser } from '@clerk/nextjs';
-import { Bell, Eye, LogOut, Menu, MoreHorizontal, Settings, User, X } from 'lucide-react';
+import { Bell, Eye, LogOut, Menu, Search, Settings, User, X } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import React from 'react';
@@ -19,7 +19,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MDMLogo } from '@/components/ui/MDMLogo';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
@@ -194,11 +193,8 @@ export function Header() {
   const [isImpersonationOpen, setIsImpersonationOpen] = React.useState(false);
 
   const { isImpersonating, stopImpersonation } = useImpersonation();
-  const { isAdmin, primaryRole } = useUserRBAC();
+  const { isAdmin } = useUserRBAC();
   const userName = user ? `${user.firstName} ${user.lastName}` : '';
-  const userRole = primaryRole
-    ? primaryRole.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
-    : '';
   const showQuickAccessToolbar = !pathname.endsWith('/dashboard') && pathname !== '/';
 
   const handleSignOut = async () => {
@@ -247,43 +243,22 @@ export function Header() {
               <div className="flex items-center gap-3 shrink-0 group cursor-pointer hover:opacity-80 transition-opacity">
                 <MDMLogo size="md" showText={true} />
               </div>
-              <nav className="hidden md:flex items-center flex-1 min-w-0 overflow-x-auto custom-scrollbar pb-1 -mb-1">
+              <nav className="hidden md:flex items-center flex-1 min-w-0">
                 <Navigation />
               </nav>
             </div>
-            <div className="flex items-center gap-2 md:gap-4 shrink-0">
+            <div className="flex items-center gap-2 md:gap-3 shrink-0">
               <DivisionSelector className="hidden md:flex" />
-              <div className="hidden sm:flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                <span className="text-sm text-green-700 dark:text-green-400 font-medium">
-                  Online
-                </span>
-              </div>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setIsCommandPaletteOpen(true)}
                 className="hover:bg-muted rounded-lg transition-colors duration-200"
-                aria-label="Open navigation menu"
+                aria-label="Search"
               >
-                <MoreHorizontal className="h-5 w-5" />
+                <Search className="h-5 w-5" />
               </Button>
               <NotificationBell />
-              {user ? (
-                <div className="hidden lg:flex items-center gap-3 bg-muted/30 rounded-lg px-3 py-2 border border-border/50">
-                  <div className="text-right">
-                    <div className="text-sm font-semibold text-foreground">{userName}</div>
-                    {userRole && <div className="text-xs text-muted-foreground">{userRole}</div>}
-                  </div>
-                </div>
-              ) : (
-                <div className="hidden lg:flex items-center gap-3 bg-muted/30 rounded-lg px-3 py-2 border border-border/50">
-                  <div className="text-right space-y-1">
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-3 w-16" />
-                  </div>
-                </div>
-              )}
               <SettingsDropdown
                 isAdmin={isAdmin}
                 onImpersonate={() => setIsImpersonationOpen(true)}

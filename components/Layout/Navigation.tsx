@@ -5,6 +5,7 @@ import {
   Building2,
   Calculator,
   Calendar,
+  ChevronDown,
   ClipboardList,
   DollarSign,
   FileText,
@@ -17,11 +18,20 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useMemo } from 'react';
 
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { useUserRBAC } from '@/hooks/useRBAC';
 import { type FeatureKey, isFeatureEnabled } from '@/lib/feature-flags';
 import { cn } from '@/lib/utils';
+
+const MAX_VISIBLE = 5;
 
 interface NavigationProps {
   isMobile?: boolean;
@@ -148,10 +158,16 @@ export function Navigation({ isMobile = false }: NavigationProps) {
     );
   }
 
+  const visibleItems = filteredItems.slice(0, MAX_VISIBLE);
+  const overflowItems = filteredItems.slice(MAX_VISIBLE);
+  const hasOverflowActive = overflowItems.some(
+    (item) => strippedPath === item.path || strippedPath.startsWith(item.path + '/'),
+  );
+
   return (
     <TooltipProvider delayDuration={300}>
       <div className="flex items-center justify-start gap-1 w-full relative">
-        {filteredItems.map((item) => {
+        {visibleItems.map((item) => {
           const href = orgPath(item.path);
           const isActive = strippedPath === item.path || strippedPath.startsWith(item.path + '/');
           return (
@@ -177,6 +193,47 @@ export function Navigation({ isMobile = false }: NavigationProps) {
             </Tooltip>
           );
         })}
+        {overflowItems.length > 0 && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant={hasOverflowActive ? 'default' : 'ghost'}
+                size="sm"
+                className={cn(
+                  'flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-sm font-medium shrink-0',
+                  hasOverflowActive && 'shadow-md font-bold',
+                )}
+              >
+                More
+                <ChevronDown className="h-3.5 w-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56">
+              {overflowItems.map((item) => {
+                const href = orgPath(item.path);
+                const isActive =
+                  strippedPath === item.path || strippedPath.startsWith(item.path + '/');
+                return (
+                  <DropdownMenuItem key={item.label} asChild>
+                    <Link
+                      href={href}
+                      className={cn(
+                        'flex items-center gap-3 cursor-pointer',
+                        isActive && 'bg-accent font-semibold',
+                      )}
+                    >
+                      <item.icon className="h-4 w-4 shrink-0" />
+                      <div>
+                        <div className="text-sm font-medium">{item.label}</div>
+                        <div className="text-xs text-muted-foreground">{item.description}</div>
+                      </div>
+                    </Link>
+                  </DropdownMenuItem>
+                );
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
     </TooltipProvider>
   );
