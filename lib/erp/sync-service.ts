@@ -19,11 +19,14 @@ import { createUserClient } from '@/lib/supabase/server';
 import { syncContact } from './sync-handlers/sync-contact';
 import { syncAccount } from './sync-handlers/sync-customer';
 import { syncExpenseClaim } from './sync-handlers/sync-expense';
+import { syncGoodsReceipt } from './sync-handlers/sync-goods-receipt';
+import { syncInventoryPo } from './sync-handlers/sync-inventory-po';
 import {
   readPaymentEntry,
   readPurchaseInvoice,
   readSalesInvoice,
 } from './sync-handlers/sync-invoices';
+import { syncMaterialCost } from './sync-handlers/sync-material-cost';
 import { syncOpportunity, syncWonDeal } from './sync-handlers/sync-opportunity';
 import { syncProject } from './sync-handlers/sync-project';
 import { syncEstimate } from './sync-handlers/sync-quotation';
@@ -89,6 +92,21 @@ export class SyncService {
 
   async syncTimesheet(timesheetBatchId: string, userId: string) {
     return syncTimesheet(timesheetBatchId, userId);
+  }
+
+  async syncInventoryPo(poId: string, userId: string) {
+    return syncInventoryPo(poId, userId);
+  }
+
+  async syncGoodsReceipt(grId: string, userId: string) {
+    return syncGoodsReceipt(grId, userId);
+  }
+
+  async syncMaterialCost(
+    options: { projectId: string; startDate: string; endDate: string },
+    userId: string,
+  ) {
+    return syncMaterialCost(options, userId);
   }
 
   async readSalesInvoice(erpDocname: string) {
