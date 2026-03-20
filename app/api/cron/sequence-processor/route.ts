@@ -6,6 +6,7 @@ import type { EmailSender, TemplateResolver } from '@/lib/crm/sequence-processor
 import { processSequences } from '@/lib/crm/sequence-processor';
 import { sendEmail } from '@/lib/email/resend';
 import { renderEmailTemplate, type TrackingConfig } from '@/lib/email/template-renderer';
+import { dispatchNotification } from '@/lib/notifications/dispatcher';
 import { createServiceClient } from '@/lib/supabase/server';
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.krewpact.com';
@@ -49,7 +50,20 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     },
   };
 
-  const result = await processSequences(supabase, { emailSender, templateResolver });
+  const result = await processSequences(supabase, {
+    emailSender,
+    templateResolver,
+    onTaskCreated: async (params) => {
+      await dispatchNotification({
+        type: 'sequence_task_created',
+        assignee_email: params.assigneeEmail,
+        assignee_name: params.assigneeName,
+        task_title: params.taskTitle,
+        lead_company: params.leadCompany,
+        lead_id: params.leadId,
+      });
+    },
+  });
 
   const response = {
     success: true,

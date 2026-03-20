@@ -75,13 +75,23 @@ interface PortalMessageReceivedEvent {
   thread_id: string;
 }
 
+interface SequenceTaskCreatedEvent {
+  type: 'sequence_task_created';
+  assignee_email: string;
+  assignee_name: string;
+  task_title: string;
+  lead_company: string;
+  lead_id: string;
+}
+
 export type NotificationEvent =
   | LeadAssignedEvent
   | EstimateApprovedEvent
   | ContractSignedEvent
   | TaskOverdueEvent
   | DailyLogSubmittedEvent
-  | PortalMessageReceivedEvent;
+  | PortalMessageReceivedEvent
+  | SequenceTaskCreatedEvent;
 
 // ---------------------------------------------------------------------------
 // Shared email wrapper
@@ -255,6 +265,26 @@ function buildPortalMessageReceived(event: PortalMessageReceivedEvent): EmailPay
   ];
 }
 
+function buildSequenceTaskCreated(event: SequenceTaskCreatedEvent): EmailPayload[] {
+  return [
+    {
+      to: event.assignee_email,
+      subject: `New task: ${event.task_title} — ${event.lead_company}`,
+      html: notificationHtml(
+        'Sequence Task Created',
+        [
+          `Hi ${event.assignee_name},`,
+          `A new task has been created for the lead <strong>${event.lead_company}</strong>:`,
+          `<strong>${event.task_title}</strong>`,
+          'Please complete this task at your earliest convenience.',
+        ],
+        `${APP_URL}/crm/leads/${event.lead_id}`,
+        'View Lead',
+      ),
+    },
+  ];
+}
+
 // ---------------------------------------------------------------------------
 // Dispatcher
 // ---------------------------------------------------------------------------
@@ -273,6 +303,8 @@ export function buildNotificationEmails(event: NotificationEvent): EmailPayload[
       return buildDailyLogSubmitted(event);
     case 'portal_message_received':
       return buildPortalMessageReceived(event);
+    case 'sequence_task_created':
+      return buildSequenceTaskCreated(event);
     default: {
       const _exhaustive: never = event;
       throw new Error(

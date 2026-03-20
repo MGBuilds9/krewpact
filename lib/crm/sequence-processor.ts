@@ -43,6 +43,13 @@ export interface TemplateResolver {
 export interface ProcessorOptions {
   emailSender?: EmailSender;
   templateResolver?: TemplateResolver;
+  onTaskCreated?: (params: {
+    assigneeEmail: string;
+    assigneeName: string;
+    taskTitle: string;
+    leadCompany: string;
+    leadId: string;
+  }) => Promise<void>;
 }
 
 /** Action types that create manual task reminders for salespeople */
@@ -193,14 +200,39 @@ async function executeStepAction(ctx: StepActionCtx): Promise<void> {
   if (actionType === 'email') {
     await executeEmailStep({ supabase, enrollment, step, actionConfig, now, options });
   } else if (actionType === 'task') {
+    const lead = enrollment.leads as Record<string, unknown> | null;
+    const assignedToId = lead?.assigned_to as string | null;
+    const taskTitle = (actionConfig.title as string) ?? 'Sequence task';
+
     const { error } = await supabase.from('activities').insert({
       activity_type: 'task',
-      title: (actionConfig.title as string) ?? 'Sequence task',
+      title: taskTitle,
       details: (actionConfig.description as string) ?? null,
       lead_id: enrollment.lead_id,
       contact_id: enrollment.contact_id ?? null,
+      assigned_to: assignedToId ?? null,
+      due_at: now,
     });
     if (error) throw new Error(`Failed to create activity: ${error.message}`);
+
+    if (assignedToId && options.onTaskCreated) {
+      const { data: assignee } = await supabase
+        .from('users')
+        .select('email, full_name')
+        .eq('id', assignedToId)
+        .single();
+
+      if (assignee?.email) {
+        const leadCompany = (lead?.company_name as string) ?? 'Unknown Company';
+        await options.onTaskCreated({
+          assigneeEmail: assignee.email as string,
+          assigneeName: (assignee.full_name as string) ?? 'Team Member',
+          taskTitle,
+          leadCompany,
+          leadId: enrollment.lead_id as string,
+        });
+      }
+    }
   } else if (MANUAL_ACTION_TYPES.includes(actionType as (typeof MANUAL_ACTION_TYPES)[number])) {
     const label = MANUAL_ACTION_LABELS[actionType] ?? actionType;
     const { error } = await supabase.from('activities').insert({

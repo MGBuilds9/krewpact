@@ -156,6 +156,27 @@ describe('buildNotificationEmails', () => {
     expect(emails[0].html).not.toContain(longMessage);
   });
 
+  it('sequence_task_created: returns 1 email to assignee with task title and lead company', () => {
+    const event: NotificationEvent = {
+      type: 'sequence_task_created',
+      assignee_email: 'david@mdm.ca',
+      assignee_name: 'David',
+      task_title: 'Call prospect',
+      lead_company: 'BuildRight Inc',
+      lead_id: 'lead-99',
+    };
+
+    const emails = buildNotificationEmails(event);
+    expect(emails).toHaveLength(1);
+    expect(emails[0].to).toBe('david@mdm.ca');
+    expect(emails[0].subject).toContain('Call prospect');
+    expect(emails[0].subject).toContain('BuildRight Inc');
+    expect(emails[0].html).toContain('David');
+    expect(emails[0].html).toContain('BuildRight Inc');
+    expect(emails[0].html).toContain('Call prospect');
+    expect(emails[0].html).toContain('lead-99');
+  });
+
   it('throws on unknown event type', () => {
     const badEvent = { type: 'unknown_type' } as unknown as NotificationEvent;
     expect(() => buildNotificationEmails(badEvent)).toThrow('Unknown notification event type');
@@ -233,6 +254,26 @@ describe('dispatchNotification', () => {
         assigned_by_name: 'Y',
       }),
     ).resolves.toBeUndefined();
+  });
+
+  it('calls sendEmail with correct subject for sequence_task_created', async () => {
+    await dispatchNotification({
+      type: 'sequence_task_created',
+      assignee_email: 'david@mdm.ca',
+      assignee_name: 'David',
+      task_title: 'Follow up call',
+      lead_company: 'ConstructCo',
+      lead_id: 'lead-50',
+    });
+
+    expect(mockSendEmail).toHaveBeenCalledTimes(1);
+    expect(mockSendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: 'david@mdm.ca',
+        subject: expect.stringContaining('Follow up call'),
+        html: expect.stringContaining('ConstructCo'),
+      }),
+    );
   });
 
   it('sends correct HTML content for estimate_approved', async () => {
