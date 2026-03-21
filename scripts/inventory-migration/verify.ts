@@ -36,9 +36,9 @@ interface CSVRow {
 
 // Division mapping — must match transform.ts
 const DIVISION_MAP: Record<string, string> = {
-  'MDM_Telecom_Inc.': 'PLACEHOLDER_TELECOM_DIVISION_UUID',
-  MDM_Wood_Industries: 'PLACEHOLDER_WOOD_DIVISION_UUID',
-  'MDM_Contracting_Inc.': 'PLACEHOLDER_CONTRACTING_DIVISION_UUID',
+  'MDM_Telecom_Inc.': 'f620691b-c153-4427-b8c4-9d36ece8eac9',
+  MDM_Wood_Industries: '90fd5f6b-9ff5-4adf-981e-11c762c9cb69',
+  'MDM_Contracting_Inc.': 'be7931f8-bd30-4307-955d-1a10c59f5860',
 };
 
 const DIVISION_LABELS: Record<string, string> = {

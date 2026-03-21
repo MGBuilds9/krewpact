@@ -43,7 +43,7 @@ for company in "${COMPANIES[@]}"; do
     OUTFILE="$OUTPUT_DIR/${SAFE_NAME}_${table}.csv"
     echo -n "  $table... "
 
-    if mdb-export "$DATA_FILE" "$table" > "$OUTFILE" 2>/dev/null; then
+    if mdb-export -b strip "$DATA_FILE" "$table" > "$OUTFILE" 2>/dev/null; then
       # Count rows (subtract header)
       row_count=$(($(wc -l < "$OUTFILE") - 1))
       echo "${row_count} rows"
