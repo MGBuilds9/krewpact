@@ -358,40 +358,21 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
-### Mar 20, 2026 — Almyta Migration Execution + Doc Cleanup
+### Mar 21, 2026 — AI Takeoff Engine Integration + App Audit + Database Seeding
 
-- **Changes:** Ran full Almyta → Supabase migration pipeline. Discovered "374K items" was inflated by binary PartImage blobs — actual count is 1,698 items (221 Telecom, 1,063 Wood, 414 Contracting). Fixed extraction with `mdb-export -b strip`. Created 6 warehouse/showroom locations (Timberlea Blvd warehouse + Queen St S showroom, one per division for RLS). All items, categories (11), and initial stock entries (276) loaded successfully. Verification passed within rounding tolerance. Enabled `inventory_management` feature flag. Doc cleanup: removed obsolete BullMQ plan, fixed stale BullMQ→QStash refs in lib/CLAUDE.md, updated session-log.md through Mar 20.
-- **Decisions:** All 3 divisions share one physical warehouse at 5585 Timberlea Blvd, Mississauga + showroom at 25 Queen St S (samples only). Separate location records per division for RLS.
+- **Changes:** Full AI takeoff engine integration (Phases 1-4): engine client with circuit breaker, upload route + webhook receiver, draft line review panel with inline editing + confidence badges, feedback training loop via QStash, Sentry error context. Deep audit found 4 critical + 4 high issues (all fixed): webhook status filter, CSP/PDF worker, API response shape mismatches, null plan_id guard, missing created_by, render-time side effect. Deployed engine to Modal (serverless, no GPU needed — uses Gemini API). Set up Cloudflare DNS CNAME. Fixed eslint-plugin-react ESLint 10 incompatibility. Added item suppliers tab (API + hooks + UI). Seeded database: 12 trade partner suppliers, 5 client accounts, 3 opportunities, 1 estimate with 4 lines.
+- **Files:** 19 new files, 8 modified (takeoff integration). Item suppliers: 1 new API route, 3 modified files. `react-pdf` dependency added.
+- **Infra:** Takeoff engine deployed at `michaelguirguis9--takeoff-engine-fastapi-app.modal.run`. Vercel env vars set (TAKEOFF_ENGINE_URL, TOKEN, SENTRY_ORG/PROJECT/AUTH_TOKEN). Supabase: 5 takeoff tables with org-scoped RLS, `takeoff-plans` storage bucket, storage RLS policies. DNS: `takeoff.mdmgroupinc.ca` CNAME created (Modal custom domain TLS pending).
 - **Tests:** 4,310/4,310 passing (372 files). 0 type errors. Build clean.
-- **Next steps:** Visual verification of inventory UI with live data. Vendor mapping (requires portal_accounts). Serial tracking for Telecom items if needed.
+- **Next steps:** Visual verification of all pages with seeded data. Modal custom domain TLS setup. Cost catalog seeding. Phase 5 polish (error states, stale job cleanup, page classification preview).
 
-### Mar 20, 2026 — Estimate Builder Phase 2 (P0 Fixes)
+### Mar 20, 2026 — Almyta Migration + Estimate Builder + Enrollment Gate
 
-- **Changes:** Fixed 3 critical gaps preventing end-to-end estimate builder usage. (1) Fixed inline line editing — `onUpdateLine` was ignoring `lineId`/`field`/`value` and calling `updateEstimate.mutate()` instead of line PATCH; added `useUpdateEstimateLine` hook. (2) Created `/estimates/new` page with form (division auto-fill, opportunity/account selects, currency). (3) Added estimates sub-navigation layout with tabs (Estimates | Assemblies | Catalog | Templates) that auto-hides on detail/creation pages.
-- **Files created:** `estimates/new/page.tsx`, `estimates/new/_page-content.tsx`, `components/Estimates/EstimatesNav.tsx`
-- **Files modified:** `hooks/useEstimates.ts`, `estimates/[id]/_page-content.tsx`, `estimates/layout.tsx`, test mock
-- **Tests:** 4,029/4,029 passing (356 files). 0 type errors. Build clean.
-- **Next steps:** P1 — cost catalog picker in LineItemEditor, ERPNext Quotation sync on status→sent. P2 — assembly insertion, create-from-template flow.
-
-### Mar 20, 2026 — Inventory System Design (Almyta Replacement)
-
-- **Changes:** Designed full inventory system to replace Almyta Control System. Append-only double-entry ledger, 11 new tables, fleet vehicles, serial/lot tracking, PO lifecycle with partial receiving, job costing integration. Verified all FKs and RLS patterns against live Supabase. Discovered Almyta data export was schema-only — located real data in per-company Access `.data` files (~1,700 parts total; original 374K was inflated by binary PartImage blobs). Installed `mdbtools` for extraction.
-- **Architecture decision:** Inventory authority moved from ERPNext to KrewPact. ERPNext retains finance/procurement authority but inventory operations (items, stock, POs, receiving, tool checkout) live in Supabase.
-- **Key integration:** Ledger `project_id` feeds job costing alongside `time_entries` + `expense_claims`. POs reference `portal_accounts` (trade partners). Items link to `cost_catalog_items` (estimating rates).
-- **Spec:** `docs/superpowers/specs/2026-03-20-inventory-system-design.md`
-- **Next steps:** Write implementation plan. Extract Almyta data via mdbtools. Build migration script. Schema migration to Supabase. UI (items list, PO creation, receiving, stock views).
-
-### Mar 20, 2026 — Enrollment Approval Gate + Email Template Cleanup
-
-- **Changes:** All sequence enrollments now require `pending_review` approval (inbound leads no longer bypass). Rewrote Initial Outreach and Follow-Up email templates: removed `{{city}}` references, fabricated claims ("active projects in your area"), and personal name signatures — company identity only. Fixed variable resolver to compute `full_name` from first+last and added `city`/`province` vars. Built enrollment approvals UI (CRM Settings → Enrollment Approvals) with approve/reject buttons using existing API endpoints. Updated DB templates via Supabase SQL.
-- **Tests:** 4,029/4,029 passing (356 files). 0 type errors. Build clean.
-- **Next steps:** E2E verification of full loop (score → enroll → approve → send). Estimate builder if CRM automation is stable. Week 7+ contracting features (proposals, BoldSign e-sign) after estimating.
+- **Changes:** (1) Ran full Almyta → Supabase migration — 1,698 items across 3 divisions, 6 locations, 11 categories. (2) Fixed 3 estimate builder gaps: inline editing, new estimate page, sub-nav. (3) Designed inventory system (11 tables, append-only ledger). (4) Enrollment approval gate + email template rewrite.
+- **Tests:** 4,310/4,310 passing. Build clean.
 
 - Mar 19: Header & Dashboard UI Polish — Nav overflow dropdown, clean dashboard cards. 3,986 tests.
 - Mar 17: Fix Email Pipeline, Smoke Test Spam, ERPNext Auth — 5 compounding issues. 3,981 tests.
 - Mar 17: Production Hardening — Feature gating (16 flags), UX fixes (8 broken UI items), AI guardrails. 3,871 tests.
 - Mar 16: Production Hardening — Demo removal, coding standards (10 ESLint rules), 8 file splits. 3,871 tests.
 - Mar 14: Scoring alignment + RBAC Unification + Platform Hardening + Mobile scaffold. 3,866 tests.
-- Mar 13: David's Sales Deliverables + CEO Sales Book v2 + Leads folder optimization.
-- Mar 12: AI Agentic Layer (8 agents, Gemini Flash, killswitch) + Lusha Integration. 3,750 tests.
-- Mar 11: Closed-Loop CRM + 7-agent audit (79 files fixed). 3,489 tests.
