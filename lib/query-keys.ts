@@ -116,6 +116,8 @@ export const queryKeys = {
     list: (filters: object) => [...queryKeys.inventoryItems.lists(), filters] as const,
     details: () => [...queryKeys.inventoryItems.all, 'detail'] as const,
     detail: (id: string) => [...queryKeys.inventoryItems.details(), id] as const,
+    suppliers: (itemId: string) =>
+      [...queryKeys.inventoryItems.detail(itemId), 'suppliers'] as const,
   },
   inventoryStock: {
     all: ['inventory-stock'] as const,

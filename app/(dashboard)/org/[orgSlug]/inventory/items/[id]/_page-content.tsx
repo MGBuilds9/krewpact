@@ -17,12 +17,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useInventoryItem, useInventoryStock } from '@/hooks/useInventory';
+import { useInventoryItem, useInventoryStock, useItemSuppliers } from '@/hooks/useInventory';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { formatCurrency, formatDate } from '@/lib/date';
 import { cn } from '@/lib/utils';
 
-const TABS = ['Details', 'Stock', 'History'] as const;
+const TABS = ['Details', 'Stock', 'Suppliers', 'History'] as const;
 type Tab = (typeof TABS)[number];
 
 function DetailField({
@@ -122,6 +122,75 @@ function StockTab({ itemId }: { itemId: string }) {
   );
 }
 
+function SuppliersTab({ itemId }: { itemId: string }) {
+  const { data: suppliers, isLoading } = useItemSuppliers(itemId);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Suppliers</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Company</TableHead>
+              <TableHead>Part #</TableHead>
+              <TableHead className="text-right">Price</TableHead>
+              <TableHead className="text-right">Lead Days</TableHead>
+              <TableHead className="text-right">Pack Size</TableHead>
+              <TableHead>Preferred</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading &&
+              Array.from({ length: 3 }, (_, i) => `sup-${i}`).map((k) => (
+                <TableRow key={k}>
+                  {Array.from({ length: 6 }, (_, j) => `c-${j}`).map((ck) => (
+                    <TableCell key={ck}>
+                      <Skeleton className="h-5 w-full" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            {!isLoading && !suppliers?.length && (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center text-muted-foreground py-6">
+                  No suppliers linked to this item
+                </TableCell>
+              </TableRow>
+            )}
+            {suppliers?.map((s) => (
+              <TableRow key={s.id}>
+                <TableCell className="font-medium">{s.company_name ?? '--'}</TableCell>
+                <TableCell className="font-mono text-sm">
+                  {s.supplier_part_number ?? '--'}
+                </TableCell>
+                <TableCell className="text-right">
+                  {s.supplier_price != null ? formatCurrency(s.supplier_price) : '--'}
+                </TableCell>
+                <TableCell className="text-right font-mono">
+                  {s.lead_days != null ? s.lead_days : '--'}
+                </TableCell>
+                <TableCell className="text-right font-mono">
+                  {s.pack_size != null ? s.pack_size : '--'}
+                </TableCell>
+                <TableCell>
+                  {s.is_preferred && (
+                    <Badge variant="default" className="text-xs">
+                      Preferred
+                    </Badge>
+                  )}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+}
+
 function HistoryTab() {
   return (
     <Card>
@@ -200,6 +269,7 @@ export default function ItemDetailContent() {
 
       {activeTab === 'Details' && <DetailsTab item={item} />}
       {activeTab === 'Stock' && <StockTab itemId={itemId} />}
+      {activeTab === 'Suppliers' && <SuppliersTab itemId={itemId} />}
       {activeTab === 'History' && <HistoryTab />}
     </div>
   );

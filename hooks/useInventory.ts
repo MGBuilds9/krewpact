@@ -191,3 +191,64 @@ export function useLowStockItems(divisionId?: string) {
     staleTime: 30_000,
   });
 }
+
+export interface ItemSupplier {
+  id: string;
+  item_id: string;
+  supplier_id: string;
+  company_name: string | null;
+  email: string | null;
+  phone: string | null;
+  supplier_part_number: string | null;
+  supplier_price: number | null;
+  lead_days: number | null;
+  pack_size: number | null;
+  is_preferred: boolean;
+}
+
+export function useItemSuppliers(itemId: string) {
+  return useQuery({
+    queryKey: queryKeys.inventoryItems.suppliers(itemId),
+    queryFn: () => apiFetch<ItemSupplier[]>(`/api/inventory/items/${itemId}/suppliers`),
+    enabled: !!itemId,
+    staleTime: 60_000,
+  });
+}
+
+export function useAddItemSupplier() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      itemId,
+      ...data
+    }: {
+      itemId: string;
+      supplier_id: string;
+      supplier_part_number?: string;
+      supplier_price?: number;
+      lead_days?: number;
+      pack_size?: number;
+      is_preferred?: boolean;
+    }) => apiFetch(`/api/inventory/items/${itemId}/suppliers`, { method: 'POST', body: data }),
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.inventoryItems.suppliers(vars.itemId),
+      });
+    },
+  });
+}
+
+export function useRemoveItemSupplier() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ itemId, supplierId }: { itemId: string; supplierId: string }) =>
+      apiFetch(`/api/inventory/items/${itemId}/suppliers?supplierId=${supplierId}`, {
+        method: 'DELETE',
+      }),
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.inventoryItems.suppliers(vars.itemId),
+      });
+    },
+  });
+}
