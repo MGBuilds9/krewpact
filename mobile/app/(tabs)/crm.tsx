@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  RefreshControl,
-  StyleSheet,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, FlatList, RefreshControl, StyleSheet, ActivityIndicator } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { api, Lead } from '@/lib/api-client';
 import { queryKeys } from '@/lib/query-client';
@@ -32,22 +25,25 @@ function LeadCard({ lead }: { lead: Lead }) {
         <Text style={styles.companyName} numberOfLines={1}>
           {lead.company_name ?? 'Unknown Company'}
         </Text>
-        <View style={[styles.badge, { backgroundColor: statusColor + '22', borderColor: statusColor }]}>
+        <View
+          style={[styles.badge, { backgroundColor: statusColor + '22', borderColor: statusColor }]}
+        >
           <Text style={[styles.badgeText, { color: statusColor }]}>
             {lead.status.replace('_', ' ')}
           </Text>
         </View>
       </View>
-      {lead.contact_name && (
-        <Text style={styles.contactName}>{lead.contact_name}</Text>
+      {(lead.city || lead.province) && (
+        <Text style={styles.contactName}>
+          {[lead.city, lead.province].filter(Boolean).join(', ')}
+        </Text>
       )}
+      {lead.industry && <Text style={styles.contactName}>{lead.industry}</Text>}
       <View style={styles.cardFooter}>
-        {lead.source && (
-          <Text style={styles.meta}>{lead.source}</Text>
-        )}
-        {lead.score !== null && (
+        {lead.source_channel && <Text style={styles.meta}>{lead.source_channel}</Text>}
+        {lead.lead_score !== null && (
           <View style={styles.scoreChip}>
-            <Text style={styles.scoreText}>Score: {lead.score}</Text>
+            <Text style={styles.scoreText}>Score: {lead.lead_score}</Text>
           </View>
         )}
       </View>
@@ -86,9 +82,7 @@ export default function CRMScreen() {
       contentContainerStyle={styles.content}
       data={data ?? []}
       keyExtractor={(item) => item.id}
-      refreshControl={
-        <RefreshControl refreshing={isFetching && !isLoading} onRefresh={refetch} />
-      }
+      refreshControl={<RefreshControl refreshing={isFetching && !isLoading} onRefresh={refetch} />}
       ListHeaderComponent={
         <View style={styles.headerRow}>
           <Text style={styles.header}>CRM</Text>
@@ -105,18 +99,56 @@ export default function CRMScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.surface },
   content: { padding: SPACING.md, paddingBottom: SPACING.xl },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: SPACING.md },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginBottom: SPACING.md,
+  },
   header: { fontSize: 24, fontWeight: '700', color: COLORS.text },
   count: { fontSize: 14, color: COLORS.muted },
-  card: { backgroundColor: COLORS.background, borderRadius: 12, padding: SPACING.md, borderWidth: 1, borderColor: COLORS.border },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.xs },
-  companyName: { flex: 1, fontSize: 16, fontWeight: '600', color: COLORS.text, marginRight: SPACING.sm },
-  badge: { borderRadius: 12, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 2, flexShrink: 0 },
+  card: {
+    backgroundColor: COLORS.background,
+    borderRadius: 12,
+    padding: SPACING.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.xs,
+  },
+  companyName: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginRight: SPACING.sm,
+  },
+  badge: {
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    flexShrink: 0,
+  },
   badgeText: { fontSize: 12, fontWeight: '600', textTransform: 'capitalize' },
   contactName: { fontSize: 14, color: COLORS.textSecondary },
-  cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: SPACING.xs },
+  cardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: SPACING.xs,
+  },
   meta: { fontSize: 13, color: COLORS.muted },
-  scoreChip: { backgroundColor: COLORS.primary + '15', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 },
+  scoreChip: {
+    backgroundColor: COLORS.primary + '15',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
   scoreText: { fontSize: 12, color: COLORS.primary, fontWeight: '600' },
   separator: { height: SPACING.sm },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },

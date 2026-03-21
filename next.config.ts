@@ -1,9 +1,16 @@
 import withBundleAnalyzer from '@next/bundle-analyzer';
 import { withSentryConfig } from '@sentry/nextjs';
+import withSerwist from '@serwist/next';
 import type { NextConfig } from 'next';
 
 const analyzeBundles = withBundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
+});
+
+const withPWA = withSerwist({
+  swSrc: 'app/sw.ts',
+  swDest: 'public/sw.js',
+  disable: process.env.NODE_ENV === 'development',
 });
 
 const nextConfig: NextConfig = {
@@ -44,7 +51,7 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withSentryConfig(analyzeBundles(nextConfig), {
+export default withSentryConfig(withPWA(analyzeBundles(nextConfig)), {
   silent: !process.env.SENTRY_AUTH_TOKEN,
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,

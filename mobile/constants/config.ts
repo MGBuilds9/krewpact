@@ -1,8 +1,11 @@
-export const API_BASE_URL = __DEV__
-  ? 'http://localhost:3000'
-  : 'https://hub.mdmgroupinc.ca';
+import Constants from 'expo-constants';
 
-export const CLERK_PUBLISHABLE_KEY = 'pk_live_Y2xlcmsuaHViLm1kbWdyb3VwaW5jLmNhJA';
+const extra = Constants.expoConfig?.extra ?? {};
+
+export const API_BASE_URL: string =
+  extra.apiBaseUrl ?? (__DEV__ ? 'http://localhost:3000' : 'https://hub.mdmgroupinc.ca');
+
+export const CLERK_PUBLISHABLE_KEY: string = extra.clerkPublishableKey ?? '';
 
 export const COLORS = {
   primary: '#2563EB',

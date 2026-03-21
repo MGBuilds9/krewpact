@@ -9,8 +9,8 @@ npm-debug.*
 *.mobileprovision
 *.orig.*
 web-build/
-.env.local
-.env.production
+.env
+.env.*
 ios/
 android/
 

@@ -4,6 +4,7 @@ import { BottomNav } from '@/components/Layout/BottomNav';
 import { Breadcrumbs } from '@/components/Layout/Breadcrumbs';
 import { Header } from '@/components/Layout/Header';
 import { QuickAddFAB } from '@/components/Layout/QuickAddFAB';
+import { InstallPrompt } from '@/components/PWA/InstallPrompt';
 import { DivisionProvider } from '@/contexts/DivisionContext';
 import { ImpersonationProvider } from '@/contexts/ImpersonationContext';
 
@@ -36,6 +37,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           {/* Quick Add FAB */}
           <QuickAddFAB />
+
+          {/* PWA install prompt (mobile only) */}
+          <InstallPrompt />
         </div>
       </DivisionProvider>
     </ImpersonationProvider>

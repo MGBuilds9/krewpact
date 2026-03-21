@@ -1,5 +1,9 @@
 import { API_BASE_URL } from '@/constants/config';
 
+// ============================================================
+// Error handling
+// ============================================================
+
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -11,11 +15,19 @@ export class ApiError extends Error {
   }
 }
 
+// ============================================================
+// Token provider (set by AuthProvider)
+// ============================================================
+
 let tokenProvider: (() => Promise<string | null>) | null = null;
 
 export function setTokenProvider(fn: () => Promise<string | null>) {
   tokenProvider = fn;
 }
+
+// ============================================================
+// Base fetch helper
+// ============================================================
 
 async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers: Record<string, string> = {
@@ -52,110 +64,209 @@ async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> 
   return response.json() as Promise<T>;
 }
 
-// TypeScript interfaces
-export interface DashboardData {
-  activeProjects: number;
-  healthyProjects: number;
-  overdueTasks: number;
-  upcomingMilestones: number;
-  projectHealth: ProjectHealth[];
+// ============================================================
+// Response wrappers — match web app pagination helper
+// ============================================================
+
+/** All list endpoints return this shape via lib/api/pagination.ts */
+interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  hasMore: boolean;
 }
 
+// ============================================================
+// Types — aligned with actual API response shapes
+// ============================================================
+
+/** GET /api/dashboard */
+export interface DashboardData {
+  atAGlance: {
+    activeProjects: number;
+    pendingExpenses: number;
+    openLeads: number;
+    unreadNotifications: number;
+  };
+  recentProjects: Project[];
+}
+
+/** GET /api/projects → PaginatedResponse<Project> */
 export interface Project {
   id: string;
-  project_number: string;
   project_name: string;
+  project_number: string;
   status: string;
+  division_id: string;
+  account_id: string | null;
+  contact_id: string | null;
+  baseline_budget: number | null;
+  current_budget: number | null;
   start_date: string | null;
-  end_date: string | null;
-  org_id: string;
+  target_completion_date: string | null;
+  actual_completion_date: string | null;
+  site_address: Record<string, unknown> | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
 }
 
-export interface ProjectHealth {
-  id: string;
-  project_number: string;
-  project_name: string;
-  status: string;
-  health: 'healthy' | 'at_risk' | 'critical';
-  milestone_total: number;
-  milestone_complete: number;
-  overdue_tasks: number;
-}
-
+/** GET /api/projects/[id]/tasks → PaginatedResponse<Task> */
 export interface Task {
   id: string;
-  title: string;
-  status: string;
-  due_date: string | null;
-  assignee_id: string | null;
   project_id: string;
+  title: string;
+  description: string | null;
+  status: string;
+  priority: string;
+  assigned_user_id: string | null;
+  milestone_id: string | null;
+  start_at: string | null;
+  due_at: string | null;
+  completed_at: string | null;
+  blocked_reason: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
 }
 
+/** GET /api/crm/leads → { data: Lead[], total, hasMore } */
 export interface Lead {
   id: string;
   company_name: string | null;
-  contact_name: string | null;
   status: string;
-  source: string | null;
-  score: number | null;
+  lead_score: number | null;
+  fit_score: number | null;
+  intent_score: number | null;
+  engagement_score: number | null;
+  source_channel: string | null;
+  assigned_to: string | null;
+  division_id: string;
+  city: string | null;
+  province: string | null;
+  industry: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
+/** GET /api/projects/[id]/daily-logs → PaginatedResponse<DailyLog> */
 export interface DailyLog {
   id: string;
   project_id: string;
-  summary: string;
-  weather: string | null;
-  workers_on_site: number | null;
-  photos: string[];
+  log_date: string;
+  work_summary: string | null;
+  crew_count: number | null;
+  delays: string | null;
+  safety_notes: string | null;
+  weather: Record<string, unknown> | null;
+  is_offline_origin: boolean;
+  submitted_at: string | null;
+  submitted_by: string | null;
   created_at: string;
-  created_by: string;
+  updated_at: string;
 }
 
+/** POST body for daily log creation — matches dailyLogCreateSchema */
+export interface DailyLogCreate {
+  log_date: string;
+  work_summary?: string;
+  crew_count?: number;
+  weather?: Record<string, unknown>;
+  delays?: string;
+  safety_notes?: string;
+  is_offline_origin?: boolean;
+}
+
+/** GET /api/projects/[id]/time-entries → PaginatedResponse<TimeEntry> */
 export interface TimeEntry {
   id: string;
+  project_id: string;
+  task_id: string | null;
   user_id: string;
-  project_id: string | null;
-  clock_in: string;
-  clock_out: string | null;
-  duration_minutes: number | null;
+  work_date: string;
+  hours_regular: number;
+  hours_overtime: number;
+  cost_code: string | null;
+  notes: string | null;
+  source: string;
+  created_at: string;
+  updated_at: string;
 }
 
-// API object
+/** POST body for time entry — matches timeEntryCreateSchema */
+export interface TimeEntryCreate {
+  user_id: string;
+  work_date: string;
+  hours_regular: number;
+  hours_overtime?: number;
+  task_id?: string;
+  cost_code?: string;
+  notes?: string;
+  source?: string;
+}
+
+/** GET /api/notifications → PaginatedResponse<Notification> */
+export interface AppNotification {
+  id: string;
+  title: string;
+  body: string | null;
+  state: string;
+  created_at: string;
+}
+
+// ============================================================
+// API client — endpoints match actual web app routes
+// ============================================================
+
 export const api = {
   dashboard: {
     get: () => apiFetch<DashboardData>('/api/dashboard'),
   },
+
   projects: {
-    list: () => apiFetch<Project[]>('/api/projects'),
+    list: () => apiFetch<PaginatedResponse<Project>>('/api/projects').then((r) => r.data),
     get: (id: string) => apiFetch<Project>(`/api/projects/${id}`),
+
     tasks: {
       list: (projectId: string) =>
-        apiFetch<Task[]>(`/api/projects/${projectId}/tasks`),
+        apiFetch<PaginatedResponse<Task>>(`/api/projects/${projectId}/tasks`).then((r) => r.data),
     },
+
     dailyLogs: {
       list: (projectId: string) =>
-        apiFetch<DailyLog[]>(`/api/projects/${projectId}/daily-logs`),
-      create: (projectId: string, data: Partial<DailyLog>) =>
+        apiFetch<PaginatedResponse<DailyLog>>(`/api/projects/${projectId}/daily-logs`).then(
+          (r) => r.data,
+        ),
+      create: (projectId: string, data: DailyLogCreate) =>
         apiFetch<DailyLog>(`/api/projects/${projectId}/daily-logs`, {
           method: 'POST',
           body: JSON.stringify(data),
         }),
     },
-  },
-  crm: {
-    leads: {
-      list: () => apiFetch<Lead[]>('/api/crm/leads'),
+
+    timeEntries: {
+      list: (projectId: string) =>
+        apiFetch<PaginatedResponse<TimeEntry>>(`/api/projects/${projectId}/time-entries`).then(
+          (r) => r.data,
+        ),
+      create: (projectId: string, data: TimeEntryCreate) =>
+        apiFetch<TimeEntry>(`/api/projects/${projectId}/time-entries`, {
+          method: 'POST',
+          body: JSON.stringify(data),
+        }),
     },
   },
-  timesheets: {
-    clockIn: (data: { project_id?: string }) =>
-      apiFetch<TimeEntry>('/api/timesheets/clock', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      }),
-    clockOut: (id: string) =>
-      apiFetch<TimeEntry>(`/api/timesheets/clock/${id}`, {
-        method: 'PATCH',
-      }),
+
+  crm: {
+    leads: {
+      list: () =>
+        apiFetch<{ data: Lead[]; total: number; hasMore: boolean }>('/api/crm/leads').then(
+          (r) => r.data,
+        ),
+    },
+  },
+
+  notifications: {
+    list: () =>
+      apiFetch<PaginatedResponse<AppNotification>>('/api/notifications').then((r) => r.data),
   },
 };

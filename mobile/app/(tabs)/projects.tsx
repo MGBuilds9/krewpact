@@ -28,15 +28,24 @@ function ProjectCard({ project, onPress }: { project: Project; onPress: () => vo
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.cardHeader}>
         <Text style={styles.projectNumber}>{project.project_number}</Text>
-        <View style={[styles.badge, { backgroundColor: statusColor + '22', borderColor: statusColor }]}>
+        <View
+          style={[styles.badge, { backgroundColor: statusColor + '22', borderColor: statusColor }]}
+        >
           <Text style={[styles.badgeText, { color: statusColor }]}>
             {project.status.replace('_', ' ')}
           </Text>
         </View>
       </View>
-      <Text style={styles.projectName} numberOfLines={2}>{project.project_name}</Text>
+      <Text style={styles.projectName} numberOfLines={2}>
+        {project.project_name}
+      </Text>
       {project.start_date && (
         <Text style={styles.date}>Started {new Date(project.start_date).toLocaleDateString()}</Text>
+      )}
+      {project.target_completion_date && (
+        <Text style={styles.date}>
+          Due {new Date(project.target_completion_date).toLocaleDateString()}
+        </Text>
       )}
     </TouchableOpacity>
   );
@@ -74,16 +83,11 @@ export default function ProjectsScreen() {
       contentContainerStyle={styles.content}
       data={data ?? []}
       keyExtractor={(item) => item.id}
-      refreshControl={
-        <RefreshControl refreshing={isFetching && !isLoading} onRefresh={refetch} />
-      }
+      refreshControl={<RefreshControl refreshing={isFetching && !isLoading} onRefresh={refetch} />}
       ListHeaderComponent={<Text style={styles.header}>Projects</Text>}
       ListEmptyComponent={<Text style={styles.empty}>No projects found.</Text>}
       renderItem={({ item }) => (
-        <ProjectCard
-          project={item}
-          onPress={() => router.push(`/project/${item.id}`)}
-        />
+        <ProjectCard project={item} onPress={() => router.push(`/project/${item.id}`)} />
       )}
       ItemSeparatorComponent={() => <View style={styles.separator} />}
     />
@@ -94,8 +98,19 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.surface },
   content: { padding: SPACING.md, paddingBottom: SPACING.xl },
   header: { fontSize: 24, fontWeight: '700', color: COLORS.text, marginBottom: SPACING.md },
-  card: { backgroundColor: COLORS.background, borderRadius: 12, padding: SPACING.md, borderWidth: 1, borderColor: COLORS.border },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.xs },
+  card: {
+    backgroundColor: COLORS.background,
+    borderRadius: 12,
+    padding: SPACING.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.xs,
+  },
   projectNumber: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary },
   badge: { borderRadius: 12, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 2 },
   badgeText: { fontSize: 12, fontWeight: '600', textTransform: 'capitalize' },
