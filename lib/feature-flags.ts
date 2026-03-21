@@ -24,7 +24,7 @@ export const features = {
   closeout: false,
   warranty: false,
   inventory_management: true,
-  ai_takeoff: false,
+  ai_takeoff: true,
 } as const;
 
 export type FeatureKey = keyof typeof features;
