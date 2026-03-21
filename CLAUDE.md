@@ -358,19 +358,20 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
+### Mar 21, 2026 — PWA + Expo Native App Production-Ready + SDK 54 Upgrade
+
+- **Changes:** Two parallel tracks — PWA (web app installable) and Expo native (field worker UX). **PWA:** Added @serwist/next service worker with offline fallback, enhanced manifest (shortcuts, maskable icons), iOS PWA meta tags, InstallPrompt component. **Expo:** Fixed all 7 API type mismatches (dashboard, projects, tasks, leads, daily logs — every field name and pagination wrapper was wrong). Redesigned Time screen from clock-in/out to hours-entry model matching actual DB schema. Rewrote DailyLogForm (work_summary, crew_count, weather as JSON, log_date). Added auth guard with useEffect redirect pattern. Created app.config.ts with env vars. Upgraded SDK 52→54 (React Native 0.81, React 19). Installed all missing peer deps (expo-crypto, expo-linking, expo-web-browser, expo-auth-session). EAS project created (@mkgbuilds/krewpact on expo.dev).
+- **Files:** 6 new files (sw.ts, offline page, InstallPrompt, app.config.ts, eas.json, .env). 16 modified. 1 deleted (unused ProjectHealthCard).
+- **Decisions:** PWA gives "full mirror" immediately (web app already had BottomNav, MobileNavigationDrawer, responsive layout). Native app focuses on field-worker UX. Time tracking uses hours-entry model (matches DB), clock-in/out deferred to Phase 2 (needs new table). Expo Go has limitations with native modules — development builds recommended once Apple Developer account approved.
+- **Tests:** 4,310/4,310 passing (372 files). 0 type errors (web + mobile). Build clean. iOS bundle compiles via `expo export`.
+- **Next steps:** Test in Expo Go or iOS Simulator (needs full Xcode). Once Apple Developer Program approved: EAS development build → TestFlight. Android dev build possible now. PWA deployed with Vercel auto-deploy.
+
 ### Mar 21, 2026 — AI Takeoff Engine Integration + App Audit + Database Seeding
 
-- **Changes:** Full AI takeoff engine integration (Phases 1-4): engine client with circuit breaker, upload route + webhook receiver, draft line review panel with inline editing + confidence badges, feedback training loop via QStash, Sentry error context. Deep audit found 4 critical + 4 high issues (all fixed): webhook status filter, CSP/PDF worker, API response shape mismatches, null plan_id guard, missing created_by, render-time side effect. Deployed engine to Modal (serverless, no GPU needed — uses Gemini API). Set up Cloudflare DNS CNAME. Fixed eslint-plugin-react ESLint 10 incompatibility. Added item suppliers tab (API + hooks + UI). Seeded database: 12 trade partner suppliers, 5 client accounts, 3 opportunities, 1 estimate with 4 lines.
-- **Files:** 19 new files, 8 modified (takeoff integration). Item suppliers: 1 new API route, 3 modified files. `react-pdf` dependency added.
-- **Infra:** Takeoff engine deployed at `michaelguirguis9--takeoff-engine-fastapi-app.modal.run`. Vercel env vars set (TAKEOFF_ENGINE_URL, TOKEN, SENTRY_ORG/PROJECT/AUTH_TOKEN). Supabase: 5 takeoff tables with org-scoped RLS, `takeoff-plans` storage bucket, storage RLS policies. DNS: `takeoff.mdmgroupinc.ca` CNAME created (Modal custom domain TLS pending).
-- **Tests:** 4,310/4,310 passing (372 files). 0 type errors. Build clean.
-- **Next steps:** Visual verification of all pages with seeded data. Modal custom domain TLS setup. Cost catalog seeding. Phase 5 polish (error states, stale job cleanup, page classification preview).
-
-### Mar 20, 2026 — Almyta Migration + Estimate Builder + Enrollment Gate
-
-- **Changes:** (1) Ran full Almyta → Supabase migration — 1,698 items across 3 divisions, 6 locations, 11 categories. (2) Fixed 3 estimate builder gaps: inline editing, new estimate page, sub-nav. (3) Designed inventory system (11 tables, append-only ledger). (4) Enrollment approval gate + email template rewrite.
+- **Changes:** Full AI takeoff integration (4 phases), deep audit (8 issues fixed), Modal deployment, item suppliers tab, DB seeding.
 - **Tests:** 4,310/4,310 passing. Build clean.
 
+- Mar 20: Almyta Migration + Estimate Builder + Enrollment Gate — 1,698 items migrated, 3 estimate builder fixes, enrollment approval gate.
 - Mar 19: Header & Dashboard UI Polish — Nav overflow dropdown, clean dashboard cards. 3,986 tests.
 - Mar 17: Fix Email Pipeline, Smoke Test Spam, ERPNext Auth — 5 compounding issues. 3,981 tests.
 - Mar 17: Production Hardening — Feature gating (16 flags), UX fixes (8 broken UI items), AI guardrails. 3,871 tests.
