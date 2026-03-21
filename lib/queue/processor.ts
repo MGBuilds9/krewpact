@@ -4,6 +4,7 @@
  */
 
 import { SyncService } from '@/lib/erp/sync-service';
+import { submitFeedbackToEngine } from '@/lib/takeoff/feedback';
 
 import { Job, JobType } from './types';
 
@@ -55,6 +56,10 @@ export async function processJob(job: Job): Promise<void> {
 
     case JobType.ERPReadPO:
       await syncService.readPurchaseInvoice(entityId);
+      break;
+
+    case JobType.TakeoffFeedback:
+      await submitFeedbackToEngine(entityId, (meta?.supabaseJobId as string) ?? entityId);
       break;
 
     default: {

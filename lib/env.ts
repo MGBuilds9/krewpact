@@ -51,6 +51,10 @@ const envSchema = z.object({
   GOOGLE_GENERATIVE_AI_API_KEY: z.string().min(1).optional(),
   ANTHROPIC_API_KEY: z.string().min(1).optional(),
 
+  // ── Takeoff Engine (optional — mock mode when missing) ──
+  TAKEOFF_ENGINE_URL: z.string().url().optional(),
+  TAKEOFF_ENGINE_TOKEN: z.string().min(1).optional(),
+
   // ── App ──
   NEXT_PUBLIC_APP_URL: z.string().url().optional(),
   CRON_SECRET: z.string().min(1).optional(),

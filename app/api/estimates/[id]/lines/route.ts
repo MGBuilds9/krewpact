@@ -4,43 +4,12 @@ import { z } from 'zod';
 
 import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
-import { calculateEstimateTotals, calculateLineTotal } from '@/lib/estimating/calculations';
-import { createUserClient, createUserClientSafe } from '@/lib/supabase/server';
+import { calculateLineTotal } from '@/lib/estimating/calculations';
+import { recalculateParentTotals } from '@/lib/estimating/totals';
+import { createUserClientSafe } from '@/lib/supabase/server';
 import { estimateLineCreateSchema } from '@/lib/validators/estimating';
 
 type RouteContext = { params: Promise<{ id: string }> };
-
-/**
- * Fetch all lines for an estimate, recalculate totals, and update the parent estimate.
- */
-async function recalculateParentTotals(
-  supabase: Awaited<ReturnType<typeof createUserClient>>,
-  estimateId: string,
-) {
-  const { data: allLines } = await supabase
-    .from('estimate_lines')
-    .select('line_total, is_optional')
-    .eq('estimate_id', estimateId);
-
-  const rawLines = Array.isArray(allLines) ? allLines : allLines ? [allLines] : [];
-  const lines = rawLines.map((l: Record<string, unknown>) => ({
-    line_total: Number(l.line_total),
-    is_optional: Boolean(l.is_optional),
-  }));
-
-  const totals = calculateEstimateTotals(lines);
-
-  await supabase
-    .from('estimates')
-    .update({
-      subtotal_amount: totals.subtotal_amount,
-      tax_amount: totals.tax_amount,
-      total_amount: totals.total_amount,
-    })
-    .eq('id', estimateId);
-
-  return totals;
-}
 
 export async function GET(req: NextRequest, context: RouteContext) {
   const { userId } = await auth();

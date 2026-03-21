@@ -15,6 +15,7 @@ export enum JobType {
   ERPSyncTimesheet = 'erp-sync-timesheet',
   ERPReadInvoice = 'erp-read-invoice',
   ERPReadPO = 'erp-read-po',
+  TakeoffFeedback = 'takeoff-feedback',
 }
 
 export type JobStatus = 'pending' | 'running' | 'succeeded' | 'failed' | 'dead_letter';

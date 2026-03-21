@@ -9,6 +9,11 @@ const eslintConfig = defineConfig([
   ...nextTs,
   eslintConfigPrettier,
   {
+    settings: {
+      react: { version: '19.1' },
+    },
+  },
+  {
     plugins: {
       'simple-import-sort': simpleImportSort,
     },

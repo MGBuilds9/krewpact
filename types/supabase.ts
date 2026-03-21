@@ -8006,6 +8006,302 @@ export type Database = {
           },
         ]
       }
+      takeoff_draft_lines: {
+        Row: {
+          confidence: number
+          cost_source: string | null
+          created_at: string
+          csi_code: string | null
+          description: string
+          final_line_id: string | null
+          id: string
+          job_id: string
+          notes: string | null
+          quantity: number
+          review_status: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          source_pages: number[] | null
+          source_regions: Json | null
+          trade: string
+          unit: string
+          unit_cost: number | null
+        }
+        Insert: {
+          confidence: number
+          cost_source?: string | null
+          created_at?: string
+          csi_code?: string | null
+          description: string
+          final_line_id?: string | null
+          id?: string
+          job_id: string
+          notes?: string | null
+          quantity: number
+          review_status?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_pages?: number[] | null
+          source_regions?: Json | null
+          trade: string
+          unit: string
+          unit_cost?: number | null
+        }
+        Update: {
+          confidence?: number
+          cost_source?: string | null
+          created_at?: string
+          csi_code?: string | null
+          description?: string
+          final_line_id?: string | null
+          id?: string
+          job_id?: string
+          notes?: string | null
+          quantity?: number
+          review_status?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_pages?: number[] | null
+          source_regions?: Json | null
+          trade?: string
+          unit?: string
+          unit_cost?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "takeoff_draft_lines_final_line_id_fkey"
+            columns: ["final_line_id"]
+            isOneToOne: false
+            referencedRelation: "estimate_lines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "takeoff_draft_lines_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "takeoff_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "takeoff_draft_lines_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      takeoff_feedback: {
+        Row: {
+          corrected_value: Json | null
+          created_at: string
+          created_by: string | null
+          draft_line_id: string | null
+          feedback_type: string
+          id: string
+          job_id: string
+          original_value: Json | null
+        }
+        Insert: {
+          corrected_value?: Json | null
+          created_at?: string
+          created_by?: string | null
+          draft_line_id?: string | null
+          feedback_type: string
+          id?: string
+          job_id: string
+          original_value?: Json | null
+        }
+        Update: {
+          corrected_value?: Json | null
+          created_at?: string
+          created_by?: string | null
+          draft_line_id?: string | null
+          feedback_type?: string
+          id?: string
+          job_id?: string
+          original_value?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "takeoff_feedback_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "takeoff_feedback_draft_line_id_fkey"
+            columns: ["draft_line_id"]
+            isOneToOne: false
+            referencedRelation: "takeoff_draft_lines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "takeoff_feedback_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "takeoff_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      takeoff_jobs: {
+        Row: {
+          completed_at: string | null
+          config: Json
+          created_at: string
+          created_by: string | null
+          error_message: string | null
+          estimate_id: string
+          id: string
+          started_at: string | null
+          status: string
+          summary: Json | null
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          estimate_id: string
+          id?: string
+          started_at?: string | null
+          status?: string
+          summary?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          estimate_id?: string
+          id?: string
+          started_at?: string | null
+          status?: string
+          summary?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "takeoff_jobs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "takeoff_jobs_estimate_id_fkey"
+            columns: ["estimate_id"]
+            isOneToOne: false
+            referencedRelation: "estimates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      takeoff_pages: {
+        Row: {
+          created_at: string
+          extraction_data: Json | null
+          id: string
+          job_id: string
+          page_number: number
+          page_type: string
+          page_type_confidence: number | null
+          plan_id: string
+          scale: string | null
+          thumbnail_path: string | null
+        }
+        Insert: {
+          created_at?: string
+          extraction_data?: Json | null
+          id?: string
+          job_id: string
+          page_number: number
+          page_type: string
+          page_type_confidence?: number | null
+          plan_id: string
+          scale?: string | null
+          thumbnail_path?: string | null
+        }
+        Update: {
+          created_at?: string
+          extraction_data?: Json | null
+          id?: string
+          job_id?: string
+          page_number?: number
+          page_type?: string
+          page_type_confidence?: number | null
+          plan_id?: string
+          scale?: string | null
+          thumbnail_path?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "takeoff_pages_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "takeoff_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "takeoff_pages_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "takeoff_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      takeoff_plans: {
+        Row: {
+          created_at: string
+          file_id: string | null
+          filename: string
+          id: string
+          job_id: string
+          page_count: number | null
+          storage_path: string
+        }
+        Insert: {
+          created_at?: string
+          file_id?: string | null
+          filename: string
+          id?: string
+          job_id: string
+          page_count?: number | null
+          storage_path: string
+        }
+        Update: {
+          created_at?: string
+          file_id?: string | null
+          filename?: string
+          id?: string
+          job_id?: string
+          page_count?: number | null
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "takeoff_plans_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "file_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "takeoff_plans_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "takeoff_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       task_comments: {
         Row: {
           author_user_id: string | null

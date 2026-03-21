@@ -34,6 +34,7 @@ export const estimateLineCreateSchema = z.object({
   markup_pct: z.number().min(0).max(100).default(0),
   is_optional: z.boolean().default(false),
   sort_order: z.number().int().optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const estimateLineUpdateSchema = z.object({
@@ -46,6 +47,7 @@ export const estimateLineUpdateSchema = z.object({
   markup_pct: z.number().min(0).max(100).optional(),
   is_optional: z.boolean().optional(),
   sort_order: z.number().int().optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const estimateLineBatchUpdateSchema = z.array(

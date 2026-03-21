@@ -159,4 +159,12 @@ export const queryKeys = {
     lists: () => [...queryKeys.transactionLedger.all, 'list'] as const,
     list: (filters: object) => [...queryKeys.transactionLedger.lists(), filters] as const,
   },
+  takeoff: {
+    all: ['takeoff'] as const,
+    byEstimate: (estimateId: string) => ['takeoff', 'estimate', estimateId] as const,
+    job: (estimateId: string, jobId: string) =>
+      ['takeoff', 'estimate', estimateId, 'job', jobId] as const,
+    lines: (estimateId: string, jobId: string) =>
+      ['takeoff', 'estimate', estimateId, 'job', jobId, 'lines'] as const,
+  },
 } as const;

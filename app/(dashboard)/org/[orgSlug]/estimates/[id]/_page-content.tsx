@@ -1,6 +1,15 @@
 'use client';
 
-import { ArrowLeft, CheckCircle, FileText, Plus, Save, Send, XCircle } from 'lucide-react';
+import {
+  ArrowLeft,
+  CheckCircle,
+  FileText,
+  Plus,
+  Save,
+  Send,
+  Sparkles,
+  XCircle,
+} from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
@@ -22,11 +31,13 @@ import {
   useEstimateLines,
   useEstimateVersions,
   useUpdateEstimate,
+  useUpdateEstimateLine,
 } from '@/hooks/useEstimates';
 import { useEstimateAllowances, useEstimateAlternates } from '@/hooks/useEstimating';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 import type { EstimateStatus } from '@/lib/estimating/estimate-status';
 import { ALLOWED_STATUS_TRANSITIONS } from '@/lib/estimating/estimate-status';
+import { isFeatureEnabled } from '@/lib/feature-flags';
 import type { EstimatePdfData } from '@/lib/pdf/types';
 import { cn } from '@/lib/utils';
 
@@ -42,6 +53,18 @@ const AlternateForm = dynamic(() =>
 );
 const ProposalGenerationForm = dynamic(() =>
   import('@/components/Estimates/ProposalGenerationForm').then((m) => m.ProposalGenerationForm),
+);
+const TakeoffUploadDialog = dynamic(() =>
+  import('@/components/Estimates/TakeoffUploadDialog').then((m) => m.TakeoffUploadDialog),
+);
+const TakeoffJobStatusCard = dynamic(() =>
+  import('@/components/Estimates/TakeoffJobStatus').then((m) => m.TakeoffJobStatusCard),
+);
+const TakeoffReviewPanel = dynamic(() =>
+  import('@/components/Estimates/TakeoffReviewPanel').then((m) => m.TakeoffReviewPanel),
+);
+const TakeoffFeedbackSummary = dynamic(() =>
+  import('@/components/Estimates/TakeoffFeedbackSummary').then((m) => m.TakeoffFeedbackSummary),
 );
 
 const STATUS_BADGE_COLORS: Record<string, string> = {
@@ -88,6 +111,7 @@ interface EstimateHeaderProps {
   onTransition: (s: EstimateStatus) => void;
   onSaveVersion: () => void;
   onProposal: () => void;
+  onTakeoff?: () => void;
   onBack: () => void;
 }
 function EstimateHeader({
@@ -99,6 +123,7 @@ function EstimateHeader({
   onTransition,
   onSaveVersion,
   onProposal,
+  onTakeoff,
   onBack,
 }: EstimateHeaderProps) {
   return (
@@ -166,6 +191,12 @@ function EstimateHeader({
             } satisfies EstimatePdfData
           }
         />
+        {onTakeoff && (
+          <Button size="sm" variant="outline" onClick={onTakeoff}>
+            <Sparkles className="h-4 w-4 mr-1" />
+            AI Takeoff
+          </Button>
+        )}
         <Button size="sm" variant="outline" onClick={onProposal}>
           <FileText className="h-4 w-4 mr-1" />
           Generate Proposal
@@ -264,6 +295,11 @@ export default function EstimateBuilderPage() {
   const [alternateDialogOpen, setAlternateDialogOpen] = useState(false);
   const [proposalDialogOpen, setProposalDialogOpen] = useState(false);
   const [versionDialogOpen, setVersionDialogOpen] = useState(false);
+  const [takeoffDialogOpen, setTakeoffDialogOpen] = useState(false);
+  const [activeTakeoffJobId, setActiveTakeoffJobId] = useState<string | null>(null);
+  const [takeoffReviewJobId, setTakeoffReviewJobId] = useState<string | null>(null);
+  const [completedTakeoffJobId, setCompletedTakeoffJobId] = useState<string | null>(null);
+  const showTakeoff = isFeatureEnabled('ai_takeoff');
 
   const { data: estimate, isLoading } = useEstimate(estimateId);
   const { data: lines } = useEstimateLines(estimateId);
@@ -272,6 +308,7 @@ export default function EstimateBuilderPage() {
   const { data: alternatesData } = useEstimateAlternates(estimateId);
   const updateEstimate = useUpdateEstimate();
   const addLine = useAddEstimateLine();
+  const updateLine = useUpdateEstimateLine();
   const deleteLine = useDeleteEstimateLine();
   const createVersion = useCreateEstimateVersion();
 
@@ -317,8 +354,36 @@ export default function EstimateBuilderPage() {
         onTransition={(s) => updateEstimate.mutate({ id: estimateId, status: s })}
         onSaveVersion={() => setVersionDialogOpen(true)}
         onProposal={() => setProposalDialogOpen(true)}
+        onTakeoff={showTakeoff && isEditable ? () => setTakeoffDialogOpen(true) : undefined}
         onBack={() => orgPush('/estimates')}
       />
+      {/* AI Takeoff status card (shown when a job is active) */}
+      {/* AI Takeoff: processing status card */}
+      {showTakeoff && activeTakeoffJobId && !takeoffReviewJobId && (
+        <TakeoffJobStatusCard
+          estimateId={estimateId}
+          jobId={activeTakeoffJobId}
+          onComplete={() => {
+            setTakeoffReviewJobId(activeTakeoffJobId);
+            setActiveTakeoffJobId(null);
+          }}
+        />
+      )}
+      {/* AI Takeoff: review panel (shown when job is complete) */}
+      {showTakeoff && takeoffReviewJobId && (
+        <TakeoffReviewPanel
+          estimateId={estimateId}
+          jobId={takeoffReviewJobId}
+          onAccepted={() => {
+            setCompletedTakeoffJobId(takeoffReviewJobId);
+            setTakeoffReviewJobId(null);
+          }}
+        />
+      )}
+      {/* AI Takeoff: feedback summary (shown after lines accepted) */}
+      {showTakeoff && completedTakeoffJobId && (
+        <TakeoffFeedbackSummary estimateId={estimateId} jobId={completedTakeoffJobId} />
+      )}
       <Card>
         <CardHeader>
           <CardTitle>Line Items</CardTitle>
@@ -336,7 +401,9 @@ export default function EstimateBuilderPage() {
                 sort_order: safeLines.length + 1,
               })
             }
-            onUpdateLine={() => updateEstimate.mutate({ id: estimateId })}
+            onUpdateLine={(lineId, field, value) =>
+              updateLine.mutate({ estimateId, lineId, [field]: value })
+            }
             onDeleteLine={(lineId) => deleteLine.mutate({ estimateId, lineId })}
             isReadOnly={!isEditable}
           />
@@ -418,6 +485,14 @@ export default function EstimateBuilderPage() {
         confirmLabel="Save Version"
         onConfirm={(reason) => createVersion.mutate({ estimateId, reason: reason || undefined })}
       />
+      {showTakeoff && (
+        <TakeoffUploadDialog
+          estimateId={estimateId}
+          open={takeoffDialogOpen}
+          onOpenChange={setTakeoffDialogOpen}
+          onJobCreated={(jobId) => setActiveTakeoffJobId(jobId)}
+        />
+      )}
     </div>
   );
 }

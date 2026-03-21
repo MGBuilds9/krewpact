@@ -22,6 +22,7 @@ const mockUseEstimateLines = vi.fn();
 const mockUseEstimateVersions = vi.fn();
 const mockUseUpdateEstimate = vi.fn();
 const mockUseAddEstimateLine = vi.fn();
+const mockUseUpdateEstimateLine = vi.fn();
 const mockUseDeleteEstimateLine = vi.fn();
 const mockUseCreateEstimateVersion = vi.fn();
 
@@ -31,6 +32,7 @@ vi.mock('@/hooks/useEstimates', () => ({
   useEstimateVersions: (...args: unknown[]) => mockUseEstimateVersions(...args),
   useUpdateEstimate: () => mockUseUpdateEstimate(),
   useAddEstimateLine: () => mockUseAddEstimateLine(),
+  useUpdateEstimateLine: () => mockUseUpdateEstimateLine(),
   useDeleteEstimateLine: () => mockUseDeleteEstimateLine(),
   useCreateEstimateVersion: () => mockUseCreateEstimateVersion(),
 }));
@@ -116,6 +118,10 @@ describe('Estimate Builder Page', () => {
       isPending: false,
     });
     mockUseAddEstimateLine.mockReturnValue({
+      mutate: vi.fn(),
+      isPending: false,
+    });
+    mockUseUpdateEstimateLine.mockReturnValue({
       mutate: vi.fn(),
       isPending: false,
     });

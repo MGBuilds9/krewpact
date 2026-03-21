@@ -165,6 +165,28 @@ export function useBatchUpdateLines() {
   });
 }
 
+export function useUpdateEstimateLine() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      estimateId,
+      lineId,
+      ...data
+    }: {
+      estimateId: string;
+      lineId: string;
+    } & Record<string, unknown>) =>
+      apiFetch<EstimateLine>(`/api/estimates/${estimateId}/lines/${lineId}`, {
+        method: 'PATCH',
+        body: data,
+      }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.estimates.lines(variables.estimateId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.estimates.detail(variables.estimateId) });
+    },
+  });
+}
+
 export function useDeleteEstimateLine() {
   const queryClient = useQueryClient();
   return useMutation({

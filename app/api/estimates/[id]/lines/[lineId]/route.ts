@@ -2,37 +2,13 @@ import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
-import { calculateEstimateTotals, calculateLineTotal } from '@/lib/estimating/calculations';
+import { calculateLineTotal } from '@/lib/estimating/calculations';
+import { recalculateParentTotals } from '@/lib/estimating/totals';
 import { createUserClient, createUserClientSafe } from '@/lib/supabase/server';
 import { estimateLineUpdateSchema } from '@/lib/validators/estimating';
 
 type RouteContext = { params: Promise<{ id: string; lineId: string }> };
 type SupabaseClient = Awaited<ReturnType<typeof createUserClient>>;
-
-async function recalculateParentTotals(supabase: SupabaseClient, estimateId: string) {
-  const { data: allLines } = await supabase
-    .from('estimate_lines')
-    .select('line_total, is_optional')
-    .eq('estimate_id', estimateId);
-
-  const rawLines = Array.isArray(allLines) ? allLines : allLines ? [allLines] : [];
-  const lines = rawLines.map((l: Record<string, unknown>) => ({
-    line_total: Number(l.line_total),
-    is_optional: Boolean(l.is_optional),
-  }));
-
-  const totals = calculateEstimateTotals(lines);
-  await supabase
-    .from('estimates')
-    .update({
-      subtotal_amount: totals.subtotal_amount,
-      tax_amount: totals.tax_amount,
-      total_amount: totals.total_amount,
-    })
-    .eq('id', estimateId);
-
-  return totals;
-}
 
 async function resolveLineTotal(
   supabase: SupabaseClient,
