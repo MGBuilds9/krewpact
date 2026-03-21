@@ -350,13 +350,20 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 - **Authority:** KrewPact/Supabase owns inventory (replaces Almyta). ERPNext gets cost journal entries only.
 - **Architecture:** Append-only double-entry ledger. No UPDATE/DELETE on `inventory_ledger`.
-- **Data source:** Almyta Access databases on MDM-Server (374K items across 3 divisions: Telecom 124K, Wood 227K, Contracting 23K).
+- **Data source:** Almyta Access databases on OneDrive (~1,700 items across 3 divisions: Telecom 221, Wood 1,063, Contracting 414). Original "374K" estimate was inflated by binary PartImage blobs in CSV line counts.
 - **Key tables:** `inventory_items`, `inventory_ledger`, `inventory_locations`, `inventory_serials`, `inventory_lots`, `inventory_purchase_orders`, `inventory_goods_receipts`, `inventory_bom`, `fleet_vehicles`.
 - **Fleet vehicles** are the source of truth for vehicles; inventory locations of type `vehicle` can only exist when linked to a `fleet_vehicles` record.
 - **Migration:** `mdb-export` from `.data` Access files → CSV → transform → Supabase COPY. Per-division tagged.
 - **Feature flag:** `inventory_management: false` until migration + UAT complete.
 
 ## Session Log
+
+### Mar 20, 2026 — Almyta Migration Execution + Doc Cleanup
+
+- **Changes:** Ran full Almyta → Supabase migration pipeline. Discovered "374K items" was inflated by binary PartImage blobs — actual count is 1,698 items (221 Telecom, 1,063 Wood, 414 Contracting). Fixed extraction with `mdb-export -b strip`. Created 6 warehouse/showroom locations (Timberlea Blvd warehouse + Queen St S showroom, one per division for RLS). All items, categories (11), and initial stock entries (276) loaded successfully. Verification passed within rounding tolerance. Doc cleanup: removed obsolete BullMQ plan, fixed stale BullMQ→QStash refs in lib/CLAUDE.md, updated session-log.md through Mar 20.
+- **Files modified:** `transform.ts`, `verify.ts`, `extract-almyta.sh` (real UUIDs + `-b strip`), `lib/CLAUDE.md`, `docs/session-log.md`, `CLAUDE.md`
+- **Files deleted:** `docs/plans/bullmq-queue-infrastructure.md`
+- **Locations in Supabase:** Timberlea Blvd warehouse (×3 divisions) + Queen St S showroom (×3 divisions) + 3 pre-existing
 
 ### Mar 20, 2026 — Estimate Builder Phase 2 (P0 Fixes)
 
@@ -368,7 +375,7 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ### Mar 20, 2026 — Inventory System Design (Almyta Replacement)
 
-- **Changes:** Designed full inventory system to replace Almyta Control System. Append-only double-entry ledger, 11 new tables, fleet vehicles, serial/lot tracking, PO lifecycle with partial receiving, job costing integration. Verified all FKs and RLS patterns against live Supabase. Discovered Almyta data export was schema-only — located real data in per-company Access `.data` files (374K parts total). Installed `mdbtools` for extraction.
+- **Changes:** Designed full inventory system to replace Almyta Control System. Append-only double-entry ledger, 11 new tables, fleet vehicles, serial/lot tracking, PO lifecycle with partial receiving, job costing integration. Verified all FKs and RLS patterns against live Supabase. Discovered Almyta data export was schema-only — located real data in per-company Access `.data` files (~1,700 parts total; original 374K was inflated by binary PartImage blobs). Installed `mdbtools` for extraction.
 - **Architecture decision:** Inventory authority moved from ERPNext to KrewPact. ERPNext retains finance/procurement authority but inventory operations (items, stock, POs, receiving, tool checkout) live in Supabase.
 - **Key integration:** Ledger `project_id` feeds job costing alongside `time_entries` + `expense_claims`. POs reference `portal_accounts` (trade partners). Items link to `cost_catalog_items` (estimating rates).
 - **Spec:** `docs/superpowers/specs/2026-03-20-inventory-system-design.md`

@@ -39,3 +39,22 @@
 - Feb 15: Tier 3 Zod validation — all 32 mutating routes. 554 tests.
 - Feb 13: CRM + Estimating Phase 1 (Ralph Loop). 549 tests.
 - Feb 12: MDM Unified Growth Intelligence System (Phase 0) — Sales AGI + pgvector schema.
+
+### Mar 6–20, 2026 — Condensed Log
+
+- **Mar 20:** Estimate Builder Phase 2 (P0 Fixes) — inline line editing, `/estimates/new` page, estimates sub-nav layout. 4,029 tests.
+- **Mar 20:** Inventory System Design — full spec for Almyta replacement (append-only ledger, 11 tables, fleet vehicles, serial/lot tracking). Spec at `docs/superpowers/specs/2026-03-20-inventory-system-design.md`.
+- **Mar 20:** Inventory Implementation — schema migration, dashboard UI (items, stock overview, locations), PO creation/receiving, transaction history. 4,286 tests.
+- **Mar 20:** Enrollment Approval Gate — all sequence enrollments require `pending_review` approval. Rewrote email templates. Built approvals UI. 4,029 tests.
+- **Mar 19:** Header & Dashboard UI Polish — nav overflow dropdown (MAX_VISIBLE=5), removed inline user name/online badge, clean dashboard cards. 3,986 tests.
+- **Mar 17:** Fix Email Pipeline + Smoke Test Spam + ERPNext Auth — 5 compounding issues resolved. 3,981 tests.
+- **Mar 17:** Production Hardening — feature gating (16 flags), UX fixes (8 broken UI items), AI guardrails. 3,871 tests.
+- **Mar 16:** Production Hardening — demo removal, coding standards (10 ESLint rules), 8 file splits. 3,871 tests.
+- **Mar 14:** RBAC Unification + Platform Hardening + Mobile scaffold. Scoring alignment. 3,866 tests.
+- **Mar 13:** David's Sales Deliverables + CEO Sales Book v2 + Leads folder optimization.
+- **Mar 12:** AI Agentic Layer (8 agents, Gemini Flash, killswitch) + Lusha Integration. 3,750 tests.
+- **Mar 11:** Closed-Loop CRM + 7-agent audit (79 files fixed). 3,489 tests.
+- **Mar 10:** Production Readiness (14 stories). 3,488 tests.
+- **Mar 9:** Executive Nucleus + Enterprise Phase 2. 3,478 tests.
+- **Mar 8:** P1 completion + autonomous loop (all 18 PRD tasks). 3,092 tests.
+- **Mar 6:** Queue migration BullMQ → QStash. Simplified job processing via Vercel serverless + HTTP push.

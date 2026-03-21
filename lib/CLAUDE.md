@@ -10,11 +10,10 @@ lib/
 ├── email/            # Email sending (Resend integration)
 ├── erp/              # ERPNext API client and sync service
 │   ├── client.ts     # ERPNext HTTP client
-│   └── sync-service.ts # BullMQ sync job handlers
+│   └── sync-service.ts # QStash sync job handlers
 ├── estimating/       # Estimating business logic
 ├── integrations/     # Third-party integrations
-├── jobs/             # BullMQ job definitions
-├── queue/            # Queue setup and configuration
+├── queue/            # QStash queue setup and configuration
 ├── supabase/         # Supabase clients
 │   ├── client.ts     # Browser client (NEXT_PUBLIC_ keys)
 │   └── server.ts     # Server client (uses pooler port 6543)
