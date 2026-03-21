@@ -67,7 +67,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     clerkPublishableKey: process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY,
     apiBaseUrl: process.env.EXPO_PUBLIC_API_BASE_URL ?? 'https://hub.mdmgroupinc.ca',
     eas: {
-      projectId: process.env.EAS_PROJECT_ID ?? '',
+      projectId: 'd97fb73b-9d4b-4ebd-bd42-a3b705aa56bb',
     },
   },
 });
