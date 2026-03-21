@@ -1,13 +1,34 @@
-import { AuthProvider } from '@/lib/auth';
-import { QueryClientProvider } from '@tanstack/react-query';
-import { queryClient } from '@/lib/query-client';
-import { useAuth } from '@clerk/clerk-expo';
-import { Redirect, Stack } from 'expo-router';
+import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
+import { useAuth } from '@clerk/clerk-expo';
+import { Stack, useRouter, useSegments } from 'expo-router';
+import { QueryClientProvider } from '@tanstack/react-query';
+
+import { AuthProvider } from '@/lib/auth';
+import { queryClient } from '@/lib/query-client';
 import { COLORS } from '@/constants/config';
 
-function AuthGate({ children }: { children: React.ReactNode }) {
+function useProtectedRoute() {
   const { isSignedIn, isLoaded } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    const inAuthGroup = segments[0] === '(auth)';
+
+    if (!isSignedIn && !inAuthGroup) {
+      router.replace('/(auth)/sign-in');
+    } else if (isSignedIn && inAuthGroup) {
+      router.replace('/(tabs)');
+    }
+  }, [isSignedIn, isLoaded, segments, router]);
+}
+
+function InnerLayout() {
+  const { isLoaded } = useAuth();
+  useProtectedRoute();
 
   if (!isLoaded) {
     return (
@@ -24,19 +45,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!isSignedIn) {
-    return <Redirect href="/(auth)/sign-in" />;
-  }
-
-  return <>{children}</>;
-}
-
-function InnerLayout() {
-  return (
-    <AuthGate>
-      <Stack screenOptions={{ headerShown: false }} />
-    </AuthGate>
-  );
+  return <Stack screenOptions={{ headerShown: false }} />;
 }
 
 export default function RootLayout() {
