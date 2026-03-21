@@ -360,10 +360,10 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ### Mar 20, 2026 — Almyta Migration Execution + Doc Cleanup
 
-- **Changes:** Ran full Almyta → Supabase migration pipeline. Discovered "374K items" was inflated by binary PartImage blobs — actual count is 1,698 items (221 Telecom, 1,063 Wood, 414 Contracting). Fixed extraction with `mdb-export -b strip`. Created 6 warehouse/showroom locations (Timberlea Blvd warehouse + Queen St S showroom, one per division for RLS). All items, categories (11), and initial stock entries (276) loaded successfully. Verification passed within rounding tolerance. Doc cleanup: removed obsolete BullMQ plan, fixed stale BullMQ→QStash refs in lib/CLAUDE.md, updated session-log.md through Mar 20.
-- **Files modified:** `transform.ts`, `verify.ts`, `extract-almyta.sh` (real UUIDs + `-b strip`), `lib/CLAUDE.md`, `docs/session-log.md`, `CLAUDE.md`
-- **Files deleted:** `docs/plans/bullmq-queue-infrastructure.md`
-- **Locations in Supabase:** Timberlea Blvd warehouse (×3 divisions) + Queen St S showroom (×3 divisions) + 3 pre-existing
+- **Changes:** Ran full Almyta → Supabase migration pipeline. Discovered "374K items" was inflated by binary PartImage blobs — actual count is 1,698 items (221 Telecom, 1,063 Wood, 414 Contracting). Fixed extraction with `mdb-export -b strip`. Created 6 warehouse/showroom locations (Timberlea Blvd warehouse + Queen St S showroom, one per division for RLS). All items, categories (11), and initial stock entries (276) loaded successfully. Verification passed within rounding tolerance. Enabled `inventory_management` feature flag. Doc cleanup: removed obsolete BullMQ plan, fixed stale BullMQ→QStash refs in lib/CLAUDE.md, updated session-log.md through Mar 20.
+- **Decisions:** All 3 divisions share one physical warehouse at 5585 Timberlea Blvd, Mississauga + showroom at 25 Queen St S (samples only). Separate location records per division for RLS.
+- **Tests:** 4,310/4,310 passing (372 files). 0 type errors. Build clean.
+- **Next steps:** Visual verification of inventory UI with live data. Vendor mapping (requires portal_accounts). Serial tracking for Telecom items if needed.
 
 ### Mar 20, 2026 — Estimate Builder Phase 2 (P0 Fixes)
 
@@ -395,6 +395,3 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 - Mar 13: David's Sales Deliverables + CEO Sales Book v2 + Leads folder optimization.
 - Mar 12: AI Agentic Layer (8 agents, Gemini Flash, killswitch) + Lusha Integration. 3,750 tests.
 - Mar 11: Closed-Loop CRM + 7-agent audit (79 files fixed). 3,489 tests.
-- Mar 10: Production Readiness (14 stories). 3,488 tests.
-- Mar 9: Executive Nucleus + Enterprise Phase 2. 3,478 tests.
-- Mar 8: P1 completion + autonomous loop (all 18 PRD tasks). 3,092 tests.
