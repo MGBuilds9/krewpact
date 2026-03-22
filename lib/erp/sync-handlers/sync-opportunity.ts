@@ -3,7 +3,7 @@
  *                KrewPact Won Deal → ERPNext Sales Order
  */
 
-import { createUserClient } from '@/lib/supabase/server';
+import { createScopedServiceClient } from '@/lib/supabase/server';
 
 import { mockOpportunityResponse, mockSalesOrderResponse } from '../mock-responses';
 import { mapOpportunityToErp } from '../opportunity-mapper';
@@ -13,14 +13,19 @@ import {
   createSyncJob,
   failJob,
   logEvent,
+  type SyncJobContext,
   SyncResult,
   updateJobStatus,
   upsertSyncMap,
 } from './sync-helpers';
 
-export async function syncOpportunity(opportunityId: string, _userId: string): Promise<SyncResult> {
-  const supabase = await createUserClient();
-  const job = await createSyncJob(supabase, 'opportunity', opportunityId);
+export async function syncOpportunity(
+  opportunityId: string,
+  _userId: string,
+  jobContext?: SyncJobContext,
+): Promise<SyncResult> {
+  const supabase = createScopedServiceClient('erp-sync:opportunity');
+  const job = await createSyncJob(supabase, 'opportunity', opportunityId, jobContext);
 
   try {
     const { data: opportunity, error: oppError } = await supabase
@@ -32,7 +37,7 @@ export async function syncOpportunity(opportunityId: string, _userId: string): P
     if (oppError || !opportunity) {
       return failJob(
         supabase,
-        job.id,
+        job,
         'opportunity',
         opportunityId,
         `Opportunity not found: ${oppError?.message || 'null'}`,
@@ -85,7 +90,7 @@ export async function syncOpportunity(opportunityId: string, _userId: string): P
       entity_id: opportunityId,
       erp_docname: erpDocname,
     });
-    await updateJobStatus(supabase, job.id, 'succeeded');
+    await updateJobStatus(supabase, job, 'succeeded');
 
     return {
       id: job.id,
@@ -93,11 +98,11 @@ export async function syncOpportunity(opportunityId: string, _userId: string): P
       entity_type: 'opportunity',
       entity_id: opportunityId,
       erp_docname: erpDocname,
-      attempt_count: 1,
+      attempt_count: job.attempt_count,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return failJob(supabase, job.id, 'opportunity', opportunityId, message);
+    return failJob(supabase, job, 'opportunity', opportunityId, message);
   }
 }
 
@@ -105,9 +110,10 @@ export async function syncWonDeal(
   opportunityId: string,
   _userId: string,
   wonDate: string,
+  jobContext?: SyncJobContext,
 ): Promise<SyncResult> {
-  const supabase = await createUserClient();
-  const job = await createSyncJob(supabase, 'sales_order', opportunityId);
+  const supabase = createScopedServiceClient('erp-sync:sales-order');
+  const job = await createSyncJob(supabase, 'sales_order', opportunityId, jobContext);
 
   try {
     const { data: opportunity, error: oppError } = await supabase
@@ -119,7 +125,7 @@ export async function syncWonDeal(
     if (oppError || !opportunity) {
       return failJob(
         supabase,
-        job.id,
+        job,
         'sales_order',
         opportunityId,
         `Opportunity not found: ${oppError?.message || 'null'}`,
@@ -171,7 +177,7 @@ export async function syncWonDeal(
       entity_id: opportunityId,
       erp_docname: erpDocname,
     });
-    await updateJobStatus(supabase, job.id, 'succeeded');
+    await updateJobStatus(supabase, job, 'succeeded');
 
     return {
       id: job.id,
@@ -179,10 +185,10 @@ export async function syncWonDeal(
       entity_type: 'sales_order',
       entity_id: opportunityId,
       erp_docname: erpDocname,
-      attempt_count: 1,
+      attempt_count: job.attempt_count,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return failJob(supabase, job.id, 'sales_order', opportunityId, message);
+    return failJob(supabase, job, 'sales_order', opportunityId, message);
   }
 }

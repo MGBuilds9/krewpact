@@ -11,7 +11,7 @@
  */
 
 import { logger } from '@/lib/logger';
-import { createUserClient } from '@/lib/supabase/server';
+import { createScopedServiceClient } from '@/lib/supabase/server';
 
 import { mockJournalEntryResponse } from '../mock-responses';
 import { isMockMode } from '../sync-service';
@@ -19,6 +19,7 @@ import {
   createSyncJob,
   failJob,
   logEvent,
+  type SyncJobContext,
   SyncResult,
   updateJobStatus,
   upsertSyncMap,
@@ -39,7 +40,7 @@ interface MaterialCostOptions {
  * Look up the ERPNext Project name for a given projects.id.
  */
 async function resolveErpProjectName(
-  supabase: Awaited<ReturnType<typeof createUserClient>>,
+  supabase: ReturnType<typeof createScopedServiceClient>,
   projectId: string,
 ): Promise<string | null> {
   const { data: syncMapRow } = await supabase
@@ -63,11 +64,12 @@ async function resolveErpProjectName(
 export async function syncMaterialCost(
   options: MaterialCostOptions,
   _userId: string,
+  jobContext?: SyncJobContext,
 ): Promise<SyncResult> {
   const { projectId, startDate, endDate } = options;
   const entityKey = `${projectId}:${startDate}:${endDate}`;
-  const supabase = await createUserClient();
-  const job = await createSyncJob(supabase, 'material_cost_journal', entityKey);
+  const supabase = createScopedServiceClient('erp-sync:material-cost');
+  const job = await createSyncJob(supabase, 'material_cost_journal', entityKey, jobContext);
 
   try {
     // 1. Aggregate ledger entries for the project and date range
@@ -83,7 +85,7 @@ export async function syncMaterialCost(
     if (ledgerError) {
       return failJob(
         supabase,
-        job.id,
+        job,
         'material_cost_journal',
         entityKey,
         `Failed to query inventory ledger: ${ledgerError.message}`,
@@ -96,14 +98,14 @@ export async function syncMaterialCost(
         startDate,
         endDate,
       });
-      await updateJobStatus(supabase, job.id, 'succeeded');
+      await updateJobStatus(supabase, job, 'succeeded');
       return {
         id: job.id,
         status: 'succeeded',
         entity_type: 'material_cost_journal',
         entity_id: entityKey,
         erp_docname: null,
-        attempt_count: 1,
+        attempt_count: job.attempt_count,
       };
     }
 
@@ -120,14 +122,14 @@ export async function syncMaterialCost(
         startDate,
         endDate,
       });
-      await updateJobStatus(supabase, job.id, 'succeeded');
+      await updateJobStatus(supabase, job, 'succeeded');
       return {
         id: job.id,
         status: 'succeeded',
         entity_type: 'material_cost_journal',
         entity_id: entityKey,
         erp_docname: null,
-        attempt_count: 1,
+        attempt_count: job.attempt_count,
       };
     }
 
@@ -199,7 +201,7 @@ export async function syncMaterialCost(
       total_cost: totalCost,
       entry_count: ledgerEntries.length,
     });
-    await updateJobStatus(supabase, job.id, 'succeeded');
+    await updateJobStatus(supabase, job, 'succeeded');
 
     return {
       id: job.id,
@@ -207,10 +209,10 @@ export async function syncMaterialCost(
       entity_type: 'material_cost_journal',
       entity_id: entityKey,
       erp_docname: erpDocname,
-      attempt_count: 1,
+      attempt_count: job.attempt_count,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return failJob(supabase, job.id, 'material_cost_journal', entityKey, message);
+    return failJob(supabase, job, 'material_cost_journal', entityKey, message);
   }
 }

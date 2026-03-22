@@ -12,50 +12,75 @@ const syncService = new SyncService();
 
 export async function processJob(job: Job): Promise<void> {
   const { entityId, userId, meta } = job.payload;
+  const jobContext =
+    typeof meta?.syncJobId === 'string'
+      ? {
+          jobId: meta.syncJobId,
+          attemptCount:
+            typeof meta.attemptCount === 'number' && Number.isFinite(meta.attemptCount)
+              ? meta.attemptCount
+              : undefined,
+          maxAttempts:
+            typeof meta.maxAttempts === 'number' && Number.isFinite(meta.maxAttempts)
+              ? meta.maxAttempts
+              : undefined,
+        }
+      : undefined;
+
+  let result: { status?: string; error?: string } | undefined;
 
   switch (job.type) {
     case JobType.ERPSyncAccount:
-      await syncService.syncAccount(entityId, userId);
+      result = await syncService.syncAccount(entityId, userId, jobContext);
       break;
 
     case JobType.ERPSyncEstimate:
-      await syncService.syncEstimate(entityId, userId);
+      result = await syncService.syncEstimate(entityId, userId, jobContext);
       break;
 
     case JobType.ERPSyncOpportunity:
-      await syncService.syncOpportunity(entityId, userId);
+      result = await syncService.syncOpportunity(entityId, userId, jobContext);
+      break;
+
+    case JobType.ERPSyncSalesOrder:
+      result = await syncService.syncWonDeal(
+        entityId,
+        userId,
+        typeof meta?.wonDate === 'string' ? meta.wonDate : new Date().toISOString().slice(0, 10),
+        jobContext,
+      );
       break;
 
     case JobType.ERPSyncContact:
-      await syncService.syncContact(entityId, userId);
+      result = await syncService.syncContact(entityId, userId, jobContext);
       break;
 
     case JobType.ERPSyncProject:
-      await syncService.syncProject(entityId, userId);
+      result = await syncService.syncProject(entityId, userId, jobContext);
       break;
 
     case JobType.ERPSyncTask:
-      await syncService.syncTask(entityId, userId);
+      result = await syncService.syncTask(entityId, userId, jobContext);
       break;
 
     case JobType.ERPSyncSupplier:
-      await syncService.syncSupplier(entityId, userId);
+      result = await syncService.syncSupplier(entityId, userId, jobContext);
       break;
 
     case JobType.ERPSyncExpense:
-      await syncService.syncExpenseClaim(entityId, userId);
+      result = await syncService.syncExpenseClaim(entityId, userId, jobContext);
       break;
 
     case JobType.ERPSyncTimesheet:
-      await syncService.syncTimesheet(entityId, userId);
+      result = await syncService.syncTimesheet(entityId, userId, jobContext);
       break;
 
     case JobType.ERPReadInvoice:
-      await syncService.readSalesInvoice(entityId);
+      result = await syncService.readSalesInvoice(entityId, jobContext);
       break;
 
     case JobType.ERPReadPO:
-      await syncService.readPurchaseInvoice(entityId);
+      result = await syncService.readPurchaseInvoice(entityId, jobContext);
       break;
 
     case JobType.TakeoffFeedback:
@@ -66,6 +91,10 @@ export async function processJob(job: Job): Promise<void> {
       const _exhaustive: never = job.type;
       throw new Error(`Unknown job type: ${_exhaustive}`);
     }
+  }
+
+  if (result?.status === 'failed') {
+    throw new Error(result.error ?? `Background job ${job.type} failed`);
   }
 
   void meta; // suppress unused warning for future use

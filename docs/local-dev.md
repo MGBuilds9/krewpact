@@ -25,23 +25,25 @@ Copy `.env.example` to `.env.local` and fill in the values. The example file doc
 
 ### Required Services (5 for full operation)
 
-| Service      | Dashboard                                                                    | What to grab                                                                                      |
-| ------------ | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| **Supabase** | [Dashboard](https://supabase.com/dashboard) → Project `wmeaabrchkysogmeroye` | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`          |
-| **Clerk**    | [Dashboard](https://dashboard.clerk.com) → KrewPact app                      | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`. Domain: `mdmgroupinc.ca`                 |
-| **ERPNext**  | Via Cloudflare Tunnel at `erp-api.mdmgroupinc.ca`                            | `ERPNEXT_BASE_URL`, `ERPNEXT_API_KEY`, `ERPNEXT_API_SECRET`                                       |
-| **Upstash**  | [Console](https://console.upstash.com) → QStash + Redis                      | QStash: `QSTASH_URL`, `QSTASH_TOKEN`. Redis: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` |
-| **Resend**   | [Dashboard](https://resend.com/api-keys)                                     | `RESEND_API_KEY`                                                                                  |
+| Service      | Dashboard                                                                    | What to grab                                                                                                                                               |
+| ------------ | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Supabase** | [Dashboard](https://supabase.com/dashboard) → Project `wmeaabrchkysogmeroye` | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`                                                                   |
+| **Clerk**    | [Dashboard](https://dashboard.clerk.com) → KrewPact app                      | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`. Domain: `mdmgroupinc.ca`                                                                          |
+| **ERPNext**  | Via Cloudflare Tunnel at `erp-api.mdmgroupinc.ca`                            | `ERPNEXT_BASE_URL`, `ERPNEXT_API_KEY`, `ERPNEXT_API_SECRET`                                                                                                |
+| **Upstash**  | [Console](https://console.upstash.com) → QStash + Redis                      | QStash: `QSTASH_URL`, `QSTASH_TOKEN`, `QSTASH_CURRENT_SIGNING_KEY`, `QSTASH_NEXT_SIGNING_KEY`. Redis: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` |
+| **Resend**   | [Dashboard](https://resend.com/api-keys)                                     | `RESEND_API_KEY`                                                                                                                                           |
+| **Mobile**   | Expo/EAS project settings                                                    | `EXPO_PUBLIC_API_BASE_URL`, `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`                                                                                            |
 
-### Clerk JWT Template
+### Clerk Third-Party Auth Metadata
 
-Clerk is configured with a JWT template named **`comet`** (not `supabase`). This template includes custom claims that drive Supabase RLS:
+Clerk is configured to mint Supabase-compatible session tokens through Third-Party Auth. The canonical KrewPact claims live in Clerk user `public_metadata` and are exposed to Supabase as session `metadata`:
 
 - `krewpact_user_id` — maps to Supabase user records
-- `krewpact_divisions` — JSONB array for division filtering
-- `krewpact_roles` — role keys for RBAC
+- `krewpact_org_id` — organization scope
+- `division_ids` — JSONB array for division filtering
+- `role_keys` — role keys for RBAC
 
-If the JWT template name doesn't match, you'll get empty results from Supabase (RLS blocks everything).
+If these metadata fields are missing, Supabase RLS will block access.
 
 ## Database
 
@@ -50,8 +52,8 @@ If the JWT template name doesn't match, you'll get empty results from Supabase (
 All tables have RLS enabled. Policies use JWT claims from Clerk (not `auth.uid()`):
 
 ```sql
-auth.jwt() ->> 'krewpact_user_id'    -- user identity
-auth.jwt() -> 'krewpact_divisions'   -- division access (JSONB array)
+auth.jwt() -> 'metadata' ->> 'krewpact_user_id'  -- user identity
+auth.jwt() -> 'metadata' -> 'division_ids'        -- division access (JSONB array)
 ```
 
 **Service role key** bypasses RLS entirely — used only server-side for admin operations, migrations, and seed scripts. Never expose to the client.
@@ -89,7 +91,7 @@ npm run test:e2e
 - Tests live in `__tests__/` directories alongside source code
 - Mock helpers in `__tests__/helpers/`: `mockSupabaseClient`, `mockClerkAuth`, `mockClerkUnauth`
 - `vi.mock()` calls must come BEFORE imports
-- Dynamic route context: `{ params: Promise.resolve({ id }) }` (Next.js 15 pattern)
+- Dynamic route context: `{ params: Promise.resolve({ id }) }` (App Router pattern)
 
 ## Code Quality
 
@@ -103,12 +105,12 @@ CI runs: Lint → Type Check → Unit Test → Build → Integration Test.
 
 ## Common Issues
 
-| Issue                           | Cause                                      | Fix                                                                                                       |
-| ------------------------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
-| Empty data from Supabase        | RLS blocking — JWT claims missing or wrong | Check Clerk JWT template is named `comet`, verify user has `krewpact_user_id` in public metadata          |
-| CRLF warnings in git            | Windows-origin files                       | `git config core.autocrlf input`                                                                          |
-| Type errors after schema change | Stale generated types                      | Run `npx supabase gen types typescript --project-id wmeaabrchkysogmeroye > types/supabase.ts 2>/dev/null` |
-| Rate limit errors in tests      | Rate limit mock missing                    | Add `vi.mock('@/lib/api/rate-limit', ...)` — see test helpers                                             |
+| Issue                           | Cause                                          | Fix                                                                                                       |
+| ------------------------------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Empty data from Supabase        | RLS blocking — Clerk metadata missing or wrong | Verify Clerk user metadata has `krewpact_user_id`, `division_ids`, `role_keys`, and `krewpact_org_id`     |
+| CRLF warnings in git            | Windows-origin files                           | `git config core.autocrlf input`                                                                          |
+| Type errors after schema change | Stale generated types                          | Run `npx supabase gen types typescript --project-id wmeaabrchkysogmeroye > types/supabase.ts 2>/dev/null` |
+| Rate limit errors in tests      | Rate limit mock missing                        | Add `vi.mock('@/lib/api/rate-limit', ...)` — see test helpers                                             |
 
 ## Project Structure
 

@@ -1,8 +1,23 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 
+import { getKrewpactRoles } from '@/lib/api/org';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
-import { createUserClientSafe } from '@/lib/supabase/server';
+import { normalizeSyncJobStatus } from '@/lib/erp/sync-handlers/sync-helpers';
+import { createScopedServiceClient } from '@/lib/supabase/server';
+
+const SYNC_ROLES = new Set(['platform_admin', 'operations_manager']);
+
+async function requireSyncAccess(): Promise<NextResponse | null> {
+  const roles = await getKrewpactRoles();
+  if (!roles.some((role) => SYNC_ROLES.has(role))) {
+    return NextResponse.json(
+      { error: 'Forbidden: platform_admin or operations_manager role required' },
+      { status: 403 },
+    );
+  }
+  return null;
+}
 
 /**
  * GET /api/erp/sync/[jobId] — Get the status of a sync job.
@@ -13,12 +28,14 @@ export async function GET(request: NextRequest, context: { params: Promise<{ job
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const denied = await requireSyncAccess();
+  if (denied) return denied;
+
   const rl = await rateLimit(request, { limit: 60, window: '1 m', identifier: userId });
   if (!rl.success) return rateLimitResponse(rl);
 
   const { jobId } = await context.params;
-  const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
+  const supabase = createScopedServiceClient('erp-sync:status');
 
   const { data: job, error } = await supabase
     .from('erp_sync_jobs')
@@ -45,6 +62,8 @@ export async function GET(request: NextRequest, context: { params: Promise<{ job
 
   return NextResponse.json({
     ...jobData,
+    status: normalizeSyncJobStatus(jobData.status as string | undefined),
+    db_status: jobData.status,
     erp_docname: syncMap ? (syncMap as Record<string, unknown>).erp_docname : null,
   });
 }

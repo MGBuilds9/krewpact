@@ -24,9 +24,16 @@ export async function verifyQStashSignature(
 ): Promise<VerifyResult> {
   const currentSigningKey = process.env.QSTASH_CURRENT_SIGNING_KEY;
   const nextSigningKey = process.env.QSTASH_NEXT_SIGNING_KEY;
+  const isStrictEnv = process.env.NODE_ENV === 'production';
 
-  // In dev/test without signing keys, allow all requests
   if (!currentSigningKey || !nextSigningKey) {
+    if (isStrictEnv) {
+      return {
+        valid: false,
+        error: 'QStash signing keys are not configured in this environment',
+      };
+    }
+
     return { valid: true, body };
   }
 

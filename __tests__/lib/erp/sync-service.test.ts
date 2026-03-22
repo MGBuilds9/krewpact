@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
-  createUserClient: vi.fn(),
+  createScopedServiceClient: vi.fn(),
   createUserClientSafe: vi.fn(),
 }));
 
@@ -15,9 +15,9 @@ import {
 } from '@/__tests__/helpers';
 // Import AFTER mocks are set up — these will be created in implementation
 import { SyncService } from '@/lib/erp/sync-service';
-import { createUserClient } from '@/lib/supabase/server';
+import { createScopedServiceClient } from '@/lib/supabase/server';
 
-const mockCreateUserClient = vi.mocked(createUserClient);
+const mockCreateScopedServiceClient = vi.mocked(createScopedServiceClient);
 
 // Valid v4 UUIDs for test data that may pass through validation
 const VALID_ACCOUNT_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
@@ -58,7 +58,7 @@ describe('SyncService', () => {
           erp_sync_events: { data: { id: 'event-1' }, error: null },
         },
       });
-      mockCreateUserClient.mockResolvedValue(client);
+      mockCreateScopedServiceClient.mockReturnValue(client);
 
       const service = new SyncService();
       const result = await service.syncAccount(VALID_ACCOUNT_ID, VALID_USER_ID);
@@ -81,7 +81,7 @@ describe('SyncService', () => {
           erp_sync_errors: { data: { id: 'err-1' }, error: null },
         },
       });
-      mockCreateUserClient.mockResolvedValue(client);
+      mockCreateScopedServiceClient.mockReturnValue(client);
 
       const service = new SyncService();
       const result = await service.syncAccount(VALID_ACCOUNT_ID, VALID_USER_ID);
@@ -139,7 +139,7 @@ describe('SyncService', () => {
           erp_sync_events: { data: { id: 'event-1' }, error: null },
         },
       });
-      mockCreateUserClient.mockResolvedValue(client);
+      mockCreateScopedServiceClient.mockReturnValue(client);
 
       const service = new SyncService();
       const result = await service.syncEstimate(VALID_ESTIMATE_ID, VALID_USER_ID);
@@ -170,7 +170,7 @@ describe('SyncService', () => {
           erp_sync_map: { data: syncMap, error: null },
         },
       });
-      mockCreateUserClient.mockResolvedValue(client);
+      mockCreateScopedServiceClient.mockReturnValue(client);
 
       const service = new SyncService();
       const result = await service.getSyncStatus('account', VALID_ACCOUNT_ID);
@@ -186,7 +186,7 @@ describe('SyncService', () => {
           erp_sync_map: { data: null, error: null },
         },
       });
-      mockCreateUserClient.mockResolvedValue(client);
+      mockCreateScopedServiceClient.mockReturnValue(client);
 
       const service = new SyncService();
       const result = await service.getSyncStatus('account', VALID_ACCOUNT_ID);
@@ -209,7 +209,7 @@ describe('SyncService', () => {
           erp_sync_events: { data: { id: 'event-1' }, error: null },
         },
       });
-      mockCreateUserClient.mockResolvedValue(client);
+      mockCreateScopedServiceClient.mockReturnValue(client);
 
       const service = new SyncService();
       await service.syncAccount(VALID_ACCOUNT_ID, VALID_USER_ID);
@@ -231,7 +231,7 @@ describe('SyncService', () => {
           erp_sync_events: { data: { id: 'event-1' }, error: null },
         },
       });
-      mockCreateUserClient.mockResolvedValue(client);
+      mockCreateScopedServiceClient.mockReturnValue(client);
 
       const service = new SyncService();
       await service.syncAccount(VALID_ACCOUNT_ID, VALID_USER_ID);
@@ -252,7 +252,7 @@ describe('SyncService', () => {
           erp_sync_events: { data: { id: 'event-1' }, error: null },
         },
       });
-      mockCreateUserClient.mockResolvedValue(client);
+      mockCreateScopedServiceClient.mockReturnValue(client);
 
       const service = new SyncService();
       await service.syncAccount(VALID_ACCOUNT_ID, VALID_USER_ID);
@@ -273,7 +273,7 @@ describe('SyncService', () => {
           erp_sync_events: { data: { id: 'event-1' }, error: null },
         },
       });
-      mockCreateUserClient.mockResolvedValue(client);
+      mockCreateScopedServiceClient.mockReturnValue(client);
 
       const service = new SyncService();
       const result = await service.syncAccount(VALID_ACCOUNT_ID, VALID_USER_ID);
@@ -285,7 +285,7 @@ describe('SyncService', () => {
   });
 
   describe('retry logic', () => {
-    it('increments attempt_count on sync job', async () => {
+    it('returns the persisted attempt count from the sync job record', async () => {
       const account = makeAccount({ id: VALID_ACCOUNT_ID });
       const syncJob = {
         id: VALID_JOB_ID,
@@ -306,14 +306,17 @@ describe('SyncService', () => {
           erp_sync_events: { data: { id: 'event-1' }, error: null },
         },
       });
-      mockCreateUserClient.mockResolvedValue(client);
+      mockCreateScopedServiceClient.mockReturnValue(client);
 
       const service = new SyncService();
-      const result = await service.syncAccount(VALID_ACCOUNT_ID, VALID_USER_ID);
+      const result = await service.syncAccount(VALID_ACCOUNT_ID, VALID_USER_ID, {
+        jobId: VALID_JOB_ID,
+        attemptCount: 2,
+        maxAttempts: 3,
+      });
 
-      // The sync should have updated the job (which includes incrementing attempt_count)
       expect(result).toBeDefined();
-      expect(result.attempt_count).toBe(1);
+      expect(result.attempt_count).toBe(0);
     });
   });
 
@@ -338,7 +341,7 @@ describe('SyncService', () => {
           erp_sync_events: { data: { id: 'event-1' }, error: null },
         },
       });
-      mockCreateUserClient.mockResolvedValue(client);
+      mockCreateScopedServiceClient.mockReturnValue(client);
 
       const service = new SyncService();
       const result = await service.syncAccount(VALID_ACCOUNT_ID, VALID_USER_ID);

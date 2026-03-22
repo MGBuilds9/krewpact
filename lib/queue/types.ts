@@ -8,6 +8,7 @@ export enum JobType {
   ERPSyncContact = 'erp-sync-contact',
   ERPSyncEstimate = 'erp-sync-estimate',
   ERPSyncOpportunity = 'erp-sync-opportunity',
+  ERPSyncSalesOrder = 'erp-sync-sales-order',
   ERPSyncProject = 'erp-sync-project',
   ERPSyncTask = 'erp-sync-task',
   ERPSyncSupplier = 'erp-sync-supplier',

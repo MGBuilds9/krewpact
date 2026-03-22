@@ -7,7 +7,13 @@ vi.mock('@clerk/nextjs/server', () => ({
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest } from 'next/server';
 
-import { getOrgFromHeaders, getOrgIdFromAuth } from '@/lib/api/org';
+import {
+  getKrewpactDivisions,
+  getKrewpactRoles,
+  getKrewpactUserId,
+  getOrgFromHeaders,
+  getOrgIdFromAuth,
+} from '@/lib/api/org';
 
 const mockAuth = vi.mocked(auth);
 
@@ -19,7 +25,11 @@ describe('getOrgIdFromAuth', () => {
   it('returns org_id from JWT claims when present', async () => {
     mockAuth.mockResolvedValue({
       userId: 'user_123',
-      sessionClaims: { krewpact_org_id: 'org-uuid-123' },
+      sessionClaims: {
+        metadata: {
+          krewpact_org_id: 'org-uuid-123',
+        },
+      },
     } as never);
 
     const result = await getOrgIdFromAuth();
@@ -29,11 +39,51 @@ describe('getOrgIdFromAuth', () => {
   it('falls back to mdm-group when no claim present', async () => {
     mockAuth.mockResolvedValue({
       userId: 'user_123',
-      sessionClaims: {},
+      sessionClaims: { metadata: {} },
     } as never);
 
     const result = await getOrgIdFromAuth();
     expect(result).toBe('mdm-group');
+  });
+});
+
+describe('metadata claim helpers', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('reads user id, roles, and divisions from metadata claims', async () => {
+    mockAuth.mockResolvedValue({
+      userId: 'user_123',
+      sessionClaims: {
+        metadata: {
+          krewpact_user_id: 'kp-user-123',
+          role_keys: ['platform_admin', 'executive'],
+          division_ids: ['contracting', 'homes'],
+        },
+      },
+    } as never);
+
+    await expect(getKrewpactUserId()).resolves.toBe('kp-user-123');
+    await expect(getKrewpactRoles()).resolves.toEqual(['platform_admin', 'executive']);
+    await expect(getKrewpactDivisions()).resolves.toEqual(['contracting', 'homes']);
+  });
+
+  it('ignores legacy top-level claims when metadata is missing', async () => {
+    mockAuth.mockResolvedValue({
+      userId: 'user_123',
+      sessionClaims: {
+        krewpact_user_id: 'legacy-user',
+        krewpact_org_id: 'legacy-org',
+        krewpact_roles: ['platform_admin'],
+        krewpact_divisions: ['legacy-division'],
+      },
+    } as never);
+
+    await expect(getKrewpactUserId()).resolves.toBeNull();
+    await expect(getKrewpactRoles()).resolves.toEqual([]);
+    await expect(getKrewpactDivisions()).resolves.toEqual([]);
+    await expect(getOrgIdFromAuth()).resolves.toBe('mdm-group');
   });
 });
 

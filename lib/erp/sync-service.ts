@@ -14,12 +14,13 @@
  */
 
 import { logger } from '@/lib/logger';
-import { createUserClient } from '@/lib/supabase/server';
+import { createScopedServiceClient } from '@/lib/supabase/server';
 
 import { syncContact } from './sync-handlers/sync-contact';
 import { syncAccount } from './sync-handlers/sync-customer';
 import { syncExpenseClaim } from './sync-handlers/sync-expense';
 import { syncGoodsReceipt } from './sync-handlers/sync-goods-receipt';
+import type { SyncJobContext } from './sync-handlers/sync-helpers';
 import { syncInventoryPo } from './sync-handlers/sync-inventory-po';
 import {
   readPaymentEntry,
@@ -54,78 +55,84 @@ export function isMockMode(): boolean {
 }
 
 export class SyncService {
-  async syncAccount(accountId: string, userId: string) {
-    return syncAccount(accountId, userId);
+  async syncAccount(accountId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncAccount(accountId, userId, jobContext);
   }
 
-  async syncEstimate(estimateId: string, userId: string) {
-    return syncEstimate(estimateId, userId);
+  async syncEstimate(estimateId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncEstimate(estimateId, userId, jobContext);
   }
 
-  async syncOpportunity(opportunityId: string, userId: string) {
-    return syncOpportunity(opportunityId, userId);
+  async syncOpportunity(opportunityId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncOpportunity(opportunityId, userId, jobContext);
   }
 
-  async syncWonDeal(opportunityId: string, userId: string, wonDate: string) {
-    return syncWonDeal(opportunityId, userId, wonDate);
+  async syncWonDeal(
+    opportunityId: string,
+    userId: string,
+    wonDate: string,
+    jobContext?: SyncJobContext,
+  ) {
+    return syncWonDeal(opportunityId, userId, wonDate, jobContext);
   }
 
-  async syncContact(contactId: string, userId: string) {
-    return syncContact(contactId, userId);
+  async syncContact(contactId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncContact(contactId, userId, jobContext);
   }
 
-  async syncProject(projectId: string, userId: string) {
-    return syncProject(projectId, userId);
+  async syncProject(projectId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncProject(projectId, userId, jobContext);
   }
 
-  async syncTask(taskId: string, userId: string) {
-    return syncTask(taskId, userId);
+  async syncTask(taskId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncTask(taskId, userId, jobContext);
   }
 
-  async syncSupplier(portalAccountId: string, userId: string) {
-    return syncSupplier(portalAccountId, userId);
+  async syncSupplier(portalAccountId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncSupplier(portalAccountId, userId, jobContext);
   }
 
-  async syncExpenseClaim(expenseClaimId: string, userId: string) {
-    return syncExpenseClaim(expenseClaimId, userId);
+  async syncExpenseClaim(expenseClaimId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncExpenseClaim(expenseClaimId, userId, jobContext);
   }
 
-  async syncTimesheet(timesheetBatchId: string, userId: string) {
-    return syncTimesheet(timesheetBatchId, userId);
+  async syncTimesheet(timesheetBatchId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncTimesheet(timesheetBatchId, userId, jobContext);
   }
 
-  async syncInventoryPo(poId: string, userId: string) {
-    return syncInventoryPo(poId, userId);
+  async syncInventoryPo(poId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncInventoryPo(poId, userId, jobContext);
   }
 
-  async syncGoodsReceipt(grId: string, userId: string) {
-    return syncGoodsReceipt(grId, userId);
+  async syncGoodsReceipt(grId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncGoodsReceipt(grId, userId, jobContext);
   }
 
   async syncMaterialCost(
     options: { projectId: string; startDate: string; endDate: string },
     userId: string,
+    jobContext?: SyncJobContext,
   ) {
-    return syncMaterialCost(options, userId);
+    return syncMaterialCost(options, userId, jobContext);
   }
 
-  async readSalesInvoice(erpDocname: string) {
-    return readSalesInvoice(erpDocname);
+  async readSalesInvoice(erpDocname: string, jobContext?: SyncJobContext) {
+    return readSalesInvoice(erpDocname, jobContext);
   }
 
-  async readPurchaseInvoice(erpDocname: string) {
-    return readPurchaseInvoice(erpDocname);
+  async readPurchaseInvoice(erpDocname: string, jobContext?: SyncJobContext) {
+    return readPurchaseInvoice(erpDocname, jobContext);
   }
 
-  async readPaymentEntry(erpDocname: string) {
-    return readPaymentEntry(erpDocname);
+  async readPaymentEntry(erpDocname: string, jobContext?: SyncJobContext) {
+    return readPaymentEntry(erpDocname, jobContext);
   }
 
   async getSyncStatus(
     entityType: string,
     entityId: string,
   ): Promise<Record<string, unknown> | null> {
-    const supabase = await createUserClient();
+    const supabase = createScopedServiceClient('erp-sync:get-status');
     const { data } = await supabase
       .from('erp_sync_map')
       .select('*')

@@ -13,7 +13,7 @@
  */
 
 import { logger } from '@/lib/logger';
-import { createUserClient } from '@/lib/supabase/server';
+import { createScopedServiceClient } from '@/lib/supabase/server';
 
 import { mockPurchaseOrderResponse } from '../mock-responses';
 import { isMockMode } from '../sync-service';
@@ -21,6 +21,7 @@ import {
   createSyncJob,
   failJob,
   logEvent,
+  type SyncJobContext,
   SyncResult,
   updateJobStatus,
   upsertSyncMap,
@@ -31,7 +32,7 @@ import {
  * by checking the erp_sync_map table.
  */
 async function resolveErpSupplierName(
-  supabase: Awaited<ReturnType<typeof createUserClient>>,
+  supabase: ReturnType<typeof createScopedServiceClient>,
   supplierId: string,
 ): Promise<string | null> {
   const { data: syncMapRow } = await supabase
@@ -47,9 +48,13 @@ async function resolveErpSupplierName(
 /**
  * Sync an approved KrewPact inventory purchase order to ERPNext as a Purchase Order.
  */
-export async function syncInventoryPo(poId: string, _userId: string): Promise<SyncResult> {
-  const supabase = await createUserClient();
-  const job = await createSyncJob(supabase, 'inventory_purchase_order', poId);
+export async function syncInventoryPo(
+  poId: string,
+  _userId: string,
+  jobContext?: SyncJobContext,
+): Promise<SyncResult> {
+  const supabase = createScopedServiceClient('erp-sync:inventory-po');
+  const job = await createSyncJob(supabase, 'inventory_purchase_order', poId, jobContext);
 
   try {
     // 1. Fetch the PO header
@@ -62,7 +67,7 @@ export async function syncInventoryPo(poId: string, _userId: string): Promise<Sy
     if (poError || !po) {
       return failJob(
         supabase,
-        job.id,
+        job,
         'inventory_purchase_order',
         poId,
         `Purchase order not found: ${poError?.message || 'null'}`,
@@ -81,7 +86,7 @@ export async function syncInventoryPo(poId: string, _userId: string): Promise<Sy
     if (linesError) {
       return failJob(
         supabase,
-        job.id,
+        job,
         'inventory_purchase_order',
         poId,
         `Failed to fetch PO lines: ${linesError.message}`,
@@ -153,7 +158,7 @@ export async function syncInventoryPo(poId: string, _userId: string): Promise<Sy
       entity_id: poId,
       erp_docname: erpDocname,
     });
-    await updateJobStatus(supabase, job.id, 'succeeded');
+    await updateJobStatus(supabase, job, 'succeeded');
 
     return {
       id: job.id,
@@ -161,10 +166,10 @@ export async function syncInventoryPo(poId: string, _userId: string): Promise<Sy
       entity_type: 'inventory_purchase_order',
       entity_id: poId,
       erp_docname: erpDocname,
-      attempt_count: 1,
+      attempt_count: job.attempt_count,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return failJob(supabase, job.id, 'inventory_purchase_order', poId, message);
+    return failJob(supabase, job, 'inventory_purchase_order', poId, message);
   }
 }

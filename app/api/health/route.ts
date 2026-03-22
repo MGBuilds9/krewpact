@@ -68,6 +68,13 @@ async function checkClerkHealth(checks: Record<string, string>): Promise<void> {
   } catch {
     checks.clerk = 'down';
   }
+
+  checks.auth_bridge =
+    process.env.CLERK_SECRET_KEY &&
+    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY &&
+    process.env.NEXT_PUBLIC_SUPABASE_URL
+      ? 'ok'
+      : 'degraded';
 }
 
 async function checkErpNextHealth(checks: Record<string, string>): Promise<void> {
@@ -85,6 +92,29 @@ async function checkErpNextHealth(checks: Record<string, string>): Promise<void>
     checks.erpnext = res.ok ? 'ok' : 'degraded';
   } catch {
     checks.erpnext = 'down';
+  }
+}
+
+async function checkQStashHealth(checks: Record<string, string>): Promise<void> {
+  const token = process.env.QSTASH_TOKEN;
+  const currentSigningKey = process.env.QSTASH_CURRENT_SIGNING_KEY;
+  const nextSigningKey = process.env.QSTASH_NEXT_SIGNING_KEY;
+  if (!token) return;
+
+  try {
+    const baseUrl = process.env.QSTASH_URL || 'https://qstash.upstash.io';
+    const res = await withTimeout(
+      fetch(`${baseUrl}/v2/topics`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+      12_000,
+    );
+
+    checks.qstash = res.ok ? 'ok' : 'degraded';
+    checks.qstash_signing_keys = currentSigningKey && nextSigningKey ? 'ok' : 'degraded';
+  } catch {
+    checks.qstash = 'down';
+    checks.qstash_signing_keys = currentSigningKey && nextSigningKey ? 'ok' : 'down';
   }
 }
 
@@ -128,6 +158,7 @@ async function runDeepChecks(
     checkRedisHealth(checks),
     checkClerkHealth(checks),
     checkErpNextHealth(checks),
+    checkQStashHealth(checks),
   ]);
   await runCronCheck(supabase, checks, details);
 }

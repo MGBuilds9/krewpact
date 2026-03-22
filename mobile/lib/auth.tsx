@@ -45,6 +45,10 @@ function TokenBridge({ children }: { children: React.ReactNode }) {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  if (!CLERK_PUBLISHABLE_KEY) {
+    throw new Error('Mobile auth is not configured: EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY is missing');
+  }
+
   return (
     <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY} tokenCache={tokenCache}>
       <ClerkLoaded>

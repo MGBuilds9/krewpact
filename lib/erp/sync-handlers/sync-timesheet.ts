@@ -2,7 +2,7 @@
  * Sync handler: KrewPact Timesheet Batch → ERPNext Timesheet
  */
 
-import { createUserClient } from '@/lib/supabase/server';
+import { createScopedServiceClient } from '@/lib/supabase/server';
 
 import { mockTimesheetResponse } from '../mock-responses';
 import { isMockMode } from '../sync-service';
@@ -11,6 +11,7 @@ import {
   createSyncJob,
   failJob,
   logEvent,
+  type SyncJobContext,
   SyncResult,
   updateJobStatus,
   upsertSyncMap,
@@ -19,9 +20,10 @@ import {
 export async function syncTimesheet(
   timesheetBatchId: string,
   _userId: string,
+  jobContext?: SyncJobContext,
 ): Promise<SyncResult> {
-  const supabase = await createUserClient();
-  const job = await createSyncJob(supabase, 'timesheet', timesheetBatchId);
+  const supabase = createScopedServiceClient('erp-sync:timesheet');
+  const job = await createSyncJob(supabase, 'timesheet', timesheetBatchId, jobContext);
 
   try {
     const { data: batch, error: batchError } = await supabase
@@ -33,7 +35,7 @@ export async function syncTimesheet(
     if (batchError || !batch) {
       return failJob(
         supabase,
-        job.id,
+        job,
         'timesheet',
         timesheetBatchId,
         `Timesheet batch not found: ${batchError?.message || 'null'}`,
@@ -83,7 +85,7 @@ export async function syncTimesheet(
       erp_docname: erpDocname,
       entry_count: entries.length,
     });
-    await updateJobStatus(supabase, job.id, 'succeeded');
+    await updateJobStatus(supabase, job, 'succeeded');
 
     return {
       id: job.id,
@@ -91,10 +93,10 @@ export async function syncTimesheet(
       entity_type: 'timesheet',
       entity_id: timesheetBatchId,
       erp_docname: erpDocname,
-      attempt_count: 1,
+      attempt_count: job.attempt_count,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return failJob(supabase, job.id, 'timesheet', timesheetBatchId, message);
+    return failJob(supabase, job, 'timesheet', timesheetBatchId, message);
   }
 }

@@ -10,6 +10,10 @@ vi.mock('@/lib/microsoft/graph', () => ({
   getMicrosoftToken: vi.fn(),
   graphFetch: vi.fn(),
   buildGraphUrl: vi.fn(),
+  graphErrorResponse: vi.fn((error: unknown) => ({
+    status: 502,
+    body: { error: error instanceof Error ? error.message : 'Graph failed' },
+  })),
 }));
 
 import { auth } from '@clerk/nextjs/server';

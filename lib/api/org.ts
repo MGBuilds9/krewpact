@@ -6,12 +6,7 @@ import { ApiError } from './errors';
 async function _getClerkMetadata(): Promise<Record<string, unknown>> {
   const { sessionClaims } = await auth();
   const claims = sessionClaims as Record<string, unknown> | null;
-  return (
-    (claims?.metadata as Record<string, unknown>) ??
-    (claims?.public_metadata as Record<string, unknown>) ??
-    claims ??
-    {}
-  );
+  return (claims?.metadata as Record<string, unknown>) ?? {};
 }
 
 export async function getKrewpactUserId(): Promise<string | null> {
@@ -21,13 +16,13 @@ export async function getKrewpactUserId(): Promise<string | null> {
 
 export async function getKrewpactRoles(): Promise<string[]> {
   const meta = await _getClerkMetadata();
-  const roles = meta?.role_keys ?? meta?.krewpact_roles;
+  const roles = meta?.role_keys;
   return Array.isArray(roles) ? roles : [];
 }
 
 export async function getKrewpactDivisions(): Promise<string[]> {
   const meta = await _getClerkMetadata();
-  const divisions = meta?.division_ids ?? meta?.krewpact_divisions;
+  const divisions = meta?.division_ids;
   return Array.isArray(divisions) ? divisions : [];
 }
 
@@ -48,9 +43,8 @@ export function getOrgFromHeaders(req: NextRequest): { orgId: string; orgSlug: s
  * Falls back to the default org if no claim is present (single-org mode).
  */
 export async function getOrgIdFromAuth(): Promise<string> {
-  const { sessionClaims } = await auth();
-  const claims = sessionClaims as Record<string, unknown> | null;
-  const orgId = claims?.krewpact_org_id as string | undefined;
+  const meta = await _getClerkMetadata();
+  const orgId = meta?.krewpact_org_id as string | undefined;
 
   if (orgId) return orgId;
 

@@ -5,7 +5,7 @@
  *   ERPNext Payment Entry → erp_sync_events
  */
 
-import { createUserClient } from '@/lib/supabase/server';
+import { createScopedServiceClient } from '@/lib/supabase/server';
 
 import {
   mockPaymentEntryResponse,
@@ -16,11 +16,21 @@ import { fromErpPaymentEntry } from '../payment-entry-mapper';
 import { fromErpPurchaseInvoice } from '../purchase-invoice-mapper';
 import { fromErpSalesInvoice } from '../sales-invoice-mapper';
 import { isMockMode } from '../sync-service';
-import { createSyncJob, failJob, logEvent, SyncResult, updateJobStatus } from './sync-helpers';
+import {
+  createSyncJob,
+  failJob,
+  logEvent,
+  type SyncJobContext,
+  SyncResult,
+  updateJobStatus,
+} from './sync-helpers';
 
-export async function readSalesInvoice(erpDocname: string): Promise<SyncResult> {
-  const supabase = await createUserClient();
-  const job = await createSyncJob(supabase, 'sales_invoice', erpDocname);
+export async function readSalesInvoice(
+  erpDocname: string,
+  jobContext?: SyncJobContext,
+): Promise<SyncResult> {
+  const supabase = createScopedServiceClient('erp-sync:read-sales-invoice');
+  const job = await createSyncJob(supabase, 'sales_invoice', erpDocname, jobContext);
 
   try {
     let invoiceData: Record<string, unknown>;
@@ -56,7 +66,7 @@ export async function readSalesInvoice(erpDocname: string): Promise<SyncResult> 
       entity_type: 'sales_invoice',
       erp_docname: erpDocname,
     });
-    await updateJobStatus(supabase, job.id, 'succeeded');
+    await updateJobStatus(supabase, job, 'succeeded');
 
     return {
       id: job.id,
@@ -64,17 +74,20 @@ export async function readSalesInvoice(erpDocname: string): Promise<SyncResult> 
       entity_type: 'sales_invoice',
       entity_id: erpDocname,
       erp_docname: erpDocname,
-      attempt_count: 1,
+      attempt_count: job.attempt_count,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return failJob(supabase, job.id, 'sales_invoice', erpDocname, message);
+    return failJob(supabase, job, 'sales_invoice', erpDocname, message);
   }
 }
 
-export async function readPurchaseInvoice(erpDocname: string): Promise<SyncResult> {
-  const supabase = await createUserClient();
-  const job = await createSyncJob(supabase, 'purchase_invoice', erpDocname);
+export async function readPurchaseInvoice(
+  erpDocname: string,
+  jobContext?: SyncJobContext,
+): Promise<SyncResult> {
+  const supabase = createScopedServiceClient('erp-sync:read-purchase-invoice');
+  const job = await createSyncJob(supabase, 'purchase_invoice', erpDocname, jobContext);
 
   try {
     let invoiceData: Record<string, unknown>;
@@ -108,7 +121,7 @@ export async function readPurchaseInvoice(erpDocname: string): Promise<SyncResul
       entity_type: 'purchase_invoice',
       erp_docname: erpDocname,
     });
-    await updateJobStatus(supabase, job.id, 'succeeded');
+    await updateJobStatus(supabase, job, 'succeeded');
 
     return {
       id: job.id,
@@ -116,17 +129,20 @@ export async function readPurchaseInvoice(erpDocname: string): Promise<SyncResul
       entity_type: 'purchase_invoice',
       entity_id: erpDocname,
       erp_docname: erpDocname,
-      attempt_count: 1,
+      attempt_count: job.attempt_count,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return failJob(supabase, job.id, 'purchase_invoice', erpDocname, message);
+    return failJob(supabase, job, 'purchase_invoice', erpDocname, message);
   }
 }
 
-export async function readPaymentEntry(erpDocname: string): Promise<SyncResult> {
-  const supabase = await createUserClient();
-  const job = await createSyncJob(supabase, 'payment_entry', erpDocname);
+export async function readPaymentEntry(
+  erpDocname: string,
+  jobContext?: SyncJobContext,
+): Promise<SyncResult> {
+  const supabase = createScopedServiceClient('erp-sync:read-payment-entry');
+  const job = await createSyncJob(supabase, 'payment_entry', erpDocname, jobContext);
 
   try {
     let paymentData: Record<string, unknown>;
@@ -152,7 +168,7 @@ export async function readPaymentEntry(erpDocname: string): Promise<SyncResult> 
       entity_type: 'payment_entry',
       erp_docname: erpDocname,
     });
-    await updateJobStatus(supabase, job.id, 'succeeded');
+    await updateJobStatus(supabase, job, 'succeeded');
 
     return {
       id: job.id,
@@ -160,10 +176,10 @@ export async function readPaymentEntry(erpDocname: string): Promise<SyncResult> 
       entity_type: 'payment_entry',
       entity_id: erpDocname,
       erp_docname: erpDocname,
-      attempt_count: 1,
+      attempt_count: job.attempt_count,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return failJob(supabase, job.id, 'payment_entry', erpDocname, message);
+    return failJob(supabase, job, 'payment_entry', erpDocname, message);
   }
 }

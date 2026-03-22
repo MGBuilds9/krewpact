@@ -15,21 +15,23 @@ import { describe, expect, it } from 'vitest';
 // =====================================================
 
 interface JWTClaims {
-  krewpact_user_id?: string;
-  krewpact_divisions?: string[];
-  krewpact_roles?: string[];
+  metadata?: {
+    krewpact_user_id?: string;
+    division_ids?: string[];
+    role_keys?: string[];
+  };
 }
 
 function krewpact_user_id(claims: JWTClaims): string {
-  return claims.krewpact_user_id ?? '';
+  return claims.metadata?.krewpact_user_id ?? '';
 }
 
 function krewpact_divisions(claims: JWTClaims): string[] {
-  return claims.krewpact_divisions ?? [];
+  return claims.metadata?.division_ids ?? [];
 }
 
 function krewpact_roles(claims: JWTClaims): string[] {
-  return claims.krewpact_roles ?? [];
+  return claims.metadata?.role_keys ?? [];
 }
 
 function is_platform_admin(claims: JWTClaims): boolean {
@@ -80,33 +82,43 @@ function canAccessErpSync(claims: JWTClaims): boolean {
 // Test JWT claim fixtures
 // =====================================================
 const USER_A: JWTClaims = {
-  krewpact_user_id: 'user-a-uuid',
-  krewpact_divisions: ['div-contracting'],
-  krewpact_roles: ['project_manager'],
+  metadata: {
+    krewpact_user_id: 'user-a-uuid',
+    division_ids: ['div-contracting'],
+    role_keys: ['project_manager'],
+  },
 };
 
 const USER_B: JWTClaims = {
-  krewpact_user_id: 'user-b-uuid',
-  krewpact_divisions: ['div-homes'],
-  krewpact_roles: ['estimator'],
+  metadata: {
+    krewpact_user_id: 'user-b-uuid',
+    division_ids: ['div-homes'],
+    role_keys: ['estimator'],
+  },
 };
 
 const MULTI_DIV_USER: JWTClaims = {
-  krewpact_user_id: 'user-multi-uuid',
-  krewpact_divisions: ['div-contracting', 'div-homes', 'div-telecom'],
-  krewpact_roles: ['operations_manager'],
+  metadata: {
+    krewpact_user_id: 'user-multi-uuid',
+    division_ids: ['div-contracting', 'div-homes', 'div-telecom'],
+    role_keys: ['operations_manager'],
+  },
 };
 
 const ADMIN: JWTClaims = {
-  krewpact_user_id: 'admin-uuid',
-  krewpact_divisions: [],
-  krewpact_roles: ['platform_admin'],
+  metadata: {
+    krewpact_user_id: 'admin-uuid',
+    division_ids: [],
+    role_keys: ['platform_admin'],
+  },
 };
 
 const ACCOUNTING_USER: JWTClaims = {
-  krewpact_user_id: 'accounting-uuid',
-  krewpact_divisions: ['div-contracting'],
-  krewpact_roles: ['accounting'],
+  metadata: {
+    krewpact_user_id: 'accounting-uuid',
+    division_ids: ['div-contracting'],
+    role_keys: ['accounting'],
+  },
 };
 
 const EMPTY_CLAIMS: JWTClaims = {};

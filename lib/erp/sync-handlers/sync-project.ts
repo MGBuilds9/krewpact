@@ -2,7 +2,7 @@
  * Sync handler: KrewPact Project → ERPNext Project
  */
 
-import { createUserClient } from '@/lib/supabase/server';
+import { createScopedServiceClient } from '@/lib/supabase/server';
 
 import { mockProjectResponse } from '../mock-responses';
 import { mapProjectToErp } from '../project-mapper';
@@ -11,14 +11,19 @@ import {
   createSyncJob,
   failJob,
   logEvent,
+  type SyncJobContext,
   SyncResult,
   updateJobStatus,
   upsertSyncMap,
 } from './sync-helpers';
 
-export async function syncProject(projectId: string, _userId: string): Promise<SyncResult> {
-  const supabase = await createUserClient();
-  const job = await createSyncJob(supabase, 'project', projectId);
+export async function syncProject(
+  projectId: string,
+  _userId: string,
+  jobContext?: SyncJobContext,
+): Promise<SyncResult> {
+  const supabase = createScopedServiceClient('erp-sync:project');
+  const job = await createSyncJob(supabase, 'project', projectId, jobContext);
 
   try {
     const { data: project, error: projectError } = await supabase
@@ -30,7 +35,7 @@ export async function syncProject(projectId: string, _userId: string): Promise<S
     if (projectError || !project) {
       return failJob(
         supabase,
-        job.id,
+        job,
         'project',
         projectId,
         `Project not found: ${projectError?.message || 'null'}`,
@@ -86,7 +91,7 @@ export async function syncProject(projectId: string, _userId: string): Promise<S
       entity_id: projectId,
       erp_docname: erpDocname,
     });
-    await updateJobStatus(supabase, job.id, 'succeeded');
+    await updateJobStatus(supabase, job, 'succeeded');
 
     return {
       id: job.id,
@@ -94,10 +99,10 @@ export async function syncProject(projectId: string, _userId: string): Promise<S
       entity_type: 'project',
       entity_id: projectId,
       erp_docname: erpDocname,
-      attempt_count: 1,
+      attempt_count: job.attempt_count,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return failJob(supabase, job.id, 'project', projectId, message);
+    return failJob(supabase, job, 'project', projectId, message);
   }
 }

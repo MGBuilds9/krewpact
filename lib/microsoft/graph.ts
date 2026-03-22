@@ -1,5 +1,15 @@
 const GRAPH_BASE = 'https://graph.microsoft.com/v1.0';
 
+export class MicrosoftGraphError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+  ) {
+    super(message);
+    this.name = 'MicrosoftGraphError';
+  }
+}
+
 export function buildGraphUrl(path: string, sharedMailbox?: string): string {
   const prefix = sharedMailbox ? `/users/${sharedMailbox}` : '/me';
   return `${GRAPH_BASE}${prefix}${path}`;
@@ -8,7 +18,7 @@ export function buildGraphUrl(path: string, sharedMailbox?: string): string {
 export async function getMicrosoftToken(clerkUserId: string): Promise<string> {
   const clerkSecretKey = process.env.CLERK_SECRET_KEY;
   if (!clerkSecretKey) {
-    throw new Error('CLERK_SECRET_KEY not configured');
+    throw new MicrosoftGraphError('CLERK_SECRET_KEY not configured', 503);
   }
 
   const res = await fetch(
@@ -21,12 +31,15 @@ export async function getMicrosoftToken(clerkUserId: string): Promise<string> {
   );
 
   if (!res.ok) {
-    throw new Error(`Clerk OAuth token fetch failed: ${res.status} ${res.statusText}`);
+    throw new MicrosoftGraphError(
+      `Clerk OAuth token fetch failed: ${res.status} ${res.statusText}`,
+      502,
+    );
   }
 
   const tokens = await res.json();
   if (!Array.isArray(tokens) || tokens.length === 0 || !tokens[0].token) {
-    throw new Error('No Microsoft OAuth token available for this user');
+    throw new MicrosoftGraphError('No Microsoft OAuth token available for this user', 403);
   }
 
   return tokens[0].token;
@@ -48,8 +61,31 @@ export async function graphFetch<T = unknown>(
 
   if (!res.ok) {
     const error = await res.json().catch(() => ({ error: { message: res.statusText } }));
-    throw new Error(error?.error?.message || `Graph API error: ${res.status}`);
+    throw new MicrosoftGraphError(error?.error?.message || `Graph API error: ${res.status}`, 502);
   }
 
-  return res.json();
+  if (res.status === 204) {
+    return undefined as T;
+  }
+
+  const text = await res.text();
+  if (!text) {
+    return undefined as T;
+  }
+
+  return JSON.parse(text) as T;
+}
+
+export function graphErrorResponse(error: unknown): { status: number; body: { error: string } } {
+  if (error instanceof MicrosoftGraphError) {
+    return {
+      status: error.status,
+      body: { error: error.message },
+    };
+  }
+
+  return {
+    status: 500,
+    body: { error: error instanceof Error ? error.message : 'Microsoft Graph request failed' },
+  };
 }

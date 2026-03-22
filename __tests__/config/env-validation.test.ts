@@ -56,4 +56,26 @@ describe('Environment validation', () => {
     // @ts-expect-error -- restore
     process.env.NODE_ENV = origNodeEnv;
   });
+
+  it('warns when QStash signing keys are missing in production', async () => {
+    const { logger } = await import('@/lib/logger');
+    process.env.QSTASH_TOKEN = 'qstash-token';
+    delete process.env.QSTASH_CURRENT_SIGNING_KEY;
+    delete process.env.QSTASH_NEXT_SIGNING_KEY;
+    const origNodeEnv = process.env.NODE_ENV;
+    // @ts-expect-error test env override
+    process.env.NODE_ENV = 'production';
+
+    await import('@/lib/env');
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      '[env] Production warnings',
+      expect.objectContaining({
+        warnings: expect.arrayContaining([expect.stringContaining('QSTASH signing keys')]),
+      }),
+    );
+
+    // @ts-expect-error test env override
+    process.env.NODE_ENV = origNodeEnv;
+  });
 });

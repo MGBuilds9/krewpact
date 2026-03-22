@@ -10,6 +10,7 @@ vi.mock('@/lib/microsoft/graph', () => ({
   getMicrosoftToken: vi.fn(),
   graphFetch: vi.fn(),
   buildGraphUrl: vi.fn(),
+  graphErrorResponse: vi.fn(),
 }));
 
 // Mock Supabase server client
@@ -26,13 +27,19 @@ import {
   mockSupabaseClient,
 } from '@/__tests__/helpers';
 import { POST } from '@/app/api/email/send/route';
-import { buildGraphUrl, getMicrosoftToken, graphFetch } from '@/lib/microsoft/graph';
+import {
+  buildGraphUrl,
+  getMicrosoftToken,
+  graphErrorResponse,
+  graphFetch,
+} from '@/lib/microsoft/graph';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockGetToken = vi.mocked(getMicrosoftToken);
 const mockGraphFetch = vi.mocked(graphFetch);
 const mockBuildGraphUrl = vi.mocked(buildGraphUrl);
+const mockGraphErrorResponse = vi.mocked(graphErrorResponse);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 function validSendPayload(overrides: Record<string, unknown> = {}) {
@@ -56,6 +63,10 @@ describe('POST /api/email/send', () => {
     );
     mockGetToken.mockResolvedValue('mock-ms-token');
     mockGraphFetch.mockResolvedValue(undefined);
+    mockGraphErrorResponse.mockImplementation((error: unknown) => ({
+      status: 502,
+      body: { error: error instanceof Error ? error.message : 'Graph failed' },
+    }));
   });
 
   it('returns 401 without auth', async () => {
@@ -211,5 +222,17 @@ describe('POST /api/email/send', () => {
     const callArgs = mockGraphFetch.mock.calls[0];
     const sentBody = JSON.parse((callArgs[2] as RequestInit).body as string);
     expect(sentBody.message.body.contentType).toBe('HTML');
+  });
+
+  it('returns mapped Graph auth errors', async () => {
+    mockClerkAuth(mockAuth);
+    mockGetToken.mockRejectedValue(new Error('No Microsoft OAuth token available for this user'));
+
+    const res = await POST(makeJsonRequest('/api/email/send', validSendPayload()));
+
+    expect(res.status).toBe(502);
+    await expect(res.json()).resolves.toEqual({
+      error: 'No Microsoft OAuth token available for this user',
+    });
   });
 });

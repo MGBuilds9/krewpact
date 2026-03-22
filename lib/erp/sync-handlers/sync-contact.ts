@@ -2,7 +2,7 @@
  * Sync handler: KrewPact Contact → ERPNext Contact
  */
 
-import { createUserClient } from '@/lib/supabase/server';
+import { createScopedServiceClient } from '@/lib/supabase/server';
 
 import { mapContactToErp } from '../contact-mapper';
 import { mockContactResponse } from '../mock-responses';
@@ -11,14 +11,19 @@ import {
   createSyncJob,
   failJob,
   logEvent,
+  type SyncJobContext,
   SyncResult,
   updateJobStatus,
   upsertSyncMap,
 } from './sync-helpers';
 
-export async function syncContact(contactId: string, _userId: string): Promise<SyncResult> {
-  const supabase = await createUserClient();
-  const job = await createSyncJob(supabase, 'contact', contactId);
+export async function syncContact(
+  contactId: string,
+  _userId: string,
+  jobContext?: SyncJobContext,
+): Promise<SyncResult> {
+  const supabase = createScopedServiceClient('erp-sync:contact');
+  const job = await createSyncJob(supabase, 'contact', contactId, jobContext);
 
   try {
     const { data: contact, error: contactError } = await supabase
@@ -30,7 +35,7 @@ export async function syncContact(contactId: string, _userId: string): Promise<S
     if (contactError || !contact) {
       return failJob(
         supabase,
-        job.id,
+        job,
         'contact',
         contactId,
         `Contact not found: ${contactError?.message || 'null'}`,
@@ -84,7 +89,7 @@ export async function syncContact(contactId: string, _userId: string): Promise<S
       entity_id: contactId,
       erp_docname: erpDocname,
     });
-    await updateJobStatus(supabase, job.id, 'succeeded');
+    await updateJobStatus(supabase, job, 'succeeded');
 
     return {
       id: job.id,
@@ -92,10 +97,10 @@ export async function syncContact(contactId: string, _userId: string): Promise<S
       entity_type: 'contact',
       entity_id: contactId,
       erp_docname: erpDocname,
-      attempt_count: 1,
+      attempt_count: job.attempt_count,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return failJob(supabase, job.id, 'contact', contactId, message);
+    return failJob(supabase, job, 'contact', contactId, message);
   }
 }

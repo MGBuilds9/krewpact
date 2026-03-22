@@ -2,7 +2,7 @@
  * Sync handler: KrewPact Task → ERPNext Task
  */
 
-import { createUserClient } from '@/lib/supabase/server';
+import { createScopedServiceClient } from '@/lib/supabase/server';
 
 import { mockTaskResponse } from '../mock-responses';
 import { isMockMode } from '../sync-service';
@@ -11,14 +11,19 @@ import {
   createSyncJob,
   failJob,
   logEvent,
+  type SyncJobContext,
   SyncResult,
   updateJobStatus,
   upsertSyncMap,
 } from './sync-helpers';
 
-export async function syncTask(taskId: string, _userId: string): Promise<SyncResult> {
-  const supabase = await createUserClient();
-  const job = await createSyncJob(supabase, 'task', taskId);
+export async function syncTask(
+  taskId: string,
+  _userId: string,
+  jobContext?: SyncJobContext,
+): Promise<SyncResult> {
+  const supabase = createScopedServiceClient('erp-sync:task');
+  const job = await createSyncJob(supabase, 'task', taskId, jobContext);
 
   try {
     const { data: task, error: taskError } = await supabase
@@ -30,7 +35,7 @@ export async function syncTask(taskId: string, _userId: string): Promise<SyncRes
     if (taskError || !task) {
       return failJob(
         supabase,
-        job.id,
+        job,
         'task',
         taskId,
         `Task not found: ${taskError?.message || 'null'}`,
@@ -87,7 +92,7 @@ export async function syncTask(taskId: string, _userId: string): Promise<SyncRes
       entity_id: taskId,
       erp_docname: erpDocname,
     });
-    await updateJobStatus(supabase, job.id, 'succeeded');
+    await updateJobStatus(supabase, job, 'succeeded');
 
     return {
       id: job.id,
@@ -95,10 +100,10 @@ export async function syncTask(taskId: string, _userId: string): Promise<SyncRes
       entity_type: 'task',
       entity_id: taskId,
       erp_docname: erpDocname,
-      attempt_count: 1,
+      attempt_count: job.attempt_count,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return failJob(supabase, job.id, 'task', taskId, message);
+    return failJob(supabase, job, 'task', taskId, message);
   }
 }

@@ -5,25 +5,25 @@
 ```
 User → Vercel (Next.js app + API routes) → Cloudflare Tunnel → ERPNext
                                           → Supabase Cloud (direct HTTPS)
-                                          → Upstash Redis (enqueue jobs)
+                                          → Upstash Redis (rate limits/cache)
+                                          → Upstash QStash (background jobs)
 
-ERPNext Host → BullMQ Workers → Upstash Redis (dequeue jobs)
-                               → ERPNext (localhost, direct)
-                               → Supabase Cloud (direct HTTPS)
+QStash → /api/queue/process → ERPNext / Supabase
 ```
 
 ## Layer Breakdown
 
-| Layer          | Technology                              | Responsibility                                             |
-| -------------- | --------------------------------------- | ---------------------------------------------------------- |
-| Web App        | Next.js + React + TypeScript            | Internal UI (online-only for MVP)                          |
-| API/BFF        | Next.js API routes (Vercel serverless)  | Domain APIs, orchestration, validation, rate limits        |
-| Sync Workers   | Node.js on ERPNext host                 | BullMQ workers for ERPNext sync, retries, dead-letter      |
-| Operational DB | Supabase Postgres (managed cloud)       | Workflows, field ops, audit trails, denormalized reporting |
-| ERP Core       | ERPNext (any Linux + cloudflared)       | Accounting, inventory, procurement, invoicing, payments    |
-| Object Storage | Supabase Storage + CDN                  | Documents, photos, signed contracts                        |
-| Identity       | Clerk → Supabase JWT bridge             | Auth, SSO, session claims. JWT claims drive RLS.           |
-| Observability  | Vercel Analytics + Sentry + BetterStack | Errors, uptime. Full Prometheus/Grafana deferred.          |
+| Layer           | Technology                              | Responsibility                                             |
+| --------------- | --------------------------------------- | ---------------------------------------------------------- |
+| Web App         | Next.js 16 + React + TypeScript         | Internal UI, portals, PWA shell                            |
+| API/BFF         | Next.js API routes (Vercel serverless)  | Domain APIs, orchestration, validation, rate limits        |
+| Background Jobs | Upstash QStash + `/api/queue/process`   | ERP sync retries, dead-letter, async processing            |
+| Operational DB  | Supabase Postgres (managed cloud)       | Workflows, field ops, audit trails, denormalized reporting |
+| ERP Core        | ERPNext (any Linux + cloudflared)       | Accounting, inventory, procurement, invoicing, payments    |
+| Object Storage  | Supabase Storage + CDN                  | Documents, photos, signed contracts                        |
+| Identity        | Clerk Third-Party Auth                  | Auth, SSO, Supabase session JWT claims drive RLS           |
+| Mobile          | Expo Router                             | Internal-beta mobile app over the same BFF                 |
+| Observability   | Vercel Analytics + Sentry + BetterStack | Errors, uptime. Full Prometheus/Grafana deferred.          |
 
 ## Unified Architecture (MDM Growth Intelligence System)
 
@@ -56,25 +56,16 @@ KrewPact is the **nucleus** of MDM Group's unified platform:
 - **Sync pattern:** Eventual consistency. Outbox/inbox with idempotent upsert, retry, dead-letter. No 2PC.
 - **Event bus:** `unified_events` table for cross-system communication
 
-## Clerk → Supabase JWT Bridge
+## Clerk → Supabase Auth Bridge
 
-Clerk JWTs drive Supabase RLS. Configured via Clerk JWT template:
+Clerk Third-Party Auth session tokens drive Supabase RLS. The Supabase JWT is derived from Clerk session claims and reads KrewPact metadata from the `metadata` object:
 
-```json
-{
-  "sub": "{{user.id}}",
-  "role": "authenticated",
-  "krewpact_user_id": "{{user.public_metadata.krewpact_user_id}}",
-  "krewpact_org_id": "{{user.public_metadata.krewpact_org_id}}",
-  "krewpact_divisions": "{{user.public_metadata.division_ids}}",
-  "krewpact_roles": "{{user.public_metadata.role_keys}}"
-}
-```
+- `metadata.krewpact_user_id`
+- `metadata.krewpact_org_id`
+- `metadata.division_ids`
+- `metadata.role_keys`
 
-- RLS policies use `auth.jwt() ->> 'krewpact_user_id'` (not `auth.uid()`)
-- Org scoping: `krewpact_org_id()` SQL function reads from JWT
-- Division filtering: `auth.jwt() -> 'krewpact_divisions'` (JSONB array)
-- No per-row subqueries — claims evaluated once per request
+RLS policies still read from `auth.jwt()`, but the canonical claim source is Clerk session metadata, not a custom JWT template.
 
 ## Canonical Role Model
 
@@ -155,6 +146,12 @@ Mappers: Customer, Contact, Opportunity, Quotation, Sales Order, Project, Task, 
 - All custom fields prefixed `krewpact_*`
 - ERPNext rate limit: 300 req/min (configurable)
 - Always `encodeURIComponent()` for document names in API calls
+
+## Surface Status
+
+- **Production:** Web app, ERPNext sync, Microsoft Graph email/calendar, PWA support
+- **Internal beta:** Expo mobile app
+- **Deferred:** Offline-first execution. Current mobile/PWA support assumes network connectivity for core writes.
 
 ## GPL v3 Boundary
 

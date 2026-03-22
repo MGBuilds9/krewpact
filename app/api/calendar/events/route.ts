@@ -2,7 +2,12 @@ import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
-import { buildGraphUrl, getMicrosoftToken, graphFetch } from '@/lib/microsoft/graph';
+import {
+  buildGraphUrl,
+  getMicrosoftToken,
+  graphErrorResponse,
+  graphFetch,
+} from '@/lib/microsoft/graph';
 import type { CreateEventPayload, GraphEvent, GraphListResponse } from '@/lib/microsoft/types';
 import { calendarQuerySchema, createEventSchema } from '@/lib/validators/calendar';
 
@@ -37,28 +42,33 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   const { mailbox, startDateTime, endDateTime, top } = parsed.data;
 
-  const token = await getMicrosoftToken(userId);
+  try {
+    const token = await getMicrosoftToken(userId);
 
-  const queryParams = new URLSearchParams({
-    $top: String(top),
-    $orderby: 'start/dateTime asc',
-    $select: EVENT_SELECT,
-  });
+    const queryParams = new URLSearchParams({
+      $top: String(top),
+      $orderby: 'start/dateTime asc',
+      $select: EVENT_SELECT,
+    });
 
-  if (startDateTime && endDateTime) {
-    queryParams.set(
-      '$filter',
-      `start/dateTime ge '${startDateTime}' and end/dateTime le '${endDateTime}'`,
+    if (startDateTime && endDateTime) {
+      queryParams.set(
+        '$filter',
+        `start/dateTime ge '${startDateTime}' and end/dateTime le '${endDateTime}'`,
+      );
+    }
+
+    const url = buildGraphUrl('/events', mailbox);
+    const data = await graphFetch<GraphListResponse<GraphEvent>>(
+      token,
+      `${url}?${queryParams.toString()}`,
     );
+
+    return NextResponse.json(data);
+  } catch (error) {
+    const response = graphErrorResponse(error);
+    return NextResponse.json(response.body, { status: response.status });
   }
-
-  const url = buildGraphUrl('/events', mailbox);
-  const data = await graphFetch<GraphListResponse<GraphEvent>>(
-    token,
-    `${url}?${queryParams.toString()}`,
-  );
-
-  return NextResponse.json(data);
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
@@ -93,27 +103,32 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     mailbox,
   } = parsed.data;
 
-  const token = await getMicrosoftToken(userId);
+  try {
+    const token = await getMicrosoftToken(userId);
 
-  const payload: CreateEventPayload = {
-    subject,
-    start: { dateTime: startDateTime, timeZone },
-    end: { dateTime: endDateTime, timeZone },
-  };
+    const payload: CreateEventPayload = {
+      subject,
+      start: { dateTime: startDateTime, timeZone },
+      end: { dateTime: endDateTime, timeZone },
+    };
 
-  if (eventBody) {
-    payload.body = { contentType: bodyType, content: eventBody };
+    if (eventBody) {
+      payload.body = { contentType: bodyType, content: eventBody };
+    }
+
+    if (location) {
+      payload.location = { displayName: location };
+    }
+
+    const url = buildGraphUrl('/events', mailbox);
+    const data = await graphFetch<GraphEvent>(token, url, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+
+    return NextResponse.json(data, { status: 201 });
+  } catch (error) {
+    const response = graphErrorResponse(error);
+    return NextResponse.json(response.body, { status: response.status });
   }
-
-  if (location) {
-    payload.location = { displayName: location };
-  }
-
-  const url = buildGraphUrl('/events', mailbox);
-  const data = await graphFetch<GraphEvent>(token, url, {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  });
-
-  return NextResponse.json(data, { status: 201 });
 }

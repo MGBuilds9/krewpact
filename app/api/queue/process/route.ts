@@ -29,6 +29,14 @@ const jobSchema = z.object({
   }),
 });
 
+function getAttemptCount(request: NextRequest): number {
+  const retriedHeader =
+    request.headers.get('upstash-retried') ?? request.headers.get('upstash-retry-count');
+  const retries = Number.parseInt(retriedHeader ?? '0', 10);
+  if (Number.isNaN(retries) || retries < 0) return 1;
+  return retries + 1;
+}
+
 export async function POST(request: NextRequest) {
   // 1. Read body once, then verify signature
   const rawBody = await request.text();
@@ -58,15 +66,28 @@ export async function POST(request: NextRequest) {
   }
 
   const { jobId, type, payload } = parsed.data;
+  const attemptCount = getAttemptCount(request);
+  const enrichedPayload = {
+    ...payload,
+    meta: {
+      ...(payload.meta ?? {}),
+      attemptCount,
+    },
+  };
 
   // 3. Process the job
   try {
-    logger.info('Processing QStash job', { jobId, type, entityId: payload.entityId });
+    logger.info('Processing QStash job', {
+      jobId,
+      type,
+      entityId: payload.entityId,
+      attemptCount,
+    });
 
     await processJob({
       id: jobId,
       type: type as JobType,
-      payload,
+      payload: enrichedPayload,
       attempts: 0,
       maxAttempts: 3,
       createdAt: new Date(),

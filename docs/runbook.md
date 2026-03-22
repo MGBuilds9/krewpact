@@ -9,7 +9,7 @@ KrewPact deploys automatically via Vercel on push to `main`.
 | **Vercel Project**  | `prj_zoqw9AOSqaUcuKfgzpBFWcIbvRiX` (team: MKG Builds) |
 | **Production URLs** | `krewpact.vercel.app`, `hub.mdmgroupinc.ca`           |
 | **Region**          | `iad1` (US East)                                      |
-| **Framework**       | Next.js 15 (App Router)                               |
+| **Framework**       | Next.js 16 (App Router)                               |
 
 ### Deploy Process
 
@@ -149,7 +149,7 @@ Vercel env vars are configured per-environment (Production / Preview / Developme
 
 **Symptom:** Dashboard shows all zeros, tables are empty.
 **Cause:** RLS is blocking queries — Clerk JWT claims aren't matching.
-**Fix:** Verify the Clerk JWT template is named `comet` (not `supabase`). Check the user has `krewpact_user_id` set in their Clerk public metadata.
+**Fix:** Verify Clerk Third-Party Auth is enabled for Supabase and the user has `krewpact_user_id`, `krewpact_org_id`, `division_ids`, and `role_keys` in Clerk metadata.
 
 ### Middleware domain error
 
@@ -163,11 +163,17 @@ Vercel env vars are configured per-environment (Production / Preview / Developme
 **Cause:** Serverless functions opening direct connections instead of using the pooler.
 **Fix:** Use the Supabase pooler URL (port 6543, transaction mode), not the direct connection (port 5432).
 
-### Clerk JWT template mismatch
+### Clerk auth bridge mismatch
 
-**Symptom:** `getToken({ template: 'comet' })` returns null.
-**Cause:** JWT template doesn't exist or has a different name in Clerk dashboard.
-**Fix:** In Clerk Dashboard → JWT Templates, ensure a template named `comet` exists with the correct claims (`krewpact_user_id`, `krewpact_divisions`, `krewpact_roles`).
+**Symptom:** Supabase queries return empty results or `Authentication failed — please sign in again`.
+**Cause:** Clerk Third-Party Auth or KrewPact metadata claims are missing, so Supabase RLS has no usable `metadata.*` values.
+**Fix:** In Clerk Dashboard, verify the Supabase Third-Party Auth integration/JWKS is active and the user metadata includes `krewpact_user_id`, `krewpact_org_id`, `division_ids`, and `role_keys`.
+
+### QStash signature failures
+
+**Symptom:** `/api/queue/process` returns 401 or background jobs stay queued.
+**Cause:** `QSTASH_CURRENT_SIGNING_KEY` or `QSTASH_NEXT_SIGNING_KEY` is missing, or the queue target URL is wrong.
+**Fix:** Set both signing keys, verify `QSTASH_TOKEN` and `QSTASH_URL`, then re-run `npx tsx scripts/health-check.ts --deep`.
 
 ### CRLF line ending issues
 

@@ -33,9 +33,6 @@ export function mockClerkAuth(
             division_ids: ['contracting'],
             role_keys: ['project_manager'],
           },
-          // Top-level for backward compat
-          krewpact_user_id: userId,
-          krewpact_org_id: 'org_test_default',
         }
       : null,
   });

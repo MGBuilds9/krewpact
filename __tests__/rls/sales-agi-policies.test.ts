@@ -14,17 +14,19 @@ import { describe, expect, it } from 'vitest';
 // =====================================================
 
 interface JWTClaims {
-  krewpact_user_id?: string;
-  krewpact_divisions?: string[];
-  krewpact_roles?: string[];
+  metadata?: {
+    krewpact_user_id?: string;
+    division_ids?: string[];
+    role_keys?: string[];
+  };
 }
 
 function krewpact_divisions(claims: JWTClaims): string[] {
-  return claims.krewpact_divisions ?? [];
+  return claims.metadata?.division_ids ?? [];
 }
 
 function krewpact_roles(claims: JWTClaims): string[] {
-  return claims.krewpact_roles ?? [];
+  return claims.metadata?.role_keys ?? [];
 }
 
 function is_platform_admin(claims: JWTClaims): boolean {
@@ -64,39 +66,51 @@ function canSelectPublicRead(): boolean {
 // =====================================================
 
 const USER_CONTRACTING: JWTClaims = {
-  krewpact_user_id: 'user-contracting',
-  krewpact_divisions: ['div-contracting'],
-  krewpact_roles: ['project_manager'],
+  metadata: {
+    krewpact_user_id: 'user-contracting',
+    division_ids: ['div-contracting'],
+    role_keys: ['project_manager'],
+  },
 };
 
 const USER_HOMES: JWTClaims = {
-  krewpact_user_id: 'user-homes',
-  krewpact_divisions: ['div-homes'],
-  krewpact_roles: ['estimator'],
+  metadata: {
+    krewpact_user_id: 'user-homes',
+    division_ids: ['div-homes'],
+    role_keys: ['estimator'],
+  },
 };
 
 const OPS_MANAGER: JWTClaims = {
-  krewpact_user_id: 'user-ops',
-  krewpact_divisions: ['div-contracting', 'div-homes'],
-  krewpact_roles: ['operations_manager'],
+  metadata: {
+    krewpact_user_id: 'user-ops',
+    division_ids: ['div-contracting', 'div-homes'],
+    role_keys: ['operations_manager'],
+  },
 };
 
 const ADMIN: JWTClaims = {
-  krewpact_user_id: 'admin-uuid',
-  krewpact_divisions: [],
-  krewpact_roles: ['platform_admin'],
+  metadata: {
+    krewpact_user_id: 'admin-uuid',
+    division_ids: [],
+    role_keys: ['platform_admin'],
+  },
 };
 
 const FIELD_SUPERVISOR: JWTClaims = {
-  krewpact_user_id: 'user-field',
-  krewpact_divisions: ['div-telecom'],
-  krewpact_roles: ['field_supervisor'],
+  metadata: {
+    krewpact_user_id: 'user-field',
+    division_ids: ['div-telecom'],
+    role_keys: ['field_supervisor'],
+  },
 };
 
 const NO_DIVISIONS: JWTClaims = {
-  krewpact_user_id: 'user-none',
-  krewpact_divisions: [],
-  krewpact_roles: ['project_coordinator'],
+  metadata: {
+    krewpact_user_id: 'user-none',
+    division_ids: [],
+    role_keys: ['project_coordinator'],
+  },
 };
 
 // =====================================================

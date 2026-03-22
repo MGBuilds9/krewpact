@@ -49,7 +49,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         'https://portal.mdmgroupinc.ca',
         ...(appUrl !== 'https://app.krewpact.com' ? [appUrl] : []),
         ...(process.env.NODE_ENV !== 'production'
-          ? ['https://mdm-dashboard.pages.dev', 'https://mdm-portal.pages.dev']
+          ? [
+              'https://mdm-dashboard.pages.dev',
+              'https://mdm-portal.pages.dev',
+              'http://localhost:3000',
+              'http://127.0.0.1:3000',
+              'http://localhost:3001',
+              'http://127.0.0.1:3001',
+            ]
           : []),
       ]}
     >

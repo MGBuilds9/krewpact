@@ -12,7 +12,7 @@
  */
 
 import { logger } from '@/lib/logger';
-import { createUserClient } from '@/lib/supabase/server';
+import { createScopedServiceClient } from '@/lib/supabase/server';
 
 import { mockPurchaseReceiptResponse } from '../mock-responses';
 import { isMockMode } from '../sync-service';
@@ -20,6 +20,7 @@ import {
   createSyncJob,
   failJob,
   logEvent,
+  type SyncJobContext,
   SyncResult,
   updateJobStatus,
   upsertSyncMap,
@@ -29,7 +30,7 @@ import {
  * Look up the ERPNext Purchase Order name for a given inventory_purchase_orders.id.
  */
 async function resolveErpPurchaseOrderName(
-  supabase: Awaited<ReturnType<typeof createUserClient>>,
+  supabase: ReturnType<typeof createScopedServiceClient>,
   poId: string,
 ): Promise<string | null> {
   const { data: syncMapRow } = await supabase
@@ -45,9 +46,13 @@ async function resolveErpPurchaseOrderName(
 /**
  * Sync a confirmed KrewPact goods receipt to ERPNext as a Purchase Receipt.
  */
-export async function syncGoodsReceipt(grId: string, _userId: string): Promise<SyncResult> {
-  const supabase = await createUserClient();
-  const job = await createSyncJob(supabase, 'inventory_goods_receipt', grId);
+export async function syncGoodsReceipt(
+  grId: string,
+  _userId: string,
+  jobContext?: SyncJobContext,
+): Promise<SyncResult> {
+  const supabase = createScopedServiceClient('erp-sync:goods-receipt');
+  const job = await createSyncJob(supabase, 'inventory_goods_receipt', grId, jobContext);
 
   try {
     // 1. Fetch the GR header
@@ -60,7 +65,7 @@ export async function syncGoodsReceipt(grId: string, _userId: string): Promise<S
     if (grError || !gr) {
       return failJob(
         supabase,
-        job.id,
+        job,
         'inventory_goods_receipt',
         grId,
         `Goods receipt not found: ${grError?.message || 'null'}`,
@@ -78,7 +83,7 @@ export async function syncGoodsReceipt(grId: string, _userId: string): Promise<S
     if (linesError) {
       return failJob(
         supabase,
-        job.id,
+        job,
         'inventory_goods_receipt',
         grId,
         `Failed to fetch GR lines: ${linesError.message}`,
@@ -158,7 +163,7 @@ export async function syncGoodsReceipt(grId: string, _userId: string): Promise<S
       entity_id: grId,
       erp_docname: erpDocname,
     });
-    await updateJobStatus(supabase, job.id, 'succeeded');
+    await updateJobStatus(supabase, job, 'succeeded');
 
     return {
       id: job.id,
@@ -166,10 +171,10 @@ export async function syncGoodsReceipt(grId: string, _userId: string): Promise<S
       entity_type: 'inventory_goods_receipt',
       entity_id: grId,
       erp_docname: erpDocname,
-      attempt_count: 1,
+      attempt_count: job.attempt_count,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return failJob(supabase, job.id, 'inventory_goods_receipt', grId, message);
+    return failJob(supabase, job, 'inventory_goods_receipt', grId, message);
   }
 }

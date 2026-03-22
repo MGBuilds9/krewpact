@@ -112,4 +112,19 @@ describe('verifyQStashSignature', () => {
     expect(result.valid).toBe(true);
     expect(result.body).toBe('{"test": true}');
   });
+
+  it('fails closed in production when signing keys are missing', async () => {
+    const previousNodeEnv = process.env.NODE_ENV;
+    // @ts-expect-error test env override
+    process.env.NODE_ENV = 'production';
+
+    const { verifyQStashSignature } = await import('@/lib/queue/verify');
+    const result = await verifyQStashSignature(null, '{"test": true}');
+
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('signing keys');
+
+    // @ts-expect-error test env override
+    process.env.NODE_ENV = previousNodeEnv;
+  });
 });

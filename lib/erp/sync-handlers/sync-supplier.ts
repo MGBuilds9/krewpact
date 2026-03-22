@@ -2,7 +2,7 @@
  * Sync handler: KrewPact Portal Account → ERPNext Supplier
  */
 
-import { createUserClient } from '@/lib/supabase/server';
+import { createScopedServiceClient } from '@/lib/supabase/server';
 
 import { mockSupplierResponse } from '../mock-responses';
 import { mapSupplierToErp } from '../supplier-mapper';
@@ -11,14 +11,19 @@ import {
   createSyncJob,
   failJob,
   logEvent,
+  type SyncJobContext,
   SyncResult,
   updateJobStatus,
   upsertSyncMap,
 } from './sync-helpers';
 
-export async function syncSupplier(portalAccountId: string, _userId: string): Promise<SyncResult> {
-  const supabase = await createUserClient();
-  const job = await createSyncJob(supabase, 'supplier', portalAccountId);
+export async function syncSupplier(
+  portalAccountId: string,
+  _userId: string,
+  jobContext?: SyncJobContext,
+): Promise<SyncResult> {
+  const supabase = createScopedServiceClient('erp-sync:supplier');
+  const job = await createSyncJob(supabase, 'supplier', portalAccountId, jobContext);
 
   try {
     const { data: portalAccount, error: paError } = await supabase
@@ -30,7 +35,7 @@ export async function syncSupplier(portalAccountId: string, _userId: string): Pr
     if (paError || !portalAccount) {
       return failJob(
         supabase,
-        job.id,
+        job,
         'supplier',
         portalAccountId,
         `Portal account not found: ${paError?.message || 'null'}`,
@@ -66,7 +71,7 @@ export async function syncSupplier(portalAccountId: string, _userId: string): Pr
       entity_id: portalAccountId,
       erp_docname: erpDocname,
     });
-    await updateJobStatus(supabase, job.id, 'succeeded');
+    await updateJobStatus(supabase, job, 'succeeded');
 
     return {
       id: job.id,
@@ -74,10 +79,10 @@ export async function syncSupplier(portalAccountId: string, _userId: string): Pr
       entity_type: 'supplier',
       entity_id: portalAccountId,
       erp_docname: erpDocname,
-      attempt_count: 1,
+      attempt_count: job.attempt_count,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return failJob(supabase, job.id, 'supplier', portalAccountId, message);
+    return failJob(supabase, job, 'supplier', portalAccountId, message);
   }
 }

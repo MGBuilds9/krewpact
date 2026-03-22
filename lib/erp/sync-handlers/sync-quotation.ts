@@ -2,7 +2,7 @@
  * Sync handler: KrewPact Estimate → ERPNext Quotation
  */
 
-import { createUserClient } from '@/lib/supabase/server';
+import { createScopedServiceClient } from '@/lib/supabase/server';
 
 import { mockQuotationResponse } from '../mock-responses';
 import { toErpQuotation } from '../quotation-mapper';
@@ -11,6 +11,7 @@ import {
   createSyncJob,
   failJob,
   logEvent,
+  type SyncJobContext,
   SyncResult,
   updateJobStatus,
   upsertSyncMap,
@@ -76,9 +77,13 @@ async function createErpQuotation(
   return result.name;
 }
 
-export async function syncEstimate(estimateId: string, _userId: string): Promise<SyncResult> {
-  const supabase = await createUserClient();
-  const job = await createSyncJob(supabase, 'estimate', estimateId);
+export async function syncEstimate(
+  estimateId: string,
+  _userId: string,
+  jobContext?: SyncJobContext,
+): Promise<SyncResult> {
+  const supabase = createScopedServiceClient('erp-sync:estimate');
+  const job = await createSyncJob(supabase, 'estimate', estimateId, jobContext);
 
   try {
     const { data: estimate, error: estimateError } = await supabase
@@ -90,7 +95,7 @@ export async function syncEstimate(estimateId: string, _userId: string): Promise
     if (estimateError || !estimate) {
       return failJob(
         supabase,
-        job.id,
+        job,
         'estimate',
         estimateId,
         `Estimate not found: ${estimateError?.message || 'null'}`,
@@ -108,7 +113,7 @@ export async function syncEstimate(estimateId: string, _userId: string): Promise
       erp_docname: erpDocname,
       line_count: lines.length,
     });
-    await updateJobStatus(supabase, job.id, 'succeeded');
+    await updateJobStatus(supabase, job, 'succeeded');
 
     return {
       id: job.id,
@@ -116,10 +121,10 @@ export async function syncEstimate(estimateId: string, _userId: string): Promise
       entity_type: 'estimate',
       entity_id: estimateId,
       erp_docname: erpDocname,
-      attempt_count: 1,
+      attempt_count: job.attempt_count,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return failJob(supabase, job.id, 'estimate', estimateId, message);
+    return failJob(supabase, job, 'estimate', estimateId, message);
   }
 }

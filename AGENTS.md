@@ -11,16 +11,16 @@ KrewPact is a construction operations platform for MDM Group Inc. (Mississauga, 
 
 ## Tech Stack (MVP)
 
-- **Frontend:** Next.js 15 (App Router, TypeScript, Server Components) on Vercel
+- **Frontend:** Next.js 16 (App Router, TypeScript, Server Components) on Vercel
 - **UI:** Tailwind CSS + shadcn/ui (Radix primitives for WCAG AA)
 - **Forms:** React Hook Form + Zod (shared validation between client and API)
 - **Database:** Supabase PostgreSQL managed cloud (Pro tier) — RLS, Realtime, Storage
 - **ERP:** ERPNext (GPL v3, any Linux host, exposed via Cloudflare Tunnel)
-- **Auth:** Clerk (email + M365 SSO, custom JWT template for Supabase RLS)
+- **Auth:** Clerk (email + M365 SSO, Third-Party Auth session token for Supabase RLS)
 - **E-Sign:** BoldSign (white-label API) — P0 Phase 2 (Week 7+)
-- **Email:** Resend (transactional email) — Microsoft Graph deferred to P2
-- **Queue:** BullMQ + Upstash Redis (REST API, reachable from Vercel serverless)
-- **Workers:** Node.js BullMQ workers co-located on ERPNext host
+- **Email:** Microsoft Graph (user mailbox + calendar) + Resend (transactional email)
+- **Queue:** Upstash QStash + Upstash Redis
+- **Workers:** Serverless queue processing via `/api/queue/process`
 - **Connectivity:** Cloudflare Tunnel (ERPNext ↔ Vercel), Tailscale (SSH admin only)
 - **CI/CD:** GitHub Actions
 - **Testing:** Vitest (unit), Playwright (E2E), @axe-core/playwright (a11y)
@@ -31,23 +31,22 @@ KrewPact is a construction operations platform for MDM Group Inc. (Mississauga, 
 ```
 User → Vercel (Next.js app + API routes) → Cloudflare Tunnel → ERPNext
                                           → Supabase Cloud (direct HTTPS)
-                                          → Upstash Redis (enqueue jobs)
+                                          → Upstash Redis (rate limits/cache)
+                                          → Upstash QStash (background jobs)
 
-ERPNext Host → BullMQ Workers → Upstash Redis (dequeue jobs)
-                               → ERPNext (localhost, direct)
-                               → Supabase Cloud (direct HTTPS)
+QStash → /api/queue/process → ERPNext / Supabase
 ```
 
-| Layer          | Technology                              | Responsibility                                             |
-| -------------- | --------------------------------------- | ---------------------------------------------------------- |
-| Web App        | Next.js + React + TypeScript            | Internal UI (online-only for MVP, offline deferred to P2)  |
-| API/BFF        | Next.js API routes (Vercel serverless)  | Domain APIs, orchestration, validation, rate limits        |
-| Sync Workers   | Node.js on ERPNext host                 | BullMQ workers for ERPNext sync, retries, dead-letter      |
-| Operational DB | Supabase Postgres (managed cloud)       | Workflows, field ops, audit trails, denormalized reporting |
-| ERP Core       | ERPNext (any Linux + cloudflared)       | Accounting, inventory, procurement, invoicing, payments    |
-| Object Storage | Supabase Storage + CDN                  | Documents, photos, signed contracts                        |
-| Identity       | Clerk → Supabase JWT bridge             | Auth, SSO, session claims. JWT claims drive RLS.           |
-| Observability  | Vercel Analytics + Sentry + BetterStack | Errors, uptime. Full Prometheus/Grafana deferred.          |
+| Layer           | Technology                              | Responsibility                                             |
+| --------------- | --------------------------------------- | ---------------------------------------------------------- |
+| Web App         | Next.js + React + TypeScript            | Internal UI, portals, PWA shell                            |
+| API/BFF         | Next.js API routes (Vercel serverless)  | Domain APIs, orchestration, validation, rate limits        |
+| Background Jobs | QStash + `/api/queue/process`           | ERPNext sync, retries, dead-letter                         |
+| Operational DB  | Supabase Postgres (managed cloud)       | Workflows, field ops, audit trails, denormalized reporting |
+| ERP Core        | ERPNext (any Linux + cloudflared)       | Accounting, inventory, procurement, invoicing, payments    |
+| Object Storage  | Supabase Storage + CDN                  | Documents, photos, signed contracts                        |
+| Identity        | Clerk Third-Party Auth                  | Auth, SSO, session claims. JWT claims drive RLS.           |
+| Observability   | Vercel Analytics + Sentry + BetterStack | Errors, uptime. Full Prometheus/Grafana deferred.          |
 
 ## Unified Architecture (MDM Growth Intelligence System)
 
@@ -81,23 +80,16 @@ KrewPact is the **nucleus** of MDM Group's unified platform. All services conver
 - **Sync pattern:** Eventual consistency. Outbox/inbox with idempotent upsert, retry, dead-letter. No 2PC.
 - **Event bus:** `unified_events` table for cross-system communication (website → CRM, project completion → case study, etc.)
 
-## Clerk → Supabase JWT Bridge
+## Clerk → Supabase Auth Bridge
 
-Clerk JWTs drive Supabase RLS. Configured via Clerk JWT template:
+Clerk Third-Party Auth session tokens drive Supabase RLS. The canonical claim source is Clerk session `metadata` populated from KrewPact user metadata:
 
-```json
-{
-  "sub": "{{user.id}}",
-  "role": "authenticated",
-  "krewpact_user_id": "{{user.public_metadata.krewpact_user_id}}",
-  "krewpact_divisions": "{{user.public_metadata.division_ids}}",
-  "krewpact_roles": "{{user.public_metadata.role_keys}}"
-}
-```
+- `metadata.krewpact_user_id`
+- `metadata.krewpact_org_id`
+- `metadata.division_ids`
+- `metadata.role_keys`
 
-- RLS policies use `auth.jwt() ->> 'krewpact_user_id'` (not `auth.uid()`)
-- Division filtering: `auth.jwt() -> 'krewpact_divisions'` (JSONB array in JWT)
-- No per-row subqueries — claims evaluated once per request from JWT
+RLS policies read those values from `auth.jwt()`; there is no custom JWT template dependency.
 
 ## Canonical Role Model (PRD is source of truth)
 
@@ -128,7 +120,7 @@ KrewPact's CRM now includes an autonomous sales automation layer:
 - **Outreach tracking:** `outreach_events` — email/call/LinkedIn/SMS with delivery status
 - **Enrichment pipeline:** `enrichment_jobs` — Apollo → Clearbit → LinkedIn → Google waterfall
 - **Bidding opportunities:** `bidding_opportunities` — Bids & Tenders, MERX import
-- **External tools:** Instantly.ai (outreach campaigns), Resend (transactional email)
+- **External tools:** Instantly.ai (outreach campaigns), Microsoft Graph, Resend
 
 ## RAG / Knowledge Layer (pgvector)
 
@@ -158,7 +150,7 @@ src/
 │   ├── supabase/
 │   │   ├── client.ts        # Browser client
 │   │   └── server.ts        # Server client (uses pooler port)
-│   ├── queue/               # BullMQ job definitions
+│   ├── queue/               # QStash job definitions and processing
 │   └── validators/          # Shared Zod schemas
 ├── components/
 │   ├── ui/                  # shadcn/ui components

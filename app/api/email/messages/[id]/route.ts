@@ -2,7 +2,12 @@ import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
-import { buildGraphUrl, getMicrosoftToken, graphFetch } from '@/lib/microsoft/graph';
+import {
+  buildGraphUrl,
+  getMicrosoftToken,
+  graphErrorResponse,
+  graphFetch,
+} from '@/lib/microsoft/graph';
 import type { GraphMessage } from '@/lib/microsoft/types';
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -19,10 +24,15 @@ export async function GET(req: NextRequest, context: RouteContext): Promise<Next
   const { id } = await context.params;
   const mailbox = req.nextUrl.searchParams.get('mailbox') || undefined;
 
-  const token = await getMicrosoftToken(userId);
-  const url = buildGraphUrl(`/messages/${id}`, mailbox);
+  try {
+    const token = await getMicrosoftToken(userId);
+    const url = buildGraphUrl(`/messages/${id}`, mailbox);
 
-  const message = await graphFetch<GraphMessage>(token, url);
+    const message = await graphFetch<GraphMessage>(token, url);
 
-  return NextResponse.json(message);
+    return NextResponse.json(message);
+  } catch (error) {
+    const response = graphErrorResponse(error);
+    return NextResponse.json(response.body, { status: response.status });
+  }
 }

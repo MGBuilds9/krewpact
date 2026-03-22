@@ -122,7 +122,7 @@ describe('mockClerkAuth', () => {
     // mockClerkAuth configures the mock's resolved value
     const result = await mockAuth();
     expect(result.userId).toBe('user_123');
-    expect(result.sessionClaims.krewpact_user_id).toBe('user_123');
+    expect(result.sessionClaims.metadata.krewpact_user_id).toBe('user_123');
   });
 
   it('sets up unauthenticated mock via mockClerkUnauth', async () => {

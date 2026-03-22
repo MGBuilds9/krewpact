@@ -186,40 +186,39 @@ async function checkClerk() {
     if (res.ok) {
       pass(name, `HTTP ${res.status}`);
 
-      // Deep: verify JWT template returns expected claims
+      // Deep: verify Third-Party Auth metadata exists for at least one test user
       if (DEEP) {
-        const jwtName = 'Clerk JWT Template';
+        const authBridgeName = 'Clerk Third-Party Auth Metadata';
         try {
-          const jwtRes = await fetchWithTimeout('https://api.clerk.com/v1/jwt_templates', {
+          const usersRes = await fetchWithTimeout('https://api.clerk.com/v1/users?limit=10', {
             headers: { Authorization: `Bearer ${key}` },
           });
-          if (jwtRes.ok) {
-            const templates = (await jwtRes.json()) as Array<{
-              name: string;
-              claims: Record<string, unknown>;
+          if (usersRes.ok) {
+            const users = (await usersRes.json()) as Array<{
+              public_metadata?: Record<string, unknown>;
             }>;
-            const supabase = templates.find(
-              (t) =>
-                t.name.toLowerCase().includes('supabase') ||
-                t.name.toLowerCase().includes('krewpact'),
-            );
-            if (supabase) {
-              const claimsStr = JSON.stringify(supabase.claims);
-              const hasUserId = claimsStr.includes('krewpact_user_id');
-              const hasRoles = claimsStr.includes('krewpact_roles');
-              if (hasUserId && hasRoles) {
-                pass(jwtName, `"${supabase.name}" has required claims`);
-              } else {
-                fail(jwtName, `Missing claims — user_id:${hasUserId} roles:${hasRoles}`);
-              }
+            const configuredUser = users.find((user) => {
+              const meta = user.public_metadata ?? {};
+              return (
+                typeof meta.krewpact_user_id === 'string' &&
+                Array.isArray(meta.role_keys) &&
+                Array.isArray(meta.division_ids)
+              );
+            });
+
+            if (configuredUser) {
+              pass(authBridgeName, 'Found user metadata for Supabase session token claims');
             } else {
-              fail(jwtName, 'No Supabase/KrewPact JWT template found');
+              fail(
+                authBridgeName,
+                'No Clerk user has krewpact_user_id + role_keys + division_ids in public metadata',
+              );
             }
           } else {
-            fail(jwtName, `HTTP ${jwtRes.status}`);
+            fail(authBridgeName, `HTTP ${usersRes.status}`);
           }
         } catch (err) {
-          fail(jwtName, String(err));
+          fail(authBridgeName, String(err));
         }
       }
     } else {
@@ -298,6 +297,15 @@ async function checkQStash() {
   const name = 'Upstash QStash';
   const token = requireEnv('QSTASH_TOKEN', name);
   if (!token) return;
+
+  const signingCheckName = 'Upstash QStash Signing Keys';
+  const currentSigningKey = env('QSTASH_CURRENT_SIGNING_KEY');
+  const nextSigningKey = env('QSTASH_NEXT_SIGNING_KEY');
+  if (currentSigningKey && nextSigningKey) {
+    pass(signingCheckName, 'Current and next signing keys configured');
+  } else {
+    fail(signingCheckName, 'Missing QSTASH_CURRENT_SIGNING_KEY or QSTASH_NEXT_SIGNING_KEY');
+  }
 
   try {
     // Use QSTASH_URL env if set (handles region routing), fallback to default

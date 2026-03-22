@@ -128,7 +128,8 @@ describe('graphFetch', () => {
     const mockData = { value: [{ id: '1', subject: 'Test' }] };
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => mockData,
+      status: 200,
+      text: async () => JSON.stringify(mockData),
     });
 
     const result = await graphFetch(testToken, testUrl);
@@ -144,7 +145,8 @@ describe('graphFetch', () => {
   it('passes custom options and headers to fetch', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({}),
+      status: 200,
+      text: async () => '{}',
     });
 
     await graphFetch(testToken, testUrl, {
@@ -199,5 +201,15 @@ describe('graphFetch', () => {
     });
 
     await expect(graphFetch(testToken, testUrl)).rejects.toThrow('Graph API error: 502');
+  });
+
+  it('returns undefined for successful empty-body responses', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 202,
+      text: async () => '',
+    });
+
+    await expect(graphFetch(testToken, testUrl)).resolves.toBeUndefined();
   });
 });

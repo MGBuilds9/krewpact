@@ -2,7 +2,7 @@
  * Sync handler: KrewPact Expense Claim → ERPNext Expense Claim
  */
 
-import { createUserClient } from '@/lib/supabase/server';
+import { createScopedServiceClient } from '@/lib/supabase/server';
 
 import { mapExpenseToErp } from '../expense-mapper';
 import { mockExpenseClaimResponse } from '../mock-responses';
@@ -11,6 +11,7 @@ import {
   createSyncJob,
   failJob,
   logEvent,
+  type SyncJobContext,
   SyncResult,
   updateJobStatus,
   upsertSyncMap,
@@ -19,9 +20,10 @@ import {
 export async function syncExpenseClaim(
   expenseClaimId: string,
   _userId: string,
+  jobContext?: SyncJobContext,
 ): Promise<SyncResult> {
-  const supabase = await createUserClient();
-  const job = await createSyncJob(supabase, 'expense_claim', expenseClaimId);
+  const supabase = createScopedServiceClient('erp-sync:expense-claim');
+  const job = await createSyncJob(supabase, 'expense_claim', expenseClaimId, jobContext);
 
   try {
     const { data: expense, error: expenseError } = await supabase
@@ -33,7 +35,7 @@ export async function syncExpenseClaim(
     if (expenseError || !expense) {
       return failJob(
         supabase,
-        job.id,
+        job,
         'expense_claim',
         expenseClaimId,
         `Expense claim not found: ${expenseError?.message || 'null'}`,
@@ -74,7 +76,7 @@ export async function syncExpenseClaim(
       entity_id: expenseClaimId,
       erp_docname: erpDocname,
     });
-    await updateJobStatus(supabase, job.id, 'succeeded');
+    await updateJobStatus(supabase, job, 'succeeded');
 
     return {
       id: job.id,
@@ -82,10 +84,10 @@ export async function syncExpenseClaim(
       entity_type: 'expense_claim',
       entity_id: expenseClaimId,
       erp_docname: erpDocname,
-      attempt_count: 1,
+      attempt_count: job.attempt_count,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return failJob(supabase, job.id, 'expense_claim', expenseClaimId, message);
+    return failJob(supabase, job, 'expense_claim', expenseClaimId, message);
   }
 }

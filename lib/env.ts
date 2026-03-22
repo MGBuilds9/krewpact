@@ -25,6 +25,7 @@ const envSchema = z.object({
 
   // ── Upstash QStash (optional — in-memory queue when missing) ──
   QSTASH_TOKEN: z.string().min(1).optional(),
+  QSTASH_URL: z.string().url().optional(),
   QSTASH_CURRENT_SIGNING_KEY: z.string().min(1).optional(),
   QSTASH_NEXT_SIGNING_KEY: z.string().min(1).optional(),
 
@@ -57,6 +58,8 @@ const envSchema = z.object({
 
   // ── App ──
   NEXT_PUBLIC_APP_URL: z.string().url().optional(),
+  EXPO_PUBLIC_API_BASE_URL: z.string().url().optional(),
+  EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().startsWith('pk_').optional(),
   CRON_SECRET: z.string().min(1).optional(),
   WEBHOOK_SIGNING_SECRET: z.string().min(1).optional(),
 });
@@ -73,6 +76,11 @@ function warnMissingOptional(env: Record<string, string | undefined>): void {
   if (!env.UPSTASH_REDIS_REST_URL || !env.UPSTASH_REDIS_REST_TOKEN) {
     warnings.push('UPSTASH_REDIS_REST_URL/TOKEN not set — rate limiting is DISABLED');
   }
+  if (env.QSTASH_TOKEN && (!env.QSTASH_CURRENT_SIGNING_KEY || !env.QSTASH_NEXT_SIGNING_KEY)) {
+    warnings.push(
+      'QSTASH signing keys not fully configured — background webhook verification will fail closed',
+    );
+  }
   if (!env.CRON_SECRET && !env.WEBHOOK_SIGNING_SECRET) {
     warnings.push('CRON_SECRET not set — cron endpoints have no auth');
   }
@@ -84,6 +92,11 @@ function warnMissingOptional(env: Record<string, string | undefined>): void {
   }
   if (!env.RESEND_API_KEY) {
     warnings.push('RESEND_API_KEY not set — email sending will fail');
+  }
+  if (!env.EXPO_PUBLIC_API_BASE_URL || !env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY) {
+    warnings.push(
+      'Mobile public env vars not set — internal beta builds may boot with invalid config',
+    );
   }
 
   if (warnings.length > 0 && process.env.NODE_ENV === 'production') {
