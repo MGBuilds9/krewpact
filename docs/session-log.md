@@ -1,4 +1,21 @@
-# Session Log
+# KrewPact Session Log
+
+Archived session entries. Most recent first.
+
+---
+
+### Mar 21, 2026 — PWA + Expo Native App Production-Ready + SDK 54 Upgrade
+
+- **Changes:** Two parallel tracks — PWA (web app installable) and Expo native (field worker UX). **PWA:** Added @serwist/next service worker with offline fallback, enhanced manifest (shortcuts, maskable icons), iOS PWA meta tags, InstallPrompt component. **Expo:** Fixed all 7 API type mismatches (dashboard, projects, tasks, leads, daily logs — every field name and pagination wrapper was wrong). Redesigned Time screen from clock-in/out to hours-entry model matching actual DB schema. Rewrote DailyLogForm (work_summary, crew_count, weather as JSON, log_date). Added auth guard with useEffect redirect pattern. Created app.config.ts with env vars. Upgraded SDK 52→54 (React Native 0.81, React 19). Installed all missing peer deps (expo-crypto, expo-linking, expo-web-browser, expo-auth-session). EAS project created (@mkgbuilds/krewpact on expo.dev).
+- **Files:** 6 new files (sw.ts, offline page, InstallPrompt, app.config.ts, eas.json, .env). 16 modified. 1 deleted (unused ProjectHealthCard).
+- **Decisions:** PWA gives "full mirror" immediately (web app already had BottomNav, MobileNavigationDrawer, responsive layout). Native app focuses on field-worker UX. Time tracking uses hours-entry model (matches DB), clock-in/out deferred to Phase 2 (needs new table). Expo Go has limitations with native modules — development builds recommended once Apple Developer account approved.
+- **Tests:** 4,310/4,310 passing (372 files). 0 type errors (web + mobile). Build clean. iOS bundle compiles via `expo export`.
+- **Next steps:** Test in Expo Go or iOS Simulator (needs full Xcode). Once Apple Developer Program approved: EAS development build → TestFlight. Android dev build possible now. PWA deployed with Vercel auto-deploy.
+
+### Mar 21, 2026 — AI Takeoff Engine Integration + App Audit + Database Seeding
+
+- **Changes:** Full AI takeoff integration (4 phases), deep audit (8 issues fixed), Modal deployment, item suppliers tab, DB seeding.
+- **Tests:** 4,310/4,310 passing. Build clean.
 
 ### Mar 5, 2026 — Phase 2: P0 Hardening — A11y, Responsive, Impersonation
 

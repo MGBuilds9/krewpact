@@ -358,6 +358,8 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 ## Session Log
 
+> Full log: `docs/session-log.md`
+
 ### Mar 21, 2026 — PWA + Expo Native App Production-Ready + SDK 54 Upgrade
 
 - **Changes:** Two parallel tracks — PWA (web app installable) and Expo native (field worker UX). **PWA:** Added @serwist/next service worker with offline fallback, enhanced manifest (shortcuts, maskable icons), iOS PWA meta tags, InstallPrompt component. **Expo:** Fixed all 7 API type mismatches (dashboard, projects, tasks, leads, daily logs — every field name and pagination wrapper was wrong). Redesigned Time screen from clock-in/out to hours-entry model matching actual DB schema. Rewrote DailyLogForm (work_summary, crew_count, weather as JSON, log_date). Added auth guard with useEffect redirect pattern. Created app.config.ts with env vars. Upgraded SDK 52→54 (React Native 0.81, React 19). Installed all missing peer deps (expo-crypto, expo-linking, expo-web-browser, expo-auth-session). EAS project created (@mkgbuilds/krewpact on expo.dev).
@@ -370,10 +372,3 @@ Run `/scope` to initialize the project. This reads the Resolution doc, confirms 
 
 - **Changes:** Full AI takeoff integration (4 phases), deep audit (8 issues fixed), Modal deployment, item suppliers tab, DB seeding.
 - **Tests:** 4,310/4,310 passing. Build clean.
-
-- Mar 20: Almyta Migration + Estimate Builder + Enrollment Gate — 1,698 items migrated, 3 estimate builder fixes, enrollment approval gate.
-- Mar 19: Header & Dashboard UI Polish — Nav overflow dropdown, clean dashboard cards. 3,986 tests.
-- Mar 17: Fix Email Pipeline, Smoke Test Spam, ERPNext Auth — 5 compounding issues. 3,981 tests.
-- Mar 17: Production Hardening — Feature gating (16 flags), UX fixes (8 broken UI items), AI guardrails. 3,871 tests.
-- Mar 16: Production Hardening — Demo removal, coding standards (10 ESLint rules), 8 file splits. 3,871 tests.
-- Mar 14: Scoring alignment + RBAC Unification + Platform Hardening + Mobile scaffold. 3,866 tests.
