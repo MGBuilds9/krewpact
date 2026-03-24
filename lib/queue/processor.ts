@@ -10,92 +10,83 @@ import { Job, JobType } from './types';
 
 const syncService = new SyncService();
 
+type SyncResult = { status?: string; error?: string } | undefined;
+type JobContext = { jobId: string; attemptCount?: number; maxAttempts?: number } | undefined;
+
+function buildJobContext(meta: Job['payload']['meta']): JobContext {
+  if (typeof meta?.syncJobId !== 'string') return undefined;
+  return {
+    jobId: meta.syncJobId,
+    attemptCount:
+      typeof meta.attemptCount === 'number' && Number.isFinite(meta.attemptCount)
+        ? meta.attemptCount
+        : undefined,
+    maxAttempts:
+      typeof meta.maxAttempts === 'number' && Number.isFinite(meta.maxAttempts)
+        ? meta.maxAttempts
+        : undefined,
+  };
+}
+
+async function handleErpSyncSalesOrder(
+  entityId: string,
+  userId: string,
+  meta: Job['payload']['meta'],
+  ctx: JobContext,
+): Promise<SyncResult> {
+  const wonDate =
+    typeof meta?.wonDate === 'string' ? meta.wonDate : new Date().toISOString().slice(0, 10);
+  return syncService.syncWonDeal(entityId, userId, wonDate, ctx);
+}
+
+async function handleTakeoffFeedback(
+  entityId: string,
+  meta: Job['payload']['meta'],
+): Promise<void> {
+  await submitFeedbackToEngine(entityId, (meta?.supabaseJobId as string) ?? entityId);
+}
+
+type SyncHandler = (entityId: string, userId: string, ctx: JobContext) => Promise<SyncResult>;
+
+const syncHandlers: Partial<Record<JobType, SyncHandler>> = {
+  [JobType.ERPSyncAccount]: (id, uid, ctx) => syncService.syncAccount(id, uid, ctx),
+  [JobType.ERPSyncEstimate]: (id, uid, ctx) => syncService.syncEstimate(id, uid, ctx),
+  [JobType.ERPSyncOpportunity]: (id, uid, ctx) => syncService.syncOpportunity(id, uid, ctx),
+  [JobType.ERPSyncContact]: (id, uid, ctx) => syncService.syncContact(id, uid, ctx),
+  [JobType.ERPSyncProject]: (id, uid, ctx) => syncService.syncProject(id, uid, ctx),
+  [JobType.ERPSyncTask]: (id, uid, ctx) => syncService.syncTask(id, uid, ctx),
+  [JobType.ERPSyncSupplier]: (id, uid, ctx) => syncService.syncSupplier(id, uid, ctx),
+  [JobType.ERPSyncExpense]: (id, uid, ctx) => syncService.syncExpenseClaim(id, uid, ctx),
+  [JobType.ERPSyncTimesheet]: (id, uid, ctx) => syncService.syncTimesheet(id, uid, ctx),
+  [JobType.ERPReadInvoice]: (id, _uid, ctx) => syncService.readSalesInvoice(id, ctx),
+  [JobType.ERPReadPO]: (id, _uid, ctx) => syncService.readPurchaseInvoice(id, ctx),
+};
+
 export async function processJob(job: Job): Promise<void> {
   const { entityId, userId, meta } = job.payload;
-  const jobContext =
-    typeof meta?.syncJobId === 'string'
-      ? {
-          jobId: meta.syncJobId,
-          attemptCount:
-            typeof meta.attemptCount === 'number' && Number.isFinite(meta.attemptCount)
-              ? meta.attemptCount
-              : undefined,
-          maxAttempts:
-            typeof meta.maxAttempts === 'number' && Number.isFinite(meta.maxAttempts)
-              ? meta.maxAttempts
-              : undefined,
-        }
-      : undefined;
+  const ctx = buildJobContext(meta);
 
-  let result: { status?: string; error?: string } | undefined;
-
-  switch (job.type) {
-    case JobType.ERPSyncAccount:
-      result = await syncService.syncAccount(entityId, userId, jobContext);
-      break;
-
-    case JobType.ERPSyncEstimate:
-      result = await syncService.syncEstimate(entityId, userId, jobContext);
-      break;
-
-    case JobType.ERPSyncOpportunity:
-      result = await syncService.syncOpportunity(entityId, userId, jobContext);
-      break;
-
-    case JobType.ERPSyncSalesOrder:
-      result = await syncService.syncWonDeal(
-        entityId,
-        userId,
-        typeof meta?.wonDate === 'string' ? meta.wonDate : new Date().toISOString().slice(0, 10),
-        jobContext,
-      );
-      break;
-
-    case JobType.ERPSyncContact:
-      result = await syncService.syncContact(entityId, userId, jobContext);
-      break;
-
-    case JobType.ERPSyncProject:
-      result = await syncService.syncProject(entityId, userId, jobContext);
-      break;
-
-    case JobType.ERPSyncTask:
-      result = await syncService.syncTask(entityId, userId, jobContext);
-      break;
-
-    case JobType.ERPSyncSupplier:
-      result = await syncService.syncSupplier(entityId, userId, jobContext);
-      break;
-
-    case JobType.ERPSyncExpense:
-      result = await syncService.syncExpenseClaim(entityId, userId, jobContext);
-      break;
-
-    case JobType.ERPSyncTimesheet:
-      result = await syncService.syncTimesheet(entityId, userId, jobContext);
-      break;
-
-    case JobType.ERPReadInvoice:
-      result = await syncService.readSalesInvoice(entityId, jobContext);
-      break;
-
-    case JobType.ERPReadPO:
-      result = await syncService.readPurchaseInvoice(entityId, jobContext);
-      break;
-
-    case JobType.TakeoffFeedback:
-      await submitFeedbackToEngine(entityId, (meta?.supabaseJobId as string) ?? entityId);
-      break;
-
-    default: {
-      const _exhaustive: never = job.type;
-      throw new Error(`Unknown job type: ${_exhaustive}`);
+  if (job.type === JobType.ERPSyncSalesOrder) {
+    const result = await handleErpSyncSalesOrder(entityId, userId, meta, ctx);
+    if (result?.status === 'failed') {
+      throw new Error(result.error ?? `Background job ${job.type} failed`);
     }
+    return;
   }
 
+  if (job.type === JobType.TakeoffFeedback) {
+    await handleTakeoffFeedback(entityId, meta);
+    return;
+  }
+
+  const handler = syncHandlers[job.type];
+  if (!handler) {
+    // If a new JobType is added without a handler entry it will hit this at runtime
+    throw new Error(`Unknown job type: ${String(job.type)}`);
+  }
+
+  const result = await handler(entityId, userId, ctx);
   if (result?.status === 'failed') {
     throw new Error(result.error ?? `Background job ${job.type} failed`);
   }
-
-  void meta; // suppress unused warning for future use
 }

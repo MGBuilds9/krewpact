@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { nullableSafeString, optionalSafeString, safeString } from '@/lib/sanitize';
+import { optionalSafeString, safeString } from '@/lib/sanitize';
 
 // ============================================================
 // Shared enums

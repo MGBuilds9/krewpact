@@ -22,7 +22,7 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - run: npm ci
@@ -32,6 +32,9 @@ jobs:
 
       - name: Type Check
         run: npm run typecheck
+
+      - name: Format Check
+        run: npm run format:check
 
       - name: Unit Tests with Coverage
         run: npm run test -- --coverage
@@ -65,7 +68,7 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - run: npm ci
@@ -83,7 +86,7 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
           cache-dependency-path: mobile/package-lock.json
 
