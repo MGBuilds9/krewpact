@@ -335,12 +335,11 @@ Start with `KrewPact-Architecture-Resolution.md` (all contradictions resolved). 
 
 > Full log: `docs/session-log.md`
 
-### Mar 23, 2026 — Harden Production Readiness and Auth Flows
+### Mar 23-24, 2026 — Playbook v2 + KrewPact Alignment + Production UX Fixes
 
-- **Changes:** Production hardening across auth, security, and deployment flows.
-
-### Mar 21, 2026 — PWA + Expo Native App + SDK 54 Upgrade
-
-- **Changes:** PWA installable (service worker, offline fallback, InstallPrompt). Expo native field-worker UX (7 API type fixes, hours-entry time tracking, SDK 52 to 54). 4,310 tests passing.
+- **Changes:** (1) MKG-Builds-Dev-Playbook v2 — 851-line gold-standard CLAUDE.md template, 13 sections. (2) KrewPact docs rewrite — CLAUDE.md 345 lines (was 374), AGENTS.md 187 lines (was 279), expanded contributing.md. (3) Dev env — CI Node 24, format:check, tsconfig ES2022, processor refactor. (4) Production readiness verified — hub.mdmgroupinc.ca live, Clerk production, Sentry clean. (5) UX fixes — division names (DivisionContext enriched with allDivisions), lead delete button, PO form division select, BulkActionBar dialogs. (6) formatStatus utility + user name resolution for 3 P0 locations. (7) CSP cleanup — wildcard \*.mdmgroupinc.ca, vercel.live frame-src, chart dimension fix.
+- **Decisions:** DivisionContext as single source of truth for all division names. formatStatus() shared utility. CSP wildcard for Clerk subdomains.
+- **Tests:** 4,316/4,316 passing (374 files). +10 new tests.
+- **Next:** Clerk DNS fix (clerk.mdmgroupinc.ca CNAME or remove NEXT_PUBLIC_CLERK_DOMAIN from Vercel), remaining enum/UUID cleanups, systematic UAT, enable more feature flags.
 
 @AGENTS.md
