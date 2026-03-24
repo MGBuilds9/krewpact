@@ -1,67 +1,263 @@
-# CLAUDE.md
+# KrewPact
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Construction operations platform for MDM Group Inc. (Mississauga, Ontario). Hybrid ERPNext-first architecture: ERPNext owns finance/procurement; KrewPact owns UX, field ops, portals, identity, inventory, and reporting.
 
-## Project Overview
+## Stack
 
-KrewPact is a construction operations platform for MDM Group Inc. (Mississauga, Ontario). It follows a **Hybrid ERPNext-first architecture**: ERPNext is finance/procurement source-of-truth; KrewPact is UX shell, field operations, portals, orchestration, identity, inventory, and reporting. **Inventory authority shifted to KrewPact** (Mar 2026) — replaces Almyta, ERPNext gets cost journal summaries only.
-
-**Domain:** krewpact.com
-**Architecture Resolution:** All contradictions resolved in `KrewPact-Architecture-Resolution.md` (Feb 2026).
-
-## Tech Stack (MVP)
-
-- **Frontend:** Next.js 15 (App Router, TypeScript, Server Components) on Vercel
-- **UI:** Tailwind CSS + shadcn/ui (Radix primitives for WCAG AA)
-- **Forms:** React Hook Form + Zod (shared validation between client and API)
-- **Database:** Supabase PostgreSQL managed cloud (Pro tier) — RLS, Realtime, Storage
-- **ERP:** ERPNext (GPL v3, any Linux host, exposed via Cloudflare Tunnel)
-- **Auth:** Clerk (email + M365 SSO, custom JWT template for Supabase RLS)
-- **E-Sign:** BoldSign (white-label API) — P0 Phase 2 (Week 7+)
-- **Email:** Resend (transactional email) — Microsoft Graph deferred to P2
-- **Queue:** QStash (Upstash) — serverless job queue via HTTP, no persistent workers
-- **Workers:** Vercel serverless `/api/queue/process` — QStash pushes jobs via webhook
-- **Connectivity:** Cloudflare Tunnel (ERPNext ↔ Vercel), Tailscale (SSH admin only)
-- **CI/CD:** GitHub Actions
+- **Framework:** Next.js 16 (App Router, React 19, Server Components) on Vercel
+- **Database:** Supabase PostgreSQL (Pro tier) — RLS, Realtime, Storage
+- **Auth:** Clerk (Third-Party Auth session tokens → Supabase RLS)
+- **Styling:** Tailwind CSS + shadcn/ui (New York style, Radix primitives for WCAG AA)
+- **Validation:** Zod + React Hook Form + @hookform/resolvers
+- **ERP:** ERPNext (GPL v3, exposed via Cloudflare Tunnel)
+- **Queue:** QStash (Upstash) — serverless job queue via HTTP
+- **Email:** Microsoft Graph (user mailbox) + Resend (transactional)
 - **Testing:** Vitest (unit), Playwright (E2E), @axe-core/playwright (a11y)
-- **Monitoring (MVP):** Vercel Analytics + Supabase Dashboard + BetterStack uptime + Sentry errors
+- **Monitoring:** Sentry + Vercel Analytics + BetterStack uptime
+- **Mobile:** Expo SDK 54 (React Native, field-worker UX)
 
-## Architecture
+## Build / Test / Lint
+
+```bash
+npm run dev            # Next.js dev server (Turbopack)
+npm run build          # Production build
+npm run lint           # ESLint (flat config)
+npm run typecheck      # tsc --noEmit (strict mode)
+npm run test           # Vitest unit tests
+npm run test:coverage  # Unit tests with coverage
+npm run test:e2e       # Playwright E2E (chromium)
+npm run format:check   # Prettier check (CI-safe)
+npm run health         # Health check script
+npm run health:deep    # Deep health check (all services)
+```
+
+Seed scripts: `npm run seed:org`, `seed:admin`, `seed:test-users`, `seed:scoring`, `seed:reference`, `seed:demo`
+
+After Supabase schema changes:
+
+```bash
+supabase gen types typescript --local > types/supabase.ts 2>/dev/null
+```
+
+Setup details: `docs/local-dev.md`
+
+## Architecture Rules
+
+### Server Components (default)
+
+- Every component is a Server Component unless it needs interactivity
+- Only add `'use client'` when genuinely needed; push it as far down the tree as possible
+- Never import server-only code in client components
+
+### Data Fetching & Mutations
+
+- **Reads:** Server Components directly, or `_lib/*.loader.ts` co-located with routes
+- **Writes:** Server Actions for form submissions and mutations
+- **Webhooks / external integrations:** API Route Handlers (`route.ts`)
+- **Realtime:** Supabase Realtime subscriptions on the client side
+
+### Project Structure
 
 ```
-User → Vercel (Next.js app + API routes) → Cloudflare Tunnel → ERPNext
-                                          → Supabase Cloud (direct HTTPS)
-                                          → Upstash Redis (enqueue jobs)
-
-QStash → Vercel /api/queue/process → ERPNext (via Cloudflare Tunnel)
-                                    → Supabase Cloud (direct HTTPS)
+app/
+  (auth)/                          # Login via Clerk
+  (dashboard)/
+    org/[orgSlug]/                 # All authenticated routes scoped by org
+      crm/                         # Leads, opportunities, accounts, contacts
+      estimates/                   # Estimate builder + templates
+      projects/                    # Project execution, milestones, daily logs
+      inventory/                   # Inventory management (replaces Almyta)
+      executive/                   # C-suite intelligence (role-gated)
+      finance/                     # Invoice snapshots, expenses
+      settings/                    # Org settings, team management
+      ...
+  (portal)/                        # External client/trade partner portal
+  api/                             # ~50 route groups (BFF pattern)
+    webhooks/                      # Clerk, BoldSign receivers
+    erp/                           # ERPNext proxy endpoints
+    queue/                         # QStash job processing
+    health/                        # Health check endpoint
+components/
+  ui/                              # shadcn/ui output — NEVER modify directly
+  shared/                          # Composed components (DataTable, ConfirmDialog)
+  [Domain]/                        # Domain-grouped (CRM/, Projects/, Layout/)
+hooks/
+  use-[domain].ts                  # React Query hooks
+lib/
+  erp/client.ts                    # ERPNext API client (sole ERPNext access point)
+  supabase/server.ts               # Server client (Clerk JWT → RLS)
+  supabase/client.ts               # Browser client
+  queue/                           # QStash job definitions
+  validators/                      # Shared Zod schemas (one per domain)
+  feature-flags.ts                 # Feature flag registry
+  logger.ts                        # Structured logger (never console.log)
+  env.ts                           # Environment variable validation
+types/
+  supabase.ts                      # Generated types (never edit manually)
 ```
 
-| Layer          | Technology                              | Responsibility                                             |
-| -------------- | --------------------------------------- | ---------------------------------------------------------- |
-| Web App        | Next.js + React + TypeScript            | Internal UI (online-only for MVP, offline deferred to P2)  |
-| API/BFF        | Next.js API routes (Vercel serverless)  | Domain APIs, orchestration, validation, rate limits        |
-| Job Processing | Vercel serverless + QStash              | QStash pushes jobs to /api/queue/process, retries, DLQ     |
-| Operational DB | Supabase Postgres (managed cloud)       | Workflows, field ops, audit trails, denormalized reporting |
-| ERP Core       | ERPNext (any Linux + cloudflared)       | Accounting, inventory, procurement, invoicing, payments    |
-| Object Storage | Supabase Storage + CDN                  | Documents, photos, signed contracts                        |
-| Identity       | Clerk → Supabase JWT bridge             | Auth, SSO, session claims. JWT claims drive RLS.           |
-| Observability  | Vercel Analytics + Sentry + BetterStack | Errors, uptime. Full Prometheus/Grafana deferred.          |
+### File Placement Rules
 
-## Unified Architecture (MDM Growth Intelligence System)
+| What                          | Where                              |
+| ----------------------------- | ---------------------------------- |
+| Route-specific components     | `_components/` under their route   |
+| Route-specific data fetching  | `_lib/` under their route          |
+| Shared components (2+ routes) | `components/shared/`               |
+| shadcn/ui primitives          | `components/ui/` (CLI-managed)     |
+| Domain components             | `components/[Domain]/`             |
+| Business logic                | `lib/services/` or `lib/<domain>/` |
+| Zod schemas                   | `lib/validators/`                  |
+| React Query hooks             | `hooks/use-[domain].ts`            |
 
-KrewPact is the **nucleus** of MDM Group's unified platform. All services converge here:
+### API Routes as BFF
 
-- **KrewPact** = The Nucleus (operations, CRM, project execution, portals)
-- **ERPNext** = The Financial Brain (replacing Sage Construction Mgmt + Sage50)
-- **LeadForge** → Sales AGI layer (merged INTO KrewPact's CRM + automation tables)
-- **mdm-website-v2** = The Conversion Engine (reads from KrewPact API)
-- **MDM-Book** = Intelligence Layer (vectorized into KrewPact's pgvector)
-- **MDM-Hub** → Archived. Superseded by KrewPact.
+API routes act as Backend-For-Frontend: authenticate (Clerk `auth()`), validate (Zod), call `lib/` for business logic, aggregate/transform, return typed responses. Routes are thin orchestrators.
 
-**One Supabase. One Clerk auth. One event bus. ERPNext for finance. Sage migrated out.**
+## Security
 
-### MDM Group Divisions
+### Server Actions Are PUBLIC HTTP Endpoints
+
+Every `'use server'` function MUST: (1) validate all input with Zod, (2) authenticate via Clerk `auth()`, (3) authorize resource access, (4) never expose raw DB errors.
+
+### Headers
+
+Security headers (CSP, HSTS, X-Frame-Options, etc.) are configured in `next.config.ts`. CSP includes Clerk, Supabase, and Sentry domains.
+
+### Rate Limiting
+
+Upstash Redis with `@upstash/ratelimit`. Circuit breaker pattern — fails open if Redis is down.
+
+### Webhook Verification
+
+Always verify webhook signatures (svix for Clerk, BoldSign SDK). Never trust unverified payloads.
+
+## Auth Pattern (Clerk Third-Party Auth)
+
+Clerk session tokens drive Supabase RLS via Third-Party Auth integration. **No custom JWT template** — Clerk's native session token is passed directly.
+
+```typescript
+// lib/supabase/server.ts — the canonical pattern
+const { getToken } = await auth();
+const token = await getToken(); // Clerk session token (Third-Party Auth)
+// Creates Supabase client with Authorization: Bearer <token>
+```
+
+### Custom Claims (in Clerk publicMetadata)
+
+- `krewpact_user_id` — maps to Supabase user record
+- `krewpact_org_id` — organization scope
+- `division_ids` — JSONB array for multi-division access
+- `role_keys` — role-based access control
+
+### RLS Rules
+
+- **Deny by default** — every table has RLS enabled
+- **Never use `auth.uid()`** — use `auth.jwt() ->> 'krewpact_user_id'` (Clerk UUIDs differ from Supabase)
+- **Division filtering:** `auth.jwt() -> 'division_ids'`
+- **Index every column referenced in RLS policies**
+- Three client types: `createUserClient()` (RLS-scoped), `createUserClientSafe()` (returns error instead of throwing), `createServiceClient()` (bypasses RLS, server-only)
+
+### Canonical Role Model
+
+**Internal (9):** `platform_admin`, `executive`, `operations_manager`, `project_manager`, `project_coordinator`, `estimator`, `field_supervisor`, `accounting`, `payroll_admin`
+**External (4):** `client_owner`, `client_delegate`, `trade_partner_admin`, `trade_partner_user`
+
+## Quality Gates
+
+### ESLint (flat config)
+
+Key rules enforced: `no-console` (error, allow warn/error), `@typescript-eslint/no-explicit-any` (error), `max-lines` (300), `max-lines-per-function` (80), `complexity` (15), `max-depth` (4), `max-params` (4), `simple-import-sort`. Exemptions: `components/ui/**`, `__tests__/**`, `scripts/**`, `types/supabase.ts`.
+
+### Testing (Vitest)
+
+- Tests in `__tests__/` mirroring source structure
+- Coverage: v8 provider, thresholds: 60% lines, 50% branches
+- Environment: jsdom, setup file: `__tests__/setup.ts`
+- Mock helpers in `__tests__/helpers/`
+- Mocks ONLY in `__tests__/` and `e2e/` — never in production code
+
+## Feature Flags
+
+All flags in `lib/feature-flags.ts`. `false` by default — only `true` after code complete + tested + UX reviewed. Check in three places: nav items, page-level `<FeatureGate>`, API routes.
+
+**Enabled:** `ai_suggestions`, `ai_insights`, `ai_daily_digest`, `ai_takeoff`, `sequences`, `inventory_management`
+**Disabled:** `portals`, `executive`, `bidding`, `enrichment_ui`, `migration_tool`, `schedule`, `documents_upload`, `finance`, `safety`, `closeout`, `warranty`
+
+## Production Hardening
+
+- **No raw IDs/UUIDs in UI** — always display human-readable names
+- **No `window.prompt()` or `window.confirm()`** — use shadcn `Dialog` or `AlertDialog`
+- **Loading skeletons everywhere** — never "Loading..." text or zeros-while-loading
+- **Error boundaries** — `error.tsx` in each route group + `global-error.tsx`
+- **Structured logger** — `lib/logger.ts`, never `console.log` (ESLint enforced)
+- **Structured error responses** — `{ error: string, code?: string }`
+- **"Would a non-technical construction manager understand this screen?"** — always ask this
+
+## CI/CD
+
+Pipeline: Lint → Type Check → Unit Tests (coverage) → Build → E2E Smoke → Security Audit (parallel)
+
+Three parallel jobs in `.github/workflows/ci.yml`:
+
+1. **quality** — lint, typecheck, test, build, Playwright E2E
+2. **security** — `npm audit --audit-level=high --omit=dev`
+3. **mobile** — mobile typecheck + Expo config validation
+
+Node 20. Runs on push to main, PRs to main, and manual dispatch. Vercel auto-deploys on merge.
+
+## Agent Rules
+
+### Session Protocol
+
+1. Read this `CLAUDE.md`
+2. Check `.env.local` for required environment variables — ask if missing
+3. Review `lib/feature-flags.ts` — understand what is enabled/disabled
+4. Log issues to `docs/issues-log.md` with date, file, description
+
+### Before Touching UI
+
+- Read the existing page first
+- Verify: Does the nav make sense? Is the data real? Is the UX coherent?
+- No mock data in production code
+- No placeholder text unless behind `<FeatureGate>`
+- NEVER add a feature to nav without adding it to `lib/feature-flags.ts`
+
+### Research Protocol
+
+1. Next.js docs: `node_modules/next/dist/docs/` (bundled)
+2. Use `think hard` before architectural decisions affecting multiple files
+3. Use `ultrathink` for complex debugging or design tradeoffs
+
+## Conventions
+
+- **Conventional commits:** `feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`
+- **Named exports** over default exports (except `page.tsx`, `layout.tsx`)
+- **Import order** (ESLint enforced): react/next → external → `@/` aliases → relative → styles
+- **No barrel files** — import directly: `import { Button } from '@/components/ui/button'`
+- **No `any`** — use `unknown` with type guards or Zod
+- **No async waterfalls** — `Promise.all()` for independent fetches
+- **Lazy load heavy components** — `next/dynamic` for charts, editors, modals
+- **Suspense boundaries** — wrap async Server Components with skeleton fallbacks
+- **One exported component per file** — never define components inside other components
+
+## What NOT To Do
+
+- Never modify `components/ui/` directly — update via shadcn CLI only
+- Never use `service_role` key in client code — server-side only
+- Never create tables without RLS policies in the same migration
+- Never hardcode secrets or API keys
+- Never skip auth in any API route or Server Action
+- Never commit `console.log` — use `lib/logger.ts`
+- Never create barrel index files — they break tree-shaking
+- Never use `getServerSideProps` — App Router only
+- Never use `auth.uid()` in Supabase RLS with Clerk — use custom JWT claims
+- Never leave a nav item pointing to a non-functional page
+- Never skip Server Action input validation — TypeScript types are NOT runtime-enforced
+- Never enable `productionBrowserSourceMaps` in `next.config`
+
+---
+
+## MDM Group Divisions
 
 | Code          | Name            | Description                |
 | ------------- | --------------- | -------------------------- |
@@ -72,303 +268,79 @@ KrewPact is the **nucleus** of MDM Group's unified platform. All services conver
 | `group-inc`   | MDM Group Inc.  | Parent company / corporate |
 | `management`  | MDM Management  | Property management        |
 
+### Unified Architecture (MDM Growth Intelligence System)
+
+KrewPact is the **nucleus**. ERPNext = Financial Brain (replacing Sage). LeadForge merged into CRM tables. mdm-website-v2 reads KrewPact API. MDM-Book vectorized into pgvector. MDM-Hub archived. One Supabase, one Clerk auth, one event bus.
+
 ## Data Authority Rules
 
-- **ERPNext authoritative for:** GL, invoices, payments, inventory, purchase orders, accounting
-- **Supabase authoritative for:** workflows, field ops, portals, audit trails, user/RBAC, lead scoring, outreach automation, knowledge embeddings
-- **Cross-system link:** `krewpact_id` field on ERPNext doctypes maps to Supabase records
-- **Sync pattern:** Eventual consistency. Outbox/inbox with idempotent upsert, retry, dead-letter. No 2PC.
-- **Event bus:** `unified_events` table for cross-system communication (website → CRM, project completion → case study, etc.)
+- **ERPNext authoritative for:** GL, invoices, payments, purchase orders, accounting
+- **Supabase authoritative for:** workflows, field ops, portals, audit trails, user/RBAC, lead scoring, outreach, knowledge embeddings, inventory (Mar 2026 — replaces Almyta)
+- **Cross-system link:** `krewpact_id` field on ERPNext doctypes
+- **Sync:** Eventual consistency. Outbox/inbox, idempotent upsert, retry with backoff, dead-letter. No 2PC.
+- **Event bus:** `unified_events` table for cross-system communication
 
-## Clerk → Supabase JWT Bridge
+## ERPNext Integration
 
-Clerk JWTs drive Supabase RLS. Configured via Clerk JWT template:
+12 MVP mappings: Customer, Contact, Opportunity, Quotation, Sales Order, Project, Task, Sales Invoice (read), Purchase Invoice (read), Supplier, Expense Claim, Timesheet. Full 43 mappings deferred to P1/P2.
 
-```json
-{
-  "sub": "{{user.id}}",
-  "role": "authenticated",
-  "krewpact_user_id": "{{user.public_metadata.krewpact_user_id}}",
-  "krewpact_divisions": "{{user.public_metadata.division_ids}}",
-  "krewpact_roles": "{{user.public_metadata.role_keys}}"
-}
-```
+- All calls through `lib/erp/client.ts` — sole ERPNext access point
+- Auth: `Authorization: token {key}:{secret}` header
+- Rate limit: 300 req/min (configurable)
+- Always `encodeURIComponent()` for document names
+- Custom fields prefixed `krewpact_*`
+- **GPL v3 boundary:** Strict API-only communication via Cloudflare Tunnel. No shared code. Prevents GPL propagation.
 
-- RLS policies use `auth.jwt() ->> 'krewpact_user_id'` (not `auth.uid()`)
-- Division filtering: `auth.jwt() -> 'krewpact_divisions'` (JSONB array in JWT)
-- No per-row subqueries — claims evaluated once per request from JWT
+## Sales AGI Layer
 
-## Canonical Role Model (PRD is source of truth)
+CRM includes autonomous sales automation: lead scoring (`lead_scoring_rules`), outreach sequences, email templates, enrichment pipeline (Apollo → Clearbit → LinkedIn → Google), bidding opportunities (MERX import). External tools: Instantly.ai, Microsoft Graph, Resend. Details: `docs/crm-workflows.md`.
 
-**Internal (9):** `platform_admin`, `executive`, `operations_manager`, `project_manager`, `project_coordinator`, `estimator`, `field_supervisor`, `accounting`, `payroll_admin`
-**External (4):** `client_owner`, `client_delegate`, `trade_partner_admin`, `trade_partner_user`
+## RAG / Knowledge Layer
 
-## Key Conventions
+pgvector-powered semantic search: `knowledge_embeddings` (OpenAI ada-002, 1536 dims, IVFFlat index), `ai_chat_sessions` + `ai_chat_messages` for context-aware AI chat. Project-view queries auto-include project context.
 
-- All server-side ERPNext calls go through `lib/erp/client.ts`
-- ERPNext API auth: `Authorization: token {key}:{secret}` header
-- ERPNext URL is env var `ERPNEXT_BASE_URL` (Cloudflare Tunnel endpoint, configurable per deployment)
-- All Supabase calls use generated types from `supabase gen types` (pipe stderr: `2>/dev/null`)
-- API routes in `app/api/` — BFF pattern (aggregate, transform, authorize)
-- File structure: feature-based (`app/(dashboard)/projects/`, `app/(dashboard)/crm/`)
-- Error handling: all external calls wrapped in try/catch with structured error responses
-- RLS with deny-by-default; all policies must have tests
-- Forms: React Hook Form + Zod. Schemas shared between client and API route validation.
-- DB connections from Vercel: use Supabase pooler (port 6543, transaction mode), NOT direct (port 5432)
-- Environment variables: NEVER hardcode secrets; see `.env.local` template in Access-and-Workflow-Plan.md
+## Inventory System
 
-## Coding Standards (Enforced)
+Append-only double-entry ledger replacing Almyta. ~1,700 items across 3 divisions (Telecom, Wood, Contracting). ERPNext gets cost journal entries only. Fleet vehicles are source of truth for vehicle locations. Design spec: `docs/superpowers/specs/2026-03-20-inventory-system-design.md`.
 
-### File Size Limits (ESLint enforced)
+## Compliance
 
-- **Components:** Max 150 lines (extract sub-components, hooks, or utils)
-- **Page files (page.tsx):** Max 200 lines (extract sections into components)
-- **API routes (route.ts):** Max 200 lines (extract business logic to lib/)
-- **Lib files:** Max 300 lines (split into focused modules)
-- **Validators:** Max 300 lines (split by domain)
-- **Exception:** `components/ui/` (shadcn/ui generated), `types/supabase.ts` (generated)
+- **PIPEDA** — Auth (Clerk) and DB (Supabase) in US. Disclosed in privacy policy. Field-level encryption for SIN/banking.
+- **Construction Act 2026** — Ontario; lien/holdback/notice in P1
+- **AODA/WCAG** — @axe-core/playwright in CI. Radix primitives for ARIA.
 
-### When a file is too large, split it:
+## Scale & SLO
 
-- Extract custom hooks -> `hooks/use<Feature>.ts`
-- Extract sub-components -> same directory as `<Component>/<SubComponent>.tsx`
-- Extract business logic -> `lib/<domain>/<function>.ts`
-- Extract types -> `types/<domain>.ts`
-- Extract constants -> co-locate or `lib/constants/<domain>.ts`
+- 300 internal users max
+- 99.5% SLO (MVP). Error budget: 3.6h/month
+- RPO 15min, RTO 2h
+- CAD + GST/HST/PST tax handling (Canada-first)
+- DB: Supabase Supavisor pooler (port 6543, transaction mode) from serverless
 
-### Component Rules
+## Required Environment Variables
 
-- One exported component per file (internal helpers OK)
-- Server Components by default -- only add 'use client' when needed for interactivity
-- Never define components inside other components (causes re-mount on every render)
-- Use `React.memo()` only when profiling shows re-render issues, not preemptively
-- Prefer composition (children prop) over deep prop drilling
-
-### Performance Rules
-
-- **CRITICAL: No async waterfalls** -- use Promise.all() for independent fetches
-- **CRITICAL: No barrel imports** -- import directly: `import { Button } from '@/components/ui/button'` not `from '@/components/ui'`
-- **CRITICAL: Lazy load heavy components** -- use `next/dynamic` for charts, editors, modals
-- **HIGH: Use React.cache()** for deduplicating server-side data fetches
-- **HIGH: Minimize Server->Client serialization** -- only pass what the client needs
-- **MEDIUM: Use Suspense boundaries** -- wrap async Server Components in `<Suspense>`
-
-### Import Order (ESLint enforced via simple-import-sort)
-
-1. React/Next.js imports
-2. External packages
-3. Internal aliases (@/lib, @/components, @/hooks, @/types)
-4. Relative imports
-5. Style imports
-
-### API Route Rules
-
-- Always start with auth check (Clerk `auth()`)
-- Always validate input with Zod on mutating routes
-- Never expose raw DB errors to clients
-- Use `lib/logger.ts` -- never `console.log` (ESLint error)
-- Extract business logic to `lib/` -- routes are thin orchestrators
-
-### Testing Rules
-
-- Mocks belong ONLY in **tests**/ and e2e/ directories
-- No mock data, fake users, or demo mode in production code
-- Test files mirror source structure: `__tests__/lib/crm/scoring.test.ts` -> `lib/crm/scoring-engine.ts`
-
-### What NOT to Do
-
-- NEVER use `any` type -- use `unknown` with type guards or define interfaces
-- NEVER hardcode secrets, API keys, or user data
-- NEVER use `getServerSideProps` -- App Router only
-- NEVER skip Clerk auth in any API route or page
-- NEVER commit `console.log` -- use `logger.info/warn/error`
-- NEVER create barrel index files (re-export files) -- they break tree-shaking
-
-## Production Quality Rules (ENFORCED)
-
-### UI Rules
-
-- NEVER ship a page that shows raw IDs, UUIDs, or technical jargon to end users
-- NEVER use `window.prompt()` or `window.confirm()` — always use `ConfirmReasonDialog` or shadcn `Dialog`
-- NEVER leave "Coming Soon", "TODO", or placeholder text in user-visible UI
-- NEVER add a nav item for a feature that isn't fully functional
-- ALWAYS check: "Would a non-technical construction manager understand this screen?"
-- ALWAYS add loading skeletons, never show "Loading..." text or zeros-while-loading
-
-### Feature Gating Rules
-
-- Every new feature MUST be added to `lib/feature-flags.ts` as `false` by default
-- Features are only enabled after: (1) code complete, (2) tested with real data, (3) UX reviewed
-- Navigation items check feature flags — hidden features = invisible nav
-- Pages behind disabled flags show `<FeatureGate>` / `<ComingSoon>` component, not broken UI
-
-### Agent Session Rules
-
-- Before adding ANY UI element, read the existing page to understand context
-- Before wiring a new page, verify: Does the nav make sense? Is the data real? Is the UX coherent?
-- Log all issues found during a session to `docs/issues-log.md` with date, file, description
-- At session end, update `docs/issues-log.md` with resolved/unresolved status
-- NEVER add a feature to the nav without also adding it to `lib/feature-flags.ts`
-
-## Sales AGI Layer (from LeadForge Merge)
-
-KrewPact's CRM now includes an autonomous sales automation layer:
-
-- **Lead scoring:** `lead_scoring_rules` + `lead_score_history` — configurable fit/intent/engagement scoring per division
-- **Outreach sequences:** `outreach_sequences` + `sequence_steps` + `sequence_enrollments` — multi-step automation
-- **Email templates:** `email_templates` — merge fields, categories (outreach, follow-up, nurture)
-- **Outreach tracking:** `outreach_events` — email/call/LinkedIn/SMS with delivery status
-- **Enrichment pipeline:** `enrichment_jobs` — Apollo → Clearbit → LinkedIn → Google waterfall
-- **Bidding opportunities:** `bidding_opportunities` — Bids & Tenders, MERX import
-- **External tools:** Instantly.ai (outreach campaigns), Resend (transactional email)
-
-## RAG / Knowledge Layer (pgvector)
-
-- **`knowledge_embeddings`** — vectorized content from MDM-Book (SOPs, market data, competitor intel), project lessons, strategy docs
-- **`ai_chat_sessions` + `ai_chat_messages`** — context-aware AI chat within dashboard
-- **Embedding model:** OpenAI ada-002 (1536 dimensions), IVFFlat index with 100 lists
-- **Context-awareness:** queries from project view automatically include project context
-
-## Expected File Structure
-
-```
-src/
-├── app/
-│   ├── (auth)/              # Login, signup routes
-│   ├── (dashboard)/         # Authenticated routes
-│   │   ├── crm/
-│   │   ├── estimates/
-│   │   ├── projects/
-│   │   └── settings/
-│   ├── api/
-│   │   ├── webhooks/        # Clerk, BoldSign webhook receivers
-│   │   └── erp/             # ERPNext proxy endpoints
-│   └── layout.tsx
-├── lib/
-│   ├── erp/
-│   │   └── client.ts        # ERPNext API client
-│   ├── supabase/
-│   │   ├── client.ts        # Browser client
-│   │   └── server.ts        # Server client (uses pooler port)
-│   ├── queue/               # QStash job definitions
-│   └── validators/          # Shared Zod schemas
-├── components/
-│   ├── ui/                  # shadcn/ui components
-│   └── layout/              # App shell components
-└── types/                   # Shared TypeScript types
-```
-
-## Required Environment Variables (MVP)
-
-Five services for MVP (full template in `KrewPact-Access-and-Workflow-Plan.md` §1):
-
-- **ERPNext:** `ERPNEXT_BASE_URL` (Cloudflare Tunnel URL), `ERPNEXT_API_KEY`, `ERPNEXT_API_SECRET`
+- **ERPNext:** `ERPNEXT_BASE_URL`, `ERPNEXT_API_KEY`, `ERPNEXT_API_SECRET`
 - **Supabase:** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_DB_URL`
 - **Clerk:** `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SECRET`
 - **Upstash:** `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`
-- **App:** `NEXT_PUBLIC_APP_URL=https://app.krewpact.com`, `WEBHOOK_SIGNING_SECRET`
+- **App:** `NEXT_PUBLIC_APP_URL`, `WEBHOOK_SIGNING_SECRET`
 
-Deferred (not needed for MVP): Azure/M365, ADP, BoldSign (needed Week 7+)
-
-## Build Commands
-
-```bash
-npm run dev          # Local dev server
-npm run build        # Production build
-npm run lint         # ESLint
-npm run typecheck    # tsc --noEmit
-npm run test         # Vitest unit tests
-npm run test:e2e     # Playwright E2E
-```
-
-## CI Pipeline Order
-
-Lint → Type Check → Unit Test → Build → Integration Test → Deploy
-
-## MVP Scope (P0 — 12 weeks)
-
-**Goal: Replace fragmented manual workflows with a unified platform. Nothing more.**
-
-| Phase                  | Weeks | Features                                                                                               |
-| ---------------------- | ----- | ------------------------------------------------------------------------------------------------------ |
-| Foundation             | 1-2   | Auth, RBAC, Supabase schema, ERPNext client, Cloudflare Tunnel, app shell, CI/CD                       |
-| CRM + Estimating       | 3-6   | Leads, opportunities, accounts, contacts, estimate builder, ERPNext sync (Customer, Quotation)         |
-| Contracting + Projects | 7-9   | Proposals, BoldSign e-sign, project creation, members, milestones, ERPNext sync (Sales Order, Project) |
-| Execution + Go-Live    | 10-12 | Tasks, daily logs, document upload, invoice snapshots, dashboard, UAT, deploy                          |
-
-**~25 features | ~314 endpoints | ~30 forms | ~13 ERPNext mappings**
-
-P1 (weeks 13-20): Change orders, RFIs, time/expense, client portal, extended ERPNext sync
-P2 (future): Trade portal, procurement, offline, ADP, closeout, migration, M365, full monitoring
+Deferred: Azure/M365, ADP, BoldSign (Week 7+). Full template: `docs/local-dev.md`.
 
 ## Planning Documents
 
-Key reference order:
-
-1. `KrewPact-Architecture-Resolution.md` — **START HERE.** All contradictions resolved, MVP scope, locked decisions.
-2. `KrewPact-Master-Plan.md` — locked decisions, architecture, scope (updated with P0/P1/P2)
-3. `KrewPact-Technology-Stack-ADRs.md` — 25 ADRs for every tech choice
-4. `KrewPact-Backend-SQL-Schema-Draft.sql` — PostgreSQL schema (28 enums, 19+ table groups)
-5. `KrewPact-Feature-Function-PRD-Checklist.md` — 16 epics, 70+ features (P0 subset = 25 features)
-6. `KrewPact-Access-and-Workflow-Plan.md` — env var template, setup checklists, build sequence (resolved)
-7. `KrewPact-Integration-Contracts.md` — ERPNext entity mappings, webhook specs
-
-## ERPNext Integration (MVP = 12 mappings)
-
-MVP mappings: Customer, Contact, Opportunity, Quotation, Sales Order, Project, Task, Sales Invoice (read), Purchase Invoice (read), Supplier, Expense Claim, Timesheet
-Full 43 mappings deferred to P1/P2.
-
-- Sync: eventual consistency, outbox/inbox, idempotent upsert, retry with backoff, dead-letter
-- All custom fields prefixed `krewpact_*`
-- ERPNext rate limit: 300 req/min (configurable)
-- Always `encodeURIComponent()` for document names in API calls
-
-## GPL v3 Boundary
-
-ERPNext is GPL v3. **Critical:** maintain strict API boundary. No shared code, separate repos. KrewPact communicates with ERPNext exclusively through REST API via Cloudflare Tunnel. This prevents GPL propagation to proprietary frontend code.
-
-## Compliance Context
-
-- **PIPEDA** — Auth (Clerk) and DB (Supabase) in US. Disclosed in privacy policy. Field-level encryption for SIN/banking.
-- **Construction Act 2026** — Ontario; lien/holdback/notice requirements in P1 (Epics 4/5)
-- **AODA/WCAG** — @axe-core/playwright in CI. shadcn/ui Radix primitives for ARIA.
-- **Data residency** — See Resolution doc §C5 for full data residency map.
-
-## Scale Targets
-
-- Up to 300 internal users
-- 99.5% uptime (MVP, single-node). 99.9% target post-HA upgrade.
-- RPO 15min, RTO 2h
-- CAD + GST/HST/PST tax handling (Canada-first)
-- DB connections: use Supabase Supavisor pooler (transaction mode) from serverless
-
-## Kickoff
-
-Run `/scope` to initialize the project. This reads the Resolution doc, confirms pending decisions, scaffolds Next.js, and creates the Phase 0 task list.
-
-## Inventory System (Design Spec: `docs/superpowers/specs/2026-03-20-inventory-system-design.md`)
-
-- **Authority:** KrewPact/Supabase owns inventory (replaces Almyta). ERPNext gets cost journal entries only.
-- **Architecture:** Append-only double-entry ledger. No UPDATE/DELETE on `inventory_ledger`.
-- **Data source:** Almyta Access databases on OneDrive (~1,700 items across 3 divisions: Telecom 221, Wood 1,063, Contracting 414). Original "374K" estimate was inflated by binary PartImage blobs in CSV line counts.
-- **Key tables:** `inventory_items`, `inventory_ledger`, `inventory_locations`, `inventory_serials`, `inventory_lots`, `inventory_purchase_orders`, `inventory_goods_receipts`, `inventory_bom`, `fleet_vehicles`.
-- **Fleet vehicles** are the source of truth for vehicles; inventory locations of type `vehicle` can only exist when linked to a `fleet_vehicles` record.
-- **Migration:** `mdb-export` from `.data` Access files → CSV → transform → Supabase COPY. Per-division tagged.
-- **Feature flag:** `inventory_management: false` until migration + UAT complete.
+Start with `KrewPact-Architecture-Resolution.md` (all contradictions resolved). Then: `Master-Plan.md` (scope), `Technology-Stack-ADRs.md` (25 ADRs), `Backend-SQL-Schema-Draft.sql`, `Feature-Function-PRD-Checklist.md` (16 epics), `Access-and-Workflow-Plan.md` (setup), `Integration-Contracts.md` (ERPNext mappings). All prefixed `KrewPact-` in project root.
 
 ## Session Log
 
 > Full log: `docs/session-log.md`
 
-### Mar 21, 2026 — PWA + Expo Native App Production-Ready + SDK 54 Upgrade
+### Mar 23, 2026 — Harden Production Readiness and Auth Flows
 
-- **Changes:** Two parallel tracks — PWA (web app installable) and Expo native (field worker UX). **PWA:** Added @serwist/next service worker with offline fallback, enhanced manifest (shortcuts, maskable icons), iOS PWA meta tags, InstallPrompt component. **Expo:** Fixed all 7 API type mismatches (dashboard, projects, tasks, leads, daily logs — every field name and pagination wrapper was wrong). Redesigned Time screen from clock-in/out to hours-entry model matching actual DB schema. Rewrote DailyLogForm (work_summary, crew_count, weather as JSON, log_date). Added auth guard with useEffect redirect pattern. Created app.config.ts with env vars. Upgraded SDK 52→54 (React Native 0.81, React 19). Installed all missing peer deps (expo-crypto, expo-linking, expo-web-browser, expo-auth-session). EAS project created (@mkgbuilds/krewpact on expo.dev).
-- **Files:** 6 new files (sw.ts, offline page, InstallPrompt, app.config.ts, eas.json, .env). 16 modified. 1 deleted (unused ProjectHealthCard).
-- **Decisions:** PWA gives "full mirror" immediately (web app already had BottomNav, MobileNavigationDrawer, responsive layout). Native app focuses on field-worker UX. Time tracking uses hours-entry model (matches DB), clock-in/out deferred to Phase 2 (needs new table). Expo Go has limitations with native modules — development builds recommended once Apple Developer account approved.
-- **Tests:** 4,310/4,310 passing (372 files). 0 type errors (web + mobile). Build clean. iOS bundle compiles via `expo export`.
-- **Next steps:** Test in Expo Go or iOS Simulator (needs full Xcode). Once Apple Developer Program approved: EAS development build → TestFlight. Android dev build possible now. PWA deployed with Vercel auto-deploy.
+- **Changes:** Production hardening across auth, security, and deployment flows.
 
-### Mar 21, 2026 — AI Takeoff Engine Integration + App Audit + Database Seeding
+### Mar 21, 2026 — PWA + Expo Native App + SDK 54 Upgrade
 
-- **Changes:** Full AI takeoff integration (4 phases), deep audit (8 issues fixed), Modal deployment, item suppliers tab, DB seeding.
-- **Tests:** 4,310/4,310 passing. Build clean.
+- **Changes:** PWA installable (service worker, offline fallback, InstallPrompt). Expo native field-worker UX (7 API type fixes, hours-entry time tracking, SDK 52 to 54). 4,310 tests passing.
+
+@AGENTS.md
