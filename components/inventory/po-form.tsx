@@ -3,6 +3,7 @@
 import { Loader2 } from 'lucide-react';
 import { useCallback, useState } from 'react';
 
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -14,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { useDivision } from '@/contexts/DivisionContext';
 import { useInventoryItems } from '@/hooks/useInventory';
@@ -27,7 +29,13 @@ import { PoLineEditor } from './po-line-editor';
 
 export function PoForm() {
   const { push: orgPush } = useOrgRouter();
-  const { activeDivision } = useDivision();
+  const {
+    activeDivision,
+    isLoading: divisionsLoading,
+    userDivisions,
+    hasMultipleDivisions,
+    setActiveDivision,
+  } = useDivision();
   const divisionId = activeDivision?.id ?? '';
   const createPo = useCreatePurchaseOrder();
 
@@ -81,12 +89,35 @@ export function PoForm() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="division">Division</Label>
-            <Input
-              id="division"
-              value={activeDivision?.name ?? 'None'}
-              disabled
-              className="bg-muted"
-            />
+            {divisionsLoading ? (
+              <Skeleton className="h-10 w-full rounded-md" />
+            ) : userDivisions.length === 0 ? (
+              <Alert variant="destructive">
+                <AlertDescription>
+                  You are not assigned to any division. Contact your administrator.
+                </AlertDescription>
+              </Alert>
+            ) : hasMultipleDivisions ? (
+              <Select value={divisionId} onValueChange={setActiveDivision}>
+                <SelectTrigger id="division">
+                  <SelectValue placeholder="Select a division" />
+                </SelectTrigger>
+                <SelectContent>
+                  {userDivisions.map((d) => (
+                    <SelectItem key={d.id} value={d.id}>
+                      {d.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input
+                id="division"
+                value={activeDivision?.name ?? ''}
+                disabled
+                className="bg-muted"
+              />
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="supplier">Supplier</Label>
@@ -155,7 +186,16 @@ export function PoForm() {
         >
           Cancel
         </Button>
-        <Button type="submit" disabled={!supplierId || lines.length === 0 || createPo.isPending}>
+        <Button
+          type="submit"
+          disabled={
+            divisionsLoading ||
+            userDivisions.length === 0 ||
+            !supplierId ||
+            lines.length === 0 ||
+            createPo.isPending
+          }
+        >
           {createPo.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
           Create Purchase Order
         </Button>
