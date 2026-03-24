@@ -22,6 +22,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { useDivisionName } from '@/hooks/useDivisionName';
 import { useCostCodes, useCreateCostCode } from '@/hooks/useProcurement';
 
 type CostCode = {
@@ -33,13 +34,12 @@ type CostCode = {
 };
 
 function CodeRow({ code }: { code: CostCode }) {
+  const { name: divisionName } = useDivisionName(code.division_id);
   return (
     <TableRow key={code.id}>
       <TableCell className="font-mono text-sm">{code.cost_code}</TableCell>
       <TableCell>{code.cost_code_name}</TableCell>
-      <TableCell className="font-mono text-xs text-muted-foreground">
-        {code.division_id.slice(0, 8)}...
-      </TableCell>
+      <TableCell className="text-sm text-muted-foreground">{divisionName}</TableCell>
       <TableCell>
         <Badge variant={code.is_active ? 'default' : 'outline'}>
           {code.is_active ? 'Active' : 'Inactive'}

@@ -38,6 +38,7 @@ import {
   useSequenceEnrollments,
   useUpdateSequence,
 } from '@/hooks/useCRM';
+import { useDivisionName } from '@/hooks/useDivisionName';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 
 function formatDate(dateStr: string): string {
@@ -127,6 +128,7 @@ function DetailsTab({ sequence, stepCount }: { sequence: SequenceData; stepCount
     .split('_')
     .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ');
+  const { name: divisionName } = useDivisionName(sequence.division_id);
   return (
     <Card>
       <CardHeader>
@@ -140,7 +142,7 @@ function DetailsTab({ sequence, stepCount }: { sequence: SequenceData; stepCount
           </div>
           <div>
             <dt className="text-sm font-medium text-muted-foreground">Division</dt>
-            <dd className="text-sm">{sequence.division_id ?? 'All divisions'}</dd>
+            <dd className="text-sm">{divisionName}</dd>
           </div>
           <div>
             <dt className="text-sm font-medium text-muted-foreground">Status</dt>

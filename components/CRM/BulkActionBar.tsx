@@ -5,6 +5,7 @@ import { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ConfirmReasonDialog } from '@/components/ui/confirm-reason-dialog';
 
 interface BulkActionBarProps {
   selectedIds: string[];
@@ -22,6 +23,10 @@ export function BulkActionBar({
   onMerge,
 }: BulkActionBarProps) {
   const [loading, setLoading] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [tagDialogOpen, setTagDialogOpen] = useState(false);
+  const [stageDialogOpen, setStageDialogOpen] = useState(false);
+  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
 
   if (selectedIds.length === 0) return null;
 
@@ -42,22 +47,17 @@ export function BulkActionBar({
     }
   }
 
-  async function handleTag() {
-    const tagId = prompt('Enter tag ID to add:');
-    if (tagId) await executeBulk('tag', { tag_id: tagId });
+  function handleTag() {
+    setTagDialogOpen(true);
   }
 
-  async function handleStageChange() {
+  function handleStageChange() {
     if (entityType !== 'lead') return;
-    const stage = prompt(
-      'Enter new stage (new, contacted, qualified, proposal, negotiation, won, lost):',
-    );
-    if (stage) await executeBulk('stage', { stage });
+    setStageDialogOpen(true);
   }
 
-  async function handleDelete() {
-    if (confirm(`Delete ${selectedIds.length} ${entityType}(s)? This cannot be undone.`))
-      await executeBulk('delete');
+  function handleDelete() {
+    setDeleteDialogOpen(true);
   }
 
   return (
@@ -82,10 +82,7 @@ export function BulkActionBar({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => {
-              const u = prompt('Enter user ID to assign:');
-              if (u) executeBulk('assign', { assigned_to: u });
-            }}
+            onClick={() => setAssignDialogOpen(true)}
             disabled={loading}
           >
             <Users className="mr-1.5 h-3.5 w-3.5" />
@@ -112,6 +109,46 @@ export function BulkActionBar({
           <X className="h-4 w-4" />
         </button>
       </div>
+      <ConfirmReasonDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title={`Delete ${selectedIds.length} ${entityType}(s)`}
+        description="This cannot be undone."
+        confirmLabel="Delete"
+        destructive
+        reasonRequired={false}
+        onConfirm={() => executeBulk('delete')}
+      />
+      <ConfirmReasonDialog
+        open={tagDialogOpen}
+        onOpenChange={setTagDialogOpen}
+        title="Add Tag"
+        description="Enter the tag to add to selected items."
+        confirmLabel="Add Tag"
+        reasonLabel="Tag"
+        reasonRequired
+        onConfirm={(reason) => executeBulk('tag', { tag_id: reason })}
+      />
+      <ConfirmReasonDialog
+        open={stageDialogOpen}
+        onOpenChange={setStageDialogOpen}
+        title="Change Stage"
+        description="Enter new stage: new, contacted, qualified, proposal, negotiation, won, lost"
+        confirmLabel="Change Stage"
+        reasonLabel="Stage"
+        reasonRequired
+        onConfirm={(reason) => executeBulk('stage', { stage: reason })}
+      />
+      <ConfirmReasonDialog
+        open={assignDialogOpen}
+        onOpenChange={setAssignDialogOpen}
+        title="Assign To"
+        description="Enter the user ID to assign selected items to."
+        confirmLabel="Assign"
+        reasonLabel="User ID"
+        reasonRequired
+        onConfirm={(reason) => executeBulk('assign', { assignee_id: reason })}
+      />
     </div>
   );
 }

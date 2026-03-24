@@ -2,32 +2,24 @@
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useDivision } from '@/contexts/DivisionContext';
 import { cn } from '@/lib/utils';
 
-export const DIVISIONS = [
-  { id: 'contracting', label: 'Contracting' },
-  { id: 'homes', label: 'Homes' },
-  { id: 'wood', label: 'Wood' },
-  { id: 'telecom', label: 'Telecom' },
-  { id: 'group-inc', label: 'Group Inc.' },
-  { id: 'management', label: 'Management' },
-] as const;
-
-export type DivisionId = (typeof DIVISIONS)[number]['id'];
+export type DivisionId = string | null;
 
 interface DivisionSelectorProps {
-  selectedDivision: DivisionId | null;
-  compareDivision: DivisionId | null;
+  selectedDivision: DivisionId;
+  compareDivision: DivisionId;
   isComparing: boolean;
-  onSelectDivision: (division: DivisionId | null) => void;
-  onSelectCompareDivision: (division: DivisionId | null) => void;
+  onSelectDivision: (division: DivisionId) => void;
+  onSelectCompareDivision: (division: DivisionId) => void;
   onToggleCompare: () => void;
 }
 
 function getDivisionSlot(
-  id: DivisionId,
-  selectedDivision: DivisionId | null,
-  compareDivision: DivisionId | null,
+  id: string,
+  selectedDivision: DivisionId,
+  compareDivision: DivisionId,
 ): 'primary' | 'compare' | null {
   if (selectedDivision === id) return 'primary';
   if (compareDivision === id) return 'compare';
@@ -35,12 +27,12 @@ function getDivisionSlot(
 }
 
 interface ClickHandlerOpts {
-  id: DivisionId;
+  id: string;
   isComparing: boolean;
-  selectedDivision: DivisionId | null;
-  compareDivision: DivisionId | null;
-  onSelectDivision: (d: DivisionId | null) => void;
-  onSelectCompareDivision: (d: DivisionId | null) => void;
+  selectedDivision: DivisionId;
+  compareDivision: DivisionId;
+  onSelectDivision: (d: DivisionId) => void;
+  onSelectCompareDivision: (d: DivisionId) => void;
 }
 
 function handleDivisionClick({
@@ -76,6 +68,8 @@ export function DivisionSelector({
   onSelectCompareDivision,
   onToggleCompare,
 }: DivisionSelectorProps) {
+  const { userDivisions } = useDivision();
+
   return (
     <div className="flex flex-wrap items-center gap-2">
       <Button
@@ -89,7 +83,7 @@ export function DivisionSelector({
       >
         All
       </Button>
-      {DIVISIONS.map(({ id, label }) => {
+      {userDivisions.map(({ id, name }) => {
         const slot = getDivisionSlot(id, selectedDivision, compareDivision);
         return (
           <button
@@ -112,7 +106,7 @@ export function DivisionSelector({
               slot === null && 'border-border bg-background text-foreground hover:bg-muted',
             )}
           >
-            {label}
+            {name}
             {isComparing && slot && (
               <Badge
                 variant="secondary"

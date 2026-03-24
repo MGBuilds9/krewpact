@@ -5,17 +5,8 @@ import { Building2, Trophy } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { useDivision } from '@/contexts/DivisionContext';
 import type { DivisionComparison } from '@/lib/crm/construction-intelligence';
-
-const DIVISION_LABELS: Record<string, string> = {
-  contracting: 'MDM Contracting',
-  homes: 'MDM Homes',
-  wood: 'MDM Wood',
-  telecom: 'MDM Telecom',
-  'group-inc': 'MDM Group Inc.',
-  management: 'MDM Management',
-  unassigned: 'Unassigned',
-};
 
 function formatCurrency(value: number): string {
   if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
@@ -28,6 +19,7 @@ interface DivisionComparisonCardProps {
 }
 
 export function DivisionComparisonCard({ divisions }: DivisionComparisonCardProps) {
+  const { userDivisions } = useDivision();
   if (divisions.length === 0) {
     return (
       <Card>
@@ -61,7 +53,7 @@ export function DivisionComparisonCard({ divisions }: DivisionComparisonCardProp
               <div className="flex items-center gap-2">
                 {idx === 0 && <Trophy className="h-4 w-4 text-yellow-500" />}
                 <span className="font-medium text-sm">
-                  {DIVISION_LABELS[div.division_id] ?? div.division_id}
+                  {userDivisions.find((d) => d.id === div.division_id)?.name ?? 'Unknown Division'}
                 </span>
               </div>
               <div className="flex items-center gap-3 text-sm">

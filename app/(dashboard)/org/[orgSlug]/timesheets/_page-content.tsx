@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useDivisionName } from '@/hooks/useDivisionName';
 import { useApproveTimesheetBatch, useTimesheetBatches } from '@/hooks/useTimeExpense';
 
 const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
@@ -90,6 +91,7 @@ function BatchCard({
   isPending: boolean;
 }) {
   const approveBatch = useApproveTimesheetBatch();
+  const { name: divName, isLoading: divLoading } = useDivisionName(batch.division_id);
   return (
     <Card>
       <CardContent className="flex items-center justify-between py-4 px-4">
@@ -99,7 +101,10 @@ function BatchCard({
             <p className="font-medium text-sm">
               {batch.period_start} — {batch.period_end}
             </p>
-            <p className="text-xs text-muted-foreground">Division: {batch.division_id}</p>
+            <p className="text-xs text-muted-foreground">
+              Division:{' '}
+              {divLoading ? <Skeleton className="inline-block h-3 w-24 align-middle" /> : divName}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-3">
