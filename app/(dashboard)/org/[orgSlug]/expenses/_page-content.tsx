@@ -32,6 +32,7 @@ import {
   useUpdateExpense,
 } from '@/hooks/useExpenses';
 import { useProjects } from '@/hooks/useProjects';
+import { formatStatus } from '@/lib/format-status';
 
 const CATEGORIES = [
   'Materials',
@@ -72,7 +73,9 @@ function ExpenseRow({ expense, onSubmit }: ExpenseRowProps) {
                 ${Number(expense.amount).toLocaleString()}
               </span>
               <Badge variant="outline">{expense.category}</Badge>
-              <Badge variant={getStatusVariant(expense.status)}>{expense.status}</Badge>
+              <Badge variant={getStatusVariant(expense.status)}>
+                {formatStatus(expense.status)}
+              </Badge>
             </div>
             <p className="text-sm text-muted-foreground mt-1">
               {expense.description || 'No description'}

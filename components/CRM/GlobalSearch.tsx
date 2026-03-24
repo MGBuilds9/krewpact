@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
+import { formatStatus } from '@/lib/format-status';
 
 interface SearchResult {
   id: string;
@@ -46,7 +47,7 @@ function SearchResultItem({
       onMouseEnter={onHover}
     >
       <Badge variant="secondary" className={`${TYPE_COLORS[result.type] ?? ''} text-xs`}>
-        {result.type}
+        {formatStatus(result.type)}
       </Badge>
       <div className="flex-1 min-w-0">
         <p className="font-medium truncate">{result.title}</p>

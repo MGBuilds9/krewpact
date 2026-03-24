@@ -14,6 +14,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { usePOSnapshots } from '@/hooks/useFinance';
+import { formatStatus } from '@/lib/format-status';
 
 const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   approved: 'default',
@@ -49,7 +50,7 @@ function PORow({ po, onClick }: { po: PO; onClick: () => void }) {
       <TableCell>{po.po_date || '—'}</TableCell>
       <TableCell>
         {po.status ? (
-          <Badge variant={STATUS_VARIANT[po.status] || 'outline'}>{po.status}</Badge>
+          <Badge variant={STATUS_VARIANT[po.status] || 'outline'}>{formatStatus(po.status)}</Badge>
         ) : (
           '—'
         )}

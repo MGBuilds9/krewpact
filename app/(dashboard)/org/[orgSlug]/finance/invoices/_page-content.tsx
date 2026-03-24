@@ -14,6 +14,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useInvoiceSnapshots } from '@/hooks/useFinance';
+import { formatStatus } from '@/lib/format-status';
 
 const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   paid: 'default',
@@ -51,7 +52,9 @@ function InvoiceRow({ inv, onClick }: { inv: Invoice; onClick: () => void }) {
       <TableCell>{inv.due_date || '—'}</TableCell>
       <TableCell>
         {inv.status ? (
-          <Badge variant={STATUS_VARIANT[inv.status] || 'outline'}>{inv.status}</Badge>
+          <Badge variant={STATUS_VARIANT[inv.status] || 'outline'}>
+            {formatStatus(inv.status)}
+          </Badge>
         ) : (
           '—'
         )}

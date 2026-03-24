@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUserRBAC } from '@/hooks/useRBAC';
 import { apiFetch } from '@/lib/api-client';
+import { formatStatus } from '@/lib/format-status';
 
 const PM_ROLES = ['project_manager', 'operations_manager', 'executive', 'platform_admin'];
 
@@ -50,7 +51,7 @@ function MilestoneRow({ ms }: { ms: MilestoneItem }) {
       </div>
       <div className="flex items-center gap-2 shrink-0">
         <Badge variant="outline" className="text-xs">
-          {ms.status}
+          {formatStatus(ms.status)}
         </Badge>
         <span className="text-xs text-muted-foreground">{ms.planned_date}</span>
       </div>
@@ -67,7 +68,7 @@ function OverdueTaskRow({ task }: { task: TaskItem }) {
       </div>
       <div className="flex items-center gap-2 shrink-0">
         <Badge variant={task.priority === 'high' ? 'destructive' : 'secondary'} className="text-xs">
-          {task.priority}
+          {formatStatus(task.priority)}
         </Badge>
         <span className="text-xs text-red-600">Due {task.due_at.slice(0, 10)}</span>
       </div>

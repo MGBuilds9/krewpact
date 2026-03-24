@@ -24,6 +24,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { useDivisionName } from '@/hooks/useDivisionName';
 import { useApproveTimesheetBatch, useTimesheetBatches } from '@/hooks/useTimeExpense';
+import { formatStatus } from '@/lib/format-status';
 
 const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   draft: 'outline',
@@ -108,9 +109,9 @@ function BatchCard({
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <Badge variant={STATUS_VARIANT[batch.status] || 'outline'} className="gap-1 capitalize">
+          <Badge variant={STATUS_VARIANT[batch.status] || 'outline'} className="gap-1">
             {STATUS_ICON[batch.status]}
-            {batch.status}
+            {formatStatus(batch.status)}
           </Badge>
           {batch.status === 'submitted' && (
             <Dialog
