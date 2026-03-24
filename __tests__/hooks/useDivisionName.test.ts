@@ -10,38 +10,54 @@ import { useDivisionName } from '@/hooks/useDivisionName';
 
 const mockUseDivision = vi.mocked(useDivision);
 
-const mockDivisions = [
-  { id: 'uuid-1', name: 'MDM Contracting', code: 'contracting' },
-  { id: 'uuid-2', name: 'MDM Homes', code: 'homes' },
-];
+const mockGetDivisionName = (id: string | null | undefined): string => {
+  if (!id) return 'All Divisions';
+  const map: Record<string, string> = { 'uuid-1': 'MDM Contracting', 'uuid-2': 'MDM Homes' };
+  return map[id] ?? 'Unknown Division';
+};
 
 describe('useDivisionName', () => {
   it('returns empty string when loading', () => {
-    mockUseDivision.mockReturnValue({ isLoading: true, userDivisions: [] } as any);
+    mockUseDivision.mockReturnValue({
+      isLoading: true,
+      getDivisionName: mockGetDivisionName,
+    } as any);
     const { result } = renderHook(() => useDivisionName('uuid-1'));
     expect(result.current).toEqual({ name: '', isLoading: true });
   });
 
   it('returns "All Divisions" for null divisionId', () => {
-    mockUseDivision.mockReturnValue({ isLoading: false, userDivisions: mockDivisions } as any);
+    mockUseDivision.mockReturnValue({
+      isLoading: false,
+      getDivisionName: mockGetDivisionName,
+    } as any);
     const { result } = renderHook(() => useDivisionName(null));
     expect(result.current).toEqual({ name: 'All Divisions', isLoading: false });
   });
 
   it('returns "All Divisions" for undefined divisionId', () => {
-    mockUseDivision.mockReturnValue({ isLoading: false, userDivisions: mockDivisions } as any);
+    mockUseDivision.mockReturnValue({
+      isLoading: false,
+      getDivisionName: mockGetDivisionName,
+    } as any);
     const { result } = renderHook(() => useDivisionName(undefined));
     expect(result.current).toEqual({ name: 'All Divisions', isLoading: false });
   });
 
   it('returns division name when UUID matches', () => {
-    mockUseDivision.mockReturnValue({ isLoading: false, userDivisions: mockDivisions } as any);
+    mockUseDivision.mockReturnValue({
+      isLoading: false,
+      getDivisionName: mockGetDivisionName,
+    } as any);
     const { result } = renderHook(() => useDivisionName('uuid-1'));
     expect(result.current).toEqual({ name: 'MDM Contracting', isLoading: false });
   });
 
   it('returns "Unknown Division" when UUID has no match', () => {
-    mockUseDivision.mockReturnValue({ isLoading: false, userDivisions: mockDivisions } as any);
+    mockUseDivision.mockReturnValue({
+      isLoading: false,
+      getDivisionName: mockGetDivisionName,
+    } as any);
     const { result } = renderHook(() => useDivisionName('uuid-unknown'));
     expect(result.current).toEqual({ name: 'Unknown Division', isLoading: false });
   });

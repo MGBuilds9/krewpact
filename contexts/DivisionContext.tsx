@@ -31,6 +31,8 @@ export interface DivisionContextType {
   hasMultipleDivisions: boolean;
   canAccessDivision: (divisionId: string) => boolean;
   getDivisionRole: (divisionId: string) => string | null;
+  allDivisions: { id: string; name: string; code: string | null }[];
+  getDivisionName: (divisionId: string | null | undefined) => string;
 }
 
 const DivisionContext = createContext<DivisionContextType | undefined>(undefined);
@@ -54,6 +56,16 @@ export function DivisionProvider({ children }: { children: ReactNode }) {
         params: { user_id: currentUser!.id },
       }),
     enabled: !!currentUser?.id,
+  });
+
+  const { data: allDivisions = [] } = useQuery({
+    queryKey: ['org-divisions-all'],
+    queryFn: () =>
+      apiFetch<{ data: { id: string; name: string; code: string | null }[] }>(
+        '/api/org/divisions?limit=100',
+      ).then((res) => res.data),
+    enabled: !!currentUser?.id,
+    staleTime: 5 * 60 * 1000,
   });
 
   // Set active division on first load
@@ -98,6 +110,11 @@ export function DivisionProvider({ children }: { children: ReactNode }) {
     return division?.user_role || null;
   };
 
+  const getDivisionName = (divisionId: string | null | undefined): string => {
+    if (!divisionId) return 'All Divisions';
+    return allDivisions.find((d) => d.id === divisionId)?.name ?? 'Unknown Division';
+  };
+
   return (
     <DivisionContext.Provider
       value={{
@@ -111,6 +128,8 @@ export function DivisionProvider({ children }: { children: ReactNode }) {
         hasMultipleDivisions,
         canAccessDivision,
         getDivisionRole,
+        allDivisions,
+        getDivisionName,
       }}
     >
       {children}
