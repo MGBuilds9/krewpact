@@ -10,6 +10,7 @@ import {
   Plus,
   Send,
   ShieldAlert,
+  Trash2,
   User,
   XCircle,
   Zap,
@@ -32,6 +33,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ConfirmReasonDialog } from '@/components/ui/confirm-reason-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useDeleteLead } from '@/hooks/crm/useLeads';
 import {
   type RuleResultDisplay,
   useActivities,
@@ -346,6 +348,7 @@ interface LeadHeaderProps {
   onEmail: () => void;
   onActivity: () => void;
   onEdit: () => void;
+  onDelete: () => void;
   orgPush: (path: string) => void;
 }
 function LeadHeader({
@@ -355,6 +358,7 @@ function LeadHeader({
   onEmail,
   onActivity,
   onEdit,
+  onDelete,
   orgPush,
 }: LeadHeaderProps) {
   return (
@@ -393,6 +397,10 @@ function LeadHeader({
             Edit
           </Button>
         )}
+        <Button variant="destructive" size="sm" onClick={onDelete}>
+          <Trash2 className="mr-1.5 h-4 w-4" />
+          Delete
+        </Button>
       </div>
     </div>
   );
@@ -463,6 +471,7 @@ export default function LeadDetailPage() {
   const leadContacts = contactsResponse ? contactsResponse.data || [] : [];
   const stageTransition = useLeadStageTransition();
   const recalculateScore = useRecalculateLeadScore();
+  const deleteLead = useDeleteLead();
   const { data: scoreBreakdown } = useLeadScoreBreakdown(leadId);
   const { data: accountMatches } = useLeadAccountMatches(leadId);
   const [isEditing, setIsEditing] = useState(false);
@@ -470,6 +479,7 @@ export default function LeadDetailPage() {
   const [convertDialogOpen, setConvertDialogOpen] = useState(false);
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const [markLostDialogOpen, setMarkLostDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   if (isLoading)
     return (
@@ -526,6 +536,7 @@ export default function LeadDetailPage() {
         onEmail={() => setEmailDialogOpen(true)}
         onActivity={() => setActivityDialogOpen(true)}
         onEdit={() => setIsEditing(true)}
+        onDelete={() => setDeleteDialogOpen(true)}
         orgPush={orgPush}
       />
       <AiInsightBanner entityType="lead" entityId={leadId} />
@@ -601,6 +612,20 @@ export default function LeadDetailPage() {
         destructive={true}
         onConfirm={(reason) => {
           if (reason) stageTransition.mutate({ id: leadId, status: 'lost', lost_reason: reason });
+        }}
+      />
+      <ConfirmReasonDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Delete Lead"
+        description="This will permanently delete this lead. This action cannot be undone."
+        confirmLabel="Delete"
+        destructive
+        reasonRequired={false}
+        onConfirm={() => {
+          deleteLead.mutate(leadId, {
+            onSuccess: () => orgPush('/crm/leads'),
+          });
         }}
       />
     </div>
