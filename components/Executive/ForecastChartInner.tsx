@@ -95,59 +95,68 @@ export function ForecastChartInner({ forecast, isLoading = false }: ForecastChar
             No forecast data available
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height={300} minWidth={1} minHeight={1}>
-            <AreaChart data={forecast} margin={{ top: 4, right: 4, left: 8, bottom: 0 }}>
-              <defs>
-                <linearGradient id="signedGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.7} />
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0.1} />
-                </linearGradient>
-                <linearGradient id="weightedGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.5} />
-                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.05} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-              <XAxis dataKey="quarter" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
-              <YAxis
-                tickFormatter={formatCAD}
-                tick={{ fontSize: 11 }}
-                tickLine={false}
-                axisLine={false}
-                width={64}
-              />
-              <Tooltip
-                content={(props) => <CustomTooltip {...(props as unknown as CustomTooltipArgs)} />}
-              />
-              {currentQuarter && (
-                <ReferenceLine
-                  x={currentQuarter}
-                  stroke="#f59e0b"
-                  strokeDasharray="4 4"
-                  strokeWidth={2}
-                  label={{ value: 'Now', fontSize: 10, fill: '#f59e0b', position: 'top' }}
+          <div className="h-[300px] w-full min-w-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={forecast} margin={{ top: 4, right: 4, left: 8, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="signedGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.7} />
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0.1} />
+                  </linearGradient>
+                  <linearGradient id="weightedGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.5} />
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.05} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <XAxis
+                  dataKey="quarter"
+                  tick={{ fontSize: 12 }}
+                  tickLine={false}
+                  axisLine={false}
                 />
-              )}
-              <Area
-                type="monotone"
-                dataKey="signed"
-                stackId="1"
-                stroke="#10b981"
-                strokeWidth={2}
-                fill="url(#signedGradient)"
-                name="Signed"
-              />
-              <Area
-                type="monotone"
-                dataKey="weighted"
-                stackId="1"
-                stroke="#3b82f6"
-                strokeWidth={2}
-                fill="url(#weightedGradient)"
-                name="Pipeline"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+                <YAxis
+                  tickFormatter={formatCAD}
+                  tick={{ fontSize: 11 }}
+                  tickLine={false}
+                  axisLine={false}
+                  width={64}
+                />
+                <Tooltip
+                  content={(props) => (
+                    <CustomTooltip {...(props as unknown as CustomTooltipArgs)} />
+                  )}
+                />
+                {currentQuarter && (
+                  <ReferenceLine
+                    x={currentQuarter}
+                    stroke="#f59e0b"
+                    strokeDasharray="4 4"
+                    strokeWidth={2}
+                    label={{ value: 'Now', fontSize: 10, fill: '#f59e0b', position: 'top' }}
+                  />
+                )}
+                <Area
+                  type="monotone"
+                  dataKey="signed"
+                  stackId="1"
+                  stroke="#10b981"
+                  strokeWidth={2}
+                  fill="url(#signedGradient)"
+                  name="Signed"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="weighted"
+                  stackId="1"
+                  stroke="#3b82f6"
+                  strokeWidth={2}
+                  fill="url(#weightedGradient)"
+                  name="Pipeline"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
         )}
       </CardContent>
     </Card>

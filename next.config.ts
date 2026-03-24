@@ -26,11 +26,11 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.clerk.com https://*.clerk.accounts.dev https://clerk.mdmgroupinc.ca https://clerk.hub.mdmgroupinc.ca",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.clerk.com https://*.clerk.accounts.dev https://clerk.hub.mdmgroupinc.ca https://vercel.live",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https://*.clerk.com https://img.clerk.com",
               "font-src 'self' data:",
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.clerk.com https://*.clerk.accounts.dev https://clerk.mdmgroupinc.ca https://clerk.hub.mdmgroupinc.ca https://*.sentry.io",
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.clerk.com https://*.clerk.accounts.dev https://clerk.hub.mdmgroupinc.ca https://*.sentry.io https://vercel.live",
               "worker-src 'self' blob:",
               "frame-ancestors 'none'",
             ].join('; '),
