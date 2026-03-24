@@ -1,5 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
-import { NextRequest } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 
 import { ApiError } from './errors';
 
@@ -24,6 +25,24 @@ export async function getKrewpactDivisions(): Promise<string[]> {
   const meta = await _getClerkMetadata();
   const divisions = meta?.division_ids;
   return Array.isArray(divisions) ? divisions : [];
+}
+
+/**
+ * Require the authenticated user to have at least one of the given roles.
+ * Returns userId + roles on success, or a 403 NextResponse on failure.
+ */
+export async function requireRole(
+  allowedRoles: string[],
+): Promise<{ userId: string; roles: string[] } | NextResponse> {
+  const { userId } = await auth();
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const roles = await getKrewpactRoles();
+  if (!roles.some((r) => allowedRoles.includes(r))) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  return { userId, roles };
 }
 
 /**

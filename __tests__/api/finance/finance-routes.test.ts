@@ -10,6 +10,13 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+const mockRequireRole = vi.fn();
+vi.mock('@/lib/api/org', () => ({
+  requireRole: (...args: unknown[]) => mockRequireRole(...args),
+  getKrewpactRoles: vi.fn().mockResolvedValue(['platform_admin']),
+  getKrewpactUserId: vi.fn().mockResolvedValue('test-user-id'),
+  getOrgIdFromAuth: vi.fn().mockResolvedValue('mdm-group'),
+}));
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 
 const mockFrom = vi.fn();
@@ -21,6 +28,7 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
 
 import { makeJsonRequest, makeRequest, mockClerkAuth, mockClerkUnauth } from '@/__tests__/helpers';
 
@@ -39,10 +47,16 @@ function paginatedChain(data: unknown[], count: number) {
 }
 
 describe('GET /api/finance/invoices', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockRequireRole.mockResolvedValue({ userId: 'test-user-id', roles: ['platform_admin'] });
+  });
 
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
+    mockRequireRole.mockResolvedValue(
+      NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
+    );
     const { GET } = await import('@/app/api/finance/invoices/route');
     const res = await GET(makeRequest('/api/finance/invoices'));
     expect(res.status).toBe(401);
@@ -87,10 +101,16 @@ describe('GET /api/finance/invoices', () => {
 });
 
 describe('POST /api/finance/invoices', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockRequireRole.mockResolvedValue({ userId: 'test-user-id', roles: ['platform_admin'] });
+  });
 
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
+    mockRequireRole.mockResolvedValue(
+      NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
+    );
     const { POST } = await import('@/app/api/finance/invoices/route');
     const res = await POST(makeJsonRequest('/api/finance/invoices', { erp_docname: 'SINV-001' }));
     expect(res.status).toBe(401);
@@ -98,10 +118,16 @@ describe('POST /api/finance/invoices', () => {
 });
 
 describe('GET /api/finance/job-costs', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockRequireRole.mockResolvedValue({ userId: 'test-user-id', roles: ['platform_admin'] });
+  });
 
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
+    mockRequireRole.mockResolvedValue(
+      NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
+    );
     const { GET } = await import('@/app/api/finance/job-costs/route');
     const res = await GET(makeRequest('/api/finance/job-costs'));
     expect(res.status).toBe(401);
@@ -124,10 +150,16 @@ describe('GET /api/finance/job-costs', () => {
 });
 
 describe('GET /api/finance/purchase-orders', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockRequireRole.mockResolvedValue({ userId: 'test-user-id', roles: ['platform_admin'] });
+  });
 
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
+    mockRequireRole.mockResolvedValue(
+      NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
+    );
     const { GET } = await import('@/app/api/finance/purchase-orders/route');
     const res = await GET(makeRequest('/api/finance/purchase-orders'));
     expect(res.status).toBe(401);

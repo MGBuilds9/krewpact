@@ -10,6 +10,13 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+const mockRequireRole = vi.fn();
+vi.mock('@/lib/api/org', () => ({
+  requireRole: (...args: unknown[]) => mockRequireRole(...args),
+  getKrewpactRoles: vi.fn().mockResolvedValue(['platform_admin']),
+  getKrewpactUserId: vi.fn().mockResolvedValue('test-user-id'),
+  getOrgIdFromAuth: vi.fn().mockResolvedValue('mdm-group'),
+}));
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
@@ -18,6 +25,7 @@ vi.mock('@/lib/api/rate-limit', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
 
 import {
   makeRequest,
@@ -33,10 +41,14 @@ const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 describe('GET /api/finance/dashboard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockRequireRole.mockResolvedValue({ userId: 'test-user-id', roles: ['platform_admin'] });
   });
 
   it('returns 401 when unauthenticated', async () => {
     mockClerkUnauth(mockAuth);
+    mockRequireRole.mockResolvedValue(
+      NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
+    );
 
     const { GET } = await import('@/app/api/finance/dashboard/route');
     const res = await GET(makeRequest('/api/finance/dashboard'));

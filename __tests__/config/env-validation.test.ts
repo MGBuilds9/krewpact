@@ -43,6 +43,9 @@ describe('Environment validation', () => {
     process.env.SENTRY_DSN = 'https://test@sentry.io/123';
     delete process.env.SENTRY_ORG;
     delete process.env.SENTRY_PROJECT;
+    // Required in production by superRefine
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key';
+    process.env.CLERK_SECRET_KEY = 'sk_test_key';
     const origNodeEnv = process.env.NODE_ENV;
     // @ts-expect-error -- NODE_ENV is readonly
     process.env.NODE_ENV = 'production';
@@ -62,6 +65,9 @@ describe('Environment validation', () => {
     process.env.QSTASH_TOKEN = 'qstash-token';
     delete process.env.QSTASH_CURRENT_SIGNING_KEY;
     delete process.env.QSTASH_NEXT_SIGNING_KEY;
+    // Required in production by superRefine
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key';
+    process.env.CLERK_SECRET_KEY = 'sk_test_key';
     const origNodeEnv = process.env.NODE_ENV;
     // @ts-expect-error test env override
     process.env.NODE_ENV = 'production';

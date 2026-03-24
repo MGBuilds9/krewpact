@@ -335,6 +335,13 @@ Start with `KrewPact-Architecture-Resolution.md` (all contradictions resolved). 
 
 > Full log: `docs/session-log.md`
 
+### Mar 24, 2026 — Deep Blueprint Audit + Production Hardening
+
+- **Changes:** (1) Comprehensive production-readiness audit (score 89→95). (2) Vercel Analytics + Speed Insights installed in root layout. (3) Env schema hardened — `SUPABASE_SERVICE_ROLE_KEY` + `CLERK_SECRET_KEY` required in production via superRefine. (4) 5 missing error.tsx boundaries added (inventory, expenses, timesheets, team, notifications). (5) 5 missing loading.tsx skeletons added (expenses, timesheets, team, notifications, executive). (6) `requireRole()` helper added to `lib/api/org.ts` — finance routes now enforce RBAC. (7) Legacy RBAC fallback removed from `useRBAC.ts` (all 3 Clerk users confirmed migrated). (8) 35 new tests: 4 cron routes + Clerk webhook + finance RBAC. (9) Payment entry mapper confirmed in use (not orphaned). (10) Queue processor already refactored (prior commit).
+- **Decisions:** All users on role_keys — safe to remove legacy role mapping. Finance routes get `['platform_admin', 'executive', 'accounting', 'operations_manager']` RBAC. Direct AI provider keys kept (AI Gateway deferred).
+- **Tests:** 4,351/4,351 passing (384 files). +35 new tests. 0 type errors.
+- **Next:** Configure BetterStack monitors (manual), add Sentry to deep health check, portal route role assertion, division filtering audit, enable portals/executive flags after UAT.
+
 ### Mar 23-24, 2026 — Playbook v2 + KrewPact Alignment + Production UX Fixes
 
 - **Changes:** (1) MKG-Builds-Dev-Playbook v2 — 851-line gold-standard CLAUDE.md template, 13 sections. (2) KrewPact docs rewrite — CLAUDE.md 345 lines (was 374), AGENTS.md 187 lines (was 279), expanded contributing.md. (3) Dev env — CI Node 24, format:check, tsconfig ES2022, processor refactor. (4) Production readiness verified — hub.mdmgroupinc.ca live, Clerk production, Sentry clean. (5) UX fixes — division names (DivisionContext enriched with allDivisions), lead delete button, PO form division select, BulkActionBar dialogs. (6) formatStatus utility + user name resolution for 3 P0 locations. (7) CSP cleanup — wildcard \*.mdmgroupinc.ca, vercel.live frame-src, chart dimension fix.

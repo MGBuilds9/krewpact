@@ -1,11 +1,13 @@
-import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { requireRole } from '@/lib/api/org';
 import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { invoiceSnapshotSchema } from '@/lib/validators/finance';
+
+const FINANCE_ROLES = ['platform_admin', 'executive', 'accounting', 'operations_manager'];
 
 const querySchema = z.object({
   project_id: z.string().uuid().optional(),
@@ -19,8 +21,9 @@ const createSchema = invoiceSnapshotSchema.extend({
 });
 
 export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const authResult = await requireRole(FINANCE_ROLES);
+  if (authResult instanceof NextResponse) return authResult;
+  const { userId } = authResult;
 
   const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
   if (!rl.success) return rateLimitResponse(rl);
@@ -53,8 +56,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const authResult = await requireRole(FINANCE_ROLES);
+  if (authResult instanceof NextResponse) return authResult;
+  const { userId } = authResult;
 
   const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
   if (!rl.success) return rateLimitResponse(rl);

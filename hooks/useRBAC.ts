@@ -71,34 +71,13 @@ export function useUserRBAC() {
   });
 
   const rbacData = useMemo(() => {
-    const roleByLegacy: Record<string, string[]> = {
-      admin: ['platform_admin'],
-      manager: ['operations_manager'],
-      worker: [],
-    };
-    const permissionsByLegacy: Record<string, string[]> = {
-      admin: ['admin.system', 'users.manage'],
-      manager: ['projects.view'],
-      worker: [],
-    };
-
-    const legacyRole = currentUser?.role;
-    const legacyRoleNames = legacyRole ? roleByLegacy[legacyRole] || [] : [];
-    const legacyPermissions = legacyRole ? permissionsByLegacy[legacyRole] || [] : [];
-
     const roles = rbacResponse?.roles || EMPTY_ROLES;
-    const effectiveRoles = legacyRoleNames
-      .filter((roleName) => !roles.some((r) => r.role_name === roleName))
-      .map((roleName) => ({ role_name: roleName, is_primary: roles.length === 0 }))
-      .concat(roles);
-
     const permissions = rbacResponse?.permissions || EMPTY_PERMISSIONS;
-    const effectivePermissions = Array.from(new Set([...permissions, ...legacyPermissions]));
     const divisionIds = rbacResponse?.divisionIds || EMPTY_DIVISIONS;
-    const primaryRole = effectiveRoles.find((r) => r.is_primary)?.role_name || null;
+    const primaryRole = roles.find((r) => r.is_primary)?.role_name || null;
 
-    return { roles: effectiveRoles, permissions: effectivePermissions, primaryRole, divisionIds };
-  }, [currentUser?.role, rbacResponse]);
+    return { roles, permissions, primaryRole, divisionIds };
+  }, [rbacResponse]);
 
   return useMemo(
     () => ({
