@@ -178,6 +178,8 @@ CREATE POLICY division_isolation ON projects
 
 **Features: ~25 | Endpoints: ~40 | Forms: ~30 | ERPNext mappings: ~12**
 
+> **Updated 2026-03-23:** Actual counts as of latest audit: 344 API routes, 118 pages, 303 components, 171 lib files, 67 hooks, 60 migrations, 4,306 tests, 14 cron jobs. See `docs/audits/2026-03-23-blueprint-audit.md` for full report.
+
 **P1 — Fast Follow (weeks 13-20)**
 
 | Epic                    | Features                                                |
