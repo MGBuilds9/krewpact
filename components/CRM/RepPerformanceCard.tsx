@@ -4,6 +4,7 @@ import { Users } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useUsers } from '@/hooks/useUsers';
 import type { RepPerformance } from '@/lib/crm/pipeline-intelligence';
 
 function formatCurrency(value: number): string {
@@ -21,6 +22,14 @@ interface RepPerformanceCardProps {
 }
 
 export function RepPerformanceCard({ data, isLoading }: RepPerformanceCardProps) {
+  const { data: users } = useUsers();
+  const userNameMap = new Map(
+    (users ?? []).map((u) => [
+      u.id,
+      [u.first_name, u.last_name].filter(Boolean).join(' ') || u.email,
+    ]),
+  );
+
   if (isLoading) {
     return (
       <Card>
@@ -56,7 +65,9 @@ export function RepPerformanceCard({ data, isLoading }: RepPerformanceCardProps)
                 <span className="text-sm font-bold text-muted-foreground w-5">{index + 1}</span>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">
-                    {rep.user_id === 'unassigned' ? 'Unassigned' : rep.user_id.slice(0, 8)}
+                    {rep.user_id === 'unassigned'
+                      ? 'Unassigned'
+                      : (userNameMap.get(rep.user_id) ?? rep.user_id.slice(0, 8))}
                   </p>
                   <div className="flex gap-2 text-xs text-muted-foreground">
                     <span>{rep.deals_won} won</span>

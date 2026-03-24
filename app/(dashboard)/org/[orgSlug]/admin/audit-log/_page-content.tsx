@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useUsers } from '@/hooks/useUsers';
 
 interface AuditEntry {
   id: string;
@@ -225,6 +226,7 @@ interface AuditTableProps {
   onPageSizeChange: (n: number) => void;
   onPrev: () => void;
   onNext: () => void;
+  resolveUser: (userId: string) => string;
 }
 function AuditTable({
   loading,
@@ -235,6 +237,7 @@ function AuditTable({
   onPageSizeChange,
   onPrev,
   onNext,
+  resolveUser,
 }: AuditTableProps) {
   return (
     <Card>
@@ -294,7 +297,7 @@ function AuditTable({
                     <td className="py-2 whitespace-nowrap text-muted-foreground">
                       {formatDate(entry.created_at)}
                     </td>
-                    <td className="py-2 font-mono text-xs">{entry.user_id}</td>
+                    <td className="py-2 text-sm">{resolveUser(entry.user_id)}</td>
                     <td className="py-2">
                       <Badge variant={ACTION_VARIANTS[entry.action] || 'outline'}>
                         {entry.action}
@@ -338,6 +341,17 @@ function AuditTable({
 }
 
 export default function AuditLogPage() {
+  const { data: users } = useUsers();
+  const userNameMap = new Map(
+    (users ?? []).map((u) => [
+      u.id,
+      [u.first_name, u.last_name].filter(Boolean).join(' ') || u.email,
+    ]),
+  );
+  function resolveUser(userId: string): string {
+    return userNameMap.get(userId) ?? userId.slice(0, 8);
+  }
+
   const [entries, setEntries] = useState<AuditEntry[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -456,6 +470,7 @@ export default function AuditLogPage() {
           onPageSizeChange={handlePageSizeChange}
           onPrev={() => setPage((p) => Math.max(1, p - 1))}
           onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
+          resolveUser={resolveUser}
         />
       </div>
     </>

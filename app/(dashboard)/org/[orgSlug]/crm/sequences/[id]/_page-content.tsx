@@ -33,6 +33,7 @@ import type { SequenceStep } from '@/hooks/useCRM';
 import {
   useDeleteSequenceStep,
   useEnrollInSequence,
+  useLeads,
   useProcessSequences,
   useSequence,
   useSequenceEnrollments,
@@ -63,8 +64,14 @@ interface EnrollmentsTabProps {
   enrollmentList: EnrollmentItem[];
   orgPush: (path: string) => void;
   onEnrollClick: () => void;
+  resolveLeadName: (leadId: string) => string;
 }
-function EnrollmentsTab({ enrollmentList, orgPush, onEnrollClick }: EnrollmentsTabProps) {
+function EnrollmentsTab({
+  enrollmentList,
+  orgPush,
+  onEnrollClick,
+  resolveLeadName,
+}: EnrollmentsTabProps) {
   if (enrollmentList.length === 0) {
     return (
       <Card>
@@ -83,7 +90,7 @@ function EnrollmentsTab({ enrollmentList, orgPush, onEnrollClick }: EnrollmentsT
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Lead ID</TableHead>
+            <TableHead>Lead</TableHead>
             <TableHead>Current Step</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Enrolled</TableHead>
@@ -97,7 +104,7 @@ function EnrollmentsTab({ enrollmentList, orgPush, onEnrollClick }: EnrollmentsT
               className="cursor-pointer hover:bg-muted/50"
               onClick={() => orgPush(`/crm/leads/${enrollment.lead_id}`)}
             >
-              <TableCell className="font-mono text-sm">{enrollment.lead_id}</TableCell>
+              <TableCell className="text-sm">{resolveLeadName(enrollment.lead_id)}</TableCell>
               <TableCell className="text-sm text-muted-foreground">
                 Step {enrollment.current_step}
               </TableCell>
@@ -250,6 +257,12 @@ export default function SequenceDetailPage() {
 
   const { data: sequence, isLoading } = useSequence(sequenceId);
   const { data: enrollments } = useSequenceEnrollments(sequenceId);
+  const { data: leadsData } = useLeads({ limit: 500 });
+  const leadNameMap = new Map((leadsData?.data ?? []).map((l) => [l.id, l.company_name]));
+  function resolveLeadName(leadId: string): string {
+    return leadNameMap.get(leadId) ?? leadId.slice(0, 8);
+  }
+
   const updateSequence = useUpdateSequence();
   const enrollInSequence = useEnrollInSequence();
   const deleteStep = useDeleteSequenceStep();
@@ -368,6 +381,7 @@ export default function SequenceDetailPage() {
             enrollmentList={enrollmentList}
             orgPush={orgPush}
             onEnrollClick={() => setEnrollLeadOpen(true)}
+            resolveLeadName={resolveLeadName}
           />
         </TabsContent>
         <TabsContent value="details" className="mt-4">
