@@ -1,9 +1,11 @@
 'use client';
 
-import { Gavel, Plus, Search } from 'lucide-react';
+import { Gavel, Plus, Search, Upload } from 'lucide-react';
 import { useState } from 'react';
 
+import { BidImportDialog } from '@/components/CRM/BidImportDialog';
 import { BiddingCard } from '@/components/CRM/BiddingCard';
+import { BidToOpportunityButton } from '@/components/CRM/BidToOpportunityButton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -34,6 +36,7 @@ export default function BiddingListPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [sourceFilter, setSourceFilter] = useState<string>('');
+  const [importOpen, setImportOpen] = useState(false);
 
   const { data, isLoading } = useBiddingOpportunities(
     buildParams(search, statusFilter, sourceFilter),
@@ -52,11 +55,18 @@ export default function BiddingListPage() {
             </p>
           </div>
         </div>
-        <Button onClick={() => orgPush('/crm/bidding/new')}>
-          <Plus className="mr-1.5 h-4 w-4" />
-          New Bid
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setImportOpen(true)}>
+            <Upload className="mr-1.5 h-4 w-4" />
+            Import Bids
+          </Button>
+          <Button onClick={() => orgPush('/crm/bidding/new')}>
+            <Plus className="mr-1.5 h-4 w-4" />
+            New Bid
+          </Button>
+        </div>
       </div>
+      <BidImportDialog open={importOpen} onOpenChange={setImportOpen} />
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -111,7 +121,15 @@ export default function BiddingListPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {bids.map((bid) => (
-            <BiddingCard key={bid.id} bid={bid} onClick={() => orgPush(`/crm/bidding/${bid.id}`)} />
+            <div key={bid.id} className="relative">
+              <BiddingCard bid={bid} onClick={() => orgPush(`/crm/bidding/${bid.id}`)} />
+              <div className="absolute bottom-3 right-3" onClick={(e) => e.stopPropagation()}>
+                <BidToOpportunityButton
+                  bid={bid}
+                  onConverted={() => orgPush('/crm/opportunities')}
+                />
+              </div>
+            </div>
           ))}
         </div>
       )}

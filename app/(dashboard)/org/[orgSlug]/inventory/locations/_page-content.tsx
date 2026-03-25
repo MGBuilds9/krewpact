@@ -1,11 +1,13 @@
 'use client';
 
-import { MapPin, Search } from 'lucide-react';
+import { MapPin, Plus, Search } from 'lucide-react';
 import { useState } from 'react';
 
 import { EmptyState } from '@/components/shared/EmptyState';
 import { PageHeader } from '@/components/shared/PageHeader';
+import { LocationForm } from '@/components/inventory/LocationForm';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
@@ -17,7 +19,8 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useDivision } from '@/contexts/DivisionContext';
-import { useInventoryLocations } from '@/hooks/useInventoryLocations';
+import { useCreateLocation, useInventoryLocations } from '@/hooks/useInventoryLocations';
+import type { CreateLocation } from '@/lib/validators/inventory-items';
 
 const TYPE_OPTIONS = [
   { label: 'All Types', value: 'all' },
@@ -55,11 +58,20 @@ export default function LocationsPageContent() {
   const { activeDivision } = useDivision();
   const [typeFilter, setTypeFilter] = useState('all');
   const [search, setSearch] = useState('');
+  const [formOpen, setFormOpen] = useState(false);
 
   const { data: locations, isLoading } = useInventoryLocations({
     divisionId: activeDivision?.id,
     locationType: typeFilter !== 'all' ? typeFilter : undefined,
   });
+
+  const createLocation = useCreateLocation();
+
+  function handleCreate(data: CreateLocation) {
+    createLocation.mutate(data as Parameters<typeof createLocation.mutate>[0], {
+      onSuccess: () => setFormOpen(false),
+    });
+  }
 
   const filtered = locations?.filter(
     (loc) => !search || loc.name.toLowerCase().includes(search.toLowerCase()),
@@ -67,7 +79,25 @@ export default function LocationsPageContent() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Locations" />
+      <PageHeader
+        title="Locations"
+        action={
+          <Button size="sm" onClick={() => setFormOpen(true)}>
+            <Plus className="h-4 w-4 mr-1" />
+            Add Location
+          </Button>
+        }
+      />
+
+      {activeDivision && (
+        <LocationForm
+          open={formOpen}
+          onOpenChange={setFormOpen}
+          divisionId={activeDivision.id}
+          onSubmit={handleCreate}
+          isSubmitting={createLocation.isPending}
+        />
+      )}
 
       <div className="flex flex-wrap gap-2">
         <div className="relative flex-1 min-w-[200px]">

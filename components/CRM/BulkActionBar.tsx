@@ -1,8 +1,9 @@
 'use client';
 
-import { ArrowRight, Merge, Tag, Trash2, Users, X } from 'lucide-react';
+import { ArrowRight, GitBranch, Merge, Tag, Trash2, Users, X } from 'lucide-react';
 import { useState } from 'react';
 
+import { SequenceEnrollDialog } from '@/components/CRM/SequenceEnrollDialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ConfirmReasonDialog } from '@/components/ui/confirm-reason-dialog';
@@ -27,6 +28,7 @@ export function BulkActionBar({
   const [tagDialogOpen, setTagDialogOpen] = useState(false);
   const [stageDialogOpen, setStageDialogOpen] = useState(false);
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [enrollDialogOpen, setEnrollDialogOpen] = useState(false);
 
   if (selectedIds.length === 0) return null;
 
@@ -89,6 +91,17 @@ export function BulkActionBar({
             Assign
           </Button>
         )}
+        {entityType === 'lead' && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setEnrollDialogOpen(true)}
+            disabled={loading}
+          >
+            <GitBranch className="mr-1.5 h-3.5 w-3.5" />
+            Enroll
+          </Button>
+        )}
         {selectedIds.length === 2 &&
           (entityType === 'account' || entityType === 'contact') &&
           onMerge && (
@@ -149,6 +162,17 @@ export function BulkActionBar({
         reasonRequired
         onConfirm={(reason) => executeBulk('assign', { assignee_id: reason })}
       />
+      {entityType === 'lead' && (
+        <SequenceEnrollDialog
+          open={enrollDialogOpen}
+          onClose={() => {
+            setEnrollDialogOpen(false);
+            onActionComplete();
+            onClearSelection();
+          }}
+          leadIds={selectedIds}
+        />
+      )}
     </div>
   );
 }

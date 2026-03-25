@@ -122,6 +122,7 @@ export {
 } from './crm/useOpportunities';
 export type { OutreachEvent, Sequence, SequenceEnrollment, SequenceStep } from './crm/useSequences';
 export {
+  useBulkEnrollInSequence,
   useCreateOutreach,
   useCreateSequence,
   useCreateSequenceStep,

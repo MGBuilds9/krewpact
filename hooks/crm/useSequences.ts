@@ -179,6 +179,26 @@ export function useEnrollInSequence() {
   });
 }
 
+export function useBulkEnrollInSequence() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ sequenceId, leadIds }: { sequenceId: string; leadIds: string[] }) =>
+      apiFetch<{ enrolled: number; skipped: number; errors: string[] }>(
+        '/api/crm/sequences/enrollments',
+        {
+          method: 'POST',
+          body: { sequence_id: sequenceId, lead_ids: leadIds },
+        },
+      ),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['sequence-enrollments', variables.sequenceId],
+      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.leads.all });
+    },
+  });
+}
+
 export function useSequenceEnrollments(sequenceId: string, status?: string) {
   return useQuery({
     queryKey: ['sequence-enrollments', sequenceId, status],

@@ -14,6 +14,7 @@ const inventoryTabs = [
   { label: 'Receiving', href: '/inventory/receive' },
   { label: 'Transactions', href: '/inventory/transactions' },
   { label: 'Fleet', href: '/inventory/fleet' },
+  { label: 'Adjustments', href: '/inventory/adjustments' },
 ];
 
 export default function InventoryLayout({ children }: { children: React.ReactNode }) {

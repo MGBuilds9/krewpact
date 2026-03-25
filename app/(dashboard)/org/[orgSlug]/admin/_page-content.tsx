@@ -2,6 +2,7 @@
 
 import { Briefcase, Settings, Shield, Users } from 'lucide-react';
 
+import { SystemHealthCard } from '@/components/Admin/SystemHealthCard';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -147,6 +148,7 @@ export default function AdminPage() {
           divisionName={activeDivision?.name ?? 'N/A'}
         />
         <UserDirectoryCard members={(members ?? []) as Member[]} />
+        <SystemHealthCard />
       </div>
     </>
   );

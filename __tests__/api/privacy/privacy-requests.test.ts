@@ -6,6 +6,10 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+const mockRequireRole = vi.fn();
+vi.mock('@/lib/api/org', () => ({
+  requireRole: (...args: unknown[]) => mockRequireRole(...args),
+}));
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/rate-limit', () => ({
@@ -13,6 +17,7 @@ vi.mock('@/lib/api/rate-limit', () => ({
   rateLimitResponse: vi.fn(),
 }));
 
+import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 
 import {
@@ -63,10 +68,14 @@ const sampleEvent = {
 
 /* --- LIST --- */
 describe('GET /api/privacy/requests', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockRequireRole.mockResolvedValue({ userId: 'admin-user', roles: ['platform_admin'] });
+  });
 
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
+    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
     const res = await GET_LIST(makeRequest('/api/privacy/requests'));
     expect(res.status).toBe(401);
   });
@@ -101,10 +110,14 @@ describe('GET /api/privacy/requests', () => {
 
 /* --- CREATE --- */
 describe('POST /api/privacy/requests', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockRequireRole.mockResolvedValue({ userId: 'admin-user', roles: ['platform_admin'] });
+  });
 
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
+    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
     const res = await POST_CREATE(makeJsonRequest('/api/privacy/requests', {}));
     expect(res.status).toBe(401);
   });

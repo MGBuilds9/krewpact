@@ -17,6 +17,10 @@ vi.mock('@/hooks/useCRM', () => ({
     mutate: mockUpdateMutate,
     isPending: false,
   }),
+  useAccounts: () => ({
+    data: { data: [{ id: 'acc-1', name: 'Test Account' }] },
+    isLoading: false,
+  }),
 }));
 
 // Mock the DivisionContext

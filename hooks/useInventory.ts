@@ -252,3 +252,37 @@ export function useRemoveItemSupplier() {
     },
   });
 }
+
+export interface StockAdjustmentPayload {
+  item_id: string;
+  location_id: string;
+  division_id: string;
+  qty_change: number;
+  reason_code: string;
+  notes?: string;
+}
+
+export interface StockAdjustmentResult {
+  id: string;
+  item_id: string;
+  location_id: string;
+  qty_change: number;
+  transaction_type: string;
+  reason_code: string | null;
+  notes: string | null;
+  transacted_at: string;
+}
+
+export function useStockAdjustment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: StockAdjustmentPayload) =>
+      apiFetch<StockAdjustmentResult>('/api/inventory/adjustments', {
+        method: 'POST',
+        body: data,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventoryStock.all });
+    },
+  });
+}

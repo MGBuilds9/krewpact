@@ -1,10 +1,12 @@
-import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { requireRole } from '@/lib/api/org';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { referenceDataSetSchema } from '@/lib/validators/governance';
+
+const ADMIN_ROLES = ['platform_admin'];
 
 const querySchema = z.object({
   status: z.string().optional(),
@@ -13,8 +15,9 @@ const querySchema = z.object({
 });
 
 export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const authResult = await requireRole(ADMIN_ROLES);
+  if (authResult instanceof NextResponse) return authResult;
+  const { userId } = authResult;
 
   const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
   if (!rl.success) return rateLimitResponse(rl);
@@ -42,8 +45,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const authResult = await requireRole(ADMIN_ROLES);
+  if (authResult instanceof NextResponse) return authResult;
+  const { userId } = authResult;
 
   const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
   if (!rl.success) return rateLimitResponse(rl);

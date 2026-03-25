@@ -1,9 +1,11 @@
-import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 
+import { requireRole } from '@/lib/api/org';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { auditLogQuerySchema } from '@/lib/validators/system';
+
+const ADMIN_ROLES = ['platform_admin'];
 
 type SupabaseClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
 type AuditQueryParams = {
@@ -49,8 +51,9 @@ function buildAuditQuery(supabase: SupabaseClient, params: AuditQueryParams) {
 }
 
 export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const authResult = await requireRole(ADMIN_ROLES);
+  if (authResult instanceof NextResponse) return authResult;
+  const { userId } = authResult;
 
   const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
   if (!rl.success) return rateLimitResponse(rl);

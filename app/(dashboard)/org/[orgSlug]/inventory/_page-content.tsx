@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/table';
 import { useDivision } from '@/contexts/DivisionContext';
 import { useInventoryItems, useInventoryStock, useLowStockItems } from '@/hooks/useInventory';
+import { usePurchaseOrders } from '@/hooks/usePurchaseOrders';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { formatCurrency } from '@/lib/date';
 
@@ -172,8 +173,10 @@ export default function OverviewPageContent() {
   const { data: items, isLoading: itemsLoading } = useInventoryItems({ divisionId, limit: 1 });
   const { data: lowStock, isLoading: lowStockLoading } = useLowStockItems(divisionId);
   const { data: stock, isLoading: stockLoading } = useInventoryStock({ divisionId, limit: 1 });
+  const { data: poData, isLoading: poLoading } = usePurchaseOrders({ status: 'submitted', limit: 100 });
+  const activePOCount = (poData?.length ?? 0);
 
-  const summaryLoading = itemsLoading || lowStockLoading || stockLoading;
+  const summaryLoading = itemsLoading || lowStockLoading || stockLoading || poLoading;
 
   return (
     <div className="space-y-6">
@@ -187,7 +190,7 @@ export default function OverviewPageContent() {
           isLoading={summaryLoading}
         />
         <StockCard label="Stock Positions" value={stock?.length ?? 0} isLoading={summaryLoading} />
-        <StockCard label="Active POs" value="--" subtitle="Coming soon" isLoading={false} />
+        <StockCard label="Active POs" value={activePOCount} isLoading={summaryLoading} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">

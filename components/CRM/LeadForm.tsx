@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useDivision } from '@/contexts/DivisionContext';
-import { type Lead, useCreateLead, useUpdateLead } from '@/hooks/useCRM';
+import { type Lead, useAccounts, useCreateLead, useUpdateLead } from '@/hooks/useCRM';
 import { SOURCE_CHANNELS } from '@/lib/crm/constants';
 import { formatStatus } from '@/lib/format-status';
 import {
@@ -65,6 +65,7 @@ function buildDefaultValues(lead?: Lead, divisionId?: string) {
     industry: lead?.industry ?? undefined,
     city: lead?.city ?? undefined,
     province: lead?.province ?? 'ON',
+    account_id: undefined as string | undefined,
   };
 }
 
@@ -74,6 +75,7 @@ export function LeadForm({ lead, onSuccess, onCancel }: LeadFormProps) {
   const updateLead = useUpdateLead();
   const { activeDivision } = useDivision();
   const isPending = createLead.isPending || updateLead.isPending;
+  const { data: accountsResponse } = useAccounts({ limit: 100 });
 
   const form = useForm<LeadCreate | LeadUpdate>({
     resolver: zodResolver(isEdit ? leadUpdateSchema : leadCreateSchema),
@@ -160,6 +162,32 @@ export function LeadForm({ lead, onSuccess, onCancel }: LeadFormProps) {
             )}
           />
         </div>
+        {!isEdit && (
+          <FormField
+            control={form.control}
+            name="account_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Linked Account</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value ?? ''}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Link to existing account (optional)" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {(accountsResponse?.data ?? []).map((account) => (
+                      <SelectItem key={account.id} value={account.id}>
+                        {account.account_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField
             control={form.control}

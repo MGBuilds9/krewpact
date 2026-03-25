@@ -22,6 +22,7 @@ export const leadCreateSchema = z.object({
   city: optionalSafeString(),
   province: optionalSafeString(),
   assigned_to: z.string().uuid().optional(),
+  account_id: z.string().uuid().optional(),
 });
 
 export const leadUpdateSchema = z.object({

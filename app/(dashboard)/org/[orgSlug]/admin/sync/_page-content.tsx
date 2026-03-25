@@ -1,5 +1,9 @@
 'use client';
 
+import { RefreshCw } from 'lucide-react';
+import { useState } from 'react';
+
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { type EntityStat, type SyncError, useSyncStatus } from '@/hooks/useSystem';
@@ -86,6 +90,53 @@ function SummaryCards({
   );
 }
 
+const TRIGGERABLE_ENTITIES = [
+  'account',
+  'contact',
+  'estimate',
+  'opportunity',
+  'sales_order',
+  'project',
+  'task',
+  'supplier',
+  'expense_claim',
+  'timesheet',
+] as const;
+
+type TriggerableEntity = (typeof TRIGGERABLE_ENTITIES)[number];
+
+function TriggerButton({ entityType }: { entityType: TriggerableEntity }) {
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+
+  async function handleTrigger() {
+    setStatus('loading');
+    try {
+      const res = await fetch('/api/admin/sync/trigger', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entity_type: entityType }),
+      });
+      setStatus(res.ok ? 'success' : 'error');
+    } catch {
+      setStatus('error');
+    }
+    setTimeout(() => setStatus('idle'), 3000);
+  }
+
+  return (
+    <Button
+      size="sm"
+      variant="outline"
+      disabled={status === 'loading'}
+      onClick={() => void handleTrigger()}
+      className="gap-1"
+    >
+      <RefreshCw className={`h-3 w-3 ${status === 'loading' ? 'animate-spin' : ''}`} />
+      {status === 'success' ? 'Queued' : status === 'error' ? 'Failed' : 'Trigger'}
+    </Button>
+  );
+}
+
 interface EntityTableProps {
   loading: boolean;
   stats: EntityStat[];
@@ -116,6 +167,7 @@ function EntityTable({ loading, stats }: EntityTableProps) {
                   <th className="pb-2 font-medium text-right">Failed</th>
                   <th className="pb-2 font-medium text-right">Queued</th>
                   <th className="pb-2 font-medium text-right">Last Sync</th>
+                  <th className="pb-2 font-medium text-right">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -133,11 +185,16 @@ function EntityTable({ loading, stats }: EntityTableProps) {
                     <td className="py-2 text-right text-muted-foreground">
                       {formatDate(s.last_sync_at)}
                     </td>
+                    <td className="py-2 text-right">
+                      {(TRIGGERABLE_ENTITIES as readonly string[]).includes(s.entity_type) && (
+                        <TriggerButton entityType={s.entity_type as TriggerableEntity} />
+                      )}
+                    </td>
                   </tr>
                 ))}
                 {visibleStats.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="py-4 text-center text-muted-foreground">
+                    <td colSpan={7} className="py-4 text-center text-muted-foreground">
                       No sync jobs recorded yet
                     </td>
                   </tr>

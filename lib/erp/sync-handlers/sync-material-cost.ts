@@ -25,10 +25,13 @@ import {
   upsertSyncMap,
 } from './sync-helpers';
 
-/** Default ERPNext accounts — should be configurable per org in the future */
-const DEFAULT_MATERIAL_EXPENSE_ACCOUNT = 'Cost of Goods Sold - MDM';
-const DEFAULT_INVENTORY_ASSET_ACCOUNT = 'Stock In Hand - MDM';
-const DEFAULT_COST_CENTER = 'Main - MDM';
+/** ERPNext accounts — configurable via env vars, with sensible defaults */
+const DEFAULT_MATERIAL_EXPENSE_ACCOUNT =
+  process.env.ERPNEXT_COGS_ACCOUNT || 'Cost of Goods Sold - MDM';
+const DEFAULT_INVENTORY_ASSET_ACCOUNT =
+  process.env.ERPNEXT_STOCK_ACCOUNT || 'Stock In Hand - MDM';
+const DEFAULT_COST_CENTER =
+  process.env.ERPNEXT_WAREHOUSE || 'Main - MDM';
 
 interface MaterialCostOptions {
   projectId: string;

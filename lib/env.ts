@@ -23,6 +23,9 @@ const envSchema = z
     ERPNEXT_API_KEY: z.string().min(1).optional(),
     ERPNEXT_API_SECRET: z.string().min(1).optional(),
     ERPNEXT_WEBHOOK_SECRET: z.string().min(1).optional(),
+    ERPNEXT_COGS_ACCOUNT: z.string().min(1).optional(),
+    ERPNEXT_STOCK_ACCOUNT: z.string().min(1).optional(),
+    ERPNEXT_WAREHOUSE: z.string().min(1).optional(),
 
     // ── Upstash QStash (optional — in-memory queue when missing) ──
     QSTASH_TOKEN: z.string().min(1).optional(),
@@ -52,6 +55,12 @@ const envSchema = z
     AI_ENABLED: z.enum(['true', 'false']).optional().default('false'),
     GOOGLE_GENERATIVE_AI_API_KEY: z.string().min(1).optional(),
     ANTHROPIC_API_KEY: z.string().min(1).optional(),
+
+    // ── Enrichment API keys (optional — sources skip gracefully when missing) ──
+    APOLLO_API_KEY: z.string().min(1).optional(),
+    BRAVE_API_KEY: z.string().min(1).optional(),
+    TAVILY_API_KEY: z.string().min(1).optional(),
+    GOOGLE_MAPS_API_KEY: z.string().min(1).optional(),
 
     // ── Takeoff Engine (optional — mock mode when missing) ──
     TAKEOFF_ENGINE_URL: z.string().url().optional(),
@@ -119,6 +128,18 @@ function warnMissingOptional(env: Record<string, string | undefined>): void {
     warnings.push(
       'Mobile public env vars not set — internal beta builds may boot with invalid config',
     );
+  }
+  if (!env.APOLLO_API_KEY) {
+    warnings.push('APOLLO_API_KEY not set — Apollo enrichment source will be skipped');
+  }
+  if (!env.BRAVE_API_KEY) {
+    warnings.push('BRAVE_API_KEY not set — Brave web search enrichment will be skipped');
+  }
+  if (!env.TAVILY_API_KEY) {
+    warnings.push('TAVILY_API_KEY not set — Tavily AI search enrichment will be skipped');
+  }
+  if (!env.GOOGLE_MAPS_API_KEY) {
+    warnings.push('GOOGLE_MAPS_API_KEY not set — Google Maps enrichment will be skipped');
   }
 
   if (warnings.length > 0 && process.env.NODE_ENV === 'production') {

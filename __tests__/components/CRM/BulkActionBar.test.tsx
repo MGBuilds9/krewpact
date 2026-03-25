@@ -2,6 +2,12 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
+// SequenceEnrollDialog uses React Query — mock it to keep BulkActionBar tests lightweight
+vi.mock('@/components/CRM/SequenceEnrollDialog', () => ({
+  SequenceEnrollDialog: ({ open }: { open: boolean }) =>
+    open ? <div data-testid="sequence-enroll-dialog" /> : null,
+}));
+
 import { BulkActionBar } from '@/components/CRM/BulkActionBar';
 
 describe('BulkActionBar', () => {
