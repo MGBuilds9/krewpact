@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 
-import ProjectsView from './ProjectsView';
+import ProjectsPageContent from './_page-content';
 
 export const metadata: Metadata = {
   title: 'Projects — KrewPact',
@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function ProjectsPage() {
-  return <ProjectsView />;
+  return <ProjectsPageContent />;
 }

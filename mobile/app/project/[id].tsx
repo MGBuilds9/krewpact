@@ -16,6 +16,7 @@ import { api, Project, Task } from '@/lib/api-client';
 import { queryKeys } from '@/lib/query-client';
 import { DailyLogForm } from '@/components/DailyLogForm';
 import { COLORS, SPACING } from '@/constants/config';
+import { formatStatus } from '@/lib/format-status';
 
 const STATUS_COLORS: Record<string, string> = {
   active: COLORS.success,
@@ -61,7 +62,7 @@ function TaskRow({ task }: { task: Task }) {
         ]}
       >
         <Text style={[styles.taskBadgeText, { color: statusColor }]}>
-          {task.status.replace('_', ' ')}
+          {formatStatus(task.status)}
         </Text>
       </View>
     </View>
@@ -151,7 +152,7 @@ export default function ProjectDetailScreen() {
               ]}
             >
               <Text style={[styles.badgeText, { color: statusColor }]}>
-                {project.status.replace('_', ' ')}
+                {formatStatus(project.status)}
               </Text>
             </View>
           </View>

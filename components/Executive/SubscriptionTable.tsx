@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { apiFetch } from '@/lib/api-client';
+import { formatStatus } from '@/lib/format-status';
 import { queryKeys } from '@/lib/query-keys';
 import { showToast } from '@/lib/toast';
 
@@ -86,7 +87,7 @@ function SubRow({
           variant="outline"
           className={`text-xs capitalize ${CATEGORY_BADGE_CLASSES[sub.category] ?? ''}`}
         >
-          {sub.category.replace(/_/g, ' ')}
+          {formatStatus(sub.category)}
         </Badge>
       </td>
       <td className="px-4 py-3 text-muted-foreground">{sub.vendor ?? '—'}</td>

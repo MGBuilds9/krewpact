@@ -7,7 +7,8 @@ import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 import { ErpClient } from '@/lib/erp/client';
 import { normalizeSyncJobStatus } from '@/lib/erp/sync-handlers/sync-helpers';
 import { logger } from '@/lib/logger';
-import { JobType, queue } from '@/lib/queue';
+import { queue } from '@/lib/queue/client';
+import { JobType } from '@/lib/queue/types';
 import { createScopedServiceClient } from '@/lib/supabase/server';
 
 const ENTITY_TYPES = [

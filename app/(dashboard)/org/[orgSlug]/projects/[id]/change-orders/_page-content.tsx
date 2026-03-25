@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { useState } from 'react';
 
 import { ChangeOrderForm } from '@/components/FieldOps/ChangeOrderForm';
+import { formatStatus } from '@/lib/format-status';
 import { ChangeRequestForm } from '@/components/FieldOps/ChangeRequestForm';
 import { Button } from '@/components/ui/button';
 import {
@@ -65,7 +66,7 @@ function CORow({ co }: { co: ChangeOrder }) {
         <span
           className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${CO_STATUS_COLORS[co.status]}`}
         >
-          {co.status.replace(/_/g, ' ')}
+          {formatStatus(co.status)}
         </span>
       </TableCell>
       <TableCell className={`font-medium ${deltaClass}`}>{formatCAD(co.amount_delta)}</TableCell>
@@ -89,7 +90,7 @@ function CRRow({ cr }: { cr: ChangeRequest }) {
         <span
           className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${CR_STATE_COLORS[cr.state]}`}
         >
-          {cr.state.replace(/_/g, ' ')}
+          {formatStatus(cr.state)}
         </span>
       </TableCell>
       <TableCell className="text-sm text-muted-foreground">

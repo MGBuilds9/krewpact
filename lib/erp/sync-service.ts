@@ -16,6 +16,7 @@
 import { logger } from '@/lib/logger';
 import { createScopedServiceClient } from '@/lib/supabase/server';
 
+import { syncChangeOrder } from './sync-handlers/sync-change-order';
 import { syncContact } from './sync-handlers/sync-contact';
 import { syncAccount } from './sync-handlers/sync-customer';
 import { syncExpenseClaim } from './sync-handlers/sync-expense';
@@ -106,6 +107,10 @@ export class SyncService {
 
   async syncGoodsReceipt(grId: string, userId: string, jobContext?: SyncJobContext) {
     return syncGoodsReceipt(grId, userId, jobContext);
+  }
+
+  async syncChangeOrder(coId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncChangeOrder(coId, userId, jobContext);
   }
 
   async syncMaterialCost(

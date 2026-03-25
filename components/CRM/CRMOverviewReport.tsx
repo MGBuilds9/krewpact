@@ -15,6 +15,7 @@ import type { ElementType } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { formatStatus } from '@/lib/format-status';
 import { apiFetch } from '@/lib/api-client';
 
 interface OverviewData {
@@ -92,7 +93,7 @@ function KVSection({
           ) : (
             entries.map(([k, v]) => (
               <div key={k} className="flex items-center justify-between">
-                <span className="text-sm capitalize">{k.replace(/_/g, ' ')}</span>
+                <span className="text-sm">{formatStatus(k)}</span>
                 {renderValue(k, v)}
               </div>
             ))

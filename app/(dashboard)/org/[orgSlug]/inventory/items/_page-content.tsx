@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 
 import { ItemsTable } from '@/components/inventory/items-table';
+import { PageHeader } from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -47,15 +48,17 @@ export default function ItemsPageContent() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Items</h1>
-        <Button asChild>
-          <Link href={orgPath('/inventory/items/new')}>
-            <Plus className="mr-2 h-4 w-4" />
-            New Item
-          </Link>
-        </Button>
-      </div>
+      <PageHeader
+        title="Items"
+        action={
+          <Button asChild>
+            <Link href={orgPath('/inventory/items/new')}>
+              <Plus className="mr-2 h-4 w-4" />
+              New Item
+            </Link>
+          </Button>
+        }
+      />
 
       <div className="flex flex-wrap gap-2">
         <div className="relative flex-1 min-w-[200px]">

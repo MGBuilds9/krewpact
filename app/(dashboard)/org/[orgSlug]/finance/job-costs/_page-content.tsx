@@ -3,6 +3,7 @@
 import { useState } from 'react';
 
 import { JobCostSnapshotForm } from '@/components/Finance/JobCostSnapshotForm';
+import { PageHeader } from '@/components/shared/PageHeader';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   Table,
@@ -72,12 +73,10 @@ export default function JobCostsPage() {
 
   return (
     <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Job Cost Snapshots</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          {data ? data.total || 0 : 0} budget vs actuals snapshots
-        </p>
-      </div>
+      <PageHeader
+        title="Job Cost Snapshots"
+        description={`${data ? data.total || 0 : 0} budget vs actuals snapshots`}
+      />
       <div className="bg-white dark:bg-card border shadow-sm rounded-2xl overflow-x-auto w-full">
         <Table className="min-w-[800px]">
           <TableHeader>

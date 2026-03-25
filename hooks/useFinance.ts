@@ -184,3 +184,21 @@ export function useCreateJobCostSnapshot() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['job-cost-snapshots'] }),
   });
 }
+
+// ============================================================
+// Finance dashboard metrics
+// ============================================================
+
+export interface FinanceDashboardMetrics {
+  accounts_receivable: { total_outstanding: number; invoice_count: number };
+  purchase_orders: { total_value: number; po_count: number };
+  job_costs: { snapshot_count: number };
+}
+
+export function useFinanceDashboard() {
+  return useQuery({
+    queryKey: ['finance-dashboard'],
+    queryFn: () => apiFetch<FinanceDashboardMetrics>('/api/finance/dashboard'),
+    staleTime: 60_000,
+  });
+}

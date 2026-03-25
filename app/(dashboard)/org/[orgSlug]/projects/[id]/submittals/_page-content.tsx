@@ -1,11 +1,15 @@
 'use client';
 
-import { ClipboardList, Plus, Star } from 'lucide-react';
+import { ClipboardList, Paperclip, Plus, Send, Star } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 
+import { AttachmentList } from '@/components/FieldOps/AttachmentList';
+import { AttachmentUpload } from '@/components/FieldOps/AttachmentUpload';
 import { SubmittalCreateForm } from '@/components/FieldOps/SubmittalCreateForm';
+import { SubmittalDistributionLog } from '@/components/FieldOps/SubmittalDistributionLog';
 import { SubmittalReviewForm } from '@/components/FieldOps/SubmittalReviewForm';
+import { StatusBadge } from '@/components/shared/StatusBadge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,6 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useAttachments } from '@/hooks/useDocumentControl';
 import type { Submittal } from '@/hooks/useFieldOps';
 import { useSubmittals } from '@/hooks/useFieldOps';
 
@@ -39,24 +44,81 @@ const STATUS_VARIANT: Record<
   rejected: 'destructive',
 };
 
-function SubRow({ sub, onReview }: { sub: Submittal; onReview: (id: string) => void }) {
+function SubmittalAttachmentsDialog({ projectId, subId }: { projectId: string; subId: string }) {
+  const [open, setOpen] = useState(false);
+  const { data, isLoading } = useAttachments('submittal', projectId, subId);
+  const attachments = data?.data ?? [];
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="sm">
+          <Paperclip className="h-4 w-4 mr-1" />
+          {attachments.length > 0 ? attachments.length : ''}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Submittal Attachments</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <AttachmentUpload entityType="submittal" projectId={projectId} entityId={subId} />
+          <AttachmentList
+            entityType="submittal"
+            projectId={projectId}
+            entityId={subId}
+            attachments={attachments}
+            isLoading={isLoading}
+          />
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function SubmittalDistributionDialog({ projectId, subId }: { projectId: string; subId: string }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="sm">
+          <Send className="h-4 w-4 mr-1" />
+          Distribution
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Distribution Log</DialogTitle>
+        </DialogHeader>
+        <SubmittalDistributionLog projectId={projectId} subId={subId} />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function SubRow({ sub, onReview, projectId }: { sub: Submittal; onReview: (id: string) => void; projectId: string }) {
   return (
     <TableRow>
       <TableCell className="font-mono font-medium">{sub.submittal_number}</TableCell>
       <TableCell className="font-medium">{sub.title}</TableCell>
       <TableCell>
-        <Badge variant={STATUS_VARIANT[sub.status]}>{sub.status.replace(/_/g, ' ')}</Badge>
+        <StatusBadge status={sub.status} />
       </TableCell>
       <TableCell className="text-sm text-muted-foreground">
         {sub.due_at ? new Date(sub.due_at).toLocaleDateString('en-CA') : '—'}
       </TableCell>
       <TableCell className="text-right">
-        {sub.status === 'submitted' && (
-          <Button variant="outline" size="sm" onClick={() => onReview(sub.id)}>
-            <Star className="h-4 w-4 mr-1" />
-            Review
-          </Button>
-        )}
+        <div className="flex items-center justify-end gap-1">
+          <SubmittalAttachmentsDialog projectId={projectId} subId={sub.id} />
+          <SubmittalDistributionDialog projectId={projectId} subId={sub.id} />
+          {sub.status === 'submitted' && (
+            <Button variant="outline" size="sm" onClick={() => onReview(sub.id)}>
+              <Star className="h-4 w-4 mr-1" />
+              Review
+            </Button>
+          )}
+        </div>
       </TableCell>
     </TableRow>
   );
@@ -125,7 +187,7 @@ export default function SubmittalsPage() {
           </TableHeader>
           <TableBody>
             {submittals.map((sub) => (
-              <SubRow key={sub.id} sub={sub} onReview={setReviewSubId} />
+              <SubRow key={sub.id} sub={sub} onReview={setReviewSubId} projectId={projectId} />
             ))}
           </TableBody>
         </Table>

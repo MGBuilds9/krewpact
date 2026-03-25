@@ -7,6 +7,7 @@ import { CloseoutPackageForm } from '@/components/Closeout/CloseoutPackageForm';
 import { DeficiencyItemForm } from '@/components/Closeout/DeficiencyItemForm';
 import { ServiceCallForm } from '@/components/Closeout/ServiceCallForm';
 import { Badge } from '@/components/ui/badge';
+import { formatStatus } from '@/lib/format-status';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -47,11 +48,11 @@ function PackagesTab({
         </div>
       ) : (
         <div className="space-y-2">
-          {items.map((pkg) => (
+          {items.map((pkg, index) => (
             <Card key={pkg.id}>
               <CardContent className="flex items-center justify-between py-3">
-                <p className="text-sm text-muted-foreground">Package {pkg.id.slice(0, 8)}</p>
-                <Badge className="capitalize">{pkg.status.replace('_', ' ')}</Badge>
+                <p className="text-sm font-medium">Package #{index + 1}</p>
+                <Badge>{formatStatus(pkg.status)}</Badge>
               </CardContent>
             </Card>
           ))}
@@ -175,13 +176,15 @@ function ServiceCallsTab({
 
 export default function CloseoutPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: projectId } = use(params);
-  const { data: pkgData, isLoading: pkgLoading } = useCloseoutPackages(projectId);
-  const { data: defData, isLoading: defLoading } = useDeficiencies(projectId);
-  const { data: callData, isLoading: callLoading } = useServiceCalls(projectId);
+  const { data: pkgData, isLoading: pkgLoading, isError: pkgError } = useCloseoutPackages(projectId);
+  const { data: defData, isLoading: defLoading, isError: defError } = useDeficiencies(projectId);
+  const { data: callData, isLoading: callLoading, isError: callError } = useServiceCalls(projectId);
 
-  const packages = pkgData ? pkgData.data || [] : [];
-  const deficiencies = defData ? defData.data || [] : [];
-  const serviceCalls = callData ? callData.data || [] : [];
+  const packages = pkgData?.data ?? [];
+  const deficiencies = defData?.data ?? [];
+  const serviceCalls = callData?.data ?? [];
+
+  const hasError = pkgError || defError || callError;
 
   return (
     <div className="space-y-6 p-6">
@@ -191,6 +194,14 @@ export default function CloseoutPage({ params }: { params: Promise<{ id: string 
           Manage closeout packages, deficiencies, and service calls.
         </p>
       </div>
+      {hasError && (
+        <div
+          className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+          role="alert"
+        >
+          Failed to load some closeout data. Please refresh to try again.
+        </div>
+      )}
       <Tabs defaultValue="packages">
         <TabsList>
           <TabsTrigger value="packages">Packages ({packages.length})</TabsTrigger>

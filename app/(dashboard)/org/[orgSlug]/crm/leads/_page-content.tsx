@@ -24,6 +24,7 @@ import { useDivision } from '@/contexts/DivisionContext';
 import { type Lead, useLeads } from '@/hooks/useCRM';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
+import { formatStatus } from '@/lib/format-status';
 import { cn } from '@/lib/utils';
 
 const STATUS_BADGE_COLORS: Record<string, string> = {
@@ -102,7 +103,7 @@ const leadColumns: ColumnDef<Lead, unknown>[] = [
     header: 'Source',
     cell: ({ row }) =>
       row.original.source_channel
-        ? row.original.source_channel.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
+        ? formatStatus(row.original.source_channel)
         : '-',
   },
   {
@@ -310,7 +311,7 @@ function LeadsContent({
   );
 }
 
-export default function LeadsView() {
+export default function LeadsPageContent() {
   const { push: orgPush } = useOrgRouter();
   const { activeDivision } = useDivision();
   const queryClient = useQueryClient();

@@ -14,7 +14,7 @@ import {
 import dynamic from 'next/dynamic';
 import { useParams } from 'next/navigation';
 
-import { AiInsightBanner } from '@/components/AI';
+import { AiInsightBanner } from '@/components/AI/AiInsightBanner';
 import { ProjectOverviewTab } from '@/components/Projects/Tabs/ProjectOverviewTab';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

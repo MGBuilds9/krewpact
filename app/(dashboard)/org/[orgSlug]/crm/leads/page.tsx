@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 
-import LeadsView from './LeadsView';
+import LeadsPageContent from './_page-content';
 
 export const metadata: Metadata = {
   title: 'Leads — KrewPact',
@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function LeadsPage() {
-  return <LeadsView />;
+  return <LeadsPageContent />;
 }

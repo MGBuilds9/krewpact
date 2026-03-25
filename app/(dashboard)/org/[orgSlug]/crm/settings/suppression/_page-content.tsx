@@ -4,6 +4,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ArrowLeft, ShieldAlert } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
+import { formatStatus } from '@/lib/format-status';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -70,7 +71,7 @@ export default function SuppressionLogPage() {
                   </TableCell>
                   <TableCell>{entry.account_name}</TableCell>
                   <TableCell>
-                    <Badge variant="outline">{entry.match_type.replace(/_/g, ' ')}</Badge>
+                    <Badge variant="outline">{formatStatus(entry.match_type)}</Badge>
                   </TableCell>
                   <TableCell className="text-right">
                     {Math.round(entry.match_score * 100)}%

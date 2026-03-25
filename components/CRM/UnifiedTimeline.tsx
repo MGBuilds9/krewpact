@@ -16,6 +16,7 @@ import {
 import type { TimelineEntry } from '@/app/api/crm/activities/timeline/route';
 import { Badge } from '@/components/ui/badge';
 import { useTimeline } from '@/hooks/useCRM';
+import { formatStatus } from '@/lib/format-status';
 import { cn } from '@/lib/utils';
 
 const sourceIcons: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -93,7 +94,7 @@ function TimelineItem({ entry }: TimelineItemProps) {
           )}
           {outcome && (
             <Badge variant="outline" className="text-xs">
-              {outcome.replace(/_/g, ' ')}
+              {formatStatus(outcome)}
             </Badge>
           )}
         </div>

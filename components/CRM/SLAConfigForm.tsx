@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useSLASettings, useUpdateSLASettings } from '@/hooks/useCRM';
+import { formatStatus } from '@/lib/format-status';
 
 interface SLAFormState {
   leadStages: Array<{ stage: string; maxHours: number }>;
@@ -41,7 +42,7 @@ function StageTable({
           {stages.map((s, i) => (
             <tr key={s.stage} className="border-b last:border-0">
               <td className="px-4 py-2">
-                <Label className="capitalize">{s.stage.replace(/_/g, ' ')}</Label>
+                <Label>{formatStatus(s.stage)}</Label>
               </td>
               <td className="px-4 py-2">
                 <Input

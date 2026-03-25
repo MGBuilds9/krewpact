@@ -4,6 +4,7 @@ import { CheckCircle, Clock, FileText, XCircle } from 'lucide-react';
 import { useState } from 'react';
 
 import { TimesheetBatchApprovalForm } from '@/components/TimeExpense/TimesheetBatchApprovalForm';
+import { PageHeader } from '@/components/shared/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -159,12 +160,10 @@ export default function TimesheetsPage() {
     <>
       <title>Timesheets — KrewPact</title>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">Timesheets</h1>
-          <p className="text-muted-foreground text-sm">
-            Review and approve timesheet batches by pay period
-          </p>
-        </div>
+        <PageHeader
+          title="Timesheets"
+          description="Review and approve timesheet batches by pay period"
+        />
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-48">
             <SelectValue placeholder="All statuses" />

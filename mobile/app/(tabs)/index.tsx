@@ -12,6 +12,7 @@ import { api, DashboardData, Project } from '@/lib/api-client';
 import { queryKeys } from '@/lib/query-client';
 import { KPICard } from '@/components/KPICard';
 import { COLORS, SPACING } from '@/constants/config';
+import { formatStatus } from '@/lib/format-status';
 
 export default function DashboardScreen() {
   const { data, isLoading, isError, refetch, isFetching } = useQuery<DashboardData>({
@@ -71,7 +72,7 @@ export default function DashboardScreen() {
                 </Text>
                 <Text style={styles.projectRowNumber}>{project.project_number}</Text>
               </View>
-              <Text style={styles.projectRowStatus}>{project.status.replace('_', ' ')}</Text>
+              <Text style={styles.projectRowStatus}>{formatStatus(project.status)}</Text>
             </View>
           ))}
 

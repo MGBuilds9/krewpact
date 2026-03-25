@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import { useState } from 'react';
 
 import { fmtCAD } from '@/components/inventory/currency-format';
+import { PageHeader } from '@/components/shared/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
@@ -60,7 +61,7 @@ export default function TransactionsPageContent() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold tracking-tight">Transaction History</h2>
+      <PageHeader title="Transaction History" />
 
       <div className="flex items-center gap-3">
         <Select value={typeFilter} onValueChange={setTypeFilter}>

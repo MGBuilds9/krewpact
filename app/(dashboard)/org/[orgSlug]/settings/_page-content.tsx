@@ -2,9 +2,10 @@
 
 import { useUser } from '@clerk/nextjs';
 import { Bell, Save, Settings, Shield, Sparkles, User } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { formatStatus } from '@/lib/format-status';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,9 +18,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUserRBAC } from '@/hooks/useRBAC';
+import { type AiPreferences, useAiPreferences, useUpdateAiPreferences } from '@/hooks/useSystem';
 
 interface NotificationPrefs {
   emailDigest: 'daily' | 'weekly' | 'never';
@@ -74,12 +77,6 @@ const NOTIF_ITEMS = [
   },
 ];
 
-type AiPrefs = {
-  insight_min_confidence: number;
-  digest_enabled: boolean;
-  ai_suggestions_enabled: boolean;
-};
-
 interface ProfileTabProps {
   user: ReturnType<typeof useUser>['user'];
   roles: { role_name: string; is_primary?: boolean }[];
@@ -109,7 +106,7 @@ function ProfileTab({ user, roles }: ProfileTabProps) {
             <div className="flex gap-1 mt-1">
               {roles.map((role) => (
                 <Badge key={role.role_name} variant="secondary" className="text-xs">
-                  {role.role_name.replace(/_/g, ' ')}
+                  {formatStatus(role.role_name)}
                 </Badge>
               ))}
             </div>
@@ -236,8 +233,8 @@ function SecurityTab() {
 }
 
 interface AiTabProps {
-  aiPrefs: AiPrefs;
-  setAiPrefs: (p: AiPrefs) => void;
+  aiPrefs: AiPreferences;
+  setAiPrefs: (p: AiPreferences) => void;
   aiSaved: boolean;
   onSave: () => void;
 }
@@ -308,38 +305,49 @@ function AiTab({ aiPrefs, setAiPrefs, aiSaved, onSave }: AiTabProps) {
   );
 }
 
+function AiTabLoading() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>AI Preferences</CardTitle>
+        <CardDescription>Configure how AI features behave for your account.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <Skeleton className="h-20 w-full" />
+        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-12 w-full" />
+      </CardContent>
+    </Card>
+  );
+}
+
+const DEFAULT_AI_PREFS: AiPreferences = {
+  insight_min_confidence: 0.7,
+  digest_enabled: true,
+  ai_suggestions_enabled: true,
+};
+
 export default function SettingsPage() {
   const { user } = useUser();
   const { roles } = useUserRBAC();
   const [prefs, setPrefs] = useState<NotificationPrefs>(DEFAULT_PREFS);
   const [saved, setSaved] = useState(false);
-  const [aiPrefs, setAiPrefs] = useState<AiPrefs>({
-    insight_min_confidence: 0.7,
-    digest_enabled: true,
-    ai_suggestions_enabled: true,
-  });
   const [aiSaved, setAiSaved] = useState(false);
 
-  useEffect(() => {
-    fetch('/api/ai/preferences')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: { preferences?: AiPrefs } | null) => {
-        if (data?.preferences) setAiPrefs(data.preferences);
-      })
-      .catch(() => {});
-  }, []);
+  const { data: fetchedAiPrefs, isLoading: aiLoading } = useAiPreferences();
+  const updateAiPrefs = useUpdateAiPreferences();
+
+  const aiPrefs = fetchedAiPrefs ?? DEFAULT_AI_PREFS;
+  const [localAiPrefs, setLocalAiPrefs] = useState<AiPreferences | null>(null);
+  const effectiveAiPrefs = localAiPrefs ?? aiPrefs;
 
   function handleSaveAiPrefs() {
-    fetch('/api/ai/preferences', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(aiPrefs),
-    })
-      .then(() => {
+    updateAiPrefs.mutate(effectiveAiPrefs, {
+      onSuccess: () => {
         setAiSaved(true);
         setTimeout(() => setAiSaved(false), 2000);
-      })
-      .catch(() => {});
+      },
+    });
   }
 
   function handleSaveNotifications() {
@@ -392,12 +400,16 @@ export default function SettingsPage() {
             <SecurityTab />
           </TabsContent>
           <TabsContent value="ai" className="mt-6 space-y-6">
-            <AiTab
-              aiPrefs={aiPrefs}
-              setAiPrefs={setAiPrefs}
-              aiSaved={aiSaved}
-              onSave={handleSaveAiPrefs}
-            />
+            {aiLoading ? (
+              <AiTabLoading />
+            ) : (
+              <AiTab
+                aiPrefs={effectiveAiPrefs}
+                setAiPrefs={setLocalAiPrefs}
+                aiSaved={aiSaved}
+                onSave={handleSaveAiPrefs}
+              />
+            )}
           </TabsContent>
         </Tabs>
       </div>

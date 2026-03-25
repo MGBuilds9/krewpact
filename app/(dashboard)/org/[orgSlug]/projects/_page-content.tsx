@@ -124,7 +124,7 @@ function ProjectCard({ project, onClick }: { project: Project; onClick: () => vo
   );
 }
 
-export default function ProjectsView() {
+export default function ProjectsPageContent() {
   const router = useRouter();
   const { activeDivision } = useDivision();
   const { data: projects } = useProjects({ divisionId: activeDivision?.id });

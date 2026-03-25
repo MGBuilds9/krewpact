@@ -2,6 +2,7 @@ import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/render
 import React from 'react';
 
 import type { ProjectStatusPdfData } from '../types';
+import { formatStatus } from '@/lib/format-status';
 
 const styles = StyleSheet.create({
   page: { padding: 40, fontFamily: 'Helvetica', fontSize: 10 },
@@ -57,7 +58,7 @@ function ProjectHeader({ data }: { data: ProjectStatusPdfData }) {
           {data.project.status && (
             <Text style={styles.projectInfo}>
               Status:{' '}
-              {data.project.status.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+              {formatStatus(data.project.status)}
             </Text>
           )}
           {data.project.startDate && data.project.endDate && (

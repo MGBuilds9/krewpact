@@ -1,6 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+
+import { formatStatus } from '@/lib/format-status';
 import { useState } from 'react';
 
 interface ChangeOrder {
@@ -70,7 +72,7 @@ function COApprovalCard({ co, canApprove, projectId }: COApprovalCardProps) {
         <span
           className={`shrink-0 text-xs font-medium px-2 py-1 rounded-full ${STATUS_STYLE[co.status] ?? 'bg-gray-100 text-gray-500'}`}
         >
-          {co.status.replace(/_/g, ' ')}
+          {formatStatus(co.status)}
         </span>
       </div>
 

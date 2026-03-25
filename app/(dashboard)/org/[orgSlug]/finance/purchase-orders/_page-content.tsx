@@ -3,7 +3,8 @@
 import { useState } from 'react';
 
 import { POSnapshotReviewForm } from '@/components/Finance/POSnapshotReviewForm';
-import { Badge } from '@/components/ui/badge';
+import { PageHeader } from '@/components/shared/PageHeader';
+import { StatusBadge } from '@/components/shared/StatusBadge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   Table,
@@ -14,16 +15,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { usePOSnapshots } from '@/hooks/useFinance';
-import { formatStatus } from '@/lib/format-status';
-
-const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-  approved: 'default',
-  submitted: 'secondary',
-  received: 'default',
-  draft: 'outline',
-  closed: 'outline',
-  cancelled: 'destructive',
-};
 
 function formatCAD(amount: number | null) {
   if (amount == null) return '—';
@@ -49,11 +40,7 @@ function PORow({ po, onClick }: { po: PO; onClick: () => void }) {
       <TableCell>{po.supplier_name || '—'}</TableCell>
       <TableCell>{po.po_date || '—'}</TableCell>
       <TableCell>
-        {po.status ? (
-          <Badge variant={STATUS_VARIANT[po.status] || 'outline'}>{formatStatus(po.status)}</Badge>
-        ) : (
-          '—'
-        )}
+        {po.status ? <StatusBadge status={po.status} /> : '—'}
       </TableCell>
       <TableCell className="text-right">{formatCAD(po.subtotal_amount || null)}</TableCell>
       <TableCell className="text-right">{formatCAD(po.tax_amount || null)}</TableCell>
@@ -93,12 +80,10 @@ export default function PurchaseOrdersPage() {
 
   return (
     <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Purchase Order Snapshots</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          {data ? data.total || 0 : 0} PO snapshots synced from ERPNext
-        </p>
-      </div>
+      <PageHeader
+        title="Purchase Order Snapshots"
+        description={`${data ? data.total || 0 : 0} PO snapshots synced from ERPNext`}
+      />
       <div className="border rounded-lg overflow-hidden">
         <Table>
           <TableHeader>

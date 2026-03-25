@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useSetPortalPermission } from '@/hooks/usePortals';
+import { formatStatus } from '@/lib/format-status';
 import { portalPermissionSchema } from '@/lib/validators/portals';
 
 type FormValues = z.infer<typeof portalPermissionSchema>;
@@ -85,7 +86,7 @@ export function PortalPermissionForm({
                 }}
               />
               <label htmlFor={perm} className="text-sm font-medium capitalize">
-                {perm.replace(/_/g, ' ')}
+                {formatStatus(perm)}
               </label>
             </div>
           ))}

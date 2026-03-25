@@ -14,7 +14,7 @@ import {
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 
-import { AiInsightBanner } from '@/components/AI';
+import { AiInsightBanner } from '@/components/AI/AiInsightBanner';
 import { ActivityLogDialog } from '@/components/CRM/ActivityLogDialog';
 import { ActivityTimeline } from '@/components/CRM/ActivityTimeline';
 import { LinkedEstimateCard } from '@/components/CRM/LinkedEstimateCard';
@@ -24,6 +24,7 @@ import { OpportunityForm } from '@/components/CRM/OpportunityForm';
 import { OpportunityStageProgressBar } from '@/components/CRM/OpportunityStageProgressBar';
 import { WonDealDialog } from '@/components/CRM/WonDealDialog';
 import { Button } from '@/components/ui/button';
+import { formatStatus } from '@/lib/format-status';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ConfirmReasonDialog } from '@/components/ui/confirm-reason-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -83,7 +84,7 @@ function OppInfoCard({ opp, isEditing, setIsEditing, currentStage }: OppInfoCard
           <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <dt className="text-sm font-medium text-muted-foreground">Stage</dt>
-              <dd className="text-sm capitalize">{currentStage.replace(/_/g, ' ')}</dd>
+              <dd className="text-sm">{formatStatus(currentStage)}</dd>
             </div>
             <div>
               <dt className="text-sm font-medium text-muted-foreground">Estimated Revenue</dt>
@@ -148,7 +149,7 @@ function DealSummaryCard({ opp, currentStage, activityCount, estimateCount }: De
         </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">Stage</span>
-          <span className="capitalize">{currentStage.replace(/_/g, ' ')}</span>
+          <span>{formatStatus(currentStage)}</span>
         </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">Activities</span>
@@ -249,10 +250,10 @@ function StageHistoryCard({ history }: { history: StageHistoryEntry[] }) {
             <div key={entry.id} className="flex items-center justify-between text-sm">
               <div>
                 <span className="capitalize text-muted-foreground">
-                  {entry.from_stage.replace(/_/g, ' ')}
+                  {formatStatus(entry.from_stage)}
                 </span>
                 <span className="mx-1.5 text-muted-foreground">&rarr;</span>
-                <span className="capitalize font-medium">{entry.to_stage.replace(/_/g, ' ')}</span>
+                <span className="font-medium">{formatStatus(entry.to_stage)}</span>
               </div>
               <span className="text-xs text-muted-foreground">
                 {new Date(entry.created_at).toLocaleDateString('en-CA', {

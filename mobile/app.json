@@ -57,6 +57,7 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "owner": "mkgbuilds"
   }
 }

@@ -12,23 +12,169 @@ const BOOK_REL_PATH = '../MDM-Book-Internal';
 const TARGET_DIRS = ['01-company', '02-market', '03-competitors', '04-strategy', '05-operations'];
 // 07-sensitive is explicitly EXCLUDED by omission
 
+// Scripts don't have generated Supabase types — use a permissive client type
+type SupabaseClient = ReturnType<typeof createClient<any, any, any>>;
+
+interface Manifest {
+  ingested: string[];
+  skipped_sensitive: string[];
+  skipped_other: string[];
+}
+
+async function embedAndStoreChunks(
+  supabase: SupabaseClient,
+  openai: OpenAI,
+  docId: string,
+  body: string,
+): Promise<void> {
+  const chunks = splitIntoChunks(body, 1500);
+  await supabase.from('knowledge_embeddings').delete().eq('doc_id', docId);
+
+  const embeddingsToInsert = [];
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i];
+    if (!chunk.trim()) continue;
+
+    const embeddingResponse = await openai.embeddings.create({
+      model: 'text-embedding-ada-002',
+      input: chunk.replace(/\n/g, ' '),
+    });
+
+    embeddingsToInsert.push({
+      doc_id: docId,
+      chunk_index: i,
+      content: chunk,
+      embedding: embeddingResponse.data[0].embedding,
+    });
+  }
+
+  const { error: embedError } = await supabase.from('knowledge_embeddings').insert(embeddingsToInsert);
+  if (embedError) console.error(embedError);
+  else process.stdout.write('✓');
+}
+
+interface UpsertDocOptions {
+  supabase: SupabaseClient;
+  openai: OpenAI;
+  relPath: string;
+  dir: string;
+  body: string;
+  title: string;
+  checksum: string;
+}
+
+async function upsertDoc(opts: UpsertDocOptions): Promise<void> {
+  const { supabase, openai, relPath, dir, body, title, checksum } = opts;
+
+  const { data: existing } = await supabase
+    .from('knowledge_docs')
+    .select('id, checksum')
+    .eq('file_path', relPath)
+    .single();
+
+  if (existing && existing.checksum === checksum) {
+    process.stdout.write('.');
+    return;
+  }
+
+  const { data: doc, error: docError } = await supabase
+    .from('knowledge_docs')
+    .upsert(
+      {
+        file_path: relPath,
+        title,
+        category: dir.split('-')[1] || 'general',
+        checksum,
+        last_synced_at: new Date().toISOString(),
+      },
+      { onConflict: 'file_path' },
+    )
+    .select()
+    .single();
+
+  if (docError) {
+    console.error(`\n❌ Error storing doc ${relPath}:`, docError.message);
+    return;
+  }
+
+  await embedAndStoreChunks(supabase, openai, doc.id, body);
+}
+
+function printManifest(manifest: Manifest, totalDocs: number, sensitiveDocs: number): void {
+  console.log('\n\n==================================================');
+  console.log('🔍 SCAN MANIFEST');
+  console.log('==================================================');
+
+  if (manifest.skipped_sensitive.length > 0) {
+    console.log('\n🚫 SKIPPED (SENSITIVE FLAG):');
+    manifest.skipped_sensitive.forEach((f) => console.log(`   - ${f}`));
+  }
+
+  console.log(`\n✅ TO BE INGESTED (${manifest.ingested.length} files):`);
+  const byFolder = Object.groupBy(manifest.ingested, (f) => f.split(path.sep)[0]);
+  for (const [folder, files] of Object.entries(byFolder)) {
+    console.log(`\n   📂 ${folder} (${files?.length})`);
+    files?.slice(0, 5).forEach((f) => console.log(`      - ${path.basename(f)}`));
+    if (files && files.length > 5) console.log(`      ... and ${files.length - 5} more`);
+  }
+
+  console.log('\n--------------------------------------------------');
+  console.log(`Summary: ${totalDocs} candidate files. ${sensitiveDocs} sensitive skipped.`);
+  console.log('--------------------------------------------------');
+}
+
+interface ProcessFileOptions {
+  filePath: string;
+  bookPath: string;
+  dir: string;
+  isDryRun: boolean;
+  supabase: SupabaseClient | undefined;
+  openai: OpenAI | undefined;
+  manifest: Manifest;
+}
+
+async function processFile(opts: ProcessFileOptions): Promise<{ ingested: boolean; sensitive: boolean }> {
+  const { filePath, bookPath, dir, isDryRun, supabase, openai, manifest } = opts;
+  const relPath = path.relative(bookPath, filePath);
+  const content = await fs.readFile(filePath, 'utf-8');
+  const { data: metadata, content: body } = matter(content);
+
+  if (metadata.sensitive === true || metadata.private === true) {
+    manifest.skipped_sensitive.push(relPath);
+    return { ingested: false, sensitive: true };
+  }
+
+  if (path.basename(filePath).startsWith('.')) {
+    manifest.skipped_other.push(relPath);
+    return { ingested: false, sensitive: false };
+  }
+
+  manifest.ingested.push(relPath);
+
+  if (!isDryRun && supabase && openai) {
+    const title = (metadata.title as string | undefined) || path.basename(filePath, '.md').replace(/-/g, ' ');
+    const checksum = Buffer.from(body).toString('base64').slice(0, 32);
+    await upsertDoc({ supabase, openai, relPath, dir, body, title, checksum });
+  }
+
+  return { ingested: true, sensitive: false };
+}
+
 async function main() {
   const isDryRun = process.argv.includes('--dry-run');
   console.log(`📚 MDM-Book Ingestion Tool ${isDryRun ? '(DRY RUN MODE)' : ''}`);
   console.log('--------------------------------------------------');
 
-  // 1. Setup Clients (Skip in Dry Run if missing)
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const openaiKey = process.env.OPENAI_API_KEY;
 
-  let supabase, openai;
+  let supabase: SupabaseClient | undefined;
+  let openai: OpenAI | undefined;
 
   if (!isDryRun) {
     if (!supabaseUrl || !supabaseKey) {
-      console.error(
-        '❌ Missing Supabase credentials (NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)',
-      );
+      console.error('❌ Missing Supabase credentials (NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)');
       process.exit(1);
     }
     if (!openaiKey) {
@@ -41,7 +187,6 @@ async function main() {
     console.log('ℹ️  Running without API keys (Dry Run)');
   }
 
-  // 2. Resolve Paths
   const bookPath = path.resolve(process.cwd(), BOOK_REL_PATH);
   console.log(`📂 Scanning: ${bookPath}`);
 
@@ -52,15 +197,9 @@ async function main() {
     process.exit(1);
   }
 
-  // 3. Scan & Process
   let totalDocs = 0;
   let sensitiveDocs = 0;
-
-  const manifest = {
-    ingested: [] as string[],
-    skipped_sensitive: [] as string[],
-    skipped_other: [] as string[],
-  };
+  const manifest: Manifest = { ingested: [], skipped_sensitive: [], skipped_other: [] };
 
   for (const dir of TARGET_DIRS) {
     const dirPath = path.join(bookPath, dir);
@@ -72,125 +211,14 @@ async function main() {
     }
 
     const files = await getMarkdownFiles(dirPath);
-
     for (const filePath of files) {
-      const relPath = path.relative(bookPath, filePath);
-      const content = await fs.readFile(filePath, 'utf-8');
-
-      // Parse Frontmatter
-      const { data: metadata, content: body } = matter(content);
-
-      // Check Sensitivity
-      if (metadata.sensitive === true || metadata.private === true) {
-        manifest.skipped_sensitive.push(relPath);
-        sensitiveDocs++;
-        continue;
-      }
-
-      // Check Ignore (e.g. if file starts with .)
-      if (path.basename(filePath).startsWith('.')) {
-        manifest.skipped_other.push(relPath);
-        continue;
-      }
-
-      manifest.ingested.push(relPath);
-      totalDocs++;
-
-      if (isDryRun) {
-        // Just verify scanning works
-        continue;
-      }
-
-      // ... (Real ingestion logic skipped in dry run) ...
-      const title = metadata.title || path.basename(filePath, '.md').replace(/-/g, ' ');
-      const checksum = Buffer.from(body).toString('base64').slice(0, 32);
-
-      // Check existence
-      const { data: existing } = await supabase!
-        .from('knowledge_docs')
-        .select('id, checksum')
-        .eq('file_path', relPath)
-        .single();
-
-      if (existing && existing.checksum === checksum) {
-        process.stdout.write('.');
-        continue;
-      }
-
-      // Upsert
-      const { data: doc, error: docError } = await supabase!
-        .from('knowledge_docs')
-        .upsert(
-          {
-            file_path: relPath,
-            title: title,
-            category: dir.split('-')[1] || 'general',
-            checksum,
-            last_synced_at: new Date().toISOString(),
-          },
-          { onConflict: 'file_path' },
-        )
-        .select()
-        .single();
-
-      if (docError) {
-        console.error(`\n❌ Error storing doc ${relPath}:`, docError.message);
-        continue;
-      }
-
-      // Embed
-      const chunks = splitIntoChunks(body, 1500);
-      await supabase!.from('knowledge_embeddings').delete().eq('doc_id', doc.id);
-
-      const embeddingsToInsert = [];
-      for (let i = 0; i < chunks.length; i++) {
-        const chunk = chunks[i];
-        if (!chunk.trim()) continue;
-
-        const embeddingResponse = await openai!.embeddings.create({
-          model: 'text-embedding-ada-002',
-          input: chunk.replace(/\n/g, ' '),
-        });
-
-        embeddingsToInsert.push({
-          doc_id: doc.id,
-          chunk_index: i,
-          content: chunk,
-          embedding: embeddingResponse.data[0].embedding,
-        });
-      }
-
-      const { error: embedError } = await supabase!
-        .from('knowledge_embeddings')
-        .insert(embeddingsToInsert);
-
-      if (embedError) console.error(embedError);
-      else process.stdout.write('✓');
+      const result = await processFile({ filePath, bookPath, dir, isDryRun, supabase, openai, manifest });
+      if (result.ingested) totalDocs++;
+      if (result.sensitive) sensitiveDocs++;
     }
   }
 
-  // Report
-  console.log('\n\n==================================================');
-  console.log('🔍 SCAN MANIFEST');
-  console.log('==================================================');
-
-  if (manifest.skipped_sensitive.length > 0) {
-    console.log('\n🚫 SKIPPED (SENSITIVE FLAG):');
-    manifest.skipped_sensitive.forEach((f) => console.log(`   - ${f}`));
-  }
-
-  console.log(`\n✅ TO BE INGESTED (${manifest.ingested.length} files):`);
-  // Group by folder for readability
-  const byFolder = Object.groupBy(manifest.ingested, (f) => f.split(path.sep)[0]);
-  for (const [folder, files] of Object.entries(byFolder)) {
-    console.log(`\n   📂 ${folder} (${files?.length})`);
-    files?.slice(0, 5).forEach((f) => console.log(`      - ${path.basename(f)}`));
-    if (files && files.length > 5) console.log(`      ... and ${files.length - 5} more`);
-  }
-
-  console.log('\n--------------------------------------------------');
-  console.log(`Summary: ${totalDocs} candidate files. ${sensitiveDocs} sensitive skipped.`);
-  console.log('--------------------------------------------------');
+  printManifest(manifest, totalDocs, sensitiveDocs);
 
   if (isDryRun) {
     console.log('\nℹ️  This was a DRY RUN. No data was sent to OpenAI or Supabase.');

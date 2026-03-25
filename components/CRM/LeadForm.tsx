@@ -24,6 +24,7 @@ import {
 import { useDivision } from '@/contexts/DivisionContext';
 import { type Lead, useCreateLead, useUpdateLead } from '@/hooks/useCRM';
 import { SOURCE_CHANNELS } from '@/lib/crm/constants';
+import { formatStatus } from '@/lib/format-status';
 import {
   type LeadCreate,
   leadCreateSchema,
@@ -149,7 +150,7 @@ export function LeadForm({ lead, onSuccess, onCancel }: LeadFormProps) {
                   <SelectContent>
                     {SOURCE_CHANNELS.map((src) => (
                       <SelectItem key={src} value={src}>
-                        {src.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
+                        {formatStatus(src)}
                       </SelectItem>
                     ))}
                   </SelectContent>

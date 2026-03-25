@@ -77,10 +77,10 @@ describe('InsightAnalyticsCard', () => {
     // section heading
     expect(screen.getByText('By Insight Type')).toBeInTheDocument();
 
-    // type labels (underscores replaced with spaces, capitalised)
-    expect(screen.getByText('lead follow up')).toBeInTheDocument();
-    expect(screen.getByText('project risk')).toBeInTheDocument();
-    expect(screen.getByText('upsell opportunity')).toBeInTheDocument();
+    // type labels (underscores replaced with spaces, Title Case via formatStatus)
+    expect(screen.getByText('Lead Follow Up')).toBeInTheDocument();
+    expect(screen.getByText('Project Risk')).toBeInTheDocument();
+    expect(screen.getByText('Upsell Opportunity')).toBeInTheDocument();
 
     // per-row totals
     expect(screen.getByText('55 total · 25 acted · 10 dismissed')).toBeInTheDocument();

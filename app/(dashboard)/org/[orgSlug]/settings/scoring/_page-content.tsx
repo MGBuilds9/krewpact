@@ -5,6 +5,7 @@ import { Check, Pencil, Plus, Sliders, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
+import { formatStatus } from '@/lib/format-status';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -121,7 +122,7 @@ function RuleFormFields({ form, onChange }: RuleFormFieldsProps) {
           <SelectContent>
             {OPERATORS.map((op) => (
               <SelectItem key={op} value={op}>
-                {op.replace(/_/g, ' ')}
+                {formatStatus(op)}
               </SelectItem>
             ))}
           </SelectContent>

@@ -119,6 +119,27 @@ async function checkSupabaseRest() {
   }
 }
 
+async function checkSupabaseTableCount(url: string, key: string, table: string): Promise<void> {
+  const checkName = `Supabase Data (${table})`;
+  try {
+    const res = await fetchWithTimeout(`${url}/rest/v1/${table}?select=count`, {
+      headers: { apikey: key, Authorization: `Bearer ${key}`, Prefer: 'count=exact' },
+    });
+    if (res.ok) {
+      const count = res.headers.get('content-range')?.split('/')?.[1] ?? '?';
+      if (count !== '0' && count !== '?') {
+        pass(checkName, `${count} rows`);
+      } else {
+        fail(checkName, `Table is empty (${count} rows)`);
+      }
+    } else {
+      fail(checkName, `HTTP ${res.status}`);
+    }
+  } catch (err) {
+    fail(checkName, String(err));
+  }
+}
+
 async function checkSupabaseServiceRole() {
   const name = 'Supabase Service Role';
   const url = requireEnv('NEXT_PUBLIC_SUPABASE_URL', name);
@@ -148,29 +169,42 @@ async function checkSupabaseServiceRole() {
   if (DEEP) {
     const tables = ['divisions', 'leads', 'projects'] as const;
     for (const table of tables) {
-      const checkName = `Supabase Data (${table})`;
-      try {
-        const res = await fetchWithTimeout(`${url}/rest/v1/${table}?select=count`, {
-          headers: {
-            apikey: key,
-            Authorization: `Bearer ${key}`,
-            Prefer: 'count=exact',
-          },
-        });
-        if (res.ok) {
-          const count = res.headers.get('content-range')?.split('/')?.[1] ?? '?';
-          if (count !== '0' && count !== '?') {
-            pass(checkName, `${count} rows`);
-          } else {
-            fail(checkName, `Table is empty (${count} rows)`);
-          }
-        } else {
-          fail(checkName, `HTTP ${res.status}`);
-        }
-      } catch (err) {
-        fail(checkName, String(err));
-      }
+      await checkSupabaseTableCount(url, key, table);
     }
+  }
+}
+
+async function checkClerkAuthMetadata(key: string): Promise<void> {
+  const authBridgeName = 'Clerk Third-Party Auth Metadata';
+  try {
+    const usersRes = await fetchWithTimeout('https://api.clerk.com/v1/users?limit=10', {
+      headers: { Authorization: `Bearer ${key}` },
+    });
+    if (!usersRes.ok) {
+      fail(authBridgeName, `HTTP ${usersRes.status}`);
+      return;
+    }
+    const users = (await usersRes.json()) as Array<{
+      public_metadata?: Record<string, unknown>;
+    }>;
+    const configuredUser = users.find((user) => {
+      const meta = user.public_metadata ?? {};
+      return (
+        typeof meta.krewpact_user_id === 'string' &&
+        Array.isArray(meta.role_keys) &&
+        Array.isArray(meta.division_ids)
+      );
+    });
+    if (configuredUser) {
+      pass(authBridgeName, 'Found user metadata for Supabase session token claims');
+    } else {
+      fail(
+        authBridgeName,
+        'No Clerk user has krewpact_user_id + role_keys + division_ids in public metadata',
+      );
+    }
+  } catch (err) {
+    fail(authBridgeName, String(err));
   }
 }
 
@@ -185,41 +219,8 @@ async function checkClerk() {
     });
     if (res.ok) {
       pass(name, `HTTP ${res.status}`);
-
-      // Deep: verify Third-Party Auth metadata exists for at least one test user
       if (DEEP) {
-        const authBridgeName = 'Clerk Third-Party Auth Metadata';
-        try {
-          const usersRes = await fetchWithTimeout('https://api.clerk.com/v1/users?limit=10', {
-            headers: { Authorization: `Bearer ${key}` },
-          });
-          if (usersRes.ok) {
-            const users = (await usersRes.json()) as Array<{
-              public_metadata?: Record<string, unknown>;
-            }>;
-            const configuredUser = users.find((user) => {
-              const meta = user.public_metadata ?? {};
-              return (
-                typeof meta.krewpact_user_id === 'string' &&
-                Array.isArray(meta.role_keys) &&
-                Array.isArray(meta.division_ids)
-              );
-            });
-
-            if (configuredUser) {
-              pass(authBridgeName, 'Found user metadata for Supabase session token claims');
-            } else {
-              fail(
-                authBridgeName,
-                'No Clerk user has krewpact_user_id + role_keys + division_ids in public metadata',
-              );
-            }
-          } else {
-            fail(authBridgeName, `HTTP ${usersRes.status}`);
-          }
-        } catch (err) {
-          fail(authBridgeName, String(err));
-        }
+        await checkClerkAuthMetadata(key);
       }
     } else {
       const body = await res.text().catch(() => '');
@@ -324,6 +325,43 @@ async function checkQStash() {
   }
 }
 
+async function checkERPNextCompanyDoctype(
+  baseUrl: string,
+  apiKey: string,
+  apiSecret: string,
+): Promise<void> {
+  const deepName = 'ERPNext (Company doctype)';
+  try {
+    const companyRes = await fetchWithTimeout(
+      `${baseUrl}/api/resource/Company?fields=["name"]&limit_page_length=5`,
+      { headers: { Authorization: `token ${apiKey}:${apiSecret}` } },
+      12_000,
+    );
+    if (!companyRes.ok) {
+      fail(deepName, `HTTP ${companyRes.status}`);
+      return;
+    }
+    const data = (await companyRes.json()) as { data?: Array<{ name: string }> };
+    const count = data.data?.length ?? 0;
+    if (count > 0) {
+      pass(deepName, `${count} companies found`);
+    } else {
+      fail(deepName, 'Company list is empty');
+    }
+  } catch (err) {
+    fail(deepName, String(err));
+  }
+}
+
+function isNetworkError(msg: string): boolean {
+  return (
+    msg.includes('ECONNREFUSED') ||
+    msg.includes('ENOTFOUND') ||
+    msg.includes('AbortError') ||
+    msg.includes('fetch failed')
+  );
+}
+
 async function checkERPNext() {
   const name = 'ERPNext';
   const baseUrl = requireEnv('ERPNEXT_BASE_URL', name);
@@ -335,37 +373,13 @@ async function checkERPNext() {
   try {
     const res = await fetchWithTimeout(
       endpoint,
-      {
-        headers: { Authorization: `token ${apiKey}:${apiSecret}` },
-      },
+      { headers: { Authorization: `token ${apiKey}:${apiSecret}` } },
       12_000, // slightly longer — Cloudflare Tunnel can be slow to wake
     );
     if (res.ok) {
       pass(name, `HTTP ${res.status}`);
-
-      // Deep: fetch Company list to verify doctype access
       if (DEEP) {
-        const deepName = 'ERPNext (Company doctype)';
-        try {
-          const companyRes = await fetchWithTimeout(
-            `${baseUrl}/api/resource/Company?fields=["name"]&limit_page_length=5`,
-            { headers: { Authorization: `token ${apiKey}:${apiSecret}` } },
-            12_000,
-          );
-          if (companyRes.ok) {
-            const data = (await companyRes.json()) as { data?: Array<{ name: string }> };
-            const count = data.data?.length ?? 0;
-            if (count > 0) {
-              pass(deepName, `${count} companies found`);
-            } else {
-              fail(deepName, 'Company list is empty');
-            }
-          } else {
-            fail(deepName, `HTTP ${companyRes.status}`);
-          }
-        } catch (err) {
-          fail(deepName, String(err));
-        }
+        await checkERPNextCompanyDoctype(baseUrl, apiKey, apiSecret);
       }
     } else {
       const body = await res.text().catch(() => '');
@@ -373,17 +387,7 @@ async function checkERPNext() {
     }
   } catch (err) {
     const msg = String(err);
-    // Surface connection-refused / tunnel-down clearly
-    if (
-      msg.includes('ECONNREFUSED') ||
-      msg.includes('ENOTFOUND') ||
-      msg.includes('AbortError') ||
-      msg.includes('fetch failed')
-    ) {
-      fail(name, `Tunnel appears down — ${msg}`);
-    } else {
-      fail(name, msg);
-    }
+    fail(name, isNetworkError(msg) ? `Tunnel appears down — ${msg}` : msg);
   }
 }
 

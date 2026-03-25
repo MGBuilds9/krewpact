@@ -6,6 +6,7 @@ import { useState } from 'react';
 
 import { fmtCAD } from '@/components/inventory/currency-format';
 import { PoStatusBadge } from '@/components/inventory/po-status-badge';
+import { PageHeader } from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -50,13 +51,15 @@ export default function PurchaseOrdersPageContent() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold tracking-tight">Purchase Orders</h2>
-        <Button onClick={() => orgPush('/inventory/purchase-orders/new')}>
-          <Plus className="h-4 w-4 mr-1" />
-          Create PO
-        </Button>
-      </div>
+      <PageHeader
+        title="Purchase Orders"
+        action={
+          <Button onClick={() => orgPush('/inventory/purchase-orders/new')}>
+            <Plus className="h-4 w-4 mr-1" />
+            Create PO
+          </Button>
+        }
+      />
 
       <div className="flex items-center gap-3">
         <Select value={statusFilter} onValueChange={setStatusFilter}>

@@ -3,6 +3,8 @@
 import { MapPin, Search } from 'lucide-react';
 import { useState } from 'react';
 
+import { EmptyState } from '@/components/shared/EmptyState';
+import { PageHeader } from '@/components/shared/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -65,9 +67,7 @@ export default function LocationsPageContent() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Locations</h1>
-      </div>
+      <PageHeader title="Locations" />
 
       <div className="flex flex-wrap gap-2">
         <div className="relative flex-1 min-w-[200px]">
@@ -96,7 +96,11 @@ export default function LocationsPageContent() {
       {isLoading && <LocationSkeleton />}
 
       {!isLoading && !filtered?.length && (
-        <p className="text-center text-muted-foreground py-12">No locations found</p>
+        <EmptyState
+          icon={<MapPin className="h-8 w-8" />}
+          title="No locations found"
+          description={search ? 'Try adjusting your search or filters.' : undefined}
+        />
       )}
 
       {!isLoading && filtered && filtered.length > 0 && (

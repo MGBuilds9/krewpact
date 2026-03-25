@@ -350,6 +350,259 @@ function uuid(): string {
 }
 
 // ---------------------------------------------------------------------------
+// Transform helpers
+// ---------------------------------------------------------------------------
+
+async function buildUomMap(company: string): Promise<Map<string, InventoryUom>> {
+  const uomRows = await readCSV<AlmytaUOM>(join(EXPORTS_DIR, `${company}_UOM.csv`));
+  const map = new Map<string, InventoryUom>();
+  for (const uom of uomRows) {
+    const mapped = UOM_ID_MAP[uom.UOMID] ?? UOM_NAME_MAP[uom.UOM.toLowerCase()] ?? null;
+    if (mapped) map.set(uom.UOMID, mapped);
+  }
+  console.log(`  UOM entries: ${uomRows.length} (${map.size} mapped)`);
+  return map;
+}
+
+async function buildCategoryMap(
+  company: string,
+  divisionId: string,
+  globalCatIdMap: Map<string, string>,
+  outCategories: KrewpactCategory[],
+): Promise<Map<string, string>> {
+  const catRows = await readCSV<AlmytaCategory>(join(EXPORTS_DIR, `${company}_Categories.csv`));
+  const companyCatMap = new Map<string, string>();
+  let catOrder = 0;
+
+  for (const cat of catRows) {
+    const name = cat.Category?.trim();
+    if (!name || name === '…' || name === '...') continue;
+
+    const key = `${divisionId}::${name.toLowerCase()}`;
+    let catId = globalCatIdMap.get(key);
+    if (!catId) {
+      catId = uuid();
+      globalCatIdMap.set(key, catId);
+      outCategories.push({ id: catId, name, division_id: divisionId, sort_order: catOrder++ });
+    }
+    companyCatMap.set(cat.Rec, catId);
+  }
+  console.log(`  Categories: ${companyCatMap.size}`);
+  return companyCatMap;
+}
+
+interface TransformPartsOptions {
+  company: string;
+  divisionId: string;
+  locationId: string;
+  companyUomMap: Map<string, InventoryUom>;
+  companyCatMap: Map<string, string>;
+}
+
+interface PartsResult {
+  parts: AlmytaPart[];
+  partIdMap: Map<string, string>;
+  partCount: number;
+  skippedCount: number;
+  stockCount: number;
+}
+
+function positiveFloatOrNull(raw: string | undefined): number | null {
+  const v = parseFloat(raw ?? '');
+  return v > 0 ? v : null;
+}
+
+function resolveUom(part: AlmytaPart, companyUomMap: Map<string, InventoryUom>): InventoryUom {
+  const uomId = part.UOM?.trim() ?? '1';
+  return companyUomMap.get(uomId) ?? UOM_ID_MAP[uomId] ?? 'each';
+}
+
+function resolvePartSku(part: AlmytaPart, partNo: number, company: string): string {
+  const shortId = part.ShortID?.trim();
+  return shortId || `ALM-${company.substring(4, 7).toUpperCase()}-${partNo}`;
+}
+
+function buildItemFromPart(
+  part: AlmytaPart,
+  partNo: number,
+  itemId: string,
+  opts: TransformPartsOptions,
+): KrewpactItem {
+  const shortId = part.ShortID?.trim() || null;
+  const description = part.Description?.trim() || null;
+  const sku = resolvePartSku(part, partNo, opts.company);
+  const useSerial = part.UseSerial?.trim() === '1' || part.UseSerial?.trim() === '-1';
+  return {
+    id: itemId, name: description ?? sku, sku, division_id: opts.divisionId,
+    unit_of_measure: resolveUom(part, opts.companyUomMap),
+    tracking_type: useSerial ? 'serial' : 'none',
+    valuation_method: 'weighted_average', is_active: true,
+    almyta_part_no: partNo, almyta_short_id: shortId, description,
+    category_id: opts.companyCatMap.get(part.Category?.trim() ?? '') ?? null,
+    manufacturer: part.ManModel?.trim() || null,
+    min_stock_level: positiveFloatOrNull(part.ReOrder),
+    reorder_qty: positiveFloatOrNull(part.EconoOrder),
+    weight_net: positiveFloatOrNull(part.PNetWeight),
+    weight_gross: positiveFloatOrNull(part.PGrossWeight),
+  };
+}
+
+function buildLedgerEntry(
+  part: AlmytaPart,
+  partNo: number,
+  itemId: string,
+  opts: TransformPartsOptions,
+): KrewpactLedgerEntry | null {
+  const inStock = parseFloat(part.InStock);
+  if (inStock <= 0) return null;
+  const curCost = parseFloat(part.curCost);
+  const safeRate = isNaN(curCost) ? 0 : curCost;
+  return {
+    id: uuid(), item_id: itemId, division_id: opts.divisionId,
+    transaction_type: 'initial_stock', qty_change: inStock, valuation_rate: safeRate,
+    value_change: parseFloat((inStock * safeRate).toFixed(2)),
+    location_id: opts.locationId, transacted_by: MIGRATION_USER_ID,
+    notes: `Almyta migration — ${opts.company} PartNo ${partNo}`,
+  };
+}
+
+async function transformParts(
+  opts: TransformPartsOptions,
+  outItems: KrewpactItem[],
+  outLedger: KrewpactLedgerEntry[],
+): Promise<PartsResult> {
+  const parts = await readCSV<AlmytaPart>(join(EXPORTS_DIR, `${opts.company}_Parts.csv`));
+  const partIdMap = new Map<string, string>();
+  let partCount = 0;
+  let skippedCount = 0;
+  let stockCount = 0;
+
+  for (const part of parts) {
+    const partNo = parseInt(part.PartNo, 10);
+    if (isNaN(partNo) || partNo < 0) { skippedCount++; continue; }
+
+    const itemId = uuid();
+    partIdMap.set(part.PartNo, itemId);
+    outItems.push(buildItemFromPart(part, partNo, itemId, opts));
+
+    const ledgerEntry = buildLedgerEntry(part, partNo, itemId, opts);
+    if (ledgerEntry) { outLedger.push(ledgerEntry); stockCount++; }
+    partCount++;
+  }
+  return { parts, partIdMap, partCount, skippedCount, stockCount };
+}
+
+interface TransformSerialsOptions {
+  company: string;
+  divisionId: string;
+  parts: AlmytaPart[];
+  partIdMap: Map<string, string>;
+}
+
+function resolveItemIdByShortId(
+  partRef: string,
+  parts: AlmytaPart[],
+  partIdMap: Map<string, string>,
+): string | undefined {
+  for (const part of parts) {
+    if (part.ShortID?.trim() === partRef) return partIdMap.get(part.PartNo);
+  }
+  return undefined;
+}
+
+async function transformSerials(
+  opts: TransformSerialsOptions,
+  outSerials: KrewpactSerial[],
+): Promise<number> {
+  const actives = await readCSV<AlmytaPartsActive>(join(EXPORTS_DIR, `${opts.company}_PartsActive.csv`));
+  let serialCount = 0;
+
+  for (const active of actives) {
+    const partRef = active.Part?.trim();
+    const serialNum = active.Serial?.trim();
+    if (!partRef || !serialNum) continue;
+
+    const itemId = resolveItemIdByShortId(partRef, opts.parts, opts.partIdMap);
+    if (!itemId) continue;
+
+    const recNo = parseInt(active.RecNo, 10);
+    const unitPrice = parseFloat(active.UnitPrice);
+    outSerials.push({
+      id: uuid(), item_id: itemId, division_id: opts.divisionId,
+      serial_number: serialNum, secondary_serial: active.Serial2?.trim() || null,
+      status: active.Active?.trim() === '1' ? 'in_stock' : 'decommissioned',
+      almyta_rec_id: isNaN(recNo) ? 0 : recNo,
+      acquisition_cost: isNaN(unitPrice) ? null : unitPrice,
+    });
+    serialCount++;
+  }
+  return serialCount;
+}
+
+function ensureVendorEntry(
+  vid: string,
+  company: string,
+  vendor: AlmytaVendor,
+  vendorItems: Map<string, VendorMapping>,
+): void {
+  if (!vendorItems.has(vid)) {
+    vendorItems.set(vid, {
+      almyta_vendor_id: vid,
+      almyta_vendor_name: vendor.Name?.trim() ?? '',
+      almyta_vendor_short_id: vendor.ShortID?.trim() ?? '',
+      company, items: [],
+    });
+  }
+}
+
+function addVendorCatalogEntry(
+  vc: AlmytaVendorCatalog,
+  company: string,
+  vendorMap: Map<string, AlmytaVendor>,
+  vendorItems: Map<string, VendorMapping>,
+): void {
+  const vid = vc.VID?.trim();
+  if (!vid || vid === '0') return;
+  const vendor = vendorMap.get(vid);
+  if (!vendor) return;
+
+  ensureVendorEntry(vid, company, vendor, vendorItems);
+
+  const partNo = parseInt(vc.PartNo, 10);
+  if (isNaN(partNo) || partNo < 0) return;
+  vendorItems.get(vid)!.items.push({
+    almyta_part_no: partNo,
+    supplier_part_number: vc.vPart?.trim() ?? '',
+    supplier_price: parseFloat(vc.UnitCost) || 0,
+    lead_days: parseInt(vc.LeadTime, 10) || 0,
+  });
+}
+
+async function buildVendorMappings(
+  company: string,
+  outMappings: VendorMapping[],
+): Promise<number> {
+  const vendors = await readCSV<AlmytaVendor>(join(EXPORTS_DIR, `${company}_Vendor.csv`));
+  const vendorMap = new Map<string, AlmytaVendor>();
+  for (const v of vendors) {
+    if (v.Rec && v.Name?.trim() && v.Name.trim() !== '…') vendorMap.set(v.Rec, v);
+  }
+
+  const vendorCatalog = await readCSV<AlmytaVendorCatalog>(
+    join(EXPORTS_DIR, `${company}_VendorCatalog.csv`),
+  );
+  const vendorItems = new Map<string, VendorMapping>();
+  for (const vc of vendorCatalog) {
+    addVendorCatalogEntry(vc, company, vendorMap, vendorItems);
+  }
+
+  for (const mapping of vendorItems.values()) {
+    if (mapping.items.length > 0) outMappings.push(mapping);
+  }
+  return vendorItems.size;
+}
+
+// ---------------------------------------------------------------------------
 // Transform logic
 // ---------------------------------------------------------------------------
 
@@ -367,14 +620,11 @@ async function run(): Promise<void> {
     process.exit(1);
   }
 
-  // Check for placeholder UUIDs
   const hasPlaceholders = Object.values(DIVISION_MAP).some((v) => v.startsWith('PLACEHOLDER'));
   if (hasPlaceholders) {
-    console.warn('');
-    console.warn('WARNING: Division UUIDs contain PLACEHOLDER values.');
+    console.warn('\nWARNING: Division UUIDs contain PLACEHOLDER values.');
     console.warn('Update DIVISION_MAP, DEFAULT_LOCATION_MAP, and MIGRATION_USER_ID');
-    console.warn('with real UUIDs from Supabase before running load.ts.');
-    console.warn('');
+    console.warn('with real UUIDs from Supabase before running load.ts.\n');
   }
 
   const allCategories: KrewpactCategory[] = [];
@@ -382,12 +632,9 @@ async function run(): Promise<void> {
   const allLedger: KrewpactLedgerEntry[] = [];
   const allSerials: KrewpactSerial[] = [];
   const allVendorMappings: VendorMapping[] = [];
-
-  // Track category name → id per division (deduplicate)
-  const categoryIdMap = new Map<string, string>(); // "division::categoryName" → uuid
+  const categoryIdMap = new Map<string, string>();
 
   let totalParts = 0;
-  let totalStock = 0;
   let totalSerials = 0;
   let totalSkipped = 0;
 
@@ -396,217 +643,27 @@ async function run(): Promise<void> {
     const locationId = DEFAULT_LOCATION_MAP[company];
     console.log(`\n=== Processing: ${company} ===`);
 
-    // -- Load UOM table to build company-specific UOM map --
-    const uomRows = await readCSV<AlmytaUOM>(join(EXPORTS_DIR, `${company}_UOM.csv`));
-    const companyUomMap = new Map<string, InventoryUom>();
-    for (const uom of uomRows) {
-      const mapped = UOM_ID_MAP[uom.UOMID] ?? UOM_NAME_MAP[uom.UOM.toLowerCase()] ?? null;
-      if (mapped) {
-        companyUomMap.set(uom.UOMID, mapped);
-      }
-    }
-    console.log(`  UOM entries: ${uomRows.length} (${companyUomMap.size} mapped)`);
+    const companyUomMap = await buildUomMap(company);
+    const companyCatMap = await buildCategoryMap(company, divisionId, categoryIdMap, allCategories);
 
-    // -- Load & transform categories --
-    const catRows = await readCSV<AlmytaCategory>(join(EXPORTS_DIR, `${company}_Categories.csv`));
-    const companyCatMap = new Map<string, string>(); // Almyta Rec → uuid
-    let catOrder = 0;
-
-    for (const cat of catRows) {
-      const name = cat.Category?.trim();
-      if (!name || name === '…' || name === '...') continue;
-
-      const key = `${divisionId}::${name.toLowerCase()}`;
-      let catId = categoryIdMap.get(key);
-      if (!catId) {
-        catId = uuid();
-        categoryIdMap.set(key, catId);
-        allCategories.push({
-          id: catId,
-          name,
-          division_id: divisionId,
-          sort_order: catOrder++,
-        });
-      }
-      companyCatMap.set(cat.Rec, catId);
-    }
-    console.log(`  Categories: ${companyCatMap.size}`);
-
-    // -- Load & transform parts --
-    const parts = await readCSV<AlmytaPart>(join(EXPORTS_DIR, `${company}_Parts.csv`));
-    const partIdMap = new Map<string, string>(); // Almyta PartNo → uuid
-    let partCount = 0;
-    let skippedCount = 0;
-
-    for (const part of parts) {
-      const partNo = parseInt(part.PartNo, 10);
-      if (isNaN(partNo) || partNo < 0) {
-        skippedCount++;
-        continue; // Skip system records (negative PartNo)
-      }
-
-      const shortId = part.ShortID?.trim() || null;
-      const description = part.Description?.trim() || null;
-      const sku = shortId ?? `ALM-${company.substring(4, 7).toUpperCase()}-${partNo}`;
-      const name = description ?? sku;
-
-      // UOM mapping
-      const uomId = part.UOM?.trim() ?? '1';
-      const unitOfMeasure = companyUomMap.get(uomId) ?? UOM_ID_MAP[uomId] ?? 'each';
-
-      // Tracking type
-      const useSerial = part.UseSerial?.trim() === '1' || part.UseSerial?.trim() === '-1';
-      const trackingType = useSerial ? 'serial' : 'none';
-
-      // Category
-      const catId = companyCatMap.get(part.Category?.trim() ?? '') ?? null;
-
-      const itemId = uuid();
-      partIdMap.set(part.PartNo, itemId);
-
-      allItems.push({
-        id: itemId,
-        name,
-        sku,
-        division_id: divisionId,
-        unit_of_measure: unitOfMeasure,
-        tracking_type: trackingType,
-        valuation_method: 'weighted_average',
-        is_active: true,
-        almyta_part_no: partNo,
-        almyta_short_id: shortId,
-        description,
-        category_id: catId,
-        manufacturer: part.ManModel?.trim() || null,
-        min_stock_level: parseFloat(part.ReOrder) > 0 ? parseFloat(part.ReOrder) : null,
-        reorder_qty: parseFloat(part.EconoOrder) > 0 ? parseFloat(part.EconoOrder) : null,
-        weight_net: parseFloat(part.PNetWeight) > 0 ? parseFloat(part.PNetWeight) : null,
-        weight_gross: parseFloat(part.PGrossWeight) > 0 ? parseFloat(part.PGrossWeight) : null,
-      });
-
-      // Create initial stock ledger entry if InStock > 0
-      const inStock = parseFloat(part.InStock);
-      const curCost = parseFloat(part.curCost);
-      if (inStock > 0) {
-        const valueChange = parseFloat((inStock * (isNaN(curCost) ? 0 : curCost)).toFixed(2));
-        allLedger.push({
-          id: uuid(),
-          item_id: itemId,
-          division_id: divisionId,
-          transaction_type: 'initial_stock',
-          qty_change: inStock,
-          valuation_rate: isNaN(curCost) ? 0 : curCost,
-          value_change: valueChange,
-          location_id: locationId,
-          transacted_by: MIGRATION_USER_ID,
-          notes: `Almyta migration — ${company} PartNo ${partNo}`,
-        });
-        totalStock++;
-      }
-
-      partCount++;
-    }
-
-    totalParts += partCount;
-    totalSkipped += skippedCount;
-    console.log(`  Parts: ${partCount} items (${skippedCount} system records skipped)`);
-    console.log(`  Initial stock entries: ${totalStock}`);
-
-    // -- Load PartsActive (serial-tracked items) --
-    const actives = await readCSV<AlmytaPartsActive>(
-      join(EXPORTS_DIR, `${company}_PartsActive.csv`),
+    const partsResult = await transformParts(
+      { company, divisionId, locationId, companyUomMap, companyCatMap },
+      allItems, allLedger,
     );
-    let serialCount = 0;
+    totalParts += partsResult.partCount;
+    totalSkipped += partsResult.skippedCount;
+    console.log(`  Parts: ${partsResult.partCount} items (${partsResult.skippedCount} system records skipped)`);
+    console.log(`  Initial stock entries: ${partsResult.stockCount}`);
 
-    for (const active of actives) {
-      const partRef = active.Part?.trim();
-      if (!partRef) continue;
-
-      const serialNum = active.Serial?.trim();
-      if (!serialNum) continue;
-
-      // Look up the item_id by matching the partRef to a PartNo-based key
-      // PartsActive.Part is typically a formatted string like "P000001"
-      // We need to find the item by matching against parts
-      // The Part field in PartsActive references Parts.ShortID (the P-number)
-      let itemId: string | undefined;
-      for (const part of parts) {
-        if (part.ShortID?.trim() === partRef) {
-          itemId = partIdMap.get(part.PartNo);
-          break;
-        }
-      }
-      if (!itemId) continue; // Skip if we can't match
-
-      const isActive = active.Active?.trim() === '1';
-      const recNo = parseInt(active.RecNo, 10);
-      const unitPrice = parseFloat(active.UnitPrice);
-
-      allSerials.push({
-        id: uuid(),
-        item_id: itemId,
-        division_id: divisionId,
-        serial_number: serialNum,
-        secondary_serial: active.Serial2?.trim() || null,
-        status: isActive ? 'in_stock' : 'decommissioned',
-        almyta_rec_id: isNaN(recNo) ? 0 : recNo,
-        acquisition_cost: isNaN(unitPrice) ? null : unitPrice,
-      });
-      serialCount++;
-    }
-
+    const serialCount = await transformSerials(
+      { company, divisionId, parts: partsResult.parts, partIdMap: partsResult.partIdMap },
+      allSerials,
+    );
     totalSerials += serialCount;
     console.log(`  Serials: ${serialCount}`);
 
-    // -- Load Vendor + VendorCatalog (for reference mapping, not direct insert) --
-    const vendors = await readCSV<AlmytaVendor>(join(EXPORTS_DIR, `${company}_Vendor.csv`));
-    const vendorMap = new Map<string, AlmytaVendor>();
-    for (const v of vendors) {
-      if (v.Rec && v.Name?.trim() && v.Name.trim() !== '…') {
-        vendorMap.set(v.Rec, v);
-      }
-    }
-
-    const vendorCatalog = await readCSV<AlmytaVendorCatalog>(
-      join(EXPORTS_DIR, `${company}_VendorCatalog.csv`),
-    );
-
-    // Group catalog entries by vendor
-    const vendorItems = new Map<string, VendorMapping>();
-    for (const vc of vendorCatalog) {
-      const vid = vc.VID?.trim();
-      if (!vid || vid === '0') continue;
-
-      const vendor = vendorMap.get(vid);
-      if (!vendor) continue;
-
-      if (!vendorItems.has(vid)) {
-        vendorItems.set(vid, {
-          almyta_vendor_id: vid,
-          almyta_vendor_name: vendor.Name?.trim() ?? '',
-          almyta_vendor_short_id: vendor.ShortID?.trim() ?? '',
-          company,
-          items: [],
-        });
-      }
-
-      const partNo = parseInt(vc.PartNo, 10);
-      if (isNaN(partNo) || partNo < 0) continue;
-
-      vendorItems.get(vid)!.items.push({
-        almyta_part_no: partNo,
-        supplier_part_number: vc.vPart?.trim() ?? '',
-        supplier_price: parseFloat(vc.UnitCost) || 0,
-        lead_days: parseInt(vc.LeadTime, 10) || 0,
-      });
-    }
-
-    for (const mapping of vendorItems.values()) {
-      if (mapping.items.length > 0) {
-        allVendorMappings.push(mapping);
-      }
-    }
-    console.log(`  Vendor mappings: ${vendorItems.size} vendors`);
+    const vendorCount = await buildVendorMappings(company, allVendorMappings);
+    console.log(`  Vendor mappings: ${vendorCount} vendors`);
   }
 
   // -- Write output JSON files --

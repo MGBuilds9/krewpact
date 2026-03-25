@@ -121,6 +121,127 @@ async function readCSV(filePath: string): Promise<CSVRow[]> {
 }
 
 // ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+interface SourceCounts {
+  validParts: CSVRow[];
+  validCategories: CSVRow[];
+  validSerials: CSVRow[];
+  sourceStockCount: number;
+  sourceStockValue: number;
+}
+
+async function loadSourceCounts(company: string, exportsDir: string): Promise<SourceCounts> {
+  const parts = await readCSV(join(exportsDir, `${company}_Parts.csv`));
+  const validParts = parts.filter((p) => {
+    const partNo = parseInt(p.PartNo, 10);
+    return !isNaN(partNo) && partNo >= 0;
+  });
+
+  const categories = await readCSV(join(exportsDir, `${company}_Categories.csv`));
+  const validCategories = categories.filter(
+    (c) => c.Category?.trim() && c.Category.trim() !== '…' && c.Category.trim() !== '...',
+  );
+
+  const partsActive = await readCSV(join(exportsDir, `${company}_PartsActive.csv`));
+  const validSerials = partsActive.filter((p) => p.Serial?.trim());
+
+  let sourceStockValue = 0;
+  let sourceStockCount = 0;
+  for (const p of validParts) {
+    const inStock = parseFloat(p.InStock);
+    const curCost = parseFloat(p.curCost);
+    if (inStock > 0) {
+      sourceStockCount++;
+      sourceStockValue += inStock * (isNaN(curCost) ? 0 : curCost);
+    }
+  }
+
+  return {
+    validParts,
+    validCategories,
+    validSerials,
+    sourceStockCount,
+    sourceStockValue: parseFloat(sourceStockValue.toFixed(2)),
+  };
+}
+
+// Scripts don't have generated Supabase types — use a permissive client type
+type SupabaseClient = ReturnType<typeof createClient<any, any, any>>;
+
+interface DestCounts {
+  itemCount: number;
+  catCount: number;
+  serialCount: number;
+  ledgerCount: number;
+  destStockValue: number;
+}
+
+async function loadDestCounts(supabase: SupabaseClient, divisionId: string): Promise<DestCounts> {
+  const [itemsRes, catsRes, serialsRes, ledgerCountRes, ledgerDataRes] = await Promise.all([
+    supabase.from('inventory_items').select('*', { count: 'exact', head: true }).eq('division_id', divisionId),
+    supabase.from('inventory_item_categories').select('*', { count: 'exact', head: true }).eq('division_id', divisionId),
+    supabase.from('inventory_serials').select('*', { count: 'exact', head: true }).eq('division_id', divisionId),
+    supabase.from('inventory_ledger').select('*', { count: 'exact', head: true }).eq('division_id', divisionId).eq('transaction_type', 'initial_stock'),
+    supabase.from('inventory_ledger').select('value_change').eq('division_id', divisionId).eq('transaction_type', 'initial_stock'),
+  ]);
+
+  const destStockValue = parseFloat(
+    ((ledgerDataRes.data ?? []) as Array<{ value_change: number }>)
+      .reduce((sum, row) => sum + Number(row.value_change), 0)
+      .toFixed(2),
+  );
+
+  return {
+    itemCount: itemsRes.count ?? 0,
+    catCount: catsRes.count ?? 0,
+    serialCount: serialsRes.count ?? 0,
+    ledgerCount: ledgerCountRes.count ?? 0,
+    destStockValue,
+  };
+}
+
+function buildComparisonRows(
+  label: string,
+  src: SourceCounts,
+  dest: DestCounts,
+): VerificationRow[] {
+  return [
+    {
+      metric: 'Items (Parts)', division: label,
+      source: src.validParts.length, destination: dest.itemCount,
+      match: src.validParts.length === dest.itemCount,
+      delta: dest.itemCount - src.validParts.length,
+    },
+    {
+      metric: 'Categories', division: label,
+      source: src.validCategories.length, destination: dest.catCount,
+      match: src.validCategories.length === dest.catCount,
+      delta: dest.catCount - src.validCategories.length,
+    },
+    {
+      metric: 'Serials (Active)', division: label,
+      source: src.validSerials.length, destination: dest.serialCount,
+      match: src.validSerials.length === dest.serialCount,
+      delta: dest.serialCount - src.validSerials.length,
+    },
+    {
+      metric: 'Initial Stock Entries', division: label,
+      source: src.sourceStockCount, destination: dest.ledgerCount,
+      match: src.sourceStockCount === dest.ledgerCount,
+      delta: dest.ledgerCount - src.sourceStockCount,
+    },
+    {
+      metric: 'Stock Value ($)', division: label,
+      source: src.sourceStockValue, destination: dest.destStockValue,
+      match: Math.abs(src.sourceStockValue - dest.destStockValue) < 0.01,
+      delta: parseFloat((dest.destStockValue - src.sourceStockValue).toFixed(2)),
+    },
+  ];
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
@@ -137,10 +258,7 @@ async function run(): Promise<void> {
     process.exit(1);
   }
 
-  const supabase = createClient(supabaseUrl, serviceKey, {
-    auth: { persistSession: false },
-  });
-
+  const supabase = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
   console.log('=== Almyta Migration Verification ===\n');
 
   const results: VerificationRow[] = [];
@@ -148,120 +266,13 @@ async function run(): Promise<void> {
   for (const company of COMPANIES) {
     const divisionId = DIVISION_MAP[company];
     const label = DIVISION_LABELS[company];
-
     console.log(`Checking ${label}...`);
 
-    // -- Source counts from CSVs --
-    const parts = await readCSV(join(EXPORTS_DIR, `${company}_Parts.csv`));
-    const validParts = parts.filter((p) => {
-      const partNo = parseInt(p.PartNo, 10);
-      return !isNaN(partNo) && partNo >= 0;
-    });
-
-    const categories = await readCSV(join(EXPORTS_DIR, `${company}_Categories.csv`));
-    const validCategories = categories.filter(
-      (c) => c.Category?.trim() && c.Category.trim() !== '…' && c.Category.trim() !== '...',
-    );
-
-    const partsActive = await readCSV(join(EXPORTS_DIR, `${company}_PartsActive.csv`));
-    const validSerials = partsActive.filter((p) => p.Serial?.trim());
-
-    // Source stock value
-    let sourceStockValue = 0;
-    let sourceStockCount = 0;
-    for (const p of validParts) {
-      const inStock = parseFloat(p.InStock);
-      const curCost = parseFloat(p.curCost);
-      if (inStock > 0) {
-        sourceStockCount++;
-        sourceStockValue += inStock * (isNaN(curCost) ? 0 : curCost);
-      }
-    }
-    sourceStockValue = parseFloat(sourceStockValue.toFixed(2));
-
-    // -- Destination counts from Supabase --
-    const { count: destItemCount } = await supabase
-      .from('inventory_items')
-      .select('*', { count: 'exact', head: true })
-      .eq('division_id', divisionId);
-
-    const { count: destCategoryCount } = await supabase
-      .from('inventory_item_categories')
-      .select('*', { count: 'exact', head: true })
-      .eq('division_id', divisionId);
-
-    const { count: destSerialCount } = await supabase
-      .from('inventory_serials')
-      .select('*', { count: 'exact', head: true })
-      .eq('division_id', divisionId);
-
-    const { count: destLedgerCount } = await supabase
-      .from('inventory_ledger')
-      .select('*', { count: 'exact', head: true })
-      .eq('division_id', divisionId)
-      .eq('transaction_type', 'initial_stock');
-
-    // Destination stock value (sum of value_change for initial_stock)
-    const { data: ledgerData } = await supabase
-      .from('inventory_ledger')
-      .select('value_change')
-      .eq('division_id', divisionId)
-      .eq('transaction_type', 'initial_stock');
-
-    const destStockValue = parseFloat(
-      (ledgerData ?? []).reduce((sum, row) => sum + Number(row.value_change), 0).toFixed(2),
-    );
-
-    // -- Build comparison rows --
-    const itemCount = destItemCount ?? 0;
-    const catCount = destCategoryCount ?? 0;
-    const serialCount = destSerialCount ?? 0;
-    const ledgerCount = destLedgerCount ?? 0;
-
-    results.push({
-      metric: 'Items (Parts)',
-      division: label,
-      source: validParts.length,
-      destination: itemCount,
-      match: validParts.length === itemCount,
-      delta: itemCount - validParts.length,
-    });
-
-    results.push({
-      metric: 'Categories',
-      division: label,
-      source: validCategories.length,
-      destination: catCount,
-      match: validCategories.length === catCount,
-      delta: catCount - validCategories.length,
-    });
-
-    results.push({
-      metric: 'Serials (Active)',
-      division: label,
-      source: validSerials.length,
-      destination: serialCount,
-      match: validSerials.length === serialCount,
-      delta: serialCount - validSerials.length,
-    });
-
-    results.push({
-      metric: 'Initial Stock Entries',
-      division: label,
-      source: sourceStockCount,
-      destination: ledgerCount,
-      match: sourceStockCount === ledgerCount,
-      delta: ledgerCount - sourceStockCount,
-    });
-
-    results.push({
-      metric: 'Stock Value ($)',
-      division: label,
-      source: sourceStockValue,
-      destination: destStockValue,
-      match: Math.abs(sourceStockValue - destStockValue) < 0.01,
-      delta: parseFloat((destStockValue - sourceStockValue).toFixed(2)),
-    });
+    const [src, dest] = await Promise.all([
+      loadSourceCounts(company, EXPORTS_DIR),
+      loadDestCounts(supabase, divisionId),
+    ]);
+    results.push(...buildComparisonRows(label, src, dest));
   }
 
   // -- Print results table --

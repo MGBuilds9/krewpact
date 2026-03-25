@@ -5,6 +5,7 @@ import { Truck } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import type { FleetVehicle } from '@/hooks/useFleetVehicles';
+import { formatStatus } from '@/lib/format-status';
 
 const statusVariant: Record<FleetVehicle['status'], string> = {
   active: 'bg-green-500/15 text-green-400 border-green-500/30',
@@ -20,9 +21,6 @@ const typeVariant: Record<string, string> = {
   other: 'bg-zinc-500/15 text-zinc-400 border-zinc-500/30',
 };
 
-function formatVehicleType(type: string): string {
-  return type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-}
 
 export const fleetColumns: ColumnDef<FleetVehicle, unknown>[] = [
   {
@@ -51,7 +49,7 @@ export const fleetColumns: ColumnDef<FleetVehicle, unknown>[] = [
       const t = row.original.vehicle_type;
       return (
         <Badge variant="outline" className={typeVariant[t] ?? typeVariant.other}>
-          {formatVehicleType(t)}
+          {formatStatus(t)}
         </Badge>
       );
     },

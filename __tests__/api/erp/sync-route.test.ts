@@ -21,7 +21,13 @@ vi.mock('@/lib/supabase/server', () => ({
   createScopedServiceClient: mockCreateScopedServiceClient,
 }));
 
-vi.mock('@/lib/queue', () => ({
+vi.mock('@/lib/queue/client', () => ({
+  queue: {
+    enqueue: mockEnqueue,
+  },
+}));
+
+vi.mock('@/lib/queue/types', () => ({
   JobType: {
     ERPSyncAccount: 'erp-sync-account',
     ERPSyncContact: 'erp-sync-contact',
@@ -33,9 +39,6 @@ vi.mock('@/lib/queue', () => ({
     ERPSyncSupplier: 'erp-sync-supplier',
     ERPSyncExpense: 'erp-sync-expense',
     ERPSyncTimesheet: 'erp-sync-timesheet',
-  },
-  queue: {
-    enqueue: mockEnqueue,
   },
 }));
 

@@ -1,15 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-
-interface DashboardMetrics {
-  accounts_receivable: { total_outstanding: number; invoice_count: number };
-  purchase_orders: { total_value: number; po_count: number };
-  job_costs: { snapshot_count: number };
-}
+import { Skeleton } from '@/components/ui/skeleton';
+import { useFinanceDashboard } from '@/hooks/useFinance';
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(amount);
@@ -49,56 +44,22 @@ function MetricCard({ label, value, sub }: { label: string; value: string; sub: 
   );
 }
 
-function buildMetrics(loading: boolean, metrics: DashboardMetrics | null) {
-  if (loading)
-    return [
-      { label: 'Accounts Receivable', value: '...', sub: '' },
-      { label: 'Purchase Orders', value: '...', sub: '' },
-      { label: 'Job Cost Snapshots', value: '...', sub: '' },
-    ];
-  if (!metrics)
-    return [
-      { label: 'Accounts Receivable', value: '\u2014', sub: '' },
-      { label: 'Purchase Orders', value: '\u2014', sub: '' },
-      { label: 'Job Cost Snapshots', value: '\u2014', sub: '' },
-    ];
-  const ar = metrics.accounts_receivable;
-  const po = metrics.purchase_orders;
-  const jc = metrics.job_costs;
-  return [
-    {
-      label: 'Accounts Receivable',
-      value: formatCurrency(ar.total_outstanding),
-      sub: `${ar.invoice_count} invoice${ar.invoice_count !== 1 ? 's' : ''}`,
-    },
-    {
-      label: 'Purchase Orders',
-      value: formatCurrency(po.total_value),
-      sub: `${po.po_count} PO${po.po_count !== 1 ? 's' : ''}`,
-    },
-    {
-      label: 'Job Cost Snapshots',
-      value: String(jc.snapshot_count),
-      sub: 'Budget vs actuals tracked',
-    },
-  ];
+function MetricCardSkeleton() {
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <Skeleton className="h-3 w-32 mb-2" />
+        <Skeleton className="h-8 w-24" />
+      </CardHeader>
+      <CardContent>
+        <Skeleton className="h-3 w-20" />
+      </CardContent>
+    </Card>
+  );
 }
 
 export default function FinancePage() {
-  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch('/api/finance/dashboard')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data) setMetrics(data);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
-
-  const metricCards = buildMetrics(loading, metrics);
+  const { data: metrics, isLoading, isError } = useFinanceDashboard();
 
   return (
     <>
@@ -111,10 +72,39 @@ export default function FinancePage() {
             accounting.
           </p>
         </div>
+        {isError && (
+          <Card className="border-destructive">
+            <CardContent className="pt-6">
+              <p className="text-destructive text-sm">Failed to load finance metrics.</p>
+            </CardContent>
+          </Card>
+        )}
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
-          {metricCards.map((m) => (
-            <MetricCard key={m.label} label={m.label} value={m.value} sub={m.sub} />
-          ))}
+          {isLoading ? (
+            <>
+              <MetricCardSkeleton />
+              <MetricCardSkeleton />
+              <MetricCardSkeleton />
+            </>
+          ) : metrics ? (
+            <>
+              <MetricCard
+                label="Accounts Receivable"
+                value={formatCurrency(metrics.accounts_receivable.total_outstanding)}
+                sub={`${metrics.accounts_receivable.invoice_count} invoice${metrics.accounts_receivable.invoice_count !== 1 ? 's' : ''}`}
+              />
+              <MetricCard
+                label="Purchase Orders"
+                value={formatCurrency(metrics.purchase_orders.total_value)}
+                sub={`${metrics.purchase_orders.po_count} PO${metrics.purchase_orders.po_count !== 1 ? 's' : ''}`}
+              />
+              <MetricCard
+                label="Job Cost Snapshots"
+                value={String(metrics.job_costs.snapshot_count)}
+                sub="Budget vs actuals tracked"
+              />
+            </>
+          ) : null}
         </div>
         <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
           {SECTIONS.map((s) => (

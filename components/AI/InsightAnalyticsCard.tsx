@@ -4,6 +4,7 @@ import { BarChart3, CheckCircle2, TrendingUp, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { formatStatus } from '@/lib/format-status';
 
 interface Analytics {
   total_generated: number;
@@ -73,7 +74,7 @@ export function InsightAnalyticsCard() {
             <div className="space-y-1">
               {insightTypes.map(([type, counts]) => (
                 <div key={type} className="flex items-center justify-between text-sm">
-                  <span className="capitalize">{type.replace(/_/g, ' ')}</span>
+                  <span>{formatStatus(type)}</span>
                   <span className="text-muted-foreground">
                     {counts.total} total · {counts.acted_on} acted · {counts.dismissed} dismissed
                   </span>

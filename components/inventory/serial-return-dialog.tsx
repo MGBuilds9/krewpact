@@ -21,6 +21,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import type { SerialItem } from '@/hooks/useSerials';
 import { useReturnSerial } from '@/hooks/useSerials';
+import { formatStatus } from '@/lib/format-status';
 
 const CONDITIONS = ['good', 'fair', 'damaged', 'needs_repair'] as const;
 
@@ -70,7 +71,7 @@ export function ReturnDialog({ serial, onClose }: ReturnDialogProps) {
               <SelectContent>
                 {CONDITIONS.map((c) => (
                   <SelectItem key={c} value={c}>
-                    {c.replace(/_/g, ' ').replace(/\b\w/g, (ch) => ch.toUpperCase())}
+                    {formatStatus(c)}
                   </SelectItem>
                 ))}
               </SelectContent>

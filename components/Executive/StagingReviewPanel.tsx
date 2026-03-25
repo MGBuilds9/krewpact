@@ -5,6 +5,7 @@ import { CheckCircle, Pencil, ShieldAlert, XCircle } from 'lucide-react';
 import { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
+import { formatStatus } from '@/lib/format-status';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -188,7 +189,7 @@ export function StagingReviewPanel({ docId }: StagingReviewPanelProps) {
           variant="outline"
           className={`shrink-0 text-xs ${STATUS_BADGE_CLASSES[doc.status] ?? ''}`}
         >
-          {doc.status.replace(/_/g, ' ')}
+          {formatStatus(doc.status)}
         </Badge>
       </div>
       {doc.source_path && (

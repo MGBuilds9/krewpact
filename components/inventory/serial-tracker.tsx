@@ -18,6 +18,7 @@ import {
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import type { SerialItem } from '@/hooks/useSerials';
 import { useSerials } from '@/hooks/useSerials';
+import { formatStatus } from '@/lib/format-status';
 
 import { CheckoutDialog } from './serial-checkout-dialog';
 import { ReturnDialog } from './serial-return-dialog';
@@ -125,7 +126,7 @@ function SerialRow({ serial, onCheckout, onReturn }: SerialRowProps) {
       <TableCell>{serial.item_name || serial.item_sku}</TableCell>
       <TableCell>
         <Badge variant="outline" className={statusStyle[serial.status] ?? statusStyle.retired}>
-          {serial.status.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+          {formatStatus(serial.status)}
         </Badge>
       </TableCell>
       <TableCell>{serial.location_name ?? '-'}</TableCell>

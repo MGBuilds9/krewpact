@@ -67,3 +67,71 @@ export function useAuditLogs(params?: {
     staleTime: 30_000,
   });
 }
+
+// ============================================================
+// AI preferences
+// ============================================================
+
+export interface AiPreferences {
+  insight_min_confidence: number;
+  digest_enabled: boolean;
+  ai_suggestions_enabled: boolean;
+}
+
+export function useAiPreferences() {
+  return useQuery({
+    queryKey: ['ai-preferences'],
+    queryFn: () =>
+      apiFetch<{ preferences: AiPreferences }>('/api/ai/preferences').then(
+        (res) => res.preferences,
+      ),
+    staleTime: 60_000,
+  });
+}
+
+export function useUpdateAiPreferences() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: AiPreferences) =>
+      apiFetch<{ preferences: AiPreferences }>('/api/ai/preferences', {
+        method: 'PATCH',
+        body: data,
+      }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['ai-preferences'] }),
+  });
+}
+
+// ============================================================
+// Admin sync status
+// ============================================================
+
+export interface EntityStat {
+  entity_type: string;
+  total: number;
+  succeeded: number;
+  failed: number;
+  queued: number;
+  last_sync_at: string | null;
+}
+
+export interface SyncError {
+  id: string;
+  job_id: string;
+  error_message: string;
+  error_code: string;
+  created_at: string;
+}
+
+export interface SyncStatus {
+  stats: EntityStat[];
+  recent_errors: SyncError[];
+  total_jobs: number;
+}
+
+export function useSyncStatus() {
+  return useQuery({
+    queryKey: ['admin-sync-status'],
+    queryFn: () => apiFetch<SyncStatus>('/api/admin/sync/status'),
+    staleTime: 30_000,
+  });
+}

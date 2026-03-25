@@ -79,7 +79,9 @@ app/
     health/                        # Health check endpoint
 components/
   ui/                              # shadcn/ui output — NEVER modify directly
-  shared/                          # Composed components (DataTable, ConfirmDialog)
+  shared/                          # Composed components (DataTable, ConfirmDialog,
+                                   # PageHeader, StatusBadge, StatsCard, PageSkeleton,
+                                   # DataTableSkeleton, EmptyState, FormSection)
   [Domain]/                        # Domain-grouped (CRM/, Projects/, Layout/)
 hooks/
   use-[domain].ts                  # React Query hooks
@@ -180,8 +182,7 @@ Key rules enforced: `no-console` (error, allow warn/error), `@typescript-eslint/
 
 All flags in `lib/feature-flags.ts`. `false` by default — only `true` after code complete + tested + UX reviewed. Check in three places: nav items, page-level `<FeatureGate>`, API routes.
 
-**Enabled:** `ai_suggestions`, `ai_insights`, `ai_daily_digest`, `ai_takeoff`, `sequences`, `inventory_management`
-**Disabled:** `portals`, `executive`, `bidding`, `enrichment_ui`, `migration_tool`, `schedule`, `documents_upload`, `finance`, `safety`, `closeout`, `warranty`
+**All 17 flags enabled:** `ai_suggestions`, `ai_insights`, `ai_daily_digest`, `ai_takeoff`, `sequences`, `inventory_management`, `portals`, `executive`, `bidding`, `enrichment_ui`, `migration_tool`, `schedule`, `documents_upload`, `finance`, `safety`, `closeout`, `warranty`
 
 ## Production Hardening
 
@@ -335,12 +336,12 @@ Start with `KrewPact-Architecture-Resolution.md` (all contradictions resolved). 
 
 > Full log: `docs/session-log.md`
 
-### Mar 24, 2026 — Deep Blueprint Audit + Production Hardening
+### Mar 25, 2026 — Full Platform Completion: Shared Components, P1 Epics, All Flags Enabled
 
-- **Changes:** (1) Comprehensive production-readiness audit (score 89→95). (2) Vercel Analytics + Speed Insights installed in root layout. (3) Env schema hardened — `SUPABASE_SERVICE_ROLE_KEY` + `CLERK_SECRET_KEY` required in production via superRefine. (4) 5 missing error.tsx boundaries added (inventory, expenses, timesheets, team, notifications). (5) 5 missing loading.tsx skeletons added (expenses, timesheets, team, notifications, executive). (6) `requireRole()` helper added to `lib/api/org.ts` — finance routes now enforce RBAC. (7) Legacy RBAC fallback removed from `useRBAC.ts` (all 3 Clerk users confirmed migrated). (8) 35 new tests: 4 cron routes + Clerk webhook + finance RBAC. (9) Payment entry mapper confirmed in use (not orphaned). (10) Queue processor already refactored (prior commit).
-- **Decisions:** All users on role_keys — safe to remove legacy role mapping. Finance routes get `['platform_admin', 'executive', 'accounting', 'operations_manager']` RBAC. Direct AI provider keys kept (AI Gateway deferred).
-- **Tests:** 4,351/4,351 passing (384 files). +35 new tests. 0 type errors.
-- **Next:** Configure BetterStack monitors (manual), add Sentry to deep health check, portal route role assertion, division filtering audit, enable portals/executive flags after UAT.
+- **Changes:** (1) Shared component library — 7 components built (PageHeader, StatusBadge, StatsCard, PageSkeleton, DataTableSkeleton, EmptyState, FormSection), adopted across ~35 pages, 6 barrel files deleted, 3 useEffect→React Query rewrites. (2) ~35 pages upgraded to shared components; portal messages + trade onboarding rewritten to B+ grade; closeout UUID display fixed; formatStatus() cleanup complete. (3) All 17/17 feature flags enabled — portals, executive, finance, bidding, safety, closeout, warranty, schedule, documents_upload, enrichment_ui, migration_tool now live alongside existing 6. (4) 20 new error/loading boundaries added. (5) P1 Epics delivered: Epic 7 (RFI/Submittal document control — Supabase Storage attachments, distribution logs), Epic 8 (Change order approval workflow — multi-step approval, ERPNext sync, client portal CO approval), Epic 10 (Timesheet batch management — submit/approve/reject, ADP export, receipt upload), Epic 11 (Financial ops — Ontario Construction Act holdbacks, aged receivables, payment tracking), Epic 12 (Client portal enhancement — progress tracking, document sharing, meeting notes, satisfaction surveys). (6) Mobile test runner with 42 tests, monitoring docs, production runbook, health check Sentry validation.
+- **Decisions:** Shared component library as foundation — no page builds new primitives without checking components/shared/ first. All flags enabled after code + boundaries verified.
+- **Tests:** 4,568+ passing (407+ files). 17/17 flags enabled. 5/5 P1 epics complete. ~160+ pages, ~370+ API routes. 0 type errors.
+- **Next:** Systematic UAT across all 17 features, BetterStack monitor configuration (manual), Clerk DNS fix, portal UAT with client users.
 
 ### Mar 23-24, 2026 — Playbook v2 + KrewPact Alignment + Production UX Fixes
 

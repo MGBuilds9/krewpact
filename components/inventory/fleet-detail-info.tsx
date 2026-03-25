@@ -2,6 +2,7 @@
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { formatStatus } from '@/lib/format-status';
 import type { FleetVehicle } from '@/hooks/useFleetVehicles';
 
 const statusStyle: Record<FleetVehicle['status'], string> = {
@@ -24,9 +25,7 @@ function InfoField({ label, value }: { label: string; value: string | number | n
 }
 
 export function FleetDetailInfo({ vehicle }: FleetDetailInfoProps) {
-  const typeLabel = vehicle.vehicle_type
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+  const typeLabel = formatStatus(vehicle.vehicle_type);
 
   return (
     <Card>

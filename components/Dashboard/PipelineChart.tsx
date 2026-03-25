@@ -1,6 +1,7 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { formatStatus } from '@/lib/format-status';
 import { cn } from '@/lib/utils';
 
 export interface PipelineStage {
@@ -21,9 +22,6 @@ function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
-function formatStageName(stage: string): string {
-  return stage.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
-}
 
 const STAGE_COLORS: Record<string, string> = {
   qualification: 'bg-blue-500',
@@ -62,7 +60,7 @@ export function PipelineChart({ data }: PipelineChartProps) {
           return (
             <div key={stage.stage} className="space-y-1">
               <div className="flex justify-between items-center text-sm">
-                <span className="font-medium">{formatStageName(stage.stage)}</span>
+                <span className="font-medium">{formatStatus(stage.stage)}</span>
                 <span className="text-muted-foreground">{stage.count} deals</span>
               </div>
               <div className="flex items-center gap-3">

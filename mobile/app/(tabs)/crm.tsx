@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api, Lead } from '@/lib/api-client';
 import { queryKeys } from '@/lib/query-client';
 import { COLORS, SPACING } from '@/constants/config';
+import { formatStatus } from '@/lib/format-status';
 
 const STATUS_COLORS: Record<string, string> = {
   new: COLORS.primary,
@@ -29,7 +30,7 @@ function LeadCard({ lead }: { lead: Lead }) {
           style={[styles.badge, { backgroundColor: statusColor + '22', borderColor: statusColor }]}
         >
           <Text style={[styles.badgeText, { color: statusColor }]}>
-            {lead.status.replace('_', ' ')}
+            {formatStatus(lead.status)}
           </Text>
         </View>
       </View>

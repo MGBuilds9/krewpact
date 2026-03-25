@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 
+import { formatStatus } from '@/lib/format-status';
+
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -70,7 +72,7 @@ export function FleetForm({ vehicle, onSubmit, onCancel, isPending }: FleetFormP
           <SelectContent>
             {VEHICLE_TYPES.map((t) => (
               <SelectItem key={t} value={t}>
-                {t.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+                {formatStatus(t)}
               </SelectItem>
             ))}
           </SelectContent>

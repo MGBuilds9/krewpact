@@ -4,6 +4,8 @@ import { useClerk, useUser } from '@clerk/nextjs';
 import { LogOut, Settings, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React from 'react';
+
+import { formatStatus } from '@/lib/format-status';
 import { toast } from 'sonner';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -104,7 +106,7 @@ export function PortalHeader() {
   const roles = user?.publicMetadata?.krewpact_roles as string[] | undefined;
   const userRole =
     roles && roles.length > 0
-      ? roles[0].replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
+      ? formatStatus(roles[0])
       : 'Portal User';
 
   const handleSignOut = async () => {

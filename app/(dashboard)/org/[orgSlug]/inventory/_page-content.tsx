@@ -4,6 +4,7 @@ import { AlertTriangle, ArrowRight, Package, ShoppingCart, TrendingUp } from 'lu
 import Link from 'next/link';
 
 import { StockCard } from '@/components/inventory/stock-card';
+import { PageHeader } from '@/components/shared/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -176,10 +177,7 @@ export default function OverviewPageContent() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Inventory Overview</h1>
-        <QuickActions />
-      </div>
+      <PageHeader title="Inventory Overview" action={<QuickActions />} />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StockCard label="Total Items" value={items?.length ?? 0} isLoading={summaryLoading} />

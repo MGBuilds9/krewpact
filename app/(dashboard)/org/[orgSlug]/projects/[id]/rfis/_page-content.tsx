@@ -1,9 +1,11 @@
 'use client';
 
-import { HelpCircle, MessageSquare, Plus } from 'lucide-react';
+import { HelpCircle, MessageSquare, Paperclip, Plus } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 
+import { AttachmentList } from '@/components/FieldOps/AttachmentList';
+import { AttachmentUpload } from '@/components/FieldOps/AttachmentUpload';
 import { RFICreateForm } from '@/components/FieldOps/RFICreateForm';
 import { RFIResponseForm } from '@/components/FieldOps/RFIResponseForm';
 import { Button } from '@/components/ui/button';
@@ -25,6 +27,7 @@ import {
 } from '@/components/ui/table';
 import type { RFIItem } from '@/hooks/useFieldOps';
 import { useRFIs } from '@/hooks/useFieldOps';
+import { useAttachments } from '@/hooks/useDocumentControl';
 
 const STATUS_COLORS: Record<RFIItem['status'], string> = {
   open: 'bg-yellow-100 text-yellow-800',
@@ -33,7 +36,43 @@ const STATUS_COLORS: Record<RFIItem['status'], string> = {
   void: 'bg-gray-100 text-gray-600',
 };
 
-function RFIRow({ rfi, onRespond }: { rfi: RFIItem; onRespond: (id: string) => void }) {
+function RFIAttachmentsDialog({ projectId, rfiId }: { projectId: string; rfiId: string }) {
+  const [open, setOpen] = useState(false);
+  const { data, isLoading } = useAttachments('rfi', projectId, rfiId);
+  const attachments = data?.data ?? [];
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="sm">
+          <Paperclip className="h-4 w-4 mr-1" />
+          {attachments.length > 0 ? attachments.length : ''}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>RFI Attachments</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <AttachmentUpload
+            entityType="rfi"
+            projectId={projectId}
+            entityId={rfiId}
+          />
+          <AttachmentList
+            entityType="rfi"
+            projectId={projectId}
+            entityId={rfiId}
+            attachments={attachments}
+            isLoading={isLoading}
+          />
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function RFIRow({ rfi, onRespond, projectId }: { rfi: RFIItem; onRespond: (id: string) => void; projectId: string }) {
   return (
     <TableRow>
       <TableCell className="font-mono font-medium">{rfi.rfi_number}</TableCell>
@@ -52,12 +91,15 @@ function RFIRow({ rfi, onRespond }: { rfi: RFIItem; onRespond: (id: string) => v
         {rfi.due_at ? new Date(rfi.due_at).toLocaleDateString('en-CA') : '—'}
       </TableCell>
       <TableCell className="text-right">
-        {rfi.status === 'open' && (
-          <Button variant="outline" size="sm" onClick={() => onRespond(rfi.id)}>
-            <MessageSquare className="h-4 w-4 mr-1" />
-            Respond
-          </Button>
-        )}
+        <div className="flex items-center justify-end gap-1">
+          <RFIAttachmentsDialog projectId={projectId} rfiId={rfi.id} />
+          {rfi.status === 'open' && (
+            <Button variant="outline" size="sm" onClick={() => onRespond(rfi.id)}>
+              <MessageSquare className="h-4 w-4 mr-1" />
+              Respond
+            </Button>
+          )}
+        </div>
       </TableCell>
     </TableRow>
   );
@@ -128,7 +170,7 @@ export default function RFIsPage() {
           </TableHeader>
           <TableBody>
             {rfis.map((rfi) => (
-              <RFIRow key={rfi.id} rfi={rfi} onRespond={setRespondRfiId} />
+              <RFIRow key={rfi.id} rfi={rfi} onRespond={setRespondRfiId} projectId={projectId} />
             ))}
           </TableBody>
         </Table>

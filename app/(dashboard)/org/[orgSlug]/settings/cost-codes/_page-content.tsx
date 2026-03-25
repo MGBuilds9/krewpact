@@ -3,6 +3,7 @@
 import { useState } from 'react';
 
 import { CostCodeForm } from '@/components/Procurement/CostCodeForm';
+import { PageHeader } from '@/components/shared/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -75,29 +76,27 @@ export default function CostCodesPage() {
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Cost Code Dictionary</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            {data ? data.total || 0 : 0} cost codes across all divisions
-          </p>
-        </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button>New Cost Code</Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-xl">
-            <DialogHeader>
-              <DialogTitle>Create Cost Code</DialogTitle>
-            </DialogHeader>
-            <CostCodeForm
-              onSubmit={handleCreate}
-              isLoading={createCostCode.isPending}
-              mode="create"
-            />
-          </DialogContent>
-        </Dialog>
-      </div>
+      <PageHeader
+        title="Cost Code Dictionary"
+        description={`${data ? data.total || 0 : 0} cost codes across all divisions`}
+        action={
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button>New Cost Code</Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-xl">
+              <DialogHeader>
+                <DialogTitle>Create Cost Code</DialogTitle>
+              </DialogHeader>
+              <CostCodeForm
+                onSubmit={handleCreate}
+                isLoading={createCostCode.isPending}
+                mode="create"
+              />
+            </DialogContent>
+          </Dialog>
+        }
+      />
       <Input
         placeholder="Search cost codes..."
         value={search}

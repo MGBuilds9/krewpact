@@ -26,6 +26,7 @@ import { useDivision } from '@/contexts/DivisionContext';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useCreateFolder, useDeleteFile, useFiles, useFolders } from '@/hooks/useDocuments';
 import { useProjects } from '@/hooks/useProjects';
+import { formatStatus } from '@/lib/format-status';
 
 function getFileIcon(mimeType: string | null) {
   if (!mimeType) return File;
@@ -100,7 +101,7 @@ function ProjectListView({ projects, loading, debouncedSearch, onSelect }: Proje
             </div>
             <div className="mt-3">
               <Badge variant="outline" className="text-xs capitalize">
-                {project.status.replace(/_/g, ' ')}
+                {formatStatus(project.status)}
               </Badge>
             </div>
           </CardContent>

@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router';
 import { api, Project } from '@/lib/api-client';
 import { queryKeys } from '@/lib/query-client';
 import { COLORS, SPACING } from '@/constants/config';
+import { formatStatus } from '@/lib/format-status';
 
 const STATUS_COLORS: Record<string, string> = {
   active: COLORS.success,
@@ -32,7 +33,7 @@ function ProjectCard({ project, onPress }: { project: Project; onPress: () => vo
           style={[styles.badge, { backgroundColor: statusColor + '22', borderColor: statusColor }]}
         >
           <Text style={[styles.badgeText, { color: statusColor }]}>
-            {project.status.replace('_', ' ')}
+            {formatStatus(project.status)}
           </Text>
         </View>
       </View>

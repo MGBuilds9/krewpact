@@ -17,7 +17,7 @@ import {
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 
-import { AiInsightBanner } from '@/components/AI';
+import { AiInsightBanner } from '@/components/AI/AiInsightBanner';
 import { AccountForm } from '@/components/CRM/AccountForm';
 import { AccountHealthCard } from '@/components/CRM/AccountHealthCard';
 import { ActivityLogDialog } from '@/components/CRM/ActivityLogDialog';

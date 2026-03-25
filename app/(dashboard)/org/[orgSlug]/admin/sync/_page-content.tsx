@@ -1,31 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-
-interface EntityStat {
-  entity_type: string;
-  total: number;
-  succeeded: number;
-  failed: number;
-  queued: number;
-  last_sync_at: string | null;
-}
-
-interface SyncError {
-  id: string;
-  job_id: string;
-  error_message: string;
-  error_code: string;
-  created_at: string;
-}
-
-interface SyncStatus {
-  stats: EntityStat[];
-  recent_errors: SyncError[];
-  total_jobs: number;
-}
+import { Skeleton } from '@/components/ui/skeleton';
+import { type EntityStat, type SyncError, useSyncStatus } from '@/hooks/useSystem';
 
 function formatEntityType(type: string): string {
   return type
@@ -57,7 +34,20 @@ function SummaryCards({
   totalFailed,
   totalQueued,
 }: SummaryCardsProps) {
-  const val = (n: number) => (loading ? '...' : n);
+  if (loading) {
+    return (
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-4">
+        {[1, 2, 3, 4].map((i) => (
+          <Card key={i}>
+            <CardHeader className="pb-2">
+              <Skeleton className="h-3 w-20 mb-2" />
+              <Skeleton className="h-8 w-16" />
+            </CardHeader>
+          </Card>
+        ))}
+      </div>
+    );
+  }
   return (
     <div className="grid gap-4 grid-cols-1 sm:grid-cols-4">
       <Card>
@@ -65,7 +55,7 @@ function SummaryCards({
           <CardDescription className="text-xs font-medium uppercase tracking-wider">
             Total Jobs
           </CardDescription>
-          <CardTitle className="text-2xl tabular-nums">{val(totalJobs)}</CardTitle>
+          <CardTitle className="text-2xl tabular-nums">{totalJobs}</CardTitle>
         </CardHeader>
       </Card>
       <Card>
@@ -73,9 +63,7 @@ function SummaryCards({
           <CardDescription className="text-xs font-medium uppercase tracking-wider">
             Succeeded
           </CardDescription>
-          <CardTitle className="text-2xl tabular-nums text-green-600">
-            {val(totalSucceeded)}
-          </CardTitle>
+          <CardTitle className="text-2xl tabular-nums text-green-600">{totalSucceeded}</CardTitle>
         </CardHeader>
       </Card>
       <Card>
@@ -83,7 +71,7 @@ function SummaryCards({
           <CardDescription className="text-xs font-medium uppercase tracking-wider">
             Failed
           </CardDescription>
-          <CardTitle className="text-2xl tabular-nums text-red-600">{val(totalFailed)}</CardTitle>
+          <CardTitle className="text-2xl tabular-nums text-red-600">{totalFailed}</CardTitle>
         </CardHeader>
       </Card>
       <Card>
@@ -91,9 +79,7 @@ function SummaryCards({
           <CardDescription className="text-xs font-medium uppercase tracking-wider">
             Queued
           </CardDescription>
-          <CardTitle className="text-2xl tabular-nums text-yellow-600">
-            {val(totalQueued)}
-          </CardTitle>
+          <CardTitle className="text-2xl tabular-nums text-yellow-600">{totalQueued}</CardTitle>
         </CardHeader>
       </Card>
     </div>
@@ -114,7 +100,11 @@ function EntityTable({ loading, stats }: EntityTableProps) {
       </CardHeader>
       <CardContent>
         {loading ? (
-          <p className="text-sm text-muted-foreground">Loading...</p>
+          <div className="space-y-2">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-10 w-full" />
+            ))}
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -187,20 +177,7 @@ function RecentErrors({ errors }: { errors: SyncError[] }) {
 }
 
 export default function SyncDashboardPage() {
-  const [status, setStatus] = useState<SyncStatus | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch('/api/admin/sync/status')
-      .then((r) => {
-        if (!r.ok) throw new Error('Failed to fetch sync status');
-        return r.json();
-      })
-      .then((data) => setStatus(data))
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, []);
+  const { data: status, isLoading, isError, error } = useSyncStatus();
 
   const stats = status?.stats ?? [];
   const totalSucceeded = stats.reduce((s, e) => s + e.succeeded, 0);
@@ -219,21 +196,23 @@ export default function SyncDashboardPage() {
             with retry and dead-letter.
           </p>
         </div>
-        {error && (
+        {isError && (
           <Card className="border-destructive">
             <CardContent className="pt-6">
-              <p className="text-destructive text-sm">{error}</p>
+              <p className="text-destructive text-sm">
+                {error instanceof Error ? error.message : 'Failed to load sync status.'}
+              </p>
             </CardContent>
           </Card>
         )}
         <SummaryCards
-          loading={loading}
+          loading={isLoading}
           totalJobs={status?.total_jobs ?? 0}
           totalSucceeded={totalSucceeded}
           totalFailed={totalFailed}
           totalQueued={totalQueued}
         />
-        <EntityTable loading={loading} stats={stats} />
+        <EntityTable loading={isLoading} stats={stats} />
         <RecentErrors errors={recentErrors} />
       </div>
     </>

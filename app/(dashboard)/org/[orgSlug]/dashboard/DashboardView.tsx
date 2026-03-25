@@ -19,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { useUserRBAC } from '@/hooks/useRBAC';
+import { formatStatus } from '@/lib/format-status';
 import { cn } from '@/lib/utils';
 
 type ClerkUser = ReturnType<typeof useUser>['user'];
@@ -69,7 +70,7 @@ function WelcomeCard({ userName, roles }: WelcardProps) {
                 variant={role.is_primary ? 'default' : 'secondary'}
                 className="text-sm px-3 py-1 rounded-full shadow-sm"
               >
-                {role.role_name.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
+                {formatStatus(role.role_name)}
               </Badge>
             ))
           ) : (

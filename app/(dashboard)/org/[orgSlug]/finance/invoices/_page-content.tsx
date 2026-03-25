@@ -3,7 +3,8 @@
 import { useState } from 'react';
 
 import { InvoiceSnapshotReviewForm } from '@/components/Finance/InvoiceSnapshotReviewForm';
-import { Badge } from '@/components/ui/badge';
+import { PageHeader } from '@/components/shared/PageHeader';
+import { StatusBadge } from '@/components/shared/StatusBadge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   Table,
@@ -14,15 +15,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useInvoiceSnapshots } from '@/hooks/useFinance';
-import { formatStatus } from '@/lib/format-status';
-
-const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-  paid: 'default',
-  submitted: 'secondary',
-  draft: 'outline',
-  overdue: 'destructive',
-  cancelled: 'outline',
-};
 
 function formatCAD(amount: number | null) {
   if (amount == null) return '—';
@@ -51,13 +43,7 @@ function InvoiceRow({ inv, onClick }: { inv: Invoice; onClick: () => void }) {
       <TableCell>{inv.invoice_date || '—'}</TableCell>
       <TableCell>{inv.due_date || '—'}</TableCell>
       <TableCell>
-        {inv.status ? (
-          <Badge variant={STATUS_VARIANT[inv.status] || 'outline'}>
-            {formatStatus(inv.status)}
-          </Badge>
-        ) : (
-          '—'
-        )}
+        {inv.status ? <StatusBadge status={inv.status} /> : '—'}
       </TableCell>
       <TableCell className="text-right">{formatCAD(inv.total_amount || null)}</TableCell>
       <TableCell className="text-right">{formatCAD(inv.amount_paid || null)}</TableCell>
@@ -91,12 +77,10 @@ export default function InvoicesPage() {
 
   return (
     <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Invoice Snapshots</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          {data ? data.total || 0 : 0} invoice snapshots synced from ERPNext
-        </p>
-      </div>
+      <PageHeader
+        title="Invoice Snapshots"
+        description={`${data ? data.total || 0 : 0} invoice snapshots synced from ERPNext`}
+      />
       <div className="bg-white dark:bg-card border shadow-sm rounded-2xl overflow-x-auto w-full">
         <Table className="min-w-[800px]">
           <TableHeader>

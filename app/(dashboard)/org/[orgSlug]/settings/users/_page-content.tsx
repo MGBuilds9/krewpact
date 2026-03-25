@@ -4,6 +4,8 @@ import { Plus, User } from 'lucide-react';
 import { useState } from 'react';
 
 import { UserProvisioningForm } from '@/components/Org/UserProvisioningForm';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { PageHeader } from '@/components/shared/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -29,31 +31,29 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Users</h1>
-          <p className="text-sm text-muted-foreground">
-            Manage internal team members and their access.
-          </p>
-        </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Provision User
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Provision New User</DialogTitle>
-            </DialogHeader>
-            <UserProvisioningForm
-              onSuccess={() => setOpen(false)}
-              onCancel={() => setOpen(false)}
-            />
-          </DialogContent>
-        </Dialog>
-      </div>
+      <PageHeader
+        title="Users"
+        description="Manage internal team members and their access."
+        action={
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Provision User
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Provision New User</DialogTitle>
+              </DialogHeader>
+              <UserProvisioningForm
+                onSuccess={() => setOpen(false)}
+                onCancel={() => setOpen(false)}
+              />
+            </DialogContent>
+          </Dialog>
+        }
+      />
 
       <Input
         placeholder="Search users..."
@@ -69,12 +69,11 @@ export default function UsersPage() {
           ))}
         </div>
       ) : users.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16">
-          <User className="mb-4 h-12 w-12 text-muted-foreground" />
-          <p className="text-muted-foreground">
-            {search ? 'No users found.' : 'No users provisioned yet.'}
-          </p>
-        </div>
+        <EmptyState
+          icon={<User className="h-8 w-8" />}
+          title={search ? 'No users found' : 'No users provisioned yet'}
+          description={search ? undefined : 'Add your first team member to get started.'}
+        />
       ) : (
         <div className="space-y-2">
           {users.map((user) => (

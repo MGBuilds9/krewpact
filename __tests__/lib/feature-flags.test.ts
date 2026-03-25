@@ -53,52 +53,52 @@ describe('isFeatureEnabled', () => {
     expect(isFeatureEnabled('ai_daily_digest')).toBe(true);
   });
 
-  it('returns false for portals (disabled)', () => {
-    expect(isFeatureEnabled('portals')).toBe(false);
+  it('returns true for portals (enabled)', () => {
+    expect(isFeatureEnabled('portals')).toBe(true);
   });
 
-  it('returns false for executive (disabled)', () => {
-    expect(isFeatureEnabled('executive')).toBe(false);
+  it('returns true for executive (enabled)', () => {
+    expect(isFeatureEnabled('executive')).toBe(true);
   });
 
-  it('returns false for bidding (disabled)', () => {
-    expect(isFeatureEnabled('bidding')).toBe(false);
+  it('returns true for bidding (enabled)', () => {
+    expect(isFeatureEnabled('bidding')).toBe(true);
   });
 
-  it('returns false for enrichment_ui (disabled)', () => {
-    expect(isFeatureEnabled('enrichment_ui')).toBe(false);
+  it('returns true for enrichment_ui (enabled)', () => {
+    expect(isFeatureEnabled('enrichment_ui')).toBe(true);
   });
 
   it('returns true for sequences (enabled)', () => {
     expect(isFeatureEnabled('sequences')).toBe(true);
   });
 
-  it('returns false for migration_tool (disabled)', () => {
-    expect(isFeatureEnabled('migration_tool')).toBe(false);
+  it('returns true for migration_tool (enabled)', () => {
+    expect(isFeatureEnabled('migration_tool')).toBe(true);
   });
 
-  it('returns false for schedule (disabled)', () => {
-    expect(isFeatureEnabled('schedule')).toBe(false);
+  it('returns true for schedule (enabled)', () => {
+    expect(isFeatureEnabled('schedule')).toBe(true);
   });
 
-  it('returns false for documents_upload (disabled)', () => {
-    expect(isFeatureEnabled('documents_upload')).toBe(false);
+  it('returns true for documents_upload (enabled)', () => {
+    expect(isFeatureEnabled('documents_upload')).toBe(true);
   });
 
-  it('returns false for finance (disabled)', () => {
-    expect(isFeatureEnabled('finance')).toBe(false);
+  it('returns true for finance (enabled)', () => {
+    expect(isFeatureEnabled('finance')).toBe(true);
   });
 
-  it('returns false for safety (disabled)', () => {
-    expect(isFeatureEnabled('safety')).toBe(false);
+  it('returns true for safety (enabled)', () => {
+    expect(isFeatureEnabled('safety')).toBe(true);
   });
 
-  it('returns false for closeout (disabled)', () => {
-    expect(isFeatureEnabled('closeout')).toBe(false);
+  it('returns true for closeout (enabled)', () => {
+    expect(isFeatureEnabled('closeout')).toBe(true);
   });
 
-  it('returns false for warranty (disabled)', () => {
-    expect(isFeatureEnabled('warranty')).toBe(false);
+  it('returns true for warranty (enabled)', () => {
+    expect(isFeatureEnabled('warranty')).toBe(true);
   });
 
   it('return value matches features object directly', () => {

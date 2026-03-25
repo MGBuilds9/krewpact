@@ -148,12 +148,31 @@ async function runCronCheck(
   }
 }
 
+function checkSentryConfig(checks: Record<string, string>): void {
+  const dsn = process.env.SENTRY_DSN;
+  if (!dsn) {
+    checks.sentry = 'degraded';
+    return;
+  }
+  try {
+    const url = new URL(dsn);
+    // Sentry DSN format: https://<key>@<host>/project-id
+    const validScheme = url.protocol === 'https:' || url.protocol === 'http:';
+    const hasHost = url.hostname.length > 0;
+    const hasProject = url.pathname.length > 1; // at minimum "/<id>"
+    checks.sentry = validScheme && hasHost && hasProject ? 'ok' : 'degraded';
+  } catch {
+    checks.sentry = 'degraded';
+  }
+}
+
 async function runDeepChecks(
   supabase: ServiceClient,
   checks: Record<string, string>,
   details: Record<string, unknown>,
 ): Promise<void> {
   await checkTableCounts(supabase, checks, details);
+  checkSentryConfig(checks);
   await Promise.all([
     checkRedisHealth(checks),
     checkClerkHealth(checks),

@@ -103,7 +103,9 @@ app/
     health/                        # Health check endpoint
 components/
   ui/                              # shadcn/ui output — NEVER modify directly
-  shared/                          # Composed components (DataTable, ConfirmDialog)
+  shared/                          # Composed components (DataTable, ConfirmDialog,
+                                   # PageHeader, StatusBadge, StatsCard, PageSkeleton,
+                                   # DataTableSkeleton, EmptyState, FormSection)
   [Domain]/                        # Domain-grouped (CRM/, Projects/, Layout/)
 hooks/
   use-[domain].ts                  # React Query hooks
@@ -121,7 +123,7 @@ types/
 mobile/                            # Expo SDK 54 app
 ```
 
-For current route and feature counts, see `docs/audits/`.
+For current route and feature counts, see `docs/audits/`. As of Mar 25, 2026: ~160+ pages, ~370+ API routes, 4,568+ tests (407+ files), 17/17 feature flags enabled, 5/5 P1 epics complete.
 
 ## Key Conventions
 

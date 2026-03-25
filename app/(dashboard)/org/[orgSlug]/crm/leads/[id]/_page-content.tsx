@@ -19,7 +19,7 @@ import dynamic from 'next/dynamic';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 
-import { AiInsightBanner } from '@/components/AI';
+import { AiInsightBanner } from '@/components/AI/AiInsightBanner';
 import { ActivityLogDialog } from '@/components/CRM/ActivityLogDialog';
 import { ActivityTimeline } from '@/components/CRM/ActivityTimeline';
 import { ConvertLeadDialog } from '@/components/CRM/ConvertLeadDialog';
@@ -47,6 +47,7 @@ import {
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 import type { LeadStage } from '@/lib/crm/lead-stages';
 import { ALLOWED_TRANSITIONS } from '@/lib/crm/lead-stages';
+import { formatStatus } from '@/lib/format-status';
 import { cn } from '@/lib/utils';
 
 const LeadForm = dynamic(() => import('@/components/CRM/LeadForm').then((m) => m.LeadForm), {
@@ -114,7 +115,7 @@ function LeadInfoCard({ lead, isEditing, setIsEditing }: InfoCardProps) {
           <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <dt className="text-sm font-medium text-muted-foreground">Status</dt>
-              <dd className="text-sm capitalize">{lead.status.replace(/_/g, ' ')}</dd>
+              <dd className="text-sm">{formatStatus(lead.status)}</dd>
             </div>
             <div>
               <dt className="text-sm font-medium text-muted-foreground">Industry</dt>
@@ -122,8 +123,8 @@ function LeadInfoCard({ lead, isEditing, setIsEditing }: InfoCardProps) {
             </div>
             <div>
               <dt className="text-sm font-medium text-muted-foreground">Source</dt>
-              <dd className="text-sm capitalize">
-                {lead.source_channel?.replace(/_/g, ' ') || '-'}
+              <dd className="text-sm">
+                {formatStatus(lead.source_channel) || '-'}
               </dd>
             </div>
             <div>
@@ -293,7 +294,7 @@ function LeadQuickInfo({ lead, contactCount, activityCount }: QuickInfoProps) {
         {lead.source_channel && (
           <div className="flex justify-between">
             <span className="text-muted-foreground">Source</span>
-            <span className="capitalize">{lead.source_channel.replace(/_/g, ' ')}</span>
+            <span>{formatStatus(lead.source_channel)}</span>
           </div>
         )}
         {lead.next_followup_at && (
@@ -546,7 +547,7 @@ export default function LeadDetailPage() {
           <AlertTitle>Existing Customer Match</AlertTitle>
           <AlertDescription>
             This lead matches <strong>{customerMatch.account?.account_name}</strong> (
-            {customerMatch.match_type.replace(/_/g, ' ')},{' '}
+            {formatStatus(customerMatch.match_type)},{' '}
             {Math.round(customerMatch.match_score * 100)}% confidence). Outreach sequences are
             suppressed for existing customers.
           </AlertDescription>

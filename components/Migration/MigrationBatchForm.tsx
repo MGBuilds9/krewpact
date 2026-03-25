@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useCreateMigrationBatch } from '@/hooks/useMigration';
+import { formatStatus } from '@/lib/format-status';
 import { migrationBatchCreateSchema } from '@/lib/validators/migration';
 
 type FormValues = z.infer<typeof migrationBatchCreateSchema>;
@@ -72,7 +73,7 @@ export function MigrationBatchForm({ onSuccess, onCancel }: MigrationBatchFormPr
                 <SelectContent>
                   {SOURCE_SYSTEMS.map((s) => (
                     <SelectItem key={s} value={s}>
-                      {s.replace(/_/g, ' ').toUpperCase()}
+                      {formatStatus(s)}
                     </SelectItem>
                   ))}
                 </SelectContent>

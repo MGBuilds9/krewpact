@@ -1,18 +1,5 @@
-import { Skeleton } from '@/components/ui/skeleton';
+import { PageSkeleton } from '@/components/shared/PageSkeleton';
 
-export default function DashboardLoading() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <Skeleton className="h-9 w-48" />
-        <Skeleton className="h-9 w-32" />
-      </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {['k-1', 'k-2', 'k-3', 'k-4'].map((id) => (
-          <Skeleton key={id} className="h-28 rounded-xl" />
-        ))}
-      </div>
-      <Skeleton className="h-[400px] rounded-xl" />
-    </div>
-  );
+export default function OrgLoading() {
+  return <PageSkeleton layout="dashboard" />;
 }

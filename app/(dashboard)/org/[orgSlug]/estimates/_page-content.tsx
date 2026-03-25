@@ -3,6 +3,7 @@
 import { Calculator, DollarSign, Plus, Search } from 'lucide-react';
 import { useState } from 'react';
 
+import { EmptyState } from '@/components/shared/EmptyState';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -140,15 +141,11 @@ export default function EstimatesListPage() {
           </Button>
         </div>
         {filtered.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <Calculator className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-              <h3 className="text-lg font-medium mb-2">No estimates yet</h3>
-              <p className="text-muted-foreground mb-4">
-                Create your first estimate to start building proposals
-              </p>
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={<Calculator className="h-8 w-8" />}
+            title="No estimates yet"
+            description="Create your first estimate to start building proposals"
+          />
         ) : (
           <div className="grid gap-3">
             {filtered.map((estimate) => (

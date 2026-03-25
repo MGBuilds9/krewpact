@@ -100,6 +100,35 @@ function loadJSON<T>(filename: string): T[] {
   return JSON.parse(raw) as T[];
 }
 
+interface RecoverOptions<T> {
+  supabase: SupabaseClient;
+  table: string;
+  batch: T[];
+  batchNum: number;
+  result: LoadResult;
+}
+
+async function recoverBatchRowByRow<T extends Record<string, unknown>>(
+  opts: RecoverOptions<T>,
+): Promise<void> {
+  const { supabase, table, batch, batchNum, result } = opts;
+  console.log(`    Retrying batch ${batchNum} row-by-row...`);
+  let recovered = 0;
+  for (const row of batch) {
+    const { error: rowError } = await supabase.from(table).insert(row);
+    if (rowError) {
+      result.errors.push(
+        `Row error: ${rowError.message} — ${JSON.stringify(row).substring(0, 200)}`,
+      );
+    } else {
+      recovered++;
+      result.failed--;
+      result.inserted++;
+    }
+  }
+  console.log(`    Recovered ${recovered}/${batch.length} rows`);
+}
+
 /**
  * Batch insert rows into a Supabase table.
  * Processes BATCH_SIZE rows at a time, logs progress, collects errors.
@@ -134,27 +163,12 @@ async function batchInsert<T extends Record<string, unknown>>(
 
     if (error) {
       result.failed += batch.length;
-      const errMsg = `Batch ${batchNum}: ${error.message}`;
-      result.errors.push(errMsg);
+      result.errors.push(`Batch ${batchNum}: ${error.message}`);
       console.log(` FAILED: ${error.message}`);
 
       // If batch fails, try inserting one-by-one to find the bad rows
       if (batch.length > 1) {
-        console.log(`    Retrying batch ${batchNum} row-by-row...`);
-        let recovered = 0;
-        for (const row of batch) {
-          const { error: rowError } = await supabase.from(table).insert(row);
-          if (rowError) {
-            result.errors.push(
-              `Row error: ${rowError.message} — ${JSON.stringify(row).substring(0, 200)}`,
-            );
-          } else {
-            recovered++;
-            result.failed--;
-            result.inserted++;
-          }
-        }
-        console.log(`    Recovered ${recovered}/${batch.length} rows`);
+        await recoverBatchRowByRow({ supabase, table, batch, batchNum, result });
       }
     } else {
       result.inserted += batch.length;

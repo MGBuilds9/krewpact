@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { apiFetch } from '@/lib/api-client';
+import { formatStatus } from '@/lib/format-status';
 import { queryKeys } from '@/lib/query-keys';
 
 export interface StagingDoc {
@@ -96,7 +97,7 @@ function DocRow({
             variant={STATUS_BADGE_VARIANTS[doc.status] ?? 'outline'}
             className={`text-xs ${STATUS_BADGE_CLASSES[doc.status] ?? ''}`}
           >
-            {doc.status.replace(/_/g, ' ')}
+            {formatStatus(doc.status)}
           </Badge>
           {doc.category && (
             <Badge variant="secondary" className="text-xs">
