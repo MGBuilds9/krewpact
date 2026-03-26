@@ -53,7 +53,7 @@ export function LeadSourceBreakdownChart({ metrics }: LeadSourceBreakdownChartPr
     const color = getColorForSource(cat, categoryCounters[cat]);
     categoryCounters[cat]++;
     return {
-      name: formatStatus(s.source),
+      name: s.source,
       value: s.count,
       totalValue: s.value,
       conversionRate: s.conversionRate,
@@ -65,7 +65,7 @@ export function LeadSourceBreakdownChart({ metrics }: LeadSourceBreakdownChartPr
   const chartCfg: ChartConfig = {};
   for (const item of chartData) {
     chartCfg[item.name] = {
-      label: `${item.name} (${formatLabel(item.category)})`,
+      label: `${formatStatus(item.name)} (${formatLabel(item.category)})`,
       color: item.fill,
     };
   }
@@ -75,7 +75,7 @@ export function LeadSourceBreakdownChart({ metrics }: LeadSourceBreakdownChartPr
       <CardHeader>
         <CardTitle>Lead Sources</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="overflow-hidden">
         <ChartContainer config={chartCfg} className="aspect-square h-[280px] w-full">
           <PieChart>
             <ChartTooltip
@@ -113,6 +113,7 @@ export function LeadSourceBreakdownChart({ metrics }: LeadSourceBreakdownChartPr
               content={
                 <ChartLegendContent
                   nameKey="name"
+                  className="flex-wrap"
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   payload={undefined as any}
                 />

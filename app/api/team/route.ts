@@ -28,16 +28,22 @@ export async function GET(req: NextRequest) {
 
   if (authError) return authError;
 
-  // Query users who have active user_divisions entries (left_at IS NULL)
+  // Query users — left join on user_divisions so users without assignments still appear
   let query = supabase
     .from('users')
-    .select('*, user_divisions!inner(division_id, is_primary, left_at)')
-    .is('user_divisions.left_at', null)
+    .select('*, user_divisions(division_id, is_primary, left_at)')
     .order('first_name')
     .limit(300);
 
   if (parsed.data.division_id) {
-    query = query.eq('user_divisions.division_id', parsed.data.division_id);
+    // When filtering by division, use inner join to only show users in that division
+    query = supabase
+      .from('users')
+      .select('*, user_divisions!inner(division_id, is_primary, left_at)')
+      .eq('user_divisions.division_id', parsed.data.division_id)
+      .is('user_divisions.left_at', null)
+      .order('first_name')
+      .limit(300);
   }
 
   const { data, error } = await query;
