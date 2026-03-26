@@ -336,6 +336,13 @@ Start with `KrewPact-Architecture-Resolution.md` (all contradictions resolved). 
 
 > Full log: `docs/session-log.md`
 
+### Mar 25-26, 2026 — Production Hardening: RBAC, UAT, Operability, Security Sanitization
+
+- **Changes:** (1) CRM operability — lead scoring on updates, enrichment cron wired, bulk sequence enrollment, MERX bid import UI + bid→opportunity conversion, lead-account association, rescore endpoint. (2) Inventory operability — location create/edit UI, stock adjustment page, active PO counter (was stub), ERPNext account names configurable. (3) Admin operability — RBAC enforced on 6 unprotected API routes (governance, BCP, migration, privacy, system), ERPNext sync trigger button, system health card, role assignment UI. (4) RBAC hardening — expense/timesheet approval locked to authorized roles (was any user), executive layout server-side RoleGuard, finance API routes role-checked. (5) 8 production bugs fixed (hydration, CSP toolbar, PWA icons, chart overflow, header nav, lead source labels). (6) Security sanitization — removed personal email, real address/phone, internal network doc, employee names from source. Repo now public + safe for developers. (7) UAT walkthrough — 17 pages tested, 0 console errors, team page bug found and fixed (!inner join dropping users without divisions). (8) Vercel env vars set (ALERT_EMAIL, COMPANY_*). (9) UX polish — dark mode toggle, nav MAX_VISIBLE 5→7, notification save wired to API, breadcrumb labels cleaned.
+- **Decisions:** Left join on user_divisions by default (inner only when filtering by division). Config keys use raw source for Recharts legend + formatStatus in label. suppressHydrationWarning for time greeting instead of useEffect.
+- **Tests:** 4,715 passing (428 files). 0 type errors. 0 Sentry errors in production. 148/148 tables with RLS enabled.
+- **Next:** Seed test projects (0 in DB), Clerk DNS fix, BetterStack monitors, audit log writes, ERPNext integration testing against live instance.
+
 ### Mar 25, 2026 — Full Platform Completion: Shared Components, P1 Epics, All Flags Enabled
 
 - **Changes:** (1) Shared component library — 7 components built (PageHeader, StatusBadge, StatsCard, PageSkeleton, DataTableSkeleton, EmptyState, FormSection), adopted across ~35 pages, 6 barrel files deleted, 3 useEffect→React Query rewrites. (2) ~35 pages upgraded to shared components; portal messages + trade onboarding rewritten to B+ grade; closeout UUID display fixed; formatStatus() cleanup complete. (3) All 17/17 feature flags enabled — portals, executive, finance, bidding, safety, closeout, warranty, schedule, documents_upload, enrichment_ui, migration_tool now live alongside existing 6. (4) 20 new error/loading boundaries added. (5) P1 Epics delivered: Epic 7 (RFI/Submittal document control — Supabase Storage attachments, distribution logs), Epic 8 (Change order approval workflow — multi-step approval, ERPNext sync, client portal CO approval), Epic 10 (Timesheet batch management — submit/approve/reject, ADP export, receipt upload), Epic 11 (Financial ops — Ontario Construction Act holdbacks, aged receivables, payment tracking), Epic 12 (Client portal enhancement — progress tracking, document sharing, meeting notes, satisfaction surveys). (6) Mobile test runner with 42 tests, monitoring docs, production runbook, health check Sentry validation.
@@ -343,11 +350,6 @@ Start with `KrewPact-Architecture-Resolution.md` (all contradictions resolved). 
 - **Tests:** 4,568+ passing (407+ files). 17/17 flags enabled. 5/5 P1 epics complete. ~160+ pages, ~370+ API routes. 0 type errors.
 - **Next:** Systematic UAT across all 17 features, BetterStack monitor configuration (manual), Clerk DNS fix, portal UAT with client users.
 
-### Mar 23-24, 2026 — Playbook v2 + KrewPact Alignment + Production UX Fixes
-
-- **Changes:** (1) MKG-Builds-Dev-Playbook v2 — 851-line gold-standard CLAUDE.md template, 13 sections. (2) KrewPact docs rewrite — CLAUDE.md 345 lines (was 374), AGENTS.md 187 lines (was 279), expanded contributing.md. (3) Dev env — CI Node 24, format:check, tsconfig ES2022, processor refactor. (4) Production readiness verified — hub.mdmgroupinc.ca live, Clerk production, Sentry clean. (5) UX fixes — division names (DivisionContext enriched with allDivisions), lead delete button, PO form division select, BulkActionBar dialogs. (6) formatStatus utility + user name resolution for 3 P0 locations. (7) CSP cleanup — wildcard \*.mdmgroupinc.ca, vercel.live frame-src, chart dimension fix.
-- **Decisions:** DivisionContext as single source of truth for all division names. formatStatus() shared utility. CSP wildcard for Clerk subdomains.
-- **Tests:** 4,316/4,316 passing (374 files). +10 new tests.
-- **Next:** Clerk DNS fix (clerk.mdmgroupinc.ca CNAME or remove NEXT_PUBLIC_CLERK_DOMAIN from Vercel), remaining enum/UUID cleanups, systematic UAT, enable more feature flags.
+- Mar 23-24: Playbook v2 + KrewPact docs rewrite + production UX fixes (division names, lead delete, PO form, CSP). 4,316 tests.
 
 @AGENTS.md
