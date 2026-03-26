@@ -51,7 +51,7 @@ function mockSupabase({
   });
 
   const bidChain = buildChain();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   (bidChain.single as any) = vi.fn().mockResolvedValue(
     bidExists
       ? { data: bid, error: null }
@@ -61,7 +61,7 @@ function mockSupabase({
   bidChain.select = vi.fn().mockReturnValue(bidChain);
 
   const oppChain = buildChain();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   (oppChain.single as any) = vi.fn().mockResolvedValue(
     insertOppFails
       ? { data: null, error: { message: 'DB error' } }

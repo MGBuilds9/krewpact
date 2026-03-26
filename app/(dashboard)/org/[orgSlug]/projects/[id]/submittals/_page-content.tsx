@@ -10,7 +10,6 @@ import { SubmittalCreateForm } from '@/components/FieldOps/SubmittalCreateForm';
 import { SubmittalDistributionLog } from '@/components/FieldOps/SubmittalDistributionLog';
 import { SubmittalReviewForm } from '@/components/FieldOps/SubmittalReviewForm';
 import { StatusBadge } from '@/components/shared/StatusBadge';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -32,17 +31,6 @@ import { useAttachments } from '@/hooks/useDocumentControl';
 import type { Submittal } from '@/hooks/useFieldOps';
 import { useSubmittals } from '@/hooks/useFieldOps';
 
-const STATUS_VARIANT: Record<
-  Submittal['status'],
-  'default' | 'secondary' | 'destructive' | 'outline'
-> = {
-  draft: 'secondary',
-  submitted: 'default',
-  revise_and_resubmit: 'destructive',
-  approved: 'default',
-  approved_as_noted: 'default',
-  rejected: 'destructive',
-};
 
 function SubmittalAttachmentsDialog({ projectId, subId }: { projectId: string; subId: string }) {
   const [open, setOpen] = useState(false);
@@ -129,9 +117,8 @@ export default function SubmittalsPage() {
   const projectId = params.id as string;
   const [createOpen, setCreateOpen] = useState(false);
   const [reviewSubId, setReviewSubId] = useState<string | null>(null);
-
   const { data, isLoading } = useSubmittals(projectId);
-  const submittals = data ? data.data || [] : [];
+  const submittals = data?.data ?? [];
 
   return (
     <div className="space-y-6">
@@ -140,34 +127,19 @@ export default function SubmittalsPage() {
           <ClipboardList className="h-6 w-6 text-muted-foreground" />
           <div>
             <h1 className="text-2xl font-bold">Submittals</h1>
-            <p className="text-sm text-muted-foreground">{data ? data.total || 0 : 0} submittals</p>
+            <p className="text-sm text-muted-foreground">{data?.total ?? 0} submittals</p>
           </div>
         </div>
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              New Submittal
-            </Button>
-          </DialogTrigger>
+          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />New Submittal</Button></DialogTrigger>
           <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create Submittal</DialogTitle>
-            </DialogHeader>
-            <SubmittalCreateForm
-              projectId={projectId}
-              onSuccess={() => setCreateOpen(false)}
-              onCancel={() => setCreateOpen(false)}
-            />
+            <DialogHeader><DialogTitle>Create Submittal</DialogTitle></DialogHeader>
+            <SubmittalCreateForm projectId={projectId} onSuccess={() => setCreateOpen(false)} onCancel={() => setCreateOpen(false)} />
           </DialogContent>
         </Dialog>
       </div>
       {isLoading ? (
-        <div className="space-y-2">
-          {['s-1', 's-2', 's-3', 's-4', 's-5'].map((id) => (
-            <Skeleton key={id} className="h-14 w-full" />
-          ))}
-        </div>
+        <div className="space-y-2">{['s1','s2','s3','s4','s5'].map((k) => <Skeleton key={k} className="h-14 w-full" />)}</div>
       ) : submittals.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">
           <ClipboardList className="h-16 w-16 mx-auto mb-4 opacity-25" />
@@ -177,39 +149,15 @@ export default function SubmittalsPage() {
       ) : (
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Number</TableHead>
-              <TableHead>Title</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Due</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
+            <TableRow>{['Number','Title','Status','Due'].map((h) => <TableHead key={h}>{h}</TableHead>)}<TableHead className="text-right">Actions</TableHead></TableRow>
           </TableHeader>
-          <TableBody>
-            {submittals.map((sub) => (
-              <SubRow key={sub.id} sub={sub} onReview={setReviewSubId} projectId={projectId} />
-            ))}
-          </TableBody>
+          <TableBody>{submittals.map((sub) => <SubRow key={sub.id} sub={sub} onReview={setReviewSubId} projectId={projectId} />)}</TableBody>
         </Table>
       )}
-      <Dialog
-        open={!!reviewSubId}
-        onOpenChange={(o) => {
-          if (!o) setReviewSubId(null);
-        }}
-      >
+      <Dialog open={!!reviewSubId} onOpenChange={(o) => { if (!o) setReviewSubId(null); }}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Review Submittal</DialogTitle>
-          </DialogHeader>
-          {reviewSubId && (
-            <SubmittalReviewForm
-              projectId={projectId}
-              subId={reviewSubId}
-              onSuccess={() => setReviewSubId(null)}
-              onCancel={() => setReviewSubId(null)}
-            />
-          )}
+          <DialogHeader><DialogTitle>Review Submittal</DialogTitle></DialogHeader>
+          {reviewSubId && <SubmittalReviewForm projectId={projectId} subId={reviewSubId} onSuccess={() => setReviewSubId(null)} onCancel={() => setReviewSubId(null)} />}
         </DialogContent>
       </Dialog>
     </div>

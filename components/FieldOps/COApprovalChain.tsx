@@ -97,6 +97,7 @@ export function COApprovalChain({
       </div>
       <ol className="relative border-l border-border ml-2.5">
         {steps.map((step, idx) => (
+          // eslint-disable-next-line react/no-array-index-key
           <li key={idx} className="mb-6 ml-6 last:mb-0">
             <span
               className={cn(

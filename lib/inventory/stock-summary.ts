@@ -3,7 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
 import type { Database } from '@/types/supabase';
 
-type LedgerRow = Database['public']['Tables']['inventory_ledger']['Row'];
+type _LedgerRow = Database['public']['Tables']['inventory_ledger']['Row'];
 
 // ============================================================
 // Types

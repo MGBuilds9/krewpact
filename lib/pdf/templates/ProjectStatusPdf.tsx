@@ -1,8 +1,9 @@
 import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
 import React from 'react';
 
-import type { ProjectStatusPdfData } from '../types';
 import { formatStatus } from '@/lib/format-status';
+
+import type { ProjectStatusPdfData } from '../types';
 
 const styles = StyleSheet.create({
   page: { padding: 40, fontFamily: 'Helvetica', fontSize: 10 },
@@ -46,6 +47,7 @@ function ProjectHeader({ data }: { data: ProjectStatusPdfData }) {
   return (
     <View style={styles.header}>
       <View style={styles.logoRow}>
+        {/* eslint-disable-next-line jsx-a11y/alt-text */}
         <Image style={styles.logo} src="/mdm-logo.svg" />
         <Text style={styles.companyName}>{data.companyName}</Text>
       </View>

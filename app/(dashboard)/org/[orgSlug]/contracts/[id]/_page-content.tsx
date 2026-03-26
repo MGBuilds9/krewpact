@@ -144,84 +144,49 @@ export default function ContractDetailPage() {
   const [amendDialogOpen, setAmendDialogOpen] = useState(false);
   const { data: contract, isLoading: contractLoading } = useContractTerm(id);
   const { data: envelopesData, isLoading: envelopesLoading } = useESignEnvelopes(id);
-  const envelopes = envelopesData ? envelopesData.data || [] : [];
+  const envelopes = envelopesData?.data ?? [];
 
-  if (contractLoading) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-64 animate-pulse" />
-        <Skeleton className="h-40 rounded-xl animate-pulse" />
-        <Skeleton className="h-32 rounded-xl animate-pulse" />
-      </div>
-    );
-  }
-  if (!contract) {
-    return (
-      <div className="space-y-4">
-        <Button variant="ghost" onClick={() => router.back()}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
-        </Button>
-        <Card>
-          <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground">Contract not found.</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  if (contractLoading) return (
+    <div className="space-y-4">
+      <Skeleton className="h-8 w-64 animate-pulse" />
+      <Skeleton className="h-40 rounded-xl animate-pulse" />
+      <Skeleton className="h-32 rounded-xl animate-pulse" />
+    </div>
+  );
+  if (!contract) return (
+    <div className="space-y-4">
+      <Button variant="ghost" onClick={() => router.back()}><ArrowLeft className="h-4 w-4 mr-2" />Back</Button>
+      <Card><CardContent className="py-12 text-center"><p className="text-muted-foreground">Contract not found.</p></CardContent></Card>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => router.back()}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
+          <Button variant="ghost" size="sm" onClick={() => router.back()}><ArrowLeft className="h-4 w-4 mr-2" />Back</Button>
           <h1 className="text-xl font-semibold">{contract.legal_text_version}</h1>
-          <Badge
-            variant="outline"
-            className={`border ${CONTRACT_STATUS_COLORS[contract.contract_status] || ''}`}
-          >
+          <Badge variant="outline" className={`border ${CONTRACT_STATUS_COLORS[contract.contract_status] || ''}`}>
             {CONTRACT_STATUS_LABELS[contract.contract_status] || contract.contract_status}
           </Badge>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setAmendDialogOpen(true)}>
-            <FilePen className="h-4 w-4 mr-2" />
-            Amend Contract
-          </Button>
-          <Button onClick={() => setESignDialogOpen(true)}>
-            <FileSignature className="h-4 w-4 mr-2" />
-            Create E-Sign Envelope
-          </Button>
+          <Button variant="outline" onClick={() => setAmendDialogOpen(true)}><FilePen className="h-4 w-4 mr-2" />Amend Contract</Button>
+          <Button onClick={() => setESignDialogOpen(true)}><FileSignature className="h-4 w-4 mr-2" />Create E-Sign Envelope</Button>
         </div>
       </div>
       <ContractInfo contract={contract} />
       <EnvelopesCard envelopes={envelopes} isLoading={envelopesLoading} />
       <Dialog open={eSignDialogOpen} onOpenChange={setESignDialogOpen}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create E-Sign Envelope</DialogTitle>
-          </DialogHeader>
-          <ESignEnvelopeForm
-            contractId={id}
-            onSuccess={() => setESignDialogOpen(false)}
-            onCancel={() => setESignDialogOpen(false)}
-          />
+          <DialogHeader><DialogTitle>Create E-Sign Envelope</DialogTitle></DialogHeader>
+          <ESignEnvelopeForm contractId={id} onSuccess={() => setESignDialogOpen(false)} onCancel={() => setESignDialogOpen(false)} />
         </DialogContent>
       </Dialog>
       <Dialog open={amendDialogOpen} onOpenChange={setAmendDialogOpen}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Amend Contract</DialogTitle>
-          </DialogHeader>
-          <ContractAmendmentForm
-            contractId={id}
-            onSuccess={() => setAmendDialogOpen(false)}
-            onCancel={() => setAmendDialogOpen(false)}
-          />
+          <DialogHeader><DialogTitle>Amend Contract</DialogTitle></DialogHeader>
+          <ContractAmendmentForm contractId={id} onSuccess={() => setAmendDialogOpen(false)} onCancel={() => setAmendDialogOpen(false)} />
         </DialogContent>
       </Dialog>
     </div>

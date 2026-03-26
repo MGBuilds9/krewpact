@@ -7,7 +7,6 @@ import { CloseoutPackageForm } from '@/components/Closeout/CloseoutPackageForm';
 import { DeficiencyItemForm } from '@/components/Closeout/DeficiencyItemForm';
 import { ServiceCallForm } from '@/components/Closeout/ServiceCallForm';
 import { Badge } from '@/components/ui/badge';
-import { formatStatus } from '@/lib/format-status';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -20,6 +19,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCloseoutPackages, useDeficiencies, useServiceCalls } from '@/hooks/useCloseout';
+import { formatStatus } from '@/lib/format-status';
 
 type Pkg = { id: string; status: string };
 type Def = { id: string; title: string; severity?: string | null; status: string };

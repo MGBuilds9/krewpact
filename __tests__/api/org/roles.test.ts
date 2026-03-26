@@ -20,12 +20,12 @@ vi.mock('@/lib/supabase/server', () => ({
   createUserClientSafe: vi.fn(),
 }));
 
-import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { makeRequest, mockClerkAuth, mockClerkUnauth, mockSupabaseClient } from '@/__tests__/helpers';
+import { NextResponse } from 'next/server';
 
+import { makeRequest, mockClerkAuth, mockClerkUnauth, mockSupabaseClient } from '@/__tests__/helpers';
 import { GET } from '@/app/api/org/roles/route';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
@@ -84,7 +84,7 @@ describe('GET /api/org/roles — RBAC', () => {
       return chain;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     mockCreateUserClientSafe.mockResolvedValue({
       client: { from: vi.fn().mockReturnValue(makeChain(SAMPLE_ROLES, 2)) } as any,
       error: null,
@@ -111,7 +111,7 @@ describe('GET /api/org/roles — RBAC', () => {
       return chain;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     mockCreateUserClientSafe.mockResolvedValue({
       client: { from: vi.fn().mockReturnValue(makeChain([SAMPLE_ROLES[0]], 1)) } as any,
       error: null,

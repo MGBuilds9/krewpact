@@ -5,7 +5,6 @@ import { CheckCircle, Pencil, ShieldAlert, XCircle } from 'lucide-react';
 import { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
-import { formatStatus } from '@/lib/format-status';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -17,6 +16,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { apiFetch } from '@/lib/api-client';
+import { formatStatus } from '@/lib/format-status';
 import { queryKeys } from '@/lib/query-keys';
 import { showToast } from '@/lib/toast';
 

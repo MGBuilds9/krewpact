@@ -2,8 +2,8 @@ import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
-import { createUserClientSafe } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 type RouteContext = { params: Promise<{ id: string }> };
 

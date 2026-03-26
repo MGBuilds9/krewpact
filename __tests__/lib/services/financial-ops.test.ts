@@ -8,12 +8,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  HOLDBACK_DAYS,
-  HOLDBACK_RATE,
   calculateHoldbacks,
   getAgedReceivables,
   getHoldbackSchedule,
   getPaymentHistory,
+  HOLDBACK_DAYS,
+  HOLDBACK_RATE,
 } from '@/lib/services/financial-ops';
 
 const mockFrom = vi.fn();

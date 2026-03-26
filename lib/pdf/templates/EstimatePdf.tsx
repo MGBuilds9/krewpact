@@ -86,6 +86,7 @@ export function EstimatePdf({ data }: { data: EstimatePdfData }) {
       <Page size="LETTER" style={styles.page}>
         <View style={styles.header}>
           <View style={styles.logoRow}>
+            {/* eslint-disable-next-line jsx-a11y/alt-text */}
             <Image style={styles.logo} src="/mdm-logo.svg" />
             <Text style={styles.companyName}>{data.companyName}</Text>
           </View>

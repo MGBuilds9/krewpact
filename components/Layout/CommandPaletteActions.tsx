@@ -91,8 +91,7 @@ export function CommandPaletteActions({
                     data-index={globalIndex}
                     onClick={() => onNavigate(item.href)}
                     className={cn(
-                      'w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors',
-                      'text-left',
+                      'w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left',
                       globalIndex === selectedIndex ? 'bg-accent' : 'hover:bg-accent',
                       pathname === item.href && 'bg-muted',
                     )}

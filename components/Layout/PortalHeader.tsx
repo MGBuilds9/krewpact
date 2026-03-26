@@ -4,8 +4,6 @@ import { useClerk, useUser } from '@clerk/nextjs';
 import { LogOut, Settings, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React from 'react';
-
-import { formatStatus } from '@/lib/format-status';
 import { toast } from 'sonner';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -19,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MDMLogo } from '@/components/ui/MDMLogo';
+import { formatStatus } from '@/lib/format-status';
 
 interface UserMenuProps {
   user: ReturnType<typeof useUser>['user'];

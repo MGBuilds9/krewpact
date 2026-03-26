@@ -43,95 +43,49 @@ export function DivisionProvider({ children }: { children: ReactNode }) {
   const [activeDivisionId, setActiveDivisionId] = useState<string | null>(null);
   const hasInitialized = React.useRef(false);
 
-  const {
-    data: userDivisions = [],
-    isLoading,
-    isError,
-    error,
-    refetch: refreshDivisions,
-  } = useQuery({
+  const { data: userDivisions = [], isLoading, isError, error, refetch: refreshDivisions } = useQuery({
     queryKey: ['user-divisions', currentUser?.id],
-    queryFn: () =>
-      apiFetch<DivisionWithRole[]>('/api/user/divisions', {
-        params: { user_id: currentUser!.id },
-      }),
+    queryFn: () => apiFetch<DivisionWithRole[]>('/api/user/divisions', { params: { user_id: currentUser!.id } }),
     enabled: !!currentUser?.id,
   });
 
   const { data: allDivisions = [] } = useQuery({
     queryKey: ['org-divisions-all'],
-    queryFn: () =>
-      apiFetch<{ data: { id: string; name: string; code: string | null }[] }>(
-        '/api/org/divisions?limit=100',
-      ).then((res) => res.data),
+    queryFn: () => apiFetch<{ data: { id: string; name: string; code: string | null }[] }>('/api/org/divisions?limit=100').then((res) => res.data),
     enabled: !!currentUser?.id,
     staleTime: 5 * 60 * 1000,
   });
 
-  // Set active division on first load
   useEffect(() => {
     if (!hasInitialized.current && userDivisions.length > 0 && !activeDivisionId) {
       hasInitialized.current = true;
-      const savedId =
-        typeof window !== 'undefined' ? localStorage.getItem('activeDivisionId') : null;
+      const savedId = typeof window !== 'undefined' ? localStorage.getItem('activeDivisionId') : null;
       if (savedId && userDivisions.some((d) => d.id === savedId)) {
         queueMicrotask(() => setActiveDivisionId(savedId));
       } else {
         const primary = userDivisions.find((d) => d.is_primary);
         const newId = primary ? primary.id : userDivisions[0].id;
         queueMicrotask(() => setActiveDivisionId(newId));
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('activeDivisionId', newId);
-        }
+        if (typeof window !== 'undefined') localStorage.setItem('activeDivisionId', newId);
       }
     }
   }, [userDivisions, activeDivisionId]);
 
   const activeDivision = userDivisions.find((d) => d.id === activeDivisionId) || null;
+  const hasMultipleDivisions = userDivisions.length > 1;
+  const canAccessDivision = (divisionId: string) => userDivisions.some((d) => d.id === divisionId);
+  const getDivisionRole = (divisionId: string) => userDivisions.find((d) => d.id === divisionId)?.user_role || null;
+  const getDivisionName = (divisionId: string | null | undefined) => !divisionId ? 'All Divisions' : allDivisions.find((d) => d.id === divisionId)?.name ?? 'Unknown Division';
 
   const setActiveDivision = (divisionId: string) => {
-    const hasAccess = userDivisions.some((d) => d.id === divisionId);
-    if (!hasAccess) return;
-
+    if (!userDivisions.some((d) => d.id === divisionId)) return;
     setActiveDivisionId(divisionId);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('activeDivisionId', divisionId);
-    }
+    if (typeof window !== 'undefined') localStorage.setItem('activeDivisionId', divisionId);
     queryClient.invalidateQueries();
   };
 
-  const hasMultipleDivisions = userDivisions.length > 1;
-
-  const canAccessDivision = (divisionId: string): boolean =>
-    userDivisions.some((d) => d.id === divisionId);
-
-  const getDivisionRole = (divisionId: string): string | null => {
-    const division = userDivisions.find((d) => d.id === divisionId);
-    return division?.user_role || null;
-  };
-
-  const getDivisionName = (divisionId: string | null | undefined): string => {
-    if (!divisionId) return 'All Divisions';
-    return allDivisions.find((d) => d.id === divisionId)?.name ?? 'Unknown Division';
-  };
-
   return (
-    <DivisionContext.Provider
-      value={{
-        activeDivision,
-        userDivisions,
-        isLoading,
-        isError,
-        error: error as Error | null,
-        setActiveDivision,
-        refreshDivisions,
-        hasMultipleDivisions,
-        canAccessDivision,
-        getDivisionRole,
-        allDivisions,
-        getDivisionName,
-      }}
-    >
+    <DivisionContext.Provider value={{ activeDivision, userDivisions, isLoading, isError, error: error as Error | null, setActiveDivision, refreshDivisions, hasMultipleDivisions, canAccessDivision, getDivisionRole, allDivisions, getDivisionName }}>
       {children}
     </DivisionContext.Provider>
   );

@@ -2,8 +2,8 @@
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { formatStatus } from '@/lib/format-status';
 import type { FleetVehicle } from '@/hooks/useFleetVehicles';
+import { formatStatus } from '@/lib/format-status';
 
 const statusStyle: Record<FleetVehicle['status'], string> = {
   active: 'bg-green-500/15 text-green-400 border-green-500/30',

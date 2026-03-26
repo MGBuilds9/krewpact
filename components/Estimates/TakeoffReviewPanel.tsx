@@ -1,7 +1,7 @@
 'use client';
 
 import { Check, Pencil, X } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -95,23 +95,187 @@ function EditRow({
   );
 }
 
+interface SubmitAcceptArgs {
+  estimateId: string;
+  jobId: string;
+  lines: ReviewLineState[];
+  onAccepted: () => void;
+  setIsSubmitting: (v: boolean) => void;
+}
+
+async function submitAcceptedLines({ estimateId, jobId, lines, onAccepted, setIsSubmitting }: SubmitAcceptArgs) {
+  const acceptedLines = lines
+    .filter((l) => l.reviewStatus === 'accepted')
+    .map((l) => ({
+      draft_line_id: l.id,
+      description: l.editedDescription ?? l.description,
+      quantity: l.editedQuantity ?? l.quantity,
+      unit: l.editedUnit ?? l.unit,
+      unit_cost: l.editedUnitCost ?? l.unit_cost ?? 0,
+      markup_pct: 0,
+    }));
+
+  setIsSubmitting(true);
+  try {
+    const res = await fetch(`/api/estimates/${estimateId}/takeoff/${jobId}/accept`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lines: acceptedLines }),
+    });
+    if (!res.ok) throw new Error(`Accept failed: ${res.status}`);
+    onAccepted();
+  } finally {
+    setIsSubmitting(false);
+  }
+}
+
+interface ReviewTableProps {
+  lines: ReviewLineState[];
+  accepted: number;
+  rejected: number;
+  pending: number;
+  isSubmitting: boolean;
+  onUpdate: (id: string, patch: Partial<ReviewLineState>) => void;
+  onAccept: () => void;
+}
+
+function ReviewTable({ lines, accepted, rejected, pending, isSubmitting, onUpdate, onAccept }: ReviewTableProps) {
+  return (
+    <CardContent className="p-0">
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b bg-muted/40 text-muted-foreground">
+              <th className="px-3 py-2 text-left font-medium">Trade</th>
+              <th className="px-3 py-2 text-left font-medium">Description</th>
+              <th className="px-3 py-2 text-right font-medium">Qty</th>
+              <th className="px-3 py-2 text-left font-medium">Unit</th>
+              <th className="px-3 py-2 text-right font-medium">Unit Cost</th>
+              <th className="px-3 py-2 text-center font-medium">Confidence</th>
+              <th className="px-3 py-2 text-center font-medium">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {lines.map((line) => (
+              <ReviewLineRow key={line.id} line={line} onUpdate={onUpdate} />
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="flex items-center justify-between px-4 py-3 border-t bg-muted/30">
+        <span className="text-sm text-muted-foreground">
+          {accepted} accepted &middot; {rejected} rejected &middot; {pending} pending
+        </span>
+        <Button onClick={onAccept} disabled={accepted === 0 || isSubmitting}>
+          {isSubmitting ? 'Accepting...' : `Accept ${accepted} Line${accepted !== 1 ? 's' : ''}`}
+        </Button>
+      </div>
+    </CardContent>
+  );
+}
+
+interface BulkActionsBarProps {
+  onAcceptAll: () => void;
+  onAcceptHighConfidence: () => void;
+  onRejectRemaining: () => void;
+}
+
+function BulkActionsBar({ onAcceptAll, onAcceptHighConfidence, onRejectRemaining }: BulkActionsBarProps) {
+  return (
+    <div className="flex gap-2">
+      <Button size="sm" variant="outline" onClick={onAcceptAll}>Accept All</Button>
+      <Button size="sm" variant="outline" onClick={onAcceptHighConfidence}>Accept High Confidence</Button>
+      <Button size="sm" variant="outline" onClick={onRejectRemaining}>Reject Remaining</Button>
+    </div>
+  );
+}
+
+interface ReviewLineRowProps {
+  line: ReviewLineState;
+  onUpdate: (id: string, patch: Partial<ReviewLineState>) => void;
+}
+
+function ReviewLineRow({ line, onUpdate }: ReviewLineRowProps) {
+  return (
+    <>
+      <tr
+        className={`border-b transition-colors ${
+          line.reviewStatus === 'accepted'
+            ? 'bg-green-50/50'
+            : line.reviewStatus === 'rejected'
+              ? 'bg-red-50/50 opacity-60'
+              : ''
+        }`}
+      >
+        <td className="px-3 py-2 text-muted-foreground">{line.trade}</td>
+        <td className="px-3 py-2">{line.editedDescription ?? line.description}</td>
+        <td className="px-3 py-2 text-right">{line.editedQuantity ?? line.quantity}</td>
+        <td className="px-3 py-2">{line.editedUnit ?? line.unit}</td>
+        <td className="px-3 py-2 text-right">
+          {(line.editedUnitCost ?? line.unit_cost) != null
+            ? `$${(line.editedUnitCost ?? line.unit_cost!).toFixed(2)}`
+            : '—'}
+        </td>
+        <td className="px-3 py-2 text-center">
+          <ConfidenceBadge confidence={line.confidence} />
+        </td>
+        <td className="px-3 py-2">
+          <div className="flex items-center justify-center gap-1">
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7 text-green-600 hover:text-green-700"
+              onClick={() => onUpdate(line.id, { reviewStatus: 'accepted' })}
+            >
+              <Check className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7"
+              onClick={() => onUpdate(line.id, { isEditing: !line.isEditing })}
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7 text-destructive hover:text-destructive"
+              onClick={() => onUpdate(line.id, { reviewStatus: 'rejected' })}
+            >
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </td>
+      </tr>
+      {line.isEditing && (
+        <tr className="border-b bg-muted/20">
+          <EditRow line={line} onSave={(vals) => onUpdate(line.id, vals)} />
+        </tr>
+      )}
+    </>
+  );
+}
+
 export function TakeoffReviewPanel({ estimateId, jobId, onAccepted }: TakeoffReviewPanelProps) {
   const { data: draftLines, isLoading } = useTakeoffDraftLines(estimateId, jobId);
-  const [lineStates, setLineStates] = useState<Map<string, ReviewLineState>>(new Map());
+  const [overrides, setOverrides] = useState<Map<string, Partial<ReviewLineState>>>(new Map());
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (!draftLines?.length) return;
-    setLineStates(
-      new Map(draftLines.map((l) => [l.id, { ...l, reviewStatus: 'pending', isEditing: false }])),
+  const lineStates = useMemo<Map<string, ReviewLineState>>(() => {
+    if (!draftLines?.length) return new Map();
+    return new Map(
+      draftLines.map((l) => [
+        l.id,
+        { ...l, reviewStatus: 'pending', isEditing: false, ...(overrides.get(l.id) ?? {}) },
+      ]),
     );
-  }, [draftLines]);
+  }, [draftLines, overrides]);
 
   const updateLine = useCallback((id: string, patch: Partial<ReviewLineState>) => {
-    setLineStates((prev) => {
+    setOverrides((prev) => {
       const next = new Map(prev);
-      const existing = next.get(id);
-      if (existing) next.set(id, { ...existing, ...patch });
+      next.set(id, { ...(next.get(id) ?? {}), ...patch });
       return next;
     });
   }, []);
@@ -125,39 +289,17 @@ export function TakeoffReviewPanel({ estimateId, jobId, onAccepted }: TakeoffRev
     filter: (l: ReviewLineState) => boolean,
     status: ReviewLineState['reviewStatus'],
   ) {
-    setLineStates((prev) => {
+    setOverrides((prev) => {
       const next = new Map(prev);
-      for (const [id, line] of next) {
-        if (filter(line)) next.set(id, { ...line, reviewStatus: status });
+      for (const [id, line] of lineStates) {
+        if (filter(line)) next.set(id, { ...(prev.get(id) ?? {}), reviewStatus: status });
       }
       return next;
     });
   }
 
-  async function handleAccept() {
-    const acceptedLines = lines
-      .filter((l) => l.reviewStatus === 'accepted')
-      .map((l) => ({
-        draft_line_id: l.id,
-        description: l.editedDescription ?? l.description,
-        quantity: l.editedQuantity ?? l.quantity,
-        unit: l.editedUnit ?? l.unit,
-        unit_cost: l.editedUnitCost ?? l.unit_cost ?? 0,
-        markup_pct: 0,
-      }));
-
-    setIsSubmitting(true);
-    try {
-      const res = await fetch(`/api/estimates/${estimateId}/takeoff/${jobId}/accept`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lines: acceptedLines }),
-      });
-      if (!res.ok) throw new Error(`Accept failed: ${res.status}`);
-      onAccepted();
-    } finally {
-      setIsSubmitting(false);
-    }
+  function handleAccept() {
+    void submitAcceptedLines({ estimateId, jobId, lines, onAccepted, setIsSubmitting });
   }
 
   if (isLoading) {
@@ -175,120 +317,24 @@ export function TakeoffReviewPanel({ estimateId, jobId, onAccepted }: TakeoffRev
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base">Review Takeoff Lines</CardTitle>
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => bulkSet((l) => l.reviewStatus === 'pending', 'accepted')}
-            >
-              Accept All
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() =>
-                bulkSet((l) => l.reviewStatus === 'pending' && l.confidence > 0.8, 'accepted')
-              }
-            >
-              Accept High Confidence
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => bulkSet((l) => l.reviewStatus === 'pending', 'rejected')}
-            >
-              Reject Remaining
-            </Button>
-          </div>
+          <BulkActionsBar
+            onAcceptAll={() => bulkSet((l) => l.reviewStatus === 'pending', 'accepted')}
+            onAcceptHighConfidence={() =>
+              bulkSet((l) => l.reviewStatus === 'pending' && l.confidence > 0.8, 'accepted')
+            }
+            onRejectRemaining={() => bulkSet((l) => l.reviewStatus === 'pending', 'rejected')}
+          />
         </div>
       </CardHeader>
-      <CardContent className="p-0">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b bg-muted/40 text-muted-foreground">
-                <th className="px-3 py-2 text-left font-medium">Trade</th>
-                <th className="px-3 py-2 text-left font-medium">Description</th>
-                <th className="px-3 py-2 text-right font-medium">Qty</th>
-                <th className="px-3 py-2 text-left font-medium">Unit</th>
-                <th className="px-3 py-2 text-right font-medium">Unit Cost</th>
-                <th className="px-3 py-2 text-center font-medium">Confidence</th>
-                <th className="px-3 py-2 text-center font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {lines.map((line) => (
-                <>
-                  <tr
-                    key={line.id}
-                    className={`border-b transition-colors ${
-                      line.reviewStatus === 'accepted'
-                        ? 'bg-green-50/50'
-                        : line.reviewStatus === 'rejected'
-                          ? 'bg-red-50/50 opacity-60'
-                          : ''
-                    }`}
-                  >
-                    <td className="px-3 py-2 text-muted-foreground">{line.trade}</td>
-                    <td className="px-3 py-2">{line.editedDescription ?? line.description}</td>
-                    <td className="px-3 py-2 text-right">{line.editedQuantity ?? line.quantity}</td>
-                    <td className="px-3 py-2">{line.editedUnit ?? line.unit}</td>
-                    <td className="px-3 py-2 text-right">
-                      {(line.editedUnitCost ?? line.unit_cost) != null
-                        ? `$${(line.editedUnitCost ?? line.unit_cost!).toFixed(2)}`
-                        : '—'}
-                    </td>
-                    <td className="px-3 py-2 text-center">
-                      <ConfidenceBadge confidence={line.confidence} />
-                    </td>
-                    <td className="px-3 py-2">
-                      <div className="flex items-center justify-center gap-1">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-7 w-7 text-green-600 hover:text-green-700"
-                          onClick={() => updateLine(line.id, { reviewStatus: 'accepted' })}
-                        >
-                          <Check className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-7 w-7"
-                          onClick={() => updateLine(line.id, { isEditing: !line.isEditing })}
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-7 w-7 text-destructive hover:text-destructive"
-                          onClick={() => updateLine(line.id, { reviewStatus: 'rejected' })}
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                  {line.isEditing && (
-                    <tr key={`${line.id}-edit`} className="border-b bg-muted/20">
-                      <EditRow line={line} onSave={(vals) => updateLine(line.id, vals)} />
-                    </tr>
-                  )}
-                </>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="flex items-center justify-between px-4 py-3 border-t bg-muted/30">
-          <span className="text-sm text-muted-foreground">
-            {accepted} accepted &middot; {rejected} rejected &middot; {pending} pending
-          </span>
-          <Button onClick={handleAccept} disabled={accepted === 0 || isSubmitting}>
-            {isSubmitting ? 'Accepting...' : `Accept ${accepted} Line${accepted !== 1 ? 's' : ''}`}
-          </Button>
-        </div>
-      </CardContent>
+      <ReviewTable
+        lines={lines}
+        accepted={accepted}
+        rejected={rejected}
+        pending={pending}
+        isSubmitting={isSubmitting}
+        onUpdate={updateLine}
+        onAccept={handleAccept}
+      />
     </Card>
   );
 }

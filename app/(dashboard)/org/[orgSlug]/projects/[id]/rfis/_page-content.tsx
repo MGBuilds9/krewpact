@@ -25,9 +25,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useAttachments } from '@/hooks/useDocumentControl';
 import type { RFIItem } from '@/hooks/useFieldOps';
 import { useRFIs } from '@/hooks/useFieldOps';
-import { useAttachments } from '@/hooks/useDocumentControl';
 
 const STATUS_COLORS: Record<RFIItem['status'], string> = {
   open: 'bg-yellow-100 text-yellow-800',
@@ -110,9 +110,8 @@ export default function RFIsPage() {
   const projectId = params.id as string;
   const [createOpen, setCreateOpen] = useState(false);
   const [respondRfiId, setRespondRfiId] = useState<string | null>(null);
-
   const { data, isLoading } = useRFIs(projectId);
-  const rfis = data ? data.data || [] : [];
+  const rfis = data?.data ?? [];
 
   return (
     <div className="space-y-6">
@@ -121,36 +120,19 @@ export default function RFIsPage() {
           <HelpCircle className="h-6 w-6 text-muted-foreground" />
           <div>
             <h1 className="text-2xl font-bold">RFIs</h1>
-            <p className="text-sm text-muted-foreground">
-              {data ? data.total || 0 : 0} requests for information
-            </p>
+            <p className="text-sm text-muted-foreground">{data?.total ?? 0} requests for information</p>
           </div>
         </div>
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              New RFI
-            </Button>
-          </DialogTrigger>
+          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />New RFI</Button></DialogTrigger>
           <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Create RFI</DialogTitle>
-            </DialogHeader>
-            <RFICreateForm
-              projectId={projectId}
-              onSuccess={() => setCreateOpen(false)}
-              onCancel={() => setCreateOpen(false)}
-            />
+            <DialogHeader><DialogTitle>Create RFI</DialogTitle></DialogHeader>
+            <RFICreateForm projectId={projectId} onSuccess={() => setCreateOpen(false)} onCancel={() => setCreateOpen(false)} />
           </DialogContent>
         </Dialog>
       </div>
       {isLoading ? (
-        <div className="space-y-2">
-          {['r-1', 'r-2', 'r-3', 'r-4', 'r-5'].map((id) => (
-            <Skeleton key={id} className="h-14 w-full" />
-          ))}
-        </div>
+        <div className="space-y-2">{['r1','r2','r3','r4','r5'].map((k) => <Skeleton key={k} className="h-14 w-full" />)}</div>
       ) : rfis.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">
           <HelpCircle className="h-16 w-16 mx-auto mb-4 opacity-25" />
@@ -160,39 +142,15 @@ export default function RFIsPage() {
       ) : (
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Number</TableHead>
-              <TableHead>Title</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Due</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
+            <TableRow>{['Number','Title','Status','Due'].map((h) => <TableHead key={h}>{h}</TableHead>)}<TableHead className="text-right">Actions</TableHead></TableRow>
           </TableHeader>
-          <TableBody>
-            {rfis.map((rfi) => (
-              <RFIRow key={rfi.id} rfi={rfi} onRespond={setRespondRfiId} projectId={projectId} />
-            ))}
-          </TableBody>
+          <TableBody>{rfis.map((rfi) => <RFIRow key={rfi.id} rfi={rfi} onRespond={setRespondRfiId} projectId={projectId} />)}</TableBody>
         </Table>
       )}
-      <Dialog
-        open={!!respondRfiId}
-        onOpenChange={(o) => {
-          if (!o) setRespondRfiId(null);
-        }}
-      >
+      <Dialog open={!!respondRfiId} onOpenChange={(o) => { if (!o) setRespondRfiId(null); }}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Post Response</DialogTitle>
-          </DialogHeader>
-          {respondRfiId && (
-            <RFIResponseForm
-              projectId={projectId}
-              rfiId={respondRfiId}
-              onSuccess={() => setRespondRfiId(null)}
-              onCancel={() => setRespondRfiId(null)}
-            />
-          )}
+          <DialogHeader><DialogTitle>Post Response</DialogTitle></DialogHeader>
+          {respondRfiId && <RFIResponseForm projectId={projectId} rfiId={respondRfiId} onSuccess={() => setRespondRfiId(null)} onCancel={() => setRespondRfiId(null)} />}
         </DialogContent>
       </Dialog>
     </div>

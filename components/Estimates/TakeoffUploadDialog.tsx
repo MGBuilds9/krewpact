@@ -153,8 +153,8 @@ export function TakeoffUploadDialog({
         {files.length > 0 && (
           <div className="space-y-2">
             {files.map((file, i) => (
-              <div
-                key={`${file.name}-${i}`}
+              // eslint-disable-next-line react/no-array-index-key
+              <div key={`${file.name}-${i}`}
                 className="flex items-center justify-between text-sm border rounded-lg px-3 py-2"
               >
                 <div className="flex items-center gap-2 min-w-0">

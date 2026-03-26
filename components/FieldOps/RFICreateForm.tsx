@@ -57,73 +57,26 @@ export function RFICreateForm({ projectId, onSuccess, onCancel }: RFICreateFormP
     }
   }
 
+  const ff = form.control;
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="rfi_number"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>RFI Number</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g. RFI-001" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="due_at"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Due Date (optional)</FormLabel>
-                <FormControl>
-                  <Input type="datetime-local" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <FormField control={ff} name="rfi_number" render={({ field }) => (
+            <FormItem><FormLabel>RFI Number</FormLabel><FormControl><Input placeholder="e.g. RFI-001" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <FormField control={ff} name="due_at" render={({ field }) => (
+            <FormItem><FormLabel>Due Date (optional)</FormLabel><FormControl><Input type="datetime-local" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
         </div>
-        <FormField
-          control={form.control}
-          name="title"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Title</FormLabel>
-              <FormControl>
-                <Input placeholder="Brief description of the question" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="question_text"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Question</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Provide detailed question or clarification request..."
-                  rows={4}
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <FormField control={ff} name="title" render={({ field }) => (
+          <FormItem><FormLabel>Title</FormLabel><FormControl><Input placeholder="Brief description of the question" {...field} /></FormControl><FormMessage /></FormItem>
+        )} />
+        <FormField control={ff} name="question_text" render={({ field }) => (
+          <FormItem><FormLabel>Question</FormLabel><FormControl><Textarea placeholder="Provide detailed question or clarification request..." rows={4} {...field} /></FormControl><FormMessage /></FormItem>
+        )} />
         <div className="flex gap-2 justify-end">
-          {onCancel && (
-            <Button type="button" variant="outline" onClick={onCancel}>
-              Cancel
-            </Button>
-          )}
+          {onCancel && <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>}
           <Button type="submit" disabled={createRFI.isPending}>
             {createRFI.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             Submit RFI

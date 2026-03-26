@@ -19,10 +19,11 @@ vi.mock('@/lib/api/rate-limit', () => ({
   rateLimitResponse: vi.fn(),
 }));
 
-import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { getAgedReceivables } from '@/lib/services/financial-ops';
+import { NextResponse } from 'next/server';
+
 import { makeRequest, mockClerkAuth, mockClerkUnauth } from '@/__tests__/helpers';
+import { getAgedReceivables } from '@/lib/services/financial-ops';
 
 const mockAuth = vi.mocked(auth);
 const mockGetAgedReceivables = vi.mocked(getAgedReceivables);

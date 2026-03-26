@@ -72,69 +72,26 @@ export function ChangeOrderForm({
     }
   }
 
+  const ff = form.control;
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="co_number"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>CO Number</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g. CO-001" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="reason"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Reason (optional)</FormLabel>
-              <FormControl>
-                <Textarea placeholder="Reason for this change order..." rows={3} {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <FormField control={ff} name="co_number" render={({ field }) => (
+          <FormItem><FormLabel>CO Number</FormLabel><FormControl><Input placeholder="e.g. CO-001" {...field} /></FormControl><FormMessage /></FormItem>
+        )} />
+        <FormField control={ff} name="reason" render={({ field }) => (
+          <FormItem><FormLabel>Reason (optional)</FormLabel><FormControl><Textarea placeholder="Reason for this change order..." rows={3} {...field} /></FormControl><FormMessage /></FormItem>
+        )} />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="amount_delta"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Amount Delta (CAD)</FormLabel>
-                <FormControl>
-                  <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="days_delta"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Days Delta</FormLabel>
-                <FormControl>
-                  <Input type="number" step="1" placeholder="0" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <FormField control={ff} name="amount_delta" render={({ field }) => (
+            <FormItem><FormLabel>Amount Delta (CAD)</FormLabel><FormControl><Input type="number" step="0.01" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <FormField control={ff} name="days_delta" render={({ field }) => (
+            <FormItem><FormLabel>Days Delta</FormLabel><FormControl><Input type="number" step="1" placeholder="0" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
         </div>
         <div className="flex gap-2 justify-end">
-          {onCancel && (
-            <Button type="button" variant="outline" onClick={onCancel}>
-              Cancel
-            </Button>
-          )}
+          {onCancel && <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>}
           <Button type="submit" disabled={createCO.isPending}>
             {createCO.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             Create Change Order

@@ -3,7 +3,6 @@
 import { Cell, Pie, PieChart } from 'recharts';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { formatStatus } from '@/lib/format-status';
 import {
   type ChartConfig,
   ChartContainer,
@@ -14,6 +13,7 @@ import {
 } from '@/components/ui/chart';
 import type { SourceCategory } from '@/lib/crm/constants';
 import type { SourceMetrics } from '@/lib/crm/metrics';
+import { formatStatus } from '@/lib/format-status';
 
 const CATEGORY_PALETTES: Record<SourceCategory, string[]> = {
   inbound: ['hsl(210, 80%, 55%)', 'hsl(210, 70%, 65%)', 'hsl(200, 75%, 50%)', 'hsl(220, 70%, 60%)'],

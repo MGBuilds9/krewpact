@@ -29,12 +29,12 @@ vi.mock('@/lib/validators/time-expense', () => ({
   },
 }));
 
-import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { createUserClientSafe } from '@/lib/supabase/server';
-import { makeJsonRequest, mockClerkAuth, mockClerkUnauth, mockSupabaseClient } from '@/__tests__/helpers';
+import { NextResponse } from 'next/server';
 
+import { makeJsonRequest, mockClerkAuth, mockClerkUnauth, mockSupabaseClient } from '@/__tests__/helpers';
 import { POST } from '@/app/api/timesheet-batches/[batchId]/approve/route';
+import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);

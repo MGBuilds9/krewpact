@@ -22,9 +22,9 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { useDivision } from '@/contexts/DivisionContext';
 import {
+  type StockAdjustmentPayload,
   useInventoryItems,
   useStockAdjustment,
-  type StockAdjustmentPayload,
 } from '@/hooks/useInventory';
 import { useInventoryLocations } from '@/hooks/useInventoryLocations';
 

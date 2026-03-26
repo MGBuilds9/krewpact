@@ -2,7 +2,7 @@
 
 import { useParams } from 'next/navigation';
 
-import { usePortalMeetings, type MeetingNote } from '@/hooks/usePortalProject';
+import { type MeetingNote,usePortalMeetings } from '@/hooks/usePortalProject';
 
 function MeetingCard({ note }: { note: MeetingNote }) {
   return (
@@ -35,6 +35,7 @@ function MeetingCard({ note }: { note: MeetingNote }) {
           </p>
           <ul className="space-y-1">
             {note.action_items.map((item, idx) => (
+              // eslint-disable-next-line react/no-array-index-key
               <li key={idx} className="flex items-start gap-2 text-sm text-gray-700">
                 <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />
                 {item}

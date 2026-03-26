@@ -29,8 +29,8 @@ vi.mock('@/lib/feature-flags', () => ({
   isFeatureEnabled: vi.fn((key: string) => key !== '__disabled_test_flag__'),
 }));
 
-import { isFeatureEnabled } from '@/lib/feature-flags';
 import { FeatureGate } from '@/components/FeatureGate';
+import { isFeatureEnabled } from '@/lib/feature-flags';
 
 const mockIsFeatureEnabled = vi.mocked(isFeatureEnabled);
 

@@ -4,7 +4,6 @@ import { formatDistanceToNow } from 'date-fns';
 import { ArrowLeft, ShieldAlert } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
-import { formatStatus } from '@/lib/format-status';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -17,6 +16,7 @@ import {
 } from '@/components/ui/table';
 import { useSuppressionLog } from '@/hooks/crm/useSuppressionLog';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
+import { formatStatus } from '@/lib/format-status';
 
 export default function SuppressionLogPage() {
   const { push: orgPush } = useOrgRouter();

@@ -1,5 +1,5 @@
-import { createServiceClient, createUserClientSafe } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
+import { createServiceClient, createUserClientSafe } from '@/lib/supabase/server';
 import type { Attachment, DistributionLog } from '@/lib/validators/document-control';
 
 const BUCKET = 'documents';

@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { surveySubmissionSchema, type SurveySubmission } from '@/lib/validators/portal-survey';
+import { type SurveySubmission,surveySubmissionSchema } from '@/lib/validators/portal-survey';
 
 const RATING_LABELS: Record<number, string> = {
   1: 'Poor',

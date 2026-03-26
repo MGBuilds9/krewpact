@@ -218,7 +218,7 @@ export function useConfirmGoodsReceipt() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, poId }: { id: string; poId: string }) =>
+    mutationFn: ({ id, poId: _poId }: { id: string; poId: string }) =>
       apiFetch<GoodsReceipt>(`/api/inventory/goods-receipts/${id}/confirm`, { method: 'POST' }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({

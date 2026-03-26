@@ -19,8 +19,8 @@ import {
 } from '@/components/ui/table';
 import { useDivision } from '@/contexts/DivisionContext';
 import { useInventoryItems, useInventoryStock, useLowStockItems } from '@/hooks/useInventory';
-import { usePurchaseOrders } from '@/hooks/usePurchaseOrders';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
+import { usePurchaseOrders } from '@/hooks/usePurchaseOrders';
 import { formatCurrency } from '@/lib/date';
 
 function QuickActions() {

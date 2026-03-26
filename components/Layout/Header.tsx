@@ -3,8 +3,8 @@
 import { useClerk, useUser } from '@clerk/nextjs';
 import { Bell, Eye, LogOut, Menu, Moon, Search, Settings, Sun, X } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import { useTheme } from 'next-themes';
 import { usePathname } from 'next/navigation';
+import { useTheme } from 'next-themes';
 import React from 'react';
 import { toast } from 'sonner';
 

@@ -5,7 +5,6 @@ import { useParams } from 'next/navigation';
 import { useState } from 'react';
 
 import { ChangeOrderForm } from '@/components/FieldOps/ChangeOrderForm';
-import { formatStatus } from '@/lib/format-status';
 import { ChangeRequestForm } from '@/components/FieldOps/ChangeRequestForm';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,6 +26,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { ChangeOrder, ChangeRequest } from '@/hooks/useFieldOps';
 import { useChangeOrders, useChangeRequests } from '@/hooks/useFieldOps';
+import { formatStatus } from '@/lib/format-status';
 
 const CR_STATE_COLORS: Record<ChangeRequest['state'], string> = {
   draft: 'bg-gray-100 text-gray-700',
@@ -103,19 +103,20 @@ function CRRow({ cr }: { cr: ChangeRequest }) {
   );
 }
 
+function TableSkeleton({ keys }: { keys: string[] }) {
+  return <div className="space-y-2">{keys.map((k) => <Skeleton key={k} className="h-14 w-full" />)}</div>;
+}
+
 export default function ChangeOrdersPage() {
   const params = useParams();
   const projectId = params.id as string;
   const [crOpen, setCROpen] = useState(false);
   const [coOpen, setCOOpen] = useState(false);
-
   const { data: crData, isLoading: crLoading } = useChangeRequests(projectId);
   const { data: coData, isLoading: coLoading } = useChangeOrders(projectId);
-  const changeRequests = crData ? crData.data || [] : [];
-  const changeOrders = coData ? coData.data || [] : [];
-  const totalDelta = changeOrders
-    .filter((co) => co.status === 'approved')
-    .reduce((sum, co) => sum + (co.amount_delta || 0), 0);
+  const changeRequests = crData?.data ?? [];
+  const changeOrders = coData?.data ?? [];
+  const totalDelta = changeOrders.filter((co) => co.status === 'approved').reduce((sum, co) => sum + (co.amount_delta || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -129,39 +130,17 @@ export default function ChangeOrdersPage() {
         </div>
         <div className="flex gap-2">
           <Dialog open={crOpen} onOpenChange={setCROpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline">
-                <Plus className="h-4 w-4 mr-2" />
-                Change Request
-              </Button>
-            </DialogTrigger>
+            <DialogTrigger asChild><Button variant="outline"><Plus className="h-4 w-4 mr-2" />Change Request</Button></DialogTrigger>
             <DialogContent className="max-w-lg">
-              <DialogHeader>
-                <DialogTitle>Create Change Request</DialogTitle>
-              </DialogHeader>
-              <ChangeRequestForm
-                projectId={projectId}
-                onSuccess={() => setCROpen(false)}
-                onCancel={() => setCROpen(false)}
-              />
+              <DialogHeader><DialogTitle>Create Change Request</DialogTitle></DialogHeader>
+              <ChangeRequestForm projectId={projectId} onSuccess={() => setCROpen(false)} onCancel={() => setCROpen(false)} />
             </DialogContent>
           </Dialog>
           <Dialog open={coOpen} onOpenChange={setCOOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Change Order
-              </Button>
-            </DialogTrigger>
+            <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Change Order</Button></DialogTrigger>
             <DialogContent className="max-w-lg">
-              <DialogHeader>
-                <DialogTitle>Create Change Order</DialogTitle>
-              </DialogHeader>
-              <ChangeOrderForm
-                projectId={projectId}
-                onSuccess={() => setCOOpen(false)}
-                onCancel={() => setCOOpen(false)}
-              />
+              <DialogHeader><DialogTitle>Create Change Order</DialogTitle></DialogHeader>
+              <ChangeOrderForm projectId={projectId} onSuccess={() => setCOOpen(false)} onCancel={() => setCOOpen(false)} />
             </DialogContent>
           </Dialog>
         </div>
@@ -169,18 +148,10 @@ export default function ChangeOrdersPage() {
       <Tabs defaultValue="change-orders">
         <TabsList>
           <TabsTrigger value="change-orders">Change Orders ({changeOrders.length})</TabsTrigger>
-          <TabsTrigger value="change-requests">
-            Change Requests ({changeRequests.length})
-          </TabsTrigger>
+          <TabsTrigger value="change-requests">Change Requests ({changeRequests.length})</TabsTrigger>
         </TabsList>
         <TabsContent value="change-orders" className="mt-4">
-          {coLoading ? (
-            <div className="space-y-2">
-              {['co-1', 'co-2', 'co-3', 'co-4'].map((id) => (
-                <Skeleton key={id} className="h-14 w-full" />
-              ))}
-            </div>
-          ) : changeOrders.length === 0 ? (
+          {coLoading ? <TableSkeleton keys={['co1','co2','co3','co4']} /> : changeOrders.length === 0 ? (
             <div className="text-center py-16 text-muted-foreground">
               <GitBranch className="h-16 w-16 mx-auto mb-4 opacity-25" />
               <p className="text-lg font-medium">No change orders yet</p>
@@ -188,50 +159,18 @@ export default function ChangeOrdersPage() {
             </div>
           ) : (
             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>CO Number</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Amount Delta</TableHead>
-                  <TableHead>Days Delta</TableHead>
-                  <TableHead>Approved</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {changeOrders.map((co) => (
-                  <CORow key={co.id} co={co} />
-                ))}
-              </TableBody>
+              <TableHeader><TableRow>{['CO Number','Status','Amount Delta','Days Delta','Approved'].map((h) => <TableHead key={h}>{h}</TableHead>)}</TableRow></TableHeader>
+              <TableBody>{changeOrders.map((co) => <CORow key={co.id} co={co} />)}</TableBody>
             </Table>
           )}
         </TabsContent>
         <TabsContent value="change-requests" className="mt-4">
-          {crLoading ? (
-            <div className="space-y-2">
-              {['cr-1', 'cr-2', 'cr-3', 'cr-4'].map((id) => (
-                <Skeleton key={id} className="h-14 w-full" />
-              ))}
-            </div>
-          ) : changeRequests.length === 0 ? (
-            <div className="text-center py-16 text-muted-foreground">
-              <p className="text-lg font-medium">No change requests yet</p>
-            </div>
+          {crLoading ? <TableSkeleton keys={['cr1','cr2','cr3','cr4']} /> : changeRequests.length === 0 ? (
+            <div className="text-center py-16 text-muted-foreground"><p className="text-lg font-medium">No change requests yet</p></div>
           ) : (
             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Number</TableHead>
-                  <TableHead>Title</TableHead>
-                  <TableHead>State</TableHead>
-                  <TableHead>Est. Cost</TableHead>
-                  <TableHead>Est. Days</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {changeRequests.map((cr) => (
-                  <CRRow key={cr.id} cr={cr} />
-                ))}
-              </TableBody>
+              <TableHeader><TableRow>{['Number','Title','State','Est. Cost','Est. Days'].map((h) => <TableHead key={h}>{h}</TableHead>)}</TableRow></TableHeader>
+              <TableBody>{changeRequests.map((cr) => <CRRow key={cr.id} cr={cr} />)}</TableBody>
             </Table>
           )}
         </TabsContent>

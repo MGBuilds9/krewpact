@@ -124,27 +124,21 @@ function ProjectCard({ project, onClick }: { project: Project; onClick: () => vo
   );
 }
 
+const PROJECT_STATUSES = ['planning','active','on_hold','completed','cancelled'] as const;
+const PROJECT_STATUS_LABELS: Record<string, string> = { planning:'Planning', active:'Active', on_hold:'On Hold', completed:'Completed', cancelled:'Cancelled' };
+
 export default function ProjectsPageContent() {
   const router = useRouter();
   const { activeDivision } = useDivision();
   const { data: projects } = useProjects({ divisionId: activeDivision?.id });
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-
-  const filteredProjects = (projects ?? []).filter((project) => {
-    const siteAddressStr =
-      typeof project.site_address === 'object'
-        ? (project.site_address as Record<string, string>)?.street || ''
-        : '';
-    const matchesSearch =
-      !search ||
-      project.project_name.toLowerCase().includes(search.toLowerCase()) ||
-      project.project_number?.toLowerCase().includes(search.toLowerCase()) ||
-      siteAddressStr.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
-    return matchesSearch && matchesStatus;
+  const lc = search.toLowerCase();
+  const filteredProjects = (projects ?? []).filter((p) => {
+    const addr = typeof p.site_address === 'object' ? (p.site_address as Record<string, string>)?.street || '' : '';
+    return (!search || p.project_name.toLowerCase().includes(lc) || p.project_number?.toLowerCase().includes(lc) || addr.toLowerCase().includes(lc))
+      && (statusFilter === 'all' || p.status === statusFilter);
   });
-
   const hasNoProjects = projects?.length === 0;
 
   return (
@@ -154,9 +148,7 @@ export default function ProjectsPageContent() {
           <Briefcase className="h-8 w-8 text-primary" />
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Projects</h1>
-            <p className="text-muted-foreground">
-              {filteredProjects.length} project{filteredProjects.length !== 1 ? 's' : ''}
-            </p>
+            <p className="text-muted-foreground">{filteredProjects.length} project{filteredProjects.length !== 1 ? 's' : ''}</p>
           </div>
         </div>
         <ProjectCreationDialog />
@@ -164,51 +156,26 @@ export default function ProjectsPageContent() {
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search projects..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
-          />
+          <Input placeholder="Search projects..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-[180px]">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
+          <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by status" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="planning">Planning</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="on_hold">On Hold</SelectItem>
-            <SelectItem value="completed">Completed</SelectItem>
-            <SelectItem value="cancelled">Cancelled</SelectItem>
+            {PROJECT_STATUSES.map((s) => <SelectItem key={s} value={s}>{PROJECT_STATUS_LABELS[s]}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
       {filteredProjects.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <Briefcase className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-medium mb-2">
-              {hasNoProjects ? 'No projects yet' : 'No matching projects'}
-            </h3>
-            <p className="text-muted-foreground mb-4">
-              {hasNoProjects
-                ? 'Create your first project to get started'
-                : 'Try adjusting your search or filters'}
-            </p>
-            {hasNoProjects && <ProjectCreationDialog />}
-          </CardContent>
-        </Card>
+        <Card><CardContent className="py-12 text-center">
+          <Briefcase className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
+          <h3 className="text-lg font-medium mb-2">{hasNoProjects ? 'No projects yet' : 'No matching projects'}</h3>
+          <p className="text-muted-foreground mb-4">{hasNoProjects ? 'Create your first project to get started' : 'Try adjusting your search or filters'}</p>
+          {hasNoProjects && <ProjectCreationDialog />}
+        </CardContent></Card>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-max">
-          {filteredProjects.map((project) => (
-            <ProjectCard
-              key={project.id}
-              project={project}
-              onClick={() => router.push(`/projects/${project.id}`)}
-            />
-          ))}
+          {filteredProjects.map((project) => <ProjectCard key={project.id} project={project} onClick={() => router.push(`/projects/${project.id}`)} />)}
         </div>
       )}
     </div>

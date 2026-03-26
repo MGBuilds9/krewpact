@@ -3,8 +3,8 @@
 import { Gavel, Plus, Search, Upload } from 'lucide-react';
 import { useState } from 'react';
 
-import { BidImportDialog } from '@/components/CRM/BidImportDialog';
 import { BiddingCard } from '@/components/CRM/BiddingCard';
+import { BidImportDialog } from '@/components/CRM/BidImportDialog';
 import { BidToOpportunityButton } from '@/components/CRM/BidToOpportunityButton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

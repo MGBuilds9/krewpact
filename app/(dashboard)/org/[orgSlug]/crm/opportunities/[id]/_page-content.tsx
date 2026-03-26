@@ -24,7 +24,6 @@ import { OpportunityForm } from '@/components/CRM/OpportunityForm';
 import { OpportunityStageProgressBar } from '@/components/CRM/OpportunityStageProgressBar';
 import { WonDealDialog } from '@/components/CRM/WonDealDialog';
 import { Button } from '@/components/ui/button';
-import { formatStatus } from '@/lib/format-status';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ConfirmReasonDialog } from '@/components/ui/confirm-reason-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -40,6 +39,7 @@ import {
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 import type { OpportunityStage } from '@/lib/crm/opportunity-stages';
 import { ALLOWED_TRANSITIONS } from '@/lib/crm/opportunity-stages';
+import { formatStatus } from '@/lib/format-status';
 
 function formatCurrency(value: number | null): string {
   if (value == null) return '-';

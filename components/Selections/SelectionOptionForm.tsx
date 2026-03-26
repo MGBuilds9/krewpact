@@ -27,22 +27,9 @@ interface SelectionOptionFormProps {
   onCancel?: () => void;
 }
 
-export function SelectionOptionForm({
-  projectId,
-  sheetId,
-  onSuccess,
-  onCancel,
-}: SelectionOptionFormProps) {
+export function SelectionOptionForm({ projectId, sheetId, onSuccess, onCancel }: SelectionOptionFormProps) {
   const addOption = useAddSelectionOption(projectId, sheetId);
-  const form = useForm<FormState>({
-    defaultValues: {
-      option_group: '',
-      option_name: '',
-      allowance_amount: '',
-      upgrade_amount: '',
-      sort_order: '',
-    },
-  });
+  const form = useForm<FormState>({ defaultValues: { option_group: '', option_name: '', allowance_amount: '', upgrade_amount: '', sort_order: '' } });
 
   async function onSubmit(values: FormState) {
     try {
@@ -57,45 +44,27 @@ export function SelectionOptionForm({
       toast.success('Option added');
       form.reset();
       onSuccess?.();
-    } catch {
-      toast.error('Failed to add option');
-    }
+    } catch { toast.error('Failed to add option'); }
   }
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
       <div>
         <label className="text-sm font-medium">Option Group</label>
-        <Input
-          placeholder="e.g. Countertops"
-          {...form.register('option_group', { required: true })}
-        />
+        <Input placeholder="e.g. Countertops" {...form.register('option_group', { required: true })} />
       </div>
       <div>
         <label className="text-sm font-medium">Option Name</label>
-        <Input
-          placeholder="e.g. Quartz - White"
-          {...form.register('option_name', { required: true })}
-        />
+        <Input placeholder="e.g. Quartz - White" {...form.register('option_name', { required: true })} />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="text-sm font-medium">Allowance Amount (CAD)</label>
-          <Input
-            type="number"
-            step="0.01"
-            placeholder="0.00"
-            {...form.register('allowance_amount')}
-          />
+          <Input type="number" step="0.01" placeholder="0.00" {...form.register('allowance_amount')} />
         </div>
         <div>
           <label className="text-sm font-medium">Upgrade Amount (CAD)</label>
-          <Input
-            type="number"
-            step="0.01"
-            placeholder="0.00"
-            {...form.register('upgrade_amount')}
-          />
+          <Input type="number" step="0.01" placeholder="0.00" {...form.register('upgrade_amount')} />
         </div>
       </div>
       <div>
@@ -107,11 +76,7 @@ export function SelectionOptionForm({
           {addOption.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Add Option
         </Button>
-        {onCancel && (
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
-        )}
+        {onCancel && <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>}
       </div>
     </form>
   );

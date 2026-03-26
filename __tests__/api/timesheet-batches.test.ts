@@ -19,8 +19,8 @@ vi.mock('@/lib/api/org', () => ({
   getOrgIdFromAuth: vi.fn().mockResolvedValue('mdm-group'),
 }));
 
-import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
 
 import {
   makeJsonRequest,

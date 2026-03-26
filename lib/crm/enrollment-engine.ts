@@ -22,6 +22,17 @@ export interface EnrollmentResult {
   errors: string[];
 }
 
+function computeNextStepAt(
+  firstStep: { delay_days?: number | null; delay_hours?: number | null } | null,
+): Date {
+  const nextAt = new Date();
+  if (firstStep) {
+    nextAt.setDate(nextAt.getDate() + (firstStep.delay_days ?? 0));
+    nextAt.setHours(nextAt.getHours() + (firstStep.delay_hours ?? 0));
+  }
+  return nextAt;
+}
+
 async function processSequenceEnrollment(
   supabase: SupabaseClient,
   sequence: { id: string; trigger_conditions: unknown },
@@ -60,9 +71,7 @@ async function processSequenceEnrollment(
       .maybeSingle();
 
     if (existError) {
-      result.errors.push(
-        `Sequence ${sequence.id}: Failed to check existing enrollment: ${existError.message}`,
-      );
+      result.errors.push(`Sequence ${sequence.id}: Failed to check existing enrollment: ${existError.message}`);
       return;
     }
     if (existing) return;
@@ -76,16 +85,8 @@ async function processSequenceEnrollment(
       .maybeSingle();
 
     if (stepError) {
-      result.errors.push(
-        `Sequence ${sequence.id}: Failed to fetch first step: ${stepError.message}`,
-      );
+      result.errors.push(`Sequence ${sequence.id}: Failed to fetch first step: ${stepError.message}`);
       return;
-    }
-
-    const nextAt = new Date();
-    if (firstStep) {
-      nextAt.setDate(nextAt.getDate() + (firstStep.delay_days ?? 0));
-      nextAt.setHours(nextAt.getHours() + (firstStep.delay_hours ?? 0));
     }
 
     const { error: insertError } = await supabase.from('sequence_enrollments').insert({
@@ -95,16 +96,14 @@ async function processSequenceEnrollment(
       status: 'pending_review',
       current_step: firstStep ? firstStep.step_number : 1,
       current_step_id: firstStep ? firstStep.id : null,
-      next_step_at: nextAt.toISOString(),
+      next_step_at: computeNextStepAt(firstStep).toISOString(),
       trigger_type: event.type,
       trigger_event: event.data,
       enrolled_at: new Date().toISOString(),
     });
 
     if (insertError) {
-      result.errors.push(
-        `Sequence ${sequence.id}: Failed to create enrollment: ${insertError.message}`,
-      );
+      result.errors.push(`Sequence ${sequence.id}: Failed to create enrollment: ${insertError.message}`);
       return;
     }
 

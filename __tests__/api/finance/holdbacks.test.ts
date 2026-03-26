@@ -19,10 +19,11 @@ vi.mock('@/lib/api/org', () => ({
   getOrgIdFromAuth: vi.fn().mockResolvedValue('mdm-group'),
 }));
 
-import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { getHoldbackSchedule } from '@/lib/services/financial-ops';
+import { NextResponse } from 'next/server';
+
 import { makeRequest, mockClerkAuth, mockClerkUnauth } from '@/__tests__/helpers';
+import { getHoldbackSchedule } from '@/lib/services/financial-ops';
 
 const mockAuth = vi.mocked(auth);
 const mockGetHoldbackSchedule = vi.mocked(getHoldbackSchedule);

@@ -72,10 +72,8 @@ export default function PhotosPage() {
   const [category, setCategory] = useState<string>('all');
   const [annotatePhotoId, setAnnotatePhotoId] = useState<string | null>(null);
   const [addPhotoOpen, setAddPhotoOpen] = useState(false);
-
   const { data: photosData, isLoading } = usePhotos(projectId);
-  const rawPhotos = photosData ? photosData.data || [] : [];
-  const photos = rawPhotos.filter((p) => category === 'all' || p.category === category);
+  const photos = (photosData?.data ?? []).filter((p) => category === 'all' || p.category === category);
 
   return (
     <div className="space-y-6">
@@ -84,50 +82,25 @@ export default function PhotosPage() {
           <Camera className="h-6 w-6 text-muted-foreground" />
           <div>
             <h1 className="text-2xl font-bold">Site Photos</h1>
-            <p className="text-sm text-muted-foreground">
-              {photosData ? photosData.total || 0 : 0} photos
-            </p>
+            <p className="text-sm text-muted-foreground">{photosData?.total ?? 0} photos</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
           <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger className="w-44">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {CATEGORIES.map((cat) => (
-                <SelectItem key={cat} value={cat}>
-                  {formatCat(cat)}
-                </SelectItem>
-              ))}
-            </SelectContent>
+            <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+            <SelectContent>{CATEGORIES.map((cat) => <SelectItem key={cat} value={cat}>{formatCat(cat)}</SelectItem>)}</SelectContent>
           </Select>
           <Dialog open={addPhotoOpen} onOpenChange={setAddPhotoOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Photo
-              </Button>
-            </DialogTrigger>
+            <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Add Photo</Button></DialogTrigger>
             <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add Site Photo</DialogTitle>
-              </DialogHeader>
-              <PhotoCaptureForm
-                projectId={projectId}
-                onSuccess={() => setAddPhotoOpen(false)}
-                onCancel={() => setAddPhotoOpen(false)}
-              />
+              <DialogHeader><DialogTitle>Add Site Photo</DialogTitle></DialogHeader>
+              <PhotoCaptureForm projectId={projectId} onSuccess={() => setAddPhotoOpen(false)} onCancel={() => setAddPhotoOpen(false)} />
             </DialogContent>
           </Dialog>
         </div>
       </div>
       {isLoading ? (
-        <div className="grid grid-cols-3 gap-4">
-          {['p-1', 'p-2', 'p-3', 'p-4', 'p-5', 'p-6'].map((id) => (
-            <Skeleton key={id} className="h-48 w-full rounded-xl" />
-          ))}
-        </div>
+        <div className="grid grid-cols-3 gap-4">{['p1','p2','p3','p4','p5','p6'].map((k) => <Skeleton key={k} className="h-48 w-full rounded-xl" />)}</div>
       ) : photos.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">
           <Camera className="h-16 w-16 mx-auto mb-4 opacity-25" />
@@ -135,30 +108,12 @@ export default function PhotosPage() {
           <p className="text-sm">Document site progress with photos</p>
         </div>
       ) : (
-        <div className="grid grid-cols-3 gap-4">
-          {photos.map((photo) => (
-            <PhotoCard key={photo.id} photo={photo as Photo} onAnnotate={setAnnotatePhotoId} />
-          ))}
-        </div>
+        <div className="grid grid-cols-3 gap-4">{photos.map((photo) => <PhotoCard key={photo.id} photo={photo as Photo} onAnnotate={setAnnotatePhotoId} />)}</div>
       )}
-      <Dialog
-        open={!!annotatePhotoId}
-        onOpenChange={(o) => {
-          if (!o) setAnnotatePhotoId(null);
-        }}
-      >
+      <Dialog open={!!annotatePhotoId} onOpenChange={(o) => { if (!o) setAnnotatePhotoId(null); }}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add Annotation</DialogTitle>
-          </DialogHeader>
-          {annotatePhotoId && (
-            <PhotoAnnotationForm
-              projectId={projectId}
-              photoId={annotatePhotoId}
-              onSuccess={() => setAnnotatePhotoId(null)}
-              onCancel={() => setAnnotatePhotoId(null)}
-            />
-          )}
+          <DialogHeader><DialogTitle>Add Annotation</DialogTitle></DialogHeader>
+          {annotatePhotoId && <PhotoAnnotationForm projectId={projectId} photoId={annotatePhotoId} onSuccess={() => setAnnotatePhotoId(null)} onCancel={() => setAnnotatePhotoId(null)} />}
         </DialogContent>
       </Dialog>
     </div>

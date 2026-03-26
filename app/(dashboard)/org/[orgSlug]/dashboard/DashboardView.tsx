@@ -11,7 +11,6 @@ import {
   TrendingUp,
 } from 'lucide-react';
 
-
 import CalendarWidget from '@/components/Dashboard/CalendarWidget';
 import InboxPreview from '@/components/Dashboard/InboxPreview';
 import { Badge } from '@/components/ui/badge';

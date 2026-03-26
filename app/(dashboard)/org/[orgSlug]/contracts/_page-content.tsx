@@ -81,27 +81,17 @@ export default function ContractsPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [dialogOpen, setDialogOpen] = useState(false);
-  const { data, isLoading } = useContractTerms({
-    contractStatus: statusFilter !== 'all' ? statusFilter : undefined,
-  });
-  const contracts = (data ? data.data || [] : []).filter((c: ContractTerms) => {
-    if (!search) return true;
-    return (
-      c.legal_text_version.toLowerCase().includes(search.toLowerCase()) ||
-      c.proposal_id.toLowerCase().includes(search.toLowerCase())
-    );
-  });
+  const { data, isLoading } = useContractTerms({ contractStatus: statusFilter !== 'all' ? statusFilter : undefined });
+  const contracts = (data?.data ?? []).filter((c: ContractTerms) =>
+    !search || c.legal_text_version.toLowerCase().includes(search.toLowerCase()) || c.proposal_id.toLowerCase().includes(search.toLowerCase())
+  );
 
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-10 w-48 animate-pulse" />
-        {['c1', 'c2', 'c3'].map((i) => (
-          <Skeleton key={i} className="h-20 rounded-xl animate-pulse" />
-        ))}
-      </div>
-    );
-  }
+  if (isLoading) return (
+    <div className="space-y-4">
+      <Skeleton className="h-10 w-48 animate-pulse" />
+      {['c1','c2','c3'].map((k) => <Skeleton key={k} className="h-20 rounded-xl animate-pulse" />)}
+    </div>
+  );
 
   return (
     <>
@@ -110,62 +100,34 @@ export default function ContractsPage() {
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search contracts..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10"
-            />
+            <Input placeholder="Search contracts..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-[200px]">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
+            <SelectTrigger className="w-full sm:w-[200px]"><SelectValue placeholder="Filter by status" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Statuses</SelectItem>
-              {CONTRACT_STATUSES.map((status) => (
-                <SelectItem key={status} value={status}>
-                  {CONTRACT_STATUS_LABELS[status]}
-                </SelectItem>
-              ))}
+              {CONTRACT_STATUSES.map((s) => <SelectItem key={s} value={s}>{CONTRACT_STATUS_LABELS[s]}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Button onClick={() => setDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Contract
-          </Button>
+          <Button onClick={() => setDialogOpen(true)}><Plus className="h-4 w-4 mr-2" />New Contract</Button>
         </div>
         {contracts.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <FileText className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-              <h3 className="text-lg font-medium mb-2">No contracts yet</h3>
-              <p className="text-muted-foreground mb-4">
-                Create a contract from an accepted proposal
-              </p>
-            </CardContent>
-          </Card>
+          <Card><CardContent className="py-12 text-center">
+            <FileText className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
+            <h3 className="text-lg font-medium mb-2">No contracts yet</h3>
+            <p className="text-muted-foreground mb-4">Create a contract from an accepted proposal</p>
+          </CardContent></Card>
         ) : (
           <div className="grid gap-3">
             {contracts.map((contract: ContractTerms) => (
-              <ContractCard
-                key={contract.id}
-                contract={contract}
-                onClick={() => router.push(`/contracts/${contract.id}`)}
-              />
+              <ContractCard key={contract.id} contract={contract} onClick={() => router.push(`/contracts/${contract.id}`)} />
             ))}
           </div>
         )}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogContent>
-            <DialogHeader>
-              <DialogTitle>New Contract</DialogTitle>
-            </DialogHeader>
-            <ContractTermsForm
-              proposalId=""
-              onSuccess={() => setDialogOpen(false)}
-              onCancel={() => setDialogOpen(false)}
-            />
+            <DialogHeader><DialogTitle>New Contract</DialogTitle></DialogHeader>
+            <ContractTermsForm proposalId="" onSuccess={() => setDialogOpen(false)} onCancel={() => setDialogOpen(false)} />
           </DialogContent>
         </Dialog>
       </div>

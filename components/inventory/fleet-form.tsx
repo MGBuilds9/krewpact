@@ -2,8 +2,6 @@
 
 import { useState } from 'react';
 
-import { formatStatus } from '@/lib/format-status';
-
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -18,10 +16,11 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { useDivision } from '@/contexts/DivisionContext';
 import type { FleetVehicle } from '@/hooks/useFleetVehicles';
+import { formatStatus } from '@/lib/format-status';
 
 const VEHICLE_TYPES = ['truck', 'van', 'trailer', 'heavy_equipment', 'other'] as const;
 const STATUSES: FleetVehicle['status'][] = ['active', 'maintenance', 'decommissioned'];
-const OWNERSHIP_TYPES = ['owned', 'leased', 'rented'] as const;
+const _OWNERSHIP_TYPES = ['owned', 'leased', 'rented'] as const;
 
 interface FleetFormProps {
   vehicle?: FleetVehicle;

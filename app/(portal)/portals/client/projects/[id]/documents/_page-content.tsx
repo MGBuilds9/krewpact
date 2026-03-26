@@ -2,7 +2,7 @@
 
 import { useParams } from 'next/navigation';
 
-import { usePortalDocuments, type PortalDocument } from '@/hooks/usePortalProject';
+import { type PortalDocument,usePortalDocuments } from '@/hooks/usePortalProject';
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;

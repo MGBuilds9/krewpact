@@ -87,6 +87,7 @@ export default function TransactionsPageContent() {
       {isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 6 }).map((_, i) => (
+            // eslint-disable-next-line react/no-array-index-key
             <Skeleton key={`skel-${i}`} className="h-12 w-full rounded" />
           ))}
         </div>

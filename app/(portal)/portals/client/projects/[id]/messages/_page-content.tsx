@@ -6,11 +6,11 @@ import { useParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-import { type PortalMessage, usePortalMessages, useSendPortalMessage } from '@/hooks/usePortalMessages';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
+import { type PortalMessage, usePortalMessages, useSendPortalMessage } from '@/hooks/usePortalMessages';
 
 const sendMessageSchema = z.object({
   subject: z.string().max(255).optional(),

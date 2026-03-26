@@ -77,6 +77,22 @@ function EstimateCard({ estimate, onClick }: EstimateCardProps) {
   );
 }
 
+function EstimatesListSkeleton() {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-10 w-48 animate-pulse" />
+        <Skeleton className="h-10 w-36 animate-pulse" />
+      </div>
+      <div className="grid gap-4">
+        {['e1', 'e2', 'e3'].map((i) => (
+          <Skeleton key={i} className="h-20 rounded-xl animate-pulse" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function EstimatesListPage() {
   const { push: orgPush } = useOrgRouter();
   const { activeDivision } = useDivision();
@@ -88,21 +104,7 @@ export default function EstimatesListPage() {
     status: statusFilter !== 'all' ? statusFilter : undefined,
   });
 
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-10 w-48 animate-pulse" />
-          <Skeleton className="h-10 w-36 animate-pulse" />
-        </div>
-        <div className="grid gap-4">
-          {['e1', 'e2', 'e3'].map((i) => (
-            <Skeleton key={i} className="h-20 rounded-xl animate-pulse" />
-          ))}
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return <EstimatesListSkeleton />;
 
   const filtered = (estimates || []).filter(
     (est) => !search || est.estimate_number.toLowerCase().includes(search.toLowerCase()),

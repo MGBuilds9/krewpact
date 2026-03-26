@@ -23,20 +23,22 @@ export function DataTableSkeleton({
       {showHeader && (
         <div className="flex items-center gap-3 pb-1">
           {Array.from({ length: columns }).map((_, i) => (
+            // eslint-disable-next-line react/no-array-index-key
             <Skeleton key={i} className="h-4 flex-1" />
           ))}
         </div>
       )}
       <div className="rounded-md border">
         {Array.from({ length: rows }).map((_, rowIdx) => (
-          <div
-            key={rowIdx}
+          // eslint-disable-next-line react/no-array-index-key
+          <div key={rowIdx}
             className={cn(
               'flex items-center gap-3 px-4 py-3',
               rowIdx < rows - 1 && 'border-b',
             )}
           >
             {Array.from({ length: columns }).map((_, colIdx) => (
+              // eslint-disable-next-line react/no-array-index-key
               <Skeleton key={colIdx} className="h-4 flex-1" />
             ))}
           </div>

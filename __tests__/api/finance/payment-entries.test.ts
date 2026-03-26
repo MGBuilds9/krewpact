@@ -18,10 +18,11 @@ vi.mock('@/lib/api/org', () => ({
   requireRole: (...args: unknown[]) => mockRequireRole(...args),
 }));
 
-import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { getPaymentHistory } from '@/lib/services/financial-ops';
+import { NextResponse } from 'next/server';
+
 import { makeRequest, mockClerkAuth, mockClerkUnauth } from '@/__tests__/helpers';
+import { getPaymentHistory } from '@/lib/services/financial-ops';
 
 const mockAuth = vi.mocked(auth);
 const mockGetPaymentHistory = vi.mocked(getPaymentHistory);

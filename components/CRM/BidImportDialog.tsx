@@ -169,6 +169,7 @@ export function BidImportDialog({ open, onOpenChange }: BidImportDialogProps) {
                   </TableHeader>
                   <TableBody>
                     {preview.map((bid, i) => (
+                      // eslint-disable-next-line react/no-array-index-key
                       <TableRow key={i}>
                         <TableCell className="max-w-[200px] truncate">{bid.title}</TableCell>
                         <TableCell>{bid.source ?? '—'}</TableCell>

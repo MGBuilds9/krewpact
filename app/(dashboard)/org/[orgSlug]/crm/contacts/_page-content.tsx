@@ -164,34 +164,22 @@ export default function ContactsPage() {
   const [pageSize, setPageSize] = useState(25);
   const [sort, setSort] = useState<SortState | null>(null);
   const [viewMode, setViewMode] = useViewMode();
-
   const { data: response, isLoading } = useContacts({
     search: debouncedSearch || undefined,
-    limit: pageSize,
-    offset: page * pageSize,
-    sortBy: sort?.field,
-    sortDir: sort?.direction,
+    limit: pageSize, offset: page * pageSize,
+    sortBy: sort?.field, sortDir: sort?.direction,
   });
-
   const contacts = response?.data ?? [];
   const total = response?.total ?? 0;
 
-  if (isLoading && !response) {
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-10 w-48 animate-pulse" />
-        </div>
-        <div className="grid gap-4">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-20 rounded-xl animate-pulse" />
-          ))}
-        </div>
+  if (isLoading && !response) return (
+    <div className="space-y-4">
+      <Skeleton className="h-10 w-48 animate-pulse" />
+      <div className="grid gap-4">
+        {['s1','s2','s3'].map((k) => <Skeleton key={k} className="h-20 rounded-xl animate-pulse" />)}
       </div>
-    );
-  }
-
-  const isEmpty = contacts.length === 0 && !isLoading;
+    </div>
+  );
 
   return (
     <>
@@ -202,9 +190,7 @@ export default function ContactsPage() {
             <Users className="h-8 w-8 text-primary" />
             <div>
               <h1 className="text-3xl font-bold tracking-tight">Contacts</h1>
-              <p className="text-muted-foreground text-sm">
-                {total} contact{total !== 1 ? 's' : ''}
-              </p>
+              <p className="text-muted-foreground text-sm">{total} contact{total !== 1 ? 's' : ''}</p>
             </div>
           </div>
           <ViewToggle mode={viewMode} onChange={setViewMode} />
@@ -212,54 +198,23 @@ export default function ContactsPage() {
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search contacts..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(0);
-              }}
-              className="pl-10"
-            />
+            <Input placeholder="Search contacts..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} className="pl-10" />
           </div>
-          <Button onClick={() => orgPush('/crm/contacts/new')}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Contact
-          </Button>
+          <Button onClick={() => orgPush('/crm/contacts/new')}><Plus className="h-4 w-4 mr-2" />New Contact</Button>
         </div>
-        {isEmpty ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <Users className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-              <h3 className="text-lg font-medium mb-2">No contacts yet</h3>
-              <p className="text-muted-foreground mb-4">
-                Contacts are added through accounts or created directly
-              </p>
-            </CardContent>
-          </Card>
+        {contacts.length === 0 && !isLoading ? (
+          <Card><CardContent className="py-12 text-center">
+            <Users className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
+            <h3 className="text-lg font-medium mb-2">No contacts yet</h3>
+            <p className="text-muted-foreground mb-4">Contacts are added through accounts or created directly</p>
+          </CardContent></Card>
         ) : viewMode === 'table' ? (
-          <DataTable<Contact>
-            columns={contactColumns}
-            data={contacts}
-            total={total}
-            page={page}
-            pageSize={pageSize}
-            onPageChange={setPage}
-            onPageSizeChange={setPageSize}
-            onSortChange={setSort}
-            currentSort={sort}
-            onRowClick={(contact) => orgPush(`/crm/contacts/${contact.id}`)}
-            isLoading={isLoading}
-          />
+          <DataTable<Contact> columns={contactColumns} data={contacts} total={total} page={page} pageSize={pageSize}
+            onPageChange={setPage} onPageSizeChange={setPageSize} onSortChange={setSort} currentSort={sort}
+            onRowClick={(contact) => orgPush(`/crm/contacts/${contact.id}`)} isLoading={isLoading} />
         ) : (
-          <ContactCardView
-            contacts={contacts}
-            total={total}
-            page={page}
-            pageSize={pageSize}
-            onNavigate={(id) => orgPush(`/crm/contacts/${id}`)}
-            onPageChange={setPage}
-          />
+          <ContactCardView contacts={contacts} total={total} page={page} pageSize={pageSize}
+            onNavigate={(id) => orgPush(`/crm/contacts/${id}`)} onPageChange={setPage} />
         )}
       </div>
     </>

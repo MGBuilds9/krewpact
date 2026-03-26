@@ -20,15 +20,17 @@ function TableLayout({ rows = 5, columns = 4 }: { rows?: number; columns?: numbe
       <div className="rounded-md border">
         <div className="flex gap-3 px-4 py-3 border-b">
           {Array.from({ length: columns }).map((_, i) => (
+            // eslint-disable-next-line react/no-array-index-key
             <Skeleton key={i} className="h-4 flex-1" />
           ))}
         </div>
         {Array.from({ length: rows }).map((_, rowIdx) => (
-          <div
-            key={rowIdx}
+          // eslint-disable-next-line react/no-array-index-key
+          <div key={rowIdx}
             className={cn('flex gap-3 px-4 py-3', rowIdx < rows - 1 && 'border-b')}
           >
             {Array.from({ length: columns }).map((_, colIdx) => (
+              // eslint-disable-next-line react/no-array-index-key
               <Skeleton key={colIdx} className="h-4 flex-1" />
             ))}
           </div>
@@ -56,6 +58,7 @@ function CardsLayout({ rows = 6, columns = 3 }: { rows?: number; columns?: numbe
         )}
       >
         {Array.from({ length: count }).map((_, i) => (
+          // eslint-disable-next-line react/no-array-index-key
           <div key={i} className="rounded-lg border p-4 space-y-3">
             <Skeleton className="h-4 w-3/4" />
             <Skeleton className="h-8 w-1/2" />
@@ -75,6 +78,7 @@ function FormLayout({ rows = 6 }: { rows?: number }) {
         <Skeleton className="h-4 w-72 mt-2" />
       </div>
       {Array.from({ length: rows }).map((_, i) => (
+        // eslint-disable-next-line react/no-array-index-key
         <div key={i} className="space-y-2">
           <Skeleton className="h-4 w-24" />
           <Skeleton className="h-10 w-full" />
@@ -91,6 +95,7 @@ function DashboardLayout({ rows = 4, columns = 4 }: { rows?: number; columns?: n
       <Skeleton className="h-8 w-48" />
       <div className="grid grid-cols-4 gap-4">
         {Array.from({ length: columns }).map((_, i) => (
+          // eslint-disable-next-line react/no-array-index-key
           <div key={i} className="rounded-lg border p-4 space-y-2">
             <Skeleton className="h-4 w-24" />
             <Skeleton className="h-8 w-16" />
@@ -99,8 +104,8 @@ function DashboardLayout({ rows = 4, columns = 4 }: { rows?: number; columns?: n
       </div>
       <div className="rounded-md border">
         {Array.from({ length: rows }).map((_, rowIdx) => (
-          <div
-            key={rowIdx}
+          // eslint-disable-next-line react/no-array-index-key
+          <div key={rowIdx}
             className={cn('flex gap-3 px-4 py-3', rowIdx < rows - 1 && 'border-b')}
           >
             <Skeleton className="h-4 flex-1" />
