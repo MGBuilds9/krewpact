@@ -174,7 +174,7 @@ export function Navigation({ isMobile = false }: NavigationProps) {
 
   return (
     <TooltipProvider delayDuration={300}>
-      <div className="flex items-center justify-start gap-1 w-full relative">
+      <div className="flex items-center justify-start gap-1 w-full relative overflow-hidden min-w-0">
         {visibleItems.map((item) => {
           const href = orgPath(item.path);
           const isActive = strippedPath === item.path || strippedPath.startsWith(item.path + '/');

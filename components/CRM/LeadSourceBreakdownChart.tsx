@@ -3,6 +3,7 @@
 import { Cell, Pie, PieChart } from 'recharts';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { formatStatus } from '@/lib/format-status';
 import {
   type ChartConfig,
   ChartContainer,
@@ -52,7 +53,7 @@ export function LeadSourceBreakdownChart({ metrics }: LeadSourceBreakdownChartPr
     const color = getColorForSource(cat, categoryCounters[cat]);
     categoryCounters[cat]++;
     return {
-      name: s.source,
+      name: formatStatus(s.source),
       value: s.count,
       totalValue: s.value,
       conversionRate: s.conversionRate,

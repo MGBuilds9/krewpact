@@ -10,6 +10,7 @@ import {
   MapPin,
   TrendingUp,
 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 import CalendarWidget from '@/components/Dashboard/CalendarWidget';
 import InboxPreview from '@/components/Dashboard/InboxPreview';
@@ -53,14 +54,15 @@ type RecentProject = DashboardData['recentProjects'][number];
 
 interface WelcardProps {
   userName: string;
+  greeting: string;
   roles: { role_name: string; is_primary: boolean }[];
 }
-function WelcomeCard({ userName, roles }: WelcardProps) {
+function WelcomeCard({ userName, greeting, roles }: WelcardProps) {
   return (
     <Card className="col-span-1 md:col-span-4 lg:col-span-4 bg-gradient-to-br from-primary/10 via-background to-secondary/10 border-0 shadow-sm rounded-3xl overflow-hidden">
       <CardContent className="p-6 flex flex-col justify-center">
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-2">
-          {getTimeGreeting()}, {userName}
+          {greeting ? `${greeting}, ${userName}` : userName}
         </h1>
         <div className="flex gap-3 flex-wrap">
           {roles.length > 0 ? (
@@ -181,6 +183,11 @@ export default function DashboardView() {
   const { push: orgPush } = useOrgRouter();
   const { data: dashboard } = useDashboard();
   const { roles } = useUserRBAC();
+  const [greeting, setGreeting] = useState('');
+
+  useEffect(() => {
+    setGreeting(getTimeGreeting());
+  }, []);
 
   const userName = getUserName(user);
 
@@ -194,7 +201,7 @@ export default function DashboardView() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-6 auto-rows-min">
-        <WelcomeCard userName={userName} roles={roles} />
+        <WelcomeCard userName={userName} greeting={greeting} roles={roles} />
         <div className="col-span-1 md:col-span-4 lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-6">
           <Card
             className="group cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-300 rounded-3xl overflow-hidden border-0 bg-white dark:bg-card relative"

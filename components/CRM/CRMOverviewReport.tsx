@@ -171,7 +171,7 @@ export function CRMOverviewReport() {
               <div key={stage} className="text-center">
                 <p className="text-2xl font-bold">{count}</p>
                 <Badge variant="outline" className="mt-1">
-                  {stage.replace('_', ' ')}
+                  {formatStatus(stage)}
                 </Badge>
               </div>
             ))}

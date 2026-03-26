@@ -96,7 +96,7 @@ export function ForecastChartInner({ forecast, isLoading = false }: ForecastChar
           </div>
         ) : (
           <div className="h-[300px] w-full min-w-0">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
               <AreaChart data={forecast} margin={{ top: 4, right: 4, left: 8, bottom: 0 }}>
                 <defs>
                   <linearGradient id="signedGradient" x1="0" y1="0" x2="0" y2="1">
