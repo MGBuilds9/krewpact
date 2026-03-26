@@ -61,7 +61,7 @@ describe('mapContactToErp', () => {
   });
 
   it('builds correct full_name from first and last', () => {
-    const result = mapContactToErp(makeInput({ first_name: 'Michael', last_name: 'Guirguis' }));
-    expect(result.full_name).toBe('Michael Guirguis');
+    const result = mapContactToErp(makeInput({ first_name: 'Jane', last_name: 'Smith' }));
+    expect(result.full_name).toBe('Jane Smith');
   });
 });

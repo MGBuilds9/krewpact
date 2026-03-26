@@ -9,10 +9,10 @@ type RouteContext = { params: Promise<{ id: string }> };
 type SupabaseClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
 
 const COMPANY_INFO = {
-  name: process.env.COMPANY_NAME ?? 'MDM Group Inc.',
-  address: process.env.COMPANY_ADDRESS ?? '2233 Argentia Road, Suite 302, Mississauga, ON L5N 2X7',
-  phone: process.env.COMPANY_PHONE ?? '(905) 542-2950',
-  email: process.env.COMPANY_EMAIL ?? 'info@mdmgroupinc.ca',
+  name: process.env.COMPANY_NAME ?? 'Your Company',
+  address: process.env.COMPANY_ADDRESS ?? 'Configure COMPANY_ADDRESS in env',
+  phone: process.env.COMPANY_PHONE ?? 'Configure COMPANY_PHONE in env',
+  email: process.env.COMPANY_EMAIL ?? 'Configure COMPANY_EMAIL in env',
 };
 
 async function fetchProposalData(supabase: SupabaseClient, id: string) {

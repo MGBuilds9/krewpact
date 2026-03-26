@@ -130,7 +130,7 @@ export function MeetingMinutesForm({ projectId, onSuccess, onCancel }: MeetingMi
             <FormItem>
               <FormLabel>Attendees * (comma-separated)</FormLabel>
               <FormControl>
-                <Input placeholder="David G., Mina T., Site Supervisor" {...field} />
+                <Input placeholder="John D., Jane S., Site Supervisor" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

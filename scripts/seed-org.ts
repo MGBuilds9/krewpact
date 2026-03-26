@@ -54,9 +54,9 @@ const MDM_SEED: SeedData = {
     locale: 'en-CA',
     metadata: {
       industry: 'construction',
-      address: '2233 Argentia Road, Suite 302, Mississauga, ON L5N 2X7',
-      phone: '(905) 542-2950',
-      email: 'info@mdmgroupinc.ca',
+      address: process.env.COMPANY_ADDRESS ?? '123 Main St, Suite 100, City, ON A1B 2C3',
+      phone: process.env.COMPANY_PHONE ?? '(555) 555-0100',
+      email: process.env.COMPANY_EMAIL ?? 'info@example.com',
       website: 'https://mdmgroupinc.ca',
     },
   },

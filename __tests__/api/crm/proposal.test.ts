@@ -61,10 +61,10 @@ describe('GET /api/crm/opportunities/[id]/proposal', () => {
         address: null,
       },
       company: {
-        name: 'MDM Group Inc.',
-        address: '2233 Argentia Road',
-        phone: '(905) 542-2950',
-        email: 'info@mdmgroupinc.ca',
+        name: 'Your Company',
+        address: 'Configure COMPANY_ADDRESS in env',
+        phone: 'Configure COMPANY_PHONE in env',
+        email: 'Configure COMPANY_EMAIL in env',
       },
       estimates: [],
       totalEstimatedValue: 0,
@@ -226,6 +226,6 @@ describe('GET /api/crm/opportunities/[id]/proposal', () => {
 
     const callArg = mockComposeProposalData.mock.calls[0][0];
     expect(callArg.companyInfo).toBeDefined();
-    expect(callArg.companyInfo.name).toBe('MDM Group Inc.');
+    expect(callArg.companyInfo.name).toBe('Your Company');
   });
 });

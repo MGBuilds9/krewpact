@@ -75,7 +75,8 @@ async function sendWatchdogAlert(
   overdue: WatchdogResult[],
   overdueKey: string,
 ): Promise<void> {
-  const alertEmail = process.env.ALERT_EMAIL ?? 'michael.guirguis@mdmgroupinc.ca';
+  const alertEmail = process.env.ALERT_EMAIL;
+  if (!alertEmail) return;
   const overdueList = overdue
     .map(
       (r) =>

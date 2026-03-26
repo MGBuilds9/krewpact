@@ -34,10 +34,10 @@ function makeInput(overrides: Partial<ProposalInput> = {}): ProposalInput {
       { id: 'est-2', estimate_number: 'EST-002', total_amount: 20000, status: 'draft' },
     ],
     companyInfo: {
-      name: 'MDM Group Inc.',
-      address: '2233 Argentia Road',
-      phone: '905-542-2950',
-      email: 'info@mdmgroupinc.ca',
+      name: 'Test Company Inc.',
+      address: '123 Main St',
+      phone: '555-555-0100',
+      email: 'info@example.com',
     },
     ...overrides,
   };
@@ -63,7 +63,7 @@ describe('composeProposalData', () => {
     expect(result.client.contactEmail).toBe('jane@acme.com');
     expect(result.client.contactTitle).toBe('VP Operations');
     expect(result.client.address).toBe('123 Main St, Toronto, ON, M5V 2T6');
-    expect(result.provider.name).toBe('MDM Group Inc.');
+    expect(result.provider.name).toBe('Test Company Inc.');
     expect(result.scope.description).toBe('Kitchen Renovation');
     expect(result.scope.estimatedValue).toBe(50000);
     expect(result.scope.targetDate).toBe('2026-06-15');

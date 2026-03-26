@@ -154,7 +154,8 @@ async function runChecks(): Promise<SmokeCheck[]> {
 }
 
 async function sendAlertEmail(failedChecks: SmokeCheck[]) {
-  const alertEmail = process.env.ALERT_EMAIL ?? 'michael.guirguis@mdmgroupinc.ca';
+  const alertEmail = process.env.ALERT_EMAIL;
+  if (!alertEmail) return;
   const failedList = failedChecks
     .map((c) => `- ${c.name}: ${c.detail ?? 'unknown error'}`)
     .join('\n');
