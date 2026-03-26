@@ -15,7 +15,7 @@ const withPWA = withSerwist({
 
 const nextConfig: NextConfig = {
   experimental: {
-    optimizePackageImports: ['recharts', 'lucide-react', '@radix-ui/react-icons', 'date-fns'],
+    optimizePackageImports: ['recharts', 'lucide-react', '@radix-ui/react-icons', 'date-fns', '@tanstack/react-table', '@tanstack/react-query'],
   },
   async headers() {
     return [
@@ -30,7 +30,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https://*.clerk.com https://img.clerk.com https://vercel.com",
               "font-src 'self' data:",
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.clerk.com https://*.clerk.accounts.dev https://*.mdmgroupinc.ca https://*.sentry.io https://vercel.live wss://ws-us3.pusher.com https://sockjs-us3.pusher.com",
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.clerk.com https://*.clerk.accounts.dev https://*.mdmgroupinc.ca https://*.sentry.io https://vercel.live wss://ws-us3.pusher.com https://sockjs-us3.pusher.com https://vitals.vercel-insights.com",
               "worker-src 'self' blob:",
               "frame-src 'self' https://vercel.live",
               "frame-ancestors 'none'",

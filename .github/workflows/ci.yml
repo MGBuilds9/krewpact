@@ -37,7 +37,7 @@ jobs:
         run: npm run format:check
 
       - name: Unit Tests with Coverage
-        run: npm run test -- --coverage
+        run: npm run test -- --coverage --coverage.thresholds.lines=60 --coverage.thresholds.branches=50
         env:
           CRON_SECRET: test-cron-secret
 

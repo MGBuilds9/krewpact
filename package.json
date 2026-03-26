@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -79,7 +79,6 @@
     "date-fns": "^4.1.0",
     "dotenv": "^17.3.1",
     "embla-carousel-react": "^8.6.0",
-    "expo-crypto": "^55.0.10",
     "gray-matter": "^4.0.3",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.576.0",
