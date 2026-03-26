@@ -50,6 +50,67 @@ function FileItem({ file, onDelete }: { file: AttachmentFile; onDelete: (name: s
   );
 }
 
+interface AttachmentsPanelBodyProps {
+  files: AttachmentFile[];
+  loading: boolean;
+  uploading: boolean;
+  error: string | null;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onDelete: (name: string) => void;
+}
+
+function AttachmentsPanelBody({
+  files,
+  loading,
+  uploading,
+  error,
+  fileInputRef,
+  onUpload,
+  onDelete,
+}: AttachmentsPanelBodyProps) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center justify-between">
+          Attachments
+          <div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              onChange={onUpload}
+              className="hidden"
+              id="attachment-upload"
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={uploading}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {uploading ? 'Uploading...' : 'Upload File'}
+            </Button>
+          </div>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {error && <p className="mb-3 text-sm text-destructive">{error}</p>}
+        {loading ? (
+          <p className="text-sm text-muted-foreground">Loading attachments...</p>
+        ) : files.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No attachments yet.</p>
+        ) : (
+          <ul className="space-y-2">
+            {files.map((file) => (
+              <FileItem key={file.path} file={file} onDelete={onDelete} />
+            ))}
+          </ul>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export function AttachmentsPanel({ opportunityId }: AttachmentsPanelProps) {
   const [files, setFiles] = useState<AttachmentFile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -114,43 +175,14 @@ export function AttachmentsPanel({ opportunityId }: AttachmentsPanelProps) {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          Attachments
-          <div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              onChange={handleUpload}
-              className="hidden"
-              id="attachment-upload"
-            />
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={uploading}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              {uploading ? 'Uploading...' : 'Upload File'}
-            </Button>
-          </div>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {error && <p className="mb-3 text-sm text-destructive">{error}</p>}
-        {loading ? (
-          <p className="text-sm text-muted-foreground">Loading attachments...</p>
-        ) : files.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No attachments yet.</p>
-        ) : (
-          <ul className="space-y-2">
-            {files.map((file) => (
-              <FileItem key={file.path} file={file} onDelete={handleDelete} />
-            ))}
-          </ul>
-        )}
-      </CardContent>
-    </Card>
+    <AttachmentsPanelBody
+      files={files}
+      loading={loading}
+      uploading={uploading}
+      error={error}
+      fileInputRef={fileInputRef}
+      onUpload={handleUpload}
+      onDelete={handleDelete}
+    />
   );
 }

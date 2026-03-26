@@ -17,6 +17,70 @@ interface AttachmentUploadProps {
 const ACCEPTED = ALLOWED_MIME_TYPES.join(',');
 const MAX_MB = MAX_FILE_SIZE_BYTES / (1024 * 1024);
 
+interface DropZoneProps {
+  isUploading: boolean;
+  dragActive: boolean;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+  onDrop: (e: React.DragEvent<HTMLDivElement>) => void;
+  onDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
+  onDragLeave: () => void;
+  onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}
+
+function DropZone({
+  isUploading,
+  dragActive,
+  inputRef,
+  onDrop,
+  onDragOver,
+  onDragLeave,
+  onInputChange,
+}: DropZoneProps) {
+  const zoneClass = [
+    'flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-6 transition-colors',
+    dragActive
+      ? 'border-primary bg-primary/5'
+      : 'border-muted-foreground/30 hover:border-primary/50 hover:bg-muted/50',
+    isUploading ? 'pointer-events-none opacity-60' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      aria-label="Upload file — click or drag and drop"
+      onDrop={onDrop}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onClick={() => inputRef.current?.click()}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') inputRef.current?.click();
+      }}
+      className={zoneClass}
+    >
+      {isUploading ? (
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      ) : (
+        <UploadCloud className="h-8 w-8 text-muted-foreground" />
+      )}
+      <p className="text-sm text-muted-foreground">
+        {isUploading ? 'Uploading…' : 'Drag & drop a file or click to browse'}
+      </p>
+      <p className="text-xs text-muted-foreground">PDF, images, Word, Excel — max {MAX_MB} MB</p>
+      <input
+        ref={inputRef}
+        type="file"
+        accept={ACCEPTED}
+        className="sr-only"
+        onChange={onInputChange}
+        aria-hidden="true"
+        tabIndex={-1}
+      />
+    </div>
+  );
+}
+
 export function AttachmentUpload({
   entityType,
   projectId,
@@ -74,61 +138,24 @@ export function AttachmentUpload({
   }
 
   const isUploading = uploadMutation.isPending;
-  const uploadError = uploadMutation.isError
-    ? (uploadMutation.error as Error).message
-    : null;
+  const uploadError = uploadMutation.isError ? (uploadMutation.error as Error).message : null;
 
   return (
     <div className="space-y-2">
-      <div
-        role="button"
-        tabIndex={0}
-        aria-label="Upload file — click or drag and drop"
+      <DropZone
+        isUploading={isUploading}
+        dragActive={dragActive}
+        inputRef={inputRef}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
-        onClick={() => inputRef.current?.click()}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') inputRef.current?.click();
-        }}
-        className={[
-          'flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-6 transition-colors',
-          dragActive
-            ? 'border-primary bg-primary/5'
-            : 'border-muted-foreground/30 hover:border-primary/50 hover:bg-muted/50',
-          isUploading ? 'pointer-events-none opacity-60' : '',
-        ]
-          .filter(Boolean)
-          .join(' ')}
-      >
-        {isUploading ? (
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        ) : (
-          <UploadCloud className="h-8 w-8 text-muted-foreground" />
-        )}
-        <p className="text-sm text-muted-foreground">
-          {isUploading ? 'Uploading…' : 'Drag & drop a file or click to browse'}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          PDF, images, Word, Excel — max {MAX_MB} MB
-        </p>
-        <input
-          ref={inputRef}
-          type="file"
-          accept={ACCEPTED}
-          className="sr-only"
-          onChange={handleInputChange}
-          aria-hidden="true"
-          tabIndex={-1}
-        />
-      </div>
-
+        onInputChange={handleInputChange}
+      />
       {(validationError ?? uploadError) && (
         <p className="text-sm text-destructive" role="alert">
           {validationError ?? uploadError}
         </p>
       )}
-
       <Button
         type="button"
         variant="outline"

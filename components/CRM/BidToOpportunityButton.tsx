@@ -16,7 +16,6 @@ import {
 import { Button } from '@/components/ui/button';
 import type { BiddingOpportunity } from '@/hooks/useCRM';
 import { apiFetch } from '@/lib/api-client';
-import { logger } from '@/lib/logger';
 
 interface BidToOpportunityButtonProps {
   bid: BiddingOpportunity;
@@ -39,7 +38,8 @@ export function BidToOpportunityButton({ bid, onConverted }: BidToOpportunityBut
       onConverted?.(result.opportunity_id);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      logger.error('Bid conversion failed', { message });
+       
+      console.error('Bid conversion failed', message);
     } finally {
       setLoading(false);
       setOpen(false);
