@@ -289,9 +289,9 @@ The biggest work stream. Split into sub-tasks — each mapper can be tested inde
 
 ### 6a: Tunnel Verification
 
-- [ ] Verify ERPNext instance accessible via Cloudflare Tunnel from Vercel
-- [ ] Verify `ERPNEXT_BASE_URL`, `ERPNEXT_API_KEY`, `ERPNEXT_API_SECRET` in Vercel env
-- [ ] Test `lib/erp/client.ts` basic connectivity (GET /api/method/frappe.ping)
+- [x] Verify ERPNext instance accessible via Cloudflare Tunnel from Vercel — tunnel live, deep health check passed
+- [x] Verify `ERPNEXT_BASE_URL`, `ERPNEXT_API_KEY`, `ERPNEXT_API_SECRET` in Vercel env
+- [x] Test `lib/erp/client.ts` basic connectivity (GET /api/method/frappe.ping) — Company doctype returns 1 company
 
 ### 6b: Customer Mapper
 
@@ -352,9 +352,9 @@ The biggest work stream. Split into sub-tasks — each mapper can be tested inde
 
 ### 6j: Read-Only Mappers
 
-- [ ] Verify Sales Invoice read from ERPNext displays in KrewPact finance view
-- [ ] Verify Purchase Invoice read works
-- [ ] Verify Payment Entry read works
+- [x] Verify Sales Invoice read from ERPNext displays in KrewPact finance view — mapper tested, empty data (no invoices yet)
+- [x] Verify Purchase Invoice read works — 1 record (ACC-PINV-2026-00001, Overdue)
+- [x] Verify Payment Entry read works — mapper tested, fixed Paid/Reconciled status mapping
 
 **Key files:** `lib/erp/sales-invoice-mapper.ts`, `lib/erp/purchase-invoice-mapper.ts`, `lib/erp/payment-entry-mapper.ts`
 

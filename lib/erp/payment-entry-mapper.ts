@@ -10,6 +10,8 @@
 const STATUS_MAP: Record<string, string> = {
   Draft: 'draft',
   Submitted: 'submitted',
+  Paid: 'paid',
+  Reconciled: 'paid',
   Cancelled: 'void',
 };
 

@@ -27,6 +27,9 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
 
   const from = params.from ?? process.env.RESEND_FROM_EMAIL ?? DEFAULT_FROM;
 
+  const testOverride = process.env.NODE_ENV !== 'production' ? process.env.ALERT_EMAIL : undefined;
+  const recipient = testOverride ?? params.to;
+
   let res: Response;
   try {
     res = await fetch('https://api.resend.com/emails', {
@@ -37,7 +40,7 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
       },
       body: JSON.stringify({
         from,
-        to: [params.to],
+        to: [recipient],
         subject: params.subject,
         html: params.html,
         text: params.text,
