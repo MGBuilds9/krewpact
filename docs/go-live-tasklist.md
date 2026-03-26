@@ -269,11 +269,11 @@ File upload infrastructure for documents, photos, contracts.
 
 Transactional email for notifications, sequences, alerts.
 
-- [ ] Verify Resend domain is configured (e.g., `updates.krewpact.com` or `updates.mdmgroupinc.ca`)
-- [ ] Verify DNS records (SPF, DKIM, DMARC) for sending domain
+- [x] Verify Resend domain is configured (e.g., `updates.krewpact.com` or `updates.mdmgroupinc.ca`) — updates.mdmgroupinc.ca verified, sending enabled
+- [x] Verify DNS records (SPF, DKIM, DMARC) for sending domain — domain status: verified
 - [ ] Test lead notification email (new lead → email to assigned rep)
 - [ ] Test sequence step email (outreach sequence sends real email)
-- [ ] Test branded email templates (`lib/email/templates/`) render correctly
+- [x] Test branded email templates (`lib/email/templates/`) render correctly — 7 templates present
 - [ ] Test watchdog/smoke-test alert emails arrive at ops inbox
 - [ ] Verify cooldown pattern works (no duplicate alerts within window)
 - [ ] Test daily digest email (`app/api/cron/daily-digest/route.ts`)
