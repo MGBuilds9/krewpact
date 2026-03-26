@@ -4,7 +4,7 @@
 > Organized by independent work streams — no timelines, just tasks with done criteria.
 > Each work stream is session-sized: pick one, complete it, check it off.
 
-**Current state:** 314 API routes, 52 migrations, 485 RLS policies, 3,871 tests passing. Build clean.
+**Current state:** ~370+ API routes, 52 migrations, 485 RLS policies, 4,715 tests passing (428 files). Build clean.
 
 ---
 
@@ -201,10 +201,10 @@ Check off tasks in docs/go-live-tasklist.md. Commit when done.
 
 Unblocks all automated testing in CI. Currently E2E tests require real Clerk credentials.
 
-- [ ] Add `CLERK_TEST_EMAIL` + `CLERK_TEST_PASSWORD` to GitHub Actions secrets
-- [ ] Add `CLERK_PUBLISHABLE_KEY` + `CLERK_SECRET_KEY` to CI environment
+- [x] Add `CLERK_TEST_EMAIL` + `CLERK_TEST_PASSWORD` to GitHub Actions secrets
+- [x] Add `CLERK_PUBLISHABLE_KEY` + `CLERK_SECRET_KEY` to CI environment
 - [ ] Verify E2E tests pass in CI with real Clerk auth (`e2e/auth-smoke.spec.ts`, `e2e/auth.spec.ts`, `e2e/dashboard-ui.spec.ts`)
-- [ ] Verify cron smoke test passes in CI (`__tests__/api/cron/smoke-test.test.ts`)
+- [x] Verify cron smoke test passes in CI (`__tests__/api/cron/smoke-test.test.ts`)
 
 **Key files:** `.github/workflows/ci.yml`, `playwright.config.ts`, `e2e/*.spec.ts`
 **Done when:** CI pipeline green with E2E step passing on a PR.
@@ -250,11 +250,11 @@ All 35 env vars verified in production.
 
 File upload infrastructure for documents, photos, contracts.
 
-- [ ] Create `project-files` bucket in Supabase Storage
-- [ ] Create `project-photos` bucket
-- [ ] Create `contracts` bucket
-- [ ] Create `avatars` bucket
-- [ ] Add RLS policies to each bucket (match corresponding table policies — org_id scoping)
+- [x] Create `project-files` bucket in Supabase Storage
+- [x] Create `project-photos` bucket
+- [x] Create `contracts` bucket
+- [x] Create `avatars` bucket
+- [x] Add RLS policies to each bucket (match corresponding table policies — org_id scoping)
 - [ ] Test upload via `/api/projects/[id]/files/` route
 - [ ] Test upload via `/api/projects/[id]/photos/` route
 - [ ] Test avatar upload via user profile
@@ -471,13 +471,13 @@ External-facing portals for clients and trade partners.
 
 Performance optimization — move data fetching server-side.
 
-- [ ] Convert `app/(dashboard)/org/[orgSlug]/dashboard/page.tsx` to Server Component
-- [ ] Convert `app/(dashboard)/org/[orgSlug]/crm/leads/page.tsx` to Server Component
-- [ ] Convert `app/(dashboard)/org/[orgSlug]/crm/accounts/page.tsx` to Server Component
-- [ ] Convert `app/(dashboard)/org/[orgSlug]/projects/page.tsx` to Server Component
-- [ ] Convert `app/(dashboard)/org/[orgSlug]/crm/opportunities/page.tsx` to Server Component
-- [ ] Add `loading.tsx` Suspense fallback for each converted route
-- [ ] Verify no hydration errors after conversion
+- [x] Convert `app/(dashboard)/org/[orgSlug]/dashboard/page.tsx` to Server Component
+- [x] Convert `app/(dashboard)/org/[orgSlug]/crm/leads/page.tsx` to Server Component
+- [x] Convert `app/(dashboard)/org/[orgSlug]/crm/accounts/page.tsx` to Server Component
+- [x] Convert `app/(dashboard)/org/[orgSlug]/projects/page.tsx` to Server Component
+- [x] Convert `app/(dashboard)/org/[orgSlug]/crm/opportunities/page.tsx` to Server Component
+- [x] Add `loading.tsx` Suspense fallback for each converted route
+- [x] Verify no hydration errors after conversion
 - [ ] Measure Lighthouse LCP before/after
 
 **Done when:** Top 5 list pages server-rendered. Lighthouse LCP improved (measure before/after).
@@ -489,10 +489,10 @@ Performance optimization — move data fetching server-side.
 Reduce JS shipped to client.
 
 - [ ] Run `ANALYZE=true npm run build` and review bundle composition
-- [ ] Add `next/dynamic` for `CommandPalette` (only loads on keyboard shortcut)
-- [ ] Add `next/dynamic` for `OnboardingWizard` (only loads for new users)
-- [ ] Add `next/dynamic` for recharts components (heavy charting lib)
-- [ ] Add `next/dynamic` for react-pdf components
+- [x] Add `next/dynamic` for `CommandPalette` (only loads on keyboard shortcut)
+- [x] Add `next/dynamic` for `OnboardingWizard` (only loads for new users) — orphaned, not imported in app
+- [x] Add `next/dynamic` for recharts components (heavy charting lib) — already code-split via 'use client' + dynamic loaders
+- [x] Add `next/dynamic` for react-pdf components — orphaned TakeoffPdfViewer, not imported
 - [ ] Verify recharts uses named imports (`import { BarChart }` not `import * as Recharts`)
 - [ ] Verify date-fns imports are tree-shakeable (no `import * from 'date-fns'`)
 - [ ] Check no single JS chunk exceeds 200KB gzipped
@@ -547,7 +547,7 @@ Docs match the codebase as-built.
 - [ ] Document Apollo pump + enrichment pipeline in `docs/runbook.md`
 - [ ] Document scoring engine rules and caps in `docs/domains.md`
 - [ ] Update `docs/ERPNEXT-SETUP-GUIDE.md` with all `krewpact_*` custom fields
-- [ ] Verify `CONTRIBUTING.md` reflects current dev workflow
+- [x] Verify `CONTRIBUTING.md` reflects current dev workflow
 
 **Key files:** `docs/`, `CONTRIBUTING.md`, planning documents
 **Done when:** All docs match current implementation. No stale references.
