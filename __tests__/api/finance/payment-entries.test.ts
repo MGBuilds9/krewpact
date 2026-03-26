@@ -13,6 +13,12 @@ vi.mock('@/lib/api/rate-limit', () => ({
   rateLimitResponse: vi.fn(),
 }));
 
+const mockRequireRole = vi.fn();
+vi.mock('@/lib/api/org', () => ({
+  requireRole: (...args: unknown[]) => mockRequireRole(...args),
+}));
+
+import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { getPaymentHistory } from '@/lib/services/financial-ops';
 import { makeRequest, mockClerkAuth, mockClerkUnauth } from '@/__tests__/helpers';
@@ -49,13 +55,34 @@ const SAMPLE_HISTORY = {
 };
 
 describe('GET /api/finance/payment-entries', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockRequireRole.mockResolvedValue({ userId: 'user_123', roles: ['accounting'] });
+  });
 
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
+    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
     const { GET } = await import('@/app/api/finance/payment-entries/route');
     const res = await GET(makeRequest(`/api/finance/payment-entries?project_id=${VALID_PROJECT_ID}`));
     expect(res.status).toBe(401);
+  });
+
+  it('returns 403 for unauthorized role (project_manager)', async () => {
+    mockClerkAuth(mockAuth);
+    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Forbidden' }, { status: 403 }));
+    const { GET } = await import('@/app/api/finance/payment-entries/route');
+    const res = await GET(makeRequest(`/api/finance/payment-entries?project_id=${VALID_PROJECT_ID}`));
+    expect(res.status).toBe(403);
+  });
+
+  it('allows access for executive role', async () => {
+    mockClerkAuth(mockAuth);
+    mockRequireRole.mockResolvedValue({ userId: 'user_123', roles: ['executive'] });
+    mockGetPaymentHistory.mockResolvedValue(SAMPLE_HISTORY);
+    const { GET } = await import('@/app/api/finance/payment-entries/route');
+    const res = await GET(makeRequest(`/api/finance/payment-entries?project_id=${VALID_PROJECT_ID}`));
+    expect(res.status).toBe(200);
   });
 
   it('returns 400 when project_id missing', async () => {

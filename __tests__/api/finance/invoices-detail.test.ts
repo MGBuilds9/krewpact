@@ -8,6 +8,17 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 
+const mockRequireRole = vi.fn();
+vi.mock('@/lib/api/org', () => ({
+  requireRole: (...args: unknown[]) => mockRequireRole(...args),
+}));
+
+vi.mock('@/lib/api/rate-limit', () => ({
+  rateLimit: vi.fn().mockResolvedValue({ success: true }),
+  rateLimitResponse: vi.fn(),
+}));
+
+import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 
 import {
@@ -47,12 +58,23 @@ const sampleInvoice = {
 };
 
 describe('GET /api/finance/invoices/[id]', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockRequireRole.mockResolvedValue({ userId: 'user_123', roles: ['accounting'] });
+  });
 
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
+    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
     const res = await GET(makeRequest('/api/finance/invoices/inv-1'), makeContext('inv-1'));
     expect(res.status).toBe(401);
+  });
+
+  it('returns 403 for unauthorized role (field_supervisor)', async () => {
+    mockClerkAuth(mockAuth);
+    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Forbidden' }, { status: 403 }));
+    const res = await GET(makeRequest('/api/finance/invoices/inv-1'), makeContext('inv-1'));
+    expect(res.status).toBe(403);
   });
 
   it('returns invoice by id', async () => {
@@ -89,15 +111,29 @@ describe('GET /api/finance/invoices/[id]', () => {
 });
 
 describe('PATCH /api/finance/invoices/[id]', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockRequireRole.mockResolvedValue({ userId: 'user_123', roles: ['accounting'] });
+  });
 
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
+    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
     const res = await PATCH(
       makeJsonRequest('/api/finance/invoices/inv-1', { status: 'paid' }, 'PATCH'),
       makeContext('inv-1'),
     );
     expect(res.status).toBe(401);
+  });
+
+  it('returns 403 for unauthorized role (project_coordinator)', async () => {
+    mockClerkAuth(mockAuth);
+    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Forbidden' }, { status: 403 }));
+    const res = await PATCH(
+      makeJsonRequest('/api/finance/invoices/inv-1', { status: 'paid' }, 'PATCH'),
+      makeContext('inv-1'),
+    );
+    expect(res.status).toBe(403);
   });
 
   it('updates invoice fields', async () => {

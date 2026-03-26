@@ -1,6 +1,10 @@
 import { NextRequest } from 'next/server';
 import { describe, expect, it, vi } from 'vitest';
 
+vi.mock('@clerk/nextjs/server', () => ({
+  auth: vi.fn().mockResolvedValue({ userId: null }),
+}));
+
 vi.mock('@/lib/supabase/server', () => ({
   createServiceClient: vi.fn(() => ({
     from: vi.fn(() => ({
@@ -35,11 +39,22 @@ describe('GET /api/health', () => {
     expect(data.checks.supabase).toBe('ok');
   });
 
-  it('returns deep checks when ?deep=true', async () => {
+  it('returns deep checks when ?deep=true with valid CRON_SECRET', async () => {
+    vi.stubEnv('CRON_SECRET', 'test-secret');
     const { GET } = await import('@/app/api/health/route');
-    const response = await GET(makeRequest('http://localhost:3000/api/health?deep=true'));
+    const req = new NextRequest('http://localhost:3000/api/health?deep=true', {
+      headers: { authorization: 'Bearer test-secret' },
+    });
+    const response = await GET(req);
     const data = await response.json();
     expect(data.timestamp).toBeDefined();
     expect(data.checks).toBeDefined();
+  });
+
+  it('returns 401 for deep check without auth', async () => {
+    vi.stubEnv('CRON_SECRET', 'test-secret');
+    const { GET } = await import('@/app/api/health/route');
+    const response = await GET(makeRequest('http://localhost:3000/api/health?deep=true'));
+    expect(response.status).toBe(401);
   });
 });

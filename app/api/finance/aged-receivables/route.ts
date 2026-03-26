@@ -1,19 +1,21 @@
-import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { getOrgIdFromAuth } from '@/lib/api/org';
+import { getOrgIdFromAuth, requireRole } from '@/lib/api/org';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 import { logger } from '@/lib/logger';
 import { getAgedReceivables } from '@/lib/services/financial-ops';
+
+const FINANCE_ROLES = ['platform_admin', 'executive', 'accounting', 'operations_manager'];
 
 const querySchema = z.object({
   org_id: z.string().uuid().optional(),
 });
 
 export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const authResult = await requireRole(FINANCE_ROLES);
+  if (authResult instanceof NextResponse) return authResult;
+  const { userId } = authResult;
 
   const rl = await rateLimit(req, { limit: 30, window: '1 m', identifier: userId });
   if (!rl.success) return rateLimitResponse(rl);

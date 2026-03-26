@@ -11,6 +11,10 @@ const mockCountSelect = vi
   .fn()
   .mockResolvedValue({ count: 5, error: null });
 
+vi.mock('@clerk/nextjs/server', () => ({
+  auth: vi.fn().mockResolvedValue({ userId: null }),
+}));
+
 vi.mock('@/lib/supabase/server', () => ({
   createServiceClient: vi.fn(() => ({
     from: vi.fn((table: string) => {
@@ -44,14 +48,19 @@ const mockFetch = vi.fn().mockResolvedValue({
 });
 vi.stubGlobal('fetch', mockFetch);
 
+const TEST_CRON_SECRET = 'test-cron-secret';
+
 function makeDeepRequest() {
-  return new NextRequest('http://localhost:3000/api/health?deep=true');
+  return new NextRequest('http://localhost:3000/api/health?deep=true', {
+    headers: { authorization: `Bearer ${TEST_CRON_SECRET}` },
+  });
 }
 
 describe('GET /api/health?deep=true — Sentry DSN check', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.unstubAllEnvs();
+    vi.stubEnv('CRON_SECRET', TEST_CRON_SECRET);
     vi.stubGlobal('fetch', mockFetch);
   });
 

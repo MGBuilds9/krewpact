@@ -93,6 +93,13 @@ const envSchema = z
           'Required in production — server-side auth, webhook verification, and Graph OAuth will fail',
       });
     }
+    if (!data.CRON_SECRET) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['CRON_SECRET'],
+        message: 'Required in production — cron endpoints have no authentication without it',
+      });
+    }
   });
 
 export type Env = z.infer<typeof envSchema>;

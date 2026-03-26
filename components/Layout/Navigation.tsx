@@ -32,7 +32,7 @@ import { useUserRBAC } from '@/hooks/useRBAC';
 import { type FeatureKey, isFeatureEnabled } from '@/lib/feature-flags';
 import { cn } from '@/lib/utils';
 
-const MAX_VISIBLE = 5;
+const MAX_VISIBLE = 7;
 
 interface NavigationProps {
   isMobile?: boolean;

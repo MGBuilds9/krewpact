@@ -1,13 +1,16 @@
-import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 
+import { requireRole } from '@/lib/api/org';
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { invoiceSnapshotSchema } from '@/lib/validators/finance';
 
+const FINANCE_ROLES = ['platform_admin', 'executive', 'accounting', 'operations_manager'];
+
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const authResult = await requireRole(FINANCE_ROLES);
+  if (authResult instanceof NextResponse) return authResult;
+  const { userId } = authResult;
 
   const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
   if (!rl.success) return rateLimitResponse(rl);
@@ -27,8 +30,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const authResult = await requireRole(FINANCE_ROLES);
+  if (authResult instanceof NextResponse) return authResult;
+  const { userId } = authResult;
 
   const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
   if (!rl.success) return rateLimitResponse(rl);

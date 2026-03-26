@@ -1,3 +1,4 @@
+import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { logger } from '@/lib/logger';
@@ -184,6 +185,20 @@ async function runDeepChecks(
 
 export async function GET(req: NextRequest) {
   const deep = req.nextUrl.searchParams.get('deep') === 'true';
+
+  if (deep) {
+    const cronSecret = process.env.CRON_SECRET;
+    const authHeader = req.headers.get('authorization');
+    const hasCronAuth = cronSecret && authHeader === `Bearer ${cronSecret}`;
+
+    if (!hasCronAuth) {
+      const { userId } = await auth();
+      if (!userId) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+    }
+  }
+
   const checks: Record<string, string> = {};
   const details: Record<string, unknown> = {};
   const supabase = createServiceClient();

@@ -19,7 +19,17 @@ export default async function PortalLayout({ children }: { children: React.React
   // Wait, let's redirect to /dashboard if they have NO client/trade roles
   const isPortalUser = roles.some((r) => r.startsWith('client_') || r.startsWith('trade_'));
   const isInternalUser = roles.some((r) =>
-    ['platform_admin', 'project_manager', 'project_coordinator', 'field_supervisor'].includes(r),
+    [
+      'platform_admin',
+      'executive',
+      'operations_manager',
+      'project_manager',
+      'project_coordinator',
+      'estimator',
+      'field_supervisor',
+      'accounting',
+      'payroll_admin',
+    ].includes(r),
   );
 
   if (!isPortalUser && !isInternalUser) {

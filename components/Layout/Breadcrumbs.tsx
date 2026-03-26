@@ -37,12 +37,16 @@ const routeLabels: Record<string, string> = {
 };
 
 const contextLabels: Record<string, string> = {
-  leads: 'Lead Details',
-  opportunities: 'Opportunity Details',
-  projects: 'Project Details',
-  contacts: 'Contact Details',
-  accounts: 'Account Details',
-  estimates: 'Estimate Details',
+  leads: 'Lead',
+  opportunities: 'Opportunity',
+  projects: 'Project',
+  contacts: 'Contact',
+  accounts: 'Account',
+  estimates: 'Estimate',
+  inventory: 'Item',
+  documents: 'Document',
+  timesheets: 'Timesheet',
+  expenses: 'Expense',
 };
 
 const UUID_RE = /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i;

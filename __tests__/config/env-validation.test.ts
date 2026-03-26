@@ -46,6 +46,7 @@ describe('Environment validation', () => {
     // Required in production by superRefine
     process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key';
     process.env.CLERK_SECRET_KEY = 'sk_test_key';
+    process.env.CRON_SECRET = 'test-cron-secret';
     const origNodeEnv = process.env.NODE_ENV;
     // @ts-expect-error -- NODE_ENV is readonly
     process.env.NODE_ENV = 'production';
@@ -68,6 +69,7 @@ describe('Environment validation', () => {
     // Required in production by superRefine
     process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key';
     process.env.CLERK_SECRET_KEY = 'sk_test_key';
+    process.env.CRON_SECRET = 'test-cron-secret';
     const origNodeEnv = process.env.NODE_ENV;
     // @ts-expect-error test env override
     process.env.NODE_ENV = 'production';

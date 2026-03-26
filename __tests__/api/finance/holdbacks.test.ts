@@ -13,6 +13,13 @@ vi.mock('@/lib/api/rate-limit', () => ({
   rateLimitResponse: vi.fn(),
 }));
 
+const mockRequireRole = vi.fn();
+vi.mock('@/lib/api/org', () => ({
+  requireRole: (...args: unknown[]) => mockRequireRole(...args),
+  getOrgIdFromAuth: vi.fn().mockResolvedValue('mdm-group'),
+}));
+
+import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { getHoldbackSchedule } from '@/lib/services/financial-ops';
 import { makeRequest, mockClerkAuth, mockClerkUnauth } from '@/__tests__/helpers';
@@ -54,13 +61,34 @@ const SAMPLE_SCHEDULE = {
 };
 
 describe('GET /api/finance/holdbacks', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockRequireRole.mockResolvedValue({ userId: 'user_123', roles: ['accounting'] });
+  });
 
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
+    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
     const { GET } = await import('@/app/api/finance/holdbacks/route');
     const res = await GET(makeRequest(`/api/finance/holdbacks?project_id=${VALID_PROJECT_ID}`));
     expect(res.status).toBe(401);
+  });
+
+  it('returns 403 for unauthorized role (field_supervisor)', async () => {
+    mockClerkAuth(mockAuth);
+    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Forbidden' }, { status: 403 }));
+    const { GET } = await import('@/app/api/finance/holdbacks/route');
+    const res = await GET(makeRequest(`/api/finance/holdbacks?project_id=${VALID_PROJECT_ID}`));
+    expect(res.status).toBe(403);
+  });
+
+  it('allows access for accounting role', async () => {
+    mockClerkAuth(mockAuth);
+    mockRequireRole.mockResolvedValue({ userId: 'user_123', roles: ['accounting'] });
+    mockGetHoldbackSchedule.mockResolvedValue(SAMPLE_SCHEDULE);
+    const { GET } = await import('@/app/api/finance/holdbacks/route');
+    const res = await GET(makeRequest(`/api/finance/holdbacks?project_id=${VALID_PROJECT_ID}`));
+    expect(res.status).toBe(200);
   });
 
   it('returns 400 when project_id missing', async () => {

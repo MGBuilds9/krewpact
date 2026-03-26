@@ -138,7 +138,7 @@ interface NotifTabProps {
   prefs: NotificationPrefs;
   setPrefs: (p: NotificationPrefs) => void;
   saved: boolean;
-  onSave: () => void;
+  onSave: () => void | Promise<void>;
 }
 function NotificationsTab({ prefs, setPrefs, saved, onSave }: NotifTabProps) {
   return (
@@ -350,9 +350,20 @@ export default function SettingsPage() {
     });
   }
 
-  function handleSaveNotifications() {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  async function handleSaveNotifications() {
+    try {
+      const res = await fetch('/api/org/notification-preferences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(prefs),
+      });
+      if (!res.ok) throw new Error('Save failed');
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch {
+      // Silently reset — toast system available if needed later
+      setSaved(false);
+    }
   }
 
   return (

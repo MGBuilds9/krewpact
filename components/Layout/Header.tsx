@@ -1,8 +1,9 @@
 'use client';
 
 import { useClerk, useUser } from '@clerk/nextjs';
-import { Bell, Eye, LogOut, Menu, Search, Settings, User, X } from 'lucide-react';
+import { Bell, Eye, LogOut, Menu, Moon, Search, Settings, Sun, X } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import { useTheme } from 'next-themes';
 import { usePathname } from 'next/navigation';
 import React from 'react';
 import { toast } from 'sonner';
@@ -34,6 +35,24 @@ import { MobileNavigationDrawer } from './MobileNavigationDrawer';
 import { Navigation } from './Navigation';
 import { QuickAccessToolbar } from './QuickAccessToolbar';
 import { ShortcutsHelpOverlay } from './ShortcutsHelpOverlay';
+
+function ThemeToggle() {
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+      className="hover:bg-muted rounded-lg transition-colors duration-200"
+      aria-label="Toggle theme"
+    >
+      {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+    </Button>
+  );
+}
 
 function ImpersonationBanner({ onStop }: { onStop: () => void }) {
   return (
@@ -102,13 +121,6 @@ function SettingsDropdown({
           <Bell className="mr-2 h-4 w-4" />
           <span>Notifications</span>
         </DropdownMenuItem>
-        <DropdownMenuItem
-          className="cursor-pointer touch-target transition-colors duration-200"
-          onClick={() => onNav('/settings')}
-        >
-          <User className="mr-2 h-4 w-4" />
-          <span>Account Settings</span>
-        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -155,13 +167,6 @@ function UserDropdown({
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem
-          className="cursor-pointer touch-target hover:bg-accent transition-colors duration-200"
-          onClick={() => onNav('/settings')}
-        >
-          <User className="mr-2 h-4 w-4" />
-          <span>Profile</span>
-        </DropdownMenuItem>
         <DropdownMenuItem
           className="cursor-pointer touch-target hover:bg-accent transition-colors duration-200"
           onClick={() => onNav('/settings')}
@@ -259,6 +264,7 @@ export function Header() {
                 <Search className="h-5 w-5" />
               </Button>
               <NotificationBell />
+              <ThemeToggle />
               <SettingsDropdown
                 isAdmin={isAdmin}
                 onImpersonate={() => setIsImpersonationOpen(true)}
