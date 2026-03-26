@@ -218,6 +218,18 @@ custom_fields = [
     {"dt": "Purchase Invoice", "fieldname": "custom_mdm_project_id", "fieldtype": "Data", "label": "KrewPact Project ID", "read_only": 1},
     # Payment Entry
     {"dt": "Payment Entry", "fieldname": "custom_mdm_project_id", "fieldtype": "Data", "label": "KrewPact Project ID", "read_only": 1},
+    # --- Fields used by sync-handlers ---
+    # Sales Order (change order sync: sync-change-order.ts)
+    {"dt": "Sales Order", "fieldname": "krewpact_change_order_id", "fieldtype": "Data", "label": "KrewPact Change Order ID", "read_only": 1, "no_copy": 1},
+    {"dt": "Sales Order", "fieldname": "krewpact_co_number", "fieldtype": "Data", "label": "KrewPact CO Number", "read_only": 1},
+    {"dt": "Sales Order", "fieldname": "krewpact_amount_delta", "fieldtype": "Currency", "label": "KrewPact Amount Delta", "read_only": 1},
+    {"dt": "Sales Order", "fieldname": "krewpact_days_delta", "fieldtype": "Int", "label": "KrewPact Days Delta", "read_only": 1},
+    # Purchase Order (inventory PO sync: sync-inventory-po.ts)
+    {"dt": "Purchase Order", "fieldname": "krewpact_id", "fieldtype": "Data", "label": "KrewPact ID", "read_only": 1, "no_copy": 1},
+    # Purchase Receipt (goods receipt sync: sync-goods-receipt.ts)
+    {"dt": "Purchase Receipt", "fieldname": "krewpact_id", "fieldtype": "Data", "label": "KrewPact ID", "read_only": 1, "no_copy": 1},
+    # Journal Entry (material cost sync: sync-material-cost.ts)
+    {"dt": "Journal Entry", "fieldname": "krewpact_id", "fieldtype": "Data", "label": "KrewPact ID", "read_only": 1, "no_copy": 1},
 ]
 
 for cf in custom_fields:

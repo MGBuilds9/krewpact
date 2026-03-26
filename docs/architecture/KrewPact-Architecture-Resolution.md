@@ -176,7 +176,7 @@ CREATE POLICY division_isolation ON projects
 | 6. Project Execution   | Tasks, daily logs, basic document upload                   | Daily PM workflow                       |
 | 7. ERPNext Sync (Core) | Customers, projects, estimates→quotations, invoices (read) | Finance bridge                          |
 
-**Features: ~25 | Endpoints: ~40 | Forms: ~30 | ERPNext mappings: ~12**
+**Features: ~25 | Endpoints: ~40 | Forms: ~30 | ERPNext mappings: 13 mappers + 15 sync-handlers**
 
 > **Updated 2026-03-23:** Actual counts as of latest audit: 344 API routes, 118 pages, 303 components, 171 lib files, 67 hooks, 60 migrations, 4,306 tests, 14 cron jobs. See `docs/audits/2026-03-23-blueprint-audit.md` for full report.
 

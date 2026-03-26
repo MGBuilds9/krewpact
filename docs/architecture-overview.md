@@ -138,9 +138,11 @@ Every AI call logs to `ai_actions` table: `org_id`, `user_id`, `model_used`, `in
 - **Embedding model:** OpenAI `text-embedding-ada-002` (1536 dimensions), IVFFlat index with 100 lists
 - Context-awareness: queries from project view automatically include project context
 
-## ERPNext Integration (13 mappers)
+## ERPNext Integration (13 mappers, 15 sync-handlers)
 
-Mappers: Customer, Contact, Opportunity, Quotation, Sales Order, Project, Task, Sales Invoice (read), Purchase Invoice (read), Supplier, Expense Claim, Timesheet, Payment Entry
+**Mappers** (`lib/erp/*-mapper.ts`): Customer, Contact, Opportunity, Quotation, Sales Order, Project, Task, Sales Invoice (read), Purchase Invoice (read), Supplier, Expense Claim, Timesheet, Payment Entry
+
+**Sync-handlers** (`lib/erp/sync-handlers/`): contact, customer, expense, goods-receipt, inventory-po, invoices, material-cost, opportunity, project, quotation, supplier, task, timesheet, change-order + helpers
 
 - Sync: eventual consistency, outbox/inbox, idempotent upsert, retry with backoff, dead-letter
 - All custom fields prefixed `krewpact_*`

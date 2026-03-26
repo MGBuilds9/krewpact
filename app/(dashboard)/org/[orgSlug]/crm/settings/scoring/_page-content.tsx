@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-import { ScoringRulesTable } from '@/components/CRM/ScoringRulesTable';
+import { ScoringRulesTable, type ScoringRuleRow } from '@/components/CRM/ScoringRulesTable';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import type { ScoringRule } from '@/hooks/useCRM';
@@ -180,34 +180,11 @@ export default function ScoringSettingsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<Partial<ScoringRule>>(EMPTY_RULE);
 
-  function handleEdit(rule: {
-    id: string;
-    name: string;
-    field_name: string;
-    operator: string;
-    value: string;
-    score_impact: number;
-    category: string;
-    is_active: boolean;
-  }) {
-    setForm(rule);
-    setEditingId(rule.id);
-    setShowForm(true);
-  }
-
-  function handleCancel() {
-    setForm(EMPTY_RULE);
-    setEditingId(null);
-    setShowForm(false);
-  }
-
+  function handleEdit(rule: ScoringRuleRow) { setForm(rule); setEditingId(rule.id); setShowForm(true); }
+  function handleCancel() { setForm(EMPTY_RULE); setEditingId(null); setShowForm(false); }
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (editingId) {
-      await updateRule.mutateAsync({ id: editingId, ...form });
-    } else {
-      await createRule.mutateAsync(form);
-    }
+    if (editingId) { await updateRule.mutateAsync({ id: editingId, ...form }); } else { await createRule.mutateAsync(form); }
     handleCancel();
   }
 
@@ -218,38 +195,23 @@ export default function ScoringSettingsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Lead Scoring Rules</h1>
-          <p className="text-muted-foreground">
-            Configure rules to automatically score leads based on their attributes.
-          </p>
+          <p className="text-muted-foreground">Configure rules to automatically score leads based on their attributes.</p>
         </div>
         {!showForm && <Button onClick={() => setShowForm(true)}>Add Rule</Button>}
       </div>
       {showForm && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">
-              {editingId ? 'Edit Rule' : 'New Scoring Rule'}
-            </CardTitle>
-            <CardDescription>
-              Define the field, condition, and score impact for this rule.
-            </CardDescription>
+            <CardTitle className="text-base">{editingId ? 'Edit Rule' : 'New Scoring Rule'}</CardTitle>
+            <CardDescription>Define the field, condition, and score impact for this rule.</CardDescription>
           </CardHeader>
           <CardContent>
-            <ScoringRuleForm
-              form={form}
-              editingId={editingId}
-              isPending={createRule.isPending || updateRule.isPending}
-              setForm={setForm}
-              onSubmit={handleSubmit}
-              onCancel={handleCancel}
-            />
+            <ScoringRuleForm form={form} editingId={editingId} isPending={createRule.isPending || updateRule.isPending} setForm={setForm} onSubmit={handleSubmit} onCancel={handleCancel} />
           </CardContent>
         </Card>
       )}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Active Rules</CardTitle>
-        </CardHeader>
+        <CardHeader><CardTitle className="text-base">Active Rules</CardTitle></CardHeader>
         <CardContent>
           <ScoringRulesTable
             rules={rules}

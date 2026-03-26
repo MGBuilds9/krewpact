@@ -540,13 +540,13 @@ SEO and WCAG compliance.
 
 Docs match the codebase as-built.
 
-- [ ] Update `docs/architecture-overview.md` with AI Agentic Layer (8 agents, Gemini Flash)
-- [ ] Update architecture docs with Executive Dashboard + RAG / pgvector layer
-- [ ] Update `KrewPact-Architecture-Resolution.md` ERPNext mapper count (12 → 14)
+- [x] Update `docs/architecture-overview.md` with AI Agentic Layer (8 agents, Gemini Flash)
+- [x] Update architecture docs with Executive Dashboard + RAG / pgvector layer
+- [x] Update `KrewPact-Architecture-Resolution.md` ERPNext mapper count (12 → 13 mappers + 15 sync-handlers)
 - [ ] Document alert cooldown pattern in `docs/runbook.md`
 - [ ] Document Apollo pump + enrichment pipeline in `docs/runbook.md`
 - [ ] Document scoring engine rules and caps in `docs/domains.md`
-- [ ] Update `docs/ERPNEXT-SETUP-GUIDE.md` with all `krewpact_*` custom fields
+- [x] Update `docs/ERPNEXT-SETUP-GUIDE.md` with all `krewpact_*` custom fields
 - [x] Verify `CONTRIBUTING.md` reflects current dev workflow
 
 **Key files:** `docs/`, `CONTRIBUTING.md`, planning documents
