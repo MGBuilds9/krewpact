@@ -16,7 +16,10 @@
 import { logger } from '@/lib/logger';
 import { createScopedServiceClient } from '@/lib/supabase/server';
 
+import { syncAward } from './sync-handlers/sync-award';
+import { syncBid } from './sync-handlers/sync-bid';
 import { syncChangeOrder } from './sync-handlers/sync-change-order';
+import { syncComplianceDoc } from './sync-handlers/sync-compliance-doc';
 import { syncContact } from './sync-handlers/sync-contact';
 import { syncAccount } from './sync-handlers/sync-customer';
 import { syncExpenseClaim } from './sync-handlers/sync-expense';
@@ -32,11 +35,11 @@ import { syncMaterialCost } from './sync-handlers/sync-material-cost';
 import { syncOpportunity, syncWonDeal } from './sync-handlers/sync-opportunity';
 import { syncProject } from './sync-handlers/sync-project';
 import { syncEstimate } from './sync-handlers/sync-quotation';
+import { syncRfqPackage } from './sync-handlers/sync-rfq';
+import { syncSelectionSheet } from './sync-handlers/sync-selection-sheet';
 import { syncSupplier } from './sync-handlers/sync-supplier';
 import { syncTask } from './sync-handlers/sync-task';
 import { syncTimesheet } from './sync-handlers/sync-timesheet';
-// TODO: import { syncRfqPackage } from './sync-handlers/sync-rfq'; — create when handler is ready
-// TODO: import { syncBid } from './sync-handlers/sync-bid'; — create when handler is ready
 
 // Re-export shared type so existing consumers don't break
 export type { SyncResult } from './sync-handlers/sync-helpers';
@@ -115,6 +118,30 @@ export class SyncService {
     return syncChangeOrder(coId, userId, jobContext);
   }
 
+  async syncRfqPackage(rfqId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncRfqPackage(rfqId, userId, jobContext);
+  }
+
+  async syncBid(bidId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncBid(bidId, userId, jobContext);
+  }
+
+  async syncAward(bidId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncAward(bidId, userId, jobContext);
+  }
+
+  async syncComplianceDoc(complianceDocId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncComplianceDoc(complianceDocId, userId, jobContext);
+  }
+
+  async syncSelectionSheet(
+    selectionSheetId: string,
+    userId: string,
+    jobContext?: SyncJobContext,
+  ) {
+    return syncSelectionSheet(selectionSheetId, userId, jobContext);
+  }
+
   async syncMaterialCost(
     options: { projectId: string; startDate: string; endDate: string },
     userId: string,
@@ -133,36 +160,6 @@ export class SyncService {
 
   async readPaymentEntry(erpDocname: string, jobContext?: SyncJobContext) {
     return readPaymentEntry(erpDocname, jobContext);
-  }
-
-  async syncRfqPackage(rfqId: string, _userId: string, _jobContext?: SyncJobContext) {
-    // TODO: Wire to sync-handlers/sync-rfq.ts when handler is created
-    void rfqId;
-    throw new Error('RFQ sync handler not yet implemented');
-  }
-
-  async syncBid(bidId: string, _userId: string, _jobContext?: SyncJobContext) {
-    // TODO: Wire to sync-handlers/sync-bid.ts when handler is created
-    void bidId;
-    throw new Error('Bid sync handler not yet implemented');
-  }
-
-  async syncAward(awardId: string, _userId: string, _jobContext?: SyncJobContext) {
-    // TODO: Wire to sync-handlers/sync-award.ts when handler is created
-    void awardId;
-    throw new Error('Award sync handler not yet implemented');
-  }
-
-  async syncComplianceDoc(docId: string, _userId: string, _jobContext?: SyncJobContext) {
-    // TODO: Wire to sync-handlers/sync-compliance-doc.ts when handler is created
-    void docId;
-    throw new Error('Compliance doc sync handler not yet implemented');
-  }
-
-  async syncSelectionSheet(sheetId: string, _userId: string, _jobContext?: SyncJobContext) {
-    // TODO: Wire to sync-handlers/sync-selection-sheet.ts when handler is created
-    void sheetId;
-    throw new Error('Selection sheet sync handler not yet implemented');
   }
 
   async getSyncStatus(
