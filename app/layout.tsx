@@ -45,7 +45,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <ClerkProvider
+      signInUrl="https://accounts.krewpact.ca/sign-in"
+      signUpUrl="https://accounts.krewpact.ca/sign-up"
+      afterSignOutUrl="https://accounts.krewpact.ca/sign-in"
       allowedRedirectOrigins={[
+        'https://accounts.krewpact.ca',
         'https://hub.krewpact.ca',
         'https://dashboard.mdmgroupinc.ca',
         'https://portal.mdmgroupinc.ca',

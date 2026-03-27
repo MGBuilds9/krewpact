@@ -3,7 +3,6 @@
 import { ArrowLeft, UserPlus } from 'lucide-react';
 
 import { SequenceStepEditor } from '@/components/CRM/SequenceStepEditor';
-import { SequenceStepForm } from '@/components/CRM/SequenceStepForm';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,8 +19,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { SequenceStep } from '@/hooks/useCRM';
 import { useSequence, useSequenceEnrollments } from '@/hooks/useCRM';
 
-import { DetailsTab } from './SequenceTabs';
-import { EnrollmentsTab } from './SequenceTabs';
+import { DetailsTab, EnrollmentsTab } from './SequenceTabs';
+import { SequenceDialogs } from './SequenceDialogs';
 
 type SequenceData = NonNullable<ReturnType<typeof useSequence>['data']>;
 type EnrollmentItem = NonNullable<ReturnType<typeof useSequenceEnrollments>['data']>[number];
@@ -142,8 +141,6 @@ export function SequenceContent({
   processPending,
   enrollPending,
 }: SequenceContentProps) {
-  const nextStepNumber = steps.length + 1;
-  const editingStepNumber = editingStep?.step_number;
   return (
     <div className="space-y-6">
       <div className="flex items-start gap-4">
@@ -218,47 +215,18 @@ export function SequenceContent({
           <DetailsTab sequence={sequence} stepCount={steps.length} />
         </TabsContent>
       </Tabs>
-      <Dialog open={addStepOpen} onOpenChange={setAddStepOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add Step {nextStepNumber}</DialogTitle>
-          </DialogHeader>
-          <SequenceStepForm
-            sequenceId={sequenceId}
-            nextStepNumber={nextStepNumber}
-            onSuccess={() => setAddStepOpen(false)}
-            onCancel={() => setAddStepOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
-      <Dialog
-        open={!!editingStep}
-        onOpenChange={(open) => {
-          if (!open) setEditingStep(null);
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Step {editingStepNumber}</DialogTitle>
-          </DialogHeader>
-          {editingStepNumber !== undefined && editingStep && (
-            <SequenceStepForm
-              sequenceId={sequenceId}
-              initialData={editingStep}
-              nextStepNumber={editingStepNumber}
-              onSuccess={() => setEditingStep(null)}
-              onCancel={() => setEditingStep(null)}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
-      <EnrollLeadDialog
-        open={enrollLeadOpen}
-        onOpenChange={setEnrollLeadOpen}
+      <SequenceDialogs
         sequenceId={sequenceId}
-        leadId={enrollLeadId}
-        setLeadId={setEnrollLeadId}
-        isPending={enrollPending}
+        steps={steps}
+        addStepOpen={addStepOpen}
+        setAddStepOpen={setAddStepOpen}
+        editingStep={editingStep}
+        setEditingStep={setEditingStep}
+        enrollLeadOpen={enrollLeadOpen}
+        setEnrollLeadOpen={setEnrollLeadOpen}
+        enrollLeadId={enrollLeadId}
+        setEnrollLeadId={setEnrollLeadId}
+        enrollPending={enrollPending}
         onEnroll={onEnroll}
       />
     </div>

@@ -5,57 +5,17 @@ import { ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 
-const schema = z.object({
-  name: z.string().min(1, 'Name is required').max(100),
-  description: z.string().max(500).optional(),
-  trigger_type: z.enum([
-    'manual',
-    'lead_created',
-    'lead_stage_changed',
-    'score_threshold',
-    'tag_added',
-    'form_submitted',
-  ]),
-  division: z.enum(['contracting', 'homes', 'wood', 'telecom', 'group-inc', 'management', 'all']),
-});
+import {
+  SequenceFormFields,
+  sequenceFormSchema,
+  type SequenceFormValues,
+} from './_components/SequenceFormFields';
 
-type FormValues = z.infer<typeof schema>;
-
-const triggerLabels: Record<string, string> = {
-  manual: 'Manual',
-  lead_created: 'Lead Created',
-  lead_stage_changed: 'Lead Stage Changed',
-  score_threshold: 'Score Threshold Reached',
-  tag_added: 'Tag Added',
-  form_submitted: 'Form Submitted',
-};
-
-const divisionLabels: Record<string, string> = {
-  contracting: 'MDM Contracting',
-  homes: 'MDM Homes',
-  wood: 'MDM Wood',
-  telecom: 'MDM Telecom',
-  'group-inc': 'MDM Group Inc.',
-  management: 'MDM Management',
-  all: 'All Divisions',
-};
-
-async function submitSequence(values: FormValues): Promise<string | null> {
+async function submitSequence(values: SequenceFormValues): Promise<string | null> {
   const res = await fetch('/api/crm/sequences', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -79,15 +39,15 @@ export default function NewSequencePage() {
     setValue,
     watch,
     formState: { errors, isSubmitting },
-  } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+  } = useForm<SequenceFormValues>({
+    resolver: zodResolver(sequenceFormSchema),
     defaultValues: { trigger_type: 'manual', division: 'contracting' },
   });
 
   const triggerType = watch('trigger_type');
   const division = watch('division');
 
-  const onSubmit = async (values: FormValues) => {
+  const onSubmit = async (values: SequenceFormValues) => {
     setServerError(null);
     try {
       const id = await submitSequence(values);
@@ -118,82 +78,14 @@ export default function NewSequencePage() {
           Set up a new automated sequence. You can add steps after creating it.
         </p>
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
-          <div className="space-y-1.5">
-            <Label htmlFor="name">
-              Sequence Name <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="name"
-              placeholder="e.g. Initial Outreach — Contracting Leads"
-              {...register('name')}
-              aria-invalid={!!errors.name}
-            />
-            {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              placeholder="Optional — describe the purpose of this sequence"
-              rows={3}
-              {...register('description')}
-            />
-            {errors.description && (
-              <p className="text-xs text-destructive">{errors.description.message}</p>
-            )}
-          </div>
-          <div className="space-y-1.5">
-            <Label>
-              Trigger <span className="text-destructive">*</span>
-            </Label>
-            <Select
-              value={triggerType}
-              onValueChange={(val) =>
-                setValue('trigger_type', val as FormValues['trigger_type'], {
-                  shouldValidate: true,
-                })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select trigger..." />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(triggerLabels).map(([val, label]) => (
-                  <SelectItem key={val} value={val}>
-                    {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.trigger_type && (
-              <p className="text-xs text-destructive">{errors.trigger_type.message}</p>
-            )}
-          </div>
-          <div className="space-y-1.5">
-            <Label>
-              Division <span className="text-destructive">*</span>
-            </Label>
-            <Select
-              value={division}
-              onValueChange={(val) =>
-                setValue('division', val as FormValues['division'], { shouldValidate: true })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select division..." />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(divisionLabels).map(([val, label]) => (
-                  <SelectItem key={val} value={val}>
-                    {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.division && (
-              <p className="text-xs text-destructive">{errors.division.message}</p>
-            )}
-          </div>
+          <SequenceFormFields
+            register={register}
+            errors={errors}
+            triggerType={triggerType}
+            division={division}
+            onTriggerChange={(val) => setValue('trigger_type', val, { shouldValidate: true })}
+            onDivisionChange={(val) => setValue('division', val, { shouldValidate: true })}
+          />
           {serverError && (
             <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {serverError}

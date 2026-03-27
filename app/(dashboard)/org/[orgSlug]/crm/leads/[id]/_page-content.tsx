@@ -5,13 +5,9 @@ import { useParams } from 'next/navigation';
 import { useState } from 'react';
 
 import { AiInsightBanner } from '@/components/AI/AiInsightBanner';
-import { ActivityLogDialog } from '@/components/CRM/ActivityLogDialog';
-import { ConvertLeadDialog } from '@/components/CRM/ConvertLeadDialog';
-import { EmailComposeDialog } from '@/components/CRM/EmailComposeDialog';
 import { NotesPanel } from '@/components/CRM/NotesPanel';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { ConfirmReasonDialog } from '@/components/ui/confirm-reason-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useDeleteLead } from '@/hooks/crm/useLeads';
 import {
@@ -31,6 +27,7 @@ import { formatStatus } from '@/lib/format-status';
 
 import { LeadActivityCard } from './_components/LeadActivityCard';
 import { LeadContactsCard } from './_components/LeadContactsCard';
+import { LeadDialogs } from './_components/LeadDialogs';
 import { LeadHeader } from './_components/LeadHeader';
 import { LeadInfoCard } from './_components/LeadInfoCard';
 import { LeadSidePanel } from './_components/LeadSidePanel';
@@ -179,46 +176,27 @@ export default function LeadDetailPage() {
           onResearchComplete={() => refetchLead()}
         />
       </div>
-      <ActivityLogDialog
-        open={activityDialogOpen}
-        onOpenChange={setActivityDialogOpen}
-        entityType="lead"
-        entityId={leadId}
-      />
-      <ConvertLeadDialog lead={lead} open={convertDialogOpen} onOpenChange={setConvertDialogOpen} />
-      <EmailComposeDialog
-        open={emailDialogOpen}
-        onOpenChange={setEmailDialogOpen}
+      <LeadDialogs
+        lead={lead}
+        leadId={leadId}
+        activityDialogOpen={activityDialogOpen}
+        setActivityDialogOpen={setActivityDialogOpen}
+        convertDialogOpen={convertDialogOpen}
+        setConvertDialogOpen={setConvertDialogOpen}
+        emailDialogOpen={emailDialogOpen}
+        setEmailDialogOpen={setEmailDialogOpen}
+        markLostDialogOpen={markLostDialogOpen}
+        setMarkLostDialogOpen={setMarkLostDialogOpen}
+        deleteDialogOpen={deleteDialogOpen}
+        setDeleteDialogOpen={setDeleteDialogOpen}
         recipientEmail={recipientEmail}
         recipientName={recipientName}
-        leadId={leadId}
-      />
-      <ConfirmReasonDialog
-        open={markLostDialogOpen}
-        onOpenChange={setMarkLostDialogOpen}
-        title="Mark Lead as Lost"
-        description="Provide a reason for closing this lead as lost."
-        reasonLabel="Reason"
-        reasonRequired={true}
-        confirmLabel="Mark Lost"
-        destructive={true}
-        onConfirm={(reason) => {
-          if (reason) stageTransition.mutate({ id: leadId, status: 'lost', lost_reason: reason });
-        }}
-      />
-      <ConfirmReasonDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        title="Delete Lead"
-        description="This will permanently delete this lead. This action cannot be undone."
-        confirmLabel="Delete"
-        destructive
-        reasonRequired={false}
-        onConfirm={() => {
-          deleteLead.mutate(leadId, {
-            onSuccess: () => orgPush('/crm/leads'),
-          });
-        }}
+        onConfirmMarkLost={(reason) =>
+          stageTransition.mutate({ id: leadId, status: 'lost', lost_reason: reason })
+        }
+        onConfirmDelete={() =>
+          deleteLead.mutate(leadId, { onSuccess: () => orgPush('/crm/leads') })
+        }
       />
     </div>
   );

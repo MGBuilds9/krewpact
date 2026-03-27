@@ -3,21 +3,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('ai', () => ({
   generateText: vi.fn(),
 }));
-vi.mock('@ai-sdk/google', () => ({
-  google: vi.fn(() => 'mock-model'),
-}));
 vi.mock('@/lib/ai/cost-tracker', () => ({
   trackAIAction: vi.fn(),
 }));
 
-import { google } from '@ai-sdk/google';
 import { generateText } from 'ai';
 
 import { trackAIAction } from '@/lib/ai/cost-tracker';
 import { generateWithGemini } from '@/lib/ai/providers/gemini';
 
 const mockGenerateText = vi.mocked(generateText);
-const mockGoogle = vi.mocked(google);
 const mockTrackAIAction = vi.mocked(trackAIAction);
 
 describe('generateWithGemini', () => {
@@ -33,10 +28,9 @@ describe('generateWithGemini', () => {
   it('calls generateText with correct model and prompt', async () => {
     await generateWithGemini({ prompt: 'Hello Gemini' });
 
-    expect(mockGoogle).toHaveBeenCalledWith('gemini-2.0-flash');
     expect(mockGenerateText).toHaveBeenCalledWith(
       expect.objectContaining({
-        model: 'mock-model',
+        model: 'google/gemini-2.0-flash',
         prompt: 'Hello Gemini',
       }),
     );

@@ -5,16 +5,12 @@ import { useParams } from 'next/navigation';
 import { useState } from 'react';
 
 import { AiInsightBanner } from '@/components/AI/AiInsightBanner';
-import { ActivityLogDialog } from '@/components/CRM/ActivityLogDialog';
 import { ActivityTimeline } from '@/components/CRM/ActivityTimeline';
 import { LinkedEstimateCard } from '@/components/CRM/LinkedEstimateCard';
-import { LostDealDialog } from '@/components/CRM/LostDealDialog';
 import { NotesPanel } from '@/components/CRM/NotesPanel';
 import { OpportunityStageProgressBar } from '@/components/CRM/OpportunityStageProgressBar';
-import { WonDealDialog } from '@/components/CRM/WonDealDialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ConfirmReasonDialog } from '@/components/ui/confirm-reason-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   useActivities,
@@ -29,6 +25,7 @@ import { useOrgRouter } from '@/hooks/useOrgRouter';
 import type { OpportunityStage } from '@/lib/crm/opportunity-stages';
 import { ALLOWED_TRANSITIONS } from '@/lib/crm/opportunity-stages';
 
+import { OppDialogs } from './_components/OppDialogs';
 import { OppInfoCard } from './_components/OppInfoCard';
 import { OppSidePanel } from './_components/OppSidePanel';
 import { OppStageActions } from './_components/OppStageActions';
@@ -224,36 +221,22 @@ export default function OpportunityDetailPage() {
         />
       </div>
 
-      <ActivityLogDialog
-        open={activityDialogOpen}
-        onOpenChange={setActivityDialogOpen}
-        entityType="opportunity"
-        entityId={opportunityId}
-      />
-      <WonDealDialog
+      <OppDialogs
         opportunity={opportunity}
-        open={wonDialogOpen}
-        onOpenChange={setWonDialogOpen}
-      />
-      <LostDealDialog
-        opportunity={opportunity}
-        open={lostDialogOpen}
-        onOpenChange={setLostDialogOpen}
-      />
-      <ConfirmReasonDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        title="Delete Opportunity"
-        description={`Permanently delete "${opportunity.opportunity_name}"? This will remove the opportunity and cannot be undone.`}
-        reasonLabel="Reason"
-        reasonRequired={false}
-        confirmLabel="Delete Opportunity"
-        destructive={true}
-        onConfirm={() => {
+        opportunityId={opportunityId}
+        activityDialogOpen={activityDialogOpen}
+        setActivityDialogOpen={setActivityDialogOpen}
+        wonDialogOpen={wonDialogOpen}
+        setWonDialogOpen={setWonDialogOpen}
+        lostDialogOpen={lostDialogOpen}
+        setLostDialogOpen={setLostDialogOpen}
+        deleteDialogOpen={deleteDialogOpen}
+        setDeleteDialogOpen={setDeleteDialogOpen}
+        onConfirmDelete={() =>
           deleteOpportunity.mutate(opportunityId, {
             onSuccess: () => orgPush('/crm/opportunities'),
-          });
-        }}
+          })
+        }
       />
     </div>
   );
