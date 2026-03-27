@@ -1,21 +1,13 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
+import { dbError } from '@/lib/api/errors';
 import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { toolboxTalkCreateSchema } from '@/lib/validators/safety';
 
-type RouteContext = { params: Promise<{ id: string }> };
-
-export async function GET(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id } = await context.params;
+export const GET = withApiRoute({}, async ({ req, params }) => {
+  const { id } = params;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
@@ -30,37 +22,25 @@ export async function GET(req: NextRequest, context: RouteContext) {
     .order('talk_date', { ascending: false })
     .range(offset, offset + limit - 1);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) throw dbError(error.message);
 
   return NextResponse.json(paginatedResponse(data, count, limit, offset));
-}
+});
 
-export async function POST(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export const POST = withApiRoute(
+  { bodySchema: toolboxTalkCreateSchema },
+  async ({ params, body, userId }) => {
+    const { id } = params;
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
+    const { data, error } = await supabase
+      .from('toolbox_talks')
+      .insert({ project_id: id, facilitator_user_id: userId, ...body })
+      .select()
+      .single();
 
-  const { id } = await context.params;
+    if (error) throw dbError(error.message);
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = toolboxTalkCreateSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-
-  const { client: supabase, error: authError } = await createUserClientSafe();
-
-  if (authError) return authError;
-  const { data, error } = await supabase
-    .from('toolbox_talks')
-    .insert({ project_id: id, facilitator_user_id: userId, ...parsed.data })
-    .select()
-    .single();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  return NextResponse.json(data, { status: 201 });
-}
+    return NextResponse.json(data, { status: 201 });
+  },
+);

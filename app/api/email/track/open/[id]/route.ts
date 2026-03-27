@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createServiceClient } from '@/lib/supabase/server';
 
 // 1x1 transparent GIF
@@ -14,34 +14,32 @@ const TRACKING_PIXEL = Buffer.from(
  * GET /api/email/track/open/:outreachEventId
  * Returns a 1x1 transparent GIF and updates outreach.opened_at.
  */
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
-  const rl = await rateLimit(_req, { limit: 30, window: '1 m' });
-  if (!rl.success) return rateLimitResponse(rl);
-  const { id } = await params;
+export const GET = withApiRoute(
+  { auth: 'public', rateLimit: { limit: 30, window: '1 m' } },
+  async ({ params }) => {
+    const { id } = params;
 
-  // Fire-and-forget: update opened_at (don't block the pixel response)
-  try {
-    const supabase = createServiceClient();
-    await supabase
-      .from('outreach')
-      .update({ opened_at: new Date().toISOString() })
-      .eq('id', id)
-      .is('opened_at', null); // Only set on first open
-  } catch {
-    // Never fail the pixel response
-  }
+    // Fire-and-forget: update opened_at (don't block the pixel response)
+    try {
+      const supabase = createServiceClient();
+      await supabase
+        .from('outreach')
+        .update({ opened_at: new Date().toISOString() })
+        .eq('id', id)
+        .is('opened_at', null); // Only set on first open
+    } catch {
+      // Never fail the pixel response
+    }
 
-  return new NextResponse(TRACKING_PIXEL, {
-    status: 200,
-    headers: {
-      'Content-Type': 'image/gif',
-      'Content-Length': String(TRACKING_PIXEL.length),
-      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-      Pragma: 'no-cache',
-      Expires: '0',
-    },
-  });
-}
+    return new NextResponse(TRACKING_PIXEL, {
+      status: 200,
+      headers: {
+        'Content-Type': 'image/gif',
+        'Content-Length': String(TRACKING_PIXEL.length),
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        Pragma: 'no-cache',
+        Expires: '0',
+      },
+    });
+  },
+);

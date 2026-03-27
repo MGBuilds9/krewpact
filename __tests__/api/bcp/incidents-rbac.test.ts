@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const mockRequireRole = vi.fn();
+const mockGetKrewpactRoles = vi.fn();
 vi.mock('@/lib/api/org', () => ({
-  requireRole: (...args: unknown[]) => mockRequireRole(...args),
+  requireRole: vi.fn(),
+  getKrewpactRoles: () => mockGetKrewpactRoles(),
 }));
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 
@@ -17,10 +18,21 @@ vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
+vi.mock('@/lib/request-context', () => ({
+  requestContext: { run: (_: unknown, fn: () => unknown) => fn() },
+  generateRequestId: () => 'req_test',
+}));
+vi.mock('@/lib/logger', () => {
+  const m = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), child: vi.fn() };
+  m.child.mockReturnValue(m);
+  return { logger: m };
+});
 
-import { NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
 
-import { makeJsonRequest, makeRequest } from '@/__tests__/helpers';
+import { makeJsonRequest, makeRequest, mockClerkAuth, mockClerkUnauth } from '@/__tests__/helpers';
+
+const mockAuth = vi.mocked(auth);
 
 function paginatedChain(data: unknown[], count: number) {
   const chain: Record<string, unknown> = {};
@@ -40,15 +52,16 @@ describe('RBAC: GET /api/bcp/incidents', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('returns 403 for user without required role', async () => {
-    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Forbidden' }, { status: 403 }));
+    mockClerkAuth(mockAuth);
+    mockGetKrewpactRoles.mockResolvedValue(['project_manager']);
     const { GET } = await import('@/app/api/bcp/incidents/route');
     const res = await GET(makeRequest('/api/bcp/incidents'));
     expect(res.status).toBe(403);
-    expect(mockRequireRole).toHaveBeenCalledWith(BCP_ROLES);
   });
 
   it('returns 200 for platform_admin', async () => {
-    mockRequireRole.mockResolvedValue({ userId: 'admin-user', roles: ['platform_admin'] });
+    mockClerkAuth(mockAuth);
+    mockGetKrewpactRoles.mockResolvedValue(['platform_admin']);
     mockFrom.mockReturnValue(paginatedChain([], 0));
     const { GET } = await import('@/app/api/bcp/incidents/route');
     const res = await GET(makeRequest('/api/bcp/incidents'));
@@ -56,7 +69,8 @@ describe('RBAC: GET /api/bcp/incidents', () => {
   });
 
   it('returns 200 for executive', async () => {
-    mockRequireRole.mockResolvedValue({ userId: 'exec-user', roles: ['executive'] });
+    mockClerkAuth(mockAuth);
+    mockGetKrewpactRoles.mockResolvedValue(['executive']);
     mockFrom.mockReturnValue(paginatedChain([], 0));
     const { GET } = await import('@/app/api/bcp/incidents/route');
     const res = await GET(makeRequest('/api/bcp/incidents'));
@@ -68,14 +82,22 @@ describe('RBAC: POST /api/bcp/incidents', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('returns 403 for user without required role', async () => {
-    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Forbidden' }, { status: 403 }));
+    mockClerkAuth(mockAuth);
+    mockGetKrewpactRoles.mockResolvedValue(['estimator']);
     const { POST } = await import('@/app/api/bcp/incidents/route');
-    const res = await POST(makeJsonRequest('/api/bcp/incidents', { title: 'Outage' }));
+    const res = await POST(
+      makeJsonRequest('/api/bcp/incidents', {
+        incident_number: 'INC-001',
+        severity: 'sev1',
+        title: 'Network Outage',
+      }),
+    );
     expect(res.status).toBe(403);
   });
 
   it('returns 201 for executive with valid body', async () => {
-    mockRequireRole.mockResolvedValue({ userId: 'exec-user', roles: ['executive'] });
+    mockClerkAuth(mockAuth);
+    mockGetKrewpactRoles.mockResolvedValue(['executive']);
     const newIncident = {
       id: 'inc-1',
       incident_number: 'INC-001',

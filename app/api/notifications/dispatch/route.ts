@@ -1,10 +1,12 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
-import { logger } from '@/lib/logger';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import type { NotificationEvent } from '@/lib/notifications/dispatcher';
 import { dispatchNotification } from '@/lib/notifications/dispatcher';
+
+// Accept any object — the dispatcher validates the shape internally
+const dispatchBodySchema = z.record(z.string(), z.unknown());
 
 /**
  * POST /api/notifications/dispatch
@@ -12,26 +14,11 @@ import { dispatchNotification } from '@/lib/notifications/dispatcher';
  * Internal endpoint to trigger notification emails.
  * Called by other API routes after mutations.
  *
- * Body: { event_type, ...context }
+ * Body: { type, ...context }
  * The body must match one of the NotificationEvent shapes.
  */
-export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  if (!body || typeof body !== 'object' || !('type' in body)) {
+export const POST = withApiRoute({ bodySchema: dispatchBodySchema }, async ({ body, logger }) => {
+  if (!body || typeof body !== 'object' || !('type' in (body as object))) {
     return NextResponse.json({ error: 'Missing required field: type' }, { status: 400 });
   }
 
@@ -43,4 +30,4 @@ export async function POST(req: NextRequest) {
     const message = err instanceof Error ? err.message : 'Dispatch failed';
     return NextResponse.json({ error: message }, { status: 500 });
   }
-}
+});

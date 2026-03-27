@@ -1,20 +1,12 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError, notFound } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { submittalUpdateSchema } from '@/lib/validators/field-ops';
 
-type RouteContext = { params: Promise<{ id: string; subId: string }> };
-
-export async function GET(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id, subId } = await context.params;
+export const GET = withApiRoute({}, async ({ params }) => {
+  const { id, subId } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
   const { data, error } = await supabase
@@ -27,46 +19,32 @@ export async function GET(req: NextRequest, context: RouteContext) {
     .single();
 
   if (error) {
-    const status = error.code === 'PGRST116' ? 404 : 500;
-    return NextResponse.json({ error: error.message }, { status });
+    if (error.code === 'PGRST116') throw notFound('Submittal');
+    throw dbError(error.message);
   }
 
   return NextResponse.json(data);
-}
+});
 
-export async function PATCH(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export const PATCH = withApiRoute(
+  { bodySchema: submittalUpdateSchema },
+  async ({ params, body }) => {
+    const { id, subId } = params;
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
+    const { data, error } = await supabase
+      .from('submittals')
+      .update(body)
+      .eq('id', subId)
+      .eq('project_id', id)
+      .select()
+      .single();
 
-  const { id, subId } = await context.params;
+    if (error) {
+      if (error.code === 'PGRST116') throw notFound('Submittal');
+      throw dbError(error.message);
+    }
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = submittalUpdateSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
-  const { client: supabase, error: authError } = await createUserClientSafe();
-
-  if (authError) return authError;
-  const { data, error } = await supabase
-    .from('submittals')
-    .update(parsed.data)
-    .eq('id', subId)
-    .eq('project_id', id)
-    .select()
-    .single();
-
-  if (error) {
-    const status = error.code === 'PGRST116' ? 404 : 500;
-    return NextResponse.json({ error: error.message }, { status });
-  }
-
-  return NextResponse.json(data);
-}
+    return NextResponse.json(data);
+  },
+);

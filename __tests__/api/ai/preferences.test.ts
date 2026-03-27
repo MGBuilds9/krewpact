@@ -8,6 +8,17 @@ vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
+vi.mock('@/lib/logger', () => ({
+  logger: {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    child: vi
+      .fn()
+      .mockReturnValue({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
+  },
+}));
 
 import { auth } from '@clerk/nextjs/server';
 
@@ -55,7 +66,7 @@ describe('GET /api/ai/preferences', () => {
     const res = await GET(req);
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns default preferences when user has no ai_preferences', async () => {
@@ -102,7 +113,7 @@ describe('PATCH /api/ai/preferences', () => {
     const res = await PATCH(req);
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns 400 for invalid preference values (confidence > 1)', async () => {

@@ -1,9 +1,9 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { dbError, forbidden, serverError } from '@/lib/api/errors';
 import { getKrewpactRoles } from '@/lib/api/org';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { ErpClient } from '@/lib/erp/client';
 import { normalizeSyncJobStatus } from '@/lib/erp/sync-handlers/sync-helpers';
 import { logger } from '@/lib/logger';
@@ -52,74 +52,6 @@ function getJobType(entityType: EntityType): JobType {
 
 function getSyncEntityType(entityType: EntityType): string {
   return entityType === 'contract' ? 'sales_order' : entityType;
-}
-
-async function requireSyncAccess(): Promise<NextResponse | null> {
-  const roles = await getKrewpactRoles();
-  if (!roles.some((role) => SYNC_ROLES.has(role))) {
-    return NextResponse.json(
-      { error: 'Forbidden: platform_admin or operations_manager role required' },
-      { status: 403 },
-    );
-  }
-  return null;
-}
-
-/**
- * POST /api/erp/sync — Trigger an ERP sync for a given entity.
- * Supports all 10 outbound entity types (12 MVP mappings including read-only invoices).
- * Returns the sync job result (status, erp_docname, etc.)
- */
-export async function POST(request: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const denied = await requireSyncAccess();
-  if (denied) return denied;
-
-  const rl = await rateLimit(request, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
-  }
-
-  const parsed = syncRequestSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: 'Validation failed', details: parsed.error.flatten() },
-      { status: 400 },
-    );
-  }
-
-  const { entity_type, entity_id } = parsed.data;
-  const syncEntityType = getSyncEntityType(entity_type);
-
-  const erpClient = new ErpClient();
-  if (process.env.NODE_ENV === 'production' && erpClient.isMockMode()) {
-    return NextResponse.json(
-      {
-        error: 'ERPNext is not configured for background sync in this environment',
-      },
-      { status: 503 },
-    );
-  }
-  if (process.env.NODE_ENV === 'production' && !process.env.QSTASH_TOKEN) {
-    return NextResponse.json(
-      { error: 'QStash is not configured for background sync in this environment' },
-      { status: 503 },
-    );
-  }
-
-  try {
-    return await enqueueErpSync(entity_type, entity_id, syncEntityType, userId);
-  } catch (err) {
-    logger.error('ERP sync failed:', err as Record<string, unknown>);
-    return NextResponse.json({ error: 'Failed to enqueue ERP sync' }, { status: 500 });
-  }
 }
 
 async function enqueueErpSync(
@@ -173,7 +105,7 @@ async function enqueueErpSync(
       entity_id,
       error: insertError,
     });
-    return NextResponse.json({ error: 'Failed to enqueue sync job' }, { status: 500 });
+    throw dbError('Failed to enqueue sync job');
   }
 
   const queued = await queue.enqueue(
@@ -214,3 +146,29 @@ async function enqueueErpSync(
     { status: 202 },
   );
 }
+
+export const POST = withApiRoute({ bodySchema: syncRequestSchema }, async ({ body, userId }) => {
+  const roles = await getKrewpactRoles();
+  if (!roles.some((role) => SYNC_ROLES.has(role))) {
+    throw forbidden('platform_admin or operations_manager role required');
+  }
+
+  const { entity_type, entity_id } = body as { entity_type: EntityType; entity_id: string };
+  const syncEntityType = getSyncEntityType(entity_type);
+
+  const erpClient = new ErpClient();
+  if (process.env.NODE_ENV === 'production' && erpClient.isMockMode()) {
+    return NextResponse.json(
+      { error: 'ERPNext is not configured for background sync in this environment' },
+      { status: 503 },
+    );
+  }
+  if (process.env.NODE_ENV === 'production' && !process.env.QSTASH_TOKEN) {
+    return NextResponse.json(
+      { error: 'QStash is not configured for background sync in this environment' },
+      { status: 503 },
+    );
+  }
+
+  return enqueueErpSync(entity_type, entity_id, syncEntityType, userId);
+});

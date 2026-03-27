@@ -1,7 +1,6 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 type InsightRow = { insight_type: string; dismissed_at: string | null; acted_on_at: string | null };
@@ -20,13 +19,7 @@ function buildTypeCounts(
   return typeCounts;
 }
 
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 30, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
+export const GET = withApiRoute({ rateLimit: { limit: 30, window: '1 m' } }, async () => {
   const { client, error } = await createUserClientSafe();
   if (error || !client) return NextResponse.json({ error: 'Auth failed' }, { status: 401 });
 
@@ -64,4 +57,4 @@ export async function GET(req: NextRequest) {
       total_ai_cost_cents: totalCostCents,
     },
   });
-}
+});

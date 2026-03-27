@@ -5,44 +5,40 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+const mockGetKrewpactRoles = vi.fn();
+vi.mock('@/lib/api/org', () => ({
+  requireRole: vi.fn(),
+  getKrewpactRoles: () => mockGetKrewpactRoles(),
+}));
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
+
+const mockFrom = vi.fn();
+vi.mock('@/lib/supabase/server', () => ({
+  createUserClientSafe: vi.fn().mockResolvedValue({
+    client: { from: (...args: unknown[]) => mockFrom(...args) },
+    error: null,
+  }),
+}));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
-
-const mockRequireRole = vi.fn();
-vi.mock('@/lib/api/org', () => ({
-  requireRole: (...args: unknown[]) => mockRequireRole(...args),
+vi.mock('@/lib/request-context', () => ({
+  requestContext: { run: (_: unknown, fn: () => unknown) => fn() },
+  generateRequestId: () => 'req_test',
 }));
-
-vi.mock('@/lib/supabase/server', () => ({
-  createUserClientSafe: vi.fn(),
-}));
-
-vi.mock('@/lib/validators/time-expense', () => ({
-  timesheetBatchApprovalSchema: {
-    safeParse: vi.fn().mockReturnValue({
-      success: true,
-      data: { status: 'approved' },
-    }),
-  },
-}));
+vi.mock('@/lib/logger', () => {
+  const m = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), child: vi.fn() };
+  m.child.mockReturnValue(m);
+  return { logger: m };
+});
 
 import { auth } from '@clerk/nextjs/server';
-import { NextResponse } from 'next/server';
 
-import {
-  makeJsonRequest,
-  mockClerkAuth,
-  mockClerkUnauth,
-  mockSupabaseClient,
-} from '@/__tests__/helpers';
+import { makeJsonRequest, mockClerkAuth, mockClerkUnauth } from '@/__tests__/helpers';
 import { POST } from '@/app/api/timesheet-batches/[batchId]/approve/route';
-import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
-const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 const BATCH_ID = 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22';
 
@@ -54,43 +50,43 @@ function makeApproveRequest() {
   return makeJsonRequest(`/api/timesheet-batches/${BATCH_ID}/approve`, { status: 'approved' });
 }
 
+function singleChain(data: unknown) {
+  const chain: Record<string, unknown> = {};
+  chain.update = vi.fn().mockReturnValue(chain);
+  chain.eq = vi.fn().mockReturnValue(chain);
+  chain.select = vi.fn().mockReturnValue(chain);
+  chain.single = vi.fn().mockResolvedValue({ data, error: null });
+  return chain;
+}
+
 describe('POST /api/timesheet-batches/[batchId]/approve — RBAC', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('returns 401 when not authenticated', async () => {
     mockClerkUnauth(mockAuth);
-    mockRequireRole.mockResolvedValue(
-      NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
-    );
-
     const res = await POST(makeApproveRequest(), makeContext(BATCH_ID));
     expect(res.status).toBe(401);
   });
 
   it('returns 403 for project_coordinator role', async () => {
     mockClerkAuth(mockAuth);
-    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Forbidden' }, { status: 403 }));
-
+    mockGetKrewpactRoles.mockResolvedValue(['project_coordinator']);
     const res = await POST(makeApproveRequest(), makeContext(BATCH_ID));
     expect(res.status).toBe(403);
   });
 
   it('returns 403 for estimator role', async () => {
     mockClerkAuth(mockAuth);
-    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Forbidden' }, { status: 403 }));
-
+    mockGetKrewpactRoles.mockResolvedValue(['estimator']);
     const res = await POST(makeApproveRequest(), makeContext(BATCH_ID));
     expect(res.status).toBe(403);
   });
 
   it('allows access for payroll_admin role', async () => {
     mockClerkAuth(mockAuth, 'user_payroll');
-    mockRequireRole.mockResolvedValue({ userId: 'user_payroll', roles: ['payroll_admin'] });
+    mockGetKrewpactRoles.mockResolvedValue(['payroll_admin']);
     const updatedBatch = { id: BATCH_ID, status: 'approved', approved_by: 'user_payroll' };
-    const supabase = mockSupabaseClient({
-      tables: { timesheet_batches: { data: updatedBatch, error: null } },
-    });
-    mockCreateUserClientSafe.mockResolvedValue({ client: supabase, error: null });
+    mockFrom.mockReturnValue(singleChain(updatedBatch));
 
     const res = await POST(makeApproveRequest(), makeContext(BATCH_ID));
     expect(res.status).toBe(200);
@@ -100,12 +96,9 @@ describe('POST /api/timesheet-batches/[batchId]/approve — RBAC', () => {
 
   it('allows access for operations_manager role', async () => {
     mockClerkAuth(mockAuth, 'user_ops');
-    mockRequireRole.mockResolvedValue({ userId: 'user_ops', roles: ['operations_manager'] });
+    mockGetKrewpactRoles.mockResolvedValue(['operations_manager']);
     const updatedBatch = { id: BATCH_ID, status: 'approved', approved_by: 'user_ops' };
-    const supabase = mockSupabaseClient({
-      tables: { timesheet_batches: { data: updatedBatch, error: null } },
-    });
-    mockCreateUserClientSafe.mockResolvedValue({ client: supabase, error: null });
+    mockFrom.mockReturnValue(singleChain(updatedBatch));
 
     const res = await POST(makeApproveRequest(), makeContext(BATCH_ID));
     expect(res.status).toBe(200);
@@ -113,12 +106,9 @@ describe('POST /api/timesheet-batches/[batchId]/approve — RBAC', () => {
 
   it('allows access for accounting role', async () => {
     mockClerkAuth(mockAuth, 'user_acc');
-    mockRequireRole.mockResolvedValue({ userId: 'user_acc', roles: ['accounting'] });
+    mockGetKrewpactRoles.mockResolvedValue(['accounting']);
     const updatedBatch = { id: BATCH_ID, status: 'approved', approved_by: 'user_acc' };
-    const supabase = mockSupabaseClient({
-      tables: { timesheet_batches: { data: updatedBatch, error: null } },
-    });
-    mockCreateUserClientSafe.mockResolvedValue({ client: supabase, error: null });
+    mockFrom.mockReturnValue(singleChain(updatedBatch));
 
     const res = await POST(makeApproveRequest(), makeContext(BATCH_ID));
     expect(res.status).toBe(200);

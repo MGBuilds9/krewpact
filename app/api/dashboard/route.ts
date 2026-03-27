@@ -1,39 +1,22 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 const querySchema = z.object({
   division_id: z.string().min(1).optional(),
 });
 
-// GET /api/dashboard — returns at-a-glance counts and recent activity
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const parsed = querySchema.safeParse(Object.fromEntries(req.nextUrl.searchParams));
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
-  const { division_id } = parsed.data;
+export const GET = withApiRoute({ querySchema }, async ({ req }) => {
+  const { division_id } = querySchema.parse(Object.fromEntries(req.nextUrl.searchParams));
 
   const { client: supabase, error: authError } = await createUserClientSafe();
-
   if (authError) return authError;
 
-  // Run all count queries in parallel for performance
   const [projectsResult, expensesResult, leadsResult, notificationsResult, recentProjectsResult] =
     await Promise.all([
-      // Active projects count
       (() => {
         let q = supabase
           .from('projects')
@@ -42,14 +25,10 @@ export async function GET(req: NextRequest) {
         if (division_id) q = q.eq('division_id', division_id);
         return q;
       })(),
-
-      // Pending expense claims count
       supabase
         .from('expense_claims')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'submitted'),
-
-      // Open leads count
       (() => {
         let q = supabase
           .from('leads')
@@ -58,14 +37,10 @@ export async function GET(req: NextRequest) {
         if (division_id) q = q.eq('division_id', division_id);
         return q;
       })(),
-
-      // Unread notifications count (state != 'read')
       supabase
         .from('notifications')
         .select('*', { count: 'exact', head: true })
         .neq('state', 'read'),
-
-      // Recent projects (5)
       (() => {
         let q = supabase
           .from('projects')
@@ -88,4 +63,4 @@ export async function GET(req: NextRequest) {
     },
     recentProjects: recentProjectsResult.data ?? [],
   });
-}
+});

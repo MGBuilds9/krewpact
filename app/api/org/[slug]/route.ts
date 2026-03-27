@@ -1,8 +1,7 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { errorResponse, notFound, UNAUTHORIZED } from '@/lib/api/errors';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { notFound } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createServiceClient } from '@/lib/supabase/server';
 
 // Hardcoded org data — used when the organizations table doesn't exist yet
@@ -23,14 +22,8 @@ const SEED_ORGS: Record<string, object> = {
   },
 };
 
-export async function GET(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
-  const { userId } = await auth();
-  if (!userId) return errorResponse(UNAUTHORIZED);
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m' });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { slug } = await params;
+export const GET = withApiRoute({}, async ({ params }) => {
+  const { slug } = params;
 
   // Try database first
   try {
@@ -62,7 +55,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
 
   // Fall back to seed data
   const seedOrg = SEED_ORGS[slug];
-  if (!seedOrg) return errorResponse(notFound('Organization'));
+  if (!seedOrg) throw notFound('Organization');
 
   return NextResponse.json(seedOrg);
-}
+});

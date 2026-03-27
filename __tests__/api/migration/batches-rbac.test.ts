@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const mockRequireRole = vi.fn();
+const mockGetKrewpactRoles = vi.fn();
 vi.mock('@/lib/api/org', () => ({
-  requireRole: (...args: unknown[]) => mockRequireRole(...args),
+  requireRole: vi.fn(),
+  getKrewpactRoles: () => mockGetKrewpactRoles(),
 }));
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 
@@ -17,10 +18,21 @@ vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
+vi.mock('@/lib/request-context', () => ({
+  requestContext: { run: (_: unknown, fn: () => unknown) => fn() },
+  generateRequestId: () => 'req_test',
+}));
+vi.mock('@/lib/logger', () => {
+  const m = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), child: vi.fn() };
+  m.child.mockReturnValue(m);
+  return { logger: m };
+});
 
-import { NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
 
-import { makeJsonRequest, makeRequest } from '@/__tests__/helpers';
+import { makeJsonRequest, makeRequest, mockClerkAuth } from '@/__tests__/helpers';
+
+const mockAuth = vi.mocked(auth);
 
 function paginatedChain(data: unknown[], count: number) {
   const chain: Record<string, unknown> = {};
@@ -38,15 +50,16 @@ describe('RBAC: GET /api/migration/batches', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('returns 403 for non-platform_admin', async () => {
-    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Forbidden' }, { status: 403 }));
+    mockClerkAuth(mockAuth);
+    mockGetKrewpactRoles.mockResolvedValue(['project_manager']);
     const { GET } = await import('@/app/api/migration/batches/route');
     const res = await GET(makeRequest('/api/migration/batches'));
     expect(res.status).toBe(403);
-    expect(mockRequireRole).toHaveBeenCalledWith(['platform_admin']);
   });
 
   it('returns 200 for platform_admin', async () => {
-    mockRequireRole.mockResolvedValue({ userId: 'admin-user', roles: ['platform_admin'] });
+    mockClerkAuth(mockAuth);
+    mockGetKrewpactRoles.mockResolvedValue(['platform_admin']);
     mockFrom.mockReturnValue(paginatedChain([], 0));
     const { GET } = await import('@/app/api/migration/batches/route');
     const res = await GET(makeRequest('/api/migration/batches'));
@@ -58,14 +71,21 @@ describe('RBAC: POST /api/migration/batches', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('returns 403 for non-platform_admin', async () => {
-    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Forbidden' }, { status: 403 }));
+    mockClerkAuth(mockAuth);
+    mockGetKrewpactRoles.mockResolvedValue(['estimator']);
     const { POST } = await import('@/app/api/migration/batches/route');
-    const res = await POST(makeJsonRequest('/api/migration/batches', { batch_name: 'Test' }));
+    const res = await POST(
+      makeJsonRequest('/api/migration/batches', {
+        source_system: 'almyta',
+        batch_name: 'Test Batch',
+      }),
+    );
     expect(res.status).toBe(403);
   });
 
   it('returns 201 for platform_admin with valid body', async () => {
-    mockRequireRole.mockResolvedValue({ userId: 'admin-user', roles: ['platform_admin'] });
+    mockClerkAuth(mockAuth);
+    mockGetKrewpactRoles.mockResolvedValue(['platform_admin']);
     const newBatch = {
       id: 'batch-1',
       source_system: 'almyta',

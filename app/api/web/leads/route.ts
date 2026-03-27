@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { resolveDivisionId, routeToDivision } from '@/lib/crm/division-router';
 import { assignLead } from '@/lib/crm/lead-assignment';
 import { logger } from '@/lib/logger';
@@ -104,11 +104,9 @@ async function insertLeadAndContact(
   });
 }
 
-export async function POST(req: NextRequest) {
-  const rl = await rateLimit(req, { limit: 10, window: '1 m' });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  try {
+export const POST = withApiRoute(
+  { auth: 'public', bodySchema: leadSchema, rateLimit: { limit: 10, window: '1 m' } },
+  async ({ req, body }) => {
     const signature = req.headers.get('x-webhook-secret');
     const secret = process.env.WEBHOOK_SIGNING_SECRET;
     if (!secret || signature !== secret) {
@@ -118,20 +116,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const body = await req.json();
-    const result = leadSchema.safeParse(body);
-    if (!result.success) {
-      return NextResponse.json(
-        { error: 'Validation Failed', details: result.error.flatten() },
-        { status: 400 },
-      );
-    }
-
     const supabase = createServiceClient();
-    return await insertLeadAndContact(supabase, result.data);
-  } catch (err: unknown) {
-    logger.error('API Error:', { error: err });
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    return NextResponse.json({ error: 'Internal Server Error', details: message }, { status: 500 });
-  }
-}
+    return insertLeadAndContact(supabase, body as LeadData);
+  },
+);

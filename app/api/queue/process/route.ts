@@ -12,6 +12,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { logger } from '@/lib/logger';
 import { processJob } from '@/lib/queue/processor';
 import { JobType } from '@/lib/queue/types';
@@ -37,10 +38,10 @@ function getAttemptCount(request: NextRequest): number {
   return retries + 1;
 }
 
-export async function POST(request: NextRequest) {
+export const POST = withApiRoute({ auth: 'public' }, async ({ req }) => {
   // 1. Read body once, then verify signature
-  const rawBody = await request.text();
-  const signature = request.headers.get('upstash-signature');
+  const rawBody = await req.text();
+  const signature = req.headers.get('upstash-signature');
 
   const verification = await verifyQStashSignature(signature, rawBody);
   if (!verification.valid) {
@@ -66,7 +67,7 @@ export async function POST(request: NextRequest) {
   }
 
   const { jobId, type, payload } = parsed.data;
-  const attemptCount = getAttemptCount(request);
+  const attemptCount = getAttemptCount(req);
   const enrichedPayload = {
     ...payload,
     meta: {
@@ -107,4 +108,4 @@ export async function POST(request: NextRequest) {
     // Return 500 so QStash retries
     return NextResponse.json({ error: 'Job processing failed', jobId }, { status: 500 });
   }
-}
+});

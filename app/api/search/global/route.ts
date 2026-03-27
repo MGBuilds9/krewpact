@@ -1,8 +1,7 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
 import { getKrewpactDivisions } from '@/lib/api/org';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 interface EntityResult {
@@ -128,13 +127,7 @@ async function runGlobalSearch(
   };
 }
 
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
+export const GET = withApiRoute({}, async ({ req }) => {
   const q = req.nextUrl.searchParams.get('q')?.trim();
   if (!q || q.length < 2) return NextResponse.json({ results: EMPTY_RESULTS });
 
@@ -144,4 +137,4 @@ export async function GET(req: NextRequest) {
   const divisions = await getKrewpactDivisions();
   const results = await runGlobalSearch(supabase, `%${q}%`, divisions);
   return NextResponse.json({ results });
-}
+});

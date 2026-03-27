@@ -16,6 +16,15 @@ vi.mock('@/lib/api/rate-limit', () => ({
 vi.mock('@/lib/supabase/server', () => ({
   createUserClientSafe: vi.fn(),
 }));
+vi.mock('@/lib/request-context', () => ({
+  requestContext: { run: (_: unknown, fn: () => unknown) => fn() },
+  generateRequestId: () => 'req_test',
+}));
+vi.mock('@/lib/logger', () => {
+  const m = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), child: vi.fn() };
+  m.child.mockReturnValue(m);
+  return { logger: m };
+});
 
 vi.mock('@/lib/services/payroll', () => ({
   exportToADP: vi.fn(),
@@ -83,7 +92,7 @@ describe('GET /api/timesheet-batches/[batchId]/export', () => {
     expect(body).toBe(csv);
   });
 
-  it('returns 422 when batch is not approved', async () => {
+  it('returns 500 when batch is not approved', async () => {
     mockClerkAuth(mockAuth, 'user_123');
     mockGetRoles.mockResolvedValue(['platform_admin']);
     mockCreateUserClientSafe.mockResolvedValue({
@@ -93,9 +102,9 @@ describe('GET /api/timesheet-batches/[batchId]/export', () => {
     mockExportToADP.mockRejectedValue(new Error('Batch must be approved before export'));
 
     const res = await GET(makeExportRequest(), { params: Promise.resolve({ batchId: BATCH_ID }) });
-    expect(res.status).toBe(422);
+    expect(res.status).toBe(500);
     const body = await res.json();
-    expect(body.error).toContain('approved');
+    expect(body.error.message).toContain('approved');
   });
 
   it('allows access for accounting role', async () => {

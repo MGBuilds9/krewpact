@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { requireRole } from '@/lib/api/org';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError } from '@/lib/api/errors';
+import { getKrewpactRoles } from '@/lib/api/org';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { timesheetBatchApprovalSchema } from '@/lib/validators/time-expense';
 
@@ -13,42 +14,30 @@ const APPROVAL_ROLES = [
   'payroll_admin',
 ];
 
-type RouteContext = { params: Promise<{ batchId: string }> };
+export const POST = withApiRoute(
+  { bodySchema: timesheetBatchApprovalSchema },
+  async ({ params, body, userId }) => {
+    const roles = await getKrewpactRoles();
+    if (!roles.some((r: string) => APPROVAL_ROLES.includes(r)))
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-export async function POST(req: NextRequest, context: RouteContext) {
-  const authResult = await requireRole(APPROVAL_ROLES);
-  if (authResult instanceof NextResponse) return authResult;
-  const { userId } = authResult;
+    const { batchId } = params;
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-  const { batchId } = await context.params;
+    const bodyData = body as { status: string };
+    const { data, error } = await supabase
+      .from('timesheet_batches')
+      .update({
+        status: bodyData.status,
+        approved_by: userId,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', batchId)
+      .select()
+      .single();
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = timesheetBatchApprovalSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-
-  const { client: supabase, error: authError } = await createUserClientSafe();
-
-  if (authError) return authError;
-  const { data, error } = await supabase
-    .from('timesheet_batches')
-    .update({
-      status: parsed.data.status,
-      approved_by: userId,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', batchId)
-    .select()
-    .single();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  return NextResponse.json(data);
-}
+    if (error) throw dbError(error.message);
+    return NextResponse.json(data);
+  },
+);

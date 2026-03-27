@@ -1,22 +1,14 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError, notFound } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string; warId: string }> },
-) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(_req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id: projectId, warId } = await params;
+export const GET = withApiRoute({}, async ({ params }) => {
+  const { id: projectId, warId } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
+
   const { data, error } = await supabase
     .from('warranty_items')
     .select(
@@ -26,18 +18,14 @@ export async function GET(
     .eq('project_id', projectId)
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 404 });
+  if (error) throw notFound('Warranty item');
+
   return NextResponse.json(data);
-}
+});
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string; warId: string }> },
-) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export const PATCH = withApiRoute({}, async ({ req, params }) => {
+  const { id: projectId, warId } = params;
 
-  const { id: projectId, warId } = await params;
   let body: unknown;
   try {
     body = await req.json();
@@ -46,8 +34,8 @@ export async function PATCH(
   }
 
   const { client: supabase, error: authError } = await createUserClientSafe();
-
   if (authError) return authError;
+
   const { data, error } = await supabase
     .from('warranty_items')
     .update({ ...(body as Record<string, unknown>), updated_at: new Date().toISOString() })
@@ -56,6 +44,7 @@ export async function PATCH(
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) throw dbError(error.message);
+
   return NextResponse.json(data);
-}
+});

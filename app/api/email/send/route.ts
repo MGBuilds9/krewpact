@@ -1,7 +1,6 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import {
   buildGraphUrl,
   getMicrosoftToken,
@@ -10,29 +9,9 @@ import {
 } from '@/lib/microsoft/graph';
 import type { SendMessagePayload } from '@/lib/microsoft/types';
 import { createUserClientSafe } from '@/lib/supabase/server';
-import { sendEmailSchema } from '@/lib/validators/email';
+import { type SendEmail,sendEmailSchema } from '@/lib/validators/email';
 
-export async function POST(req: NextRequest): Promise<NextResponse> {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = sendEmailSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
+export const POST = withApiRoute({ bodySchema: sendEmailSchema }, async ({ body, userId }) => {
   const {
     to,
     cc,
@@ -43,7 +22,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     contactId,
     accountId,
     mailbox,
-  } = parsed.data;
+  } = body as SendEmail;
 
   try {
     const token = await getMicrosoftToken(userId);
@@ -72,7 +51,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     if (leadId || contactId || accountId) {
       const recipients = to.map((r) => r.address).join(', ');
       const { client: supabase, error: authError } = await createUserClientSafe();
-      if (authError) return authError;
+      if (authError) return NextResponse.json({ error: 'Auth failed' }, { status: 401 });
 
       await supabase.from('activities').insert({
         activity_type: 'email',
@@ -90,4 +69,4 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const response = graphErrorResponse(error);
     return NextResponse.json(response.body, { status: response.status });
   }
-}
+});

@@ -1,22 +1,12 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { taskDependencyCreateSchema } from '@/lib/validators/projects';
 
-type RouteContext = { params: Promise<{ id: string; taskId: string }> };
-
-export async function GET(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { taskId } = await context.params;
+export const GET = withApiRoute({}, async ({ params }) => {
+  const { taskId } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -25,30 +15,23 @@ export async function GET(req: NextRequest, context: RouteContext) {
     .select('id, task_id, depends_on_task_id, dependency_type, created_at')
     .eq('task_id', taskId);
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  if (error) throw dbError(error.message);
 
   return NextResponse.json({ data: data || [] });
-}
+});
 
-export async function POST(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+export const POST = withApiRoute({}, async ({ req, params }) => {
+  const { taskId } = params;
 
-  const { taskId } = await context.params;
-
-  let body: unknown;
+  let rawBody: unknown;
   try {
-    body = await req.json();
+    rawBody = await req.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
   const parsed = taskDependencyCreateSchema.safeParse({
-    ...(body as Record<string, unknown>),
+    ...(rawBody as Record<string, unknown>),
     task_id: taskId,
   });
   if (!parsed.success) {
@@ -56,28 +39,20 @@ export async function POST(req: NextRequest, context: RouteContext) {
   }
 
   const { client: supabase, error: authError } = await createUserClientSafe();
-
   if (authError) return authError;
+
   const { data, error } = await supabase
     .from('task_dependencies')
     .insert(parsed.data)
     .select()
     .single();
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  if (error) throw dbError(error.message);
 
   return NextResponse.json(data, { status: 201 });
-}
+});
 
-export async function DELETE(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  await context.params;
+export const DELETE = withApiRoute({}, async ({ req }) => {
   const dependencyId = req.nextUrl.searchParams.get('dependency_id');
 
   if (!dependencyId) {
@@ -85,13 +60,11 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
   }
 
   const { client: supabase, error: authError } = await createUserClientSafe();
-
   if (authError) return authError;
+
   const { error } = await supabase.from('task_dependencies').delete().eq('id', dependencyId);
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  if (error) throw dbError(error.message);
 
   return NextResponse.json({ success: true });
-}
+});

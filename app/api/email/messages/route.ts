@@ -1,7 +1,6 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import {
   buildGraphUrl,
   getMicrosoftToken,
@@ -27,45 +26,40 @@ const MESSAGE_SELECT = [
   'conversationId',
 ].join(',');
 
-export async function GET(req: NextRequest): Promise<NextResponse> {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+export const GET = withApiRoute(
+  { querySchema: emailQuerySchema },
+  async ({ req, userId, query }) => {
+    const { mailbox, top, skip, search, folder } = query as {
+      mailbox?: string;
+      top: number;
+      skip: number;
+      search?: string;
+      folder: string;
+    };
 
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
+    try {
+      const token = await getMicrosoftToken(userId);
 
-  const params = Object.fromEntries(req.nextUrl.searchParams);
-  const parsed = emailQuerySchema.safeParse(params);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
+      const queryParams = new URLSearchParams({
+        $top: String(top),
+        $skip: String(skip),
+        $orderby: 'receivedDateTime desc',
+        $select: MESSAGE_SELECT,
+      });
 
-  const { mailbox, top, skip, search, folder } = parsed.data;
+      if (search) {
+        queryParams.set('$search', `"${search}"`);
+      }
 
-  try {
-    const token = await getMicrosoftToken(userId);
+      const path = `/mailFolders/${folder}/messages?${queryParams.toString()}`;
+      const url = buildGraphUrl(path, mailbox);
 
-    const queryParams = new URLSearchParams({
-      $top: String(top),
-      $skip: String(skip),
-      $orderby: 'receivedDateTime desc',
-      $select: MESSAGE_SELECT,
-    });
+      const data = await graphFetch<GraphListResponse<GraphMessage>>(token, url);
 
-    if (search) {
-      queryParams.set('$search', `"${search}"`);
+      return NextResponse.json(data);
+    } catch (error) {
+      const response = graphErrorResponse(error);
+      return NextResponse.json(response.body, { status: response.status });
     }
-
-    const path = `/mailFolders/${folder}/messages?${queryParams.toString()}`;
-    const url = buildGraphUrl(path, mailbox);
-
-    const data = await graphFetch<GraphListResponse<GraphMessage>>(token, url);
-
-    return NextResponse.json(data);
-  } catch (error) {
-    const response = graphErrorResponse(error);
-    return NextResponse.json(response.body, { status: response.status });
-  }
-}
+  },
+);

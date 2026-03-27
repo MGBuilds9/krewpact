@@ -1,21 +1,13 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
+import { dbError } from '@/lib/api/errors';
 import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { fileVersionSchema } from '@/lib/validators/documents';
 
-type RouteContext = { params: Promise<{ id: string; fileId: string }> };
-
-export async function GET(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { fileId } = await context.params;
+export const GET = withApiRoute({}, async ({ req, params }) => {
+  const { fileId } = params;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
@@ -30,54 +22,40 @@ export async function GET(req: NextRequest, context: RouteContext) {
     .order('version_no', { ascending: false })
     .range(offset, offset + limit - 1);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) throw dbError(error.message);
 
   return NextResponse.json(paginatedResponse(data, count, limit, offset));
-}
+});
 
-export async function POST(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export const POST = withApiRoute(
+  { bodySchema: fileVersionSchema },
+  async ({ params, body, userId }) => {
+    const { fileId } = params;
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
-  const { fileId } = await context.params;
+    // Get current max version_no
+    const { data: existing } = await supabase
+      .from('file_versions')
+      .select('version_no')
+      .eq('file_id', fileId)
+      .order('version_no', { ascending: false })
+      .limit(1)
+      .single();
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
+    const nextVersion = (existing?.version_no ?? 0) + 1;
 
-  const parsed = fileVersionSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
+    const { data, error } = await supabase
+      .from('file_versions')
+      .insert({ ...body, file_id: fileId, version_no: nextVersion, uploaded_by: userId })
+      .select()
+      .single();
 
-  const { client: supabase, error: authError } = await createUserClientSafe();
+    if (error) throw dbError(error.message);
 
-  if (authError) return authError;
+    // Update version_no on file_metadata
+    await supabase.from('file_metadata').update({ version_no: nextVersion }).eq('id', fileId);
 
-  // Get current max version_no
-  const { data: existing } = await supabase
-    .from('file_versions')
-    .select('version_no')
-    .eq('file_id', fileId)
-    .order('version_no', { ascending: false })
-    .limit(1)
-    .single();
-
-  const nextVersion = (existing?.version_no ?? 0) + 1;
-
-  const { data, error } = await supabase
-    .from('file_versions')
-    .insert({ ...parsed.data, file_id: fileId, version_no: nextVersion, uploaded_by: userId })
-    .select()
-    .single();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  // Update version_no on file_metadata
-  await supabase.from('file_metadata').update({ version_no: nextVersion }).eq('id', fileId);
-
-  return NextResponse.json(data, { status: 201 });
-}
+    return NextResponse.json(data, { status: 201 });
+  },
+);

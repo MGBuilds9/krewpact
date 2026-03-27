@@ -1,11 +1,10 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
-const querySchema = z.object({
+const suggestQuerySchema = z.object({
   field: z.string().min(1),
   context: z.string().min(2), // JSON string
 });
@@ -113,27 +112,17 @@ async function findSuggestion(
   return null;
 }
 
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 30, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const params = Object.fromEntries(req.nextUrl.searchParams);
-  const parsed = querySchema.safeParse(params);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-
+export const GET = withApiRoute({ querySchema: suggestQuerySchema }, async ({ query }) => {
   let context: Record<string, unknown>;
   try {
-    context = JSON.parse(parsed.data.context);
+    context = JSON.parse(query.context);
   } catch {
     return NextResponse.json({ error: 'Invalid context JSON' }, { status: 400 });
   }
 
   const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
+  if (authError) return NextResponse.json({ error: 'Auth failed' }, { status: 401 });
 
-  const suggestion = await findSuggestion(supabase, parsed.data.field, context);
+  const suggestion = await findSuggestion(supabase, query.field, context);
   return suggestion ?? NextResponse.json({ suggestion: null });
-}
+});

@@ -1,8 +1,8 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
+import { dbError, forbidden } from '@/lib/api/errors';
 import { getKrewpactRoles, getKrewpactUserId } from '@/lib/api/org';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 const ALLOWED_ROLES = ['project_manager', 'operations_manager', 'executive', 'platform_admin'];
@@ -43,14 +43,6 @@ export interface PMDashboardResponse {
   }[];
 }
 
-/**
- * Calculate health score for a project.
- *
- * Factors:
- * - Milestone completion % (0-100, weighted 50%)
- * - Overdue task penalty: -5 points per overdue task (weighted 30%)
- * - Daily log recency: full marks if logged today, degrades over 7 days (weighted 20%)
- */
 export function calculateHealthScore(
   milestoneTotal: number,
   milestoneCompleted: number,
@@ -217,20 +209,11 @@ async function fetchProjectData(
   };
 }
 
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
+export const GET = withApiRoute({ rateLimit: { limit: 30, window: '1 m' } }, async ({ userId }) => {
   const userRoles = await getKrewpactRoles();
   const hasAccess = userRoles.some((r: unknown) => ALLOWED_ROLES.includes(String(r)));
   if (!hasAccess)
-    return NextResponse.json(
-      { error: 'Forbidden: project_manager, operations_manager, or executive role required' },
-      { status: 403 },
-    );
-
-  const rl = await rateLimit(req, { limit: 30, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
+    throw forbidden('project_manager, operations_manager, or executive role required');
 
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
@@ -242,8 +225,8 @@ export async function GET(req: NextRequest) {
     .eq('user_id', krewpactUserId ?? userId)
     .eq('role', 'manager')
     .is('left_at', null);
-  if (memberError)
-    return NextResponse.json({ error: 'Failed to fetch project assignments' }, { status: 500 });
+
+  if (memberError) throw dbError('Failed to fetch project assignments');
 
   const projectIds = (memberships ?? []).map((m: { project_id: string }) => m.project_id);
   if (projectIds.length === 0)
@@ -254,8 +237,7 @@ export async function GET(req: NextRequest) {
     } satisfies PMDashboardResponse);
 
   const data = await fetchProjectData(supabase, projectIds);
-  if (!data)
-    return NextResponse.json({ error: 'Failed to fetch PM dashboard data' }, { status: 500 });
+  if (!data) throw dbError('Failed to fetch PM dashboard data');
 
   return NextResponse.json(buildDashboardData(data) satisfies PMDashboardResponse);
-}
+});

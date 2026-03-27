@@ -9,6 +9,15 @@ vi.mock('@clerk/nextjs/server', () => ({
 vi.mock('@/lib/supabase/server', () => ({
   createUserClientSafe: vi.fn(),
 }));
+vi.mock('@/lib/request-context', () => ({
+  requestContext: { run: (_: unknown, fn: () => unknown) => fn() },
+  generateRequestId: () => 'req_test',
+}));
+vi.mock('@/lib/logger', () => {
+  const m = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), child: vi.fn() };
+  m.child.mockReturnValue(m);
+  return { logger: m };
+});
 
 import { auth } from '@clerk/nextjs/server';
 
@@ -136,7 +145,7 @@ describe('GET /api/cost-catalog', () => {
     const res = await GET_CATALOG(makeRequest('/api/cost-catalog'));
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns paginated list of catalog items', async () => {

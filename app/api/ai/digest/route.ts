@@ -1,18 +1,11 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 30, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
+export const GET = withApiRoute({ rateLimit: { limit: 30, window: '1 m' } }, async ({ userId }) => {
   const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
+  if (authError) return NextResponse.json({ error: 'Auth failed' }, { status: 401 });
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -24,12 +17,10 @@ export async function GET(req: NextRequest) {
     .single();
 
   if (error && error.code !== 'PGRST116') {
-    // Not found is OK
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
   if (data && !data.read_at) {
-    // Mark as read
     await supabase
       .from('user_digests')
       .update({ read_at: new Date().toISOString() })
@@ -37,4 +28,4 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({ digest: data ?? null });
-}
+});

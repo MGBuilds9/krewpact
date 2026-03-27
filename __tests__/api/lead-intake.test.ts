@@ -8,6 +8,19 @@ vi.mock('@/lib/crm/division-router', () => ({
   routeToDivision: vi.fn(() => 'contracting'),
   resolveDivisionId: vi.fn(() => Promise.resolve('div-001')),
 }));
+vi.mock('@/lib/request-context', () => ({
+  requestContext: { run: (_: unknown, fn: () => unknown) => fn() },
+  generateRequestId: () => 'req_test',
+}));
+vi.mock('@/lib/logger', () => {
+  const m = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), child: vi.fn() };
+  m.child.mockReturnValue(m);
+  return { logger: m };
+});
+vi.mock('@/lib/api/rate-limit', () => ({
+  rateLimit: vi.fn().mockResolvedValue({ success: true }),
+  rateLimitResponse: vi.fn(),
+}));
 
 // Mock Supabase
 const mockSupabase = {
@@ -65,9 +78,9 @@ describe('Lead Intake API (/api/web/leads)', () => {
     const res = await POST(req);
     expect(res.status).toBe(400);
     const json = await res.json();
-    expect(json.error).toBe('Validation Failed');
-    expect(json.details.fieldErrors.name).toBeDefined();
-    expect(json.details.fieldErrors.email).toBeDefined();
+    expect(json.error.code).toBe('VALIDATION_ERROR');
+    expect(json.error.details.issues.fieldErrors.name).toBeDefined();
+    expect(json.error.details.issues.fieldErrors.email).toBeDefined();
   });
 
   it('should successfully create a lead and contact (Happy Path)', async () => {

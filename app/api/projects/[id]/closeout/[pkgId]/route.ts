@@ -1,21 +1,12 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError, notFound } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { closeoutPackageUpdateSchema } from '@/lib/validators/closeout';
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string; pkgId: string }> },
-) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(_req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id: projectId, pkgId } = await params;
+export const GET = withApiRoute({}, async ({ params }) => {
+  const { id: projectId, pkgId } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
   const { data, error } = await supabase
@@ -27,39 +18,25 @@ export async function GET(
     .eq('project_id', projectId)
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 404 });
+  if (error) throw notFound('Closeout package');
   return NextResponse.json(data);
-}
+});
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string; pkgId: string }> },
-) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export const PATCH = withApiRoute(
+  { bodySchema: closeoutPackageUpdateSchema },
+  async ({ params, body }) => {
+    const { id: projectId, pkgId } = params;
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
+    const { data, error } = await supabase
+      .from('closeout_packages')
+      .update({ ...body, updated_at: new Date().toISOString() })
+      .eq('id', pkgId)
+      .eq('project_id', projectId)
+      .select()
+      .single();
 
-  const { id: projectId, pkgId } = await params;
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = closeoutPackageUpdateSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-
-  const { client: supabase, error: authError } = await createUserClientSafe();
-
-  if (authError) return authError;
-  const { data, error } = await supabase
-    .from('closeout_packages')
-    .update({ ...parsed.data, updated_at: new Date().toISOString() })
-    .eq('id', pkgId)
-    .eq('project_id', projectId)
-    .select()
-    .single();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
-}
+    if (error) throw dbError(error.message);
+    return NextResponse.json(data);
+  },
+);

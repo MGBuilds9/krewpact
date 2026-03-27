@@ -1,7 +1,7 @@
-import { auth, currentUser } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { currentUser } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { logger } from '@/lib/logger';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
@@ -61,31 +61,18 @@ async function handleImpersonation(
   return NextResponse.json({ ...impersonated, _impersonated_by: callerUser.id });
 }
 
-export async function GET(req: NextRequest) {
-  try {
-    const { userId } = await auth();
-    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export const GET = withApiRoute({}, async ({ req }) => {
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return NextResponse.json({ error: 'Auth failed' }, { status: 401 });
 
-    const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-    if (!rl.success) return rateLimitResponse(rl);
+  const callerResult = await resolveCallerUser(supabase);
+  if (callerResult instanceof NextResponse) return callerResult;
+  const callerUser = callerResult;
 
-    const { client: supabase, error: authError } = await createUserClientSafe();
-    if (authError) return authError;
-
-    const callerResult = await resolveCallerUser(supabase);
-    if (callerResult instanceof NextResponse) return callerResult;
-    const callerUser = callerResult;
-
-    const impersonateId = req.nextUrl.searchParams.get('impersonate');
-    if (impersonateId) {
-      return handleImpersonation(supabase, callerUser, impersonateId);
-    }
-
-    return NextResponse.json(callerUser);
-  } catch (err: unknown) {
-    logger.error('/api/user/current error:', {
-      error: err instanceof Error ? err.message : String(err),
-    });
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  const impersonateId = req.nextUrl.searchParams.get('impersonate');
+  if (impersonateId) {
+    return handleImpersonation(supabase, callerUser, impersonateId);
   }
-}
+
+  return NextResponse.json(callerUser);
+});

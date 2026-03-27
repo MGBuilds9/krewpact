@@ -36,10 +36,20 @@ vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
+vi.mock('@/lib/request-context', () => ({
+  requestContext: { run: (_: unknown, fn: () => unknown) => fn() },
+  generateRequestId: () => 'req_test',
+}));
+vi.mock('@/lib/logger', () => {
+  const m = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), child: vi.fn() };
+  m.child.mockReturnValue(m);
+  return { logger: m };
+});
 
 import { auth } from '@clerk/nextjs/server';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook } from '@testing-library/react';
+import { NextRequest } from 'next/server';
 import React from 'react';
 
 import { POST } from '@/app/api/pdf/generate/route';
@@ -58,7 +68,7 @@ function createWrapper() {
 }
 
 function makeRequest(body: unknown) {
-  return new Request('http://localhost/api/pdf/generate', {
+  return new NextRequest('http://localhost/api/pdf/generate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),

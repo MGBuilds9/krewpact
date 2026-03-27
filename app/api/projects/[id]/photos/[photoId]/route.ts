@@ -1,19 +1,11 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError, notFound } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
-type RouteContext = { params: Promise<{ id: string; photoId: string }> };
-
-export async function GET(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id, photoId } = await context.params;
+export const GET = withApiRoute({}, async ({ params }) => {
+  const { id, photoId } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
   const { data, error } = await supabase
@@ -24,9 +16,9 @@ export async function GET(req: NextRequest, context: RouteContext) {
     .single();
 
   if (error) {
-    const status = error.code === 'PGRST116' ? 404 : 500;
-    return NextResponse.json({ error: error.message }, { status });
+    if (error.code === 'PGRST116') throw notFound('Photo');
+    throw dbError(error.message);
   }
 
   return NextResponse.json(data);
-}
+});

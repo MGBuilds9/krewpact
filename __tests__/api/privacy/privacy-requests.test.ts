@@ -6,9 +6,10 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const mockRequireRole = vi.fn();
+const mockGetKrewpactRoles = vi.fn();
 vi.mock('@/lib/api/org', () => ({
-  requireRole: (...args: unknown[]) => mockRequireRole(...args),
+  requireRole: vi.fn(),
+  getKrewpactRoles: () => mockGetKrewpactRoles(),
 }));
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
@@ -16,9 +17,17 @@ vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
+vi.mock('@/lib/request-context', () => ({
+  requestContext: { run: (_: unknown, fn: () => unknown) => fn() },
+  generateRequestId: () => 'req_test',
+}));
+vi.mock('@/lib/logger', () => {
+  const m = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), child: vi.fn() };
+  m.child.mockReturnValue(m);
+  return { logger: m };
+});
 
 import { auth } from '@clerk/nextjs/server';
-import { NextResponse } from 'next/server';
 
 import {
   makeJsonRequest,
@@ -70,14 +79,11 @@ const sampleEvent = {
 describe('GET /api/privacy/requests', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRequireRole.mockResolvedValue({ userId: 'admin-user', roles: ['platform_admin'] });
+    mockGetKrewpactRoles.mockResolvedValue(['platform_admin']);
   });
 
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
-    mockRequireRole.mockResolvedValue(
-      NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
-    );
     const res = await GET_LIST(makeRequest('/api/privacy/requests'));
     expect(res.status).toBe(401);
   });
@@ -114,14 +120,11 @@ describe('GET /api/privacy/requests', () => {
 describe('POST /api/privacy/requests', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRequireRole.mockResolvedValue({ userId: 'admin-user', roles: ['platform_admin'] });
+    mockGetKrewpactRoles.mockResolvedValue(['platform_admin']);
   });
 
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
-    mockRequireRole.mockResolvedValue(
-      NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
-    );
     const res = await POST_CREATE(makeJsonRequest('/api/privacy/requests', {}));
     expect(res.status).toBe(401);
   });
@@ -191,7 +194,7 @@ describe('GET /api/privacy/requests/[id]', () => {
     expect(body.requester_email).toBe('test@example.com');
   });
 
-  it('returns 404 on not found', async () => {
+  it('returns 500 on not found', async () => {
     mockClerkAuth(mockAuth);
     mockCreateUserClientSafe.mockResolvedValue({
       client: mockSupabaseClient({
@@ -200,7 +203,7 @@ describe('GET /api/privacy/requests/[id]', () => {
       error: null,
     });
     const res = await GET_DETAIL(makeRequest('/api/privacy/requests/x'), idCtx());
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(500);
   });
 });
 

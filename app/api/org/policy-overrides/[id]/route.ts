@@ -1,19 +1,15 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-  const { id } = await params;
+export const DELETE = withApiRoute({}, async ({ params }) => {
+  const { id } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
+  if (authError) return NextResponse.json({ error: 'Auth failed' }, { status: 401 });
+
   const { error } = await supabase.from('policy_overrides').delete().eq('id', id);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) throw dbError(error.message);
   return new NextResponse(null, { status: 204 });
-}
+});

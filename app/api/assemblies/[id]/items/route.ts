@@ -1,24 +1,18 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
+import { dbError, notFound } from '@/lib/api/errors';
 import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { assemblyItemCreateSchema, assemblyItemUpdateSchema } from '@/lib/validators/estimating';
 
-export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id } = await params;
+export const GET = withApiRoute({}, async ({ req, params }) => {
+  const { id } = params;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
+
   const { data, error, count } = await supabase
     .from('assembly_items')
     .select(
@@ -29,127 +23,82 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     .order('sort_order', { ascending: true })
     .range(offset, offset + limit - 1);
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  if (error) throw dbError(error.message);
 
   return NextResponse.json(paginatedResponse(data, count, limit, offset));
-}
+});
 
-export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+export const POST = withApiRoute(
+  { bodySchema: assemblyItemCreateSchema },
+  async ({ params, body }) => {
+    const { id } = params;
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
+    const { data, error } = await supabase
+      .from('assembly_items')
+      .insert({ ...body, assembly_id: id })
+      .select()
+      .single();
 
-  const { id } = await params;
+    if (error) throw dbError(error.message);
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
+    return NextResponse.json(data, { status: 201 });
+  },
+);
 
-  const parsed = assemblyItemCreateSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
+export const PATCH = withApiRoute(
+  { bodySchema: assemblyItemUpdateSchema },
+  async ({ req, params, body }) => {
+    const { id } = params;
+    const itemId = req.nextUrl.searchParams.get('item_id');
+    if (!itemId) {
+      return NextResponse.json({ error: 'item_id query param required' }, { status: 400 });
+    }
 
-  const { client: supabase, error: authError } = await createUserClientSafe();
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
-  if (authError) return authError;
-  const { data, error } = await supabase
-    .from('assembly_items')
-    .insert({ ...parsed.data, assembly_id: id })
-    .select()
-    .single();
+    const { data, error } = await supabase
+      .from('assembly_items')
+      .update(body)
+      .eq('id', itemId)
+      .eq('assembly_id', id)
+      .select()
+      .single();
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+    if (error) {
+      if (error.code === 'PGRST116') throw notFound('Assembly item');
+      throw dbError(error.message);
+    }
 
-  return NextResponse.json(data, { status: 201 });
-}
+    return NextResponse.json(data);
+  },
+);
 
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id } = await params;
+export const DELETE = withApiRoute({}, async ({ req, params }) => {
+  const { id } = params;
   const itemId = req.nextUrl.searchParams.get('item_id');
   if (!itemId) {
     return NextResponse.json({ error: 'item_id query param required' }, { status: 400 });
   }
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = assemblyItemUpdateSchema.safeParse(body);
+  const querySchema = z.object({ item_id: z.string().uuid() });
+  const parsed = querySchema.safeParse({ item_id: itemId });
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    return NextResponse.json({ error: 'Invalid item_id' }, { status: 400 });
   }
 
   const { client: supabase, error: authError } = await createUserClientSafe();
-
   if (authError) return authError;
-  const { data, error } = await supabase
-    .from('assembly_items')
-    .update(parsed.data)
-    .eq('id', itemId)
-    .eq('assembly_id', id)
-    .select()
-    .single();
 
-  if (error) {
-    return NextResponse.json(
-      { error: error.message },
-      { status: error.code === 'PGRST116' ? 404 : 500 },
-    );
-  }
-
-  return NextResponse.json(data);
-}
-
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id } = await params;
-  const itemId = req.nextUrl.searchParams.get('item_id');
-  if (!itemId) {
-    return NextResponse.json({ error: 'item_id query param required' }, { status: 400 });
-  }
-
-  const { client: supabase, error: authError } = await createUserClientSafe();
-
-  if (authError) return authError;
   const { error } = await supabase
     .from('assembly_items')
     .delete()
     .eq('id', itemId)
     .eq('assembly_id', id);
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  if (error) throw dbError(error.message);
 
   return NextResponse.json({ success: true });
-}
+});

@@ -1,8 +1,8 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { bidLevelingEntrySchema, bidLevelingSessionSchema } from '@/lib/validators/procurement';
 
@@ -15,22 +15,10 @@ const createSchema = bidLevelingSessionSchema.extend({
   entries: z.array(bidLevelingEntrySchema).min(1),
 });
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string; rfqId: string }> },
-) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { rfqId } = await params;
-  const qp = Object.fromEntries(req.nextUrl.searchParams);
-  const parsed = querySchema.safeParse(qp);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-
-  const { limit, offset } = parsed.data;
+export const GET = withApiRoute({ querySchema }, async ({ req, params }) => {
+  const { rfqId } = params;
+  const limit = Number(req.nextUrl.searchParams.get('limit') ?? 10);
+  const offset = Number(req.nextUrl.searchParams.get('offset') ?? 0);
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
   const { data, error, count } = await supabase
@@ -40,25 +28,14 @@ export async function GET(
     .order('version_no', { ascending: false })
     .range(offset, offset + limit - 1);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) throw dbError(error.message);
   const total = count ?? 0;
   return NextResponse.json({ data, total, hasMore: offset + limit < total });
-}
+});
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string; rfqId: string }> },
-) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const { rfqId } = await params;
-  const body = await req.json();
-  const parsed = createSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-
+export const POST = withApiRoute({ bodySchema: createSchema }, async ({ params, body, userId }) => {
+  const { rfqId } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
-
   if (authError) return authError;
 
   // Determine next version number
@@ -71,19 +48,19 @@ export async function POST(
 
   const { data: session, error: sessionError } = await supabase
     .from('bid_leveling_sessions')
-    .insert({ notes: parsed.data.notes, rfq_id: rfqId, version_no: versionNo, created_by: userId })
+    .insert({ notes: body.notes, rfq_id: rfqId, version_no: versionNo, created_by: userId })
     .select()
     .single();
 
-  if (sessionError) return NextResponse.json({ error: sessionError.message }, { status: 500 });
+  if (sessionError) throw dbError(sessionError.message);
 
-  const entries = parsed.data.entries.map((e) => ({
+  const entries = body.entries.map((e: Record<string, unknown>) => ({
     ...e,
     leveling_session_id: session.id,
   }));
 
   const { error: entriesError } = await supabase.from('bid_leveling_entries').insert(entries);
-  if (entriesError) return NextResponse.json({ error: entriesError.message }, { status: 500 });
+  if (entriesError) throw dbError(entriesError.message);
 
   return NextResponse.json(session, { status: 201 });
-}
+});

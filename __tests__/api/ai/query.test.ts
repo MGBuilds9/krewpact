@@ -7,7 +7,15 @@ vi.mock('@/lib/api/rate-limit', () => ({
 }));
 vi.mock('@/lib/ai/agents/nl-query', () => ({ executeNLQuery: vi.fn() }));
 vi.mock('@/lib/logger', () => ({
-  logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  logger: {
+    warn: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+    child: vi
+      .fn()
+      .mockReturnValue({ warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() }),
+  },
 }));
 
 import { auth } from '@clerk/nextjs/server';
@@ -58,7 +66,7 @@ describe('POST /api/ai/query', () => {
     expect(res.status).toBe(401);
 
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns 400 when query is too short (< 3 chars)', async () => {
@@ -66,7 +74,7 @@ describe('POST /api/ai/query', () => {
     expect(res.status).toBe(400);
 
     const body = await res.json();
-    expect(body.error).toBe('Invalid query');
+    expect(body.error.code).toBe('VALIDATION_ERROR');
   });
 
   it('returns 404 when org not found', async () => {

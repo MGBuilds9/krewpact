@@ -12,15 +12,25 @@ vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
+vi.mock('@/lib/request-context', () => ({
+  requestContext: { run: (_: unknown, fn: () => unknown) => fn() },
+  generateRequestId: () => 'req_test',
+}));
+vi.mock('@/lib/logger', () => {
+  const m = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), child: vi.fn() };
+  m.child.mockReturnValue(m);
+  return { logger: m };
+});
 
 const mockRequireRole = vi.fn();
+const mockGetKrewpactRoles = vi.fn();
 vi.mock('@/lib/api/org', () => ({
   requireRole: (...args: unknown[]) => mockRequireRole(...args),
+  getKrewpactRoles: () => mockGetKrewpactRoles(),
   getOrgIdFromAuth: vi.fn().mockResolvedValue('mdm-group'),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { NextResponse } from 'next/server';
 
 import {
   makeJsonRequest,
@@ -189,14 +199,11 @@ describe('DELETE /api/timesheet-batches/[batchId]', () => {
 describe('POST /api/timesheet-batches/[batchId]/approve', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRequireRole.mockResolvedValue({ userId: 'user_123', roles: ['payroll_admin'] });
+    mockGetKrewpactRoles.mockResolvedValue(['payroll_admin']);
   });
 
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
-    mockRequireRole.mockResolvedValue(
-      NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
-    );
     const res = await POST_APPROVE(makeJsonRequest('/api/x/approve', {}), batchCtx());
     expect(res.status).toBe(401);
   });

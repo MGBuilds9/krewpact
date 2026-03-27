@@ -1,7 +1,6 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { logger } from '@/lib/logger';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
@@ -41,40 +40,29 @@ function computeOnboardingStep(
   return 1;
 }
 
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export const GET = withApiRoute({ rateLimit: { limit: 30, window: '1 m' } }, async ({ userId }) => {
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return NextResponse.json({ error: 'Auth failed' }, { status: 401 });
 
-  const rl = await rateLimit(req, { limit: 30, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
+  const { orgResult, divResult, memberResult } = await fetchOnboardingData(supabase, userId);
 
-  try {
-    const { client: supabase, error: authError } = await createUserClientSafe();
-    if (authError) return authError;
-
-    const { orgResult, divResult, memberResult } = await fetchOnboardingData(supabase, userId);
-
-    if (orgResult.error) {
-      logger.error('Onboarding: failed to fetch org', { error: orgResult.error.message });
-      return NextResponse.json({ error: 'Failed to fetch organization' }, { status: 500 });
-    }
-    if (divResult.error) {
-      logger.error('Onboarding: failed to fetch divisions', { error: divResult.error.message });
-      return NextResponse.json({ error: 'Failed to fetch divisions' }, { status: 500 });
-    }
-    if (memberResult.error) {
-      logger.error('Onboarding: failed to fetch members', { error: memberResult.error.message });
-      return NextResponse.json({ error: 'Failed to fetch team members' }, { status: 500 });
-    }
-
-    const hasOrgProfile = !!(orgResult.data?.name && orgResult.data?.address);
-    const hasDivisions = (divResult.count ?? 0) > 0;
-    const hasTeamMembers = (memberResult.count ?? 0) > 0;
-    const currentStep = computeOnboardingStep(hasOrgProfile, hasDivisions, hasTeamMembers);
-
-    return NextResponse.json({ completed: currentStep === 4, currentStep });
-  } catch (err: unknown) {
-    logger.error('Onboarding status check failed', { error: String(err) });
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  if (orgResult.error) {
+    logger.error('Onboarding: failed to fetch org', { error: orgResult.error.message });
+    return NextResponse.json({ error: 'Failed to fetch organization' }, { status: 500 });
   }
-}
+  if (divResult.error) {
+    logger.error('Onboarding: failed to fetch divisions', { error: divResult.error.message });
+    return NextResponse.json({ error: 'Failed to fetch divisions' }, { status: 500 });
+  }
+  if (memberResult.error) {
+    logger.error('Onboarding: failed to fetch members', { error: memberResult.error.message });
+    return NextResponse.json({ error: 'Failed to fetch team members' }, { status: 500 });
+  }
+
+  const hasOrgProfile = !!(orgResult.data?.name && orgResult.data?.address);
+  const hasDivisions = (divResult.count ?? 0) > 0;
+  const hasTeamMembers = (memberResult.count ?? 0) > 0;
+  const currentStep = computeOnboardingStep(hasOrgProfile, hasDivisions, hasTeamMembers);
+
+  return NextResponse.json({ completed: currentStep === 4, currentStep });
+});

@@ -1,20 +1,12 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError, notFound } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { fileMetadataUpdateSchema } from '@/lib/validators/documents';
 
-type RouteContext = { params: Promise<{ id: string; fileId: string }> };
-
-export async function GET(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id, fileId } = await context.params;
+export const GET = withApiRoute({}, async ({ params }) => {
+  const { id, fileId } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
   const { data, error } = await supabase
@@ -27,55 +19,38 @@ export async function GET(req: NextRequest, context: RouteContext) {
     .single();
 
   if (error) {
-    const status = error.code === 'PGRST116' ? 404 : 500;
-    return NextResponse.json({ error: error.message }, { status });
+    if (error.code === 'PGRST116') throw notFound('File');
+    throw dbError(error.message);
   }
 
   return NextResponse.json(data);
-}
+});
 
-export async function PATCH(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export const PATCH = withApiRoute(
+  { bodySchema: fileMetadataUpdateSchema },
+  async ({ params, body }) => {
+    const { id, fileId } = params;
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
+    const { data, error } = await supabase
+      .from('file_metadata')
+      .update(body)
+      .eq('id', fileId)
+      .eq('project_id', id)
+      .select()
+      .single();
 
-  const { id, fileId } = await context.params;
+    if (error) {
+      if (error.code === 'PGRST116') throw notFound('File');
+      throw dbError(error.message);
+    }
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
+    return NextResponse.json(data);
+  },
+);
 
-  const parsed = fileMetadataUpdateSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
-  const { client: supabase, error: authError } = await createUserClientSafe();
-
-  if (authError) return authError;
-  const { data, error } = await supabase
-    .from('file_metadata')
-    .update(parsed.data)
-    .eq('id', fileId)
-    .eq('project_id', id)
-    .select()
-    .single();
-
-  if (error) {
-    const status = error.code === 'PGRST116' ? 404 : 500;
-    return NextResponse.json({ error: error.message }, { status });
-  }
-
-  return NextResponse.json(data);
-}
-
-export async function DELETE(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const { id, fileId } = await context.params;
+export const DELETE = withApiRoute({}, async ({ params }) => {
+  const { id, fileId } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -86,7 +61,7 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
     .eq('id', fileId)
     .eq('project_id', id);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) throw dbError(error.message);
 
   return new NextResponse(null, { status: 204 });
-}
+});

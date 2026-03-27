@@ -1,8 +1,8 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { policyOverrideCreateSchema } from '@/lib/validators/org';
 
@@ -12,21 +12,20 @@ const querySchema = z.object({
   offset: z.coerce.number().int().min(0).optional(),
 });
 
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-  const params = Object.fromEntries(req.nextUrl.searchParams);
-  const parsed = querySchema.safeParse(params);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-
-  const { user_id, limit = 50, offset = 0 } = parsed.data;
+export const GET = withApiRoute({ querySchema }, async ({ query }) => {
+  const {
+    user_id,
+    limit = 50,
+    offset = 0,
+  } = query as {
+    user_id?: string;
+    limit?: number;
+    offset?: number;
+  };
   const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
+  if (authError) return NextResponse.json({ error: 'Auth failed' }, { status: 401 });
 
-  let query = supabase
+  let dbQuery = supabase
     .from('policy_overrides')
     .select(
       'id, user_id, permission_id, override_value, reason, expires_at, created_by, created_at, updated_at',
@@ -35,40 +34,28 @@ export async function GET(req: NextRequest) {
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 
-  if (user_id) query = query.eq('user_id', user_id);
+  if (user_id) dbQuery = dbQuery.eq('user_id', user_id);
 
-  const { data, error, count } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  const { data, error, count } = await dbQuery;
+  if (error) throw dbError(error.message);
 
   const total = count ?? 0;
   return NextResponse.json({ data, total, hasMore: offset + limit < total });
-}
+});
 
-export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export const POST = withApiRoute(
+  { bodySchema: policyOverrideCreateSchema },
+  async ({ body, userId }) => {
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return NextResponse.json({ error: 'Auth failed' }, { status: 401 });
 
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
+    const { data, error } = await supabase
+      .from('policy_overrides')
+      .insert({ ...body, created_by: userId })
+      .select()
+      .single();
 
-  const parsed = policyOverrideCreateSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-
-  const { client: supabase, error: authError } = await createUserClientSafe();
-
-  if (authError) return authError;
-  const { data, error } = await supabase
-    .from('policy_overrides')
-    .insert({ ...parsed.data, created_by: userId })
-    .select()
-    .single();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data, { status: 201 });
-}
+    if (error) throw dbError(error.message);
+    return NextResponse.json(data, { status: 201 });
+  },
+);

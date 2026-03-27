@@ -1,12 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { requireRole } from '@/lib/api/org';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
-
-const ADMIN_ROLES = ['platform_admin'];
+import { dbError } from '@/lib/api/errors';
+import { getKrewpactRoles } from '@/lib/api/org';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { privacyRequestCreateSchema } from '@/lib/validators/migration';
+
+const ADMIN_ROLES = ['platform_admin'];
 
 const querySchema = z.object({
   status: z.string().optional(),
@@ -15,18 +16,18 @@ const querySchema = z.object({
   offset: z.coerce.number().int().min(0).optional(),
 });
 
-export async function GET(req: NextRequest) {
-  const authResult = await requireRole(ADMIN_ROLES);
-  if (authResult instanceof NextResponse) return authResult;
-  const { userId } = authResult;
+export const GET = withApiRoute({ querySchema }, async ({ req, userId }) => {
+  const roles = await getKrewpactRoles();
+  if (!roles.some((r: string) => ADMIN_ROLES.includes(r)))
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-  const params = Object.fromEntries(req.nextUrl.searchParams);
-  const parsed = querySchema.safeParse(params);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  const {
+    status,
+    request_type,
+    limit = 50,
+    offset = 0,
+  } = querySchema.parse(Object.fromEntries(req.nextUrl.searchParams));
 
-  const { status, request_type, limit = 50, offset = 0 } = parsed.data;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -43,38 +44,29 @@ export async function GET(req: NextRequest) {
   if (request_type) query = query.eq('request_type', request_type);
 
   const { data, error, count } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) throw dbError(error.message);
 
   const total = count ?? 0;
   return NextResponse.json({ data, total, hasMore: offset + limit < total });
-}
+});
 
-export async function POST(req: NextRequest) {
-  const authResult = await requireRole(ADMIN_ROLES);
-  if (authResult instanceof NextResponse) return authResult;
-  const { userId } = authResult;
+export const POST = withApiRoute(
+  { bodySchema: privacyRequestCreateSchema },
+  async ({ body, userId }) => {
+    const roles = await getKrewpactRoles();
+    if (!roles.some((r: string) => ADMIN_ROLES.includes(r)))
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
-  const parsed = privacyRequestCreateSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    const { data, error } = await supabase
+      .from('privacy_requests')
+      .insert({ ...body, status: 'received', received_by: userId })
+      .select()
+      .single();
 
-  const { client: supabase, error: authError } = await createUserClientSafe();
-
-  if (authError) return authError;
-  const { data, error } = await supabase
-    .from('privacy_requests')
-    .insert({ ...parsed.data, status: 'received', received_by: userId })
-    .select()
-    .single();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data, { status: 201 });
-}
+    if (error) throw dbError(error.message);
+    return NextResponse.json(data, { status: 201 });
+  },
+);

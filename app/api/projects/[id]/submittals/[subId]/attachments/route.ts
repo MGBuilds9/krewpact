@@ -1,8 +1,7 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
-import { logger } from '@/lib/logger';
+import { notFound,serverError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import {
   deleteAttachment,
   getAttachmentSignedUrl,
@@ -12,18 +11,9 @@ import {
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE_BYTES } from '@/lib/validators/document-control';
 
-type RouteContext = { params: Promise<{ id: string; subId: string }> };
+export const GET = withApiRoute({}, async ({ params }) => {
+  const { id, subId } = params;
 
-export async function GET(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id, subId } = await context.params;
-
-  // Verify submittal belongs to project (RLS enforced)
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -35,39 +25,25 @@ export async function GET(req: NextRequest, context: RouteContext) {
     .single();
 
   if (subError) {
-    const status = subError.code === 'PGRST116' ? 404 : 500;
-    return NextResponse.json({ error: 'Submittal not found' }, { status });
+    if (subError.code === 'PGRST116') throw notFound('Submittal');
+    throw serverError('Failed to verify submittal');
   }
 
-  try {
-    const attachments = await listAttachments('submittal', subId);
+  const attachments = await listAttachments('submittal', subId);
 
-    const withUrls = await Promise.all(
-      attachments.map(async (a) => ({
-        ...a,
-        downloadUrl: await getAttachmentSignedUrl(a.storage_path),
-      })),
-    );
+  const withUrls = await Promise.all(
+    attachments.map(async (a) => ({
+      ...a,
+      downloadUrl: await getAttachmentSignedUrl(a.storage_path),
+    })),
+  );
 
-    return NextResponse.json({ data: withUrls, total: withUrls.length });
-  } catch (err: unknown) {
-    logger.error('[submittal-attachments] GET failed', {
-      message: err instanceof Error ? err.message : String(err),
-    });
-    return NextResponse.json({ error: 'Failed to list attachments' }, { status: 500 });
-  }
-}
+  return NextResponse.json({ data: withUrls, total: withUrls.length });
+});
 
-export async function POST(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export const POST = withApiRoute({}, async ({ req, params, userId }) => {
+  const { id, subId } = params;
 
-  const rl = await rateLimit(req, { limit: 20, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id, subId } = await context.params;
-
-  // Verify submittal belongs to project
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -79,8 +55,8 @@ export async function POST(req: NextRequest, context: RouteContext) {
     .single();
 
   if (subError) {
-    const status = subError.code === 'PGRST116' ? 404 : 500;
-    return NextResponse.json({ error: 'Submittal not found' }, { status });
+    if (subError.code === 'PGRST116') throw notFound('Submittal');
+    throw serverError('Failed to verify submittal');
   }
 
   let formData: FormData;
@@ -104,30 +80,18 @@ export async function POST(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: 'File type not permitted' }, { status: 400 });
   }
 
-  try {
-    const result = await uploadAttachment(file, 'submittal', subId, userId);
-    return NextResponse.json(result, { status: 201 });
-  } catch (err: unknown) {
-    logger.error('[submittal-attachments] POST upload failed', {
-      message: err instanceof Error ? err.message : String(err),
-    });
-    return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
-  }
-}
+  const result = await uploadAttachment(file, 'submittal', subId, userId);
+  return NextResponse.json(result, { status: 201 });
+});
 
-export async function DELETE(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const { subId } = await context.params;
-  const { searchParams } = new URL(req.url);
-  const attachmentId = searchParams.get('attachmentId');
+export const DELETE = withApiRoute({}, async ({ req, params }) => {
+  const { subId } = params;
+  const attachmentId = req.nextUrl.searchParams.get('attachmentId');
 
   if (!attachmentId) {
     return NextResponse.json({ error: 'Missing attachmentId param' }, { status: 400 });
   }
 
-  // Verify attachment belongs to this submittal
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -141,16 +105,9 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
     .single();
 
   if (attError) {
-    return NextResponse.json({ error: 'Attachment not found' }, { status: 404 });
+    throw notFound('Attachment');
   }
 
-  try {
-    await deleteAttachment(attachmentId);
-    return NextResponse.json({ ok: true });
-  } catch (err: unknown) {
-    logger.error('[submittal-attachments] DELETE failed', {
-      message: err instanceof Error ? err.message : String(err),
-    });
-    return NextResponse.json({ error: 'Delete failed' }, { status: 500 });
-  }
-}
+  await deleteAttachment(attachmentId);
+  return NextResponse.json({ ok: true });
+});

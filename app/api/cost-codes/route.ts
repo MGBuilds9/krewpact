@@ -1,8 +1,8 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { costCodeCreateSchema } from '@/lib/validators/procurement';
 
@@ -14,23 +14,15 @@ const querySchema = z.object({
   offset: z.coerce.number().int().nonnegative().default(0),
 });
 
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
+export const GET = withApiRoute({ querySchema }, async ({ req }) => {
   const params = Object.fromEntries(req.nextUrl.searchParams);
-  const parsed = querySchema.safeParse(params);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  const { division_id, is_active, search, limit, offset } = querySchema.parse(params);
 
-  const { division_id, is_active, search, limit, offset } = parsed.data;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
   let query = supabase
     .from('cost_code_dictionary')
-    /* excluded from list: metadata */
     .select(
       'id, division_id, cost_code, cost_code_name, parent_cost_code_id, is_active, created_at, updated_at',
       { count: 'exact' },
@@ -43,34 +35,25 @@ export async function GET(req: NextRequest) {
   if (search) query = query.ilike('cost_code_name', `%${search}%`);
 
   const { data, error, count } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) throw dbError(error.message);
 
   const total = count ?? 0;
   return NextResponse.json(
     { data, total, hasMore: offset + limit < total },
     { headers: { 'Cache-Control': 'private, s-maxage=300, stale-while-revalidate=600' } },
   );
-}
+});
 
-export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-  const body = await req.json();
-  const parsed = costCodeCreateSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-
+export const POST = withApiRoute({ bodySchema: costCodeCreateSchema }, async ({ body }) => {
   const { client: supabase, error: authError } = await createUserClientSafe();
-
   if (authError) return authError;
+
   const { data, error } = await supabase
     .from('cost_code_dictionary')
-    .insert({ ...parsed.data, is_active: true })
+    .insert({ ...body, is_active: true })
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) throw dbError(error.message);
   return NextResponse.json(data, { status: 201 });
-}
+});

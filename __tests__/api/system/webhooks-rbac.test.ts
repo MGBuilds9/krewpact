@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const mockRequireRole = vi.fn();
+const mockGetKrewpactRoles = vi.fn();
 vi.mock('@/lib/api/org', () => ({
-  requireRole: (...args: unknown[]) => mockRequireRole(...args),
+  requireRole: vi.fn(),
+  getKrewpactRoles: () => mockGetKrewpactRoles(),
 }));
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 
@@ -17,10 +18,21 @@ vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
+vi.mock('@/lib/request-context', () => ({
+  requestContext: { run: (_: unknown, fn: () => unknown) => fn() },
+  generateRequestId: () => 'req_test',
+}));
+vi.mock('@/lib/logger', () => {
+  const m = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), child: vi.fn() };
+  m.child.mockReturnValue(m);
+  return { logger: m };
+});
 
-import { NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
 
-import { makeRequest } from '@/__tests__/helpers';
+import { makeRequest, mockClerkAuth } from '@/__tests__/helpers';
+
+const mockAuth = vi.mocked(auth);
 
 function paginatedChain(data: unknown[], count: number) {
   const chain: Record<string, unknown> = {};
@@ -36,15 +48,16 @@ describe('RBAC: GET /api/system/webhooks', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('returns 403 for non-platform_admin', async () => {
-    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Forbidden' }, { status: 403 }));
+    mockClerkAuth(mockAuth);
+    mockGetKrewpactRoles.mockResolvedValue(['project_manager']);
     const { GET } = await import('@/app/api/system/webhooks/route');
     const res = await GET(makeRequest('/api/system/webhooks'));
     expect(res.status).toBe(403);
-    expect(mockRequireRole).toHaveBeenCalledWith(['platform_admin']);
   });
 
   it('returns 200 for platform_admin', async () => {
-    mockRequireRole.mockResolvedValue({ userId: 'admin-user', roles: ['platform_admin'] });
+    mockClerkAuth(mockAuth);
+    mockGetKrewpactRoles.mockResolvedValue(['platform_admin']);
     mockFrom.mockReturnValue(paginatedChain([], 0));
     const { GET } = await import('@/app/api/system/webhooks/route');
     const res = await GET(makeRequest('/api/system/webhooks'));

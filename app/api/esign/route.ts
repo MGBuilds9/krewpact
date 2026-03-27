@@ -1,8 +1,8 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { BoldSignClient } from '@/lib/esign/boldsign-client';
 import { logger } from '@/lib/logger';
 import { createUserClientSafe } from '@/lib/supabase/server';
@@ -22,75 +22,6 @@ const sendForSigningSchema = z.object({
 
 type SendParams = z.infer<typeof sendForSigningSchema>;
 type SupabaseClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
-
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const params = Object.fromEntries(req.nextUrl.searchParams);
-  const parsed = querySchema.safeParse(params);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-
-  const { contract_id, limit, offset } = parsed.data;
-  const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
-
-  let query = supabase
-    .from('esign_envelopes')
-    .select(
-      'id, contract_id, provider, provider_envelope_id, status, signer_count, webhook_last_event_at, created_at, updated_at',
-      { count: 'exact' },
-    )
-    .order('created_at', { ascending: false });
-
-  if (contract_id) query = query.eq('contract_id', contract_id);
-  const effectiveLimit = limit ?? 25;
-  const effectiveOffset = offset ?? 0;
-  query = query.range(effectiveOffset, effectiveOffset + effectiveLimit - 1);
-
-  const { data, error, count } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({
-    data: data ?? [],
-    total: count ?? 0,
-    hasMore: effectiveOffset + (data?.length ?? 0) < (count ?? 0),
-  });
-}
-
-export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const sendParsed = sendForSigningSchema.safeParse(body);
-  if (sendParsed.success) return handleProposalSend(sendParsed.data, userId);
-
-  const directParsed = esignEnvelopeCreateSchema.safeParse(body);
-  if (!directParsed.success)
-    return NextResponse.json({ error: directParsed.error.flatten() }, { status: 400 });
-
-  const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
-  const { data, error } = await supabase
-    .from('esign_envelopes')
-    .insert(directParsed.data)
-    .select()
-    .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data, { status: 201 });
-}
 
 async function resolveContractId(
   supabase: SupabaseClient,
@@ -251,7 +182,6 @@ async function handleProposalSend(params: SendParams, userId: string): Promise<N
     proposal.proposal_payload,
   );
   if (contractIdResult instanceof NextResponse) return contractIdResult;
-  const contractId = contractIdResult;
 
   const signers = extractSigners(proposal as Record<string, unknown>);
   if (signers.length === 0) {
@@ -267,10 +197,67 @@ async function handleProposalSend(params: SendParams, userId: string): Promise<N
   const proposalNumber = (proposal as Record<string, unknown>).proposal_number as string;
 
   return createBoldSignEnvelope(supabase, params, {
-    contractId,
+    contractId: contractIdResult,
     signers,
     accountName,
     proposalNumber,
     userId,
   });
 }
+
+export const GET = withApiRoute({ querySchema }, async ({ req }) => {
+  const params = Object.fromEntries(req.nextUrl.searchParams);
+  const { contract_id, limit, offset } = querySchema.parse(params);
+  const effectiveLimit = limit ?? 25;
+  const effectiveOffset = offset ?? 0;
+
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
+
+  let query = supabase
+    .from('esign_envelopes')
+    .select(
+      'id, contract_id, provider, provider_envelope_id, status, signer_count, webhook_last_event_at, created_at, updated_at',
+      { count: 'exact' },
+    )
+    .order('created_at', { ascending: false });
+
+  if (contract_id) query = query.eq('contract_id', contract_id);
+  query = query.range(effectiveOffset, effectiveOffset + effectiveLimit - 1);
+
+  const { data, error, count } = await query;
+  if (error) throw dbError(error.message);
+
+  return NextResponse.json({
+    data: data ?? [],
+    total: count ?? 0,
+    hasMore: effectiveOffset + (data?.length ?? 0) < (count ?? 0),
+  });
+});
+
+export const POST = withApiRoute({}, async ({ req, userId }) => {
+  let rawBody: unknown;
+  try {
+    rawBody = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+  }
+
+  const sendParsed = sendForSigningSchema.safeParse(rawBody);
+  if (sendParsed.success) return handleProposalSend(sendParsed.data, userId);
+
+  const directParsed = esignEnvelopeCreateSchema.safeParse(rawBody);
+  if (!directParsed.success)
+    return NextResponse.json({ error: directParsed.error.flatten() }, { status: 400 });
+
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
+
+  const { data, error } = await supabase
+    .from('esign_envelopes')
+    .insert(directParsed.data)
+    .select()
+    .single();
+  if (error) throw dbError(error.message);
+  return NextResponse.json(data, { status: 201 });
+});

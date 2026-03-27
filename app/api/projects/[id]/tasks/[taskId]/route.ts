@@ -1,22 +1,12 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError, notFound } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { taskUpdateSchema } from '@/lib/validators/projects';
 
-type RouteContext = { params: Promise<{ id: string; taskId: string }> };
-
-export async function GET(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id, taskId } = await context.params;
+export const GET = withApiRoute({}, async ({ params }) => {
+  const { id, taskId } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -30,37 +20,18 @@ export async function GET(req: NextRequest, context: RouteContext) {
     .single();
 
   if (error) {
-    if (error.code === 'PGRST116') {
-      return NextResponse.json({ error: 'Task not found' }, { status: 404 });
-    }
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error.code === 'PGRST116') throw notFound('Task');
+    throw dbError(error.message);
   }
 
   return NextResponse.json(data);
-}
+});
 
-export async function PATCH(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const { id, taskId } = await context.params;
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = taskUpdateSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
+export const PATCH = withApiRoute({ bodySchema: taskUpdateSchema }, async ({ params, body }) => {
+  const { id, taskId } = params;
 
   // Auto-set completed_at when status changes to 'done'
-  const updateData = { ...parsed.data };
+  const updateData = { ...body };
   if (updateData.status === 'done' && !updateData.completed_at) {
     updateData.completed_at = new Date().toISOString();
   }
@@ -70,8 +41,8 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
   }
 
   const { client: supabase, error: authError } = await createUserClientSafe();
-
   if (authError) return authError;
+
   const { data, error } = await supabase
     .from('tasks')
     .update(updateData)
@@ -81,30 +52,21 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     .single();
 
   if (error) {
-    if (error.code === 'PGRST116') {
-      return NextResponse.json({ error: 'Task not found' }, { status: 404 });
-    }
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error.code === 'PGRST116') throw notFound('Task');
+    throw dbError(error.message);
   }
 
   return NextResponse.json(data);
-}
+});
 
-export async function DELETE(_req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const { id, taskId } = await context.params;
+export const DELETE = withApiRoute({}, async ({ params }) => {
+  const { id, taskId } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
   const { error } = await supabase.from('tasks').delete().eq('id', taskId).eq('project_id', id);
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  if (error) throw dbError(error.message);
 
   return NextResponse.json({ success: true });
-}
+});

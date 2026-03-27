@@ -1,8 +1,7 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
 import { getKrewpactDivisions, getKrewpactRoles } from '@/lib/api/org';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import type { KrewpactRole } from '@/lib/rbac/permissions.shared';
 import { getPermissions, isExternalRole, isInternalRole } from '@/lib/rbac/permissions.shared';
 import { createUserClientSafe } from '@/lib/supabase/server';
@@ -53,18 +52,12 @@ function mergeRolesAndPermissions({
   };
 }
 
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
+export const GET = withApiRoute({}, async ({ req }) => {
   const userIdParam = req.nextUrl.searchParams.get('user_id');
   if (!userIdParam) return NextResponse.json({ error: 'user_id is required' }, { status: 400 });
 
   const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
+  if (authError) return NextResponse.json({ error: 'Auth failed' }, { status: 401 });
 
   const [rolesResult, permissionsResult, divisionsResult, clerkRoles, clerkDivisions] =
     await fetchRbacData(supabase, userIdParam);
@@ -88,4 +81,4 @@ export async function GET(req: NextRequest) {
     clerkDivisions,
   });
   return NextResponse.json(merged);
-}
+});

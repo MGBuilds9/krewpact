@@ -9,7 +9,15 @@ vi.mock('@/lib/api/rate-limit', () => ({
 }));
 vi.mock('@/lib/ai/agents/email-drafter', () => ({ draftEmail: vi.fn() }));
 vi.mock('@/lib/logger', () => ({
-  logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  logger: {
+    warn: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+    child: vi
+      .fn()
+      .mockReturnValue({ warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() }),
+  },
 }));
 
 import { auth } from '@clerk/nextjs/server';
@@ -54,7 +62,7 @@ describe('POST /api/ai/draft-email', () => {
     const res = await POST(req);
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns 400 for invalid body (missing entity_type)', async () => {

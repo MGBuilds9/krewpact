@@ -1,3 +1,4 @@
+import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({
@@ -7,6 +8,15 @@ vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
+vi.mock('@/lib/request-context', () => ({
+  requestContext: { run: (_: unknown, fn: () => unknown) => fn() },
+  generateRequestId: () => 'req_test',
+}));
+vi.mock('@/lib/logger', () => {
+  const m = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), child: vi.fn() };
+  m.child.mockReturnValue(m);
+  return { logger: m };
+});
 vi.mock('@/lib/pdf/generator', () => ({
   generatePdf: vi.fn(),
 }));
@@ -17,7 +27,7 @@ import { POST } from '@/app/api/pdf/generate/route';
 import { generatePdf } from '@/lib/pdf/generator';
 
 function makeRequest(body: unknown) {
-  return new Request('http://localhost/api/pdf/generate', {
+  return new NextRequest('http://localhost/api/pdf/generate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),

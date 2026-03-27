@@ -1,27 +1,16 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
+import { dbError } from '@/lib/api/errors';
 import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { meetingMinutesSchema } from '@/lib/validators/projects';
 
-type RouteContext = { params: Promise<{ id: string }> };
-
-export async function GET(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id } = await context.params;
+export const GET = withApiRoute({}, async ({ req, params }) => {
+  const { id } = params;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
 
   const { client: supabase, error: authError } = await createUserClientSafe();
-
   if (authError) return authError;
   const { data, error, count } = await supabase
     .from('site_diary_entries')
@@ -34,56 +23,36 @@ export async function GET(req: NextRequest, context: RouteContext) {
     .order('entry_at', { ascending: false })
     .range(offset, offset + limit - 1);
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  if (error) throw dbError(error.message);
 
   return NextResponse.json(paginatedResponse(data, count, limit, offset));
-}
+});
 
-export async function POST(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+export const POST = withApiRoute(
+  { bodySchema: meetingMinutesSchema },
+  async ({ params, body, userId }) => {
+    const { id } = params;
+    const { meeting_date, title, attendees, agenda, notes, action_items } = body;
 
-  const { id } = await context.params;
+    // Serialize meeting minutes into diary entry_text as structured JSON
+    const entryText = JSON.stringify({ title, attendees, agenda, notes, action_items });
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
+    const { data, error } = await supabase
+      .from('site_diary_entries')
+      .insert({
+        project_id: id,
+        entry_at: meeting_date,
+        entry_type: 'meeting',
+        entry_text: entryText,
+        created_by: userId,
+      })
+      .select()
+      .single();
 
-  const parsed = meetingMinutesSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
+    if (error) throw dbError(error.message);
 
-  const { meeting_date, title, attendees, agenda, notes, action_items } = parsed.data;
-
-  // Serialize meeting minutes into diary entry_text as structured JSON
-  const entryText = JSON.stringify({ title, attendees, agenda, notes, action_items });
-
-  const { client: supabase, error: authError } = await createUserClientSafe();
-
-  if (authError) return authError;
-  const { data, error } = await supabase
-    .from('site_diary_entries')
-    .insert({
-      project_id: id,
-      entry_at: meeting_date,
-      entry_type: 'meeting',
-      entry_text: entryText,
-      created_by: userId,
-    })
-    .select()
-    .single();
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  return NextResponse.json(data, { status: 201 });
-}
+    return NextResponse.json(data, { status: 201 });
+  },
+);

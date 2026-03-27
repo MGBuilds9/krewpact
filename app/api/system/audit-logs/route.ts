@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { requireRole } from '@/lib/api/org';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError } from '@/lib/api/errors';
+import { getKrewpactRoles } from '@/lib/api/org';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { auditLogQuerySchema } from '@/lib/validators/system';
 
@@ -50,25 +51,20 @@ function buildAuditQuery(supabase: SupabaseClient, params: AuditQueryParams) {
   return { query, limit, offset };
 }
 
-export async function GET(req: NextRequest) {
-  const authResult = await requireRole(ADMIN_ROLES);
-  if (authResult instanceof NextResponse) return authResult;
-  const { userId } = authResult;
+export const GET = withApiRoute({ querySchema: auditLogQuerySchema }, async ({ req, userId }) => {
+  const roles = await getKrewpactRoles();
+  if (!roles.some((r: string) => ADMIN_ROLES.includes(r)))
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const params = Object.fromEntries(req.nextUrl.searchParams);
-  const parsed = auditLogQuerySchema.safeParse(params);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  const parsed = auditLogQuerySchema.parse(Object.fromEntries(req.nextUrl.searchParams));
 
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
-  const { query, limit, offset } = buildAuditQuery(supabase, parsed.data);
+  const { query, limit, offset } = buildAuditQuery(supabase, parsed);
   const { data, error, count } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) throw dbError(error.message);
 
   const total = count ?? 0;
   return NextResponse.json({ data, total, hasMore: offset + limit < total });
-}
+});

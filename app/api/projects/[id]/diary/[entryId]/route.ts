@@ -1,22 +1,12 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError, notFound } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { siteDiaryEntryUpdateSchema } from '@/lib/validators/projects';
 
-type RouteContext = { params: Promise<{ id: string; entryId: string }> };
-
-export async function GET(_req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(_req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id, entryId } = await context.params;
+export const GET = withApiRoute({}, async ({ params }) => {
+  const { id, entryId } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -28,63 +18,38 @@ export async function GET(_req: NextRequest, context: RouteContext) {
     .single();
 
   if (error) {
-    if (error.code === 'PGRST116') {
-      return NextResponse.json({ error: 'Entry not found' }, { status: 404 });
-    }
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error.code === 'PGRST116') throw notFound('Entry');
+    throw dbError(error.message);
   }
 
   return NextResponse.json(data);
-}
+});
 
-export async function PATCH(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+export const PATCH = withApiRoute(
+  { bodySchema: siteDiaryEntryUpdateSchema },
+  async ({ params, body }) => {
+    const { id, entryId } = params;
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
+    const { data, error } = await supabase
+      .from('site_diary_entries')
+      .update(body)
+      .eq('id', entryId)
+      .eq('project_id', id)
+      .select()
+      .single();
 
-  const { id, entryId } = await context.params;
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = siteDiaryEntryUpdateSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
-  const { client: supabase, error: authError } = await createUserClientSafe();
-
-  if (authError) return authError;
-  const { data, error } = await supabase
-    .from('site_diary_entries')
-    .update(parsed.data)
-    .eq('id', entryId)
-    .eq('project_id', id)
-    .select()
-    .single();
-
-  if (error) {
-    if (error.code === 'PGRST116') {
-      return NextResponse.json({ error: 'Entry not found' }, { status: 404 });
+    if (error) {
+      if (error.code === 'PGRST116') throw notFound('Entry');
+      throw dbError(error.message);
     }
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
 
-  return NextResponse.json(data);
-}
+    return NextResponse.json(data);
+  },
+);
 
-export async function DELETE(_req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const { id, entryId } = await context.params;
+export const DELETE = withApiRoute({}, async ({ params }) => {
+  const { id, entryId } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -94,9 +59,7 @@ export async function DELETE(_req: NextRequest, context: RouteContext) {
     .eq('id', entryId)
     .eq('project_id', id);
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  if (error) throw dbError(error.message);
 
   return new NextResponse(null, { status: 204 });
-}
+});

@@ -1,23 +1,19 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
-export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-  const { id } = await params;
+export const GET = withApiRoute({}, async ({ params }) => {
+  const { id } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
+  if (authError) return NextResponse.json({ error: 'Auth failed' }, { status: 401 });
+
   const { data, error } = await supabase
     .from('roles')
     .select('id, role_key, role_name, scope, is_system, created_at, updated_at')
     .eq('id', id)
     .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 404 });
+  if (error) throw dbError(error.message);
   return NextResponse.json(data);
-}
+});

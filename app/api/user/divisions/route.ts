@@ -1,47 +1,38 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
+export const GET = withApiRoute({}, async ({ req }) => {
   const userIdParam = req.nextUrl.searchParams.get('user_id');
   if (!userIdParam) {
     return NextResponse.json({ error: 'user_id is required' }, { status: 400 });
   }
 
   const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return NextResponse.json({ error: 'Auth failed' }, { status: 401 });
 
-  if (authError) return authError;
   const { data, error } = await supabase
     .from('user_divisions')
     .select(
       `
-      id,
-      user_id,
-      division_id,
-      is_primary,
-      joined_at,
-      left_at,
-      divisions (
         id,
-        code,
-        name,
-        description,
-        is_active,
-        settings,
-        created_at,
-        updated_at
-      )
-    `,
+        user_id,
+        division_id,
+        is_primary,
+        joined_at,
+        left_at,
+        divisions (
+          id,
+          code,
+          name,
+          description,
+          is_active,
+          settings,
+          created_at,
+          updated_at
+        )
+      `,
     )
     .eq('user_id', userIdParam)
     .is('left_at', null)
@@ -51,12 +42,12 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Get user's primary role for role display
-  const { data: roleData } = await supabase.rpc('get_user_role_names', { p_user_id: userIdParam });
+  const { data: roleData } = await supabase.rpc('get_user_role_names', {
+    p_user_id: userIdParam,
+  });
   const primaryRoleName =
     (roleData as { role_name: string; is_primary: boolean }[] | null)?.[0]?.role_name || 'worker';
 
-  // Transform to DivisionWithRole format
   const divisions =
     data
       ?.filter((ud: Record<string, unknown>) => ud.divisions)
@@ -71,4 +62,4 @@ export async function GET(req: NextRequest) {
       }) || [];
 
   return NextResponse.json(divisions);
-}
+});

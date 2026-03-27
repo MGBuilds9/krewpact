@@ -1,8 +1,8 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { assemblyCreateSchema } from '@/lib/validators/estimating';
 
@@ -14,11 +14,12 @@ const querySchema = z.object({
   offset: z.coerce.number().int().min(0).optional(),
 });
 
-type SupabaseClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
-type QueryParams = z.infer<typeof querySchema>;
+export const GET = withApiRoute({ querySchema }, async ({ req }) => {
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
-function buildAssemblyQuery(supabase: SupabaseClient, params: QueryParams) {
-  const { division_id, is_active, search, limit, offset } = params;
+  const params = Object.fromEntries(req.nextUrl.searchParams);
+  const { division_id, is_active, search, limit, offset } = querySchema.parse(params);
   const effectiveLimit = limit ?? 25;
   const effectiveOffset = offset ?? 0;
 
@@ -34,31 +35,12 @@ function buildAssemblyQuery(supabase: SupabaseClient, params: QueryParams) {
   if (is_active !== undefined) query = query.eq('is_active', is_active);
   if (search) query = query.ilike('assembly_name', `%${search}%`);
 
-  return {
-    query: query.range(effectiveOffset, effectiveOffset + effectiveLimit - 1),
-    effectiveLimit,
+  const { data, error, count } = await query.range(
     effectiveOffset,
-  };
-}
+    effectiveOffset + effectiveLimit - 1,
+  );
 
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const params = Object.fromEntries(req.nextUrl.searchParams);
-  const parsed = querySchema.safeParse(params);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-
-  const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
-
-  const { query, effectiveOffset } = buildAssemblyQuery(supabase, parsed.data);
-  const { data, error, count } = await query;
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) throw dbError(error.message);
 
   return NextResponse.json(
     {
@@ -68,30 +50,14 @@ export async function GET(req: NextRequest) {
     },
     { headers: { 'Cache-Control': 'private, s-maxage=300, stale-while-revalidate=600' } },
   );
-}
+});
 
-export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = assemblyCreateSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-
+export const POST = withApiRoute({ bodySchema: assemblyCreateSchema }, async ({ body }) => {
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
-  const { data, error } = await supabase.from('assemblies').insert(parsed.data).select().single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  const { data, error } = await supabase.from('assemblies').insert(body).select().single();
+  if (error) throw dbError(error.message);
 
   return NextResponse.json(data, { status: 201 });
-}
+});

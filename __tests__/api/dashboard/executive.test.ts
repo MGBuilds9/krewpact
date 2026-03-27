@@ -7,6 +7,15 @@ vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
+vi.mock('@/lib/request-context', () => ({
+  requestContext: { run: (_: unknown, fn: () => unknown) => fn() },
+  generateRequestId: () => 'req_test',
+}));
+vi.mock('@/lib/logger', () => {
+  const m = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), child: vi.fn() };
+  m.child.mockReturnValue(m);
+  return { logger: m };
+});
 
 import { auth } from '@clerk/nextjs/server';
 
@@ -81,7 +90,7 @@ describe('GET /api/dashboard/executive', () => {
     const res = await GET(makeRequest());
     expect(res.status).toBe(403);
     const body = await res.json();
-    expect(body.error).toContain('Forbidden');
+    expect(body.error.code).toBe('FORBIDDEN');
   });
 
   it('returns 200 with KPI data for executive role', async () => {

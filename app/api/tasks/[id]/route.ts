@@ -1,9 +1,8 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
-import { logger } from '@/lib/logger';
+import { dbError, notFound } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 const updateSchema = z.object({
@@ -15,112 +14,47 @@ const updateSchema = z.object({
   due_at: z.string().nullable().optional(),
 });
 
-export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export const GET = withApiRoute({}, async ({ params }) => {
+  const { id } = params;
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
+
+  const { data, error } = await supabase
+    .from('tasks')
+    .select(
+      'id, project_id, title, description, status, priority, assigned_user_id, created_by, milestone_id, due_at, start_at, completed_at, blocked_reason, metadata, created_at, updated_at',
+    )
+    .eq('id', id)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') throw notFound('Task not found');
+    throw dbError(error.message);
   }
+  return NextResponse.json(data);
+});
 
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
+export const PATCH = withApiRoute({ bodySchema: updateSchema }, async ({ params, body }) => {
+  const { id } = params;
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
-  const { id } = await params;
+  const { data, error } = await supabase.from('tasks').update(body).eq('id', id).select().single();
 
-  try {
-    const { client: supabase, error: authError } = await createUserClientSafe();
-    if (authError) return authError;
-    const { data, error } = await supabase
-      .from('tasks')
-      .select(
-        'id, project_id, title, description, status, priority, assigned_user_id, created_by, milestone_id, due_at, start_at, completed_at, blocked_reason, metadata, created_at, updated_at',
-      )
-      .eq('id', id)
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return NextResponse.json({ error: 'Task not found' }, { status: 404 });
-      }
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json(data);
-  } catch (error) {
-    logger.error('Task GET error', { error });
-    return NextResponse.json({ error: 'Failed to fetch task' }, { status: 500 });
+  if (error) {
+    if (error.code === 'PGRST116') throw notFound('Task not found');
+    throw dbError(error.message);
   }
-}
+  return NextResponse.json(data);
+});
 
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+export const DELETE = withApiRoute({}, async ({ params }) => {
+  const { id } = params;
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
+  const { error } = await supabase.from('tasks').delete().eq('id', id);
+  if (error) throw dbError(error.message);
 
-  const { id } = await params;
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
-  }
-
-  const parsed = updateSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
-  try {
-    const { client: supabase, error: authError } = await createUserClientSafe();
-    if (authError) return authError;
-    const { data, error } = await supabase
-      .from('tasks')
-      .update(parsed.data)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return NextResponse.json({ error: 'Task not found' }, { status: 404 });
-      }
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json(data);
-  } catch (error) {
-    logger.error('Task PATCH error', { error });
-    return NextResponse.json({ error: 'Failed to update task' }, { status: 500 });
-  }
-}
-
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id } = await params;
-
-  try {
-    const { client: supabase, error: authError } = await createUserClientSafe();
-    if (authError) return authError;
-    const { error } = await supabase.from('tasks').delete().eq('id', id);
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    logger.error('Task DELETE error', { error });
-    return NextResponse.json({ error: 'Failed to delete task' }, { status: 500 });
-  }
-}
+  return NextResponse.json({ success: true });
+});

@@ -14,8 +14,15 @@ vi.mock('@/lib/api/rate-limit', () => ({
 vi.mock('@/lib/notifications/dispatcher', () => ({
   dispatchNotification: vi.fn().mockResolvedValue(undefined),
 }));
+const mockChildLogger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
 vi.mock('@/lib/logger', () => ({
-  logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+  logger: {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    child: vi.fn(() => mockChildLogger),
+  },
 }));
 vi.mock('@sentry/nextjs', () => ({
   captureException: vi.fn(),

@@ -5,6 +5,23 @@ vi.mock('@clerk/nextjs/server', () => ({
   auth: vi.fn(),
 }));
 
+vi.mock('@/lib/logger', () => ({
+  logger: {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    child: vi
+      .fn()
+      .mockReturnValue({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
+  },
+}));
+
+vi.mock('@/lib/api/rate-limit', () => ({
+  rateLimit: vi.fn().mockResolvedValue({ success: true }),
+  rateLimitResponse: vi.fn(),
+}));
+
 // Mock Microsoft Graph client
 vi.mock('@/lib/microsoft/graph', () => ({
   getMicrosoftToken: vi.fn(),
@@ -136,7 +153,7 @@ describe('POST /api/email/send', () => {
     const res = await POST(nextReq);
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toBe('Invalid JSON');
+    expect(body.error.code).toBe('INVALID_JSON');
   });
 
   it('logs CRM activity when leadId is provided', async () => {

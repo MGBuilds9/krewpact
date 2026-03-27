@@ -1,55 +1,44 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { requireRole } from '@/lib/api/org';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError, forbidden } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { expenseApprovalSchema } from '@/lib/validators/time-expense';
 
 const APPROVAL_ROLES = ['platform_admin', 'executive', 'operations_manager', 'accounting'];
 
-type RouteContext = { params: Promise<{ id: string }> };
+export const POST = withApiRoute(
+  { bodySchema: expenseApprovalSchema },
+  async ({ params, body, userId }) => {
+    const { getKrewpactRoles } = await import('@/lib/api/org');
+    const roles = await getKrewpactRoles();
+    if (!roles.some((r: string) => APPROVAL_ROLES.includes(r))) {
+      throw forbidden('Approval role required');
+    }
 
-export async function POST(req: NextRequest, context: RouteContext) {
-  const authResult = await requireRole(APPROVAL_ROLES);
-  if (authResult instanceof NextResponse) return authResult;
-  const { userId } = authResult;
+    const { id } = params;
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-  const { id } = await context.params;
+    const approvalBody = body as { decision: string; reviewer_notes?: string };
+    const { data, error } = await supabase
+      .from('expense_approvals')
+      .insert({
+        expense_id: id,
+        decision: approvalBody.decision,
+        reviewer_user_id: userId,
+        reviewer_notes: approvalBody.reviewer_notes ?? null,
+      })
+      .select()
+      .single();
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
+    if (error) throw dbError(error.message);
 
-  const parsed = expenseApprovalSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    await supabase
+      .from('expense_claims')
+      .update({ status: approvalBody.decision, updated_at: new Date().toISOString() })
+      .eq('id', id);
 
-  const { client: supabase, error: authError } = await createUserClientSafe();
-
-  if (authError) return authError;
-
-  const { data, error } = await supabase
-    .from('expense_approvals')
-    .insert({
-      expense_id: id,
-      decision: parsed.data.decision,
-      reviewer_user_id: userId,
-      reviewer_notes: parsed.data.reviewer_notes ?? null,
-    })
-    .select()
-    .single();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  // Sync status back to expenses table
-  await supabase
-    .from('expense_claims')
-    .update({ status: parsed.data.decision, updated_at: new Date().toISOString() })
-    .eq('id', id);
-
-  return NextResponse.json(data, { status: 201 });
-}
+    return NextResponse.json(data, { status: 201 });
+  },
+);

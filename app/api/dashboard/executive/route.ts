@@ -1,8 +1,8 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
+import { dbError, forbidden } from '@/lib/api/errors';
 import { getKrewpactRoles } from '@/lib/api/org';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 const ALLOWED_ROLES = ['executive', 'platform_admin'];
@@ -36,21 +36,10 @@ function buildPipeline(opportunities: OppRow[]) {
   }));
 }
 
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
+export const GET = withApiRoute({ rateLimit: { limit: 30, window: '1 m' } }, async () => {
   const userRoles = await getKrewpactRoles();
   const hasAccess = userRoles.some((r: unknown) => ALLOWED_ROLES.includes(String(r)));
-  if (!hasAccess) {
-    return NextResponse.json(
-      { error: 'Forbidden: executive or platform_admin role required' },
-      { status: 403 },
-    );
-  }
-
-  const rl = await rateLimit(req, { limit: 30, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
+  if (!hasAccess) throw forbidden('executive or platform_admin role required');
 
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
@@ -62,10 +51,7 @@ export async function GET(req: NextRequest) {
   ]);
 
   if (opportunitiesResult.error || projectsResult.error || estimatesResult.error) {
-    return NextResponse.json(
-      { error: 'Failed to fetch executive dashboard data' },
-      { status: 500 },
-    );
+    throw dbError('Failed to fetch executive dashboard data');
   }
 
   const opportunities = opportunitiesResult.data ?? [];
@@ -81,4 +67,4 @@ export async function GET(req: NextRequest) {
     },
     pipeline: buildPipeline(opportunities),
   });
-}
+});

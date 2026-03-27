@@ -1,9 +1,9 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { dbError } from '@/lib/api/errors';
 import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 const addMemberSchema = z.object({
@@ -12,18 +12,8 @@ const addMemberSchema = z.object({
   allocation_pct: z.number().nonnegative().max(100).nullable().optional(),
 });
 
-type RouteContext = { params: Promise<{ id: string }> };
-
-export async function GET(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id } = await context.params;
+export const GET = withApiRoute({}, async ({ req, params }) => {
+  const { id } = params;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
@@ -35,61 +25,33 @@ export async function GET(req: NextRequest, context: RouteContext) {
     .is('left_at', null)
     .range(offset, offset + limit - 1);
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  if (error) throw dbError(error.message);
 
   return NextResponse.json(paginatedResponse(data, count, limit, offset));
-}
+});
 
-export async function POST(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const { id } = await context.params;
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = addMemberSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
+export const POST = withApiRoute({ bodySchema: addMemberSchema }, async ({ params, body }) => {
+  const { id } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
-
   if (authError) return authError;
   const { data, error } = await supabase
     .from('project_members')
-    .insert({ project_id: id, ...parsed.data })
+    .insert({ project_id: id, ...body })
     .select('*, user:users(id, first_name, last_name, email, avatar_url)')
     .single();
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  if (error) throw dbError(error.message);
 
   return NextResponse.json(data, { status: 201 });
-}
+});
 
-export async function DELETE(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
+export const DELETE = withApiRoute({}, async ({ req, params }) => {
   const memberId = req.nextUrl.searchParams.get('member_id');
   if (!memberId) {
     return NextResponse.json({ error: 'member_id required' }, { status: 400 });
   }
 
-  const { id } = await context.params;
+  const { id } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -99,9 +61,7 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
     .eq('id', memberId)
     .eq('project_id', id);
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  if (error) throw dbError(error.message);
 
   return NextResponse.json({ success: true });
-}
+});

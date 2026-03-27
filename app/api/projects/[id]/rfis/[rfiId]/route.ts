@@ -1,20 +1,12 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError, notFound } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { rfiUpdateSchema } from '@/lib/validators/field-ops';
 
-type RouteContext = { params: Promise<{ id: string; rfiId: string }> };
-
-export async function GET(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id, rfiId } = await context.params;
+export const GET = withApiRoute({}, async ({ params }) => {
+  const { id, rfiId } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
   const { data, error } = await supabase
@@ -27,46 +19,29 @@ export async function GET(req: NextRequest, context: RouteContext) {
     .single();
 
   if (error) {
-    const status = error.code === 'PGRST116' ? 404 : 500;
-    return NextResponse.json({ error: error.message }, { status });
+    if (error.code === 'PGRST116') throw notFound('RFI');
+    throw dbError(error.message);
   }
 
   return NextResponse.json(data);
-}
+});
 
-export async function PATCH(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const { id, rfiId } = await context.params;
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = rfiUpdateSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
+export const PATCH = withApiRoute({ bodySchema: rfiUpdateSchema }, async ({ params, body }) => {
+  const { id, rfiId } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
-
   if (authError) return authError;
   const { data, error } = await supabase
     .from('rfi_items')
-    .update(parsed.data)
+    .update(body)
     .eq('id', rfiId)
     .eq('project_id', id)
     .select()
     .single();
 
   if (error) {
-    const status = error.code === 'PGRST116' ? 404 : 500;
-    return NextResponse.json({ error: error.message }, { status });
+    if (error.code === 'PGRST116') throw notFound('RFI');
+    throw dbError(error.message);
   }
 
   return NextResponse.json(data);
-}
+});

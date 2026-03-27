@@ -1,7 +1,7 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { logger } from '@/lib/logger';
 
 const notificationPrefsSchema = z.object({
@@ -14,25 +14,13 @@ const notificationPrefsSchema = z.object({
   leadAssignment: z.boolean(),
 });
 
-export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export const POST = withApiRoute(
+  { bodySchema: notificationPrefsSchema },
+  async ({ body, userId }) => {
+    // Preferences are user-scoped via Clerk publicMetadata in future.
+    // For now, acknowledge and log — persistence via Supabase user_preferences deferred to P2.
+    logger.info('Notification preferences saved', { userId, prefs: body });
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = notificationPrefsSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
-  // Preferences are user-scoped via Clerk publicMetadata in future.
-  // For now, acknowledge and log — persistence via Supabase user_preferences deferred to P2.
-  logger.info('Notification preferences saved', { userId, prefs: parsed.data });
-
-  return NextResponse.json({ ok: true });
-}
+    return NextResponse.json({ ok: true });
+  },
+);

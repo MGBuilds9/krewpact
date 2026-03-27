@@ -1,61 +1,46 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { executeNLQuery } from '@/lib/ai/agents/nl-query';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
-import { logger } from '@/lib/logger';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
-const querySchema = z.object({
+const queryBodySchema = z.object({
   query: z.string().min(3).max(500),
 });
 
-export async function POST(req: NextRequest): Promise<NextResponse> {
-  if (process.env.AI_ENABLED !== 'true') {
-    return NextResponse.json({ error: 'AI features are not enabled' }, { status: 503 });
-  }
+export const POST = withApiRoute(
+  { rateLimit: { limit: 20, window: '1 m' }, bodySchema: queryBodySchema },
+  async ({ body, userId, logger }) => {
+    if (process.env.AI_ENABLED !== 'true') {
+      return NextResponse.json({ error: 'AI features are not enabled' }, { status: 503 });
+    }
 
-  const limited = await rateLimit(req, { limit: 20, window: '1 m', identifier: 'ai-query' });
-  if (!limited.success) return rateLimitResponse(limited);
+    const { client, error: clientError } = await createUserClientSafe();
+    if (clientError || !client) {
+      return NextResponse.json({ error: 'Auth failed' }, { status: 401 });
+    }
 
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { data: user } = await client
+      .from('users')
+      .select('org_id')
+      .eq('clerk_id', userId)
+      .single();
+    if (!user?.org_id) {
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+    }
 
-  const body = await req.json();
-  const parsed = querySchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: 'Invalid query', details: parsed.error.flatten() },
-      { status: 400 },
-    );
-  }
+    try {
+      const result = await executeNLQuery({
+        query: body.query,
+        orgId: user.org_id,
+        userId,
+      });
 
-  const { client, error: clientError } = await createUserClientSafe();
-  if (clientError || !client) {
-    return NextResponse.json({ error: 'Auth failed' }, { status: 401 });
-  }
-
-  // Get org_id from user
-  const { data: user } = await client
-    .from('users')
-    .select('org_id')
-    .eq('clerk_id', userId)
-    .single();
-  if (!user?.org_id) {
-    return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
-  }
-
-  try {
-    const result = await executeNLQuery({
-      query: parsed.data.query,
-      orgId: user.org_id,
-      userId,
-    });
-
-    return NextResponse.json({ success: true, ...result });
-  } catch (err) {
-    logger.error('NL query failed', { error: err instanceof Error ? err.message : String(err) });
-    return NextResponse.json({ error: 'Query failed' }, { status: 500 });
-  }
-}
+      return NextResponse.json({ success: true, ...result });
+    } catch (err) {
+      logger.error('NL query failed', { error: err instanceof Error ? err.message : String(err) });
+      return NextResponse.json({ error: 'Query failed' }, { status: 500 });
+    }
+  },
+);

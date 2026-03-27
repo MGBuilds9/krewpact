@@ -1,12 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { requireRole } from '@/lib/api/org';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
-
-const BCP_ROLES = ['platform_admin', 'executive'];
+import { dbError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { bcpIncidentCreateSchema } from '@/lib/validators/migration';
+
+const BCP_ROLES = ['platform_admin', 'executive'];
 
 const querySchema = z.object({
   status: z.string().optional(),
@@ -15,18 +15,17 @@ const querySchema = z.object({
   offset: z.coerce.number().int().min(0).optional(),
 });
 
-export async function GET(req: NextRequest) {
-  const authResult = await requireRole(BCP_ROLES);
-  if (authResult instanceof NextResponse) return authResult;
-  const { userId } = authResult;
+export const GET = withApiRoute({ querySchema }, async ({ req, userId }) => {
+  // Role check — BCP is restricted
+  const { getKrewpactRoles } = await import('@/lib/api/org');
+  const roles = await getKrewpactRoles();
+  if (!roles.some((r: string) => BCP_ROLES.includes(r))) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
 
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
   const params = Object.fromEntries(req.nextUrl.searchParams);
-  const parsed = querySchema.safeParse(params);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  const { status, severity, limit = 50, offset = 0 } = querySchema.parse(params);
 
-  const { status, severity, limit = 50, offset = 0 } = parsed.data;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -43,40 +42,33 @@ export async function GET(req: NextRequest) {
   if (severity) query = query.eq('severity', severity);
 
   const { data, error, count } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) throw dbError(error.message);
 
   const total = count ?? 0;
   return NextResponse.json({ data, total, hasMore: offset + limit < total });
-}
+});
 
-export async function POST(req: NextRequest) {
-  const authResult = await requireRole(BCP_ROLES);
-  if (authResult instanceof NextResponse) return authResult;
-  const { userId } = authResult;
+export const POST = withApiRoute(
+  { bodySchema: bcpIncidentCreateSchema },
+  async ({ userId, body }) => {
+    const { getKrewpactRoles } = await import('@/lib/api/org');
+    const roles = await getKrewpactRoles();
+    if (!roles.some((r: string) => BCP_ROLES.includes(r))) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
-  const parsed = bcpIncidentCreateSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    const { data, error } = await supabase
+      .from('bcp_incidents')
+      .insert({ ...body, status: 'open', declared_by: userId })
+      .select(
+        'id, incident_number, severity, status, title, summary, started_at, resolved_at, owner_user_id, created_at, updated_at',
+      )
+      .single();
 
-  const { client: supabase, error: authError } = await createUserClientSafe();
-
-  if (authError) return authError;
-  const { data, error } = await supabase
-    .from('bcp_incidents')
-    .insert({ ...parsed.data, status: 'open', declared_by: userId })
-    .select(
-      'id, incident_number, severity, status, title, summary, started_at, resolved_at, owner_user_id, created_at, updated_at',
-    )
-    .single();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data, { status: 201 });
-}
+    if (error) throw dbError(error.message);
+    return NextResponse.json(data, { status: 201 });
+  },
+);

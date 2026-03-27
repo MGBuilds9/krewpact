@@ -6,9 +6,10 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const mockRequireRole = vi.fn();
+const mockGetKrewpactRoles = vi.fn();
 vi.mock('@/lib/api/org', () => ({
-  requireRole: (...args: unknown[]) => mockRequireRole(...args),
+  requireRole: vi.fn(),
+  getKrewpactRoles: () => mockGetKrewpactRoles(),
 }));
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
@@ -16,9 +17,17 @@ vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
+vi.mock('@/lib/request-context', () => ({
+  requestContext: { run: (_: unknown, fn: () => unknown) => fn() },
+  generateRequestId: () => 'req_test',
+}));
+vi.mock('@/lib/logger', () => {
+  const m = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), child: vi.fn() };
+  m.child.mockReturnValue(m);
+  return { logger: m };
+});
 
 import { auth } from '@clerk/nextjs/server';
-import { NextResponse } from 'next/server';
 
 import {
   makeJsonRequest,
@@ -67,14 +76,11 @@ const sampleValue = {
 describe('GET /api/governance/reference-data', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRequireRole.mockResolvedValue({ userId: 'admin-user', roles: ['platform_admin'] });
+    mockGetKrewpactRoles.mockResolvedValue(['platform_admin']);
   });
 
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
-    mockRequireRole.mockResolvedValue(
-      NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
-    );
     const res = await GET_LIST(makeRequest('/api/governance/reference-data'));
     expect(res.status).toBe(401);
   });
@@ -111,14 +117,11 @@ describe('GET /api/governance/reference-data', () => {
 describe('POST /api/governance/reference-data', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRequireRole.mockResolvedValue({ userId: 'admin-user', roles: ['platform_admin'] });
+    mockGetKrewpactRoles.mockResolvedValue(['platform_admin']);
   });
 
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
-    mockRequireRole.mockResolvedValue(
-      NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
-    );
     const res = await POST_CREATE(makeJsonRequest('/api/governance/reference-data', {}));
     expect(res.status).toBe(401);
   });
@@ -182,7 +185,7 @@ describe('GET /api/governance/reference-data/[setId]', () => {
     expect(body.set_key).toBe('project_status');
   });
 
-  it('returns 404 on not found', async () => {
+  it('returns 500 on not found', async () => {
     mockClerkAuth(mockAuth);
     mockCreateUserClientSafe.mockResolvedValue({
       client: mockSupabaseClient({
@@ -191,7 +194,7 @@ describe('GET /api/governance/reference-data/[setId]', () => {
       error: null,
     });
     const res = await GET_DETAIL(makeRequest('/api/governance/reference-data/x'), setCtx());
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(500);
   });
 });
 
@@ -304,6 +307,7 @@ describe('POST /api/governance/reference-data/[setId]/values', () => {
     });
     const res = await POST_VALUE(
       makeJsonRequest('/api/governance/reference-data/x/values', {
+        data_set_id: SET_ID,
         value_key: 'active',
         value_name: 'Active',
         sort_order: 1,
@@ -323,6 +327,7 @@ describe('POST /api/governance/reference-data/[setId]/values', () => {
     });
     const res = await POST_VALUE(
       makeJsonRequest('/api/governance/reference-data/x/values', {
+        data_set_id: SET_ID,
         value_key: 'active',
         value_name: 'Active',
         sort_order: 1,

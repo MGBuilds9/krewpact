@@ -1,7 +1,7 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import {
   buildGraphUrl,
   getMicrosoftToken,
@@ -25,26 +25,16 @@ const EVENT_SELECT = [
   'onlineMeetingUrl',
 ].join(',');
 
-export async function GET(req: NextRequest): Promise<NextResponse> {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const params = Object.fromEntries(req.nextUrl.searchParams);
-  const parsed = calendarQuerySchema.safeParse(params);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
-  const { mailbox, startDateTime, endDateTime, top } = parsed.data;
+export const GET = withApiRoute({ querySchema: calendarQuerySchema }, async ({ userId, query }) => {
+  const { mailbox, startDateTime, endDateTime, top } = query as {
+    mailbox?: string;
+    startDateTime?: string;
+    endDateTime?: string;
+    top: number;
+  };
 
   try {
     const token = await getMicrosoftToken(userId);
-
     const queryParams = new URLSearchParams({
       $top: String(top),
       $orderby: 'start/dateTime asc',
@@ -69,29 +59,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const response = graphErrorResponse(error);
     return NextResponse.json(response.body, { status: response.status });
   }
-}
+});
 
-export async function POST(req: NextRequest): Promise<NextResponse> {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = createEventSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
+export const POST = withApiRoute({ bodySchema: createEventSchema }, async ({ userId, body }) => {
   const {
     subject,
     body: eventBody,
@@ -101,7 +71,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     timeZone,
     location,
     mailbox,
-  } = parsed.data;
+  } = body as {
+    subject: string;
+    body?: string;
+    bodyType?: string;
+    startDateTime: string;
+    endDateTime: string;
+    timeZone: string;
+    location?: string;
+    mailbox?: string;
+  };
 
   try {
     const token = await getMicrosoftToken(userId);
@@ -113,7 +92,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     };
 
     if (eventBody) {
-      payload.body = { contentType: bodyType, content: eventBody };
+      payload.body = { contentType: (bodyType ?? 'Text') as 'Text' | 'HTML', content: eventBody };
     }
 
     if (location) {
@@ -131,4 +110,4 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const response = graphErrorResponse(error);
     return NextResponse.json(response.body, { status: response.status });
   }
-}
+});

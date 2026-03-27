@@ -9,6 +9,17 @@ vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
+vi.mock('@/lib/logger', () => ({
+  logger: {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    child: vi
+      .fn()
+      .mockReturnValue({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
+  },
+}));
 
 import { auth } from '@clerk/nextjs/server';
 
@@ -36,7 +47,7 @@ describe('PATCH /api/ai/insights/[id]/dismiss', () => {
     const res = await PATCH(req, context);
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns success on valid dismiss', async () => {

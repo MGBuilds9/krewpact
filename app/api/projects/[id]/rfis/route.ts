@@ -1,27 +1,17 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
+import { dbError } from '@/lib/api/errors';
 import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { rfiCreateSchema } from '@/lib/validators/field-ops';
 
-type RouteContext = { params: Promise<{ id: string }> };
-
-export async function GET(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id } = await context.params;
-  const { searchParams } = new URL(req.url);
-  const status = searchParams.get('status');
+export const GET = withApiRoute({}, async ({ req, params }) => {
+  const { id } = params;
+  const status = req.nextUrl.searchParams.get('status');
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
 
   const { client: supabase, error: authError } = await createUserClientSafe();
-
   if (authError) return authError;
   let query = supabase
     .from('rfi_items')
@@ -36,39 +26,25 @@ export async function GET(req: NextRequest, context: RouteContext) {
   if (status) query = query.eq('status', status);
 
   const { data, error, count } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) throw dbError(error.message);
 
   return NextResponse.json(paginatedResponse(data, count, limit, offset));
-}
+});
 
-export async function POST(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export const POST = withApiRoute(
+  { bodySchema: rfiCreateSchema },
+  async ({ params, body, userId }) => {
+    const { id } = params;
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
+    const { data, error } = await supabase
+      .from('rfi_items')
+      .insert({ ...body, project_id: id, requester_user_id: userId, status: 'open' })
+      .select()
+      .single();
 
-  const { id } = await context.params;
+    if (error) throw dbError(error.message);
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = rfiCreateSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
-  const { client: supabase, error: authError } = await createUserClientSafe();
-
-  if (authError) return authError;
-  const { data, error } = await supabase
-    .from('rfi_items')
-    .insert({ ...parsed.data, project_id: id, requester_user_id: userId, status: 'open' })
-    .select()
-    .single();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  return NextResponse.json(data, { status: 201 });
-}
+    return NextResponse.json(data, { status: 201 });
+  },
+);

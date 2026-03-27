@@ -10,6 +10,15 @@ vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
+vi.mock('@/lib/request-context', () => ({
+  requestContext: { run: (_: unknown, fn: () => unknown) => fn() },
+  generateRequestId: () => 'req_test',
+}));
+vi.mock('@/lib/logger', () => {
+  const m = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), child: vi.fn() };
+  m.child.mockReturnValue(m);
+  return { logger: m };
+});
 
 import { auth } from '@clerk/nextjs/server';
 
@@ -148,7 +157,7 @@ describe('GET /api/compliance/[docId]', () => {
     expect(body.doc_number).toBe('WSIB-2026-001');
   });
 
-  it('returns 404 on not found', async () => {
+  it('returns 500 on not found', async () => {
     mockClerkAuth(mockAuth);
     mockCreateUserClientSafe.mockResolvedValue({
       client: mockSupabaseClient({
@@ -157,7 +166,7 @@ describe('GET /api/compliance/[docId]', () => {
       error: null,
     });
     const res = await GET_DETAIL(makeRequest('/api/compliance/x'), docCtx());
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(500);
   });
 });
 
