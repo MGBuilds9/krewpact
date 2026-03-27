@@ -1,11 +1,10 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError, notFound } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { composeProposalData } from '@/lib/crm/proposal-generator';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
-type RouteContext = { params: Promise<{ id: string }> };
 type SupabaseClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
 
 const COMPANY_INFO = {
@@ -25,8 +24,7 @@ async function fetchProposalData(supabase: SupabaseClient, id: string) {
     .single();
 
   if (oppError) {
-    const status = oppError.code === 'PGRST116' ? 404 : 500;
-    return { error: NextResponse.json({ error: oppError.message }, { status }) };
+    return { oppError };
   }
 
   const opp = opportunity as Record<string, unknown>;
@@ -61,19 +59,17 @@ async function fetchProposalData(supabase: SupabaseClient, id: string) {
   };
 }
 
-export async function GET(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id } = await context.params;
+export const GET = withApiRoute({}, async ({ params }) => {
+  const { id } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
   const result = await fetchProposalData(supabase, id);
-  if ('error' in result) return result.error;
+  if ('oppError' in result) {
+    const oppError = result.oppError!;
+    if (oppError.code === 'PGRST116') throw notFound('Opportunity');
+    throw dbError(oppError.message);
+  }
 
   const { opp, account, contact, estimates } = result;
 
@@ -108,4 +104,4 @@ export async function GET(req: NextRequest, context: RouteContext) {
   });
 
   return NextResponse.json(proposalData);
-}
+});

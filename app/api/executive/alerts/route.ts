@@ -1,7 +1,8 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
+import { forbidden } from '@/lib/api/errors';
 import { getKrewpactRoles } from '@/lib/api/org';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { logger } from '@/lib/logger';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
@@ -121,13 +122,9 @@ async function fetchAlertData(supabase: SupabaseClient, now: Date) {
   ]);
 }
 
-export async function GET(_req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
+export const GET = withApiRoute({}, async () => {
   const roles = await getKrewpactRoles();
-  if (!roles.some((r) => EXECUTIVE_ROLES.includes(r)))
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!roles.some((r) => EXECUTIVE_ROLES.includes(r))) throw forbidden();
 
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
@@ -147,4 +144,4 @@ export async function GET(_req: NextRequest) {
   alerts.sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]);
 
   return NextResponse.json({ alerts });
-}
+});

@@ -46,7 +46,7 @@ describe('GET /api/crm/activities/overdue', () => {
     const res = await GET(makeRequest('/api/crm/activities/overdue'));
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns overdue tasks for authenticated user', async () => {
@@ -99,7 +99,7 @@ describe('GET /api/crm/activities/overdue', () => {
     const res = await GET(makeRequest('/api/crm/activities/overdue'));
     expect(res.status).toBe(500);
     const body = await res.json();
-    expect(body.error).toBe('relation "activities" does not exist');
+    expect(body.error.message).toContain('activities');
   });
 
   it('only returns incomplete tasks (completed_at is null)', async () => {

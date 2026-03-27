@@ -87,7 +87,7 @@ describe('POST /api/crm/opportunities/[id]/lost', () => {
     );
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toContain('already');
+    expect(body.error.message).toContain('already');
   });
 
   it('rejects missing lost_reason', async () => {

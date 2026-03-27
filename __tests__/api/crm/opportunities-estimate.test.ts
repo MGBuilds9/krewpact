@@ -1,3 +1,4 @@
+import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // --- Mocks ---
@@ -6,12 +7,6 @@ const mockAuth = vi.fn();
 vi.mock('@clerk/nextjs/server', () => ({
   auth: () => mockAuth(),
 }));
-
-const _mockSelect = vi.fn();
-const _mockEq = vi.fn();
-const _mockSingle = vi.fn();
-const _mockInsert = vi.fn();
-const _mockOrder = vi.fn();
 
 const mockFrom = vi.fn();
 vi.mock('@/lib/supabase/server', () => ({
@@ -32,13 +27,13 @@ function makeContext(id = 'opp-123') {
 
 function makeRequest(body?: unknown) {
   if (body) {
-    return new Request('http://localhost/api/crm/opportunities/opp-123/estimate', {
+    return new NextRequest('http://localhost/api/crm/opportunities/opp-123/estimate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
   }
-  return new Request('http://localhost/api/crm/opportunities/opp-123/estimate');
+  return new NextRequest('http://localhost/api/crm/opportunities/opp-123/estimate');
 }
 
 describe('GET /api/crm/opportunities/[id]/estimate', () => {
@@ -48,7 +43,7 @@ describe('GET /api/crm/opportunities/[id]/estimate', () => {
 
   it('returns 401 when not authenticated', async () => {
     mockAuth.mockResolvedValue({ userId: null });
-    const res = await GET(makeRequest() as never, makeContext());
+    const res = await GET(makeRequest(), makeContext());
     expect(res.status).toBe(401);
   });
 
@@ -61,7 +56,7 @@ describe('GET /api/crm/opportunities/[id]/estimate', () => {
         }),
       }),
     });
-    const res = await GET(makeRequest() as never, makeContext());
+    const res = await GET(makeRequest(), makeContext());
     expect(res.status).toBe(404);
   });
 
@@ -92,7 +87,7 @@ describe('GET /api/crm/opportunities/[id]/estimate', () => {
         }),
       };
     });
-    const res = await GET(makeRequest() as never, makeContext());
+    const res = await GET(makeRequest(), makeContext());
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data).toEqual(estimates);
@@ -115,7 +110,7 @@ describe('POST /api/crm/opportunities/[id]/estimate', () => {
 
   it('returns 400 for invalid body', async () => {
     mockAuth.mockResolvedValue({ userId: 'user-1' });
-    const res = await POST(makeRequest({ total_amount: -1 }) as never, makeContext());
+    const res = await POST(makeRequest({ total_amount: -1 }), makeContext());
     expect(res.status).toBe(400);
   });
 

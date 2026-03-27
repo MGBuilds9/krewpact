@@ -1,8 +1,8 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError, notFound, serverError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { mapApolloToContact, mapApolloToLead, searchPeople } from '@/lib/integrations/apollo';
 import { getActiveProfiles, getProfileById } from '@/lib/integrations/apollo-profiles';
 import { createUserClientSafe } from '@/lib/supabase/server';
@@ -71,12 +71,7 @@ async function importPeople(
     .insert(leadsToInsert)
     .select('id, external_id');
 
-  if (leadError) {
-    return NextResponse.json(
-      { error: 'Failed to insert leads', details: leadError.message },
-      { status: 500 },
-    );
-  }
+  if (leadError) throw dbError(`Failed to insert leads: ${leadError.message}`);
 
   if (insertedLeads && insertedLeads.length > 0) {
     const leadIdMap = new Map(insertedLeads.map((l) => [l.external_id, l.id]));
@@ -95,56 +90,27 @@ async function importPeople(
   });
 }
 
-export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export const POST = withApiRoute({ bodySchema: searchSchema }, async ({ body }) => {
+  const { profileId, page, import: shouldImport } = body as z.infer<typeof searchSchema>;
 
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = searchSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: 'Validation failed', details: parsed.error.flatten() },
-      { status: 400 },
-    );
-  }
-
-  const { profileId, page, import: shouldImport } = parsed.data;
   const profile = getProfileById(profileId);
-  if (!profile) {
-    return NextResponse.json({ error: `Profile not found: ${profileId}` }, { status: 404 });
-  }
+  if (!profile) throw notFound(`Profile '${profileId}'`);
 
+  let people: Awaited<ReturnType<typeof searchPeople>>;
   try {
-    const people = await searchPeople({ ...profile.searchParams, per_page: 25, page });
-    if (!shouldImport) return formatPreviewResults(people, profile, page);
-
-    const { client: supabase, error: authError } = await createUserClientSafe();
-    if (authError) return authError;
-
-    return importPeople(supabase, people, profile);
+    people = await searchPeople({ ...profile.searchParams, per_page: 25, page });
   } catch (err) {
-    return NextResponse.json(
-      { error: 'Apollo search failed', details: String(err) },
-      { status: 500 },
-    );
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    throw serverError(`Apollo search failed: ${msg}`);
   }
-}
+  if (!shouldImport) return formatPreviewResults(people, profile, page);
 
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
+  return importPeople(supabase, people, profile);
+});
 
+export const GET = withApiRoute({}, async () => {
   return NextResponse.json({ profiles: getActiveProfiles() });
-}
+});

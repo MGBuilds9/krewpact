@@ -1,15 +1,16 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import type { z } from 'zod';
 
+import { dbError, forbidden, notFound } from '@/lib/api/errors';
 import { getKrewpactUserId } from '@/lib/api/org';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { SyncService } from '@/lib/erp/sync-service';
 import { logger } from '@/lib/logger';
 import { createServiceClient, createUserClientSafe } from '@/lib/supabase/server';
 import { wonDealSchema } from '@/lib/validators/crm';
 
-type RouteContext = { params: Promise<{ id: string }> };
 type ServiceClient = ReturnType<typeof createServiceClient>;
+type UserClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
 
 async function updateExistingAccount(
   serviceClient: ServiceClient,
@@ -141,22 +142,12 @@ async function finalizeAccountRecords(params: FinalizeAccountParams): Promise<vo
     });
 }
 
-interface PostWonParams {
-  supabase: NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
-  serviceClient: ServiceClient;
-  opp: Record<string, unknown>;
-  opportunityId: string;
-  wonDate: string;
-  userId: string;
-  krewpactUserId: string;
-  wonNotes?: string;
-  syncToErp: boolean;
-}
-
 async function resolveAccountId(
-  params: Pick<PostWonParams, 'serviceClient' | 'opp' | 'opportunityId' | 'wonDate'>,
+  serviceClient: ServiceClient,
+  opp: Record<string, unknown>,
+  opportunityId: string,
+  wonDate: string,
 ): Promise<string | null> {
-  const { serviceClient, opp, opportunityId, wonDate } = params;
   const existingId = opp.account_id as string | null;
   if (existingId) {
     await updateExistingAccount(
@@ -178,124 +169,104 @@ async function resolveAccountId(
   return null;
 }
 
-async function recordWonActivities(
-  params: Pick<
-    PostWonParams,
-    'supabase' | 'opp' | 'opportunityId' | 'wonDate' | 'krewpactUserId' | 'wonNotes'
-  >,
-): Promise<void> {
-  const { supabase, opp, opportunityId, wonDate, krewpactUserId, wonNotes } = params;
-  await supabase.from('opportunity_stage_history').insert({
-    opportunity_id: opportunityId,
-    from_stage: opp.stage as string,
+interface RecordWonParams {
+  supabase: UserClient;
+  opp: Record<string, unknown>;
+  opportunityId: string;
+  wonDate: string;
+  krewpactUserId: string;
+  wonNotes?: string;
+}
+
+async function recordWonActivities(p: RecordWonParams): Promise<void> {
+  await p.supabase.from('opportunity_stage_history').insert({
+    opportunity_id: p.opportunityId,
+    from_stage: p.opp.stage as string,
     to_stage: 'contracted',
-    changed_by: krewpactUserId,
+    changed_by: p.krewpactUserId,
   });
-  await supabase.from('activities').insert({
+  await p.supabase.from('activities').insert({
     activity_type: 'note',
     title: 'Deal Won',
-    details: wonNotes || `Opportunity marked as won on ${wonDate}`,
-    opportunity_id: opportunityId,
-    owner_user_id: krewpactUserId,
+    details: p.wonNotes || `Opportunity marked as won on ${p.wonDate}`,
+    opportunity_id: p.opportunityId,
+    owner_user_id: p.krewpactUserId,
   });
 }
 
-async function parseWonBody(req: NextRequest) {
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return { error: NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }) };
-  }
-  const parsed = wonDealSchema.safeParse(body);
-  if (!parsed.success)
-    return { error: NextResponse.json({ error: parsed.error.flatten() }, { status: 400 }) };
-  return { parsed: parsed.data };
-}
+export const POST = withApiRoute(
+  { bodySchema: wonDealSchema },
+  async ({ params, body, userId }) => {
+    const { id } = params;
+    const parsed = body as z.infer<typeof wonDealSchema>;
 
-type UserClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
-async function fetchAndValidateOpportunity(supabase: UserClient, id: string) {
-  const { data: opportunity, error: fetchError } = await supabase
-    .from('opportunities')
-    .select(
-      'id, opportunity_name, stage, estimated_revenue, probability_pct, target_close_date, account_id, contact_id, lead_id, division_id, owner_user_id, notes, created_at, updated_at',
-    )
-    .eq('id', id)
-    .single();
+    const krewpactUserId = await getKrewpactUserId();
+    if (!krewpactUserId) throw forbidden('Unauthorized');
 
-  if (fetchError) {
-    const status = fetchError.code === 'PGRST116' ? 404 : 500;
-    return { error: NextResponse.json({ error: fetchError.message }, { status }) };
-  }
-  const opp = opportunity as Record<string, unknown>;
-  if (opp.stage !== 'contracted') {
-    return {
-      error: NextResponse.json(
-        { error: 'Only opportunities in contracted stage can be marked as won' },
-        { status: 400 },
-      ),
-    };
-  }
-  return { opp };
-}
+    const { data: opportunity, error: fetchError } = await supabase
+      .from('opportunities')
+      .select(
+        'id, opportunity_name, stage, estimated_revenue, probability_pct, target_close_date, account_id, contact_id, lead_id, division_id, owner_user_id, notes, created_at, updated_at',
+      )
+      .eq('id', id)
+      .single();
 
-export async function POST(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const parseResult = await parseWonBody(req);
-  if (parseResult.error) return parseResult.error;
-  const parsed = parseResult.parsed!;
-
-  const { id } = await context.params;
-  const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
-
-  const krewpactUserId = await getKrewpactUserId();
-  if (!krewpactUserId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const fetchResult = await fetchAndValidateOpportunity(supabase, id);
-  if (fetchResult.error) return fetchResult.error;
-  const opp = fetchResult.opp!;
-
-  const wonDate = parsed.won_date || new Date().toISOString().split('T')[0];
-  const updatePayload: Record<string, unknown> = { stage: 'contracted', won_at: wonDate };
-  if (parsed.won_notes !== undefined) updatePayload.won_notes = parsed.won_notes;
-
-  const { data: updated, error: updateError } = await supabase
-    .from('opportunities')
-    .update(updatePayload)
-    .eq('id', id)
-    .select()
-    .single();
-  if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
-
-  const serviceClient = createServiceClient();
-  const accountId = await resolveAccountId({ serviceClient, opp, opportunityId: id, wonDate });
-  if (accountId)
-    await finalizeAccountRecords({ serviceClient, accountId, opp, opportunityId: id, wonDate });
-
-  await recordWonActivities({
-    supabase,
-    opp,
-    opportunityId: id,
-    wonDate,
-    krewpactUserId,
-    wonNotes: parsed.won_notes,
-  });
-
-  let syncResult = null;
-  if (parsed.sync_to_erp) {
-    try {
-      syncResult = await new SyncService().syncWonDeal(id, userId, wonDate);
-    } catch {
-      // Sync failure is non-fatal
+    if (fetchError) {
+      if (fetchError.code === 'PGRST116') throw notFound('Opportunity');
+      throw dbError(fetchError.message);
     }
-  }
 
-  return NextResponse.json({ ...updated, account_id: accountId, sync_result: syncResult });
-}
+    const opp = opportunity as Record<string, unknown>;
+    if (opp.stage !== 'contracted') {
+      return NextResponse.json(
+        {
+          error: {
+            code: 'INVALID_STAGE',
+            message: 'Only opportunities in contracted stage can be marked as won',
+          },
+        },
+        { status: 400 },
+      );
+    }
+
+    const wonDate = parsed.won_date || new Date().toISOString().split('T')[0];
+    const updatePayload: Record<string, unknown> = { stage: 'contracted', won_at: wonDate };
+    if (parsed.won_notes !== undefined) updatePayload.won_notes = parsed.won_notes;
+
+    const { data: updated, error: updateError } = await supabase
+      .from('opportunities')
+      .update(updatePayload)
+      .eq('id', id)
+      .select()
+      .single();
+    if (updateError) throw dbError(updateError.message);
+
+    const serviceClient = createServiceClient();
+    const accountId = await resolveAccountId(serviceClient, opp, id, wonDate);
+    if (accountId)
+      await finalizeAccountRecords({ serviceClient, accountId, opp, opportunityId: id, wonDate });
+
+    await recordWonActivities({
+      supabase,
+      opp,
+      opportunityId: id,
+      wonDate,
+      krewpactUserId,
+      wonNotes: parsed.won_notes,
+    });
+
+    let syncResult = null;
+    if (parsed.sync_to_erp) {
+      try {
+        syncResult = await new SyncService().syncWonDeal(id, userId, wonDate);
+      } catch {
+        // Sync failure is non-fatal
+      }
+    }
+
+    return NextResponse.json({ ...updated, account_id: accountId, sync_result: syncResult });
+  },
+);

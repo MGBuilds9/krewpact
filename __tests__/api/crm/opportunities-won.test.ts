@@ -110,7 +110,7 @@ describe('POST /api/crm/opportunities/[id]/won', () => {
     );
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toContain('contracted');
+    expect(body.error.message).toContain('contracted');
   });
 
   it('syncs to ERPNext when sync_to_erp is true', async () => {

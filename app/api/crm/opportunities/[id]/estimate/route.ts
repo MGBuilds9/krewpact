@@ -1,26 +1,16 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import type { z } from 'zod';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError, notFound } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { linkedEstimateCreateSchema } from '@/lib/validators/crm';
 
-type RouteContext = { params: Promise<{ id: string }> };
-
-export async function GET(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id } = await context.params;
+export const GET = withApiRoute({}, async ({ params }) => {
+  const { id } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
-  // Verify opportunity exists
   const { error: oppError } = await supabase
     .from('opportunities')
     .select('id')
@@ -28,75 +18,54 @@ export async function GET(req: NextRequest, context: RouteContext) {
     .single();
 
   if (oppError) {
-    const status = oppError.code === 'PGRST116' ? 404 : 500;
-    return NextResponse.json({ error: oppError.message }, { status });
+    if (oppError.code === 'PGRST116') throw notFound('Opportunity');
+    throw dbError(oppError.message);
   }
 
-  // Fetch linked estimates
   const { data, error } = await supabase
     .from('estimates')
     .select('id, estimate_number, total_amount, status')
     .eq('opportunity_id', id)
     .order('created_at', { ascending: false });
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  if (error) throw dbError(error.message);
 
   return NextResponse.json(data);
-}
+});
 
-export async function POST(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+export const POST = withApiRoute(
+  { bodySchema: linkedEstimateCreateSchema },
+  async ({ params, body, userId }) => {
+    const { id } = params;
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
+    const { data: opportunity, error: oppError } = await supabase
+      .from('opportunities')
+      .select('id, division_id')
+      .eq('id', id)
+      .single();
 
-  const parsed = linkedEstimateCreateSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
+    if (oppError) {
+      if (oppError.code === 'PGRST116') throw notFound('Opportunity');
+      throw dbError(oppError.message);
+    }
 
-  const { id } = await context.params;
-  const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
+    const oppData = opportunity as Record<string, unknown>;
 
-  // Verify opportunity exists
-  const { data: opportunity, error: oppError } = await supabase
-    .from('opportunities')
-    .select('id, division_id')
-    .eq('id', id)
-    .single();
+    const { data, error } = await supabase
+      .from('estimates')
+      .insert({
+        ...(body as z.infer<typeof linkedEstimateCreateSchema>),
+        opportunity_id: id,
+        division_id: oppData.division_id as string | null,
+        created_by: userId,
+      })
+      .select()
+      .single();
 
-  if (oppError) {
-    const status = oppError.code === 'PGRST116' ? 404 : 500;
-    return NextResponse.json({ error: oppError.message }, { status });
-  }
+    if (error) throw dbError(error.message);
 
-  const oppData = opportunity as Record<string, unknown>;
-
-  // Create estimate linked to this opportunity
-  const { data, error } = await supabase
-    .from('estimates')
-    .insert({
-      ...parsed.data,
-      opportunity_id: id,
-      division_id: oppData.division_id as string | null,
-      created_by: userId,
-    })
-    .select()
-    .single();
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  return NextResponse.json(data, { status: 201 });
-}
+    return NextResponse.json(data, { status: 201 });
+  },
+);

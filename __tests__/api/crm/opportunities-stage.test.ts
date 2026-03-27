@@ -132,7 +132,7 @@ describe('POST /api/crm/opportunities/[id]/stage', () => {
     );
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toContain('not allowed');
+    expect(body.error.message).toContain('not allowed');
   });
 
   it('rejects contracted -> intake (terminal)', async () => {
@@ -151,7 +151,7 @@ describe('POST /api/crm/opportunities/[id]/stage', () => {
     );
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toContain('terminal');
+    expect(body.error.message).toContain('terminal');
   });
 
   it('rejects closed_lost without lost_reason', async () => {

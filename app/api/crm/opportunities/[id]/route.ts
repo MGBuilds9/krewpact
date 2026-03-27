@@ -1,24 +1,16 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError, notFound } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { opportunityUpdateSchema } from '@/lib/validators/crm';
 
-type RouteContext = { params: Promise<{ id: string }> };
-
-export async function GET(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id } = await context.params;
+export const GET = withApiRoute({}, async ({ params }) => {
+  const { id } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
+
   const { data, error } = await supabase
     .from('opportunities')
     .select(
@@ -28,94 +20,69 @@ export async function GET(req: NextRequest, context: RouteContext) {
     .single();
 
   if (error) {
-    const status = error.code === 'PGRST116' ? 404 : 500;
-    return NextResponse.json({ error: error.message }, { status });
+    if (error.code === 'PGRST116') throw notFound('Opportunity');
+    throw dbError(error.message);
   }
 
   return NextResponse.json(data);
-}
+});
 
-export async function PATCH(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+export const PATCH = withApiRoute(
+  { bodySchema: opportunityUpdateSchema },
+  async ({ params, body, userId }) => {
+    const { id } = params;
+    const update = body as z.infer<typeof opportunityUpdateSchema>;
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
-  const { id } = await context.params;
+    // If stage is being changed, record history
+    if (update.stage) {
+      const { data: current, error: fetchError } = await supabase
+        .from('opportunities')
+        .select('stage')
+        .eq('id', id)
+        .single();
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
+      if (fetchError) {
+        if (fetchError.code === 'PGRST116') throw notFound('Opportunity');
+        throw dbError(fetchError.message);
+      }
 
-  const parsed = opportunityUpdateSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
+      const currentStage = (current as Record<string, unknown>)?.stage as string;
 
-  const { client: supabase, error: authError } = await createUserClientSafe();
+      if (currentStage && currentStage !== update.stage) {
+        await supabase.from('opportunity_stage_history').insert({
+          opportunity_id: id,
+          from_stage: currentStage,
+          to_stage: update.stage,
+          changed_by: userId,
+        });
+      }
+    }
 
-  if (authError) return authError;
-
-  // If stage is being changed, record history
-  if (parsed.data.stage) {
-    // Fetch current opportunity to detect stage change
-    const { data: current, error: fetchError } = await supabase
+    const { data, error } = await supabase
       .from('opportunities')
-      .select('stage')
+      .update(update)
       .eq('id', id)
+      .select()
       .single();
 
-    if (fetchError) {
-      const status = fetchError.code === 'PGRST116' ? 404 : 500;
-      return NextResponse.json({ error: fetchError.message }, { status });
+    if (error) {
+      if (error.code === 'PGRST116') throw notFound('Opportunity');
+      throw dbError(error.message);
     }
 
-    const currentStage = (current as Record<string, unknown>)?.stage as string;
+    return NextResponse.json(data);
+  },
+);
 
-    if (currentStage && currentStage !== parsed.data.stage) {
-      // Insert stage history record
-      await supabase.from('opportunity_stage_history').insert({
-        opportunity_id: id,
-        from_stage: currentStage,
-        to_stage: parsed.data.stage,
-        changed_by: userId,
-      });
-    }
-  }
-
-  // Update the opportunity
-  const { data, error } = await supabase
-    .from('opportunities')
-    .update(parsed.data)
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (error) {
-    const status = error.code === 'PGRST116' ? 404 : 500;
-    return NextResponse.json({ error: error.message }, { status });
-  }
-
-  return NextResponse.json(data);
-}
-
-export async function DELETE(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const { id } = await context.params;
+export const DELETE = withApiRoute({}, async ({ params }) => {
+  const { id } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
-  const { error } = await supabase.from('opportunities').delete().eq('id', id);
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  const { error } = await supabase.from('opportunities').delete().eq('id', id);
+  if (error) throw dbError(error.message);
 
   return NextResponse.json({ success: true });
-}
+});

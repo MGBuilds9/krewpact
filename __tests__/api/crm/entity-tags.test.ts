@@ -52,7 +52,7 @@ describe('GET /api/crm/entity-tags', () => {
     );
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns tags for entity', async () => {

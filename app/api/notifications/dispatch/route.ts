@@ -23,7 +23,7 @@ export const POST = withApiRoute({ bodySchema: dispatchBodySchema }, async ({ bo
   }
 
   try {
-    await dispatchNotification(body as NotificationEvent);
+    await dispatchNotification(body as unknown as NotificationEvent);
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
     logger.error('Notification dispatch failed:', { error: err });

@@ -56,7 +56,7 @@ describe('POST /api/crm/activities/[id]/disposition', () => {
 
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns 400 for invalid outcome', async () => {
@@ -75,7 +75,7 @@ describe('POST /api/crm/activities/[id]/disposition', () => {
 
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toBe('Invalid input');
+    expect(body.error.code).toBe('VALIDATION_ERROR');
   });
 
   it('returns 400 for missing outcome', async () => {
@@ -192,7 +192,7 @@ describe('POST /api/crm/activities/[id]/disposition', () => {
 
     expect(res.status).toBe(404);
     const body = await res.json();
-    expect(body.error).toBe('Activity not found');
+    expect(body.error.code).toBe('NOT_FOUND');
   });
 
   it('returns 500 for unexpected errors', async () => {
@@ -212,7 +212,7 @@ describe('POST /api/crm/activities/[id]/disposition', () => {
 
     expect(res.status).toBe(500);
     const body = await res.json();
-    expect(body.error).toBe('Failed to process disposition');
+    expect(body.error.message).toContain('Failed to process disposition');
   });
 
   it('validates followUpDays range (rejects 0)', async () => {

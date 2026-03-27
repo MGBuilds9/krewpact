@@ -1,12 +1,9 @@
+import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mocks BEFORE imports
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
-vi.mock('@/lib/api/rate-limit', () => ({
-  rateLimit: vi.fn().mockResolvedValue({ success: true }),
-  rateLimitResponse: vi.fn(),
-}));
 
 import { auth } from '@clerk/nextjs/server';
 
@@ -135,11 +132,14 @@ describe('POST /api/crm/opportunities/[id]/attachments', () => {
     const formData = new FormData();
     formData.append('file', new File(['test'], 'test.pdf', { type: 'application/pdf' }));
 
-    const req = new Request(`http://localhost:3000/api/crm/opportunities/${OPP_ID}/attachments`, {
-      method: 'POST',
-      body: formData,
-    });
-    const res = await POST(req as never, makeContext(OPP_ID));
+    const req = new NextRequest(
+      `http://localhost:3000/api/crm/opportunities/${OPP_ID}/attachments`,
+      {
+        method: 'POST',
+        body: formData,
+      },
+    );
+    const res = await POST(req, makeContext(OPP_ID));
     expect(res.status).toBe(401);
   });
 
@@ -153,12 +153,15 @@ describe('POST /api/crm/opportunities/[id]/attachments', () => {
     formData.append('file', file);
 
     // Mock formData() because jsdom Request.formData() hangs on streamed bodies
-    const req = new Request(`http://localhost:3000/api/crm/opportunities/${OPP_ID}/attachments`, {
-      method: 'POST',
-    });
+    const req = new NextRequest(
+      `http://localhost:3000/api/crm/opportunities/${OPP_ID}/attachments`,
+      {
+        method: 'POST',
+      },
+    );
     vi.spyOn(req, 'formData').mockResolvedValue(formData);
 
-    const res = await POST(req as never, makeContext(OPP_ID));
+    const res = await POST(req, makeContext(OPP_ID));
     expect(res.status).toBe(201);
     const body = await res.json();
     expect(body.name).toBeDefined();
@@ -170,15 +173,19 @@ describe('POST /api/crm/opportunities/[id]/attachments', () => {
     const { client } = createStorageMock();
     mockCreateUserClientSafe.mockResolvedValue({ client: client as never, error: null });
 
-    const formData = new FormData();
-    const req = new Request(`http://localhost:3000/api/crm/opportunities/${OPP_ID}/attachments`, {
-      method: 'POST',
-      body: formData,
-    });
-    const res = await POST(req as never, makeContext(OPP_ID));
+    const emptyFormData = new FormData();
+    const req = new NextRequest(
+      `http://localhost:3000/api/crm/opportunities/${OPP_ID}/attachments`,
+      {
+        method: 'POST',
+      },
+    );
+    vi.spyOn(req, 'formData').mockResolvedValue(emptyFormData);
+
+    const res = await POST(req, makeContext(OPP_ID));
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toBe('No file provided');
+    expect(body.error.message).toContain('No file provided');
   });
 });
 
@@ -229,6 +236,6 @@ describe('DELETE /api/crm/opportunities/[id]/attachments', () => {
     );
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toContain('fileName');
+    expect(body.error.message).toContain('fileName');
   });
 });

@@ -1,12 +1,12 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import type { z } from 'zod';
 
+import { dbError, forbidden, notFound } from '@/lib/api/errors';
 import { getKrewpactUserId } from '@/lib/api/org';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { lostDealSchema } from '@/lib/validators/crm';
 
-type RouteContext = { params: Promise<{ id: string }> };
 type UserClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
 
 function buildUpdatePayload(data: {
@@ -53,29 +53,15 @@ async function maybeReopenAsLead(
   return leadData;
 }
 
-export async function POST(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export const POST = withApiRoute({ bodySchema: lostDealSchema }, async ({ params, body }) => {
+  const { id } = params;
+  const parsed = body as z.infer<typeof lostDealSchema>;
 
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = lostDealSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-
-  const { id } = await context.params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
   const krewpactUserId = await getKrewpactUserId();
-  if (!krewpactUserId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!krewpactUserId) throw forbidden('Unauthorized');
 
   const { data: opportunity, error: fetchError } = await supabase
     .from('opportunities')
@@ -86,16 +72,14 @@ export async function POST(req: NextRequest, context: RouteContext) {
     .single();
 
   if (fetchError) {
-    return NextResponse.json(
-      { error: fetchError.message },
-      { status: fetchError.code === 'PGRST116' ? 404 : 500 },
-    );
+    if (fetchError.code === 'PGRST116') throw notFound('Opportunity');
+    throw dbError(fetchError.message);
   }
 
   const oppData = opportunity as Record<string, unknown>;
   if (oppData.stage === 'closed_lost') {
     return NextResponse.json(
-      { error: 'Opportunity is already in closed_lost stage' },
+      { error: { code: 'ALREADY_LOST', message: 'Opportunity is already in closed_lost stage' } },
       { status: 400 },
     );
   }
@@ -103,11 +87,11 @@ export async function POST(req: NextRequest, context: RouteContext) {
   const previousStage = oppData.stage as string;
   const { data: updated, error: updateError } = await supabase
     .from('opportunities')
-    .update(buildUpdatePayload(parsed.data))
+    .update(buildUpdatePayload(parsed))
     .eq('id', id)
     .select()
     .single();
-  if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
+  if (updateError) throw dbError(updateError.message);
 
   await supabase.from('opportunity_stage_history').insert({
     opportunity_id: id,
@@ -119,11 +103,11 @@ export async function POST(req: NextRequest, context: RouteContext) {
   await supabase.from('activities').insert({
     activity_type: 'note',
     title: 'Deal Lost',
-    details: buildActivityDetails(parsed.data),
+    details: buildActivityDetails(parsed),
     opportunity_id: id,
     owner_user_id: krewpactUserId,
   });
 
-  const newLead = await maybeReopenAsLead(supabase, oppData, parsed.data.reopen_as_lead ?? false);
+  const newLead = await maybeReopenAsLead(supabase, oppData, parsed.reopen_as_lead ?? false);
   return NextResponse.json({ ...updated, new_lead: newLead });
-}
+});

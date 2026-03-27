@@ -1,9 +1,9 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { dbError } from '@/lib/api/errors';
 import { parsePagination } from '@/lib/api/pagination';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 const querySchema = z.object({
@@ -25,12 +25,7 @@ export interface TimelineEntry {
   metadata: Record<string, unknown>;
 }
 
-type Filters = {
-  lead_id?: string;
-  account_id?: string;
-  contact_id?: string;
-  opportunity_id?: string;
-};
+type Filters = z.infer<typeof querySchema>;
 type SupabaseClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
 
 async function fetchActivities(supabase: SupabaseClient, filters: Filters) {
@@ -102,21 +97,17 @@ function mapOutreachToTimeline(outreach: Array<Record<string, unknown>>): Timeli
   }));
 }
 
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export const GET = withApiRoute({ querySchema }, async ({ req, query }) => {
+  const filters = query as Filters;
 
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const params = Object.fromEntries(req.nextUrl.searchParams);
-  const parsed = querySchema.safeParse(params);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-
-  const filters = parsed.data;
   if (!filters.lead_id && !filters.account_id && !filters.contact_id && !filters.opportunity_id) {
     return NextResponse.json(
-      { error: 'At least one of lead_id, account_id, contact_id, or opportunity_id is required' },
+      {
+        error: {
+          code: 'MISSING_FILTER',
+          message: 'At least one of lead_id, account_id, contact_id, or opportunity_id is required',
+        },
+      },
       { status: 400 },
     );
   }
@@ -128,8 +119,8 @@ export async function GET(req: NextRequest) {
   const [{ data: activities, error: actError }, { data: outreach, error: outreachError }] =
     await Promise.all([fetchActivities(supabase, filters), fetchOutreach(supabase, filters)]);
 
-  if (actError) return NextResponse.json({ error: actError.message }, { status: 500 });
-  if (outreachError) return NextResponse.json({ error: outreachError.message }, { status: 500 });
+  if (actError) throw dbError(actError.message);
+  if (outreachError) throw dbError(outreachError.message);
 
   const timeline = [
     ...mapActivitiesToTimeline((activities ?? []) as Array<Record<string, unknown>>),
@@ -142,4 +133,4 @@ export async function GET(req: NextRequest) {
     total,
     hasMore: total > offset + limit,
   });
-}
+});

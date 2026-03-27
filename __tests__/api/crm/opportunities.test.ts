@@ -46,7 +46,7 @@ describe('GET /api/crm/opportunities', () => {
     const res = await GET(makeRequest('/api/crm/opportunities'));
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns opportunities list', async () => {

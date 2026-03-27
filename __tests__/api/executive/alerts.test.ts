@@ -5,8 +5,10 @@ vi.mock('@clerk/nextjs/server', () => ({
   auth: vi.fn(),
 }));
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
+const childLogger = { error: vi.fn(), info: vi.fn(), warn: vi.fn(), child: vi.fn() };
+childLogger.child.mockReturnValue(childLogger);
 vi.mock('@/lib/logger', () => ({
-  logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
+  logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn(), child: vi.fn(() => childLogger) },
 }));
 
 import { auth } from '@clerk/nextjs/server';
@@ -114,7 +116,7 @@ describe('GET /api/executive/alerts', () => {
     const res = await GET(makeRequest());
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns 403 for non-executive role', async () => {
@@ -130,7 +132,7 @@ describe('GET /api/executive/alerts', () => {
     const res = await GET(makeRequest());
     expect(res.status).toBe(403);
     const body = await res.json();
-    expect(body.error).toBe('Forbidden');
+    expect(body.error.code).toBe('FORBIDDEN');
   });
 
   it('returns 200 with empty alerts when nothing triggers thresholds', async () => {

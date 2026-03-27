@@ -1,7 +1,8 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import type { z } from 'zod';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { matchEmailToEntities } from '@/lib/crm/email-activity-matcher';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { autoLogSchema } from '@/lib/validators/crm';
@@ -44,24 +45,11 @@ function buildActivityRecords(
   return activityRecords;
 }
 
-export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export const POST = withApiRoute({ bodySchema: autoLogSchema }, async ({ body }) => {
+  const { email_address, subject, direction, message_preview } = body as z.infer<
+    typeof autoLogSchema
+  >;
 
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = autoLogSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-
-  const { email_address, subject, direction, message_preview } = parsed.data;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -80,7 +68,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ matched: false, activities_created: 0 });
 
   const { error } = await supabase.from('activities').insert(activityRecords);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) throw dbError(error.message);
 
   return NextResponse.json({ matched: true, activities_created: activityRecords.length });
-}
+});

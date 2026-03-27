@@ -41,7 +41,7 @@ describe('GET /api/crm/activities/my-tasks', () => {
     const res = await GET(makeRequest('/api/crm/activities/my-tasks'));
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns task list for authenticated user (filter=all)', async () => {

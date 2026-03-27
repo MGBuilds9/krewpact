@@ -1,9 +1,9 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { dbError } from '@/lib/api/errors';
 import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { opportunityCreateSchema } from '@/lib/validators/crm';
 
@@ -45,23 +45,15 @@ function buildPipelineView(data: OppRow[]) {
   return { stages: stageMap };
 }
 
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const params = Object.fromEntries(req.nextUrl.searchParams);
-  const parsed = querySchema.safeParse(params);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-
-  const { division_id, stage, owner_user_id, account_id, view } = parsed.data;
+export const GET = withApiRoute({ querySchema }, async ({ req, query }) => {
+  const { division_id, stage, owner_user_id, account_id, view } = query as z.infer<
+    typeof querySchema
+  >;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
-  let query = supabase
+  let dbQuery = supabase
     .from('opportunities')
     .select(
       'id, opportunity_name, stage, estimated_revenue, probability_pct, target_close_date, account_id, contact_id, lead_id, division_id, owner_user_id, notes, created_at, updated_at',
@@ -69,41 +61,31 @@ export async function GET(req: NextRequest) {
     )
     .order('created_at', { ascending: false });
 
-  if (division_id) query = query.eq('division_id', division_id);
-  if (stage) query = query.eq('stage', stage);
-  if (owner_user_id) query = query.eq('owner_user_id', owner_user_id);
-  if (account_id) query = query.eq('account_id', account_id);
+  if (division_id) dbQuery = dbQuery.eq('division_id', division_id);
+  if (stage) dbQuery = dbQuery.eq('stage', stage);
+  if (owner_user_id) dbQuery = dbQuery.eq('owner_user_id', owner_user_id);
+  if (account_id) dbQuery = dbQuery.eq('account_id', account_id);
 
-  query = query.range(offset, offset + limit - 1);
+  dbQuery = dbQuery.range(offset, offset + limit - 1);
 
-  const { data, error, count } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  const { data, error, count } = await dbQuery;
+  if (error) throw dbError(error.message);
 
   if (view === 'pipeline') return NextResponse.json(buildPipelineView((data ?? []) as OppRow[]));
 
   return NextResponse.json(paginatedResponse(data, count, limit, offset));
-}
+});
 
-export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = opportunityCreateSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-
+export const POST = withApiRoute({ bodySchema: opportunityCreateSchema }, async ({ body }) => {
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
-  const insertData = { ...parsed.data, stage: parsed.data.stage ?? 'intake' };
+  const insertData = {
+    ...(body as z.infer<typeof opportunityCreateSchema>),
+    stage: (body as z.infer<typeof opportunityCreateSchema>).stage ?? 'intake',
+  };
   const { data, error } = await supabase.from('opportunities').insert(insertData).select().single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) throw dbError(error.message);
 
   return NextResponse.json(data, { status: 201 });
-}
+});

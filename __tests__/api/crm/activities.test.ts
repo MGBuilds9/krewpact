@@ -47,7 +47,7 @@ describe('GET /api/crm/activities', () => {
     const res = await GET(makeRequest('/api/crm/activities'));
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns activities list', async () => {

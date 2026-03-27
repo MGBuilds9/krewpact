@@ -58,7 +58,7 @@ describe('GET /api/crm/notes', () => {
     const res = await GET(makeRequest(`/api/crm/notes?entity_type=lead&entity_id=${ENTITY_ID}`));
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns notes for entity with total and hasMore', async () => {

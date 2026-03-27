@@ -1,13 +1,10 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { notFound, serverError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { routeOutcome } from '@/lib/crm/outcome-router';
-import { logger } from '@/lib/logger';
 import { createUserClientSafe } from '@/lib/supabase/server';
-
-type RouteContext = { params: Promise<{ id: string }> };
 
 const dispositionSchema = z.object({
   outcome: z.enum(['interested', 'follow_up', 'not_interested', 'no_answer']),
@@ -24,49 +21,23 @@ const dispositionSchema = z.object({
  * - not_interested → mark lead lost, stop sequences
  * - no_answer → retry (max 3), then mark cold
  */
-export async function POST(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+export const POST = withApiRoute(
+  { bodySchema: dispositionSchema, rateLimit: { limit: 30, window: '1 m' } },
+  async ({ params, body, logger }) => {
+    const { id } = params;
+    const { outcome, followUpDays, notes } = body as z.infer<typeof dispositionSchema>;
 
-  const rl = await rateLimit(req, { limit: 30, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
-  const { id } = await context.params;
-
-  // Validate input
-  const body = await req.json().catch(() => null);
-  if (!body) {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
-  }
-
-  const parsed = dispositionSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: 'Invalid input', details: parsed.error.flatten() },
-      { status: 400 },
-    );
-  }
-
-  const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
-
-  try {
-    const result = await routeOutcome(supabase, id, parsed.data.outcome, {
-      followUpDays: parsed.data.followUpDays,
-      notes: parsed.data.notes,
-    });
-
-    return NextResponse.json(result);
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-
-    if (message.includes('not found')) {
-      return NextResponse.json({ error: 'Activity not found' }, { status: 404 });
+    try {
+      const result = await routeOutcome(supabase, id, outcome, { followUpDays, notes });
+      return NextResponse.json(result);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      if (message.includes('not found')) throw notFound('Activity');
+      logger.error('Disposition routing failed', { activityId: id, error: message });
+      throw serverError('Failed to process disposition');
     }
-
-    logger.error('Disposition routing failed', { activityId: id, error: message });
-    return NextResponse.json({ error: 'Failed to process disposition' }, { status: 500 });
-  }
-}
+  },
+);

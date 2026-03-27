@@ -60,7 +60,7 @@ describe('GET /api/crm/activities/timeline', () => {
 
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns 400 when no entity ID provided', async () => {
@@ -73,7 +73,7 @@ describe('GET /api/crm/activities/timeline', () => {
 
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toContain('At least one');
+    expect(body.error.message).toContain('At least one');
   });
 
   it('returns merged timeline for lead_id', async () => {
@@ -189,7 +189,7 @@ describe('GET /api/crm/activities/timeline', () => {
 
     expect(res.status).toBe(500);
     const body = await res.json();
-    expect(body.error).toBe('activities query failed');
+    expect(body.error.message).toContain('activities query failed');
   });
 
   it('handles outreach table error', async () => {
@@ -208,7 +208,7 @@ describe('GET /api/crm/activities/timeline', () => {
 
     expect(res.status).toBe(500);
     const body = await res.json();
-    expect(body.error).toBe('outreach query failed');
+    expect(body.error.message).toContain('outreach query failed');
   });
 
   it('applies pagination (limit, offset)', async () => {

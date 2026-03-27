@@ -173,7 +173,7 @@ describe('POST /api/crm/leads/apollo-search', () => {
     const res = await POST(req);
     expect(res.status).toBe(500);
     const body = await res.json();
-    expect(body.error).toBe('Apollo search failed');
+    expect(body.error.message).toContain('Apollo search failed');
   });
 
   it('reports all duplicates when leads already exist', async () => {
