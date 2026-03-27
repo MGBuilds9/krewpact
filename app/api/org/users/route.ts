@@ -61,13 +61,46 @@ export const POST = withApiRoute(
     const { client: supabase, error: authError } = await createUserClientSafe();
     if (authError) return NextResponse.json({ error: 'Auth failed' }, { status: 401 });
 
-    const { data, error } = await supabase
+    const { email, first_name, last_name, role_keys, division_ids } = body;
+
+    // Create the user record
+    const { data: newUser, error } = await supabase
       .from('users')
-      .insert({ ...body, is_active: true, provisioned_by: userId })
+      .insert({ email, first_name, last_name, status: 'invited' })
       .select()
       .single();
 
     if (error) throw dbError(error.message);
-    return NextResponse.json(data, { status: 201 });
+
+    // Assign roles in Supabase (Clerk metadata will be synced when user signs up)
+    if (role_keys.length > 0) {
+      const { data: roles } = await supabase
+        .from('roles')
+        .select('id, role_key')
+        .in('role_key', role_keys);
+
+      if (roles && roles.length > 0) {
+        await supabase.from('user_roles').insert(
+          roles.map((r, idx) => ({
+            user_id: newUser.id,
+            role_id: r.id,
+            is_primary: idx === 0,
+            assigned_by: userId,
+          })),
+        );
+      }
+    }
+
+    // Assign divisions
+    if (division_ids.length > 0) {
+      await supabase.from('user_divisions').insert(
+        division_ids.map((divId) => ({
+          user_id: newUser.id,
+          division_id: divId,
+        })),
+      );
+    }
+
+    return NextResponse.json(newUser, { status: 201 });
   },
 );

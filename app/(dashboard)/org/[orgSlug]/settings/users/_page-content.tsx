@@ -1,9 +1,10 @@
 'use client';
 
-import { Plus, User } from 'lucide-react';
+import { Plus, Settings, User } from 'lucide-react';
 import { useState } from 'react';
 
 import { UserProvisioningForm } from '@/components/Org/UserProvisioningForm';
+import { UserRoleEditor } from '@/components/Org/UserRoleEditor';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +25,7 @@ import { useOrgUsers } from '@/hooks/useOrg';
 export default function UsersPage() {
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<{ id: string; name: string } | null>(null);
   const debouncedSearch = useDebouncedValue(search, 300);
 
   const { data, isLoading } = useOrgUsers({ search: debouncedSearch || undefined });
@@ -91,10 +93,34 @@ export default function UsersPage() {
                 <Badge variant={user.status === 'active' ? 'default' : 'secondary'}>
                   {user.status === 'active' ? 'Active' : 'Inactive'}
                 </Badge>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setEditingUser({
+                      id: user.id,
+                      name: `${user.first_name} ${user.last_name}`.trim(),
+                    })
+                  }
+                >
+                  <Settings className="mr-2 h-3 w-3" />
+                  Manage Roles
+                </Button>
               </CardContent>
             </Card>
           ))}
         </div>
+      )}
+
+      {editingUser && (
+        <UserRoleEditor
+          userId={editingUser.id}
+          userName={editingUser.name}
+          open={!!editingUser}
+          onOpenChange={(isOpen) => {
+            if (!isOpen) setEditingUser(null);
+          }}
+        />
       )}
     </div>
   );

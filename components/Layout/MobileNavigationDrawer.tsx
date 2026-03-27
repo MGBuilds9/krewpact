@@ -27,6 +27,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useUserRBAC } from '@/hooks/useRBAC';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 
 import { DivisionSelector } from './DivisionSelector';
@@ -118,9 +119,10 @@ export function MobileNavigationDrawer({ isOpen, onClose }: MobileNavigationDraw
   const { data: currentUser } = useCurrentUser();
   const { user } = useUser();
   const { signOut } = useClerk();
+  const { isAdmin } = useUserRBAC();
 
   const userName = user ? `${user.firstName} ${user.lastName}` : '';
-  const userRole = currentUser?.role || 'User';
+  const userRole = isAdmin ? 'Admin' : 'User';
 
   const handleSignOut = async () => {
     try {
@@ -136,7 +138,7 @@ export function MobileNavigationDrawer({ isOpen, onClose }: MobileNavigationDraw
     onClose();
   };
   const filteredItems = navigationItems.filter(
-    (item) => !item.adminOnly || currentUser?.role === 'admin',
+    (item) => !item.adminOnly || isAdmin,
   );
 
   return (

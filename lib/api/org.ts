@@ -58,8 +58,9 @@ export function getOrgFromHeaders(req: NextRequest): { orgId: string; orgSlug: s
 }
 
 /**
- * Extract org_id from Clerk session claims for API routes.
- * Falls back to the default org if no claim is present (single-org mode).
+ * Extract org_id (UUID) from Clerk session claims for API routes.
+ * Falls back to the default org UUID if no claim is present (single-org mode).
+ * This must be a UUID matching organizations.id, not a slug.
  */
 export async function getOrgIdFromAuth(): Promise<string> {
   const meta = await _getClerkMetadata();
@@ -67,6 +68,7 @@ export async function getOrgIdFromAuth(): Promise<string> {
 
   if (orgId) return orgId;
 
-  // Single-org: MDM Group is the only org
-  return 'mdm-group';
+  // Single-org fallback: MDM Group org UUID from seed
+  // This is the organizations.id for slug='default' seeded in 20260302_001
+  return process.env.DEFAULT_ORG_ID || 'e076c9b9-72ce-4fdc-a031-e5808e73d92c';
 }

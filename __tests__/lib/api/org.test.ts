@@ -36,14 +36,17 @@ describe('getOrgIdFromAuth', () => {
     expect(result).toBe('org-uuid-123');
   });
 
-  it('falls back to mdm-group when no claim present', async () => {
+  it('falls back to default org UUID when no claim present', async () => {
     mockAuth.mockResolvedValue({
       userId: 'user_123',
       sessionClaims: { metadata: {} },
     } as never);
 
     const result = await getOrgIdFromAuth();
-    expect(result).toBe('mdm-group');
+    // Falls back to DEFAULT_ORG_ID env or hardcoded org UUID (single-org mode)
+    expect(result).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+    );
   });
 });
 
@@ -83,7 +86,9 @@ describe('metadata claim helpers', () => {
     await expect(getKrewpactUserId()).resolves.toBeNull();
     await expect(getKrewpactRoles()).resolves.toEqual([]);
     await expect(getKrewpactDivisions()).resolves.toEqual([]);
-    await expect(getOrgIdFromAuth()).resolves.toBe('mdm-group');
+    await expect(getOrgIdFromAuth()).resolves.toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+    );
   });
 });
 

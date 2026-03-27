@@ -36,7 +36,7 @@ async function handleImpersonation(
 ): Promise<NextResponse> {
   const { data: perms } = await supabase.rpc('get_user_permissions', { p_user_id: callerUser.id });
   const permNames = (perms || []).map((p: { permission_name: string }) => p.permission_name);
-  const isAdmin = permNames.includes('system.admin') || callerUser.role === 'admin';
+  const isAdmin = permNames.includes('admin.system');
 
   if (!isAdmin) {
     return NextResponse.json({ error: 'Impersonation requires admin privileges' }, { status: 403 });

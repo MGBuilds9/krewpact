@@ -24,32 +24,37 @@ vi.mock('@/lib/logger', () => ({
   },
 }));
 
-import { auth, clerkClient } from '@clerk/nextjs/server';
+vi.mock('@/lib/supabase/server', () => ({
+  createServiceClient: vi.fn().mockReturnValue({
+    from: vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({ data: { id: 'uuid-123', clerk_user_id: 'user_target' }, error: null }),
+        }),
+      }),
+    }),
+  }),
+}));
+
+vi.mock('@/lib/rbac/sync-roles', () => ({
+  syncRolesToBothStores: vi.fn().mockResolvedValue({ success: true, errors: [] }),
+}));
+
+import { auth } from '@clerk/nextjs/server';
 
 import { makeJsonRequest, mockClerkAuth, mockClerkUnauth } from '@/__tests__/helpers';
 import { POST } from '@/app/api/admin/roles/assign/route';
 import { getKrewpactRoles } from '@/lib/api/org';
+import { syncRolesToBothStores } from '@/lib/rbac/sync-roles';
 
 const mockAuth = vi.mocked(auth);
-const mockClerkClientFn = vi.mocked(clerkClient);
 const mockRoles = vi.mocked(getKrewpactRoles);
-
-function mockClerkSDK(overrides?: {
-  getUser?: ReturnType<typeof vi.fn>;
-  updateUserMetadata?: ReturnType<typeof vi.fn>;
-}) {
-  mockClerkClientFn.mockResolvedValue({
-    users: {
-      getUser: overrides?.getUser ?? vi.fn().mockResolvedValue({ publicMetadata: {} }),
-      updateUserMetadata:
-        overrides?.updateUserMetadata ?? vi.fn().mockResolvedValue({ publicMetadata: {} }),
-    },
-  } as never);
-}
+const mockSync = vi.mocked(syncRolesToBothStores);
 
 describe('POST /api/admin/roles/assign', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSync.mockResolvedValue({ success: true, errors: [] });
   });
 
   it('returns 401 when not authenticated', async () => {
@@ -99,10 +104,9 @@ describe('POST /api/admin/roles/assign', () => {
     expect(res.status).toBe(400);
   });
 
-  it('assigns roles and returns updated user', async () => {
+  it('assigns roles via syncRolesToBothStores and returns success', async () => {
     mockClerkAuth(mockAuth, 'user_admin');
     mockRoles.mockResolvedValue(['platform_admin']);
-    mockClerkSDK();
 
     const res = await POST(
       makeJsonRequest('/api/admin/roles/assign', {
@@ -115,12 +119,19 @@ describe('POST /api/admin/roles/assign', () => {
     expect(body.ok).toBe(true);
     expect(body.user_id).toBe('user_target');
     expect(body.role_keys).toEqual(['project_manager', 'estimator']);
+
+    expect(mockSync).toHaveBeenCalledWith({
+      supabaseUserId: 'uuid-123',
+      clerkUserId: 'user_target',
+      roleKeys: ['project_manager', 'estimator'],
+      divisionIds: undefined,
+      assignedBy: 'user_admin',
+    });
   });
 
   it('allows empty role_keys to clear all roles', async () => {
     mockClerkAuth(mockAuth, 'user_admin');
     mockRoles.mockResolvedValue(['platform_admin']);
-    mockClerkSDK();
 
     const res = await POST(
       makeJsonRequest('/api/admin/roles/assign', { user_id: 'user_target', role_keys: [] }),
@@ -130,38 +141,31 @@ describe('POST /api/admin/roles/assign', () => {
     expect(body.role_keys).toEqual([]);
   });
 
-  it('preserves existing publicMetadata fields when updating roles', async () => {
+  it('passes division_ids to sync when provided', async () => {
     mockClerkAuth(mockAuth, 'user_admin');
     mockRoles.mockResolvedValue(['platform_admin']);
 
-    const updateUserMetadata = vi.fn().mockResolvedValue({});
-    mockClerkSDK({
-      getUser: vi.fn().mockResolvedValue({
-        publicMetadata: { krewpact_user_id: 'uuid-123', krewpact_org_id: 'org-1' },
-      }),
-      updateUserMetadata,
-    });
-
-    await POST(
+    const divisionId = '550e8400-e29b-41d4-a716-446655440000';
+    const res = await POST(
       makeJsonRequest('/api/admin/roles/assign', {
         user_id: 'user_target',
         role_keys: ['accounting'],
+        division_ids: [divisionId],
       }),
     );
+    expect(res.status).toBe(200);
 
-    expect(updateUserMetadata).toHaveBeenCalledWith('user_target', {
-      publicMetadata: {
-        krewpact_user_id: 'uuid-123',
-        krewpact_org_id: 'org-1',
-        role_keys: ['accounting'],
-      },
-    });
+    expect(mockSync).toHaveBeenCalledWith(
+      expect.objectContaining({
+        divisionIds: [divisionId],
+      }),
+    );
   });
 
-  it('returns 500 when Clerk API throws', async () => {
+  it('returns 500 when sync fails completely', async () => {
     mockClerkAuth(mockAuth, 'user_admin');
     mockRoles.mockResolvedValue(['platform_admin']);
-    mockClerkClientFn.mockRejectedValueOnce(new Error('Clerk unavailable'));
+    mockSync.mockRejectedValueOnce(new Error('Sync unavailable'));
 
     const res = await POST(
       makeJsonRequest('/api/admin/roles/assign', {

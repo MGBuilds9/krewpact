@@ -12,8 +12,8 @@ import {
   navigationSections,
   NavItem,
 } from '@/components/Layout/CommandPaletteTypes';
-import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
+import { useUserRBAC } from '@/hooks/useRBAC';
 import { apiFetch } from '@/lib/api-client';
 
 export interface UseCommandPaletteReturn {
@@ -49,7 +49,7 @@ function isNaturalLanguageQuery(q: string): boolean {
 export function useCommandPalette(isOpen: boolean, onClose: () => void): UseCommandPaletteReturn {
   const { push: orgPush } = useOrgRouter();
   const pathname = usePathname();
-  const { data: currentUser } = useCurrentUser();
+  const { isAdmin } = useUserRBAC();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<GlobalSearchResults | null>(null);
@@ -175,7 +175,7 @@ export function useCommandPalette(isOpen: boolean, onClose: () => void): UseComm
     ...section,
     items: section.items.filter(
       (item) =>
-        (!item.adminOnly || currentUser?.role === 'admin') &&
+        (!item.adminOnly || isAdmin) &&
         item.label.toLowerCase().includes(searchQuery.toLowerCase()),
     ),
   }));

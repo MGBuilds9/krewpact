@@ -32,9 +32,10 @@ export const divisionUpdateSchema = z.object({
 
 export const userProvisioningSchema = z.object({
   email: z.string().email(),
-  full_name: z.string().min(1),
-  role_ids: z.array(z.string().uuid()).min(1),
-  division_ids: z.array(z.string().uuid()).min(1),
+  first_name: z.string().min(1),
+  last_name: z.string().min(1),
+  role_keys: z.array(z.string()),
+  division_ids: z.array(z.string().uuid()),
 });
 
 // ============================================================

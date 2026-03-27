@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Form,
   FormControl,
@@ -16,10 +17,24 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 import { useProvisionUser } from '@/hooks/useOrg';
 import { userProvisioningSchema } from '@/lib/validators/org';
 
 type FormValues = z.infer<typeof userProvisioningSchema>;
+
+const ROLE_OPTIONS = [
+  { key: 'platform_admin', label: 'Platform Admin' },
+  { key: 'executive', label: 'Executive' },
+  { key: 'operations_manager', label: 'Operations Manager' },
+  { key: 'project_manager', label: 'Project Manager' },
+  { key: 'project_coordinator', label: 'Project Coordinator' },
+  { key: 'estimator', label: 'Estimator' },
+  { key: 'field_supervisor', label: 'Field Supervisor' },
+  { key: 'accounting', label: 'Accounting' },
+  { key: 'payroll_admin', label: 'Payroll Admin' },
+];
 
 interface UserProvisioningFormProps {
   onSuccess?: () => void;
@@ -31,8 +46,18 @@ export function UserProvisioningForm({ onSuccess, onCancel }: UserProvisioningFo
 
   const form = useForm<FormValues>({
     resolver: zodResolver(userProvisioningSchema),
-    defaultValues: { email: '', full_name: '', role_ids: [], division_ids: [] },
+    defaultValues: { email: '', first_name: '', last_name: '', role_keys: [], division_ids: [] },
   });
+
+  const selectedRoles = form.watch('role_keys');
+
+  function toggleRole(roleKey: string) {
+    const current = form.getValues('role_keys');
+    const next = current.includes(roleKey)
+      ? current.filter((r) => r !== roleKey)
+      : [...current, roleKey];
+    form.setValue('role_keys', next, { shouldValidate: true });
+  }
 
   async function onSubmit(values: FormValues) {
     try {
@@ -62,23 +87,57 @@ export function UserProvisioningForm({ onSuccess, onCancel }: UserProvisioningFo
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="full_name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Full Name</FormLabel>
-              <FormControl>
-                <Input placeholder="Full name" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-2 gap-3">
+          <FormField
+            control={form.control}
+            name="first_name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>First Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="First name" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="last_name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Last Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="Last name" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
-        <p className="text-sm text-muted-foreground">
-          Role and division assignments are managed after provisioning.
-        </p>
+        <Separator />
+
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Roles (optional)</p>
+          <div className="grid grid-cols-2 gap-2">
+            {ROLE_OPTIONS.map(({ key, label }) => (
+              <div key={key} className="flex items-center gap-2">
+                <Checkbox
+                  id={`prov-role-${key}`}
+                  checked={selectedRoles.includes(key)}
+                  onCheckedChange={() => toggleRole(key)}
+                />
+                <Label htmlFor={`prov-role-${key}`} className="cursor-pointer text-sm font-normal">
+                  {label}
+                </Label>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Roles can also be assigned after provisioning from the user list.
+          </p>
+        </div>
 
         <div className="flex gap-3 pt-2">
           <Button type="submit" disabled={provision.isPending}>

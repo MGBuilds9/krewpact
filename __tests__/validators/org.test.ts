@@ -93,8 +93,9 @@ describe('userProvisioningSchema', () => {
   it('accepts valid input with all required fields', () => {
     const result = userProvisioningSchema.safeParse({
       email: 'david@mdmgroupinc.ca',
-      full_name: 'David COO',
-      role_ids: [VALID_UUID],
+      first_name: 'David',
+      last_name: 'COO',
+      role_keys: ['platform_admin'],
       division_ids: [VALID_UUID],
     });
     expect(result.success).toBe(true);
@@ -102,38 +103,51 @@ describe('userProvisioningSchema', () => {
 
   it('fails when email is missing', () => {
     const result = userProvisioningSchema.safeParse({
-      full_name: 'David',
-      role_ids: [VALID_UUID],
+      first_name: 'David',
+      last_name: 'COO',
+      role_keys: ['platform_admin'],
       division_ids: [VALID_UUID],
     });
     expect(result.success).toBe(false);
   });
 
-  it('fails when role_ids is empty array', () => {
+  it('accepts empty role_keys (roles are optional)', () => {
     const result = userProvisioningSchema.safeParse({
       email: 'david@mdmgroupinc.ca',
-      full_name: 'David',
-      role_ids: [],
+      first_name: 'David',
+      last_name: 'COO',
+      role_keys: [],
       division_ids: [VALID_UUID],
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
-  it('fails when division_ids is empty array', () => {
+  it('accepts empty division_ids (divisions are optional)', () => {
     const result = userProvisioningSchema.safeParse({
       email: 'david@mdmgroupinc.ca',
-      full_name: 'David',
-      role_ids: [VALID_UUID],
+      first_name: 'David',
+      last_name: 'COO',
+      role_keys: ['project_coordinator'],
       division_ids: [],
     });
+    expect(result.success).toBe(true);
+  });
+
+  it('fails when role_keys is missing', () => {
+    const result = userProvisioningSchema.safeParse({
+      email: 'david@mdmgroupinc.ca',
+      first_name: 'David',
+      last_name: 'COO',
+    });
     expect(result.success).toBe(false);
   });
 
-  it('accepts multiple role_ids and division_ids', () => {
+  it('accepts multiple role_keys and division_ids', () => {
     const result = userProvisioningSchema.safeParse({
       email: 'david@mdmgroupinc.ca',
-      full_name: 'David',
-      role_ids: [VALID_UUID, VALID_UUID_2],
+      first_name: 'David',
+      last_name: 'COO',
+      role_keys: ['project_manager', 'estimator'],
       division_ids: [VALID_UUID, VALID_UUID_2],
     });
     expect(result.success).toBe(true);

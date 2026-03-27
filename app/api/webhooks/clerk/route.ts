@@ -4,6 +4,7 @@ import { Webhook } from 'svix';
 
 import { withApiRoute } from '@/lib/api/with-api-route';
 import { logger } from '@/lib/logger';
+import { syncRolesToBothStores } from '@/lib/rbac/sync-roles';
 import { createServiceClient } from '@/lib/supabase/server';
 
 type ClerkWebhookEvent = {
@@ -19,6 +20,12 @@ type ClerkWebhookEvent = {
 };
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
+
+const INTERNAL_DOMAINS = (
+  process.env.ALLOWED_DOMAINS || 'mdmgroupinc.ca,mdmcontracting.ca,krewpact.ca'
+).split(',');
+
+const DEFAULT_INTERNAL_ROLE = 'project_coordinator';
 
 async function verifyWebhook(
   req: Request,
@@ -52,7 +59,7 @@ async function handleUserUpsert(
   type: string,
 ): Promise<NextResponse | null> {
   const email = data.email_addresses?.[0]?.email_address || '';
-  const { error } = await supabase.rpc('ensure_clerk_user', {
+  const { data: userRow, error } = await supabase.rpc('ensure_clerk_user', {
     p_clerk_id: data.id,
     p_email: email,
     p_first_name: data.first_name || '',
@@ -65,6 +72,9 @@ async function handleUserUpsert(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  const user = Array.isArray(userRow) ? userRow[0] : userRow;
+
+  // Portal account linking (existing logic)
   if (type === 'user.created') {
     const portalAccountId = data.public_metadata?.krewpact_user_id as string | undefined;
     if (portalAccountId) {
@@ -81,7 +91,72 @@ async function handleUserUpsert(
     }
   }
 
+  // Assign default role + write publicMetadata for new users without roles
+  if (user?.id) {
+    await assignDefaultRoleIfNeeded(supabase, user.id, data.id, email);
+  }
+
   return null;
+}
+
+async function assignDefaultRoleIfNeeded(
+  supabase: ServiceClient,
+  supabaseUserId: string,
+  clerkUserId: string,
+  email: string,
+): Promise<void> {
+  // Check if user already has roles in the DB
+  const { data: existingRoles } = await supabase
+    .from('user_roles')
+    .select('id')
+    .eq('user_id', supabaseUserId)
+    .limit(1);
+
+  if (existingRoles && existingRoles.length > 0) {
+    // User has DB roles — ensure Clerk metadata is in sync
+    const { data: roleRows } = await supabase
+      .from('user_roles')
+      .select('roles(role_key)')
+      .eq('user_id', supabaseUserId);
+
+    const roleKeys = (roleRows ?? [])
+      .map((r) => (r.roles as unknown as { role_key: string })?.role_key)
+      .filter(Boolean);
+
+    if (roleKeys.length > 0) {
+      await syncRolesToBothStores({
+        supabaseUserId,
+        clerkUserId,
+        roleKeys,
+      });
+    }
+    return;
+  }
+
+  // No roles — assign default if internal domain
+  const domain = email.split('@')[1]?.toLowerCase();
+  if (!domain || !INTERNAL_DOMAINS.includes(domain)) {
+    // External user — just write krewpact_user_id to Clerk so getKrewpactUserId() works
+    await syncRolesToBothStores({
+      supabaseUserId,
+      clerkUserId,
+      roleKeys: [],
+    });
+    return;
+  }
+
+  logger.info('Assigning default role to new internal user', {
+    supabaseUserId,
+    clerkUserId,
+    email: email.split('@')[0] + '@***',
+    defaultRole: DEFAULT_INTERNAL_ROLE,
+  });
+
+  await syncRolesToBothStores({
+    supabaseUserId,
+    clerkUserId,
+    roleKeys: [DEFAULT_INTERNAL_ROLE],
+  });
 }
 
 async function handleUserDeleted(
