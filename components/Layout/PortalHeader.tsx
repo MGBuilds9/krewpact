@@ -1,7 +1,7 @@
 'use client';
 
 import { useClerk, useUser } from '@clerk/nextjs';
-import { LogOut, Settings, User } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React from 'react';
 import { toast } from 'sonner';
@@ -24,16 +24,9 @@ interface UserMenuProps {
   userName: string;
   userRole: string;
   onSignOut: () => void;
-  onNavigate: (path: string) => void;
 }
 
-function UserMenu({
-  user,
-  userName,
-  userRole,
-  onSignOut,
-  onNavigate,
-}: UserMenuProps): React.ReactElement {
+function UserMenu({ user, userName, userRole, onSignOut }: UserMenuProps): React.ReactElement {
   return (
     <div className="flex items-center gap-4">
       <div className="hidden lg:flex items-center gap-3 bg-muted/30 rounded-lg px-3 py-2 border border-border/50">
@@ -70,21 +63,6 @@ function UserMenu({
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            className="cursor-pointer touch-target hover:bg-accent transition-colors duration-200"
-            onClick={() => onNavigate('/portals/profile')}
-          >
-            <User className="mr-2 h-4 w-4" />
-            <span>Profile</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            className="cursor-pointer touch-target hover:bg-accent transition-colors duration-200"
-            onClick={() => onNavigate('/portals/settings')}
-          >
-            <Settings className="mr-2 h-4 w-4" />
-            <span>Settings</span>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
             className="cursor-pointer touch-target transition-colors duration-200"
             onClick={onSignOut}
           >
@@ -102,8 +80,13 @@ export function PortalHeader() {
   const { signOut } = useClerk();
   const router = useRouter();
   const userName = user ? `${user.firstName} ${user.lastName}` : '';
-  const roles = user?.publicMetadata?.krewpact_roles as string[] | undefined;
+  const roles = user?.publicMetadata?.role_keys as string[] | undefined;
   const userRole = roles && roles.length > 0 ? formatStatus(roles[0]) : 'Portal User';
+  const portalLabel = roles?.some((r) => r.startsWith('trade_partner'))
+    ? 'Trade Partner Portal'
+    : roles?.some((r) => r.startsWith('client'))
+      ? 'Client Portal'
+      : 'Portal';
 
   const handleSignOut = async () => {
     try {
@@ -122,17 +105,11 @@ export function PortalHeader() {
             <div className="flex items-center gap-3 group cursor-pointer hover:opacity-80 transition-opacity">
               <MDMLogo size="md" showText={true} />
               <span className="text-sm font-semibold text-muted-foreground ml-2 hidden sm:inline-block border-l pl-3">
-                Client Portal
+                {portalLabel}
               </span>
             </div>
           </div>
-          <UserMenu
-            user={user}
-            userName={userName}
-            userRole={userRole}
-            onSignOut={handleSignOut}
-            onNavigate={(path) => router.push(path)}
-          />
+          <UserMenu user={user} userName={userName} userRole={userRole} onSignOut={handleSignOut} />
         </div>
       </div>
     </header>

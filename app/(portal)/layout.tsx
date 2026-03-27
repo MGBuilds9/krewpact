@@ -9,7 +9,7 @@ export default async function PortalLayout({ children }: { children: React.React
 
   // Basic security guard: Ensure user is authenticated
   if (!sessionClaims) {
-    redirect('/');
+    redirect('/auth');
   }
 
   const claims = sessionClaims as Record<string, unknown>;
@@ -35,7 +35,7 @@ export default async function PortalLayout({ children }: { children: React.React
 
   if (!isPortalUser && !isInternalUser) {
     // If they have no valid roles, kick them out
-    redirect('/');
+    redirect('/auth');
   }
 
   return (

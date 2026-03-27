@@ -16,13 +16,22 @@ vi.mock('@/lib/request-context', () => ({
   generateRequestId: vi.fn().mockReturnValue('test-request-id'),
   requestContext: { run: vi.fn().mockImplementation((_ctx, fn) => fn()) },
 }));
+vi.mock('ai', () => ({
+  streamText: vi.fn(),
+}));
+vi.mock('@ai-sdk/openai', () => ({
+  openai: vi.fn().mockReturnValue('mock-model'),
+}));
 
 import { auth } from '@clerk/nextjs/server';
+import { streamText } from 'ai';
 
 import { POST } from '@/app/api/executive/knowledge/chat/route';
 import { getKrewpactRoles, getKrewpactUserId } from '@/lib/api/org';
 import { embedChunks } from '@/lib/knowledge/embeddings';
 import { createServiceClient } from '@/lib/supabase/server';
+
+const mockStreamText = vi.mocked(streamText);
 
 const mockAuth = vi.mocked(auth);
 const mockCreateServiceClient = vi.mocked(createServiceClient);
@@ -153,32 +162,30 @@ describe('POST /api/executive/knowledge/chat', () => {
       rpc: mockRpc,
     } as unknown as Awaited<ReturnType<typeof createServiceClient>>);
 
-    // Mock global fetch for OpenAI call
-    const originalFetch = global.fetch;
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: vi.fn().mockResolvedValue({
-        choices: [{ message: { content: 'AI response about safety' } }],
-        usage: { total_tokens: 250 },
-      }),
-    } as unknown as Response);
+    mockStreamText.mockReturnValue({
+      toTextStreamResponse: vi.fn().mockReturnValue(
+        new Response('AI response about safety', {
+          status: 200,
+          headers: {
+            'Content-Type': 'text/plain; charset=utf-8',
+            'X-Session-Id': 'session-uuid-1',
+          },
+        }),
+      ),
+    } as any);
 
-    try {
-      const res = await POST(makeRequest({ message: 'What are our safety procedures?' }));
-      expect(res.status).toBe(200);
+    const res = await POST(makeRequest({ message: 'What are our safety procedures?' }));
+    expect(res.status).toBe(200);
 
-      // Route returns a text stream, not JSON — verify status and session header
-      expect(res.headers.get('X-Session-Id')).toBe('session-uuid-1');
+    // Route returns a text stream, not JSON — verify status and session header
+    expect(res.headers.get('X-Session-Id')).toBe('session-uuid-1');
 
-      expect(mockEmbedChunks).toHaveBeenCalledWith(['What are our safety procedures?']);
-      expect(mockRpc).toHaveBeenCalledWith('match_knowledge', {
-        query_embedding: JSON.stringify(fakeEmbedding),
-        match_threshold: 0.5,
-        match_count: 5,
-      });
-    } finally {
-      global.fetch = originalFetch;
-    }
+    expect(mockEmbedChunks).toHaveBeenCalledWith(['What are our safety procedures?']);
+    expect(mockRpc).toHaveBeenCalledWith('match_knowledge', {
+      query_embedding: JSON.stringify(fakeEmbedding),
+      match_threshold: 0.5,
+      match_count: 5,
+    });
   });
 
   it('reuses existing sessionId when provided', async () => {
@@ -217,25 +224,24 @@ describe('POST /api/executive/knowledge/chat', () => {
       rpc: vi.fn().mockResolvedValue({ data: [], error: null }),
     } as unknown as Awaited<ReturnType<typeof createServiceClient>>);
 
-    const originalFetch = global.fetch;
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: vi.fn().mockResolvedValue({
-        choices: [{ message: { content: 'Reused session response' } }],
-        usage: { total_tokens: 100 },
-      }),
-    } as unknown as Response);
+    mockStreamText.mockReturnValue({
+      toTextStreamResponse: vi.fn().mockReturnValue(
+        new Response('Reused session response', {
+          status: 200,
+          headers: {
+            'Content-Type': 'text/plain; charset=utf-8',
+            'X-Session-Id': 'existing-session-id',
+          },
+        }),
+      ),
+    } as any);
 
-    try {
-      const res = await POST(
-        makeRequest({ message: 'Follow-up question', sessionId: 'existing-session-id' }),
-      );
-      expect(res.status).toBe(200);
+    const res = await POST(
+      makeRequest({ message: 'Follow-up question', sessionId: 'existing-session-id' }),
+    );
+    expect(res.status).toBe(200);
 
-      // Route returns a text stream — verify session ID from header
-      expect(res.headers.get('X-Session-Id')).toBe('existing-session-id');
-    } finally {
-      global.fetch = originalFetch;
-    }
+    // Route returns a text stream — verify session ID from header
+    expect(res.headers.get('X-Session-Id')).toBe('existing-session-id');
   });
 });

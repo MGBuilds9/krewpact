@@ -1,11 +1,13 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { FileText, RefreshCw, ShieldAlert } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { FileText, RefreshCw, ShieldAlert, Upload } from 'lucide-react';
+import { useRef, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { createBrowserClient } from '@/lib/supabase/client';
 
 interface ComplianceDoc {
   id: string;
@@ -89,6 +91,10 @@ function ComplianceSkeleton() {
 }
 
 export default function TradeCompliancePage() {
+  const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
   const { data, isLoading, isError, refetch } = useQuery<ApiResponse>({
     queryKey: ['portal-trade-compliance'],
     queryFn: async () => {
@@ -97,6 +103,35 @@ export default function TradeCompliancePage() {
       return res.json() as Promise<ApiResponse>;
     },
   });
+
+  const uploadMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const supabase = createBrowserClient();
+      const ext = file.name.split('.').pop() ?? 'bin';
+      const path = `compliance/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+
+      const { error } = await supabase.storage
+        .from('portal-compliance')
+        .upload(path, file, { contentType: file.type, upsert: false });
+
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      setUploadError(null);
+      void queryClient.invalidateQueries({ queryKey: ['portal-trade-compliance'] });
+    },
+    onError: (err: Error) => {
+      setUploadError(err.message);
+    },
+  });
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadError(null);
+    uploadMutation.mutate(file);
+    e.target.value = '';
+  }
 
   const docs = data?.data ?? [];
   const total = data?.total ?? 0;
@@ -110,12 +145,48 @@ export default function TradeCompliancePage() {
             Insurance certificates, WSIB clearances, and certifications
           </p>
         </div>
-        {!isLoading && (
-          <span className="text-sm text-gray-500">
-            {total} document{total !== 1 ? 's' : ''}
-          </span>
-        )}
+        <div className="flex items-center gap-3">
+          {!isLoading && (
+            <span className="text-sm text-gray-500">
+              {total} document{total !== 1 ? 's' : ''}
+            </span>
+          )}
+          <Button
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploadMutation.isPending}
+          >
+            <Upload className="h-3.5 w-3.5 mr-1.5" aria-hidden="true" />
+            {uploadMutation.isPending ? 'Uploading…' : 'Upload Document'}
+          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+            className="hidden"
+            onChange={handleFileChange}
+            aria-label="Upload compliance document"
+          />
+        </div>
       </div>
+
+      {uploadError && (
+        <div
+          className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700"
+          role="alert"
+        >
+          Upload failed: {uploadError}
+        </div>
+      )}
+
+      {uploadMutation.isSuccess && (
+        <div
+          className="rounded-lg bg-green-50 border border-green-200 p-3 text-sm text-green-700"
+          role="status"
+        >
+          Document uploaded successfully.
+        </div>
+      )}
 
       {isError && (
         <div

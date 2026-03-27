@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { dbError,forbidden } from '@/lib/api/errors';
+import { dbError, forbidden } from '@/lib/api/errors';
 import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
 import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
@@ -26,30 +26,33 @@ export const GET = withApiRoute({}, async ({ req, userId }) => {
 
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
 
-  // Fetch compliance docs from portal_view_logs / file_metadata tagged as compliance
+  // Fetch compliance docs from file_metadata tagged as compliance for this portal account
   const {
     data: complianceDocs,
     error: docError,
     count,
   } = await supabase
     .from('file_metadata')
-    .select('id, file_name, file_type, file_size_bytes, meta, created_at, updated_at', {
+    .select('id, original_filename, mime_type, file_size_bytes, tags, created_at, updated_at', {
       count: 'exact',
     })
-    .contains('meta', { trade_portal_id: pa.id, doc_category: 'compliance' })
+    .contains('tags', ['compliance'])
+    .eq('source_identifier', pa.id)
     .order('updated_at', { ascending: false })
     .range(offset, offset + limit - 1);
 
   if (docError) throw dbError(docError.message);
 
-  // Derive expiry from meta.expiry_date
+  // Derive expiry from tags array entry formatted as "expiry:<ISO date>"
   const now = new Date();
   const docs = (complianceDocs ?? []).map((d) => {
-    const meta = (d.meta as Record<string, unknown>) ?? {};
-    const expiryDate = meta.expiry_date ? new Date(meta.expiry_date as string) : null;
-    const daysUntilExpiry = expiryDate
-      ? Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-      : null;
+    const tags = d.tags ?? [];
+    const expiryTag = tags.find((t: string) => t.startsWith('expiry:'));
+    const expiryDate = expiryTag ? new Date(expiryTag.replace('expiry:', '')) : null;
+    const daysUntilExpiry =
+      expiryDate && !isNaN(expiryDate.getTime())
+        ? Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+        : null;
     return {
       ...d,
       expiry_date: expiryDate?.toISOString() ?? null,

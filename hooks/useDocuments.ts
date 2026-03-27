@@ -149,6 +149,19 @@ export function useDeleteFile(projectId: string) {
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
 const STORAGE_BUCKET = 'project-files';
+const ALLOWED_TYPES = new Set([
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'text/csv',
+  'application/zip',
+  'application/x-zip-compressed',
+]);
 
 export function useUploadFile(projectId: string, folderId?: string, orgId?: string) {
   const queryClient = useQueryClient();
@@ -156,6 +169,11 @@ export function useUploadFile(projectId: string, folderId?: string, orgId?: stri
     mutationFn: async (file: File) => {
       if (file.size > MAX_FILE_SIZE) {
         throw new Error('File exceeds 50 MB limit');
+      }
+      if (!ALLOWED_TYPES.has(file.type) && file.type !== '') {
+        throw new Error(
+          'File type not allowed. Please upload PDF, images, Office documents, or ZIP files.',
+        );
       }
       if (!orgId) {
         throw new Error('Organization ID is required for file upload');

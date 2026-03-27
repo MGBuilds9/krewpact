@@ -1,11 +1,25 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { Briefcase, RefreshCw } from 'lucide-react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Briefcase, Plus, RefreshCw } from 'lucide-react';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Textarea } from '@/components/ui/textarea';
 
 interface Bid {
   id: string;
@@ -21,6 +35,15 @@ interface ApiResponse {
   data: Bid[];
   total: number;
 }
+
+const bidSchema = z.object({
+  project_id: z.string().uuid('Must be a valid Project UUID'),
+  bid_amount: z.number().positive('Must be positive'),
+  scope_summary: z.string().min(10, 'At least 10 characters').max(2000),
+  notes: z.string().optional(),
+});
+
+type BidForm = z.infer<typeof bidSchema>;
 
 const STATUS_MAP: Record<Bid['status'], { label: string; className: string }> = {
   submitted: { label: 'Submitted', className: 'bg-blue-100 text-blue-700 border-blue-200' },
@@ -76,7 +99,119 @@ function BidsSkeleton() {
   );
 }
 
+function NewBidDialog({ onSuccess }: { onSuccess: () => void }) {
+  const [open, setOpen] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<BidForm>({ resolver: zodResolver(bidSchema) });
+
+  const mutation = useMutation({
+    mutationFn: async (values: BidForm) => {
+      const res = await fetch('/api/portal/trade/bids', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(values),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(body.error ?? 'Failed to submit bid');
+      }
+    },
+    onSuccess: () => {
+      reset();
+      setOpen(false);
+      onSuccess();
+    },
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm">
+          <Plus className="h-3.5 w-3.5 mr-1.5" aria-hidden="true" />
+          New Bid
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Submit a Bid</DialogTitle>
+        </DialogHeader>
+        <form
+          onSubmit={handleSubmit((v) => mutation.mutate(v))}
+          className="space-y-4 pt-2"
+          noValidate
+        >
+          <div className="space-y-1">
+            <Label htmlFor="project_id">Project ID (UUID)</Label>
+            <Input
+              id="project_id"
+              placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+              {...register('project_id')}
+            />
+            {errors.project_id && (
+              <p className="text-xs text-red-600">{errors.project_id.message}</p>
+            )}
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="bid_amount">Bid Amount (CAD)</Label>
+            <Input
+              id="bid_amount"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="0.00"
+              {...register('bid_amount', { valueAsNumber: true })}
+            />
+            {errors.bid_amount && (
+              <p className="text-xs text-red-600">{errors.bid_amount.message}</p>
+            )}
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="scope_summary">Scope Summary</Label>
+            <Textarea
+              id="scope_summary"
+              rows={4}
+              placeholder="Describe the scope of work covered by this bid…"
+              {...register('scope_summary')}
+            />
+            {errors.scope_summary && (
+              <p className="text-xs text-red-600">{errors.scope_summary.message}</p>
+            )}
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="notes">Notes (optional)</Label>
+            <Textarea
+              id="notes"
+              rows={2}
+              placeholder="Any additional notes…"
+              {...register('notes')}
+            />
+          </div>
+          {mutation.error && (
+            <p className="text-xs text-red-600" role="alert">
+              {(mutation.error as Error).message}
+            </p>
+          )}
+          <div className="flex justify-end gap-2 pt-1">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={mutation.isPending}>
+              {mutation.isPending ? 'Submitting…' : 'Submit Bid'}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function TradeBidsPage() {
+  const queryClient = useQueryClient();
   const { data, isLoading, isError, refetch } = useQuery<ApiResponse>({
     queryKey: ['portal-trade-bids'],
     queryFn: async () => {
@@ -98,11 +233,16 @@ export default function TradeBidsPage() {
             Track your submitted bids and their review status
           </p>
         </div>
-        {!isLoading && (
-          <span className="text-sm text-gray-500">
-            {total} bid{total !== 1 ? 's' : ''}
-          </span>
-        )}
+        <div className="flex items-center gap-3">
+          {!isLoading && (
+            <span className="text-sm text-gray-500">
+              {total} bid{total !== 1 ? 's' : ''}
+            </span>
+          )}
+          <NewBidDialog
+            onSuccess={() => queryClient.invalidateQueries({ queryKey: ['portal-trade-bids'] })}
+          />
+        </div>
       </div>
 
       {isError && (

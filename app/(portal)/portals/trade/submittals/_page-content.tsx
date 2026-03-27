@@ -1,11 +1,32 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { ClipboardList, RefreshCw } from 'lucide-react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ClipboardList, Plus, RefreshCw } from 'lucide-react';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Textarea } from '@/components/ui/textarea';
 
 interface Submittal {
   id: string;
@@ -26,6 +47,23 @@ interface ApiResponse {
   data: Submittal[];
   total: number;
 }
+
+const SUBMITTAL_TYPES = [
+  { value: 'shop_drawing', label: 'Shop Drawing' },
+  { value: 'product_data', label: 'Product Data' },
+  { value: 'sample', label: 'Sample' },
+  { value: 'rfi', label: 'RFI' },
+  { value: 'other', label: 'Other' },
+] as const;
+
+const submittalSchema = z.object({
+  project_id: z.string().uuid('Must be a valid Project UUID'),
+  submittal_type: z.enum(['shop_drawing', 'product_data', 'sample', 'rfi', 'other']),
+  title: z.string().min(1, 'Required').max(200),
+  description: z.string().max(2000).optional(),
+});
+
+type SubmittalForm = z.infer<typeof submittalSchema>;
 
 const STATUS_MAP: Record<Submittal['status'], { label: string; className: string }> = {
   draft: { label: 'Draft', className: 'bg-gray-100 text-gray-600 border-gray-200' },
@@ -88,7 +126,130 @@ function SubmittalsSkeleton() {
   );
 }
 
+function NewSubmittalDialog({ onSuccess }: { onSuccess: () => void }) {
+  const [open, setOpen] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<SubmittalForm>({ resolver: zodResolver(submittalSchema) });
+
+  const selectedType = watch('submittal_type');
+
+  const mutation = useMutation({
+    mutationFn: async (values: SubmittalForm) => {
+      const res = await fetch('/api/portal/trade/submittals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(values),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(body.error ?? 'Failed to create submittal');
+      }
+    },
+    onSuccess: () => {
+      reset();
+      setOpen(false);
+      onSuccess();
+    },
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm">
+          <Plus className="h-3.5 w-3.5 mr-1.5" aria-hidden="true" />
+          New Submittal
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Create Submittal</DialogTitle>
+        </DialogHeader>
+        <form
+          onSubmit={handleSubmit((v) => mutation.mutate(v))}
+          className="space-y-4 pt-2"
+          noValidate
+        >
+          <div className="space-y-1">
+            <Label htmlFor="s_project_id">Project ID (UUID)</Label>
+            <Input
+              id="s_project_id"
+              placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+              {...register('project_id')}
+            />
+            {errors.project_id && (
+              <p className="text-xs text-red-600">{errors.project_id.message}</p>
+            )}
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="s_type">Submittal Type</Label>
+            <Select
+              value={selectedType}
+              onValueChange={(v) =>
+                setValue('submittal_type', v as SubmittalForm['submittal_type'], {
+                  shouldValidate: true,
+                })
+              }
+            >
+              <SelectTrigger id="s_type">
+                <SelectValue placeholder="Select type…" />
+              </SelectTrigger>
+              <SelectContent>
+                {SUBMITTAL_TYPES.map((t) => (
+                  <SelectItem key={t.value} value={t.value}>
+                    {t.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.submittal_type && (
+              <p className="text-xs text-red-600">{errors.submittal_type.message}</p>
+            )}
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="s_title">Title</Label>
+            <Input id="s_title" placeholder="Submittal title…" {...register('title')} />
+            {errors.title && <p className="text-xs text-red-600">{errors.title.message}</p>}
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="s_description">Description (optional)</Label>
+            <Textarea
+              id="s_description"
+              rows={3}
+              placeholder="Additional details…"
+              {...register('description')}
+            />
+            {errors.description && (
+              <p className="text-xs text-red-600">{errors.description.message}</p>
+            )}
+          </div>
+          {mutation.error && (
+            <p className="text-xs text-red-600" role="alert">
+              {(mutation.error as Error).message}
+            </p>
+          )}
+          <div className="flex justify-end gap-2 pt-1">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={mutation.isPending}>
+              {mutation.isPending ? 'Creating…' : 'Create Submittal'}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function TradeSubmittalsPage() {
+  const queryClient = useQueryClient();
   const { data, isLoading, isError, refetch } = useQuery<ApiResponse>({
     queryKey: ['portal-trade-submittals'],
     queryFn: async () => {
@@ -110,11 +271,18 @@ export default function TradeSubmittalsPage() {
             Shop drawings, samples, and product data under review
           </p>
         </div>
-        {!isLoading && (
-          <span className="text-sm text-gray-500">
-            {total} submittal{total !== 1 ? 's' : ''}
-          </span>
-        )}
+        <div className="flex items-center gap-3">
+          {!isLoading && (
+            <span className="text-sm text-gray-500">
+              {total} submittal{total !== 1 ? 's' : ''}
+            </span>
+          )}
+          <NewSubmittalDialog
+            onSuccess={() =>
+              queryClient.invalidateQueries({ queryKey: ['portal-trade-submittals'] })
+            }
+          />
+        </div>
       </div>
 
       {isError && (

@@ -4,6 +4,16 @@ import { useUser } from '@clerk/nextjs';
 import { FileText, Search } from 'lucide-react';
 import { useRef, useState } from 'react';
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { useDivision } from '@/contexts/DivisionContext';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
@@ -32,6 +42,7 @@ export default function DocumentsPage() {
   const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(undefined);
   const [showNewFolder, setShowNewFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const { data: projects = [], isLoading: projectsLoading } = useProjects({
@@ -71,13 +82,16 @@ export default function DocumentsPage() {
     }
   }
 
-  async function handleDeleteFile(fileId: string) {
-    if (!confirm('Delete this file? This cannot be undone.')) return;
+  async function handleDelete(fileId: string) {
     try {
       await deleteFile.mutateAsync(fileId);
     } catch {
       /* handled by React Query */
     }
+  }
+
+  function handleDeleteFile(fileId: string) {
+    setDeleteTarget(fileId);
   }
 
   async function handleFileInputChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -103,7 +117,13 @@ export default function DocumentsPage() {
   return (
     <>
       <title>Documents — KrewPact</title>
-      <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileInputChange} />
+      <input
+        ref={fileInputRef}
+        type="file"
+        className="hidden"
+        accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.jpg,.jpeg,.png,.gif,.dwg,.dxf,.zip"
+        onChange={handleFileInputChange}
+      />
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -158,6 +178,27 @@ export default function DocumentsPage() {
           />
         )}
       </div>
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete File</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. The file will be permanently deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                handleDelete(deleteTarget!);
+                setDeleteTarget(null);
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
