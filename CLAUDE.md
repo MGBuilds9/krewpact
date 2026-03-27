@@ -336,12 +336,16 @@ Start with `KrewPact-Architecture-Resolution.md` (all contradictions resolved). 
 
 > Full log: `docs/session-log.md`
 
-### Mar 27, 2026 — P2 Buildout: AI Streaming, Trade Portal, ERPNext Mappers, MERX, 19-Issue Remediation
+### Mar 27, 2026 — A-Z Audit, Agent Teams, Production Auth Fix, AI Connected
 
-- **Changes:** (1) Blueprint audit (93/100). (2) Phase 1: 4 trade portal pages (compliance/bids/tasks/submittals), doc upload/download enabled, portal sidebar. (3) Phase 2: Knowledge chat streaming (AI SDK v6), DailyDigest + InsightAnalytics widgets placed, NLQueryBar, AI React Query hooks, knowledge RLS fix. (4) Phase 3: 5 new ERPNext mappers (RFQ, Bid, Award, Compliance, Selection Sheet). (5) Phase 4: MERX API client + cron, 5 files split. (6) Critical code review found 19 issues (7 critical) — all fixed: enum mismatch, RLS path, dead links, field names, missing item_code/schedule_date, column mismatches. (7) Auth fix: ClerkProvider signInUrl → accounts.krewpact.ca, env vars added. (8) Portal write forms added (upload, bid submit, submittal create). (9) PortalHeader: role field fix, dynamic label, dead links removed. (10) AlertDialog replaced window.confirm.
-- **Decisions:** Streaming uses `toTextStreamResponse()` (plain text, not data stream) for simplicity. MERX dedup uses SHA-256. Cron staggered: MERX at 11 UTC, digest at 12 UTC. Executive metrics single-org guard (proper per-org deferred). Compliance API uses `tags` array filtering (no `metadata` JSONB column on `file_metadata`).
-- **Tests:** 4,792/4,792 passing (435 files). 0 type errors. 0 lint errors.
-- **Next:** Rotate Clerk secret key (exposed). Add Clerk URL env vars to Vercel. Verify auth redirect in production. Remaining P2: offline/PWA, mobile, ADP live, white-label.
+- **Changes:** (1) Full A-Z audit + agent-team remediation (19 commits). (2) 5 ERP sync handlers created (RFQ, Bid, Award, Compliance, Selection Sheet) + address sync for Customer/Supplier. (3) AI Gateway reverted to direct `@ai-sdk/google` provider (gateway OIDC not confirmed). NL Query Bar now connected and working. (4) DNS cleanup: all 14 `hub.mdmgroupinc.ca` refs → `krewpact.ca`. BetterStack monitors updated. (5) Clerk auth fixed: rotated publishable key (old key had `hub.mdmgroupinc.ca` baked in), added `krewpact.ca` to `authorizedParties` + `allowedRedirectOrigins`. Azure OAuth redirect URI updated. (6) Sentry edge config added, SENTRY_PROJECT corrected to `krewpact`. (7) Notification dispatch type safety, feature flag env kill-switch, MERX/BetterStack env vars. (8) 10 loading.tsx + Wave G file splits (8 files). (9) Dashboard layout: 4 stat cards horizontal. (10) 48 new tests (utils, sanitize, date, portal reminders, address mapper). Proxy: stale domains removed, console.log → console.warn. CI mobile TLD fixed (.com → .ca).
+- **Decisions:** Direct Google provider over AI Gateway (OIDC not set up yet — revisit when gateway enabled). Clerk key rotation required because publishable key embeds the Clerk frontend API domain. `noUncheckedIndexedAccess` deferred (572 TS errors). Feature flags get `FEATURE_DISABLE_<FLAG>=true` env override.
+- **Tests:** 4,850/4,850 passing (438 files). 0 type errors. 0 lint errors.
+- **Next:** Rotate Clerk secret key if still needed. Enable AI Gateway on Vercel for OIDC auth. Remaining P2: offline/PWA, mobile Expo, ADP payroll live, white-label portals.
+
+### Mar 27, 2026 — P2 Buildout: AI Streaming, Trade Portal, ERPNext Mappers, MERX, 19-Issue Remediation
+- **Changes:** Blueprint audit (93→98/100). 4 trade portal pages. AI streaming chat. 5 ERPNext mappers. MERX client + cron. 19-issue code review fix. Auth fix (ClerkProvider → accounts.krewpact.ca).
+- **Tests:** 4,792/4,792 (435 files). 0 TS errors.
 
 ### Mar 26-27, 2026 — Gap Audit Remediation: 342 Routes Migrated, DNS to krewpact.ca, 36 Files Split
 
