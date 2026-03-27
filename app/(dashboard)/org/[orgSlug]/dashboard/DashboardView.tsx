@@ -1,7 +1,7 @@
 'use client';
 
 import { useUser } from '@clerk/nextjs';
-import { Bell, ClipboardList } from 'lucide-react';
+import { Bell, Briefcase, ClipboardList, DollarSign } from 'lucide-react';
 
 import { DailyDigestWidget } from '@/components/AI/DailyDigestWidget';
 import { NLQueryBar } from '@/components/AI/NLQueryBar';
@@ -14,7 +14,6 @@ import { useUserRBAC } from '@/hooks/useRBAC';
 import {
   getTimeGreeting,
   getUserName,
-  ProjectsAndExpensesCards,
   QuickLinksGrid,
   RecentProjectsCard,
   StatCard,
@@ -38,15 +37,17 @@ export default function DashboardView() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-6 auto-rows-min">
-        <WelcomeCard userName={userName} greeting={greeting} roles={roles} />
-        <div className="col-span-1 md:col-span-4 lg:col-span-6">
-          <NLQueryBar />
-        </div>
-        <ProjectsAndExpensesCards
-          activeProjects={activeProjects}
-          pendingExpenses={pendingExpenses}
-          orgPush={orgPush}
+      <WelcomeCard userName={userName} greeting={greeting} roles={roles} />
+      <NLQueryBar />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          value={activeProjects}
+          label="Active Projects"
+          Icon={Briefcase}
+          colorClass="text-blue-600 dark:text-blue-400"
+          bgClass="bg-blue-50 dark:bg-blue-900/20"
+          gridClass=""
+          onClick={() => orgPush('/projects')}
         />
         <StatCard
           value={openLeads}
@@ -54,8 +55,17 @@ export default function DashboardView() {
           Icon={ClipboardList}
           colorClass="text-purple-600 dark:text-purple-400"
           bgClass="bg-purple-50 dark:bg-purple-900/20"
-          gridClass="col-span-1 md:col-span-2 lg:col-span-2"
+          gridClass=""
           onClick={() => orgPush('/crm/leads')}
+        />
+        <StatCard
+          value={pendingExpenses}
+          label="Pending Expenses"
+          Icon={DollarSign}
+          colorClass="text-green-600 dark:text-green-400"
+          bgClass="bg-green-50 dark:bg-green-900/20"
+          gridClass=""
+          onClick={() => orgPush('/expenses')}
         />
         <StatCard
           value={unread}
@@ -63,12 +73,12 @@ export default function DashboardView() {
           Icon={Bell}
           colorClass="text-orange-600 dark:text-orange-400"
           bgClass="bg-orange-50 dark:bg-orange-900/20"
-          gridClass="col-span-1 md:col-span-2 lg:col-span-2"
+          gridClass=""
           onClick={() => orgPush('/notifications')}
           showPulse={unread > 0}
         />
-        <QuickLinksGrid orgPush={orgPush} />
       </div>
+      <QuickLinksGrid orgPush={orgPush} />
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <RecentProjectsCard projects={recentProjects} orgPush={orgPush} />
         <div className="lg:col-span-1 space-y-6">

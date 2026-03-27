@@ -113,7 +113,7 @@ export function QuickLinksGrid({ orgPush }: { orgPush: (path: string) => void })
   ] as const;
 
   return (
-    <div className="col-span-1 md:col-span-4 lg:col-span-2 grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
       {links.map(({ label, path, Icon }) => (
         <Card
           key={label}
@@ -199,7 +199,7 @@ interface WelcardProps {
 
 export function WelcomeCard({ userName, greeting, roles }: WelcardProps) {
   return (
-    <Card className="col-span-1 md:col-span-4 lg:col-span-4 bg-gradient-to-br from-primary/10 via-background to-secondary/10 border-0 shadow-sm rounded-3xl overflow-hidden">
+    <Card className="bg-gradient-to-br from-primary/10 via-background to-secondary/10 border-0 shadow-sm rounded-3xl overflow-hidden">
       <CardContent className="p-6 flex flex-col justify-center">
         <h1
           className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-2"
