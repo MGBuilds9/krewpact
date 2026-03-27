@@ -336,6 +336,13 @@ Start with `KrewPact-Architecture-Resolution.md` (all contradictions resolved). 
 
 > Full log: `docs/session-log.md`
 
+### Mar 27, 2026 — P2 Buildout: AI Streaming, Trade Portal, ERPNext Mappers, MERX, 19-Issue Remediation
+
+- **Changes:** (1) Blueprint audit (93/100). (2) Phase 1: 4 trade portal pages (compliance/bids/tasks/submittals), doc upload/download enabled, portal sidebar. (3) Phase 2: Knowledge chat streaming (AI SDK v6), DailyDigest + InsightAnalytics widgets placed, NLQueryBar, AI React Query hooks, knowledge RLS fix. (4) Phase 3: 5 new ERPNext mappers (RFQ, Bid, Award, Compliance, Selection Sheet). (5) Phase 4: MERX API client + cron, 5 files split. (6) Critical code review found 19 issues (7 critical) — all fixed: enum mismatch, RLS path, dead links, field names, missing item_code/schedule_date, column mismatches. (7) Auth fix: ClerkProvider signInUrl → accounts.krewpact.ca, env vars added. (8) Portal write forms added (upload, bid submit, submittal create). (9) PortalHeader: role field fix, dynamic label, dead links removed. (10) AlertDialog replaced window.confirm.
+- **Decisions:** Streaming uses `toTextStreamResponse()` (plain text, not data stream) for simplicity. MERX dedup uses SHA-256. Cron staggered: MERX at 11 UTC, digest at 12 UTC. Executive metrics single-org guard (proper per-org deferred). Compliance API uses `tags` array filtering (no `metadata` JSONB column on `file_metadata`).
+- **Tests:** 4,792/4,792 passing (435 files). 0 type errors. 0 lint errors.
+- **Next:** Rotate Clerk secret key (exposed). Add Clerk URL env vars to Vercel. Verify auth redirect in production. Remaining P2: offline/PWA, mobile, ADP live, white-label.
+
 ### Mar 26-27, 2026 — Gap Audit Remediation: 342 Routes Migrated, DNS to krewpact.ca, 36 Files Split
 
 - **Changes:** (1) Full gap audit (32 findings) — 28 fixed: CI pipeline (actions v4, Node 22), Sentry replay+tracing, offline page fix, CSP hardening, env validation, 12 `form: any` → FormProp aliases. (2) All 342 API routes migrated to `withApiRoute()` in 6 waves (A-E + mop-up): webhooks (public auth), cron (cron auth), CRM (89), Projects (68), Inventory (23), Portal (24), Finance (10), Estimates (14), Executive (12), Admin (4), + 75 misc. (3) 18 error boundaries + 3 not-found pages added. (4) CRM sequence-email-executor: skipped vs pending outcomes, DLQ propagation. (5) DNS migrated: krewpact.ca on Cloudflare (3 Vercel CNAMEs + 5 Clerk CNAMEs), krewpact.ca deleted. (6) Wave F: 36 oversized files split — 14 page-content files, 5 components, 11 lib files extracted to sub-modules. (7) Vercel env vars: LOG_LEVEL, ALLOWED_DOMAINS, DEFAULT_ORG_SLUG, BETTERSTACK_API_TOKEN, CRON_SECRET (dev/preview). (8) Supabase edge functions added to CI (Deno check).
@@ -356,13 +363,9 @@ Start with `KrewPact-Architecture-Resolution.md` (all contradictions resolved). 
 - **Tests:** 4,715 passing (428 files). 0 lint errors.
 - **Next:** Remaining 10 moderate dev-only vulns are in `eslint-config-next` and `@serwist/next` transitive deps (brace-expansion) — will resolve when upstream updates.
 
-### Mar 26, 2026 — Go-Live Audit: 14/16 Work Streams Verified + Live Testing
-
-- **Changes:** 8 commits. Verified 9 WS's complete, completed 5 more. Lint 304→93 warnings. Env audit 13 gaps. ERPNext 13/13 mappers. Email verified + dev safety. Live manual checklist. 2 branches deleted.
-- **Tests:** 4,715 passing (428 files). 0 type errors. Build clean.
-
-- Mar 26: Observability & Monitoring Stack — Sentry, request tracing, withApiRoute(), CI post-deploy, BetterStack monitors.
-- Mar 25-26: Production Hardening — RBAC, UAT, operability, security sanitization. 4,715 tests.
+- Mar 26: Go-Live Audit — 14/16 WS verified, lint 304→93, ERPNext 13/13 mappers. 4,715 tests.
+- Mar 26: Observability & Monitoring Stack — Sentry, request tracing, withApiRoute(), BetterStack monitors.
+- Mar 25-26: Production Hardening — RBAC, UAT, security sanitization. 4,715 tests.
 - Mar 25: Full Platform Completion — shared components, 5/5 P1 epics, all 17 flags enabled. 4,568 tests.
 - Mar 23-24: Playbook v2 + KrewPact docs rewrite + production UX fixes. 4,316 tests.
 
