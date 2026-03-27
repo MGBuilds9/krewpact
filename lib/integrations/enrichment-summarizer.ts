@@ -1,3 +1,4 @@
+import { google } from '@ai-sdk/google';
 import { generateText } from 'ai';
 
 /**
@@ -45,7 +46,7 @@ export async function summarizeEnrichment(
   }
 
   const { text } = await generateText({
-    model: 'google/gemini-2.0-flash',
+    model: google('gemini-2.0-flash'),
     prompt: `You are a construction industry analyst for MDM Group Inc., a construction conglomerate in the Greater Toronto Area (GTA), Ontario, Canada.
 
 Given the following enrichment data about "${companyName}", write a concise 2-3 sentence company brief. Focus on:

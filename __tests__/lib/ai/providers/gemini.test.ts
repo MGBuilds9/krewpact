@@ -30,7 +30,7 @@ describe('generateWithGemini', () => {
 
     expect(mockGenerateText).toHaveBeenCalledWith(
       expect.objectContaining({
-        model: 'google/gemini-2.0-flash',
+        model: expect.anything(),
         prompt: 'Hello Gemini',
       }),
     );

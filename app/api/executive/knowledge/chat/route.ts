@@ -1,3 +1,4 @@
+import { google } from '@ai-sdk/google';
 import { streamText } from 'ai';
 import { NextResponse } from 'next/server';
 
@@ -146,7 +147,7 @@ export const POST = withApiRoute({}, async ({ req, logger }) => {
     : `You are an AI assistant for MDM Group executives. No relevant documents were found in the knowledge base for this query. Let the user know and suggest they try rephrasing or ask about a topic covered in the knowledge base.`;
 
   const result = streamText({
-    model: 'openai/gpt-4o-mini',
+    model: google('gemini-2.0-flash'),
     system: systemPrompt,
     messages: [...conversationHistory, { role: 'user', content: trimmedMessage }],
     temperature: 0.3,
