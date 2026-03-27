@@ -49,11 +49,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       signUpUrl="https://accounts.krewpact.ca/sign-up"
       afterSignOutUrl="https://accounts.krewpact.ca/sign-in"
       allowedRedirectOrigins={[
+        'https://krewpact.ca',
         'https://accounts.krewpact.ca',
+        'https://app.krewpact.ca',
         'https://hub.krewpact.ca',
-        'https://dashboard.mdmgroupinc.ca',
-        'https://portal.mdmgroupinc.ca',
-        ...(appUrl !== 'https://app.krewpact.com' ? [appUrl] : []),
+        'https://portal.krewpact.ca',
+        ...(appUrl ? [appUrl] : []),
         ...(process.env.NODE_ENV !== 'production'
           ? [
               'https://mdm-dashboard.pages.dev',
