@@ -1,7 +1,7 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError,forbidden } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClient, createUserClientSafe } from '@/lib/supabase/server';
 import { surveySubmissionSchema } from '@/lib/validators/portal-survey';
 
@@ -34,19 +34,13 @@ async function resolvePortalAccess(
  * GET /api/portal/projects/[id]/survey
  * Returns the existing survey response for this portal account + project, if any.
  */
-export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id: projectId } = await params;
+export const GET = withApiRoute({}, async ({ userId, params }) => {
+  const projectId = params.id;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
   const access = await resolvePortalAccess(supabase, userId, projectId);
-  if (!access) return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+  if (!access) throw forbidden('Access denied');
 
   const { data, error } = await supabase
     .from('portal_satisfaction_surveys')
@@ -57,62 +51,43 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     .eq('portal_account_id', access.portalAccountId)
     .maybeSingle();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) throw dbError(error.message);
 
   return NextResponse.json({ survey: data });
-}
+});
 
 /**
  * POST /api/portal/projects/[id]/survey
  * Submits or updates a satisfaction survey for this portal account + project.
  */
-export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export const POST = withApiRoute(
+  { rateLimit: { limit: 10, window: '1 m' }, bodySchema: surveySubmissionSchema },
+  async ({ userId, params, body }) => {
+    const projectId = params.id;
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
-  const rl = await rateLimit(req, { limit: 10, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
+    const access = await resolvePortalAccess(supabase, userId, projectId);
+    if (!access) throw forbidden('Access denied');
 
-  const { id: projectId } = await params;
+    const { data, error } = await supabase
+      .from('portal_satisfaction_surveys')
+      .upsert(
+        {
+          project_id: projectId,
+          portal_account_id: access.portalAccountId,
+          ...body,
+          submitted_at: new Date().toISOString(),
+        },
+        { onConflict: 'project_id,portal_account_id' },
+      )
+      .select(
+        'id, overall_rating, communication_rating, quality_rating, schedule_rating, comments, would_recommend, submitted_at',
+      )
+      .single();
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
+    if (error) throw dbError(error.message);
 
-  const parsed = surveySubmissionSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: 'Validation failed', details: parsed.error.flatten() },
-      { status: 422 },
-    );
-  }
-
-  const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
-
-  const access = await resolvePortalAccess(supabase, userId, projectId);
-  if (!access) return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-
-  const { data, error } = await supabase
-    .from('portal_satisfaction_surveys')
-    .upsert(
-      {
-        project_id: projectId,
-        portal_account_id: access.portalAccountId,
-        ...parsed.data,
-        submitted_at: new Date().toISOString(),
-      },
-      { onConflict: 'project_id,portal_account_id' },
-    )
-    .select(
-      'id, overall_rating, communication_rating, quality_rating, schedule_rating, comments, would_recommend, submitted_at',
-    )
-    .single();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  return NextResponse.json(data, { status: 201 });
-}
+    return NextResponse.json(data, { status: 201 });
+  },
+);

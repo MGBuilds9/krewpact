@@ -7,6 +7,19 @@ vi.mock('@/lib/api/rate-limit', () => ({
 vi.mock('@/lib/feature-flags', () => ({
   isFeatureEnabled: vi.fn(),
 }));
+vi.mock('@/lib/request-context', () => ({
+  requestContext: { run: vi.fn((_, fn) => fn()) },
+  generateRequestId: vi.fn().mockReturnValue('req_test'),
+}));
+vi.mock('@/lib/logger', () => ({
+  logger: {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    child: vi.fn().mockReturnThis(),
+  },
+}));
 vi.mock('@/lib/inventory/serials', () => ({
   createSerial: vi.fn(),
   listSerials: vi.fn(),
@@ -62,6 +75,8 @@ describe('GET /api/inventory/serials', () => {
     mockClerkUnauth(mockAuth);
     const res = await GET(makeRequest('/api/inventory/serials'));
     expect(res.status).toBe(401);
+    const body = await res.json();
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns 404 when feature disabled', async () => {
@@ -170,6 +185,8 @@ describe('GET /api/inventory/serials/[id]', () => {
       params: Promise.resolve({ id: 'missing' }),
     });
     expect(res.status).toBe(404);
+    const body = await res.json();
+    expect(body.error.code).toBe('NOT_FOUND');
   });
 });
 

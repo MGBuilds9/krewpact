@@ -1,15 +1,10 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { errorResponse, INVALID_JSON, UNAUTHORIZED, validationError } from '@/lib/api/errors';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { isFeatureEnabled } from '@/lib/feature-flags';
 import { checkoutSerial } from '@/lib/inventory/serials';
-import { logger } from '@/lib/logger';
 import { createUserClientSafe } from '@/lib/supabase/server';
-
-type RouteContext = { params: Promise<{ id: string }> };
 
 const checkoutSchema = z.object({
   checked_out_to: z.string().min(1),
@@ -17,41 +12,26 @@ const checkoutSchema = z.object({
   notes: z.string().max(1000).optional(),
 });
 
-export async function POST(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return errorResponse(UNAUTHORIZED);
+export const POST = withApiRoute(
+  { bodySchema: checkoutSchema },
+  async ({ body, params, userId }) => {
+    if (!isFeatureEnabled('inventory_management')) {
+      return NextResponse.json({ error: 'Feature not enabled' }, { status: 404 });
+    }
 
-  if (!isFeatureEnabled('inventory_management')) {
-    return NextResponse.json({ error: 'Feature not enabled' }, { status: 404 });
-  }
+    const { id } = params;
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
-  const rl = await rateLimit(req, { limit: 30, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return errorResponse(INVALID_JSON);
-  }
-
-  const parsed = checkoutSchema.safeParse(body);
-  if (!parsed.success) return errorResponse(validationError(parsed.error.flatten()));
-
-  const { id } = await context.params;
-  const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
-
-  try {
-    const result = await checkoutSerial(supabase, id, {
-      ...parsed.data,
-      transacted_by: userId,
-    });
-
-    return NextResponse.json(result, { status: 201 });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to checkout serial';
-    logger.error('Failed to checkout serial', { error: err, id });
-    return NextResponse.json({ error: message }, { status: 400 });
-  }
-}
+    try {
+      const result = await checkoutSerial(supabase, id, {
+        ...body,
+        transacted_by: userId,
+      });
+      return NextResponse.json(result, { status: 201 });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to checkout serial';
+      return NextResponse.json({ error: message }, { status: 400 });
+    }
+  },
+);

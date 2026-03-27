@@ -128,7 +128,7 @@ describe('POST /api/portal/projects/[id]/survey', () => {
       makeJsonRequest('/api/portal/projects/proj-1/survey', { overall_rating: 10 }),
       makeContext('proj-1'),
     );
-    expect(res.status).toBe(422);
+    expect(res.status).toBe(400);
   });
 
   it('submits survey and returns 201', async () => {

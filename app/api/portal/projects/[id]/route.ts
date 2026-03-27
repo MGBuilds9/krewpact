@@ -1,7 +1,7 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError,forbidden, notFound } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 /**
@@ -9,13 +9,8 @@ import { createUserClientSafe } from '@/lib/supabase/server';
  * Returns a single project detail for a portal user.
  * Guard: portal_permissions row must exist for the calling portal_account.
  */
-export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-  const { id: projectId } = await params;
+export const GET = withApiRoute({}, async ({ userId, params }) => {
+  const projectId = params.id;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -27,11 +22,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     .single();
 
   if (paError || !portalAccount) {
-    return NextResponse.json({ error: 'Portal account not found' }, { status: 403 });
+    throw forbidden('Portal account not found');
   }
 
   if (portalAccount.status !== 'active') {
-    return NextResponse.json({ error: 'Portal account inactive' }, { status: 403 });
+    throw forbidden('Portal account inactive');
   }
 
   // 2. Verify permission for this specific project
@@ -43,7 +38,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     .single();
 
   if (permError || !permission) {
-    return NextResponse.json({ error: 'Access denied to this project' }, { status: 403 });
+    throw forbidden('Access denied to this project');
   }
 
   // 3. Fetch project details
@@ -56,7 +51,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     .single();
 
   if (projectError || !project) {
-    return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    throw notFound('Project');
   }
 
   const permSet: Record<string, boolean> =
@@ -77,4 +72,4 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     current_budget: permSet.view_financials ? project.current_budget : undefined,
     permission_set: permSet,
   });
-}
+});

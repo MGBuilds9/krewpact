@@ -1,7 +1,7 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError,forbidden } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 /**
@@ -10,12 +10,7 @@ import { createUserClientSafe } from '@/lib/supabase/server';
  * Gate: user must have a clerk_user_id matching a portal_accounts row
  * with at least one portal_permissions entry.
  */
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
+export const GET = withApiRoute({}, async ({ userId }) => {
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -27,14 +22,11 @@ export async function GET(req: NextRequest) {
     .single();
 
   if (paError || !portalAccount) {
-    return NextResponse.json({ error: 'Portal account not found for this user' }, { status: 403 });
+    throw forbidden('Portal account not found for this user');
   }
 
   if (portalAccount.status !== 'active') {
-    return NextResponse.json(
-      { error: 'Portal account is not active. Please complete onboarding.' },
-      { status: 403 },
-    );
+    throw forbidden('Portal account is not active. Please complete onboarding.');
   }
 
   // 2. Fetch projects via portal_permissions join
@@ -59,7 +51,7 @@ export async function GET(req: NextRequest) {
     .eq('portal_account_id', portalAccount.id);
 
   if (permError) {
-    return NextResponse.json({ error: permError.message }, { status: 500 });
+    throw dbError(permError.message);
   }
 
   // 3. Shape the response — redact financial info unless permission_set allows it
@@ -81,4 +73,4 @@ export async function GET(req: NextRequest) {
     },
     projects,
   });
-}
+});

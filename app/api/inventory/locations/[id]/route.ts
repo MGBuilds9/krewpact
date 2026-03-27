@@ -1,22 +1,11 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import {
-  dbError,
-  errorResponse,
-  INVALID_JSON,
-  notFound,
-  UNAUTHORIZED,
-  validationError,
-} from '@/lib/api/errors';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError, notFound } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { isFeatureEnabled } from '@/lib/feature-flags';
 import { getLocationWithSpots, updateLocation } from '@/lib/inventory/locations';
-import { logger } from '@/lib/logger';
 import { createUserClientSafe } from '@/lib/supabase/server';
-
-type RouteContext = { params: Promise<{ id: string }> };
 
 const updateLocationSchema = z.object({
   name: z.string().min(1).max(200).optional(),
@@ -28,62 +17,39 @@ const updateLocationSchema = z.object({
   is_active: z.boolean().optional(),
 });
 
-export async function GET(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return errorResponse(UNAUTHORIZED);
-
+export const GET = withApiRoute({}, async ({ params }) => {
   if (!isFeatureEnabled('inventory_management')) {
     return NextResponse.json({ error: 'Feature not enabled' }, { status: 404 });
   }
 
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id } = await context.params;
+  const { id } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
-  try {
-    const location = await getLocationWithSpots(supabase, id);
-    if (!location) return errorResponse(notFound('Location'));
+  const location = await getLocationWithSpots(supabase, id).catch(() => {
+    throw dbError('Failed to get location');
+  });
+
+  if (!location) throw notFound('Location');
+
+  return NextResponse.json(location);
+});
+
+export const PATCH = withApiRoute(
+  { bodySchema: updateLocationSchema },
+  async ({ body, params }) => {
+    if (!isFeatureEnabled('inventory_management')) {
+      return NextResponse.json({ error: 'Feature not enabled' }, { status: 404 });
+    }
+
+    const { id } = params;
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
+
+    const location = await updateLocation(supabase, id, body).catch(() => {
+      throw dbError('Failed to update location');
+    });
+
     return NextResponse.json(location);
-  } catch (err: unknown) {
-    logger.error('Failed to get location', { error: err, id });
-    return errorResponse(dbError('Failed to get location'));
-  }
-}
-
-export async function PATCH(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return errorResponse(UNAUTHORIZED);
-
-  if (!isFeatureEnabled('inventory_management')) {
-    return NextResponse.json({ error: 'Feature not enabled' }, { status: 404 });
-  }
-
-  const rl = await rateLimit(req, { limit: 30, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id } = await context.params;
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return errorResponse(INVALID_JSON);
-  }
-
-  const parsed = updateLocationSchema.safeParse(body);
-  if (!parsed.success) return errorResponse(validationError(parsed.error.flatten()));
-
-  const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
-
-  try {
-    const location = await updateLocation(supabase, id, parsed.data);
-    return NextResponse.json(location);
-  } catch (err: unknown) {
-    logger.error('Failed to update location', { error: err, id });
-    return errorResponse(dbError('Failed to update location'));
-  }
-}
+  },
+);

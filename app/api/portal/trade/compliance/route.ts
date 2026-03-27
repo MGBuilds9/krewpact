@@ -1,20 +1,15 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
+import { dbError,forbidden } from '@/lib/api/errors';
 import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 /**
  * GET /api/portal/trade/compliance
  * Returns the trade partner's compliance documents and expiry summary.
  */
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
+export const GET = withApiRoute({}, async ({ req, userId }) => {
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -25,12 +20,9 @@ export async function GET(req: NextRequest) {
     .eq('clerk_user_id', userId)
     .single();
 
-  if (paError || !pa)
-    return NextResponse.json({ error: 'Portal account not found' }, { status: 403 });
-  if (pa.actor_type !== 'trade_partner')
-    return NextResponse.json({ error: 'Trade partner access only' }, { status: 403 });
-  if (pa.status !== 'active')
-    return NextResponse.json({ error: 'Portal account inactive' }, { status: 403 });
+  if (paError || !pa) throw forbidden('Portal account not found');
+  if (pa.actor_type !== 'trade_partner') throw forbidden('Trade partner access only');
+  if (pa.status !== 'active') throw forbidden('Portal account inactive');
 
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
 
@@ -48,7 +40,7 @@ export async function GET(req: NextRequest) {
     .order('updated_at', { ascending: false })
     .range(offset, offset + limit - 1);
 
-  if (docError) return NextResponse.json({ error: docError.message }, { status: 500 });
+  if (docError) throw dbError(docError.message);
 
   // Derive expiry from meta.expiry_date
   const now = new Date();
@@ -82,4 +74,4 @@ export async function GET(req: NextRequest) {
       valid: docs.filter((d) => d.status === 'valid').length,
     },
   });
-}
+});

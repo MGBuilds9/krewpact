@@ -1,18 +1,10 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import {
-  dbError,
-  errorResponse,
-  INVALID_JSON,
-  UNAUTHORIZED,
-  validationError,
-} from '@/lib/api/errors';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { isFeatureEnabled } from '@/lib/feature-flags';
 import { createVehicle, listVehicles } from '@/lib/inventory/fleet';
-import { logger } from '@/lib/logger';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { createFleetVehicleSchema } from '@/lib/validators/inventory';
 
@@ -29,76 +21,45 @@ const createBodySchema = createFleetVehicleSchema.extend({
   auto_create_location: z.boolean().optional(),
 });
 
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return errorResponse(UNAUTHORIZED);
-
+export const GET = withApiRoute({ querySchema }, async ({ query }) => {
   if (!isFeatureEnabled('inventory_management')) {
     return NextResponse.json({ error: 'Feature not enabled' }, { status: 404 });
   }
 
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const params = Object.fromEntries(req.nextUrl.searchParams);
-  const parsed = querySchema.safeParse(params);
-  if (!parsed.success) return errorResponse(validationError(parsed.error.flatten()));
-
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
-  try {
-    const result = await listVehicles(supabase, {
-      divisionId: parsed.data.division_id,
-      vehicleType: parsed.data.vehicle_type,
-      status: parsed.data.status,
-      search: parsed.data.search,
-      limit: parsed.data.limit,
-      offset: parsed.data.offset,
-    });
+  const result = await listVehicles(supabase, {
+    divisionId: query.division_id,
+    vehicleType: query.vehicle_type,
+    status: query.status,
+    search: query.search,
+    limit: query.limit,
+    offset: query.offset,
+  }).catch(() => {
+    throw dbError('Failed to list fleet vehicles');
+  });
 
-    return NextResponse.json({
-      data: result.data,
-      total: result.total,
-      hasMore: (parsed.data.offset ?? 0) + result.data.length < result.total,
-    });
-  } catch (err: unknown) {
-    logger.error('Failed to list fleet vehicles', { error: err });
-    return errorResponse(dbError('Failed to list fleet vehicles'));
-  }
-}
+  return NextResponse.json({
+    data: result.data,
+    total: result.total,
+    hasMore: (query.offset ?? 0) + result.data.length < result.total,
+  });
+});
 
-export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return errorResponse(UNAUTHORIZED);
-
+export const POST = withApiRoute({ bodySchema: createBodySchema }, async ({ body }) => {
   if (!isFeatureEnabled('inventory_management')) {
     return NextResponse.json({ error: 'Feature not enabled' }, { status: 404 });
   }
 
-  const rl = await rateLimit(req, { limit: 30, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return errorResponse(INVALID_JSON);
-  }
-
-  const parsed = createBodySchema.safeParse(body);
-  if (!parsed.success) return errorResponse(validationError(parsed.error.flatten()));
-
-  const { auto_create_location, ...vehicleData } = parsed.data;
+  const { auto_create_location, ...vehicleData } = body;
 
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
-  try {
-    const result = await createVehicle(supabase, vehicleData, auto_create_location);
-    return NextResponse.json(result, { status: 201 });
-  } catch (err: unknown) {
-    logger.error('Failed to create fleet vehicle', { error: err });
-    return errorResponse(dbError('Failed to create fleet vehicle'));
-  }
-}
+  const result = await createVehicle(supabase, vehicleData, auto_create_location).catch(() => {
+    throw dbError('Failed to create fleet vehicle');
+  });
+
+  return NextResponse.json(result, { status: 201 });
+});

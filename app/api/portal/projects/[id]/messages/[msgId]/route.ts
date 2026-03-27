@@ -1,10 +1,9 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError,forbidden, notFound } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClient, createUserClientSafe } from '@/lib/supabase/server';
-
-type RouteContext = { params: Promise<{ id: string; msgId: string }> };
 
 async function resolvePortalAccess(
   supabase: Awaited<ReturnType<typeof createUserClient>>,
@@ -31,23 +30,21 @@ async function resolvePortalAccess(
   return { portalAccountId: pa.id };
 }
 
+const patchBodySchema = z.object({
+  is_read: z.boolean(),
+});
+
 /**
  * GET /api/portal/projects/[id]/messages/[msgId]
  * Returns a single message and marks it as read.
  */
-export async function GET(req: NextRequest, { params }: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id: projectId, msgId } = await params;
+export const GET = withApiRoute({}, async ({ userId, params }) => {
+  const { id: projectId, msgId } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
   const access = await resolvePortalAccess(supabase, userId, projectId);
-  if (!access) return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+  if (!access) throw forbidden('Access denied');
 
   const { data, error } = await supabase
     .from('portal_messages')
@@ -58,9 +55,7 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
     .eq('id', msgId)
     .single();
 
-  if (error || !data) {
-    return NextResponse.json({ error: 'Message not found' }, { status: 404 });
-  }
+  if (error || !data) throw notFound('Message');
 
   // Mark as read (fire-and-forget)
   if (!data.is_read) {
@@ -68,53 +63,34 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
   }
 
   return NextResponse.json(data);
-}
+});
 
 /**
  * PATCH /api/portal/projects/[id]/messages/[msgId]
  * Updates the is_read status of a message.
  */
-export async function PATCH(req: NextRequest, { params }: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export const PATCH = withApiRoute(
+  { rateLimit: { limit: 30, window: '1 m' }, bodySchema: patchBodySchema },
+  async ({ userId, params, body }) => {
+    const { id: projectId, msgId } = params;
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
-  const rl = await rateLimit(req, { limit: 30, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
+    const access = await resolvePortalAccess(supabase, userId, projectId);
+    if (!access) throw forbidden('Access denied');
 
-  const { id: projectId, msgId } = await params;
+    const { data, error } = await supabase
+      .from('portal_messages')
+      .update({ is_read: body.is_read })
+      .eq('project_id', projectId)
+      .eq('id', msgId)
+      .select(
+        'id, project_id, sender_id, sender_type, subject, body, is_read, created_at, updated_at',
+      )
+      .single();
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
+    if (error || !data) throw notFound('Message');
 
-  const { is_read } = body as Record<string, unknown>;
-  if (typeof is_read !== 'boolean') {
-    return NextResponse.json({ error: 'is_read (boolean) is required' }, { status: 400 });
-  }
-
-  const { client: supabase, error: authError } = await createUserClientSafe();
-
-  if (authError) return authError;
-
-  const access = await resolvePortalAccess(supabase, userId, projectId);
-  if (!access) return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-
-  const { data, error } = await supabase
-    .from('portal_messages')
-    .update({ is_read })
-    .eq('project_id', projectId)
-    .eq('id', msgId)
-    .select(
-      'id, project_id, sender_id, sender_type, subject, body, is_read, created_at, updated_at',
-    )
-    .single();
-
-  if (error || !data) {
-    return NextResponse.json({ error: 'Message not found' }, { status: 404 });
-  }
-
-  return NextResponse.json(data);
-}
+    return NextResponse.json(data);
+  },
+);

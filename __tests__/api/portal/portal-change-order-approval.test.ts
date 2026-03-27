@@ -94,7 +94,7 @@ describe('POST /api/portal/projects/[id]/change-orders/[coId]/approve', () => {
     );
     expect(res.status).toBe(403);
     const body = await res.json();
-    expect(body.error).toContain('Insufficient permissions');
+    expect(body.error.message).toContain('Insufficient permissions');
   });
 
   it('returns 400 when CO is not in pending_client_approval state', async () => {
@@ -124,7 +124,7 @@ describe('POST /api/portal/projects/[id]/change-orders/[coId]/approve', () => {
     );
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toContain('Cannot approve CO in status: approved');
+    expect(body.error.message).toContain('Cannot approve CO in status: approved');
   });
 
   it('approves CO successfully when all checks pass', async () => {

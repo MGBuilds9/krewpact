@@ -1,37 +1,25 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { dbError, errorResponse, notFound, UNAUTHORIZED } from '@/lib/api/errors';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError, notFound } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { isFeatureEnabled } from '@/lib/feature-flags';
 import { getPurchaseOrder } from '@/lib/inventory/purchase-orders';
-import { logger } from '@/lib/logger';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
-type RouteContext = { params: Promise<{ id: string }> };
-
-export async function GET(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return errorResponse(UNAUTHORIZED);
-
+export const GET = withApiRoute({}, async ({ params }) => {
   if (!isFeatureEnabled('inventory_management')) {
     return NextResponse.json({ error: 'Feature not enabled' }, { status: 404 });
   }
 
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id } = await context.params;
+  const { id } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
-  try {
-    const po = await getPurchaseOrder(supabase, id);
-    if (!po) return errorResponse(notFound('Purchase order'));
+  const po = await getPurchaseOrder(supabase, id).catch(() => {
+    throw dbError('Failed to get purchase order');
+  });
 
-    return NextResponse.json(po);
-  } catch (err: unknown) {
-    logger.error('Failed to get purchase order', { error: err, id });
-    return errorResponse(dbError('Failed to get purchase order'));
-  }
-}
+  if (!po) throw notFound('Purchase order');
+
+  return NextResponse.json(po);
+});

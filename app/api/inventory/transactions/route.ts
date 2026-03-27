@@ -1,72 +1,50 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import {
-  dbError,
-  errorResponse,
-  INVALID_JSON,
-  UNAUTHORIZED,
-  validationError,
-} from '@/lib/api/errors';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { isFeatureEnabled } from '@/lib/feature-flags';
 import { createLedgerEntry, createTransferEntries } from '@/lib/inventory/ledger';
-import { logger } from '@/lib/logger';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { createTransactionSchema } from '@/lib/validators/inventory';
 
-export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return errorResponse(UNAUTHORIZED);
+export const POST = withApiRoute(
+  { bodySchema: createTransactionSchema },
+  async ({ body, userId }) => {
+    if (!isFeatureEnabled('inventory_management')) {
+      return NextResponse.json({ error: 'Feature not enabled' }, { status: 404 });
+    }
 
-  if (!isFeatureEnabled('inventory_management')) {
-    return NextResponse.json({ error: 'Feature not enabled' }, { status: 404 });
-  }
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
-  const rl = await rateLimit(req, { limit: 30, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return errorResponse(INVALID_JSON);
-  }
-
-  const parsed = createTransactionSchema.safeParse(body);
-  if (!parsed.success) return errorResponse(validationError(parsed.error.flatten()));
-
-  const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
-
-  try {
-    if (parsed.data.transaction_type === 'stock_transfer') {
+    if (body.transaction_type === 'stock_transfer') {
       const entries = await createTransferEntries(supabase, {
-        item_id: parsed.data.item_id,
-        division_id: parsed.data.division_id,
-        qty: Math.abs(parsed.data.qty_change),
-        valuation_rate: parsed.data.valuation_rate ?? 0,
-        from_location_id: parsed.data.location_id,
-        to_location_id: parsed.data.counterpart_location_id!,
-        from_spot_id: parsed.data.spot_id,
+        item_id: body.item_id,
+        division_id: body.division_id,
+        qty: Math.abs(body.qty_change),
+        valuation_rate: body.valuation_rate ?? 0,
+        from_location_id: body.location_id,
+        to_location_id: body.counterpart_location_id!,
+        from_spot_id: body.spot_id,
         to_spot_id: undefined,
-        serial_id: parsed.data.serial_id,
-        lot_number: parsed.data.lot_number,
-        notes: parsed.data.notes,
+        serial_id: body.serial_id,
+        lot_number: body.lot_number,
+        notes: body.notes,
         transacted_by: userId,
+      }).catch(() => {
+        throw dbError('Failed to create transaction');
       });
 
       return NextResponse.json(entries, { status: 201 });
     }
 
     const entry = await createLedgerEntry(supabase, {
-      ...parsed.data,
+      ...body,
       transacted_by: userId,
+    }).catch(() => {
+      throw dbError('Failed to create transaction');
     });
 
     return NextResponse.json(entry, { status: 201 });
-  } catch (err: unknown) {
-    logger.error('Failed to create transaction', { error: err });
-    return errorResponse(dbError('Failed to create transaction'));
-  }
-}
+  },
+);

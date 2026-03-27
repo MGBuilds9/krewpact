@@ -21,7 +21,7 @@ vi.mock('@/lib/supabase/server', () => ({
 
 import { auth } from '@clerk/nextjs/server';
 
-import { makeRequest, mockClerkAuth, mockClerkUnauth } from '@/__tests__/helpers';
+import { makeJsonRequest, makeRequest, mockClerkAuth, mockClerkUnauth } from '@/__tests__/helpers';
 import { GET as getTradeTasks } from '@/app/api/portal/trade/tasks/route';
 
 const mockAuth = vi.mocked(auth);
@@ -56,7 +56,7 @@ describe('GET /api/portal/trade/tasks', () => {
     const res = await getTradeTasks(makeRequest('/api/portal/trade/tasks'));
     expect(res.status).toBe(403);
     const body = await res.json();
-    expect(body.error).toContain('Trade partner access only');
+    expect(body.error.message).toContain('Trade partner access only');
   });
 
   it('returns 403 when trade partner is inactive', async () => {
@@ -138,12 +138,12 @@ describe('PATCH /api/portal/trade/tasks/[id]/status', () => {
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
     const { PATCH } = await import('@/app/api/portal/trade/tasks/[id]/status/route');
-    const req = new Request('http://localhost/api/portal/trade/tasks/task-1/status', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'in_progress' }),
-    });
-    const res = await PATCH(req as never, { params: Promise.resolve({ id: 'task-1' }) });
+    const req = makeJsonRequest(
+      'http://localhost/api/portal/trade/tasks/task-1/status',
+      { status: 'in_progress' },
+      'PATCH',
+    );
+    const res = await PATCH(req, { params: Promise.resolve({ id: 'task-1' }) });
     expect(res.status).toBe(401);
   });
 });

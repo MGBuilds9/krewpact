@@ -1,7 +1,7 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError,forbidden } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 /**
@@ -9,13 +9,8 @@ import { createUserClientSafe } from '@/lib/supabase/server';
  * Marks a message as read for the calling portal user.
  * Idempotent — safe to call multiple times.
  */
-export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-  const { id: messageId } = await params;
+export const POST = withApiRoute({}, async ({ userId, params }) => {
+  const messageId = params.id;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -26,9 +21,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     .eq('clerk_user_id', userId)
     .single();
 
-  if (!pa) {
-    return NextResponse.json({ error: 'Portal account not found' }, { status: 403 });
-  }
+  if (!pa) throw forbidden('Portal account not found');
 
   // Update read_at only if it's not already set (idempotent)
   const { data, error } = await supabase
@@ -40,7 +33,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     .select()
     .maybeSingle();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) throw dbError(error.message);
 
   return NextResponse.json({ success: true, message: data });
-}
+});

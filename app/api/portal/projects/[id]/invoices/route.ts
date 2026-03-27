@@ -1,8 +1,8 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
+import { dbError,forbidden } from '@/lib/api/errors';
 import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 /**
@@ -10,13 +10,8 @@ import { createUserClientSafe } from '@/lib/supabase/server';
  * Returns invoice / job-cost snapshot data for a project.
  * Guard: permission_set.view_financials must be true.
  */
-export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-  const { id: projectId } = await params;
+export const GET = withApiRoute({}, async ({ req, userId, params }) => {
+  const projectId = params.id;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -28,7 +23,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     .single();
 
   if (!pa || pa.status !== 'active') {
-    return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+    throw forbidden('Access denied');
   }
 
   // 2. Check view_financials permission
@@ -41,10 +36,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const permSet: Record<string, boolean> = (perm?.permission_set as Record<string, boolean>) ?? {};
   if (!permSet.view_financials) {
-    return NextResponse.json(
-      { error: 'Financial access not granted for this project' },
-      { status: 403 },
-    );
+    throw forbidden('Financial access not granted for this project');
   }
 
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
@@ -64,7 +56,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     .order('snapshot_date', { ascending: false })
     .range(offset, offset + limit - 1);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) throw dbError(error.message);
 
   // 4. Log the view
   await supabase.from('portal_view_logs').insert({
@@ -75,4 +67,4 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   });
 
   return NextResponse.json(paginatedResponse(snapshots, count, limit, offset));
-}
+});

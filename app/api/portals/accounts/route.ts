@@ -1,8 +1,8 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { logger } from '@/lib/logger';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { portalAccountInviteSchema } from '@/lib/validators/portals';
@@ -14,21 +14,12 @@ const querySchema = z.object({
   offset: z.coerce.number().int().min(0).optional(),
 });
 
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-  const params = Object.fromEntries(req.nextUrl.searchParams);
-  const parsed = querySchema.safeParse(params);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-
-  const { status, actor_type, limit = 50, offset = 0 } = parsed.data;
+export const GET = withApiRoute({ querySchema }, async ({ query }) => {
+  const { status, actor_type, limit = 50, offset = 0 } = query as z.infer<typeof querySchema>;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
-  let query = supabase
+  let q = supabase
     .from('portal_accounts')
     .select(
       'id, clerk_user_id, contact_name, email, phone, company_name, actor_type, status, invited_by, created_at, updated_at',
@@ -37,48 +28,33 @@ export async function GET(req: NextRequest) {
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 
-  if (status) query = query.eq('status', status);
-  if (actor_type) query = query.eq('actor_type', actor_type);
+  if (status) q = q.eq('status', status);
+  if (actor_type) q = q.eq('actor_type', actor_type);
 
-  const { data, error, count } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  const { data, error, count } = await q;
+  if (error) throw dbError(error.message);
 
   const total = count ?? 0;
   return NextResponse.json({ data, total, hasMore: offset + limit < total });
-}
+});
 
-export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = portalAccountInviteSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-
-  const { projects, role, ...accountData } = parsed.data;
+export const POST = withApiRoute({ bodySchema: portalAccountInviteSchema }, async ({ body }) => {
+  const { projects, role, ...accountData } = body as z.infer<typeof portalAccountInviteSchema>;
 
   const { client: supabase, error: authError } = await createUserClientSafe();
-
   if (authError) return authError;
+
   const { data: account, error: accountError } = await supabase
     .from('portal_accounts')
     .insert({ ...accountData, status: 'invited' })
     .select()
     .single();
 
-  if (accountError) return NextResponse.json({ error: accountError.message }, { status: 500 });
+  if (accountError) throw dbError(accountError.message);
 
   // 1. Link projects if any
   if (projects && projects.length > 0) {
-    const permissions = projects.map((projectId) => ({
+    const permissions = projects.map((projectId: string) => ({
       portal_account_id: account.id,
       project_id: projectId,
       permission_set: {},
@@ -107,4 +83,4 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json(account, { status: 201 });
-}
+});

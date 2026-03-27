@@ -1,8 +1,9 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
+import { dbError,forbidden } from '@/lib/api/errors';
 import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClient, createUserClientSafe } from '@/lib/supabase/server';
 
 async function resolvePortalAccess(
@@ -30,24 +31,23 @@ async function resolvePortalAccess(
   return { portalAccountId: pa.id };
 }
 
+const postBodySchema = z.object({
+  subject: z.string().optional(),
+  message: z.string().min(1),
+});
+
 /**
  * GET /api/portal/projects/[id]/messages
  * Returns paginated messages for a portal project.
  * Guard: user must have an active portal account with permission for this project.
  */
-export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id: projectId } = await params;
+export const GET = withApiRoute({}, async ({ req, userId, params }) => {
+  const projectId = params.id;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
   const access = await resolvePortalAccess(supabase, userId, projectId);
-  if (!access) return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+  if (!access) throw forbidden('Access denied');
 
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
 
@@ -60,7 +60,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) throw dbError(error.message);
 
   // Log the view
   await supabase.from('portal_view_logs').insert({
@@ -71,77 +71,60 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   });
 
   return NextResponse.json(paginatedResponse(data, count, limit, offset));
-}
+});
 
 /**
  * POST /api/portal/projects/[id]/messages
  * Creates a new message from a portal user on a project thread.
  * Guard: same portal access check as GET.
  */
-export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export const POST = withApiRoute(
+  { rateLimit: { limit: 30, window: '1 m' }, bodySchema: postBodySchema },
+  async ({ userId, params, body }) => {
+    const projectId = params.id;
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
-  const rl = await rateLimit(req, { limit: 30, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
+    const access = await resolvePortalAccess(supabase, userId, projectId);
+    if (!access) throw forbidden('Access denied');
 
-  const { id: projectId } = await params;
+    const { data, error } = await supabase
+      .from('portal_messages')
+      .insert({
+        project_id: projectId,
+        sender_id: userId,
+        sender_type: 'client',
+        subject: body.subject ?? null,
+        body: body.message,
+      })
+      .select('id, project_id, sender_id, sender_type, subject, body, is_read, created_at')
+      .single();
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
+    if (error) throw dbError(error.message);
 
-  const { subject, message } = body as Record<string, unknown>;
-  if (!message || typeof message !== 'string') {
-    return NextResponse.json({ error: 'message is required' }, { status: 400 });
-  }
+    // Fire-and-forget notification to project managers for this project
+    try {
+      const { data: members } = await supabase
+        .from('project_members')
+        .select('user_id')
+        .eq('project_id', projectId)
+        .in('member_role', ['project_manager', 'project_coordinator']);
 
-  const { client: supabase, error: authError } = await createUserClientSafe();
-
-  if (authError) return authError;
-
-  const access = await resolvePortalAccess(supabase, userId, projectId);
-  if (!access) return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-
-  const { data, error } = await supabase
-    .from('portal_messages')
-    .insert({
-      project_id: projectId,
-      sender_id: userId,
-      sender_type: 'client',
-      subject: typeof subject === 'string' ? subject : null,
-      body: message,
-    })
-    .select('id, project_id, sender_id, sender_type, subject, body, is_read, created_at')
-    .single();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  // Fire-and-forget notification to project managers for this project
-  try {
-    const { data: members } = await supabase
-      .from('project_members')
-      .select('user_id')
-      .eq('project_id', projectId)
-      .in('member_role', ['project_manager', 'project_coordinator']);
-
-    if (members && members.length > 0) {
-      await supabase.from('notifications').insert(
-        members.map((m) => ({
-          user_id: m.user_id,
-          type: 'portal_message',
-          title: 'New portal message',
-          body: `Message on project: ${typeof subject === 'string' ? subject : '(no subject)'}`,
-          data: { project_id: projectId, message_id: data.id },
-        })),
-      );
+      if (members && members.length > 0) {
+        await supabase.from('notifications').insert(
+          members.map((m) => ({
+            user_id: m.user_id,
+            type: 'portal_message',
+            title: 'New portal message',
+            body: `Message on project: ${body.subject ?? '(no subject)'}`,
+            data: { project_id: projectId, message_id: data.id },
+          })),
+        );
+      }
+    } catch {
+      /* fire-and-forget */
     }
-  } catch {
-    /* fire-and-forget */
-  }
 
-  return NextResponse.json(data, { status: 201 });
-}
+    return NextResponse.json(data, { status: 201 });
+  },
+);

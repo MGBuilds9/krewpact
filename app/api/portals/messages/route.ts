@@ -1,8 +1,8 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { portalMessageSchema } from '@/lib/validators/portals';
 
@@ -21,21 +21,18 @@ const querySchema = z.object({
  * Portal users automatically see only their own messages.
  * Internal staff can query any portal_account_id or project_id.
  */
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-  const params = Object.fromEntries(req.nextUrl.searchParams);
-  const parsed = querySchema.safeParse(params);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-
-  const { portal_account_id, project_id, direction, limit = 50, offset = 0 } = parsed.data;
+export const GET = withApiRoute({ querySchema }, async ({ query }) => {
+  const {
+    portal_account_id,
+    project_id,
+    direction,
+    limit = 50,
+    offset = 0,
+  } = query as z.infer<typeof querySchema>;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
-  let query = supabase
+  let q = supabase
     .from('portal_messages')
     .select(
       'id, project_id, portal_account_id, sender_user_id, direction, subject, body, read_at, created_at, updated_at',
@@ -44,16 +41,16 @@ export async function GET(req: NextRequest) {
     .order('created_at', { ascending: true })
     .range(offset, offset + limit - 1);
 
-  if (portal_account_id) query = query.eq('portal_account_id', portal_account_id);
-  if (project_id) query = query.eq('project_id', project_id);
-  if (direction) query = query.eq('direction', direction);
+  if (portal_account_id) q = q.eq('portal_account_id', portal_account_id);
+  if (project_id) q = q.eq('project_id', project_id);
+  if (direction) q = q.eq('direction', direction);
 
-  const { data, error, count } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  const { data, error, count } = await q;
+  if (error) throw dbError(error.message);
 
   const total = count ?? 0;
   return NextResponse.json({ data, total, hasMore: offset + limit < total });
-}
+});
 
 /**
  * POST /api/portals/messages
@@ -61,24 +58,8 @@ export async function GET(req: NextRequest) {
  * - Portal users (have a portal_accounts row with clerk_user_id) → 'inbound'
  * - Internal staff → 'outbound'
  */
-export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = portalMessageSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-
+export const POST = withApiRoute({ bodySchema: portalMessageSchema }, async ({ userId, body }) => {
   const { client: supabase, error: authError } = await createUserClientSafe();
-
   if (authError) return authError;
 
   // Determine if caller is a portal user or internal staff
@@ -93,7 +74,7 @@ export async function POST(req: NextRequest) {
 
   // Build the message payload
   const messagePayload: Record<string, unknown> = {
-    ...parsed.data,
+    ...(body as Record<string, unknown>),
     direction,
   };
 
@@ -116,6 +97,6 @@ export async function POST(req: NextRequest) {
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) throw dbError(error.message);
   return NextResponse.json(data, { status: 201 });
-}
+});

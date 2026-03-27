@@ -1,8 +1,8 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
+import { dbError,forbidden } from '@/lib/api/errors';
 import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClient, createUserClientSafe } from '@/lib/supabase/server';
 
 async function resolveActiveTradePartner(
@@ -22,16 +22,11 @@ async function resolveActiveTradePartner(
  * GET /api/portal/trade/tasks
  * Returns tasks assigned to this trade partner's account, scoped by portal_permissions.
  */
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
+export const GET = withApiRoute({}, async ({ req, userId }) => {
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
   const pa = await resolveActiveTradePartner(userId, supabase);
-  if (!pa) return NextResponse.json({ error: 'Trade partner access only' }, { status: 403 });
+  if (!pa) throw forbidden('Trade partner access only');
 
   const projectId = req.nextUrl.searchParams.get('project_id');
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
@@ -50,7 +45,7 @@ export async function GET(req: NextRequest) {
   if (projectId) query = query.eq('project_id', projectId);
 
   const { data, error, count } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) throw dbError(error.message);
 
   return NextResponse.json(paginatedResponse(data, count, limit, offset));
-}
+});

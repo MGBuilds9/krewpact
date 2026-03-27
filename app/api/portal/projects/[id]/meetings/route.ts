@@ -1,8 +1,8 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
+import { dbError,forbidden } from '@/lib/api/errors';
 import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClient, createUserClientSafe } from '@/lib/supabase/server';
 
 async function resolvePortalAccess(
@@ -35,19 +35,13 @@ async function resolvePortalAccess(
  * Returns portal-published meeting notes (read-only).
  * Guard: active portal account with permission for this project.
  */
-export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id: projectId } = await params;
+export const GET = withApiRoute({}, async ({ req, userId, params }) => {
+  const projectId = params.id;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
   const access = await resolvePortalAccess(supabase, userId, projectId);
-  if (!access) return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+  if (!access) throw forbidden('Access denied');
 
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
 
@@ -61,7 +55,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     .order('meeting_date', { ascending: false })
     .range(offset, offset + limit - 1);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) throw dbError(error.message);
 
   await supabase.from('portal_view_logs').insert({
     project_id: projectId,
@@ -71,4 +65,4 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   });
 
   return NextResponse.json(paginatedResponse(data, count, limit, offset));
-}
+});

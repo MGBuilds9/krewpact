@@ -1,7 +1,7 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError,forbidden } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClient, createUserClientSafe } from '@/lib/supabase/server';
 
 async function resolvePortalAccess(
@@ -34,19 +34,13 @@ async function resolvePortalAccess(
  * Returns milestones and tasks for progress tracking.
  * Guard: active portal account with permission for this project.
  */
-export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id: projectId } = await params;
+export const GET = withApiRoute({}, async ({ userId, params }) => {
+  const projectId = params.id;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
   const access = await resolvePortalAccess(supabase, userId, projectId);
-  if (!access) return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+  if (!access) throw forbidden('Access denied');
 
   const [milestonesResult, tasksResult] = await Promise.all([
     supabase
@@ -61,12 +55,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       .order('created_at', { ascending: true }),
   ]);
 
-  if (milestonesResult.error) {
-    return NextResponse.json({ error: milestonesResult.error.message }, { status: 500 });
-  }
-  if (tasksResult.error) {
-    return NextResponse.json({ error: tasksResult.error.message }, { status: 500 });
-  }
+  if (milestonesResult.error) throw dbError(milestonesResult.error.message);
+  if (tasksResult.error) throw dbError(tasksResult.error.message);
 
   await supabase.from('portal_view_logs').insert({
     project_id: projectId,
@@ -89,4 +79,4 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       completion_pct: total > 0 ? Math.round((completed / total) * 100) : 0,
     },
   });
-}
+});

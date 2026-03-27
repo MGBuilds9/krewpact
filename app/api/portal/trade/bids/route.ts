@@ -1,9 +1,9 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { dbError,forbidden } from '@/lib/api/errors';
 import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClient, createUserClientSafe } from '@/lib/supabase/server';
 
 const bidSchema = z.object({
@@ -31,16 +31,11 @@ async function resolveTradePortalAccount(
  * GET /api/portal/trade/bids
  * Returns bids submitted by this trade partner.
  */
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
+export const GET = withApiRoute({}, async ({ req, userId }) => {
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
   const pa = await resolveTradePortalAccount(userId, supabase);
-  if (!pa) return NextResponse.json({ error: 'Trade partner access only' }, { status: 403 });
+  if (!pa) throw forbidden('Trade partner access only');
 
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
 
@@ -58,41 +53,25 @@ export async function GET(req: NextRequest) {
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) throw dbError(error.message);
   return NextResponse.json(paginatedResponse(bids, count, limit, offset));
-}
+});
 
 /**
  * POST /api/portal/trade/bids
  * Submits a new bid/proposal from the trade portal.
  */
-export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = bidSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-
+export const POST = withApiRoute({ bodySchema: bidSchema }, async ({ userId, body }) => {
   const { client: supabase, error: authError } = await createUserClientSafe();
-
   if (authError) return authError;
   const pa = await resolveTradePortalAccount(userId, supabase);
-  if (!pa) return NextResponse.json({ error: 'Trade partner access only' }, { status: 403 });
+  if (!pa) throw forbidden('Trade partner access only');
 
   // Find the opportunity tied to this project
   const { data: opportunity } = await supabase
     .from('opportunities')
     .select('id')
-    .eq('metadata->>project_id', parsed.data.project_id)
+    .eq('metadata->>project_id', body.project_id)
     .single();
 
   const { data: proposal, error } = await supabase
@@ -100,17 +79,17 @@ export async function POST(req: NextRequest) {
     .insert({
       opportunity_id: opportunity?.id ?? null,
       status: 'draft',
-      total_amount: parsed.data.bid_amount,
-      notes: `${parsed.data.scope_summary}${parsed.data.notes ? '\n\n' + parsed.data.notes : ''}`,
+      total_amount: body.bid_amount,
+      notes: `${body.scope_summary}${body.notes ? '\n\n' + body.notes : ''}`,
       metadata: {
         source_portal_id: pa.id,
-        project_id: parsed.data.project_id,
+        project_id: body.project_id,
         bid_type: 'trade_portal',
       },
     })
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) throw dbError(error.message);
   return NextResponse.json(proposal, { status: 201 });
-}
+});

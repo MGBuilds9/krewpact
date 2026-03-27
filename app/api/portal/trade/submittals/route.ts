@@ -1,9 +1,9 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { dbError,forbidden } from '@/lib/api/errors';
 import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClient, createUserClientSafe } from '@/lib/supabase/server';
 
 const submittalSchema = z.object({
@@ -31,16 +31,11 @@ async function resolveActiveTradePartner(
  * GET /api/portal/trade/submittals
  * Returns submittals submitted by this trade partner.
  */
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
+export const GET = withApiRoute({}, async ({ req, userId }) => {
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
   const pa = await resolveActiveTradePartner(userId, supabase);
-  if (!pa) return NextResponse.json({ error: 'Trade partner access only' }, { status: 403 });
+  if (!pa) throw forbidden('Trade partner access only');
 
   const projectId = req.nextUrl.searchParams.get('project_id');
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
@@ -58,67 +53,51 @@ export async function GET(req: NextRequest) {
   if (projectId) query = query.eq('project_id', projectId);
 
   const { data, error, count } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) throw dbError(error.message);
 
   return NextResponse.json(paginatedResponse(data, count, limit, offset));
-}
+});
 
 /**
  * POST /api/portal/trade/submittals
  * Creates a new submittal. Submittal revisions are immutable once submitted.
  */
-export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = submittalSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-
+export const POST = withApiRoute({ bodySchema: submittalSchema }, async ({ userId, body }) => {
   const { client: supabase, error: authError } = await createUserClientSafe();
-
   if (authError) return authError;
   const pa = await resolveActiveTradePartner(userId, supabase);
-  if (!pa) return NextResponse.json({ error: 'Trade partner access only' }, { status: 403 });
+  if (!pa) throw forbidden('Trade partner access only');
 
   // Verify portal has permission on this project
   const { data: perm } = await supabase
     .from('portal_permissions')
     .select('id')
     .eq('portal_account_id', pa.id)
-    .eq('project_id', parsed.data.project_id)
+    .eq('project_id', body.project_id)
     .single();
 
-  if (!perm) return NextResponse.json({ error: 'No access to this project' }, { status: 403 });
+  if (!perm) throw forbidden('No access to this project');
 
   // Create the submittal
   const { data, error } = await supabase
     .from('submittals')
     .insert({
-      project_id: parsed.data.project_id,
-      submittal_type: parsed.data.submittal_type,
-      title: parsed.data.title,
-      description: parsed.data.description ?? null,
+      project_id: body.project_id,
+      submittal_type: body.submittal_type,
+      title: body.title,
+      description: body.description ?? null,
       status: 'submitted',
       revision_no: 1,
       submitted_at: new Date().toISOString(),
       metadata: {
         trade_portal_id: pa.id,
-        file_ids: parsed.data.file_ids ?? [],
+        file_ids: body.file_ids ?? [],
         source: 'trade_portal',
       },
     })
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) throw dbError(error.message);
   return NextResponse.json(data, { status: 201 });
-}
+});

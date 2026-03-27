@@ -1,27 +1,17 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { errorResponse, UNAUTHORIZED } from '@/lib/api/errors';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { serverError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { isFeatureEnabled } from '@/lib/feature-flags';
 import { confirmGoodsReceipt } from '@/lib/inventory/goods-receipts';
-import { logger } from '@/lib/logger';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
-type RouteContext = { params: Promise<{ id: string }> };
-
-export async function POST(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return errorResponse(UNAUTHORIZED);
-
+export const POST = withApiRoute({}, async ({ params, userId }) => {
   if (!isFeatureEnabled('inventory_management')) {
     return NextResponse.json({ error: 'Feature not enabled' }, { status: 404 });
   }
 
-  const rl = await rateLimit(req, { limit: 30, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id } = await context.params;
+  const { id } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -30,7 +20,6 @@ export async function POST(req: NextRequest, context: RouteContext) {
     return NextResponse.json(gr);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Failed to confirm goods receipt';
-    logger.error('Failed to confirm goods receipt', { error: err, id });
     return NextResponse.json({ error: message }, { status: 400 });
   }
-}
+});

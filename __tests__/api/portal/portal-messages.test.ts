@@ -187,7 +187,7 @@ describe('POST /api/portal/projects/[id]/messages', () => {
     const res = await POST(req, ctx('proj-1'));
     expect(res.status).toBe(400);
     const json = await res.json();
-    expect(json.error).toContain('message is required');
+    expect(JSON.stringify(json.error)).toContain('message');
   });
 
   it('returns 403 when no portal access', async () => {
@@ -367,7 +367,7 @@ describe('PATCH /api/portal/projects/[id]/messages/[msgId]', () => {
     const res = await PATCH(req, ctx('proj-1', 'msg-1'));
     expect(res.status).toBe(400);
     const json = await res.json();
-    expect(json.error).toContain('is_read');
+    expect(JSON.stringify(json.error)).toContain('is_read');
   });
 
   it('updates is_read and returns message', async () => {

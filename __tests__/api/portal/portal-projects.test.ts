@@ -86,7 +86,7 @@ describe('GET /api/portal/projects', () => {
     const res = await GET(makeRequest('/api/portal/projects'));
     expect(res.status).toBe(403);
     const body = await res.json();
-    expect(body.error).toContain('not active');
+    expect(body.error.message).toContain('not active');
   });
 
   it('returns projects with portal account info when active', async () => {

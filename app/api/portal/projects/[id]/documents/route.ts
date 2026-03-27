@@ -1,8 +1,8 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
+import { dbError,forbidden } from '@/lib/api/errors';
 import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClient, createUserClientSafe } from '@/lib/supabase/server';
 
 async function resolvePortalPermission(
@@ -38,26 +38,18 @@ async function resolvePortalPermission(
  * Returns documents that are published to the portal for this project.
  * Permission guard: `view_documents` must be true in permission_set.
  */
-export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-  const { id: projectId } = await params;
+export const GET = withApiRoute({}, async ({ req, userId, params }) => {
+  const projectId = params.id;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
   const access = await resolvePortalPermission(supabase, userId, projectId);
-  if (!access) return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+  if (!access) throw forbidden('Access denied');
 
   // Check if document viewing is in permission_set (default to allow if not explicitly set)
   const canViewDocs = access.permSet.view_documents !== false;
   if (!canViewDocs) {
-    return NextResponse.json(
-      { error: 'Document access not granted for this project' },
-      { status: 403 },
-    );
+    throw forbidden('Document access not granted for this project');
   }
 
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
@@ -77,7 +69,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) throw dbError(error.message);
 
   // Log the view
   await supabase.from('portal_view_logs').insert({
@@ -88,4 +80,4 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   });
 
   return NextResponse.json(paginatedResponse(documents, count, limit, offset));
-}
+});

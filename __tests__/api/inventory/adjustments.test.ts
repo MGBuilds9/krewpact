@@ -17,6 +17,21 @@ vi.mock('@/lib/api/rate-limit', () => ({
   rateLimitResponse: vi.fn(),
 }));
 
+vi.mock('@/lib/request-context', () => ({
+  requestContext: { run: vi.fn((_, fn) => fn()) },
+  generateRequestId: vi.fn().mockReturnValue('req_test'),
+}));
+
+vi.mock('@/lib/logger', () => ({
+  logger: {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    child: vi.fn().mockReturnThis(),
+  },
+}));
+
 vi.mock('@/lib/inventory/ledger', () => ({
   createLedgerEntry: vi.fn(),
 }));
@@ -59,6 +74,8 @@ describe('POST /api/inventory/adjustments', () => {
     mockClerkUnauth(mockAuth);
     const res = await POST(makeRequest('/api/inventory/adjustments', { method: 'POST' }));
     expect(res.status).toBe(401);
+    const body = await res.json();
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns 404 when feature is disabled', async () => {
@@ -122,6 +139,8 @@ describe('POST /api/inventory/adjustments', () => {
 
     const res = await POST(makeJsonRequest('/api/inventory/adjustments', VALID_BODY));
     expect(res.status).toBe(500);
+    const body = await res.json();
+    expect(body.error.code).toBe('DB_ERROR');
   });
 
   it('returns 400 when body is invalid JSON', async () => {
