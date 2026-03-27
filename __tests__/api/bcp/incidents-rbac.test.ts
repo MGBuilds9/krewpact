@@ -40,9 +40,7 @@ describe('RBAC: GET /api/bcp/incidents', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('returns 403 for user without required role', async () => {
-    mockRequireRole.mockResolvedValue(
-      NextResponse.json({ error: 'Forbidden' }, { status: 403 }),
-    );
+    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Forbidden' }, { status: 403 }));
     const { GET } = await import('@/app/api/bcp/incidents/route');
     const res = await GET(makeRequest('/api/bcp/incidents'));
     expect(res.status).toBe(403);
@@ -70,9 +68,7 @@ describe('RBAC: POST /api/bcp/incidents', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('returns 403 for user without required role', async () => {
-    mockRequireRole.mockResolvedValue(
-      NextResponse.json({ error: 'Forbidden' }, { status: 403 }),
-    );
+    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Forbidden' }, { status: 403 }));
     const { POST } = await import('@/app/api/bcp/incidents/route');
     const res = await POST(makeJsonRequest('/api/bcp/incidents', { title: 'Outage' }));
     expect(res.status).toBe(403);
@@ -80,11 +76,20 @@ describe('RBAC: POST /api/bcp/incidents', () => {
 
   it('returns 201 for executive with valid body', async () => {
     mockRequireRole.mockResolvedValue({ userId: 'exec-user', roles: ['executive'] });
-    const newIncident = { id: 'inc-1', incident_number: 'INC-001', severity: 'high', status: 'open' };
+    const newIncident = {
+      id: 'inc-1',
+      incident_number: 'INC-001',
+      severity: 'high',
+      status: 'open',
+    };
     mockFrom.mockReturnValue(paginatedChain([newIncident], 1));
     const { POST } = await import('@/app/api/bcp/incidents/route');
     const res = await POST(
-      makeJsonRequest('/api/bcp/incidents', { incident_number: 'INC-001', title: 'Network Outage', severity: 'sev1' }),
+      makeJsonRequest('/api/bcp/incidents', {
+        incident_number: 'INC-001',
+        title: 'Network Outage',
+        severity: 'sev1',
+      }),
     );
     expect(res.status).toBe(201);
   });

@@ -27,7 +27,11 @@ const ENROLLMENT_STATUS_COLORS: Record<string, string> = {
 };
 
 function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
+  return new Date(dateStr).toLocaleDateString('en-CA', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
 }
 
 export interface EnrollmentsTabProps {
@@ -37,13 +41,21 @@ export interface EnrollmentsTabProps {
   resolveLeadName: (leadId: string) => string;
 }
 
-export function EnrollmentsTab({ enrollmentList, orgPush, onEnrollClick, resolveLeadName }: EnrollmentsTabProps) {
+export function EnrollmentsTab({
+  enrollmentList,
+  orgPush,
+  onEnrollClick,
+  resolveLeadName,
+}: EnrollmentsTabProps) {
   if (enrollmentList.length === 0) {
     return (
       <Card>
         <CardContent className="py-10 text-center">
           <p className="text-muted-foreground mb-4">No leads enrolled in this sequence yet.</p>
-          <Button onClick={onEnrollClick}><UserPlus className="h-4 w-4 mr-2" />Enroll Lead</Button>
+          <Button onClick={onEnrollClick}>
+            <UserPlus className="h-4 w-4 mr-2" />
+            Enroll Lead
+          </Button>
         </CardContent>
       </Card>
     );
@@ -62,16 +74,29 @@ export function EnrollmentsTab({ enrollmentList, orgPush, onEnrollClick, resolve
         </TableHeader>
         <TableBody>
           {enrollmentList.map((enrollment) => (
-            <TableRow key={enrollment.id} className="cursor-pointer hover:bg-muted/50" onClick={() => orgPush(`/crm/leads/${enrollment.lead_id}`)}>
+            <TableRow
+              key={enrollment.id}
+              className="cursor-pointer hover:bg-muted/50"
+              onClick={() => orgPush(`/crm/leads/${enrollment.lead_id}`)}
+            >
               <TableCell className="text-sm">{resolveLeadName(enrollment.lead_id)}</TableCell>
-              <TableCell className="text-sm text-muted-foreground">Step {enrollment.current_step}</TableCell>
+              <TableCell className="text-sm text-muted-foreground">
+                Step {enrollment.current_step}
+              </TableCell>
               <TableCell>
-                <Badge variant="outline" className={`border text-xs ${ENROLLMENT_STATUS_COLORS[enrollment.status] ?? ''}`}>
+                <Badge
+                  variant="outline"
+                  className={`border text-xs ${ENROLLMENT_STATUS_COLORS[enrollment.status] ?? ''}`}
+                >
                   {enrollment.status.charAt(0).toUpperCase() + enrollment.status.slice(1)}
                 </Badge>
               </TableCell>
-              <TableCell className="text-sm text-muted-foreground">{formatDate(enrollment.enrolled_at)}</TableCell>
-              <TableCell className="text-sm text-muted-foreground">{enrollment.next_step_at ? formatDate(enrollment.next_step_at) : '-'}</TableCell>
+              <TableCell className="text-sm text-muted-foreground">
+                {formatDate(enrollment.enrolled_at)}
+              </TableCell>
+              <TableCell className="text-sm text-muted-foreground">
+                {enrollment.next_step_at ? formatDate(enrollment.next_step_at) : '-'}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -81,23 +106,48 @@ export function EnrollmentsTab({ enrollmentList, orgPush, onEnrollClick, resolve
 }
 
 export function DetailsTab({ sequence, stepCount }: { sequence: SequenceData; stepCount: number }) {
-  const triggerLabel = sequence.trigger_type.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  const triggerLabel = sequence.trigger_type
+    .split('_')
+    .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
   const { name: divisionName } = useDivisionName(sequence.division_id);
   return (
     <Card>
-      <CardHeader><CardTitle>Sequence Details</CardTitle></CardHeader>
+      <CardHeader>
+        <CardTitle>Sequence Details</CardTitle>
+      </CardHeader>
       <CardContent>
         <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div><dt className="text-sm font-medium text-muted-foreground">Trigger Type</dt><dd className="text-sm">{triggerLabel}</dd></div>
-          <div><dt className="text-sm font-medium text-muted-foreground">Division</dt><dd className="text-sm">{divisionName}</dd></div>
-          <div><dt className="text-sm font-medium text-muted-foreground">Status</dt><dd className="text-sm">{sequence.is_active ? 'Active' : 'Inactive'}</dd></div>
-          <div><dt className="text-sm font-medium text-muted-foreground">Total Steps</dt><dd className="text-sm">{stepCount}</dd></div>
-          <div><dt className="text-sm font-medium text-muted-foreground">Created</dt><dd className="text-sm">{formatDate(sequence.created_at)}</dd></div>
-          <div><dt className="text-sm font-medium text-muted-foreground">Last Updated</dt><dd className="text-sm">{formatDate(sequence.updated_at)}</dd></div>
+          <div>
+            <dt className="text-sm font-medium text-muted-foreground">Trigger Type</dt>
+            <dd className="text-sm">{triggerLabel}</dd>
+          </div>
+          <div>
+            <dt className="text-sm font-medium text-muted-foreground">Division</dt>
+            <dd className="text-sm">{divisionName}</dd>
+          </div>
+          <div>
+            <dt className="text-sm font-medium text-muted-foreground">Status</dt>
+            <dd className="text-sm">{sequence.is_active ? 'Active' : 'Inactive'}</dd>
+          </div>
+          <div>
+            <dt className="text-sm font-medium text-muted-foreground">Total Steps</dt>
+            <dd className="text-sm">{stepCount}</dd>
+          </div>
+          <div>
+            <dt className="text-sm font-medium text-muted-foreground">Created</dt>
+            <dd className="text-sm">{formatDate(sequence.created_at)}</dd>
+          </div>
+          <div>
+            <dt className="text-sm font-medium text-muted-foreground">Last Updated</dt>
+            <dd className="text-sm">{formatDate(sequence.updated_at)}</dd>
+          </div>
           {sequence.trigger_conditions && (
             <div className="sm:col-span-2">
               <dt className="text-sm font-medium text-muted-foreground">Trigger Conditions</dt>
-              <dd className="text-sm font-mono bg-muted rounded p-2 mt-1 text-xs">{JSON.stringify(sequence.trigger_conditions, null, 2)}</dd>
+              <dd className="text-sm font-mono bg-muted rounded p-2 mt-1 text-xs">
+                {JSON.stringify(sequence.trigger_conditions, null, 2)}
+              </dd>
             </div>
           )}
         </dl>

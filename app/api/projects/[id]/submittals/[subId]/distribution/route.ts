@@ -38,7 +38,9 @@ export async function GET(req: NextRequest, context: RouteContext) {
     const log = await getDistributionLog(subId);
     return NextResponse.json({ data: log, total: log.length });
   } catch (err: unknown) {
-    logger.error('[submittal-distribution] GET failed', { message: err instanceof Error ? err.message : String(err) });
+    logger.error('[submittal-distribution] GET failed', {
+      message: err instanceof Error ? err.message : String(err),
+    });
     return NextResponse.json({ error: 'Failed to get distribution log' }, { status: 500 });
   }
 }
@@ -84,7 +86,9 @@ export async function POST(req: NextRequest, context: RouteContext) {
     const entries = await createDistributionLog(subId, parsed.data.recipients);
     return NextResponse.json({ data: entries, total: entries.length }, { status: 201 });
   } catch (err: unknown) {
-    logger.error('[submittal-distribution] POST failed', { message: err instanceof Error ? err.message : String(err) });
+    logger.error('[submittal-distribution] POST failed', {
+      message: err instanceof Error ? err.message : String(err),
+    });
     return NextResponse.json({ error: 'Failed to create distribution log' }, { status: 500 });
   }
 }

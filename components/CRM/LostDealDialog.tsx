@@ -40,6 +40,73 @@ interface LostDealDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+function LostDealForm({
+  lostReason,
+  setLostReason,
+  lostNotes,
+  setLostNotes,
+  competitor,
+  setCompetitor,
+  reopenAsLead,
+  setReopenAsLead,
+}: {
+  lostReason: string;
+  setLostReason: (v: string) => void;
+  lostNotes: string;
+  setLostNotes: (v: string) => void;
+  competitor: string;
+  setCompetitor: (v: string) => void;
+  reopenAsLead: boolean;
+  setReopenAsLead: (v: boolean) => void;
+}) {
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="lost-reason">Lost Reason</Label>
+        <Select value={lostReason} onValueChange={setLostReason}>
+          <SelectTrigger id="lost-reason">
+            <SelectValue placeholder="Select a reason" />
+          </SelectTrigger>
+          <SelectContent>
+            {LOST_REASONS.map((reason) => (
+              <SelectItem key={reason} value={reason}>
+                {reason}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="lost-notes">Notes</Label>
+        <Textarea
+          id="lost-notes"
+          value={lostNotes}
+          onChange={(e) => setLostNotes(e.target.value)}
+          placeholder="Additional details about why the deal was lost..."
+          rows={3}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="competitor-name">Competitor (optional)</Label>
+        <Input
+          id="competitor-name"
+          value={competitor}
+          onChange={(e) => setCompetitor(e.target.value)}
+          placeholder="Name of competing company"
+        />
+      </div>
+      <div className="flex items-center space-x-2">
+        <Checkbox
+          id="reopen-as-lead"
+          checked={reopenAsLead}
+          onCheckedChange={(checked) => setReopenAsLead(checked === true)}
+        />
+        <Label htmlFor="reopen-as-lead">Re-open as Lead for re-nurture</Label>
+      </div>
+    </div>
+  );
+}
+
 export function LostDealDialog({ opportunity, open, onOpenChange }: LostDealDialogProps) {
   const [lostReason, setLostReason] = useState('');
   const [lostNotes, setLostNotes] = useState('');
@@ -47,7 +114,6 @@ export function LostDealDialog({ opportunity, open, onOpenChange }: LostDealDial
   const [reopenAsLead, setReopenAsLead] = useState(false);
   const markLost = useMarkOpportunityLost();
   const isAlreadyLost = opportunity.stage === 'closed_lost';
-  const canMarkLost = !isAlreadyLost && lostReason.length > 0;
 
   const handleSubmit = async () => {
     try {
@@ -60,7 +126,7 @@ export function LostDealDialog({ opportunity, open, onOpenChange }: LostDealDial
       });
       onOpenChange(false);
     } catch {
-      // Error handled by React Query
+      /* Error handled by React Query */
     }
   };
 
@@ -78,57 +144,23 @@ export function LostDealDialog({ opportunity, open, onOpenChange }: LostDealDial
             This opportunity is already marked as lost.
           </div>
         )}
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="lost-reason">Lost Reason</Label>
-            <Select value={lostReason} onValueChange={setLostReason}>
-              <SelectTrigger id="lost-reason">
-                <SelectValue placeholder="Select a reason" />
-              </SelectTrigger>
-              <SelectContent>
-                {LOST_REASONS.map((reason) => (
-                  <SelectItem key={reason} value={reason}>
-                    {reason}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="lost-notes">Notes</Label>
-            <Textarea
-              id="lost-notes"
-              value={lostNotes}
-              onChange={(e) => setLostNotes(e.target.value)}
-              placeholder="Additional details about why the deal was lost..."
-              rows={3}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="competitor-name">Competitor (optional)</Label>
-            <Input
-              id="competitor-name"
-              value={competitor}
-              onChange={(e) => setCompetitor(e.target.value)}
-              placeholder="Name of competing company"
-            />
-          </div>
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="reopen-as-lead"
-              checked={reopenAsLead}
-              onCheckedChange={(checked) => setReopenAsLead(checked === true)}
-            />
-            <Label htmlFor="reopen-as-lead">Re-open as Lead for re-nurture</Label>
-          </div>
-        </div>
+        <LostDealForm
+          lostReason={lostReason}
+          setLostReason={setLostReason}
+          lostNotes={lostNotes}
+          setLostNotes={setLostNotes}
+          competitor={competitor}
+          setCompetitor={setCompetitor}
+          reopenAsLead={reopenAsLead}
+          setReopenAsLead={setReopenAsLead}
+        />
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={!canMarkLost || markLost.isPending}
+            disabled={isAlreadyLost || !lostReason || markLost.isPending}
             variant="destructive"
           >
             {markLost.isPending ? 'Saving...' : 'Mark as Lost'}

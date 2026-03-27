@@ -39,11 +39,7 @@ export function PayrollPeriodSelector({
   return (
     <div className="flex items-center gap-2">
       <CalendarRange className="h-4 w-4 shrink-0 text-muted-foreground" />
-      <Select
-        value={value?.label ?? ''}
-        onValueChange={handleSelect}
-        disabled={disabled}
-      >
+      <Select value={value?.label ?? ''} onValueChange={handleSelect} disabled={disabled}>
         <SelectTrigger className="w-64">
           <SelectValue placeholder="Select pay period…" />
         </SelectTrigger>
@@ -60,9 +56,7 @@ export function PayrollPeriodSelector({
           variant="ghost"
           size="sm"
           className="text-xs text-muted-foreground"
-          onClick={() =>
-            onChange({ start: value.start, end: value.end, label: value.label })
-          }
+          onClick={() => onChange({ start: value.start, end: value.end, label: value.label })}
           disabled={disabled}
         >
           Current

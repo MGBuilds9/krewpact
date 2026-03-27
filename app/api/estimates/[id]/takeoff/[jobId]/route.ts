@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 import { logger } from '@/lib/logger';
-import { createUserClientSafe } from '@/lib/supabase/server';
+import { createUserClientSafe, UserClientType } from '@/lib/supabase/server';
 import { takeoffEngine } from '@/lib/takeoff/client';
 import { ACTIVE_JOB_STATUSES } from '@/lib/takeoff/types';
 
@@ -58,14 +58,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
         // If engine says completed but no draft lines in DB, sync them
         if (newStatus === 'completed') {
-          const { count } = await supabase
-            .from('takeoff_draft_lines')
-            .select('id', { count: 'exact', head: true })
-            .eq('job_id', jobId);
-
-          if (!count || count === 0) {
-            await syncLinesFromEngine(supabase, jobId, engineJobId);
-          }
+          await syncLinesIfMissing(supabase, jobId, engineJobId);
         }
 
         return NextResponse.json({ ...job, status: newStatus });
@@ -145,9 +138,22 @@ export async function POST(req: NextRequest, context: RouteContext) {
 // Helpers
 // ---------------------------------------------------------------------------
 
+async function syncLinesIfMissing(
+  supabase: UserClientType,
+  jobId: string,
+  engineJobId: string,
+): Promise<void> {
+  const { count } = await supabase
+    .from('takeoff_draft_lines')
+    .select('id', { count: 'exact', head: true })
+    .eq('job_id', jobId);
+  if (!count || count === 0) {
+    await syncLinesFromEngine(supabase, jobId, engineJobId);
+  }
+}
+
 async function syncLinesFromEngine(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabase: any,
+  supabase: UserClientType,
   jobId: string,
   engineJobId: string,
 ): Promise<void> {

@@ -47,6 +47,123 @@ const PO_AMOUNT_FIELDS: { name: keyof FormValues; label: string }[] = [
   { name: 'total_amount', label: 'Total Amount (CAD)' },
 ];
 
+const PO_DEFAULTS: FormValues = {
+  po_number: '',
+  supplier_name: '',
+  po_date: '',
+  subtotal_amount: '',
+  tax_amount: '',
+  total_amount: '',
+  erp_docname: '',
+  status: undefined,
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function POSnapshotFields({ form, isLoading }: { form: any; isLoading?: boolean }) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <FormField
+        control={form.control}
+        name="po_number"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>PO Number</FormLabel>
+            <FormControl>
+              <Input placeholder="PO-2026-001" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="supplier_name"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Supplier Name</FormLabel>
+            <FormControl>
+              <Input placeholder="Supplier name" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="po_date"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>PO Date</FormLabel>
+            <FormControl>
+              <Input type="date" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="status"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Status</FormLabel>
+            <Select onValueChange={field.onChange} value={field.value}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="submitted">Submitted</SelectItem>
+                <SelectItem value="approved">Approved</SelectItem>
+                <SelectItem value="received">Received</SelectItem>
+                <SelectItem value="closed">Closed</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      {PO_AMOUNT_FIELDS.map(({ name, label }) => (
+        <FormField
+          key={name}
+          control={form.control}
+          name={name}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{label}</FormLabel>
+              <FormControl>
+                <Input type="number" step="0.01" placeholder="0.00" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      ))}
+      <FormField
+        control={form.control}
+        name="erp_docname"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>ERP Doc Name</FormLabel>
+            <FormControl>
+              <Input placeholder="ERPNext document reference" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <div className="col-span-2 flex justify-end">
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? 'Saving...' : 'Save PO Snapshot'}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export function POSnapshotReviewForm({
   defaultValues,
   onSubmit,
@@ -54,16 +171,7 @@ export function POSnapshotReviewForm({
 }: POSnapshotReviewFormProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      po_number: '',
-      supplier_name: '',
-      po_date: '',
-      subtotal_amount: '',
-      tax_amount: '',
-      total_amount: '',
-      erp_docname: '',
-      ...defaultValues,
-    },
+    defaultValues: { ...PO_DEFAULTS, ...defaultValues },
   });
 
   function handleSubmit(values: FormValues) {
@@ -79,106 +187,7 @@ export function POSnapshotReviewForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="po_number"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>PO Number</FormLabel>
-                <FormControl>
-                  <Input placeholder="PO-2026-001" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="supplier_name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Supplier Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="Supplier name" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="po_date"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>PO Date</FormLabel>
-                <FormControl>
-                  <Input type="date" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="status"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Status</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="submitted">Submitted</SelectItem>
-                    <SelectItem value="approved">Approved</SelectItem>
-                    <SelectItem value="received">Received</SelectItem>
-                    <SelectItem value="closed">Closed</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          {PO_AMOUNT_FIELDS.map(({ name, label }) => (
-            <FormField
-              key={name}
-              control={form.control}
-              name={name}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{label}</FormLabel>
-                  <FormControl>
-                    <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          ))}
-          <FormField
-            control={form.control}
-            name="erp_docname"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>ERP Doc Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="ERPNext document reference" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        <div className="flex justify-end">
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? 'Saving...' : 'Save PO Snapshot'}
-          </Button>
-        </div>
+        <POSnapshotFields form={form} isLoading={isLoading} />
       </form>
     </Form>
   );

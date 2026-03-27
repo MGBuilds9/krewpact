@@ -98,6 +98,53 @@ function EnrollmentRow({
   );
 }
 
+interface EnrollmentCountsProps {
+  counts: SequenceAnalytics['enrollments'];
+  completionRate: number;
+  totalSteps: number;
+}
+
+function EnrollmentCounts({ counts, completionRate, totalSteps }: EnrollmentCountsProps) {
+  return (
+    <>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="flex items-center gap-2 text-sm">
+          <Users className="h-4 w-4 text-blue-500" />
+          <span className="text-muted-foreground">Active:</span>
+          <span className="font-medium">{counts.active}</span>
+        </div>
+        <div className="flex items-center gap-2 text-sm">
+          <CheckCircle2 className="h-4 w-4 text-green-500" />
+          <span className="text-muted-foreground">Done:</span>
+          <span className="font-medium">{counts.completed}</span>
+        </div>
+        <div className="flex items-center gap-2 text-sm">
+          <Pause className="h-4 w-4 text-yellow-500" />
+          <span className="text-muted-foreground">Paused:</span>
+          <span className="font-medium">{counts.paused}</span>
+        </div>
+        <div className="flex items-center gap-2 text-sm">
+          <AlertCircle className="h-4 w-4 text-red-500" />
+          <span className="text-muted-foreground">Failed:</span>
+          <span className="font-medium">{counts.failed}</span>
+        </div>
+      </div>
+      <div className="space-y-1">
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <span>Completion rate</span>
+          <span>
+            {completionRate}% ({counts.completed}/{counts.total})
+          </span>
+        </div>
+        <Progress value={completionRate} className="h-2" />
+      </div>
+      <div className="text-xs text-muted-foreground">
+        {totalSteps} step{totalSteps !== 1 ? 's' : ''} in sequence
+      </div>
+    </>
+  );
+}
+
 export function SequenceMonitorCard({ analytics }: SequenceMonitorCardProps) {
   const [expanded, setExpanded] = useState(false);
   const queryClient = useQueryClient();
@@ -108,6 +155,7 @@ export function SequenceMonitorCard({ analytics }: SequenceMonitorCardProps) {
   );
   const { enrollments: counts } = analytics;
   const completionRate = counts.total > 0 ? Math.round((counts.completed / counts.total) * 100) : 0;
+  const enrollmentList = Array.isArray(enrollments) ? enrollments : [];
 
   async function handlePauseResume(enrollmentId: string, action: 'pause' | 'resume') {
     await apiFetch(`/api/crm/sequences/enrollments/${enrollmentId}`, {
@@ -117,8 +165,6 @@ export function SequenceMonitorCard({ analytics }: SequenceMonitorCardProps) {
     queryClient.invalidateQueries({ queryKey: ['sequence-enrollments'] });
     queryClient.invalidateQueries({ queryKey: ['sequence-analytics'] });
   }
-
-  const enrollmentList = Array.isArray(enrollments) ? enrollments : [];
 
   return (
     <Card>
@@ -156,40 +202,11 @@ export function SequenceMonitorCard({ analytics }: SequenceMonitorCardProps) {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="flex items-center gap-2 text-sm">
-            <Users className="h-4 w-4 text-blue-500" />
-            <span className="text-muted-foreground">Active:</span>
-            <span className="font-medium">{counts.active}</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
-            <span className="text-muted-foreground">Done:</span>
-            <span className="font-medium">{counts.completed}</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <Pause className="h-4 w-4 text-yellow-500" />
-            <span className="text-muted-foreground">Paused:</span>
-            <span className="font-medium">{counts.paused}</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <AlertCircle className="h-4 w-4 text-red-500" />
-            <span className="text-muted-foreground">Failed:</span>
-            <span className="font-medium">{counts.failed}</span>
-          </div>
-        </div>
-        <div className="space-y-1">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Completion rate</span>
-            <span>
-              {completionRate}% ({counts.completed}/{counts.total})
-            </span>
-          </div>
-          <Progress value={completionRate} className="h-2" />
-        </div>
-        <div className="text-xs text-muted-foreground">
-          {analytics.total_steps} step{analytics.total_steps !== 1 ? 's' : ''} in sequence
-        </div>
+        <EnrollmentCounts
+          counts={counts}
+          completionRate={completionRate}
+          totalSteps={analytics.total_steps}
+        />
         {expanded && (
           <div className="border-t pt-3 space-y-2">
             <h4 className="text-sm font-medium">Enrollments</h4>

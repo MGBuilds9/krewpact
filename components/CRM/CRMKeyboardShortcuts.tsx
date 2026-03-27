@@ -20,9 +20,7 @@ export function CRMKeyboardShortcuts({ onOpenFollowUp }: CRMKeyboardShortcutsPro
     { key: 'b', handler: () => orgPush('/crm/bidding') },
     { key: 's', handler: () => orgPush('/crm/sequences') },
     { key: 'e', handler: () => orgPush('/crm/enrichment') },
-    ...(onOpenFollowUp
-      ? [{ key: 'f', handler: onOpenFollowUp }]
-      : []),
+    ...(onOpenFollowUp ? [{ key: 'f', handler: onOpenFollowUp }] : []),
   ]);
 
   return null;

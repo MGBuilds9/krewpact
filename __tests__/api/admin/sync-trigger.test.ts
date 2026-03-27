@@ -81,9 +81,7 @@ describe('POST /api/admin/sync/trigger', () => {
     mockClerkAuth(mockAuth, 'user_admin');
     mockRoles.mockResolvedValue(['platform_admin']);
 
-    const res = await POST(
-      makeJsonRequest('/api/admin/sync/trigger', { entity_type: 'account' }),
-    );
+    const res = await POST(makeJsonRequest('/api/admin/sync/trigger', { entity_type: 'account' }));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.ok).toBe(true);
@@ -97,9 +95,7 @@ describe('POST /api/admin/sync/trigger', () => {
     mockRoles.mockResolvedValue(['platform_admin']);
     mockEnqueue.mockRejectedValueOnce(new Error('QStash unreachable'));
 
-    const res = await POST(
-      makeJsonRequest('/api/admin/sync/trigger', { entity_type: 'project' }),
-    );
+    const res = await POST(makeJsonRequest('/api/admin/sync/trigger', { entity_type: 'project' }));
     expect(res.status).toBe(500);
     const body = await res.json();
     expect(body.error).toBe('Failed to trigger sync');

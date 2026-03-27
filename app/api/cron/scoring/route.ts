@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { verifyCronAuth } from '@/lib/api/cron-auth';
 import { createCronLogger } from '@/lib/api/cron-logger';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { INBOUND_SOURCES } from '@/lib/crm/constants';
 import { matchSequenceToLead } from '@/lib/crm/industry-sequence-matcher';
 import type { ScoringRule } from '@/lib/crm/scoring-engine';
@@ -184,12 +184,7 @@ async function maybeAutoEnroll(
   }
 }
 
-export async function POST(req: NextRequest): Promise<NextResponse> {
-  const { authorized } = await verifyCronAuth(req);
-  if (!authorized) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
+export const GET = withApiRoute({ auth: 'cron' }, async ({ req }) => {
   const cronLog = createCronLogger('scoring');
   const supabase = createServiceClient();
 
@@ -246,7 +241,4 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   return NextResponse.json(result);
-}
-
-// Vercel Cron Jobs sends GET requests
-export { POST as GET };
+});

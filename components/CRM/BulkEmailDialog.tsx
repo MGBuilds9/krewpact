@@ -5,13 +5,7 @@ import { useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useBulkEmail } from '@/hooks/useCRM';
 
-import {
-  ComposeStep,
-  ConfirmStep,
-  type FormState,
-  ReviewStep,
-  SentStep,
-} from './BulkEmailSteps';
+import { ComposeStep, ConfirmStep, type FormState, ReviewStep, SentStep } from './BulkEmailSteps';
 
 interface BulkEmailDialogProps {
   open: boolean;
@@ -20,7 +14,12 @@ interface BulkEmailDialogProps {
   onSendComplete: () => void;
 }
 
-export function BulkEmailDialog({ open, onOpenChange, selectedLeadIds, onSendComplete }: BulkEmailDialogProps) {
+export function BulkEmailDialog({
+  open,
+  onOpenChange,
+  selectedLeadIds,
+  onSendComplete,
+}: BulkEmailDialogProps) {
   const [form, setForm] = useState<FormState>({
     step: 'review',
     templates: [],
@@ -32,7 +31,14 @@ export function BulkEmailDialog({ open, onOpenChange, selectedLeadIds, onSendCom
   });
   const bulkEmail = useBulkEmail();
 
-  const resetForm = { step: 'review' as const, templates: [], selectedTemplateId: '', subject: '', body: '', result: null };
+  const resetForm = {
+    step: 'review' as const,
+    templates: [],
+    selectedTemplateId: '',
+    subject: '',
+    body: '',
+    result: null,
+  };
   if (open && !form._openKey) {
     setForm({ ...resetForm, _openKey: true });
     fetch('/api/crm/email-templates')
@@ -62,13 +68,31 @@ export function BulkEmailDialog({ open, onOpenChange, selectedLeadIds, onSendCom
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         {step === 'review' && (
-          <ReviewStep count={selectedLeadIds.length} onNext={() => setForm((p) => ({ ...p, step: 'compose' as const }))} onClose={() => onOpenChange(false)} />
+          <ReviewStep
+            count={selectedLeadIds.length}
+            onNext={() => setForm((p) => ({ ...p, step: 'compose' as const }))}
+            onClose={() => onOpenChange(false)}
+          />
         )}
         {step === 'compose' && (
-          <ComposeStep templates={templates} selectedTemplateId={selectedTemplateId} subject={subject} body={body} setForm={setForm} canSend={canSend} />
+          <ComposeStep
+            templates={templates}
+            selectedTemplateId={selectedTemplateId}
+            subject={subject}
+            body={body}
+            setForm={setForm}
+            canSend={canSend}
+          />
         )}
         {step === 'confirm' && (
-          <ConfirmStep count={selectedLeadIds.length} subject={subject} body={body} isPending={bulkEmail.isPending} onBack={() => setForm((p) => ({ ...p, step: 'compose' as const }))} onSend={handleSend} />
+          <ConfirmStep
+            count={selectedLeadIds.length}
+            subject={subject}
+            body={body}
+            isPending={bulkEmail.isPending}
+            onBack={() => setForm((p) => ({ ...p, step: 'compose' as const }))}
+            onSend={handleSend}
+          />
         )}
         {step === 'sent' && result && (
           <SentStep result={result} onClose={() => onOpenChange(false)} />

@@ -31,20 +31,26 @@ vi.mock('@/lib/email/resend', () => ({
 }));
 
 vi.mock('@/lib/logger', () => ({
-  logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+  logger: {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    child: vi.fn().mockReturnThis(),
+  },
 }));
 
-describe('POST /api/cron/watchdog', () => {
+describe('GET /api/cron/watchdog', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it('checks cron run status and returns results', async () => {
-    const { POST } = await import('@/app/api/cron/watchdog/route');
+    const { GET } = await import('@/app/api/cron/watchdog/route');
     const req = new NextRequest('http://localhost:3000/api/cron/watchdog', {
-      method: 'POST',
+      method: 'GET',
     });
-    const response = await POST(req);
+    const response = await GET(req);
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -57,11 +63,11 @@ describe('POST /api/cron/watchdog', () => {
     const { verifyCronAuth } = await import('@/lib/api/cron-auth');
     vi.mocked(verifyCronAuth).mockResolvedValueOnce({ authorized: false });
 
-    const { POST } = await import('@/app/api/cron/watchdog/route');
+    const { GET } = await import('@/app/api/cron/watchdog/route');
     const req = new NextRequest('http://localhost:3000/api/cron/watchdog', {
-      method: 'POST',
+      method: 'GET',
     });
-    const response = await POST(req);
+    const response = await GET(req);
     expect(response.status).toBe(401);
   });
 });

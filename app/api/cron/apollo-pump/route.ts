@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { verifyCronAuth } from '@/lib/api/cron-auth';
 import { createCronLogger } from '@/lib/api/cron-logger';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import type { ApolloPerson } from '@/lib/integrations/apollo';
 import { mapApolloToContact, mapApolloToLead, searchPeople } from '@/lib/integrations/apollo';
 import type { ApolloSearchProfile } from '@/lib/integrations/apollo-profiles';
@@ -229,12 +229,7 @@ async function runProfile(
   return result;
 }
 
-export async function POST(req: NextRequest): Promise<NextResponse> {
-  const { authorized } = await verifyCronAuth(req);
-  if (!authorized) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
+export const GET = withApiRoute({ auth: 'cron' }, async ({ req }) => {
   const cronLog = createCronLogger('apollo-pump');
   const supabase = createServiceClient();
 
@@ -319,7 +314,4 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   return NextResponse.json(response);
-}
-
-// Vercel Cron Jobs sends GET requests
-export { POST as GET };
+});

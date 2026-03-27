@@ -74,6 +74,77 @@ function MemberCard({ member, onRemove }: { member: Member; onRemove: (id: strin
   );
 }
 
+function AddMemberDialog({
+  isOpen,
+  setIsOpen,
+  availableUsers,
+  selectedUserId,
+  setSelectedUserId,
+  selectedRole,
+  setSelectedRole,
+  onAdd,
+  isPending,
+}: {
+  isOpen: boolean;
+  setIsOpen: (v: boolean) => void;
+  availableUsers: ReturnType<typeof useUsers>['data'];
+  selectedUserId: string;
+  setSelectedUserId: (v: string) => void;
+  selectedRole: string;
+  setSelectedRole: (v: string) => void;
+  onAdd: () => void;
+  isPending: boolean;
+}) {
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button>
+          <Plus className="h-4 w-4 mr-2" />
+          Add Member
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Add Team Member</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 pt-4">
+          <div>
+            <label className="text-sm font-medium">Select User</label>
+            <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choose a team member" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableUsers?.map((user) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {user.first_name} {user.last_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="text-sm font-medium">Role</label>
+            <Select value={selectedRole} onValueChange={setSelectedRole}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="manager">Manager</SelectItem>
+                <SelectItem value="supervisor">Supervisor</SelectItem>
+                <SelectItem value="worker">Worker</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <Button onClick={onAdd} className="w-full" disabled={!selectedUserId || isPending}>
+            Add to Team
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function ProjectTeamTab({ projectId }: ProjectTeamTabProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState('');
@@ -96,7 +167,6 @@ export function ProjectTeamTab({ projectId }: ProjectTeamTabProps) {
       toast.error('Error adding team member');
     }
   };
-
   const handleRemoveMember = async (memberId: string) => {
     try {
       await removeMember.mutateAsync(memberId);
@@ -110,52 +180,17 @@ export function ProjectTeamTab({ projectId }: ProjectTeamTabProps) {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Team Members</h2>
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Member
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add Team Member</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 pt-4">
-              <div>
-                <label className="text-sm font-medium">Select User</label>
-                <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose a team member" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableUsers?.map((user) => (
-                      <SelectItem key={user.id} value={user.id}>
-                        {user.first_name} {user.last_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="text-sm font-medium">Role</label>
-                <Select value={selectedRole} onValueChange={setSelectedRole}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="manager">Manager</SelectItem>
-                    <SelectItem value="supervisor">Supervisor</SelectItem>
-                    <SelectItem value="worker">Worker</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button onClick={handleAddMember} className="w-full" disabled={!selectedUserId}>
-                Add to Team
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <AddMemberDialog
+          isOpen={isOpen}
+          setIsOpen={setIsOpen}
+          availableUsers={availableUsers}
+          selectedUserId={selectedUserId}
+          setSelectedUserId={setSelectedUserId}
+          selectedRole={selectedRole}
+          setSelectedRole={setSelectedRole}
+          onAdd={handleAddMember}
+          isPending={addMember.isPending}
+        />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {teamMembers.map((member) => (

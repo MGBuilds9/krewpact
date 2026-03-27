@@ -23,7 +23,12 @@ vi.mock('@/lib/supabase/server', () => ({
 import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
-import { makeRequest, mockClerkAuth, mockClerkUnauth, mockSupabaseClient } from '@/__tests__/helpers';
+import {
+  makeRequest,
+  mockClerkAuth,
+  mockClerkUnauth,
+  mockSupabaseClient,
+} from '@/__tests__/helpers';
 import { GET } from '@/app/api/org/roles/route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
@@ -31,8 +36,24 @@ const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 
 const SAMPLE_ROLES = [
-  { id: 'r1', role_key: 'platform_admin', role_name: 'Platform Admin', scope: 'internal', is_system: true, created_at: '', updated_at: '' },
-  { id: 'r2', role_key: 'executive', role_name: 'Executive', scope: 'internal', is_system: true, created_at: '', updated_at: '' },
+  {
+    id: 'r1',
+    role_key: 'platform_admin',
+    role_name: 'Platform Admin',
+    scope: 'internal',
+    is_system: true,
+    created_at: '',
+    updated_at: '',
+  },
+  {
+    id: 'r2',
+    role_key: 'executive',
+    role_name: 'Executive',
+    scope: 'internal',
+    is_system: true,
+    created_at: '',
+    updated_at: '',
+  },
 ];
 
 describe('GET /api/org/roles — RBAC', () => {
@@ -40,7 +61,9 @@ describe('GET /api/org/roles — RBAC', () => {
 
   it('returns 401 when not authenticated', async () => {
     mockClerkUnauth(mockAuth);
-    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
+    mockRequireRole.mockResolvedValue(
+      NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
+    );
 
     const res = await GET(makeRequest('/api/org/roles'));
     expect(res.status).toBe(401);
@@ -84,7 +107,6 @@ describe('GET /api/org/roles — RBAC', () => {
       return chain;
     }
 
-     
     mockCreateUserClientSafe.mockResolvedValue({
       client: { from: vi.fn().mockReturnValue(makeChain(SAMPLE_ROLES, 2)) } as any,
       error: null,
@@ -111,7 +133,6 @@ describe('GET /api/org/roles — RBAC', () => {
       return chain;
     }
 
-     
     mockCreateUserClientSafe.mockResolvedValue({
       client: { from: vi.fn().mockReturnValue(makeChain([SAMPLE_ROLES[0]], 1)) } as any,
       error: null,

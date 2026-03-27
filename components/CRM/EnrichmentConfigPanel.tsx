@@ -16,6 +16,52 @@ const SOURCE_LABELS: Record<string, string> = {
   google: 'Google',
 };
 
+interface SourceRowProps {
+  source: EnrichmentConfig['sources'][number];
+  index: number;
+  total: number;
+  onMove: (index: number, dir: 'up' | 'down') => void;
+  onToggle: (name: string) => void;
+}
+
+function SourceRow({ source, index, total, onMove, onToggle }: SourceRowProps) {
+  return (
+    <div className="flex items-center justify-between rounded-md border p-3">
+      <div className="flex items-center gap-3">
+        <span className="text-sm font-medium text-muted-foreground w-5 text-center">
+          {source.order}
+        </span>
+        <span className="text-sm font-medium">{SOURCE_LABELS[source.name] ?? source.name}</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onMove(index, 'up')}
+          disabled={index === 0}
+          aria-label={`Move ${source.name} up`}
+        >
+          <ArrowUp className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onMove(index, 'down')}
+          disabled={index === total - 1}
+          aria-label={`Move ${source.name} down`}
+        >
+          <ArrowDown className="h-4 w-4" />
+        </Button>
+        <Switch
+          checked={source.enabled}
+          onCheckedChange={() => onToggle(source.name)}
+          aria-label={`Toggle ${source.name}`}
+        />
+      </div>
+    </div>
+  );
+}
+
 interface EnrichmentFormState {
   localSources: EnrichmentConfig['sources'];
   dirty: boolean;
@@ -86,44 +132,14 @@ export function EnrichmentConfigPanel() {
       </CardHeader>
       <CardContent className="space-y-3">
         {localSources.map((source, index) => (
-          <div
+          <SourceRow
             key={source.name}
-            className="flex items-center justify-between rounded-md border p-3"
-          >
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-muted-foreground w-5 text-center">
-                {source.order}
-              </span>
-              <span className="text-sm font-medium">
-                {SOURCE_LABELS[source.name] ?? source.name}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleMove(index, 'up')}
-                disabled={index === 0}
-                aria-label={`Move ${source.name} up`}
-              >
-                <ArrowUp className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleMove(index, 'down')}
-                disabled={index === localSources.length - 1}
-                aria-label={`Move ${source.name} down`}
-              >
-                <ArrowDown className="h-4 w-4" />
-              </Button>
-              <Switch
-                checked={source.enabled}
-                onCheckedChange={() => handleToggle(source.name)}
-                aria-label={`Toggle ${source.name}`}
-              />
-            </div>
-          </div>
+            source={source}
+            index={index}
+            total={localSources.length}
+            onMove={handleMove}
+            onToggle={handleToggle}
+          />
         ))}
         <Button
           onClick={handleSave}

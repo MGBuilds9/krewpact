@@ -26,11 +26,7 @@ import {
   mockClerkUnauth,
   mockSupabaseClient,
 } from '@/__tests__/helpers';
-import {
-  DELETE,
-  GET,
-  POST,
-} from '@/app/api/projects/[id]/submittals/[subId]/attachments/route';
+import { DELETE, GET, POST } from '@/app/api/projects/[id]/submittals/[subId]/attachments/route';
 import {
   deleteAttachment,
   listAttachments,

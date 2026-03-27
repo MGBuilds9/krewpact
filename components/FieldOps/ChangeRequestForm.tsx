@@ -74,25 +74,83 @@ export function ChangeRequestForm({ projectId, onSuccess, onCancel }: ChangeRequ
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField control={ff} name="request_number" render={({ field }) => (
-          <FormItem><FormLabel>Request Number</FormLabel><FormControl><Input placeholder="e.g. CR-001" {...field} /></FormControl><FormMessage /></FormItem>
-        )} />
-        <FormField control={ff} name="title" render={({ field }) => (
-          <FormItem><FormLabel>Title</FormLabel><FormControl><Input placeholder="Brief description of the change" {...field} /></FormControl><FormMessage /></FormItem>
-        )} />
-        <FormField control={ff} name="description" render={({ field }) => (
-          <FormItem><FormLabel>Description</FormLabel><FormControl><Textarea placeholder="Describe the change request in detail..." rows={4} {...field} /></FormControl><FormMessage /></FormItem>
-        )} />
+        <FormField
+          control={ff}
+          name="request_number"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Request Number</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g. CR-001" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={ff}
+          name="title"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Title</FormLabel>
+              <FormControl>
+                <Input placeholder="Brief description of the change" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={ff}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Describe the change request in detail..."
+                  rows={4}
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField control={ff} name="estimated_cost_impact" render={({ field }) => (
-            <FormItem><FormLabel>Est. Cost Impact (CAD)</FormLabel><FormControl><Input type="number" step="0.01" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>
-          )} />
-          <FormField control={ff} name="estimated_days_impact" render={({ field }) => (
-            <FormItem><FormLabel>Est. Days Impact</FormLabel><FormControl><Input type="number" step="1" placeholder="0" {...field} /></FormControl><FormMessage /></FormItem>
-          )} />
+          <FormField
+            control={ff}
+            name="estimated_cost_impact"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Est. Cost Impact (CAD)</FormLabel>
+                <FormControl>
+                  <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={ff}
+            name="estimated_days_impact"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Est. Days Impact</FormLabel>
+                <FormControl>
+                  <Input type="number" step="1" placeholder="0" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
         <div className="flex gap-2 justify-end">
-          {onCancel && <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>}
+          {onCancel && (
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
+          )}
           <Button type="submit" disabled={createCR.isPending}>
             {createCR.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             Create Change Request

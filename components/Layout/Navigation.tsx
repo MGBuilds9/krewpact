@@ -121,57 +121,54 @@ const navigationItems: NavItem[] = [
 
 export { navigationItems };
 
-export function Navigation({ isMobile = false }: NavigationProps) {
-  const pathname = usePathname();
-  const { orgPath } = useOrgRouter();
-  const { isAdmin, hasRole } = useUserRBAC();
-
-  const filteredItems = useMemo(
-    () =>
-      navigationItems.filter((item) => {
-        if (item.featureFlag && !isFeatureEnabled(item.featureFlag)) return false;
-        if (item.adminOnly && !isAdmin) return false;
-        if (item.requiredRoles && !item.requiredRoles.some((r) => hasRole(r)) && !isAdmin)
-          return false;
-        return true;
-      }),
-    [isAdmin, hasRole],
+function MobileNav({
+  items,
+  strippedPath,
+  orgPath,
+}: {
+  items: NavItem[];
+  strippedPath: string;
+  orgPath: (p: string) => string;
+}) {
+  return (
+    <nav className="flex flex-col gap-2">
+      {items.map((item) => {
+        const href = orgPath(item.path);
+        const isActive = strippedPath === item.path || strippedPath.startsWith(item.path + '/');
+        return (
+          <Link
+            key={item.label}
+            href={href}
+            className={cn(
+              'flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 touch-target',
+              isActive
+                ? 'bg-primary text-primary-foreground font-bold border-l-4 border-primary-foreground/50'
+                : 'text-foreground hover:bg-accent hover:text-accent-foreground',
+            )}
+          >
+            <item.icon className="h-5 w-5" />
+            {item.label}
+          </Link>
+        );
+      })}
+    </nav>
   );
+}
 
-  const strippedPath = pathname.replace(/^\/org\/[^/]+/, '');
-
-  if (isMobile) {
-    return (
-      <nav className="flex flex-col gap-2">
-        {filteredItems.map((item) => {
-          const href = orgPath(item.path);
-          const isActive = strippedPath === item.path || strippedPath.startsWith(item.path + '/');
-          return (
-            <Link
-              key={item.label}
-              href={href}
-              className={cn(
-                'flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 touch-target',
-                isActive
-                  ? 'bg-primary text-primary-foreground font-bold border-l-4 border-primary-foreground/50'
-                  : 'text-foreground hover:bg-accent hover:text-accent-foreground',
-              )}
-            >
-              <item.icon className="h-5 w-5" />
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
-    );
-  }
-
-  const visibleItems = filteredItems.slice(0, MAX_VISIBLE);
-  const overflowItems = filteredItems.slice(MAX_VISIBLE);
+function DesktopNav({
+  items,
+  strippedPath,
+  orgPath,
+}: {
+  items: NavItem[];
+  strippedPath: string;
+  orgPath: (p: string) => string;
+}) {
+  const visibleItems = items.slice(0, MAX_VISIBLE);
+  const overflowItems = items.slice(MAX_VISIBLE);
   const hasOverflowActive = overflowItems.some(
     (item) => strippedPath === item.path || strippedPath.startsWith(item.path + '/'),
   );
-
   return (
     <TooltipProvider delayDuration={300}>
       <div className="flex items-center justify-start gap-1 w-full relative overflow-hidden min-w-0">
@@ -245,4 +242,27 @@ export function Navigation({ isMobile = false }: NavigationProps) {
       </div>
     </TooltipProvider>
   );
+}
+
+export function Navigation({ isMobile = false }: NavigationProps) {
+  const pathname = usePathname();
+  const { orgPath } = useOrgRouter();
+  const { isAdmin, hasRole } = useUserRBAC();
+
+  const filteredItems = useMemo(
+    () =>
+      navigationItems.filter((item) => {
+        if (item.featureFlag && !isFeatureEnabled(item.featureFlag)) return false;
+        if (item.adminOnly && !isAdmin) return false;
+        if (item.requiredRoles && !item.requiredRoles.some((r) => hasRole(r)) && !isAdmin)
+          return false;
+        return true;
+      }),
+    [isAdmin, hasRole],
+  );
+
+  const strippedPath = pathname.replace(/^\/org\/[^/]+/, '');
+  if (isMobile)
+    return <MobileNav items={filteredItems} strippedPath={strippedPath} orgPath={orgPath} />;
+  return <DesktopNav items={filteredItems} strippedPath={strippedPath} orgPath={orgPath} />;
 }

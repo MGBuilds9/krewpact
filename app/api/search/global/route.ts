@@ -34,13 +34,8 @@ const EMPTY_RESULTS: GlobalSearchResults = {
 
 type SupabaseClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
 
-async function runGlobalSearch(
-  supabase: SupabaseClient,
-  pattern: string,
-  divisions: string[],
-): Promise<GlobalSearchResults> {
+async function fetchSearchRows(supabase: SupabaseClient, pattern: string, divisions: string[]) {
   const hasDivisions = divisions.length > 0;
-
   const leadsQ = supabase
     .from('leads')
     .select('id, company_name, status')
@@ -67,24 +62,32 @@ async function runGlobalSearch(
     .or(`project_name.ilike.${pattern},project_number.ilike.${pattern}`)
     .limit(MAX_PER_TYPE);
 
+  return Promise.all([
+    hasDivisions ? leadsQ.in('division_id', divisions) : leadsQ,
+    hasDivisions ? accountsQ.in('division_id', divisions) : accountsQ,
+    supabase
+      .from('contacts')
+      .select('id, first_name, last_name, email')
+      .or(`first_name.ilike.${pattern},last_name.ilike.${pattern},email.ilike.${pattern}`)
+      .limit(MAX_PER_TYPE),
+    hasDivisions ? oppsQ.in('division_id', divisions) : oppsQ,
+    hasDivisions ? estimatesQ.in('division_id', divisions) : estimatesQ,
+    hasDivisions ? projectsQ.in('division_id', divisions) : projectsQ,
+    supabase
+      .from('tasks')
+      .select('id, title, status, project_id')
+      .ilike('title', pattern)
+      .limit(MAX_PER_TYPE),
+  ]);
+}
+
+async function runGlobalSearch(
+  supabase: SupabaseClient,
+  pattern: string,
+  divisions: string[],
+): Promise<GlobalSearchResults> {
   const [leadsRes, accountsRes, contactsRes, oppsRes, estimatesRes, projectsRes, tasksRes] =
-    await Promise.all([
-      hasDivisions ? leadsQ.in('division_id', divisions) : leadsQ,
-      hasDivisions ? accountsQ.in('division_id', divisions) : accountsQ,
-      supabase
-        .from('contacts')
-        .select('id, first_name, last_name, email')
-        .or(`first_name.ilike.${pattern},last_name.ilike.${pattern},email.ilike.${pattern}`)
-        .limit(MAX_PER_TYPE),
-      hasDivisions ? oppsQ.in('division_id', divisions) : oppsQ,
-      hasDivisions ? estimatesQ.in('division_id', divisions) : estimatesQ,
-      hasDivisions ? projectsQ.in('division_id', divisions) : projectsQ,
-      supabase
-        .from('tasks')
-        .select('id, title, status, project_id')
-        .ilike('title', pattern)
-        .limit(MAX_PER_TYPE),
-    ]);
+    await fetchSearchRows(supabase, pattern, divisions);
 
   return {
     leads: (leadsRes.data ?? []).map((l) => ({

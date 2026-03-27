@@ -104,26 +104,8 @@ function KVSection({
   );
 }
 
-export function CRMOverviewReport() {
-  const { data, isLoading } = useQuery({
-    queryKey: ['crm-overview-report'],
-    queryFn: () => apiFetch<OverviewData>('/api/crm/reports/overview'),
-    staleTime: 60_000,
-  });
-
-  if (isLoading) {
-    return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {Array.from({ length: 8 }, (_, n) => n).map((n) => (
-          <div key={n} className="h-28 rounded-lg bg-muted animate-pulse" />
-        ))}
-      </div>
-    );
-  }
-  if (!data) return null;
-
-  const { summary, leadFunnel, leadsBySource, pipeline, activityVolume, bidding } = data;
-  const STATS = [
+function buildStats(summary: OverviewData['summary']) {
+  return [
     { icon: Target, color: 'text-blue-500', label: 'Total Leads', value: summary.totalLeads },
     { icon: Users, color: 'text-green-500', label: 'Contacts', value: summary.totalContacts },
     { icon: Building2, color: 'text-purple-500', label: 'Accounts', value: summary.totalAccounts },
@@ -153,31 +135,58 @@ export function CRMOverviewReport() {
       value: formatCurrency(summary.totalBidValue),
     },
   ];
+}
 
+function LeadFunnelCard({ leadFunnel }: { leadFunnel: Record<string, number> }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Lead Funnel</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex flex-wrap gap-4">
+          {Object.entries(leadFunnel).map(([stage, count]) => (
+            <div key={stage} className="text-center">
+              <p className="text-2xl font-bold">{count}</p>
+              <Badge variant="outline" className="mt-1">
+                {formatStatus(stage)}
+              </Badge>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+export function CRMOverviewReport() {
+  const { data, isLoading } = useQuery({
+    queryKey: ['crm-overview-report'],
+    queryFn: () => apiFetch<OverviewData>('/api/crm/reports/overview'),
+    staleTime: 60_000,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {Array.from({ length: 8 }, (_, n) => n).map((n) => (
+          <div key={n} className="h-28 rounded-lg bg-muted animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+  if (!data) return null;
+
+  const { summary, leadFunnel, leadsBySource, pipeline, activityVolume, bidding } = data;
+  const stats = buildStats(summary);
   return (
     <div className="space-y-8">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {STATS.map((s) => (
+        {stats.map((s) => (
           <StatCard key={s.label} icon={s.icon} color={s.color} label={s.label} value={s.value} />
         ))}
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>Lead Funnel</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-4">
-            {Object.entries(leadFunnel).map(([stage, count]) => (
-              <div key={stage} className="text-center">
-                <p className="text-2xl font-bold">{count}</p>
-                <Badge variant="outline" className="mt-1">
-                  {formatStatus(stage)}
-                </Badge>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <LeadFunnelCard leadFunnel={leadFunnel} />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <KVSection
           title="Lead Sources"

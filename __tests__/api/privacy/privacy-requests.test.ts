@@ -75,7 +75,9 @@ describe('GET /api/privacy/requests', () => {
 
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
-    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
+    mockRequireRole.mockResolvedValue(
+      NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
+    );
     const res = await GET_LIST(makeRequest('/api/privacy/requests'));
     expect(res.status).toBe(401);
   });
@@ -117,7 +119,9 @@ describe('POST /api/privacy/requests', () => {
 
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
-    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
+    mockRequireRole.mockResolvedValue(
+      NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
+    );
     const res = await POST_CREATE(makeJsonRequest('/api/privacy/requests', {}));
     expect(res.status).toBe(401);
   });

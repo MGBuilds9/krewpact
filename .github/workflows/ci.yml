@@ -18,11 +18,11 @@ jobs:
   quality:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 22
           cache: npm
 
       - run: npm ci
@@ -66,11 +66,11 @@ jobs:
   security:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 22
           cache: npm
 
       - run: npm ci
@@ -78,17 +78,86 @@ jobs:
       - name: Security Audit (production deps)
         run: npm audit --audit-level=high --omit=dev
 
+  post-deploy:
+    needs: quality
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Wait for Vercel deploy
+        run: |
+          echo "Waiting for Vercel deployment to become ready..."
+          for i in $(seq 1 30); do
+            STATUS=$(curl -s -H "Authorization: Bearer $VERCEL_TOKEN" \
+              "https://api.vercel.com/v6/deployments?projectId=$VERCEL_PROJECT_ID&limit=1&target=production" \
+              | jq -r '.deployments[0].readyState')
+            echo "  Attempt $i: status=$STATUS"
+            if [ "$STATUS" = "READY" ]; then
+              echo "Deployment is ready."
+              break
+            fi
+            sleep 10
+          done
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Health check (shallow)
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$APP_URL/api/health")
+          echo "Health check status: $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "::error::Shallow health check failed with status $STATUS"
+            exit 1
+          fi
+        env:
+          APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL }}
+
+      - name: Health check (deep)
+        run: |
+          BODY=$(curl -s -H "Authorization: Bearer $CRON_SECRET" "$APP_URL/api/health?deep=true")
+          STATUS=$(echo "$BODY" | jq -r '.status')
+          echo "Deep health check: $STATUS"
+          if [ "$STATUS" != "ok" ]; then
+            echo "::warning::Deep health check returned: $STATUS"
+            echo "$BODY" | jq .
+          fi
+        env:
+          APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+
+      - name: Create Sentry release
+        run: |
+          npx @sentry/cli releases new "$GITHUB_SHA"
+          npx @sentry/cli releases set-commits "$GITHUB_SHA" --auto
+          npx @sentry/cli releases finalize "$GITHUB_SHA"
+          npx @sentry/cli releases deploys "$GITHUB_SHA" new -e production
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+
   mobile:
     runs-on: ubuntu-latest
     env:
       EXPO_PUBLIC_API_BASE_URL: https://staging.krewpact.com
-      EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_mobile_ci
+      EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 22
           cache: npm
           cache-dependency-path: mobile/package-lock.json
 

@@ -112,6 +112,28 @@ function DraftFooter({
   );
 }
 
+async function sendEmail(params: {
+  to: string;
+  subject: string;
+  body: string;
+  entityType: string;
+  entityId: string;
+}): Promise<boolean> {
+  const res = await fetch('/api/email/send', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      to: [{ address: params.to }],
+      subject: params.subject,
+      body: params.body,
+      bodyType: 'text',
+      ...(params.entityType === 'lead' ? { leadId: params.entityId } : {}),
+      ...(params.entityType === 'account' ? { accountId: params.entityId } : {}),
+    }),
+  });
+  return res.ok;
+}
+
 function useEmailDraft(
   entityType: string,
   entityId: string,
@@ -163,19 +185,8 @@ function useEmailDraft(
     if (!to || !subject || !body) return;
     setLoading(true);
     try {
-      const res = await fetch('/api/email/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: [{ address: to }],
-          subject,
-          body,
-          bodyType: 'text',
-          ...(entityType === 'lead' ? { leadId: entityId } : {}),
-          ...(entityType === 'account' ? { accountId: entityId } : {}),
-        }),
-      });
-      if (res.ok) {
+      const ok = await sendEmail({ to, subject, body, entityType, entityId });
+      if (ok) {
         onClose();
       } else {
         setError('Failed to send email');

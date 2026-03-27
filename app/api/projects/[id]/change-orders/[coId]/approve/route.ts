@@ -29,7 +29,10 @@ export async function POST(req: NextRequest, context: RouteContext) {
 
   const roles = await getKrewpactRoles();
   if (!roles.some((r) => ALLOWED_ROLES.includes(r))) {
-    return NextResponse.json({ error: 'Insufficient permissions to approve change orders' }, { status: 403 });
+    return NextResponse.json(
+      { error: 'Insufficient permissions to approve change orders' },
+      { status: 403 },
+    );
   }
 
   const { coId } = await context.params;
@@ -49,7 +52,8 @@ export async function POST(req: NextRequest, context: RouteContext) {
   try {
     const result = await approveChangeOrder(coId, userId, parsed.data.comment);
     if (!result.success) {
-      const status = result.code === 'NOT_FOUND' ? 404 : result.code === 'INVALID_STATE' ? 400 : 500;
+      const status =
+        result.code === 'NOT_FOUND' ? 404 : result.code === 'INVALID_STATE' ? 400 : 500;
       return NextResponse.json({ error: result.error, code: result.code }, { status });
     }
     return NextResponse.json(result.changeOrder);

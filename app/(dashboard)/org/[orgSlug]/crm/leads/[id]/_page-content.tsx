@@ -123,9 +123,7 @@ function LeadInfoCard({ lead, isEditing, setIsEditing }: InfoCardProps) {
             </div>
             <div>
               <dt className="text-sm font-medium text-muted-foreground">Source</dt>
-              <dd className="text-sm">
-                {formatStatus(lead.source_channel) || '-'}
-              </dd>
+              <dd className="text-sm">{formatStatus(lead.source_channel) || '-'}</dd>
             </div>
             <div>
               <dt className="text-sm font-medium text-muted-foreground">Location</dt>
@@ -547,9 +545,8 @@ export default function LeadDetailPage() {
           <AlertTitle>Existing Customer Match</AlertTitle>
           <AlertDescription>
             This lead matches <strong>{customerMatch.account?.account_name}</strong> (
-            {formatStatus(customerMatch.match_type)},{' '}
-            {Math.round(customerMatch.match_score * 100)}% confidence). Outreach sequences are
-            suppressed for existing customers.
+            {formatStatus(customerMatch.match_type)}, {Math.round(customerMatch.match_score * 100)}%
+            confidence). Outreach sequences are suppressed for existing customers.
           </AlertDescription>
         </Alert>
       )}

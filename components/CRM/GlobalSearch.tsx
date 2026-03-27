@@ -59,6 +59,79 @@ function SearchResultItem({
   );
 }
 
+function SearchOverlay({
+  query,
+  results,
+  selectedIndex,
+  inputRef,
+  onClose,
+  onQueryChange,
+  onKeyDown,
+  onSelect,
+  onHover,
+}: {
+  query: string;
+  results: SearchResult[];
+  selectedIndex: number;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+  onClose: () => void;
+  onQueryChange: (v: string) => void;
+  onKeyDown: (e: React.KeyboardEvent) => void;
+  onSelect: (r: SearchResult) => void;
+  onHover: (i: number) => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh]"
+      role="dialog"
+      aria-label="CRM Search"
+    >
+      <div className="fixed inset-0 bg-black/50" onClick={onClose} aria-hidden="true" />
+      <div className="relative z-10 w-full max-w-lg rounded-lg border bg-background shadow-xl">
+        <div className="flex items-center border-b px-4">
+          <Search className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          <input
+            ref={inputRef}
+            type="text"
+            placeholder="Search leads, contacts, accounts, opportunities..."
+            className="flex-1 px-3 py-3 text-sm outline-none bg-transparent"
+            value={query}
+            onChange={(e) => onQueryChange(e.target.value)}
+            onKeyDown={onKeyDown}
+            aria-label="Search CRM"
+          />
+          <button onClick={onClose} className="p-1" aria-label="Close search">
+            <X className="h-4 w-4 text-muted-foreground" />
+          </button>
+        </div>
+        {results.length > 0 && (
+          <div className="max-h-64 overflow-y-auto p-2">
+            {results.map((result, i) => (
+              <SearchResultItem
+                key={`${result.type}-${result.id}`}
+                result={result}
+                isSelected={i === selectedIndex}
+                onSelect={() => onSelect(result)}
+                onHover={() => onHover(i)}
+              />
+            ))}
+          </div>
+        )}
+        {query.length >= 2 && results.length === 0 && (
+          <div className="p-6 text-center text-sm text-muted-foreground">
+            No results found for &ldquo;{query}&rdquo;
+          </div>
+        )}
+        {query.length < 2 && (
+          <div className="p-6 text-center text-sm text-muted-foreground">
+            Type at least 2 characters to search
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function GlobalSearch() {
   const router = useRouter();
   const { orgSlug } = useParams<{ orgSlug: string }>();
@@ -115,7 +188,6 @@ export function GlobalSearch() {
     setQuery(value);
     setSelectedIndex(0);
   }
-
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
@@ -140,53 +212,16 @@ export function GlobalSearch() {
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh]"
-      role="dialog"
-      aria-label="CRM Search"
-    >
-      <div className="fixed inset-0 bg-black/50" onClick={handleClose} aria-hidden="true" />
-      <div className="relative z-10 w-full max-w-lg rounded-lg border bg-background shadow-xl">
-        <div className="flex items-center border-b px-4">
-          <Search className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-          <input
-            ref={inputRef}
-            type="text"
-            placeholder="Search leads, contacts, accounts, opportunities..."
-            className="flex-1 px-3 py-3 text-sm outline-none bg-transparent"
-            value={query}
-            onChange={(e) => handleQueryChange(e.target.value)}
-            onKeyDown={handleKeyDown}
-            aria-label="Search CRM"
-          />
-          <button onClick={handleClose} className="p-1" aria-label="Close search">
-            <X className="h-4 w-4 text-muted-foreground" />
-          </button>
-        </div>
-        {results.length > 0 && (
-          <div className="max-h-64 overflow-y-auto p-2">
-            {results.map((result, i) => (
-              <SearchResultItem
-                key={`${result.type}-${result.id}`}
-                result={result}
-                isSelected={i === selectedIndex}
-                onSelect={() => handleSelect(result)}
-                onHover={() => setSelectedIndex(i)}
-              />
-            ))}
-          </div>
-        )}
-        {query.length >= 2 && results.length === 0 && (
-          <div className="p-6 text-center text-sm text-muted-foreground">
-            No results found for &ldquo;{query}&rdquo;
-          </div>
-        )}
-        {query.length < 2 && (
-          <div className="p-6 text-center text-sm text-muted-foreground">
-            Type at least 2 characters to search
-          </div>
-        )}
-      </div>
-    </div>
+    <SearchOverlay
+      query={query}
+      results={results}
+      selectedIndex={selectedIndex}
+      inputRef={inputRef}
+      onClose={handleClose}
+      onQueryChange={handleQueryChange}
+      onKeyDown={handleKeyDown}
+      onSelect={handleSelect}
+      onHover={setSelectedIndex}
+    />
   );
 }

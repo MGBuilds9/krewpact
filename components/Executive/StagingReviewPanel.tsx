@@ -127,60 +127,31 @@ function ActionButtons({
   );
 }
 
-export function StagingReviewPanel({ docId }: StagingReviewPanelProps) {
-  const queryClient = useQueryClient();
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedContent, setEditedContent] = useState('');
-  const [reviewNotes, setReviewNotes] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
-
-  const {
-    data: doc,
-    isLoading,
-    isError,
-  } = useQuery({
-    queryKey: queryKeys.executive.staging.detail(docId),
-    queryFn: () => apiFetch<StagingDocDetail>(`/api/executive/staging/${docId}`),
-    select(d) {
-      setEditedContent((prev) => (prev === '' ? (d.content ?? '') : prev));
-      setReviewNotes((prev) => (prev === '' ? (d.review_notes ?? '') : prev));
-      setSelectedCategory((prev) => (prev === '' ? (d.category ?? '') : prev));
-      return d;
-    },
-  });
-
-  const { mutate: patch, isPending } = useMutation({
-    mutationFn: (payload: PatchPayload) =>
-      apiFetch<StagingDocDetail>(`/api/executive/staging/${docId}`, {
-        method: 'PATCH',
-        body: payload,
-      }),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.executive.staging.all });
-      if (variables.status === 'approved') showToast.success('Document approved');
-      else if (variables.status === 'rejected') showToast.success('Document rejected');
-      else showToast.success('Changes saved');
-      setIsEditing(false);
-    },
-    onError: () => showToast.error('Failed to update document'),
-  });
-
-  if (isLoading)
-    return (
-      <div className="border rounded-lg p-6 space-y-4">
-        <Skeleton className="h-6 w-2/3" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-64 w-full" />
-      </div>
-    );
-  if (isError || !doc)
-    return (
-      <div className="border rounded-lg p-8 text-center text-destructive flex flex-col items-center gap-2">
-        <ShieldAlert className="h-8 w-8" />
-        <p className="text-sm">Failed to load document.</p>
-      </div>
-    );
-
+function PanelContent({
+  doc,
+  isPending,
+  isEditing,
+  editedContent,
+  reviewNotes,
+  selectedCategory,
+  setEditedContent,
+  setReviewNotes,
+  setSelectedCategory,
+  setIsEditing,
+  patch,
+}: {
+  doc: StagingDocDetail;
+  isPending: boolean;
+  isEditing: boolean;
+  editedContent: string;
+  reviewNotes: string;
+  selectedCategory: string;
+  setEditedContent: (v: string) => void;
+  setReviewNotes: (v: string) => void;
+  setSelectedCategory: (v: string) => void;
+  setIsEditing: (v: boolean) => void;
+  patch: (p: PatchPayload) => void;
+}) {
   return (
     <div className="border rounded-lg p-6 space-y-5">
       <div className="flex items-start justify-between gap-3">
@@ -252,5 +223,76 @@ export function StagingReviewPanel({ docId }: StagingReviewPanelProps) {
         }}
       />
     </div>
+  );
+}
+
+export function StagingReviewPanel({ docId }: StagingReviewPanelProps) {
+  const queryClient = useQueryClient();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedContent, setEditedContent] = useState('');
+  const [reviewNotes, setReviewNotes] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+
+  const {
+    data: doc,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: queryKeys.executive.staging.detail(docId),
+    queryFn: () => apiFetch<StagingDocDetail>(`/api/executive/staging/${docId}`),
+    select(d) {
+      setEditedContent((prev) => (prev === '' ? (d.content ?? '') : prev));
+      setReviewNotes((prev) => (prev === '' ? (d.review_notes ?? '') : prev));
+      setSelectedCategory((prev) => (prev === '' ? (d.category ?? '') : prev));
+      return d;
+    },
+  });
+
+  const { mutate: patch, isPending } = useMutation({
+    mutationFn: (payload: PatchPayload) =>
+      apiFetch<StagingDocDetail>(`/api/executive/staging/${docId}`, {
+        method: 'PATCH',
+        body: payload,
+      }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.executive.staging.all });
+      if (variables.status === 'approved') showToast.success('Document approved');
+      else if (variables.status === 'rejected') showToast.success('Document rejected');
+      else showToast.success('Changes saved');
+      setIsEditing(false);
+    },
+    onError: () => showToast.error('Failed to update document'),
+  });
+
+  if (isLoading)
+    return (
+      <div className="border rounded-lg p-6 space-y-4">
+        <Skeleton className="h-6 w-2/3" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  if (isError || !doc)
+    return (
+      <div className="border rounded-lg p-8 text-center text-destructive flex flex-col items-center gap-2">
+        <ShieldAlert className="h-8 w-8" />
+        <p className="text-sm">Failed to load document.</p>
+      </div>
+    );
+
+  return (
+    <PanelContent
+      doc={doc}
+      isPending={isPending}
+      isEditing={isEditing}
+      editedContent={editedContent}
+      reviewNotes={reviewNotes}
+      selectedCategory={selectedCategory}
+      setEditedContent={setEditedContent}
+      setReviewNotes={setReviewNotes}
+      setSelectedCategory={setSelectedCategory}
+      setIsEditing={setIsEditing}
+      patch={patch}
+    />
   );
 }

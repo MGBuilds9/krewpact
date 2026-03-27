@@ -22,7 +22,6 @@ function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
-
 const STAGE_COLORS: Record<string, string> = {
   qualification: 'bg-blue-500',
   proposal: 'bg-indigo-500',

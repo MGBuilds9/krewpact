@@ -70,6 +70,7 @@ const eslintConfig = defineConfig([
       complexity: 'off',
       'no-console': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
     },
   },
   // Overrides: scripts have relaxed console rules

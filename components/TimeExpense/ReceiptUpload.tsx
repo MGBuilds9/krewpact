@@ -23,6 +23,114 @@ interface ReceiptUploadProps {
 
 // ─── Component ─────────────────────────────────────────────────────────────────
 
+interface ReceiptDropZoneProps {
+  dragOver: boolean;
+  accept: string;
+  maxSizeMb: number;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+  onDrop: (e: React.DragEvent<HTMLDivElement>) => void;
+  onDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
+  onDragLeave: () => void;
+  onFileChange: (files: FileList | null) => void;
+}
+
+function ReceiptDropZone({
+  dragOver,
+  accept,
+  maxSizeMb,
+  inputRef,
+  onDrop,
+  onDragOver,
+  onDragLeave,
+  onFileChange,
+}: ReceiptDropZoneProps) {
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      aria-label="Upload receipt — drag and drop or click to select"
+      onDrop={onDrop}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onClick={() => inputRef.current?.click()}
+      onKeyDown={(e) => e.key === 'Enter' && inputRef.current?.click()}
+      className={cn(
+        'flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-8 text-center transition-colors',
+        dragOver
+          ? 'border-primary bg-primary/5'
+          : 'border-muted-foreground/25 hover:border-muted-foreground/50 hover:bg-muted/30',
+      )}
+    >
+      <Upload className="h-8 w-8 text-muted-foreground" />
+      <div>
+        <p className="text-sm font-medium">Drop receipt here or click to browse</p>
+        <p className="mt-1 text-xs text-muted-foreground">Images and PDFs up to {maxSizeMb} MB</p>
+      </div>
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        className="hidden"
+        onChange={(e) => onFileChange(e.target.files)}
+      />
+    </div>
+  );
+}
+
+function ReceiptPreview({
+  pending,
+  isUploading,
+  onUpload,
+  onRemove,
+}: {
+  pending: ReceiptFile;
+  isUploading: boolean;
+  onUpload: () => void;
+  onRemove: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-lg border bg-muted/30 p-3">
+      {pending.preview ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={pending.preview}
+          alt="Receipt preview"
+          className="h-14 w-14 rounded object-cover"
+        />
+      ) : (
+        <div className="flex h-14 w-14 items-center justify-center rounded bg-muted">
+          <FileImage className="h-6 w-6 text-muted-foreground" />
+        </div>
+      )}
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium">{pending.file.name}</p>
+        <p className="text-xs text-muted-foreground">{(pending.file.size / 1024).toFixed(0)} KB</p>
+      </div>
+      <div className="flex items-center gap-2">
+        <Button size="sm" onClick={onUpload} disabled={isUploading}>
+          {isUploading ? (
+            <>
+              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+              Uploading…
+            </>
+          ) : (
+            'Upload'
+          )}
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={onRemove}
+          disabled={isUploading}
+          aria-label="Remove selected file"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export function ReceiptUpload({
   onUpload,
   isUploading = false,
@@ -35,25 +143,15 @@ export function ReceiptUpload({
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  function readFile(file: File): ReceiptFile {
-    const isImage = file.type.startsWith('image/');
-    const preview = isImage ? URL.createObjectURL(file) : null;
-    return { file, preview };
-  }
-
   function validateFile(file: File): string | null {
-    if (file.size > maxSizeMb * 1024 * 1024) {
-      return `File exceeds ${maxSizeMb} MB limit.`;
-    }
+    if (file.size > maxSizeMb * 1024 * 1024) return `File exceeds ${maxSizeMb} MB limit.`;
     const allowed = accept.split(',').map((s) => s.trim());
-    const typeOk = allowed.some((pattern) => {
-      if (pattern.endsWith('/*')) {
-        return file.type.startsWith(pattern.replace('/*', '/'));
-      }
-      return file.type === pattern || file.name.endsWith(pattern.replace('*', ''));
-    });
-    if (!typeOk) return 'File type not supported. Upload an image or PDF.';
-    return null;
+    const typeOk = allowed.some((p) =>
+      p.endsWith('/*')
+        ? file.type.startsWith(p.replace('/*', '/'))
+        : file.type === p || file.name.endsWith(p.replace('*', '')),
+    );
+    return typeOk ? null : 'File type not supported. Upload an image or PDF.';
   }
 
   function handleFiles(files: FileList | null) {
@@ -66,27 +164,21 @@ export function ReceiptUpload({
     }
     setError(null);
     if (pending?.preview) URL.revokeObjectURL(pending.preview);
-    setPending(readFile(file));
+    setPending({
+      file,
+      preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : null,
+    });
   }
 
+   
   const handleDrop = useCallback(
     (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
       setDragOver(false);
       handleFiles(e.dataTransfer.files);
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [pending],
+    [handleFiles],
   );
-
-  function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
-    e.preventDefault();
-    setDragOver(true);
-  }
-
-  function handleDragLeave() {
-    setDragOver(false);
-  }
 
   async function handleUpload() {
     if (!pending) return;
@@ -103,87 +195,29 @@ export function ReceiptUpload({
 
   return (
     <div className={cn('space-y-3', className)}>
-      {/* Drop zone */}
       {!pending && (
-        <div
-          role="button"
-          tabIndex={0}
-          aria-label="Upload receipt — drag and drop or click to select"
+        <ReceiptDropZone
+          dragOver={dragOver}
+          accept={accept}
+          maxSizeMb={maxSizeMb}
+          inputRef={inputRef}
           onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onClick={() => inputRef.current?.click()}
-          onKeyDown={(e) => e.key === 'Enter' && inputRef.current?.click()}
-          className={cn(
-            'flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-8 text-center transition-colors',
-            dragOver
-              ? 'border-primary bg-primary/5'
-              : 'border-muted-foreground/25 hover:border-muted-foreground/50 hover:bg-muted/30',
-          )}
-        >
-          <Upload className="h-8 w-8 text-muted-foreground" />
-          <div>
-            <p className="text-sm font-medium">Drop receipt here or click to browse</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Images and PDFs up to {maxSizeMb} MB
-            </p>
-          </div>
-          <input
-            ref={inputRef}
-            type="file"
-            accept={accept}
-            className="hidden"
-            onChange={(e) => handleFiles(e.target.files)}
-          />
-        </div>
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragOver(true);
+          }}
+          onDragLeave={() => setDragOver(false)}
+          onFileChange={handleFiles}
+        />
       )}
-
-      {/* Error */}
       {error && <p className="text-xs text-destructive">{error}</p>}
-
-      {/* Preview */}
       {pending && (
-        <div className="flex items-center gap-3 rounded-lg border bg-muted/30 p-3">
-          {pending.preview ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={pending.preview}
-              alt="Receipt preview"
-              className="h-14 w-14 rounded object-cover"
-            />
-          ) : (
-            <div className="flex h-14 w-14 items-center justify-center rounded bg-muted">
-              <FileImage className="h-6 w-6 text-muted-foreground" />
-            </div>
-          )}
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium">{pending.file.name}</p>
-            <p className="text-xs text-muted-foreground">
-              {(pending.file.size / 1024).toFixed(0)} KB
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button size="sm" onClick={handleUpload} disabled={isUploading}>
-              {isUploading ? (
-                <>
-                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                  Uploading…
-                </>
-              ) : (
-                'Upload'
-              )}
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={handleRemove}
-              disabled={isUploading}
-              aria-label="Remove selected file"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+        <ReceiptPreview
+          pending={pending}
+          isUploading={isUploading}
+          onUpload={handleUpload}
+          onRemove={handleRemove}
+        />
       )}
     </div>
   );

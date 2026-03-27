@@ -25,6 +25,9 @@ import {
 import type { CostCatalogItem } from '@/hooks/useEstimating';
 import { useCreateCostCatalogItem, useUpdateCostCatalogItem } from '@/hooks/useEstimating';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type FormProp = any;
+
 const itemTypes = ['material', 'labor', 'equipment', 'subcontract', 'other'] as const;
 
 const formSchema = z.object({
@@ -76,6 +79,155 @@ function buildDefaultValues(item?: CostCatalogItem, divisionId?: string) {
   };
 }
 
+function CostCatalogItemFormFields({
+  form,
+  isPending,
+  isEditing,
+  onCancel,
+}: {
+  form: FormProp;
+  isPending: boolean;
+  isEditing: boolean;
+  onCancel?: () => void;
+}) {
+  return (
+    <>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="item_code"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Item Code</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g. MAT-001" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="item_type"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Type *</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {itemTypes.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {itemTypeLabels[type]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+      <FormField
+        control={form.control}
+        name="item_name"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Name *</FormLabel>
+            <FormControl>
+              <Input placeholder="e.g. 2x4 Lumber" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="unit"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Unit *</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g. LF, EA, SF" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="base_cost"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Base Cost (CAD) *</FormLabel>
+              <FormControl>
+                <Input type="number" step="0.01" min="0" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+      <FormField
+        control={form.control}
+        name="vendor_name"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Vendor</FormLabel>
+            <FormControl>
+              <Input placeholder="e.g. Home Depot" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="effective_from"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Effective From</FormLabel>
+              <FormControl>
+                <Input type="date" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="effective_to"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Effective To</FormLabel>
+              <FormControl>
+                <Input type="date" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+      <div className="flex gap-2 justify-end pt-2">
+        {onCancel && (
+          <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
+            Cancel
+          </Button>
+        )}
+        <Button type="submit" disabled={isPending}>
+          {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+          {isEditing ? 'Update Item' : 'Create Item'}
+        </Button>
+      </div>
+    </>
+  );
+}
+
 export function CostCatalogItemForm({
   item,
   divisionId,
@@ -85,19 +237,17 @@ export function CostCatalogItemForm({
   const createItem = useCreateCostCatalogItem();
   const updateItem = useUpdateCostCatalogItem();
   const isEditing = !!item;
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: buildDefaultValues(item, divisionId),
+  });
+  const isPending = createItem.isPending || updateItem.isPending;
   const cb = {
     onSuccess: () => {
       form.reset();
       onSuccess?.();
     },
   };
-
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: buildDefaultValues(item, divisionId),
-  });
-
-  const isPending = createItem.isPending || updateItem.isPending;
 
   function onSubmit(values: FormValues) {
     const baseCost = parseFloat(values.base_cost);
@@ -126,138 +276,12 @@ export function CostCatalogItemForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="item_code"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Item Code</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g. MAT-001" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="item_type"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Type *</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {itemTypes.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {itemTypeLabels[type]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        <FormField
-          control={form.control}
-          name="item_name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Name *</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g. 2x4 Lumber" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+        <CostCatalogItemFormFields
+          form={form}
+          isPending={isPending}
+          isEditing={isEditing}
+          onCancel={onCancel}
         />
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="unit"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Unit *</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g. LF, EA, SF" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="base_cost"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Base Cost (CAD) *</FormLabel>
-                <FormControl>
-                  <Input type="number" step="0.01" min="0" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        <FormField
-          control={form.control}
-          name="vendor_name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Vendor</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g. Home Depot" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="effective_from"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Effective From</FormLabel>
-                <FormControl>
-                  <Input type="date" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="effective_to"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Effective To</FormLabel>
-                <FormControl>
-                  <Input type="date" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        <div className="flex gap-2 justify-end pt-2">
-          {onCancel && (
-            <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
-              Cancel
-            </Button>
-          )}
-          <Button type="submit" disabled={isPending}>
-            {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            {isEditing ? 'Update Item' : 'Create Item'}
-          </Button>
-        </div>
       </form>
     </Form>
   );

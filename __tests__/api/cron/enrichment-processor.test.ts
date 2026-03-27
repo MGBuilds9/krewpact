@@ -29,11 +29,17 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 vi.mock('@/lib/logger', () => ({
-  logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  logger: {
+    warn: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+    child: vi.fn().mockReturnThis(),
+  },
 }));
 
 import { makeRequest, mockSupabaseClient } from '@/__tests__/helpers';
-import { POST } from '@/app/api/cron/enrichment/route';
+import { GET } from '@/app/api/cron/enrichment/route';
 import { createServiceClient } from '@/lib/supabase/server';
 
 const mockCreateServiceClient = vi.mocked(createServiceClient);
@@ -64,10 +70,10 @@ describe('POST /api/cron/enrichment (enrichment-processor)', () => {
 
   it('returns 401 when CRON_SECRET validation fails', async () => {
     mockVerifyCronAuth.mockResolvedValue({ authorized: false });
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns processed:0 when no leads need enrichment', async () => {
@@ -76,7 +82,7 @@ describe('POST /api/cron/enrichment (enrichment-processor)', () => {
     });
     mockCreateServiceClient.mockReturnValue(supabase);
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);
@@ -90,7 +96,7 @@ describe('POST /api/cron/enrichment (enrichment-processor)', () => {
     });
     mockCreateServiceClient.mockReturnValue(supabase);
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(500);
   });
 
@@ -100,7 +106,7 @@ describe('POST /api/cron/enrichment (enrichment-processor)', () => {
     });
     mockCreateServiceClient.mockReturnValue(supabase);
 
-    await POST(makeCronRequest());
+    await GET(makeCronRequest());
 
     // The .or() filter targets null and pending statuses
     const fromCalls = (supabase.from as ReturnType<typeof vi.fn>).mock.calls;
@@ -127,7 +133,7 @@ describe('POST /api/cron/enrichment (enrichment-processor)', () => {
     });
     mockMergeEnrichmentData.mockReturnValue({ brave: { website: 'https://test.com' } });
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);
@@ -144,7 +150,7 @@ describe('POST /api/cron/enrichment (enrichment-processor)', () => {
     });
     mockCreateServiceClient.mockReturnValue(supabase);
 
-    await POST(makeCronRequest());
+    await GET(makeCronRequest());
 
     const fromCalls = (supabase.from as ReturnType<typeof vi.fn>).mock.calls;
     expect(fromCalls.length).toBeGreaterThan(0);
@@ -169,7 +175,7 @@ describe('POST /api/cron/enrichment (enrichment-processor)', () => {
     });
     mockMergeEnrichmentData.mockReturnValue({ brave: {} });
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.processed).toBe(1);
@@ -197,7 +203,7 @@ describe('POST /api/cron/enrichment (enrichment-processor)', () => {
     });
     mockMergeEnrichmentData.mockReturnValue({});
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     // All sources failed but no exception thrown — lead is updated with status 'failed',
@@ -207,10 +213,7 @@ describe('POST /api/cron/enrichment (enrichment-processor)', () => {
   });
 
   it('counts error and continues when enrichLead throws', async () => {
-    const leads = [
-      makePendingLead({ id: 'lead-1' }),
-      makePendingLead({ id: 'lead-2' }),
-    ];
+    const leads = [makePendingLead({ id: 'lead-1' }), makePendingLead({ id: 'lead-2' })];
     const supabase = mockSupabaseClient({
       tables: {
         leads: { data: leads, error: null },
@@ -219,15 +222,13 @@ describe('POST /api/cron/enrichment (enrichment-processor)', () => {
     });
     mockCreateServiceClient.mockReturnValue(supabase);
 
-    mockEnrichLead
-      .mockRejectedValueOnce(new Error('Network error'))
-      .mockResolvedValueOnce({
-        results: [{ source: 'brave', success: true, data: {} }],
-        sideEffects: {},
-      });
+    mockEnrichLead.mockRejectedValueOnce(new Error('Network error')).mockResolvedValueOnce({
+      results: [{ source: 'brave', success: true, data: {} }],
+      sideEffects: {},
+    });
     mockMergeEnrichmentData.mockReturnValue({ brave: {} });
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.errors).toBe(1);
@@ -251,7 +252,7 @@ describe('POST /api/cron/enrichment (enrichment-processor)', () => {
     });
     mockMergeEnrichmentData.mockReturnValue({ brave: { website: 'https://mdmgroup.ca' } });
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.processed).toBe(1);
@@ -274,7 +275,7 @@ describe('POST /api/cron/enrichment (enrichment-processor)', () => {
     mockMergeEnrichmentData.mockReturnValue({ tavily: {} });
     mockSummarizeEnrichment.mockRejectedValue(new Error('OpenAI rate limit'));
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.processed).toBe(1);
@@ -296,7 +297,7 @@ describe('POST /api/cron/enrichment (enrichment-processor)', () => {
     });
     mockMergeEnrichmentData.mockReturnValue({ brave: {} });
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body).toHaveProperty('timestamp');

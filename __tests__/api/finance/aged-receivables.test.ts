@@ -67,7 +67,9 @@ describe('GET /api/finance/aged-receivables', () => {
 
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
-    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
+    mockRequireRole.mockResolvedValue(
+      NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
+    );
     const { GET } = await import('@/app/api/finance/aged-receivables/route');
     const res = await GET(makeRequest('/api/finance/aged-receivables'));
     expect(res.status).toBe(401);

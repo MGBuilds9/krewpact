@@ -146,7 +146,10 @@ export default function ProjectDiaryPage() {
   const [offset, setOffset] = useState(0);
   const limit = 25;
   const { data, isLoading } = useSiteDiary(projectId, { limit, offset });
-  const { data: logsData, isLoading: logsLoading } = useDailyLogs(projectId, { limit: 10, offset: 0 });
+  const { data: logsData, isLoading: logsLoading } = useDailyLogs(projectId, {
+    limit: 10,
+    offset: 0,
+  });
   const entries = data?.data ?? [];
   const total = data?.total ?? 0;
   const hasMore = data?.hasMore ?? false;
@@ -156,34 +159,73 @@ export default function ProjectDiaryPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2"><BookOpen className="h-6 w-6" />Site Diary</h2>
-          <p className="text-muted-foreground text-sm mt-1">{total} {total === 1 ? 'entry' : 'entries'}</p>
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            <BookOpen className="h-6 w-6" />
+            Site Diary
+          </h2>
+          <p className="text-muted-foreground text-sm mt-1">
+            {total} {total === 1 ? 'entry' : 'entries'}
+          </p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Add Entry</Button></DialogTrigger>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Entry
+            </Button>
+          </DialogTrigger>
           <DialogContent className="max-w-lg">
-            <DialogHeader><DialogTitle>New Diary Entry</DialogTitle></DialogHeader>
-            <SiteDiaryEntryForm projectId={projectId} onSuccess={() => setOpen(false)} onCancel={() => setOpen(false)} />
+            <DialogHeader>
+              <DialogTitle>New Diary Entry</DialogTitle>
+            </DialogHeader>
+            <SiteDiaryEntryForm
+              projectId={projectId}
+              onSuccess={() => setOpen(false)}
+              onCancel={() => setOpen(false)}
+            />
           </DialogContent>
         </Dialog>
       </div>
       {isLoading ? (
-        <div className="space-y-3">{['e1','e2','e3','e4','e5'].map((k) => <Skeleton key={k} className="h-20 w-full rounded-xl" />)}</div>
+        <div className="space-y-3">
+          {['e1', 'e2', 'e3', 'e4', 'e5'].map((k) => (
+            <Skeleton key={k} className="h-20 w-full rounded-xl" />
+          ))}
+        </div>
       ) : (
-        <EntriesList entries={entries as DiaryEntry[]} hasMore={hasMore} offset={offset}
-          onPrev={() => setOffset(Math.max(0, offset - limit))} onNext={() => setOffset(offset + limit)} />
+        <EntriesList
+          entries={entries as DiaryEntry[]}
+          hasMore={hasMore}
+          offset={offset}
+          onPrev={() => setOffset(Math.max(0, offset - limit))}
+          onNext={() => setOffset(offset + limit)}
+        />
       )}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2"><ClipboardList className="h-5 w-5" />Daily Logs</CardTitle>
-          <Button size="sm" onClick={() => setLogDialogOpen(true)}><Plus className="h-4 w-4 mr-2" />Add Log</Button>
+          <CardTitle className="flex items-center gap-2">
+            <ClipboardList className="h-5 w-5" />
+            Daily Logs
+          </CardTitle>
+          <Button size="sm" onClick={() => setLogDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Log
+          </Button>
         </CardHeader>
-        <CardContent><LogsSection logs={logs as DailyLog[]} logsLoading={logsLoading} /></CardContent>
+        <CardContent>
+          <LogsSection logs={logs as DailyLog[]} logsLoading={logsLoading} />
+        </CardContent>
       </Card>
       <Dialog open={logDialogOpen} onOpenChange={setLogDialogOpen}>
         <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>New Daily Log</DialogTitle></DialogHeader>
-          <DailyLogForm projectId={projectId} onSuccess={() => setLogDialogOpen(false)} onCancel={() => setLogDialogOpen(false)} />
+          <DialogHeader>
+            <DialogTitle>New Daily Log</DialogTitle>
+          </DialogHeader>
+          <DailyLogForm
+            projectId={projectId}
+            onSuccess={() => setLogDialogOpen(false)}
+            onCancel={() => setLogDialogOpen(false)}
+          />
         </DialogContent>
       </Dialog>
     </div>

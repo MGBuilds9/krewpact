@@ -2,7 +2,7 @@
 
 import { useParams } from 'next/navigation';
 
-import { type MeetingNote,usePortalMeetings } from '@/hooks/usePortalProject';
+import { type MeetingNote, usePortalMeetings } from '@/hooks/usePortalProject';
 
 function MeetingCard({ note }: { note: MeetingNote }) {
   return (

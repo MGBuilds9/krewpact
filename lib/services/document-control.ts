@@ -67,7 +67,9 @@ export async function uploadAttachment(
     .single();
 
   if (dbError) {
-    logger.error('[document-control] Attachment record insert failed', { message: dbError.message });
+    logger.error('[document-control] Attachment record insert failed', {
+      message: dbError.message,
+    });
     // Clean up orphaned storage object
     await supabase.storage.from(BUCKET).remove([storagePath]);
     throw new Error(`Failed to record attachment: ${dbError.message}`);
@@ -134,9 +136,7 @@ export async function deleteAttachment(id: string): Promise<void> {
 export async function getAttachmentSignedUrl(storagePath: string): Promise<string> {
   const supabase = createServiceClient();
 
-  const { data, error } = await supabase.storage
-    .from(BUCKET)
-    .createSignedUrl(storagePath, 3600);
+  const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(storagePath, 3600);
 
   if (error || !data) {
     throw new Error(`Failed to create signed URL: ${error?.message}`);

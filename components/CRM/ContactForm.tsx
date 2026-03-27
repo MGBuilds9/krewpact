@@ -23,6 +23,9 @@ import {
   contactUpdateSchema,
 } from '@/lib/validators/crm';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type FormProp = any;
+
 interface ContactFormProps {
   contact?: Contact;
   defaultAccountId?: string;
@@ -56,6 +59,121 @@ function buildDefaultValues(contact?: Contact, defaultAccountId?: string, defaul
   };
 }
 
+function ContactFormFields({
+  form,
+  isEdit,
+  isPending,
+  onCancel,
+}: {
+  form: FormProp;
+  isEdit: boolean;
+  isPending: boolean;
+  onCancel?: () => void;
+}) {
+  return (
+    <>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="first_name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>First Name *</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g. John" {...field} value={field.value ?? ''} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="last_name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Last Name *</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g. Smith" {...field} value={field.value ?? ''} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <Input
+                  type="email"
+                  placeholder="john@example.com"
+                  {...field}
+                  value={field.value ?? ''}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="phone"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Phone</FormLabel>
+              <FormControl>
+                <Input placeholder="(416) 555-0100" {...field} value={field.value ?? ''} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+      <FormField
+        control={form.control}
+        name="role_title"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Role / Title</FormLabel>
+            <FormControl>
+              <Input placeholder="e.g. Project Manager" {...field} value={field.value ?? ''} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="is_primary"
+        render={({ field }) => (
+          <FormItem className="flex items-center gap-3">
+            <FormControl>
+              <Switch checked={field.value as boolean} onCheckedChange={field.onChange} />
+            </FormControl>
+            <FormLabel className="!mt-0">Primary Contact</FormLabel>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <div className="flex gap-2 justify-end pt-2">
+        {onCancel && (
+          <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
+            Cancel
+          </Button>
+        )}
+        <Button type="submit" disabled={isPending}>
+          {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+          {isEdit ? 'Save Changes' : 'Create Contact'}
+        </Button>
+      </div>
+    </>
+  );
+}
+
 export function ContactForm({
   contact,
   defaultAccountId,
@@ -67,7 +185,6 @@ export function ContactForm({
   const createContact = useCreateContact();
   const updateContact = useUpdateContact();
   const isPending = createContact.isPending || updateContact.isPending;
-
   const form = useForm<ContactCreate | ContactUpdate>({
     resolver: zodResolver(isEdit ? contactUpdateSchema : contactCreateSchema),
     defaultValues: buildDefaultValues(contact, defaultAccountId, defaultLeadId),
@@ -86,104 +203,7 @@ export function ContactForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="first_name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>First Name *</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g. John" {...field} value={field.value ?? ''} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="last_name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Last Name *</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g. Smith" {...field} value={field.value ?? ''} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input
-                    type="email"
-                    placeholder="john@example.com"
-                    {...field}
-                    value={field.value ?? ''}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="phone"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Phone</FormLabel>
-                <FormControl>
-                  <Input placeholder="(416) 555-0100" {...field} value={field.value ?? ''} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        <FormField
-          control={form.control}
-          name="role_title"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Role / Title</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g. Project Manager" {...field} value={field.value ?? ''} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="is_primary"
-          render={({ field }) => (
-            <FormItem className="flex items-center gap-3">
-              <FormControl>
-                <Switch checked={field.value as boolean} onCheckedChange={field.onChange} />
-              </FormControl>
-              <FormLabel className="!mt-0">Primary Contact</FormLabel>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="flex gap-2 justify-end pt-2">
-          {onCancel && (
-            <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
-              Cancel
-            </Button>
-          )}
-          <Button type="submit" disabled={isPending}>
-            {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            {isEdit ? 'Save Changes' : 'Create Contact'}
-          </Button>
-        </div>
+        <ContactFormFields form={form} isEdit={isEdit} isPending={isPending} onCancel={onCancel} />
       </form>
     </Form>
   );

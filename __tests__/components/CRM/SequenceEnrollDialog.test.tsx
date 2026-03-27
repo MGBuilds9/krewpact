@@ -29,7 +29,11 @@ vi.mock('@/components/ui/select', () => ({
     children: React.ReactNode;
     onValueChange: (v: string) => void;
     value?: string;
-  }) => <div data-testid="select-root" onClick={() => onValueChange('seq-1')}>{children}</div>,
+  }) => (
+    <div data-testid="select-root" onClick={() => onValueChange('seq-1')}>
+      {children}
+    </div>
+  ),
   SelectTrigger: ({ children, id }: { children: React.ReactNode; id?: string }) => (
     <button data-testid="select-trigger" id={id}>
       {children}
@@ -63,56 +67,40 @@ describe('SequenceEnrollDialog', () => {
   });
 
   it('shows singular "lead" for single lead', () => {
-    render(
-      <SequenceEnrollDialog open={true} onClose={vi.fn()} leadIds={['lead-1']} />,
-    );
+    render(<SequenceEnrollDialog open={true} onClose={vi.fn()} leadIds={['lead-1']} />);
 
     expect(screen.getByText(/1 lead[^s]/)).toBeInTheDocument();
   });
 
   it('renders sequence options', () => {
-    render(
-      <SequenceEnrollDialog open={true} onClose={vi.fn()} leadIds={['lead-1']} />,
-    );
+    render(<SequenceEnrollDialog open={true} onClose={vi.fn()} leadIds={['lead-1']} />);
 
     expect(screen.getByText(/Welcome Sequence/)).toBeInTheDocument();
     expect(screen.getByText(/Follow-up Sequence/)).toBeInTheDocument();
   });
 
   it('shows Cancel button', () => {
-    render(
-      <SequenceEnrollDialog open={true} onClose={vi.fn()} leadIds={['lead-1']} />,
-    );
+    render(<SequenceEnrollDialog open={true} onClose={vi.fn()} leadIds={['lead-1']} />);
 
     expect(screen.getByRole('button', { name: /Cancel/ })).toBeInTheDocument();
   });
 
   it('shows Enroll button with count', () => {
-    render(
-      <SequenceEnrollDialog
-        open={true}
-        onClose={vi.fn()}
-        leadIds={['lead-1', 'lead-2']}
-      />,
-    );
+    render(<SequenceEnrollDialog open={true} onClose={vi.fn()} leadIds={['lead-1', 'lead-2']} />);
 
     expect(screen.getByRole('button', { name: /Enroll 2 Leads/ })).toBeInTheDocument();
   });
 
   it('calls onClose when Cancel is clicked', async () => {
     const onClose = vi.fn();
-    render(
-      <SequenceEnrollDialog open={true} onClose={onClose} leadIds={['lead-1']} />,
-    );
+    render(<SequenceEnrollDialog open={true} onClose={onClose} leadIds={['lead-1']} />);
 
     await userEvent.click(screen.getByRole('button', { name: /Cancel/ }));
     expect(onClose).toHaveBeenCalledOnce();
   });
 
   it('does not render when closed', () => {
-    render(
-      <SequenceEnrollDialog open={false} onClose={vi.fn()} leadIds={['lead-1']} />,
-    );
+    render(<SequenceEnrollDialog open={false} onClose={vi.fn()} leadIds={['lead-1']} />);
 
     expect(screen.queryByText('Enroll in Sequence')).not.toBeInTheDocument();
   });

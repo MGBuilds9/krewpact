@@ -97,9 +97,7 @@ export function AgedReceivablesReport({ orgId }: AgedReceivablesReportProps) {
         </div>
       </CardHeader>
       <CardContent>
-        {!isLoading && data?.rows && data.rows.length > 0 && (
-          <SummaryCards rows={data.rows} />
-        )}
+        {!isLoading && data?.rows && data.rows.length > 0 && <SummaryCards rows={data.rows} />}
         <Table>
           <TableHeader>
             <TableRow>

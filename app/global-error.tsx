@@ -53,8 +53,9 @@ export default function GlobalError({
             >
               Try again
             </button>
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- global-error renders outside Next.js providers, Link unavailable */}
             <a
-              href="/dashboard"
+              href="/"
               style={{
                 padding: '0.75rem 1.5rem',
                 backgroundColor: 'transparent',

@@ -167,6 +167,96 @@ function StepDivisionSetup({
   );
 }
 
+type InviteForm = UseFormReturn<{ email: string; role: string }>;
+
+function PendingInviteList({
+  invites,
+  onRemove,
+}: {
+  invites: PendingInvite[];
+  onRemove: (email: string) => void;
+}) {
+  if (invites.length === 0) return null;
+  return (
+    <div className="space-y-2">
+      <h3 className="text-sm font-medium">Pending Invites</h3>
+      <ul className="space-y-2" data-testid="pending-invites">
+        {invites.map((inv) => (
+          <li
+            key={inv.email}
+            className="flex items-center justify-between rounded-md border p-2 text-sm"
+          >
+            <span>
+              {inv.email}{' '}
+              <span className="text-muted-foreground">
+                ({INTERNAL_ROLES.find((r) => r.value === inv.role)?.label ?? inv.role})
+              </span>
+            </span>
+            <Button type="button" variant="ghost" size="sm" onClick={() => onRemove(inv.email)}>
+              Remove
+            </Button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function InviteFormFields({
+  inviteForm,
+  onAddInvite,
+}: {
+  inviteForm: InviteForm;
+  onAddInvite: (e: React.FormEvent) => void;
+}) {
+  return (
+    <form onSubmit={onAddInvite} className="space-y-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="invite-email">Email</Label>
+          <Input
+            id="invite-email"
+            type="email"
+            placeholder="colleague@company.com"
+            {...inviteForm.register('email')}
+          />
+          {inviteForm.formState.errors.email && (
+            <p className="text-sm text-destructive" role="alert">
+              {inviteForm.formState.errors.email.message}
+            </p>
+          )}
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="invite-role">Role</Label>
+          <Select
+            onValueChange={(val) => inviteForm.setValue('role', val, { shouldValidate: true })}
+            value={inviteForm.watch('role')}
+          >
+            <SelectTrigger id="invite-role">
+              <SelectValue placeholder="Select role" />
+            </SelectTrigger>
+            <SelectContent>
+              {INTERNAL_ROLES.map((r) => (
+                <SelectItem key={r.value} value={r.value}>
+                  {r.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {inviteForm.formState.errors.role && (
+            <p className="text-sm text-destructive" role="alert">
+              {inviteForm.formState.errors.role.message}
+            </p>
+          )}
+        </div>
+      </div>
+      <Button type="submit" variant="secondary" size="sm">
+        Add Invite
+      </Button>
+    </form>
+  );
+}
+
 function StepInviteTeam({
   inviteForm,
   pendingInvites,
@@ -176,7 +266,7 @@ function StepInviteTeam({
   onAddInvite,
   onRemove,
 }: {
-  inviteForm: UseFormReturn<{ email: string; role: string }>;
+  inviteForm: InviteForm;
   pendingInvites: PendingInvite[];
   onBack: () => void;
   onSkip: () => void;
@@ -190,73 +280,8 @@ function StepInviteTeam({
       <p className="text-muted-foreground">
         Add your team members. You can always invite more later.
       </p>
-      <form onSubmit={onAddInvite} className="space-y-4">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="invite-email">Email</Label>
-            <Input
-              id="invite-email"
-              type="email"
-              placeholder="colleague@company.com"
-              {...inviteForm.register('email')}
-            />
-            {inviteForm.formState.errors.email && (
-              <p className="text-sm text-destructive" role="alert">
-                {inviteForm.formState.errors.email.message}
-              </p>
-            )}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="invite-role">Role</Label>
-            <Select
-              onValueChange={(val) => inviteForm.setValue('role', val, { shouldValidate: true })}
-              value={inviteForm.watch('role')}
-            >
-              <SelectTrigger id="invite-role">
-                <SelectValue placeholder="Select role" />
-              </SelectTrigger>
-              <SelectContent>
-                {INTERNAL_ROLES.map((r) => (
-                  <SelectItem key={r.value} value={r.value}>
-                    {r.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {inviteForm.formState.errors.role && (
-              <p className="text-sm text-destructive" role="alert">
-                {inviteForm.formState.errors.role.message}
-              </p>
-            )}
-          </div>
-        </div>
-        <Button type="submit" variant="secondary" size="sm">
-          Add Invite
-        </Button>
-      </form>
-      {pendingInvites.length > 0 && (
-        <div className="space-y-2">
-          <h3 className="text-sm font-medium">Pending Invites</h3>
-          <ul className="space-y-2" data-testid="pending-invites">
-            {pendingInvites.map((inv) => (
-              <li
-                key={inv.email}
-                className="flex items-center justify-between rounded-md border p-2 text-sm"
-              >
-                <span>
-                  {inv.email}{' '}
-                  <span className="text-muted-foreground">
-                    ({INTERNAL_ROLES.find((r) => r.value === inv.role)?.label ?? inv.role})
-                  </span>
-                </span>
-                <Button type="button" variant="ghost" size="sm" onClick={() => onRemove(inv.email)}>
-                  Remove
-                </Button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <InviteFormFields inviteForm={inviteForm} onAddInvite={onAddInvite} />
+      <PendingInviteList invites={pendingInvites} onRemove={onRemove} />
       <div className="flex justify-between">
         <Button type="button" variant="outline" onClick={onBack}>
           Back
@@ -269,6 +294,40 @@ function StepInviteTeam({
             Next
           </Button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function WizardProgress({
+  currentStep,
+  totalSteps,
+  progressPercent,
+}: {
+  currentStep: number;
+  totalSteps: number;
+  progressPercent: number;
+}) {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between text-sm text-muted-foreground">
+        <span>
+          Step {currentStep} of {totalSteps}
+        </span>
+        <span>{Math.round(progressPercent)}% complete</span>
+      </div>
+      <div
+        className="h-2 w-full overflow-hidden rounded-full bg-secondary"
+        role="progressbar"
+        aria-valuenow={progressPercent}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={`Onboarding progress: step ${currentStep} of ${totalSteps}`}
+      >
+        <div
+          className="h-full rounded-full bg-primary transition-all duration-300"
+          style={{ width: `${progressPercent}%` }}
+        />
       </div>
     </div>
   );
@@ -354,27 +413,11 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 p-6">
-      <div className="space-y-2">
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <span>
-            Step {currentStep} of {TOTAL_STEPS}
-          </span>
-          <span>{Math.round(progressPercent)}% complete</span>
-        </div>
-        <div
-          className="h-2 w-full overflow-hidden rounded-full bg-secondary"
-          role="progressbar"
-          aria-valuenow={progressPercent}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-label={`Onboarding progress: step ${currentStep} of ${TOTAL_STEPS}`}
-        >
-          <div
-            className="h-full rounded-full bg-primary transition-all duration-300"
-            style={{ width: `${progressPercent}%` }}
-          />
-        </div>
-      </div>
+      <WizardProgress
+        currentStep={currentStep}
+        totalSteps={TOTAL_STEPS}
+        progressPercent={progressPercent}
+      />
       {currentStep === 1 && (
         <StepCompanyProfile
           form={companyForm}

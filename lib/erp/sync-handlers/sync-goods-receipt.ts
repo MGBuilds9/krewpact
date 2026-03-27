@@ -26,6 +26,38 @@ import {
   upsertSyncMap,
 } from './sync-helpers';
 
+async function createPurchaseReceiptInErp(
+  grId: string,
+  grRecord: Record<string, unknown>,
+  erpPoName: string | null,
+  erpItems: Record<string, unknown>[],
+): Promise<string> {
+  if (isMockMode()) {
+    const mockResp = mockPurchaseReceiptResponse({
+      id: grId,
+      gr_number: grRecord.gr_number as string,
+      po_name: erpPoName || 'MOCK-PO',
+      items: erpItems,
+    });
+    return mockResp.name;
+  }
+
+  const { ErpClient } = await import('../client');
+  const client = new ErpClient();
+  const payload: Record<string, unknown> = {
+    naming_series: 'MAT-PRE-.YYYY.-',
+    title: grRecord.gr_number as string,
+    posting_date: grRecord.received_date as string,
+    supplier: '',
+    currency: 'CAD',
+    krewpact_id: grId,
+    items: erpItems,
+  };
+  if (erpPoName) payload.purchase_order = erpPoName;
+  const result = await client.create<{ name: string }>('Purchase Receipt', payload);
+  return result.name;
+}
+
 /**
  * Look up the ERPNext Purchase Order name for a given inventory_purchase_orders.id.
  */
@@ -41,6 +73,27 @@ async function resolveErpPurchaseOrderName(
     .maybeSingle();
 
   return (syncMapRow?.erp_docname as string) || null;
+}
+
+function buildGrErpItems(
+  lines: Record<string, unknown>[],
+  warehouseName: string,
+  erpPoName: string | null,
+): Record<string, unknown>[] {
+  return lines.map((lineRecord, idx) => {
+    const itemRelation = lineRecord.inventory_items as Record<string, unknown> | null;
+    return {
+      idx: idx + 1,
+      item_code: itemRelation?.sku || `ITEM-${lineRecord.item_id as string}`,
+      item_name: itemRelation?.name || '',
+      qty: lineRecord.qty_received as number,
+      rate: lineRecord.unit_price as number,
+      warehouse: warehouseName,
+      purchase_order: erpPoName || '',
+      serial_no: (lineRecord.serial_number as string) || '',
+      batch_no: (lineRecord.lot_number as string) || '',
+    };
+  });
 }
 
 /**
@@ -108,54 +161,13 @@ export async function syncGoodsReceipt(
     const warehouseName = (location?.name as string) || 'Stores - MDM';
 
     // 5. Build ERPNext Purchase Receipt payload
-    const erpItems = (lines || []).map((line, idx) => {
-      const lineRecord = line as Record<string, unknown>;
-      const itemRelation = lineRecord.inventory_items as Record<string, unknown> | null;
-      return {
-        idx: idx + 1,
-        item_code: itemRelation?.sku || `ITEM-${lineRecord.item_id as string}`,
-        item_name: itemRelation?.name || '',
-        qty: lineRecord.qty_received as number,
-        rate: lineRecord.unit_price as number,
-        warehouse: warehouseName,
-        purchase_order: erpPoName || '',
-        serial_no: (lineRecord.serial_number as string) || '',
-        batch_no: (lineRecord.lot_number as string) || '',
-      };
-    });
+    const erpItems = buildGrErpItems(
+      (lines || []).map((l) => l as Record<string, unknown>),
+      warehouseName,
+      erpPoName,
+    );
 
-    let erpDocname: string;
-
-    if (isMockMode()) {
-      const mockResp = mockPurchaseReceiptResponse({
-        id: grId,
-        gr_number: grRecord.gr_number as string,
-        po_name: erpPoName || 'MOCK-PO',
-        items: erpItems,
-      });
-      erpDocname = mockResp.name;
-    } else {
-      const { ErpClient } = await import('../client');
-      const client = new ErpClient();
-
-      const payload: Record<string, unknown> = {
-        naming_series: 'MAT-PRE-.YYYY.-',
-        title: grRecord.gr_number as string,
-        posting_date: grRecord.received_date as string,
-        supplier: '', // Will be populated from PO link by ERPNext
-        currency: 'CAD',
-        krewpact_id: grId,
-        items: erpItems,
-      };
-
-      // If we have the linked PO, ERPNext can auto-fill supplier
-      if (erpPoName) {
-        payload.purchase_order = erpPoName;
-      }
-
-      const result = await client.create<{ name: string }>('Purchase Receipt', payload);
-      erpDocname = result.name;
-    }
+    const erpDocname = await createPurchaseReceiptInErp(grId, grRecord, erpPoName, erpItems);
 
     await upsertSyncMap(supabase, 'inventory_goods_receipt', grId, 'Purchase Receipt', erpDocname);
     await logEvent(supabase, job.id, 'sync_completed', {

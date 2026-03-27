@@ -12,6 +12,8 @@ const envSchema = z
     NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
     NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
     SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
+    // Supavisor pooler URL (port 6543, transaction mode) — required for serverless
+    SUPABASE_DB_URL: z.string().url().optional(),
 
     // ── Clerk (CRITICAL — auth fails without these) ──
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().startsWith('pk_'),
@@ -66,11 +68,19 @@ const envSchema = z
     TAKEOFF_ENGINE_URL: z.string().url().optional(),
     TAKEOFF_ENGINE_TOKEN: z.string().min(1).optional(),
 
+    // ── Logging ──
+    LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).optional().default('info'),
+
+    // ── Proxy / Domain ──
+    ALLOWED_DOMAINS: z.string().optional(),
+    DEFAULT_ORG_SLUG: z.string().optional(),
+
     // ── App ──
     NEXT_PUBLIC_APP_URL: z.string().url().optional(),
     EXPO_PUBLIC_API_BASE_URL: z.string().url().optional(),
     EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().startsWith('pk_').optional(),
     CRON_SECRET: z.string().min(1).optional(),
+    // Fallback for CRON_SECRET — used for webhook signature verification
     WEBHOOK_SIGNING_SECRET: z.string().min(1).optional(),
   })
   // Production-required: these are optional for local dev but MUST exist in production
@@ -108,46 +118,65 @@ export type Env = z.infer<typeof envSchema>;
 // Production warnings for optional but important vars
 // ---------------------------------------------------------------------------
 
-function warnMissingOptional(env: Record<string, string | undefined>): void {
-  const warnings: string[] = [];
+type EnvWarningCheck = {
+  condition: (e: Record<string, string | undefined>) => boolean;
+  message: string;
+};
 
-  if (!env.UPSTASH_REDIS_REST_URL || !env.UPSTASH_REDIS_REST_TOKEN) {
-    warnings.push('UPSTASH_REDIS_REST_URL/TOKEN not set — rate limiting is DISABLED');
-  }
-  if (env.QSTASH_TOKEN && (!env.QSTASH_CURRENT_SIGNING_KEY || !env.QSTASH_NEXT_SIGNING_KEY)) {
-    warnings.push(
+const ENV_WARNING_CHECKS: EnvWarningCheck[] = [
+  {
+    condition: (e) => !e.UPSTASH_REDIS_REST_URL || !e.UPSTASH_REDIS_REST_TOKEN,
+    message: 'UPSTASH_REDIS_REST_URL/TOKEN not set — rate limiting is DISABLED',
+  },
+  {
+    condition: (e) =>
+      !!e.QSTASH_TOKEN && (!e.QSTASH_CURRENT_SIGNING_KEY || !e.QSTASH_NEXT_SIGNING_KEY),
+    message:
       'QSTASH signing keys not fully configured — background webhook verification will fail closed',
-    );
-  }
-  if (!env.CRON_SECRET && !env.WEBHOOK_SIGNING_SECRET) {
-    warnings.push('CRON_SECRET not set — cron endpoints have no auth');
-  }
-  if (!env.SENTRY_DSN && !env.NEXT_PUBLIC_SENTRY_DSN) {
-    warnings.push('SENTRY_DSN not set — error tracking is DISABLED');
-  }
-  if ((env.SENTRY_DSN || env.NEXT_PUBLIC_SENTRY_DSN) && (!env.SENTRY_ORG || !env.SENTRY_PROJECT)) {
-    warnings.push('SENTRY_ORG/SENTRY_PROJECT not set — source map uploads will be skipped');
-  }
-  if (!env.RESEND_API_KEY) {
-    warnings.push('RESEND_API_KEY not set — email sending will fail');
-  }
-  if (!env.EXPO_PUBLIC_API_BASE_URL || !env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY) {
-    warnings.push(
-      'Mobile public env vars not set — internal beta builds may boot with invalid config',
-    );
-  }
-  if (!env.APOLLO_API_KEY) {
-    warnings.push('APOLLO_API_KEY not set — Apollo enrichment source will be skipped');
-  }
-  if (!env.BRAVE_API_KEY) {
-    warnings.push('BRAVE_API_KEY not set — Brave web search enrichment will be skipped');
-  }
-  if (!env.TAVILY_API_KEY) {
-    warnings.push('TAVILY_API_KEY not set — Tavily AI search enrichment will be skipped');
-  }
-  if (!env.GOOGLE_MAPS_API_KEY) {
-    warnings.push('GOOGLE_MAPS_API_KEY not set — Google Maps enrichment will be skipped');
-  }
+  },
+  {
+    condition: (e) => !e.CRON_SECRET && !e.WEBHOOK_SIGNING_SECRET,
+    message: 'CRON_SECRET not set — cron endpoints have no auth',
+  },
+  {
+    condition: (e) => !e.SENTRY_DSN && !e.NEXT_PUBLIC_SENTRY_DSN,
+    message: 'SENTRY_DSN not set — error tracking is DISABLED',
+  },
+  {
+    condition: (e) =>
+      !!(e.SENTRY_DSN || e.NEXT_PUBLIC_SENTRY_DSN) && (!e.SENTRY_ORG || !e.SENTRY_PROJECT),
+    message: 'SENTRY_ORG/SENTRY_PROJECT not set — source map uploads will be skipped',
+  },
+  {
+    condition: (e) => !e.RESEND_API_KEY,
+    message: 'RESEND_API_KEY not set — email sending will fail',
+  },
+  {
+    condition: (e) => !e.EXPO_PUBLIC_API_BASE_URL || !e.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY,
+    message: 'Mobile public env vars not set — internal beta builds may boot with invalid config',
+  },
+  {
+    condition: (e) => !e.APOLLO_API_KEY,
+    message: 'APOLLO_API_KEY not set — Apollo enrichment source will be skipped',
+  },
+  {
+    condition: (e) => !e.BRAVE_API_KEY,
+    message: 'BRAVE_API_KEY not set — Brave web search enrichment will be skipped',
+  },
+  {
+    condition: (e) => !e.TAVILY_API_KEY,
+    message: 'TAVILY_API_KEY not set — Tavily AI search enrichment will be skipped',
+  },
+  {
+    condition: (e) => !e.GOOGLE_MAPS_API_KEY,
+    message: 'GOOGLE_MAPS_API_KEY not set — Google Maps enrichment will be skipped',
+  },
+];
+
+function warnMissingOptional(env: Record<string, string | undefined>): void {
+  const warnings = ENV_WARNING_CHECKS.filter((check) => check.condition(env)).map(
+    (check) => check.message,
+  );
 
   if (warnings.length > 0 && process.env.NODE_ENV === 'production') {
     logger.warn('[env] Production warnings', { warnings });

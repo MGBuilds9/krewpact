@@ -11,7 +11,7 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 import { makeRequest, mockSupabaseClient } from '@/__tests__/helpers';
-import { POST } from '@/app/api/cron/sla-alerts/route';
+import { GET } from '@/app/api/cron/sla-alerts/route';
 import { createServiceClient } from '@/lib/supabase/server';
 
 const mockCreateServiceClient = vi.mocked(createServiceClient);
@@ -29,7 +29,7 @@ describe('POST /api/cron/sla-alerts', () => {
   it('returns 401 when cron auth fails', async () => {
     mockVerifyCronAuth.mockResolvedValue({ authorized: false });
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(401);
   });
 
@@ -44,7 +44,7 @@ describe('POST /api/cron/sla-alerts', () => {
       }) as any,
     );
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.alertsCreated).toBe(0);
@@ -75,7 +75,7 @@ describe('POST /api/cron/sla-alerts', () => {
       }) as any,
     );
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.alertsCreated).toBe(1);
@@ -107,7 +107,7 @@ describe('POST /api/cron/sla-alerts', () => {
       }) as any,
     );
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.alertsCreated).toBe(0);
@@ -139,7 +139,7 @@ describe('POST /api/cron/sla-alerts', () => {
       }) as any,
     );
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.alertsCreated).toBe(1);
@@ -170,7 +170,7 @@ describe('POST /api/cron/sla-alerts', () => {
       }) as any,
     );
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.alertsCreated).toBe(0);
@@ -200,7 +200,7 @@ describe('POST /api/cron/sla-alerts', () => {
       }) as any,
     );
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     // 'won' is not in LEAD_SLA_CONFIG so isOverdue returns false
@@ -218,7 +218,7 @@ describe('POST /api/cron/sla-alerts', () => {
       }) as any,
     );
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.alertsCreated).toBe(0);

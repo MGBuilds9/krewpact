@@ -336,12 +336,23 @@ Start with `KrewPact-Architecture-Resolution.md` (all contradictions resolved). 
 
 > Full log: `docs/session-log.md`
 
+### Mar 26, 2026 — BetterStack Uptime Monitors + Status Page
+
+- **Changes:** 5 BetterStack uptime monitors created via REST API (App Health, Deep Health, Homepage, ERPNext Tunnel, Clerk Auth). All 3-min intervals. Public status page at `https://krewpact.betteruptime.com`. CRON_SECRET + BETTERSTACK_API_TOKEN added to `.env.local`. URLs corrected to `hub.mdmgroupinc.ca`. Paused duplicate pre-existing monitor.
+- **Decisions:** BetterStack MCP OAuth broken — used REST API directly. Homepage monitor accepts 200/404 (no root page). Free tier alerts go to account owner email by default.
+- **Next:** Add michael.guirguis@mdmgroupinc.ca to BetterStack on-call schedule. Add root page or redirect at `/`.
+
+### Mar 26, 2026 — Dependency Audit: 35 Vulnerabilities → 0 Production
+
+- **Changes:** (1) Removed unused `xlsx` (SheetJS) — never imported, had unfixable high-severity prototype pollution + ReDoS. (2) Removed `vercel` CLI from production deps (should be global). (3) Upgraded `@serwist/next` 8.4.4→9.5.7 and moved to devDeps. (4) Moved `@axe-core/playwright` and `@testing-library/dom` to devDeps. Net: 258 packages removed from node_modules.
+- **Decisions:** `npm audit fix` alone couldn't resolve transitive deps in `vercel` CLI (32.7.2) — removing it entirely was cleaner since it's installed globally. `@serwist/next` was version-mismatched with `serwist` (8.x vs 9.x).
+- **Tests:** 4,715 passing (428 files). 0 lint errors.
+- **Next:** Remaining 10 moderate dev-only vulns are in `eslint-config-next` and `@serwist/next` transitive deps (brace-expansion) — will resolve when upstream updates.
+
 ### Mar 26, 2026 — Go-Live Audit: 14/16 Work Streams Verified + Live Testing
 
-- **Changes:** (1) Go-live audit — verified WS1 (CI), WS4 (storage buckets), WS11 (server components) already complete from prior sessions; 20 items checked off in tasklist. (2) WS12 bundle optimization — `optimizePackageImports` expanded 6→25 entries (17 Radix packages, cmdk, sonner). (3) WS13 lint cleanup — 304→93 warnings across 98 files; import sort auto-fix, array-index-key, complexity refactors, sub-component extraction. (4) WS14 a11y — 123/123 pages have metadata; skip-to-content, alt text, form labels all verified. (5) WS3 Vercel env audit — 13 undocumented vars added to `.env.example`, BoldSign env var name mismatch fixed (`BOLDSIGN_API_BASE_URL`→`BOLDSIGN_BASE_URL`). (6) WS6 ERPNext — tunnel live, 13/13 read mappers verified; fixed `mapPaymentStatus` (added Paid→paid, Reconciled→paid). (7) WS5 email — Resend key rotated, domain verified, test email sent. Dev email safety: all non-prod emails route to ALERT_EMAIL. (8) WS8 RBAC — 13 roles, 26 enforcement points. (9) WS10 portals — auth guards verified. (10) 3 type errors fixed (JSX.Element→ReactNode, ScoringRuleRow, RefObject null). (11) Build fix: removed `logger` import from client component pulling `node:async_hooks`. (12) Live manual checklist created (18 sections, 80+ items). (13) 2 stale branches deleted. Resend + BoldSign keys rotated in Vercel.
-- **Decisions:** Dev email override uses `ALERT_EMAIL` env var (not hardcoded). BoldSign key returns 401 (needs dashboard investigation — mock mode fallback is fine for now). Lint cleanup prioritized top offenders, not all 170 max-lines-per-function warnings.
+- **Changes:** 8 commits. Verified 9 WS's complete, completed 5 more. Lint 304→93 warnings. Env audit 13 gaps. ERPNext 13/13 mappers. Email verified + dev safety. Live manual checklist. 2 branches deleted.
 - **Tests:** 4,715 passing (428 files). 0 type errors. Build clean.
-- **Next:** BoldSign API key investigation. Full manual UAT via `docs/LIVE-MANUAL-CHECKLIST.md`. WS6 write mapper testing (create account → verify in ERPNext). WS16 formal UAT.
 
 - Mar 26: Observability & Monitoring Stack — Sentry, request tracing, withApiRoute(), CI post-deploy, BetterStack monitors.
 - Mar 25-26: Production Hardening — RBAC, UAT, operability, security sanitization. 4,715 tests.

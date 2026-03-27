@@ -26,11 +26,149 @@ import {
 import { useInvitePortalAccount } from '@/hooks/usePortals';
 import { portalAccountInviteSchema } from '@/lib/validators/portals';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type FormProp = any;
+
 type FormValues = z.infer<typeof portalAccountInviteSchema>;
 
 interface PortalInviteFormProps {
   onSuccess?: () => void;
   onCancel?: () => void;
+}
+
+function PortalInviteFields({
+  form,
+  actorType,
+  isPending,
+  onCancel,
+}: {
+  form: FormProp;
+  actorType: string;
+  isPending: boolean;
+  onCancel?: () => void;
+}) {
+  return (
+    <>
+      <FormField
+        control={form.control}
+        name="actor_type"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Account Type</FormLabel>
+            <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem value="client">Client</SelectItem>
+                <SelectItem value="trade_partner">Trade Partner</SelectItem>
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="role"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Role</FormLabel>
+            <Select
+              onValueChange={field.onChange}
+              defaultValue={
+                field.value || (actorType === 'client' ? 'client_owner' : 'trade_partner_admin')
+              }
+            >
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {actorType === 'client' ? (
+                  <>
+                    <SelectItem value="client_owner">Client Owner</SelectItem>
+                    <SelectItem value="client_delegate">Client Delegate</SelectItem>
+                  </>
+                ) : (
+                  <>
+                    <SelectItem value="trade_partner_admin">Trade Partner Admin</SelectItem>
+                    <SelectItem value="trade_partner_user">Trade Partner User</SelectItem>
+                  </>
+                )}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="email"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Email</FormLabel>
+            <FormControl>
+              <Input type="email" placeholder="email@example.com" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="company_name"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Company Name</FormLabel>
+            <FormControl>
+              <Input placeholder="Company name" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="contact_name"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Contact Name</FormLabel>
+            <FormControl>
+              <Input placeholder="Full name" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="phone"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Phone</FormLabel>
+            <FormControl>
+              <Input placeholder="+1 (416) 555-0100" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <div className="flex gap-3 pt-2">
+        <Button type="submit" disabled={isPending}>
+          {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Send Invitation
+        </Button>
+        {onCancel && (
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+        )}
+      </div>
+    </>
+  );
 }
 
 export function PortalInviteForm({ onSuccess, onCancel }: PortalInviteFormProps) {
@@ -63,125 +201,12 @@ export function PortalInviteForm({ onSuccess, onCancel }: PortalInviteFormProps)
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="actor_type"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Account Type</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="client">Client</SelectItem>
-                  <SelectItem value="trade_partner">Trade Partner</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
+        <PortalInviteFields
+          form={form}
+          actorType={actorType}
+          isPending={invite.isPending}
+          onCancel={onCancel}
         />
-        <FormField
-          control={form.control}
-          name="role"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Role</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                defaultValue={
-                  field.value || (actorType === 'client' ? 'client_owner' : 'trade_partner_admin')
-                }
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {actorType === 'client' ? (
-                    <>
-                      <SelectItem value="client_owner">Client Owner</SelectItem>
-                      <SelectItem value="client_delegate">Client Delegate</SelectItem>
-                    </>
-                  ) : (
-                    <>
-                      <SelectItem value="trade_partner_admin">Trade Partner Admin</SelectItem>
-                      <SelectItem value="trade_partner_user">Trade Partner User</SelectItem>
-                    </>
-                  )}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input type="email" placeholder="email@example.com" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="company_name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Company Name</FormLabel>
-              <FormControl>
-                <Input placeholder="Company name" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="contact_name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Contact Name</FormLabel>
-              <FormControl>
-                <Input placeholder="Full name" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="phone"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Phone</FormLabel>
-              <FormControl>
-                <Input placeholder="+1 (416) 555-0100" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="flex gap-3 pt-2">
-          <Button type="submit" disabled={invite.isPending}>
-            {invite.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Send Invitation
-          </Button>
-          {onCancel && (
-            <Button type="button" variant="outline" onClick={onCancel}>
-              Cancel
-            </Button>
-          )}
-        </div>
       </form>
     </Form>
   );

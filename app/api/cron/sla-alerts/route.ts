@@ -1,16 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { verifyCronAuth } from '@/lib/api/cron-auth';
 import { createCronLogger } from '@/lib/api/cron-logger';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { isOverdue, LEAD_SLA_CONFIG, OPPORTUNITY_SLA_CONFIG } from '@/lib/crm/sla-config';
 import { createServiceClient } from '@/lib/supabase/server';
 
-export async function POST(req: NextRequest) {
-  const { authorized } = await verifyCronAuth(req);
-  if (!authorized) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
+export const GET = withApiRoute({ auth: 'cron' }, async () => {
   const cronLog = createCronLogger('sla-alerts');
   const supabase = createServiceClient();
 
@@ -79,7 +74,4 @@ export async function POST(req: NextRequest) {
   };
   await cronLog.success(result);
   return NextResponse.json(result);
-}
-
-// Vercel Cron Jobs sends GET requests
-export { POST as GET };
+});

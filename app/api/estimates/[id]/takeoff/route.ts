@@ -7,6 +7,59 @@ import { createUserClientSafe } from '@/lib/supabase/server';
 import { takeoffEngine } from '@/lib/takeoff/client';
 
 type RouteContext = { params: Promise<{ id: string }> };
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type UserClient = any;
+
+async function uploadTakeoffFiles(
+  supabase: UserClient,
+  files: File[],
+  estimateId: string,
+  jobId: string,
+): Promise<{ file: File; storagePath: string; signedUrl: string | null }[]> {
+  return Promise.all(
+    files.map(async (file) => {
+      const storagePath = `${estimateId}/${jobId}/${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from('takeoff-plans')
+        .upload(storagePath, file, { upsert: false });
+      if (uploadError) throw new Error(`Upload failed for "${file.name}": ${uploadError.message}`);
+      const { data: signedData } = await supabase.storage
+        .from('takeoff-plans')
+        .createSignedUrl(storagePath, 86400);
+      return { file, storagePath, signedUrl: signedData?.signedUrl ?? null };
+    }),
+  );
+}
+
+async function insertFileMetadata(
+  supabase: UserClient,
+  uploadResults: { file: File; storagePath: string; signedUrl: string | null }[],
+  krewpactUserId: string | null,
+): Promise<{ fileId: string; storagePath: string; filename: string }[] | NextResponse> {
+  const fileRecords: { fileId: string; storagePath: string; filename: string }[] = [];
+  for (const { file, storagePath } of uploadResults) {
+    const { data: meta, error: metaError } = await supabase
+      .from('file_metadata')
+      .insert({
+        filename: file.name,
+        original_filename: file.name,
+        file_path: storagePath,
+        storage_bucket: 'takeoff-plans',
+        file_size_bytes: file.size,
+        mime_type: 'application/pdf',
+        source_system: 'takeoff',
+        uploaded_by: krewpactUserId,
+      })
+      .select('id')
+      .single();
+    if (metaError) {
+      logger.error('takeoff/POST: file_metadata insert failed', { error: metaError.message });
+      return NextResponse.json({ error: 'Failed to record file metadata' }, { status: 500 });
+    }
+    fileRecords.push({ fileId: meta.id as string, storagePath, filename: file.name });
+  }
+  return fileRecords;
+}
 
 const MAX_FILES = 5;
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
@@ -104,22 +157,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
   // Upload all files in parallel
   let uploadResults: { file: File; storagePath: string; signedUrl: string | null }[];
   try {
-    uploadResults = await Promise.all(
-      files.map(async (file) => {
-        const storagePath = `${id}/${jobId}/${file.name}`;
-        const { error: uploadError } = await supabase.storage
-          .from('takeoff-plans')
-          .upload(storagePath, file, { upsert: false });
-        if (uploadError)
-          throw new Error(`Upload failed for "${file.name}": ${uploadError.message}`);
-
-        const { data: signedData } = await supabase.storage
-          .from('takeoff-plans')
-          .createSignedUrl(storagePath, 86400);
-
-        return { file, storagePath, signedUrl: signedData?.signedUrl ?? null };
-      }),
-    );
+    uploadResults = await uploadTakeoffFiles(supabase, files, id, jobId);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     logger.error('takeoff/POST: file upload failed', { estimateId: id, error: msg });
@@ -127,28 +165,9 @@ export async function POST(req: NextRequest, context: RouteContext) {
   }
 
   // Insert file_metadata records sequentially, collect IDs
-  const fileRecords: { fileId: string; storagePath: string; filename: string }[] = [];
-  for (const { file, storagePath } of uploadResults) {
-    const { data: meta, error: metaError } = await supabase
-      .from('file_metadata')
-      .insert({
-        filename: file.name,
-        original_filename: file.name,
-        file_path: storagePath,
-        storage_bucket: 'takeoff-plans',
-        file_size_bytes: file.size,
-        mime_type: 'application/pdf',
-        source_system: 'takeoff',
-        uploaded_by: krewpactUserId,
-      })
-      .select('id')
-      .single();
-    if (metaError) {
-      logger.error('takeoff/POST: file_metadata insert failed', { error: metaError.message });
-      return NextResponse.json({ error: 'Failed to record file metadata' }, { status: 500 });
-    }
-    fileRecords.push({ fileId: meta.id as string, storagePath, filename: file.name });
-  }
+  const fileRecordsResult = await insertFileMetadata(supabase, uploadResults, krewpactUserId);
+  if (fileRecordsResult instanceof NextResponse) return fileRecordsResult;
+  const fileRecords = fileRecordsResult;
 
   // Create takeoff_jobs record (don't store token in config — read from env at runtime)
   const { error: jobError } = await supabase.from('takeoff_jobs').insert({

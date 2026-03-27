@@ -38,9 +38,7 @@ describe('RBAC: GET /api/governance/reference-data', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('returns 403 for non-platform_admin', async () => {
-    mockRequireRole.mockResolvedValue(
-      NextResponse.json({ error: 'Forbidden' }, { status: 403 }),
-    );
+    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Forbidden' }, { status: 403 }));
     const { GET } = await import('@/app/api/governance/reference-data/route');
     const res = await GET(makeRequest('/api/governance/reference-data'));
     expect(res.status).toBe(403);
@@ -60,9 +58,7 @@ describe('RBAC: POST /api/governance/reference-data', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('returns 403 for non-platform_admin', async () => {
-    mockRequireRole.mockResolvedValue(
-      NextResponse.json({ error: 'Forbidden' }, { status: 403 }),
-    );
+    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Forbidden' }, { status: 403 }));
     const { POST } = await import('@/app/api/governance/reference-data/route');
     const res = await POST(makeJsonRequest('/api/governance/reference-data', { set_key: 'x' }));
     expect(res.status).toBe(403);
@@ -74,7 +70,10 @@ describe('RBAC: POST /api/governance/reference-data', () => {
     mockFrom.mockReturnValue(paginatedChain([newRecord], 1));
     const { POST } = await import('@/app/api/governance/reference-data/route');
     const res = await POST(
-      makeJsonRequest('/api/governance/reference-data', { set_key: 'test_key', set_name: 'Test Set' }),
+      makeJsonRequest('/api/governance/reference-data', {
+        set_key: 'test_key',
+        set_name: 'Test Set',
+      }),
     );
     expect(res.status).toBe(201);
   });

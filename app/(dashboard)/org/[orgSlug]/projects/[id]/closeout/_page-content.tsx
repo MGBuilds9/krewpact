@@ -176,7 +176,11 @@ function ServiceCallsTab({
 
 export default function CloseoutPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: projectId } = use(params);
-  const { data: pkgData, isLoading: pkgLoading, isError: pkgError } = useCloseoutPackages(projectId);
+  const {
+    data: pkgData,
+    isLoading: pkgLoading,
+    isError: pkgError,
+  } = useCloseoutPackages(projectId);
   const { data: defData, isLoading: defLoading, isError: defError } = useDeficiencies(projectId);
   const { data: callData, isLoading: callLoading, isError: callError } = useServiceCalls(projectId);
 

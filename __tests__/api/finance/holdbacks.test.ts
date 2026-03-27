@@ -69,7 +69,9 @@ describe('GET /api/finance/holdbacks', () => {
 
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
-    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
+    mockRequireRole.mockResolvedValue(
+      NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
+    );
     const { GET } = await import('@/app/api/finance/holdbacks/route');
     const res = await GET(makeRequest(`/api/finance/holdbacks?project_id=${VALID_PROJECT_ID}`));
     expect(res.status).toBe(401);

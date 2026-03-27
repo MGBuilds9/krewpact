@@ -126,19 +126,14 @@ function CreateTagForm({
   );
 }
 
-export function TagSelector({
-  entityType,
-  entityId,
-  existingTags,
-  onTagsChanged,
-}: TagSelectorProps) {
+function useTagSelector(
+  entityType: TagSelectorProps['entityType'],
+  entityId: string,
+  existingTags: Tag[],
+  onTagsChanged?: () => void,
+) {
   const [appliedTags, setAppliedTags] = useState<Tag[]>(existingTags);
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
-  const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState('');
-  const [creating, setCreating] = useState(false);
-  const [newTagName, setNewTagName] = useState('');
-  const [newTagColor, setNewTagColor] = useState(PRESET_COLORS[5]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -147,11 +142,6 @@ export function TagSelector({
       .then((res) => setAvailableTags(res.data ?? []))
       .catch(() => {});
   }, []);
-
-  const appliedIds = new Set(appliedTags.map((t) => t.id));
-  const filteredTags = availableTags.filter(
-    (t) => !appliedIds.has(t.id) && t.name.toLowerCase().includes(search.toLowerCase()),
-  );
 
   async function applyTag(tag: Tag) {
     setLoading(true);
@@ -179,7 +169,7 @@ export function TagSelector({
     } catch {}
   }
 
-  async function createAndApplyTag() {
+  async function createAndApplyTag(newTagName: string, newTagColor: string, onDone: () => void) {
     if (!newTagName.trim()) return;
     setLoading(true);
     try {
@@ -191,13 +181,33 @@ export function TagSelector({
       const tag: Tag = await res.json();
       setAvailableTags((prev) => [...prev, tag]);
       await applyTag(tag);
-      setNewTagName('');
-      setCreating(false);
-      setOpen(false);
+      onDone();
     } finally {
       setLoading(false);
     }
   }
+
+  return { appliedTags, availableTags, loading, applyTag, removeTag, createAndApplyTag };
+}
+
+export function TagSelector({
+  entityType,
+  entityId,
+  existingTags,
+  onTagsChanged,
+}: TagSelectorProps) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [newTagName, setNewTagName] = useState('');
+  const [newTagColor, setNewTagColor] = useState(PRESET_COLORS[5]);
+  const { appliedTags, availableTags, loading, applyTag, removeTag, createAndApplyTag } =
+    useTagSelector(entityType, entityId, existingTags, onTagsChanged);
+
+  const appliedIds = new Set(appliedTags.map((t) => t.id));
+  const filteredTags = availableTags.filter(
+    (t) => !appliedIds.has(t.id) && t.name.toLowerCase().includes(search.toLowerCase()),
+  );
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">
@@ -244,7 +254,13 @@ export function TagSelector({
                 newTagColor={newTagColor}
                 setNewTagColor={setNewTagColor}
                 loading={loading}
-                onCreate={createAndApplyTag}
+                onCreate={() =>
+                  createAndApplyTag(newTagName, newTagColor, () => {
+                    setNewTagName('');
+                    setCreating(false);
+                    setOpen(false);
+                  })
+                }
                 onCancel={() => setCreating(false)}
               />
             )}

@@ -103,10 +103,7 @@ export function PortalHeader() {
   const router = useRouter();
   const userName = user ? `${user.firstName} ${user.lastName}` : '';
   const roles = user?.publicMetadata?.krewpact_roles as string[] | undefined;
-  const userRole =
-    roles && roles.length > 0
-      ? formatStatus(roles[0])
-      : 'Portal User';
+  const userRole = roles && roles.length > 0 ? formatStatus(roles[0]) : 'Portal User';
 
   const handleSignOut = async () => {
     try {

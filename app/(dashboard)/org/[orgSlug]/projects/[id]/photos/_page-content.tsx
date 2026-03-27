@@ -73,7 +73,9 @@ export default function PhotosPage() {
   const [annotatePhotoId, setAnnotatePhotoId] = useState<string | null>(null);
   const [addPhotoOpen, setAddPhotoOpen] = useState(false);
   const { data: photosData, isLoading } = usePhotos(projectId);
-  const photos = (photosData?.data ?? []).filter((p) => category === 'all' || p.category === category);
+  const photos = (photosData?.data ?? []).filter(
+    (p) => category === 'all' || p.category === category,
+  );
 
   return (
     <div className="space-y-6">
@@ -87,20 +89,43 @@ export default function PhotosPage() {
         </div>
         <div className="flex items-center gap-3">
           <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
-            <SelectContent>{CATEGORIES.map((cat) => <SelectItem key={cat} value={cat}>{formatCat(cat)}</SelectItem>)}</SelectContent>
+            <SelectTrigger className="w-44">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {CATEGORIES.map((cat) => (
+                <SelectItem key={cat} value={cat}>
+                  {formatCat(cat)}
+                </SelectItem>
+              ))}
+            </SelectContent>
           </Select>
           <Dialog open={addPhotoOpen} onOpenChange={setAddPhotoOpen}>
-            <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Add Photo</Button></DialogTrigger>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Photo
+              </Button>
+            </DialogTrigger>
             <DialogContent>
-              <DialogHeader><DialogTitle>Add Site Photo</DialogTitle></DialogHeader>
-              <PhotoCaptureForm projectId={projectId} onSuccess={() => setAddPhotoOpen(false)} onCancel={() => setAddPhotoOpen(false)} />
+              <DialogHeader>
+                <DialogTitle>Add Site Photo</DialogTitle>
+              </DialogHeader>
+              <PhotoCaptureForm
+                projectId={projectId}
+                onSuccess={() => setAddPhotoOpen(false)}
+                onCancel={() => setAddPhotoOpen(false)}
+              />
             </DialogContent>
           </Dialog>
         </div>
       </div>
       {isLoading ? (
-        <div className="grid grid-cols-3 gap-4">{['p1','p2','p3','p4','p5','p6'].map((k) => <Skeleton key={k} className="h-48 w-full rounded-xl" />)}</div>
+        <div className="grid grid-cols-3 gap-4">
+          {['p1', 'p2', 'p3', 'p4', 'p5', 'p6'].map((k) => (
+            <Skeleton key={k} className="h-48 w-full rounded-xl" />
+          ))}
+        </div>
       ) : photos.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">
           <Camera className="h-16 w-16 mx-auto mb-4 opacity-25" />
@@ -108,12 +133,30 @@ export default function PhotosPage() {
           <p className="text-sm">Document site progress with photos</p>
         </div>
       ) : (
-        <div className="grid grid-cols-3 gap-4">{photos.map((photo) => <PhotoCard key={photo.id} photo={photo as Photo} onAnnotate={setAnnotatePhotoId} />)}</div>
+        <div className="grid grid-cols-3 gap-4">
+          {photos.map((photo) => (
+            <PhotoCard key={photo.id} photo={photo as Photo} onAnnotate={setAnnotatePhotoId} />
+          ))}
+        </div>
       )}
-      <Dialog open={!!annotatePhotoId} onOpenChange={(o) => { if (!o) setAnnotatePhotoId(null); }}>
+      <Dialog
+        open={!!annotatePhotoId}
+        onOpenChange={(o) => {
+          if (!o) setAnnotatePhotoId(null);
+        }}
+      >
         <DialogContent>
-          <DialogHeader><DialogTitle>Add Annotation</DialogTitle></DialogHeader>
-          {annotatePhotoId && <PhotoAnnotationForm projectId={projectId} photoId={annotatePhotoId} onSuccess={() => setAnnotatePhotoId(null)} onCancel={() => setAnnotatePhotoId(null)} />}
+          <DialogHeader>
+            <DialogTitle>Add Annotation</DialogTitle>
+          </DialogHeader>
+          {annotatePhotoId && (
+            <PhotoAnnotationForm
+              projectId={projectId}
+              photoId={annotatePhotoId}
+              onSuccess={() => setAnnotatePhotoId(null)}
+              onCancel={() => setAnnotatePhotoId(null)}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </div>

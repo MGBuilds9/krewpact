@@ -125,25 +125,13 @@ export async function createGoodsReceipt(
 }
 
 // ============================================================
-// confirmGoodsReceipt
+// confirmGoodsReceipt helpers
 // ============================================================
 
-export async function confirmGoodsReceipt(
+async function fetchAndValidatePoLines(
   supabase: SupabaseClient<Database>,
-  grId: string,
-  transactedBy: string,
-): Promise<GRRow> {
-  // 1. Read the GR with lines
-  const gr = await getGoodsReceipt(supabase, grId);
-  if (!gr) {
-    throw new Error('Goods receipt not found');
-  }
-
-  if (gr.status !== 'draft') {
-    throw new Error(`Cannot confirm GR in status "${gr.status}". Must be "draft".`);
-  }
-
-  // 2. Fetch PO lines to validate quantities
+  gr: GRRow & { lines: GRLineRow[] },
+): Promise<Map<string, POLineRow>> {
   const poLineIds = gr.lines.map((l) => l.po_line_id);
   const { data: poLines, error: poLinesError } = await supabase
     .from('inventory_po_lines')
@@ -156,17 +144,11 @@ export async function confirmGoodsReceipt(
   }
 
   const poLineMap = new Map<string, POLineRow>();
-  for (const pl of poLines) {
-    poLineMap.set(pl.id, pl);
-  }
+  for (const pl of poLines) poLineMap.set(pl.id, pl);
 
-  // 3. Validate: no over-receiving
   for (const grLine of gr.lines) {
     const poLine = poLineMap.get(grLine.po_line_id);
-    if (!poLine) {
-      throw new Error(`PO line ${grLine.po_line_id} not found`);
-    }
-
+    if (!poLine) throw new Error(`PO line ${grLine.po_line_id} not found`);
     const remainingQty = poLine.qty_ordered - poLine.qty_received;
     if (grLine.qty_received > remainingQty) {
       throw new Error(
@@ -177,9 +159,15 @@ export async function confirmGoodsReceipt(
     }
   }
 
-  // 4. All validation passed — perform writes
+  return poLineMap;
+}
 
-  // 4a. Create ledger entries for each GR line
+async function applyGrLineWrites(
+  supabase: SupabaseClient<Database>,
+  gr: GRRow & { lines: GRLineRow[] },
+  poLineMap: Map<string, POLineRow>,
+  transactedBy: string,
+): Promise<void> {
   for (const grLine of gr.lines) {
     await createLedgerEntry(supabase, {
       item_id: grLine.item_id,
@@ -195,14 +183,11 @@ export async function confirmGoodsReceipt(
     });
   }
 
-  // 4b. Update PO line qty_received + handle serial/lot tracking
   for (const grLine of gr.lines) {
     const poLine = poLineMap.get(grLine.po_line_id)!;
-    const newQtyReceived = poLine.qty_received + grLine.qty_received;
-
     const { error: updateError } = await supabase
       .from('inventory_po_lines')
-      .update({ qty_received: newQtyReceived })
+      .update({ qty_received: poLine.qty_received + grLine.qty_received })
       .eq('id', grLine.po_line_id);
 
     if (updateError) {
@@ -213,7 +198,6 @@ export async function confirmGoodsReceipt(
       throw new Error(`PO line update failed: ${updateError.message}`);
     }
 
-    // Serial tracking
     if (grLine.serial_number) {
       await createSerialRecord(supabase, {
         item_id: grLine.item_id,
@@ -226,7 +210,6 @@ export async function confirmGoodsReceipt(
       });
     }
 
-    // Lot tracking
     if (grLine.lot_number) {
       await upsertLotRecord(supabase, {
         item_id: grLine.item_id,
@@ -236,37 +219,50 @@ export async function confirmGoodsReceipt(
       });
     }
   }
+}
 
-  // 4c. Determine PO status (partially vs fully received)
-  // Re-fetch PO lines after updates
+async function updatePoStatus(supabase: SupabaseClient<Database>, poId: string): Promise<void> {
   const { data: updatedPoLines, error: refetchError } = await supabase
     .from('inventory_po_lines')
     .select('qty_ordered, qty_received')
-    .eq('po_id', gr.po_id);
+    .eq('po_id', poId);
 
   if (refetchError || !updatedPoLines) {
-    logger.error('Failed to refetch PO lines for status check', {
-      error: refetchError?.message,
-    });
+    logger.error('Failed to refetch PO lines for status check', { error: refetchError?.message });
     throw new Error(`PO lines refetch failed: ${refetchError?.message}`);
   }
 
   const fullyReceived = updatedPoLines.every((l) => l.qty_received >= l.qty_ordered);
-  const newPoStatus = fullyReceived ? 'fully_received' : 'partially_received';
-
   const { error: poStatusError } = await supabase
     .from('inventory_purchase_orders')
-    .update({ status: newPoStatus })
-    .eq('id', gr.po_id);
+    .update({ status: fullyReceived ? 'fully_received' : 'partially_received' })
+    .eq('id', poId);
 
   if (poStatusError) {
-    logger.error('Failed to update PO status after GR confirm', {
-      error: poStatusError.message,
-    });
+    logger.error('Failed to update PO status after GR confirm', { error: poStatusError.message });
     throw new Error(`PO status update failed: ${poStatusError.message}`);
   }
+}
 
-  // 4d. Set GR status to confirmed
+// ============================================================
+// confirmGoodsReceipt
+// ============================================================
+
+export async function confirmGoodsReceipt(
+  supabase: SupabaseClient<Database>,
+  grId: string,
+  transactedBy: string,
+): Promise<GRRow> {
+  const gr = await getGoodsReceipt(supabase, grId);
+  if (!gr) throw new Error('Goods receipt not found');
+  if (gr.status !== 'draft') {
+    throw new Error(`Cannot confirm GR in status "${gr.status}". Must be "draft".`);
+  }
+
+  const poLineMap = await fetchAndValidatePoLines(supabase, gr);
+  await applyGrLineWrites(supabase, gr, poLineMap, transactedBy);
+  await updatePoStatus(supabase, gr.po_id);
+
   const { data: confirmedGr, error: confirmError } = await supabase
     .from('inventory_goods_receipts')
     .update({ status: 'confirmed' })

@@ -38,9 +38,7 @@ describe('RBAC: GET /api/migration/batches', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('returns 403 for non-platform_admin', async () => {
-    mockRequireRole.mockResolvedValue(
-      NextResponse.json({ error: 'Forbidden' }, { status: 403 }),
-    );
+    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Forbidden' }, { status: 403 }));
     const { GET } = await import('@/app/api/migration/batches/route');
     const res = await GET(makeRequest('/api/migration/batches'));
     expect(res.status).toBe(403);
@@ -60,9 +58,7 @@ describe('RBAC: POST /api/migration/batches', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('returns 403 for non-platform_admin', async () => {
-    mockRequireRole.mockResolvedValue(
-      NextResponse.json({ error: 'Forbidden' }, { status: 403 }),
-    );
+    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Forbidden' }, { status: 403 }));
     const { POST } = await import('@/app/api/migration/batches/route');
     const res = await POST(makeJsonRequest('/api/migration/batches', { batch_name: 'Test' }));
     expect(res.status).toBe(403);
@@ -70,11 +66,19 @@ describe('RBAC: POST /api/migration/batches', () => {
 
   it('returns 201 for platform_admin with valid body', async () => {
     mockRequireRole.mockResolvedValue({ userId: 'admin-user', roles: ['platform_admin'] });
-    const newBatch = { id: 'batch-1', source_system: 'almyta', batch_name: 'Items Import', status: 'queued' };
+    const newBatch = {
+      id: 'batch-1',
+      source_system: 'almyta',
+      batch_name: 'Items Import',
+      status: 'queued',
+    };
     mockFrom.mockReturnValue(paginatedChain([newBatch], 1));
     const { POST } = await import('@/app/api/migration/batches/route');
     const res = await POST(
-      makeJsonRequest('/api/migration/batches', { source_system: 'almyta', batch_name: 'Items Import' }),
+      makeJsonRequest('/api/migration/batches', {
+        source_system: 'almyta',
+        batch_name: 'Items Import',
+      }),
     );
     expect(res.status).toBe(201);
   });

@@ -91,9 +91,9 @@ export function ConvertLeadDialog({ lead, open, onOpenChange }: ConvertLeadDialo
                 <SelectValue placeholder="Select an account" />
               </SelectTrigger>
               <SelectContent>
-                {accounts.map((account) => (
-                  <SelectItem key={account.id} value={account.id}>
-                    {account.account_name}
+                {accounts.map((a) => (
+                  <SelectItem key={a.id} value={a.id}>
+                    {a.account_name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -106,9 +106,9 @@ export function ConvertLeadDialog({ lead, open, onOpenChange }: ConvertLeadDialo
                 <SelectValue placeholder="Select a contact" />
               </SelectTrigger>
               <SelectContent>
-                {contacts.map((contact) => (
-                  <SelectItem key={contact.id} value={contact.id}>
-                    {contact.first_name} {contact.last_name}
+                {contacts.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.first_name} {c.last_name}
                   </SelectItem>
                 ))}
               </SelectContent>

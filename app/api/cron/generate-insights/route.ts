@@ -1,22 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
 import { generateInsights } from '@/lib/ai/agents/insight-engine';
-import { verifyCronAuth } from '@/lib/api/cron-auth';
 import { createCronLogger } from '@/lib/api/cron-logger';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { logger } from '@/lib/logger';
 import { createServiceClient } from '@/lib/supabase/server';
 
-export async function POST(req: NextRequest): Promise<NextResponse> {
+export const GET = withApiRoute({ auth: 'cron' }, async () => {
   if (process.env.AI_ENABLED !== 'true') {
     return NextResponse.json(
       { error: 'AI features are not enabled', disabled: true },
       { status: 503 },
     );
-  }
-
-  const { authorized } = await verifyCronAuth(req);
-  if (!authorized) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const cronLog = createCronLogger('generate-insights');
@@ -69,7 +64,4 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   };
   await cronLog.success({ generated: totalGenerated, skipped: totalSkipped, errors: totalErrors });
   return NextResponse.json(result);
-}
-
-// Vercel Cron Jobs sends GET requests
-export { POST as GET };
+});

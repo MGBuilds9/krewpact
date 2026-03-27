@@ -26,10 +26,7 @@ import {
   mockSupabaseClient,
 } from '@/__tests__/helpers';
 import { GET, POST } from '@/app/api/projects/[id]/submittals/[subId]/distribution/route';
-import {
-  createDistributionLog,
-  getDistributionLog,
-} from '@/lib/services/document-control';
+import { createDistributionLog, getDistributionLog } from '@/lib/services/document-control';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
@@ -157,7 +154,9 @@ describe('POST /api/projects/[id]/submittals/[subId]/distribution', () => {
     mockClerkAuth(mockAuth);
     const res = await POST(
       makeJsonRequest('/api/projects/proj-1/submittals/sub-1/distribution', {
-        recipients: [{ user_id: '550e8400-e29b-41d4-a716-446655440000', email: 'not-an-email', name: 'Test' }],
+        recipients: [
+          { user_id: '550e8400-e29b-41d4-a716-446655440000', email: 'not-an-email', name: 'Test' },
+        ],
       }),
       makeContext('proj-1', 'sub-1'),
     );

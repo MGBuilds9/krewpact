@@ -136,12 +136,7 @@ export const ROLE_PERMISSIONS: Record<KrewpactRole, readonly Permission[]> = {
     'field_ops.edit',
   ],
 
-  estimator: [
-    'crm.view',
-    'estimates.view',
-    'estimates.edit',
-    'estimates.admin',
-  ],
+  estimator: ['crm.view', 'estimates.view', 'estimates.edit', 'estimates.admin'],
 
   field_supervisor: [
     'projects.view',

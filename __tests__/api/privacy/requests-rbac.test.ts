@@ -38,9 +38,7 @@ describe('RBAC: GET /api/privacy/requests', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('returns 403 for non-platform_admin', async () => {
-    mockRequireRole.mockResolvedValue(
-      NextResponse.json({ error: 'Forbidden' }, { status: 403 }),
-    );
+    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Forbidden' }, { status: 403 }));
     const { GET } = await import('@/app/api/privacy/requests/route');
     const res = await GET(makeRequest('/api/privacy/requests'));
     expect(res.status).toBe(403);
@@ -60,17 +58,22 @@ describe('RBAC: POST /api/privacy/requests', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('returns 403 for non-platform_admin', async () => {
-    mockRequireRole.mockResolvedValue(
-      NextResponse.json({ error: 'Forbidden' }, { status: 403 }),
-    );
+    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Forbidden' }, { status: 403 }));
     const { POST } = await import('@/app/api/privacy/requests/route');
-    const res = await POST(makeJsonRequest('/api/privacy/requests', { requester_email: 'a@b.com' }));
+    const res = await POST(
+      makeJsonRequest('/api/privacy/requests', { requester_email: 'a@b.com' }),
+    );
     expect(res.status).toBe(403);
   });
 
   it('returns 201 for platform_admin with valid body', async () => {
     mockRequireRole.mockResolvedValue({ userId: 'admin-user', roles: ['platform_admin'] });
-    const newRequest = { id: 'pr-1', requester_email: 'user@example.com', request_type: 'access', status: 'received' };
+    const newRequest = {
+      id: 'pr-1',
+      requester_email: 'user@example.com',
+      request_type: 'access',
+      status: 'received',
+    };
     mockFrom.mockReturnValue(paginatedChain([newRequest], 1));
     const { POST } = await import('@/app/api/privacy/requests/route');
     const res = await POST(

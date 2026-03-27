@@ -65,7 +65,9 @@ function EstimateNotFound({ onBack }: { onBack: () => void }) {
       <p className="text-muted-foreground mb-4">
         This estimate may have been deleted or you don&apos;t have access.
       </p>
-      <button onClick={onBack} className="underline text-sm">Back to Estimates</button>
+      <button onClick={onBack} className="underline text-sm">
+        Back to Estimates
+      </button>
     </div>
   );
 }
@@ -81,8 +83,13 @@ interface TakeoffPanelsProps {
 }
 
 function TakeoffPanels({
-  estimateId, showTakeoff, activeTakeoffJobId, takeoffReviewJobId,
-  completedTakeoffJobId, onJobComplete, onLinesAccepted,
+  estimateId,
+  showTakeoff,
+  activeTakeoffJobId,
+  takeoffReviewJobId,
+  completedTakeoffJobId,
+  onJobComplete,
+  onLinesAccepted,
 }: TakeoffPanelsProps) {
   if (!showTakeoff) return null;
   return (
@@ -126,29 +133,57 @@ interface EstimateDialogsProps {
 }
 
 function EstimateDialogs({
-  estimateId, allowanceDialogOpen, alternateDialogOpen, proposalDialogOpen,
-  versionDialogOpen, takeoffDialogOpen, showTakeoff,
-  onAllowanceClose, onAlternateClose, onProposalClose,
-  onVersionClose, onTakeoffClose, onVersionConfirm, onJobCreated,
+  estimateId,
+  allowanceDialogOpen,
+  alternateDialogOpen,
+  proposalDialogOpen,
+  versionDialogOpen,
+  takeoffDialogOpen,
+  showTakeoff,
+  onAllowanceClose,
+  onAlternateClose,
+  onProposalClose,
+  onVersionClose,
+  onTakeoffClose,
+  onVersionConfirm,
+  onJobCreated,
 }: EstimateDialogsProps) {
   return (
     <>
       <Dialog open={allowanceDialogOpen} onOpenChange={onAllowanceClose}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Add Allowance</DialogTitle></DialogHeader>
-          <AllowanceForm estimateId={estimateId} onSuccess={onAllowanceClose} onCancel={onAllowanceClose} />
+          <DialogHeader>
+            <DialogTitle>Add Allowance</DialogTitle>
+          </DialogHeader>
+          <AllowanceForm
+            estimateId={estimateId}
+            onSuccess={onAllowanceClose}
+            onCancel={onAllowanceClose}
+          />
         </DialogContent>
       </Dialog>
       <Dialog open={alternateDialogOpen} onOpenChange={onAlternateClose}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Add Alternate</DialogTitle></DialogHeader>
-          <AlternateForm estimateId={estimateId} onSuccess={onAlternateClose} onCancel={onAlternateClose} />
+          <DialogHeader>
+            <DialogTitle>Add Alternate</DialogTitle>
+          </DialogHeader>
+          <AlternateForm
+            estimateId={estimateId}
+            onSuccess={onAlternateClose}
+            onCancel={onAlternateClose}
+          />
         </DialogContent>
       </Dialog>
       <Dialog open={proposalDialogOpen} onOpenChange={onProposalClose}>
         <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>Generate Proposal</DialogTitle></DialogHeader>
-          <ProposalGenerationForm estimateId={estimateId} onSuccess={onProposalClose} onCancel={onProposalClose} />
+          <DialogHeader>
+            <DialogTitle>Generate Proposal</DialogTitle>
+          </DialogHeader>
+          <ProposalGenerationForm
+            estimateId={estimateId}
+            onSuccess={onProposalClose}
+            onCancel={onProposalClose}
+          />
         </DialogContent>
       </Dialog>
       <ConfirmReasonDialog
@@ -209,8 +244,11 @@ export default function EstimateBuilderPage() {
   return (
     <div className="space-y-6">
       <EstimateHeader
-        estimate={estimate} lines={safeLines} allowedTransitions={allowedTransitions}
-        isPending={updateEstimate.isPending} isVersionPending={createVersion.isPending}
+        estimate={estimate}
+        lines={safeLines}
+        allowedTransitions={allowedTransitions}
+        isPending={updateEstimate.isPending}
+        isVersionPending={createVersion.isPending}
         onTransition={(s) => updateEstimate.mutate({ id: estimateId, status: s })}
         onSaveVersion={() => setVersionDialogOpen(true)}
         onProposal={() => setProposalDialogOpen(true)}
@@ -218,32 +256,60 @@ export default function EstimateBuilderPage() {
         onBack={() => orgPush('/estimates')}
       />
       <TakeoffPanels
-        estimateId={estimateId} showTakeoff={showTakeoff}
-        activeTakeoffJobId={activeTakeoffJobId} takeoffReviewJobId={takeoffReviewJobId}
+        estimateId={estimateId}
+        showTakeoff={showTakeoff}
+        activeTakeoffJobId={activeTakeoffJobId}
+        takeoffReviewJobId={takeoffReviewJobId}
         completedTakeoffJobId={completedTakeoffJobId}
-        onJobComplete={(id) => { setTakeoffReviewJobId(id); setActiveTakeoffJobId(null); }}
-        onLinesAccepted={(id) => { setCompletedTakeoffJobId(id); setTakeoffReviewJobId(null); }}
+        onJobComplete={(id) => {
+          setTakeoffReviewJobId(id);
+          setActiveTakeoffJobId(null);
+        }}
+        onLinesAccepted={(id) => {
+          setCompletedTakeoffJobId(id);
+          setTakeoffReviewJobId(null);
+        }}
       />
       <EstimateCardsSection
-        estimate={estimate} safeLines={safeLines}
-        allowances={allowancesData || []} alternates={alternatesData || []}
-        isEditable={isEditable} versions={versions}
-        onAddLine={() => addLine.mutate({ estimateId, description: 'New line item', quantity: 1, unit_cost: 0, markup_pct: 0, sort_order: safeLines.length + 1 })}
-        onUpdateLine={(lineId, field, value) => updateLine.mutate({ estimateId, lineId, [field]: value })}
+        estimate={estimate}
+        safeLines={safeLines}
+        allowances={allowancesData || []}
+        alternates={alternatesData || []}
+        isEditable={isEditable}
+        versions={versions}
+        onAddLine={() =>
+          addLine.mutate({
+            estimateId,
+            description: 'New line item',
+            quantity: 1,
+            unit_cost: 0,
+            markup_pct: 0,
+            sort_order: safeLines.length + 1,
+          })
+        }
+        onUpdateLine={(lineId, field, value) =>
+          updateLine.mutate({ estimateId, lineId, [field]: value })
+        }
         onDeleteLine={(lineId) => deleteLine.mutate({ estimateId, lineId })}
         onAddAllowance={() => setAllowanceDialogOpen(true)}
         onAddAlternate={() => setAlternateDialogOpen(true)}
       />
       <EstimateDialogs
         estimateId={estimateId}
-        allowanceDialogOpen={allowanceDialogOpen} alternateDialogOpen={alternateDialogOpen}
-        proposalDialogOpen={proposalDialogOpen} versionDialogOpen={versionDialogOpen}
-        takeoffDialogOpen={takeoffDialogOpen} showTakeoff={showTakeoff}
+        allowanceDialogOpen={allowanceDialogOpen}
+        alternateDialogOpen={alternateDialogOpen}
+        proposalDialogOpen={proposalDialogOpen}
+        versionDialogOpen={versionDialogOpen}
+        takeoffDialogOpen={takeoffDialogOpen}
+        showTakeoff={showTakeoff}
         onAllowanceClose={() => setAllowanceDialogOpen(false)}
         onAlternateClose={() => setAlternateDialogOpen(false)}
         onProposalClose={() => setProposalDialogOpen(false)}
-        onVersionClose={setVersionDialogOpen} onTakeoffClose={setTakeoffDialogOpen}
-        onVersionConfirm={(reason) => createVersion.mutate({ estimateId, reason: reason || undefined })}
+        onVersionClose={setVersionDialogOpen}
+        onTakeoffClose={setTakeoffDialogOpen}
+        onVersionConfirm={(reason) =>
+          createVersion.mutate({ estimateId, reason: reason || undefined })
+        }
         onJobCreated={(jobId) => setActiveTakeoffJobId(jobId)}
       />
     </div>

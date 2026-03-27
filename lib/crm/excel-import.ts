@@ -75,7 +75,10 @@ export function parseProjectSummary(summary: string): ParsedProject[] {
   const projects: ParsedProject[] = [];
 
   // Split on pipe separators
-  const parts = summary.split('|').map((p) => p.trim()).filter(Boolean);
+  const parts = summary
+    .split('|')
+    .map((p) => p.trim())
+    .filter(Boolean);
 
   for (const part of parts) {
     // Match "[XX] Some description" pattern

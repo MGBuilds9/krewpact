@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { type SurveySubmission,surveySubmissionSchema } from '@/lib/validators/portal-survey';
+import { type SurveySubmission, surveySubmissionSchema } from '@/lib/validators/portal-survey';
 
 const RATING_LABELS: Record<number, string> = {
   1: 'Poor',
@@ -69,6 +69,29 @@ interface SatisfactionSurveyProps {
   onSubmitted?: () => void;
 }
 
+type ExistingSurveyData = SatisfactionSurveyProps['existingSurvey'];
+
+function buildDefaultValues(existingSurvey: ExistingSurveyData): SurveySubmission {
+  if (existingSurvey) {
+    return {
+      overall_rating: existingSurvey.overall_rating,
+      communication_rating: existingSurvey.communication_rating,
+      quality_rating: existingSurvey.quality_rating,
+      schedule_rating: existingSurvey.schedule_rating,
+      comments: existingSurvey.comments ?? '',
+      would_recommend: existingSurvey.would_recommend,
+    };
+  }
+  return {
+    overall_rating: 0,
+    communication_rating: 0,
+    quality_rating: 0,
+    schedule_rating: 0,
+    comments: '',
+    would_recommend: true,
+  };
+}
+
 export function SatisfactionSurvey({
   projectId,
   existingSurvey,
@@ -85,23 +108,7 @@ export function SatisfactionSurvey({
     formState: { errors, isSubmitting },
   } = useForm<SurveySubmission>({
     resolver: zodResolver(surveySubmissionSchema),
-    defaultValues: existingSurvey
-      ? {
-          overall_rating: existingSurvey.overall_rating,
-          communication_rating: existingSurvey.communication_rating,
-          quality_rating: existingSurvey.quality_rating,
-          schedule_rating: existingSurvey.schedule_rating,
-          comments: existingSurvey.comments ?? '',
-          would_recommend: existingSurvey.would_recommend,
-        }
-      : {
-          overall_rating: 0,
-          communication_rating: 0,
-          quality_rating: 0,
-          schedule_rating: 0,
-          comments: '',
-          would_recommend: true,
-        },
+    defaultValues: buildDefaultValues(existingSurvey),
   });
 
   const overallRating = watch('overall_rating');
@@ -201,6 +208,86 @@ interface SurveyFormProps {
   isUpdate: boolean;
 }
 
+type SurveySetValue = ReturnType<typeof useForm<SurveySubmission>>['setValue'];
+type SurveyErrors = ReturnType<typeof useForm<SurveySubmission>>['formState']['errors'];
+
+interface RatingsGridProps {
+  overallRating: number;
+  commRating: number;
+  qualityRating: number;
+  scheduleRating: number;
+  errors: SurveyErrors;
+  setValue: SurveySetValue;
+}
+function RatingsGrid({
+  overallRating,
+  commRating,
+  qualityRating,
+  scheduleRating,
+  errors,
+  setValue,
+}: RatingsGridProps) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      <StarRating
+        label="Overall Satisfaction"
+        name="overall_rating"
+        value={overallRating}
+        onChange={(v) => setValue('overall_rating', v, { shouldValidate: true })}
+        error={errors.overall_rating?.message}
+      />
+      <StarRating
+        label="Communication"
+        name="communication_rating"
+        value={commRating}
+        onChange={(v) => setValue('communication_rating', v, { shouldValidate: true })}
+        error={errors.communication_rating?.message}
+      />
+      <StarRating
+        label="Quality of Work"
+        name="quality_rating"
+        value={qualityRating}
+        onChange={(v) => setValue('quality_rating', v, { shouldValidate: true })}
+        error={errors.quality_rating?.message}
+      />
+      <StarRating
+        label="Schedule Adherence"
+        name="schedule_rating"
+        value={scheduleRating}
+        onChange={(v) => setValue('schedule_rating', v, { shouldValidate: true })}
+        error={errors.schedule_rating?.message}
+      />
+    </div>
+  );
+}
+
+function RecommendationField({
+  wouldRecommend,
+  setValue,
+}: {
+  wouldRecommend: boolean;
+  setValue: SurveySetValue;
+}) {
+  return (
+    <div className="space-y-1">
+      <label className="block text-sm font-medium text-gray-700">Would you recommend us?</label>
+      <div className="flex gap-3">
+        {[true, false].map((val) => (
+          <button
+            key={String(val)}
+            type="button"
+            onClick={() => setValue('would_recommend', val, { shouldValidate: true })}
+            aria-pressed={wouldRecommend === val}
+            className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${wouldRecommend === val ? (val ? 'bg-green-600 border-green-600 text-white' : 'bg-red-500 border-red-500 text-white') : 'bg-white border-gray-300 text-gray-600 hover:border-gray-400'}`}
+          >
+            {val ? 'Yes' : 'No'}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function SurveyForm({
   register,
   handleSubmit,
@@ -218,64 +305,18 @@ function SurveyForm({
 }: SurveyFormProps) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <StarRating
-          label="Overall Satisfaction"
-          name="overall_rating"
-          value={overallRating}
-          onChange={(v) => setValue('overall_rating', v, { shouldValidate: true })}
-          error={errors.overall_rating?.message}
-        />
-        <StarRating
-          label="Communication"
-          name="communication_rating"
-          value={commRating}
-          onChange={(v) => setValue('communication_rating', v, { shouldValidate: true })}
-          error={errors.communication_rating?.message}
-        />
-        <StarRating
-          label="Quality of Work"
-          name="quality_rating"
-          value={qualityRating}
-          onChange={(v) => setValue('quality_rating', v, { shouldValidate: true })}
-          error={errors.quality_rating?.message}
-        />
-        <StarRating
-          label="Schedule Adherence"
-          name="schedule_rating"
-          value={scheduleRating}
-          onChange={(v) => setValue('schedule_rating', v, { shouldValidate: true })}
-          error={errors.schedule_rating?.message}
-        />
-      </div>
-
-      <div className="space-y-1">
-        <label className="block text-sm font-medium text-gray-700">Would you recommend us?</label>
-        <div className="flex gap-3">
-          {[true, false].map((val) => (
-            <button
-              key={String(val)}
-              type="button"
-              onClick={() => setValue('would_recommend', val, { shouldValidate: true })}
-              aria-pressed={wouldRecommend === val}
-              className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
-                wouldRecommend === val
-                  ? val
-                    ? 'bg-green-600 border-green-600 text-white'
-                    : 'bg-red-500 border-red-500 text-white'
-                  : 'bg-white border-gray-300 text-gray-600 hover:border-gray-400'
-              }`}
-            >
-              {val ? 'Yes' : 'No'}
-            </button>
-          ))}
-        </div>
-      </div>
-
+      <RatingsGrid
+        overallRating={overallRating}
+        commRating={commRating}
+        qualityRating={qualityRating}
+        scheduleRating={scheduleRating}
+        errors={errors}
+        setValue={setValue}
+      />
+      <RecommendationField wouldRecommend={wouldRecommend} setValue={setValue} />
       <div className="space-y-1">
         <label htmlFor="survey-comments" className="block text-sm font-medium text-gray-700">
-          Additional Comments{' '}
-          <span className="text-gray-400 font-normal">(optional)</span>
+          Additional Comments <span className="text-gray-400 font-normal">(optional)</span>
         </label>
         <textarea
           id="survey-comments"
@@ -284,17 +325,13 @@ function SurveyForm({
           placeholder="Share any additional thoughts..."
           className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
         />
-        {errors.comments && (
-          <p className="text-xs text-red-600">{errors.comments.message}</p>
-        )}
+        {errors.comments && <p className="text-xs text-red-600">{errors.comments.message}</p>}
       </div>
-
       {submitError && (
         <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
           {submitError}
         </div>
       )}
-
       <div className="flex justify-end">
         <button
           type="submit"

@@ -38,7 +38,7 @@ export function BidToOpportunityButton({ bid, onConverted }: BidToOpportunityBut
       onConverted?.(result.opportunity_id);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-       
+
       console.error('Bid conversion failed', message);
     } finally {
       setLoading(false);

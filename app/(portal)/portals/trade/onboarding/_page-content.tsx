@@ -111,12 +111,7 @@ function StepContact({
       </div>
       <div>
         <Label htmlFor="phone">Phone</Label>
-        <Input
-          id="phone"
-          {...register('phone')}
-          placeholder="+1-416-555-0100"
-          className="mt-1"
-        />
+        <Input id="phone" {...register('phone')} placeholder="+1-416-555-0100" className="mt-1" />
       </div>
       <div className="flex justify-end">
         <Button type="submit">Next →</Button>

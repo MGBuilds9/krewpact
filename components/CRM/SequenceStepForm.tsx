@@ -26,6 +26,9 @@ import { Textarea } from '@/components/ui/textarea';
 import type { SequenceStep } from '@/hooks/useCRM';
 import { useCreateSequenceStep } from '@/hooks/useCRM';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type FormProp = any;
+
 const actionTypes = ['email', 'task', 'wait'] as const;
 const actionTypeLabels: Record<string, string> = {
   email: 'Send Email',
@@ -77,6 +80,153 @@ function buildActionConfig(values: StepFormValues): Record<string, unknown> {
   return {};
 }
 
+function SequenceStepFormFields({
+  form,
+  actionType,
+  initialData,
+  nextStepNumber,
+  isPending,
+  onCancel,
+}: {
+  form: FormProp;
+  actionType: string;
+  initialData?: Partial<SequenceStep>;
+  nextStepNumber: number;
+  isPending: boolean;
+  onCancel?: () => void;
+}) {
+  return (
+    <>
+      <FormField
+        control={form.control}
+        name="action_type"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Action Type *</FormLabel>
+            <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select action type" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {actionTypes.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {actionTypeLabels[type]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      {actionType === 'email' && (
+        <>
+          <FormField
+            control={form.control}
+            name="email_subject"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Subject</FormLabel>
+                <FormControl>
+                  <Input placeholder="Email subject line" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="email_body"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Body</FormLabel>
+                <FormControl>
+                  <Textarea placeholder="Email body content" rows={3} {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </>
+      )}
+      {actionType === 'task' && (
+        <>
+          <FormField
+            control={form.control}
+            name="task_title"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Task Title</FormLabel>
+                <FormControl>
+                  <Input placeholder="Task title" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="task_description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                  <Textarea placeholder="Task description" rows={2} {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </>
+      )}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="delay_days"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Delay (days)</FormLabel>
+              <FormControl>
+                <Input type="number" min="0" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="delay_hours"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Delay (hours)</FormLabel>
+              <FormControl>
+                <Input type="number" min="0" max="23" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Step {initialData?.step_number ?? nextStepNumber}
+      </p>
+      <div className="flex gap-2 justify-end">
+        {onCancel && (
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+        )}
+        <Button type="submit" disabled={isPending}>
+          {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+          {initialData ? 'Update Step' : 'Add Step'}
+        </Button>
+      </div>
+    </>
+  );
+}
+
 export function SequenceStepForm({
   sequenceId,
   initialData,
@@ -85,12 +235,10 @@ export function SequenceStepForm({
   onCancel,
 }: SequenceStepFormProps) {
   const createStep = useCreateSequenceStep();
-
   const form = useForm<StepFormValues>({
     resolver: zodResolver(stepFormSchema) as Resolver<StepFormValues>,
     defaultValues: extractFormDefaults(initialData),
   });
-
   // eslint-disable-next-line react-hooks/incompatible-library
   const actionType = form.watch('action_type');
 
@@ -116,137 +264,14 @@ export function SequenceStepForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="action_type"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Action Type *</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select action type" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {actionTypes.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {actionTypeLabels[type]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
+        <SequenceStepFormFields
+          form={form}
+          actionType={actionType}
+          initialData={initialData}
+          nextStepNumber={nextStepNumber}
+          isPending={createStep.isPending}
+          onCancel={onCancel}
         />
-
-        {actionType === 'email' && (
-          <>
-            <FormField
-              control={form.control}
-              name="email_subject"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Subject</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Email subject line" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="email_body"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Body</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Email body content" rows={3} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </>
-        )}
-
-        {actionType === 'task' && (
-          <>
-            <FormField
-              control={form.control}
-              name="task_title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Task Title</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Task title" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="task_description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Task description" rows={2} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </>
-        )}
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="delay_days"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Delay (days)</FormLabel>
-                <FormControl>
-                  <Input type="number" min="0" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="delay_hours"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Delay (hours)</FormLabel>
-                <FormControl>
-                  <Input type="number" min="0" max="23" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <p className="text-xs text-muted-foreground">
-          Step {initialData?.step_number ?? nextStepNumber}
-        </p>
-
-        <div className="flex gap-2 justify-end">
-          {onCancel && (
-            <Button type="button" variant="outline" onClick={onCancel}>
-              Cancel
-            </Button>
-          )}
-          <Button type="submit" disabled={createStep.isPending}>
-            {createStep.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            {initialData ? 'Update Step' : 'Add Step'}
-          </Button>
-        </div>
       </form>
     </Form>
   );

@@ -253,8 +253,10 @@ export default function AccountsView() {
     divisionId,
     accountType: typeFilter !== 'all' ? typeFilter : undefined,
     search: debouncedSearch || undefined,
-    limit: pageSize, offset: page * pageSize,
-    sortBy: sort?.field, sortDir: sort?.direction,
+    limit: pageSize,
+    offset: page * pageSize,
+    sortBy: sort?.field,
+    sortDir: sort?.direction,
   });
 
   const accounts = response?.data || [];
@@ -267,7 +269,9 @@ export default function AccountsView() {
           <Building2 className="h-8 w-8 text-primary" />
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Accounts</h1>
-            <p className="text-muted-foreground text-sm">{total} account{total !== 1 ? 's' : ''}</p>
+            <p className="text-muted-foreground text-sm">
+              {total} account{total !== 1 ? 's' : ''}
+            </p>
           </div>
         </div>
         <ViewToggle mode={viewMode} onChange={setViewMode} />
@@ -275,18 +279,53 @@ export default function AccountsView() {
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search accounts..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} className="pl-10" />
+          <Input
+            placeholder="Search accounts..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(0);
+            }}
+            className="pl-10"
+          />
         </div>
-        <Select value={typeFilter} onValueChange={(val) => { setTypeFilter(val); setPage(0); }}>
-          <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by type" /></SelectTrigger>
+        <Select
+          value={typeFilter}
+          onValueChange={(val) => {
+            setTypeFilter(val);
+            setPage(0);
+          }}
+        >
+          <SelectTrigger className="w-full sm:w-[180px]">
+            <SelectValue placeholder="Filter by type" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Types</SelectItem>
-            {ACCOUNT_TYPES.map((type) => <SelectItem key={type} value={type}>{type.charAt(0).toUpperCase() + type.slice(1)}</SelectItem>)}
+            {ACCOUNT_TYPES.map((type) => (
+              <SelectItem key={type} value={type}>
+                {type.charAt(0).toUpperCase() + type.slice(1)}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
-        <Button onClick={() => orgPush('/crm/accounts/new')}><Plus className="h-4 w-4 mr-2" />New Account</Button>
+        <Button onClick={() => orgPush('/crm/accounts/new')}>
+          <Plus className="h-4 w-4 mr-2" />
+          New Account
+        </Button>
       </div>
-      <AccountsBody accounts={accounts} total={total} page={page} pageSize={pageSize} sort={sort} viewMode={viewMode} isLoading={isLoading} setPage={setPage} setPageSize={setPageSize} setSort={setSort} orgPush={orgPush} />
+      <AccountsBody
+        accounts={accounts}
+        total={total}
+        page={page}
+        pageSize={pageSize}
+        sort={sort}
+        viewMode={viewMode}
+        isLoading={isLoading}
+        setPage={setPage}
+        setPageSize={setPageSize}
+        setSort={setSort}
+        orgPush={orgPush}
+      />
     </div>
   );
 }

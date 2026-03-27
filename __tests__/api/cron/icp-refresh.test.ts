@@ -22,7 +22,13 @@ vi.mock('@/lib/crm/icp-engine', () => ({
 }));
 
 vi.mock('@/lib/logger', () => ({
-  logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  logger: {
+    warn: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+    child: vi.fn().mockReturnThis(),
+  },
 }));
 
 import { makeRequest, mockSupabaseClient } from '@/__tests__/helpers';
@@ -75,7 +81,7 @@ describe('GET /api/cron/icp-refresh', () => {
     const res = await GET(makeCronRequest());
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns success with no accounts when table is empty', async () => {

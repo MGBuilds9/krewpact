@@ -34,7 +34,10 @@ export type LifecycleStage = 'lead' | 'prospect' | 'active_client' | 'repeat_cli
  */
 export function calculateAccountHealth(input: AccountHealthInput): AccountHealthScore {
   const recency = calculateRecencyScore(input.last_activity_at);
-  const engagement = calculateEngagementScore(input.total_opportunities, input.active_opportunities);
+  const engagement = calculateEngagementScore(
+    input.total_opportunities,
+    input.active_opportunities,
+  );
   const revenue = calculateRevenueScore(input.total_revenue);
   const winRate = calculateWinRateScore(input.won_opportunities, input.total_opportunities);
 

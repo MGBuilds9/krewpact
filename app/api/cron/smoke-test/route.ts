@@ -1,10 +1,3 @@
-import { NextRequest, NextResponse } from 'next/server';
-
-import { verifyCronAuth } from '@/lib/api/cron-auth';
-import { sendEmail } from '@/lib/email/resend';
-import { logger } from '@/lib/logger';
-import { createServiceClient } from '@/lib/supabase/server';
-
 /**
  * Internal smoke test — runs every hour.
  * Hits key internal APIs and data paths, logs results,
@@ -13,6 +6,13 @@ import { createServiceClient } from '@/lib/supabase/server';
  * Alert cooldown: only sends email on state transition (pass→fail)
  * or at most once per hour to prevent email flooding.
  */
+
+import { NextResponse } from 'next/server';
+
+import { withApiRoute } from '@/lib/api/with-api-route';
+import { sendEmail } from '@/lib/email/resend';
+import { logger } from '@/lib/logger';
+import { createServiceClient } from '@/lib/supabase/server';
 
 const ALERT_COOLDOWN_MS = 60 * 60 * 1000; // 1 hour
 
@@ -197,10 +197,7 @@ async function maybeAlert(failedChecks: SmokeCheck[]): Promise<void> {
   }
 }
 
-export async function POST(req: NextRequest): Promise<NextResponse> {
-  const { authorized } = await verifyCronAuth(req);
-  if (!authorized) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
+export const GET = withApiRoute({ auth: 'cron' }, async () => {
   const startTime = Date.now();
   const checks = await runChecks();
   const durationMs = Date.now() - startTime;
@@ -235,6 +232,4 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     duration_ms: durationMs,
     timestamp: new Date().toISOString(),
   });
-}
-
-export { POST as GET };
+});

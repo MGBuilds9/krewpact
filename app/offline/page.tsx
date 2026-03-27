@@ -1,12 +1,8 @@
-import type { Metadata } from 'next';
+'use client';
+
 import { WifiOff } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-
-export const metadata: Metadata = {
-  title: 'Offline | KrewPact',
-  description: 'You are currently offline.',
-};
 
 export default function OfflinePage() {
   return (

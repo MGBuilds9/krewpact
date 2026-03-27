@@ -107,10 +107,7 @@ function AssignRoleDialog({ open, onClose }: AssignRoleDialogProps) {
             <p className="text-sm font-medium">Internal Roles</p>
             <div className="grid grid-cols-2 gap-2">
               {internalRoles.map((role) => (
-                <label
-                  key={role.key}
-                  className="flex items-center gap-2 text-sm cursor-pointer"
-                >
+                <label key={role.key} className="flex items-center gap-2 text-sm cursor-pointer">
                   <Checkbox
                     checked={selectedRoles.includes(role.key)}
                     onCheckedChange={() => toggleRole(role.key)}
@@ -124,10 +121,7 @@ function AssignRoleDialog({ open, onClose }: AssignRoleDialogProps) {
             <p className="text-sm font-medium">External Roles</p>
             <div className="grid grid-cols-2 gap-2">
               {externalRoles.map((role) => (
-                <label
-                  key={role.key}
-                  className="flex items-center gap-2 text-sm cursor-pointer"
-                >
+                <label key={role.key} className="flex items-center gap-2 text-sm cursor-pointer">
                   <Checkbox
                     checked={selectedRoles.includes(role.key)}
                     onCheckedChange={() => toggleRole(role.key)}

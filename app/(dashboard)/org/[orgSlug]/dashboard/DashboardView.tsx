@@ -60,7 +60,10 @@ function WelcomeCard({ userName, greeting, roles }: WelcardProps) {
   return (
     <Card className="col-span-1 md:col-span-4 lg:col-span-4 bg-gradient-to-br from-primary/10 via-background to-secondary/10 border-0 shadow-sm rounded-3xl overflow-hidden">
       <CardContent className="p-6 flex flex-col justify-center">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-2" suppressHydrationWarning>
+        <h1
+          className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-2"
+          suppressHydrationWarning
+        >
           {greeting ? `${greeting}, ${userName}` : userName}
         </h1>
         <div className="flex gap-3 flex-wrap">

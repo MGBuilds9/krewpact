@@ -25,6 +25,9 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { useCreateActivity } from '@/hooks/useCRM';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type FormProp = any;
+
 const activityTypes = ['call', 'email', 'meeting', 'note', 'task'] as const;
 
 const activityFormSchema = z.object({
@@ -57,6 +60,94 @@ const activityTypeLabels: Record<string, string> = {
   task: 'Task',
 };
 
+function ActivityFormFields({
+  form,
+  isPending,
+  onCancel,
+}: {
+  form: FormProp;
+  isPending: boolean;
+  onCancel?: () => void;
+}) {
+  return (
+    <>
+      <FormField
+        control={form.control}
+        name="activity_type"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Activity Type *</FormLabel>
+            <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {activityTypes.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {activityTypeLabels[type]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="title"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Title *</FormLabel>
+            <FormControl>
+              <Input placeholder="e.g. Follow-up call" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="details"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Details</FormLabel>
+            <FormControl>
+              <Textarea placeholder="Add notes or details..." rows={3} {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="due_at"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Due Date</FormLabel>
+            <FormControl>
+              <Input type="datetime-local" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <div className="flex gap-2 justify-end pt-2">
+        {onCancel && (
+          <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
+            Cancel
+          </Button>
+        )}
+        <Button type="submit" disabled={isPending}>
+          {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Log Activity
+        </Button>
+      </div>
+    </>
+  );
+}
+
 export function ActivityForm({ entityType, entityId, onSuccess, onCancel }: ActivityFormProps) {
   const createActivity = useCreateActivity();
 
@@ -85,85 +176,7 @@ export function ActivityForm({ entityType, entityId, onSuccess, onCancel }: Acti
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="activity_type"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Activity Type *</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {activityTypes.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {activityTypeLabels[type]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="title"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Title *</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g. Follow-up call" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="details"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Details</FormLabel>
-              <FormControl>
-                <Textarea placeholder="Add notes or details..." rows={3} {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="due_at"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Due Date</FormLabel>
-              <FormControl>
-                <Input type="datetime-local" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="flex gap-2 justify-end pt-2">
-          {onCancel && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onCancel}
-              disabled={createActivity.isPending}
-            >
-              Cancel
-            </Button>
-          )}
-          <Button type="submit" disabled={createActivity.isPending}>
-            {createActivity.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Log Activity
-          </Button>
-        </div>
+        <ActivityFormFields form={form} isPending={createActivity.isPending} onCancel={onCancel} />
       </form>
     </Form>
   );

@@ -102,9 +102,7 @@ const leadColumns: ColumnDef<Lead, unknown>[] = [
     accessorKey: 'source_channel',
     header: 'Source',
     cell: ({ row }) =>
-      row.original.source_channel
-        ? formatStatus(row.original.source_channel)
-        : '-',
+      row.original.source_channel ? formatStatus(row.original.source_channel) : '-',
   },
   {
     accessorKey: 'created_at',

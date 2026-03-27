@@ -51,7 +51,9 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ data: withUrls, total: withUrls.length });
   } catch (err: unknown) {
-    logger.error('[submittal-attachments] GET failed', { message: err instanceof Error ? err.message : String(err) });
+    logger.error('[submittal-attachments] GET failed', {
+      message: err instanceof Error ? err.message : String(err),
+    });
     return NextResponse.json({ error: 'Failed to list attachments' }, { status: 500 });
   }
 }
@@ -106,7 +108,9 @@ export async function POST(req: NextRequest, context: RouteContext) {
     const result = await uploadAttachment(file, 'submittal', subId, userId);
     return NextResponse.json(result, { status: 201 });
   } catch (err: unknown) {
-    logger.error('[submittal-attachments] POST upload failed', { message: err instanceof Error ? err.message : String(err) });
+    logger.error('[submittal-attachments] POST upload failed', {
+      message: err instanceof Error ? err.message : String(err),
+    });
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
   }
 }
@@ -144,7 +148,9 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
     await deleteAttachment(attachmentId);
     return NextResponse.json({ ok: true });
   } catch (err: unknown) {
-    logger.error('[submittal-attachments] DELETE failed', { message: err instanceof Error ? err.message : String(err) });
+    logger.error('[submittal-attachments] DELETE failed', {
+      message: err instanceof Error ? err.message : String(err),
+    });
     return NextResponse.json({ error: 'Delete failed' }, { status: 500 });
   }
 }

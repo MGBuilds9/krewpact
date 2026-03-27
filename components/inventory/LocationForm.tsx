@@ -21,7 +21,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { type CreateLocation, createLocationSchema, locationTypeValues } from '@/lib/validators/inventory-items';
+import {
+  type CreateLocation,
+  createLocationSchema,
+  locationTypeValues,
+} from '@/lib/validators/inventory-items';
 
 const TYPE_LABELS: Record<string, string> = {
   warehouse: 'Warehouse',
@@ -72,9 +76,7 @@ export function LocationForm({
             <div className="space-y-2">
               <Label htmlFor="loc-name">Name *</Label>
               <Input id="loc-name" {...register('name')} placeholder="e.g. Main Warehouse" />
-              {errors.name && (
-                <p className="text-sm text-destructive">{errors.name.message}</p>
-              )}
+              {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
             </div>
 
             <div className="space-y-2">
@@ -104,7 +106,6 @@ export function LocationForm({
               <Label htmlFor="loc-address">Address</Label>
               <Input id="loc-address" {...register('address')} placeholder="Street address" />
             </div>
-
           </FormSection>
 
           <DialogFooter>

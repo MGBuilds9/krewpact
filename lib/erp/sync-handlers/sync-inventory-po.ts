@@ -27,6 +27,45 @@ import {
   upsertSyncMap,
 } from './sync-helpers';
 
+interface CreatePoInErpParams {
+  poId: string;
+  poRecord: Record<string, unknown>;
+  erpSupplierName: string | null;
+  scheduleDate: string;
+  erpItems: Record<string, unknown>[];
+}
+
+async function createPurchaseOrderInErp(params: CreatePoInErpParams): Promise<string> {
+  const { poId, poRecord, erpSupplierName, scheduleDate, erpItems } = params;
+  if (isMockMode()) {
+    const mockResp = mockPurchaseOrderResponse({
+      id: poId,
+      po_number: poRecord.po_number as string,
+      supplier_name: erpSupplierName || 'MOCK-SUPPLIER',
+      total_amount: poRecord.total_amount as number,
+      items: erpItems,
+    });
+    return mockResp.name;
+  }
+
+  const { ErpClient } = await import('../client');
+  const client = new ErpClient();
+  const payload: Record<string, unknown> = {
+    naming_series: 'PUR-ORD-.YYYY.-',
+    title: poRecord.po_number as string,
+    supplier: erpSupplierName || '',
+    transaction_date: poRecord.order_date as string,
+    schedule_date: scheduleDate,
+    currency: 'CAD',
+    buying_price_list: 'Standard Buying',
+    remarks: (poRecord.notes as string) || '',
+    krewpact_id: poId,
+    items: erpItems,
+  };
+  const result = await client.create<{ name: string }>('Purchase Order', payload);
+  return result.name;
+}
+
 /**
  * Look up the ERPNext Supplier name for a given portal_accounts.id
  * by checking the erp_sync_map table.
@@ -104,53 +143,28 @@ export async function syncInventoryPo(
     // 4. Build ERPNext Purchase Order payload
     const scheduleDate =
       (poRecord.expected_delivery_date as string) || (poRecord.order_date as string);
-
     const erpItems = (lines || []).map((line, idx) => {
-      const lineRecord = line as Record<string, unknown>;
-      const itemRelation = lineRecord.inventory_items as Record<string, unknown> | null;
+      const l = line as Record<string, unknown>;
+      const item = l.inventory_items as Record<string, unknown> | null;
       return {
         idx: idx + 1,
-        item_code: itemRelation?.sku || `ITEM-${lineRecord.item_id as string}`,
-        item_name: itemRelation?.name || (lineRecord.description as string),
-        description: lineRecord.description as string,
-        qty: lineRecord.qty_ordered as number,
-        rate: lineRecord.unit_price as number,
-        amount: lineRecord.line_total as number,
+        item_code: item?.sku || `ITEM-${l.item_id as string}`,
+        item_name: item?.name || (l.description as string),
+        description: l.description as string,
+        qty: l.qty_ordered as number,
+        rate: l.unit_price as number,
+        amount: l.line_total as number,
         schedule_date: scheduleDate,
       };
     });
 
-    let erpDocname: string;
-
-    if (isMockMode()) {
-      const mockResp = mockPurchaseOrderResponse({
-        id: poId,
-        po_number: poRecord.po_number as string,
-        supplier_name: erpSupplierName || 'MOCK-SUPPLIER',
-        total_amount: poRecord.total_amount as number,
-        items: erpItems,
-      });
-      erpDocname = mockResp.name;
-    } else {
-      const { ErpClient } = await import('../client');
-      const client = new ErpClient();
-
-      const payload: Record<string, unknown> = {
-        naming_series: 'PUR-ORD-.YYYY.-',
-        title: poRecord.po_number as string,
-        supplier: erpSupplierName || '',
-        transaction_date: poRecord.order_date as string,
-        schedule_date: scheduleDate,
-        currency: 'CAD',
-        buying_price_list: 'Standard Buying',
-        remarks: (poRecord.notes as string) || '',
-        krewpact_id: poId,
-        items: erpItems,
-      };
-
-      const result = await client.create<{ name: string }>('Purchase Order', payload);
-      erpDocname = result.name;
-    }
+    const erpDocname = await createPurchaseOrderInErp({
+      poId,
+      poRecord,
+      erpSupplierName,
+      scheduleDate,
+      erpItems,
+    });
 
     await upsertSyncMap(supabase, 'inventory_purchase_order', poId, 'Purchase Order', erpDocname);
     await logEvent(supabase, job.id, 'sync_completed', {

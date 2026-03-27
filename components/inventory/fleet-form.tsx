@@ -29,35 +29,23 @@ interface FleetFormProps {
   isPending?: boolean;
 }
 
-export function FleetForm({ vehicle, onSubmit, onCancel, isPending }: FleetFormProps) {
-  const { activeDivision } = useDivision();
-  const [autoCreateLocation, setAutoCreateLocation] = useState(!vehicle);
+interface FleetFormFieldsProps {
+  vehicle?: FleetVehicle;
+  autoCreateLocation: boolean;
+  setAutoCreateLocation: (v: boolean) => void;
+  onCancel: () => void;
+  isPending?: boolean;
+}
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const fd = new FormData(e.currentTarget);
-    const data: Record<string, unknown> = {
-      unit_number: fd.get('unit_number'),
-      division_id: activeDivision?.id,
-      vehicle_type: fd.get('vehicle_type'),
-      vin: fd.get('vin') || null,
-      year: fd.get('year') ? Number(fd.get('year')) : null,
-      make: fd.get('make') || null,
-      model: fd.get('model') || null,
-      license_plate: fd.get('license_plate') || null,
-      status: fd.get('status') || 'active',
-      assigned_to: fd.get('assigned_to') || null,
-      insurance_expiry: fd.get('insurance_expiry') || null,
-      notes: fd.get('notes') || null,
-    };
-    if (!vehicle && autoCreateLocation) {
-      data.auto_create_location = true;
-    }
-    onSubmit(data);
-  }
-
+function FleetFormFields({
+  vehicle,
+  autoCreateLocation,
+  setAutoCreateLocation,
+  onCancel,
+  isPending,
+}: FleetFormFieldsProps) {
   return (
-    <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <>
       <div className="space-y-1.5">
         <Label htmlFor="unit_number">Unit Number *</Label>
         <Input id="unit_number" name="unit_number" defaultValue={vehicle?.unit_number} required />
@@ -158,6 +146,44 @@ export function FleetForm({ vehicle, onSubmit, onCancel, isPending }: FleetFormP
           {isPending ? 'Saving...' : vehicle ? 'Update Vehicle' : 'Add Vehicle'}
         </Button>
       </div>
+    </>
+  );
+}
+
+export function FleetForm({ vehicle, onSubmit, onCancel, isPending }: FleetFormProps) {
+  const { activeDivision } = useDivision();
+  const [autoCreateLocation, setAutoCreateLocation] = useState(!vehicle);
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    const data: Record<string, unknown> = {
+      unit_number: fd.get('unit_number'),
+      division_id: activeDivision?.id,
+      vehicle_type: fd.get('vehicle_type'),
+      vin: fd.get('vin') || null,
+      year: fd.get('year') ? Number(fd.get('year')) : null,
+      make: fd.get('make') || null,
+      model: fd.get('model') || null,
+      license_plate: fd.get('license_plate') || null,
+      status: fd.get('status') || 'active',
+      assigned_to: fd.get('assigned_to') || null,
+      insurance_expiry: fd.get('insurance_expiry') || null,
+      notes: fd.get('notes') || null,
+    };
+    if (!vehicle && autoCreateLocation) data.auto_create_location = true;
+    onSubmit(data);
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <FleetFormFields
+        vehicle={vehicle}
+        autoCreateLocation={autoCreateLocation}
+        setAutoCreateLocation={setAutoCreateLocation}
+        onCancel={onCancel}
+        isPending={isPending}
+      />
     </form>
   );
 }

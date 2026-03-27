@@ -9,11 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  useEstimate,
-  useEstimateLines,
-  useEstimateVersions,
-} from '@/hooks/useEstimates';
+import { useEstimate, useEstimateLines, useEstimateVersions } from '@/hooks/useEstimates';
 import { useEstimateAllowances, useEstimateAlternates } from '@/hooks/useEstimating';
 
 const VersionHistory = dynamic(
@@ -53,7 +49,10 @@ function AllowancesSection({ allowances, isEditable, onAdd }: AllowancesSectionP
         ) : (
           <div className="space-y-2">
             {allowances.map((a) => (
-              <div key={a.id} className="flex items-center justify-between text-sm border rounded-lg p-3">
+              <div
+                key={a.id}
+                className="flex items-center justify-between text-sm border rounded-lg p-3"
+              >
                 <span className="font-medium">{a.allowance_name}</span>
                 <span className="text-muted-foreground">{fmtCAD(a.allowance_amount)}</span>
               </div>
@@ -88,7 +87,10 @@ function AlternatesSection({ alternates, isEditable, onAdd }: AlternatesSectionP
         ) : (
           <div className="space-y-2">
             {alternates.map((a) => (
-              <div key={a.id} className="flex items-center justify-between text-sm border rounded-lg p-3">
+              <div
+                key={a.id}
+                className="flex items-center justify-between text-sm border rounded-lg p-3"
+              >
                 <span className="font-medium">{a.title}</span>
                 <div className="flex items-center gap-3">
                   <Badge variant={a.selected ? 'default' : 'outline'}>
@@ -120,13 +122,24 @@ export interface EstimateCardsSectionProps {
 }
 
 export function EstimateCardsSection({
-  estimate, safeLines, allowances, alternates, isEditable, versions,
-  onAddLine, onUpdateLine, onDeleteLine, onAddAllowance, onAddAlternate,
+  estimate,
+  safeLines,
+  allowances,
+  alternates,
+  isEditable,
+  versions,
+  onAddLine,
+  onUpdateLine,
+  onDeleteLine,
+  onAddAllowance,
+  onAddAlternate,
 }: EstimateCardsSectionProps) {
   return (
     <>
       <Card>
-        <CardHeader><CardTitle>Line Items</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Line Items</CardTitle>
+        </CardHeader>
         <CardContent>
           <LineItemEditor
             lines={safeLines}
@@ -138,7 +151,9 @@ export function EstimateCardsSection({
         </CardContent>
       </Card>
       <Card>
-        <CardHeader><CardTitle>Totals</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Totals</CardTitle>
+        </CardHeader>
         <CardContent>
           <TotalsPanel
             subtotal={estimate.subtotal_amount}
@@ -148,7 +163,9 @@ export function EstimateCardsSection({
         </CardContent>
       </Card>
       <Card>
-        <CardHeader><CardTitle>Version History</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Version History</CardTitle>
+        </CardHeader>
         <CardContent>
           <VersionHistory versions={versions || []} />
         </CardContent>

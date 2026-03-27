@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import type { EnrichmentJob } from '@/hooks/useCRM';
 import { useEnrichmentJobs } from '@/hooks/useCRM';
 
 import { EnrichmentConfigPanel } from './EnrichmentConfigPanel';
@@ -29,6 +30,8 @@ const STATUS_OPTIONS = [
   { value: 'failed', label: 'Failed' },
 ];
 
+const TABLE_HEADERS = ['Job ID', 'Lead ID', 'Status', 'Source', 'Created', 'Error', 'Actions'];
+
 function EmptyRow({ colSpan, message }: { colSpan: number; message: string }) {
   return (
     <TableRow>
@@ -36,6 +39,100 @@ function EmptyRow({ colSpan, message }: { colSpan: number; message: string }) {
         {message}
       </td>
     </TableRow>
+  );
+}
+
+interface JobsCardProps {
+  jobs: EnrichmentJob[];
+  isLoading: boolean;
+  total: number;
+  hasMore: boolean;
+  page: number;
+  statusFilter: string;
+  onStatusChange: (v: string) => void;
+  onPageChange: (fn: (p: number) => number) => void;
+}
+
+function EnrichmentJobsCard({
+  jobs,
+  isLoading,
+  total,
+  hasMore,
+  page,
+  statusFilter,
+  onStatusChange,
+  onPageChange,
+}: JobsCardProps) {
+  return (
+    <Card>
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <CardTitle className="text-base">Enrichment Jobs</CardTitle>
+        <Select
+          value={statusFilter}
+          onValueChange={(v) => {
+            onStatusChange(v);
+          }}
+        >
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Filter by status" />
+          </SelectTrigger>
+          <SelectContent>
+            {STATUS_OPTIONS.map((o) => (
+              <SelectItem key={o.value} value={o.value}>
+                {o.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                {TABLE_HEADERS.map((h) => (
+                  <TableHead key={h}>{h}</TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <EmptyRow colSpan={7} message="Loading enrichment jobs..." />
+              ) : jobs.length === 0 ? (
+                <EmptyRow colSpan={7} message="No enrichment jobs found." />
+              ) : (
+                jobs.map((job) => <EnrichmentJobRow key={job.id} job={job} />)
+              )}
+            </TableBody>
+          </Table>
+        </div>
+        {total > PAGE_SIZE && (
+          <div className="flex items-center justify-between px-4 py-3 border-t">
+            <p className="text-sm text-muted-foreground">
+              Showing {page * PAGE_SIZE + 1}-{Math.min((page + 1) * PAGE_SIZE, total)} of {total}
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onPageChange((p) => Math.max(0, p - 1))}
+                disabled={page === 0}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onPageChange((p) => p + 1)}
+                disabled={!hasMore}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -55,84 +152,26 @@ export function EnrichmentDashboard() {
   const total = data?.total ?? 0;
   const hasMore = data?.hasMore ?? false;
 
+  function handleStatusChange(v: string) {
+    setStatusFilter(v);
+    setPage(0);
+  }
+
   return (
     <div className="space-y-6">
       <EnrichmentStatsCards />
       <div className="flex flex-col lg:flex-row gap-6">
         <div className="flex-1 min-w-0">
-          <Card>
-            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <CardTitle className="text-base">Enrichment Jobs</CardTitle>
-              <Select
-                value={statusFilter}
-                onValueChange={(v) => {
-                  setStatusFilter(v);
-                  setPage(0);
-                }}
-              >
-                <SelectTrigger className="w-[160px]">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUS_OPTIONS.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>
-                      {o.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      {['Job ID', 'Lead ID', 'Status', 'Source', 'Created', 'Error', 'Actions'].map(
-                        (h) => (
-                          <TableHead key={h}>{h}</TableHead>
-                        ),
-                      )}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {isLoading ? (
-                      <EmptyRow colSpan={7} message="Loading enrichment jobs..." />
-                    ) : jobs.length === 0 ? (
-                      <EmptyRow colSpan={7} message="No enrichment jobs found." />
-                    ) : (
-                      jobs.map((job) => <EnrichmentJobRow key={job.id} job={job} />)
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-              {total > PAGE_SIZE && (
-                <div className="flex items-center justify-between px-4 py-3 border-t">
-                  <p className="text-sm text-muted-foreground">
-                    Showing {page * PAGE_SIZE + 1}-{Math.min((page + 1) * PAGE_SIZE, total)} of{' '}
-                    {total}
-                  </p>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage((p) => Math.max(0, p - 1))}
-                      disabled={page === 0}
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage((p) => p + 1)}
-                      disabled={!hasMore}
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <EnrichmentJobsCard
+            jobs={jobs}
+            isLoading={isLoading}
+            total={total}
+            hasMore={hasMore}
+            page={page}
+            statusFilter={statusFilter}
+            onStatusChange={handleStatusChange}
+            onPageChange={setPage}
+          />
         </div>
         <div className="w-full lg:w-80 shrink-0">
           <EnrichmentConfigPanel />

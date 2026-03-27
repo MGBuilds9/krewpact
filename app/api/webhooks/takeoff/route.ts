@@ -177,38 +177,27 @@ async function insertLines(
 // Route handler
 // ============================================================
 
-export async function POST(req: NextRequest) {
-  const rl = await rateLimit(req, { limit: 30, window: '1 m' });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const rawBody = await req.text();
-
-  const signature = req.headers.get('x-takeoff-signature') ?? '';
+function verifyWebhookRequest(
+  rawBody: string,
+  req: NextRequest,
+): NextResponse | { signature: string; secret: string } {
   const secret = process.env.TAKEOFF_ENGINE_TOKEN;
-
   if (!secret) {
     logger.error('Takeoff webhook: TAKEOFF_ENGINE_TOKEN not configured');
     return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
   }
-
+  const signature = req.headers.get('x-takeoff-signature') ?? '';
   if (!signature || !verifySignature(rawBody, signature, secret)) {
     logger.warn('Takeoff webhook: invalid or missing signature');
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
   }
+  return { signature, secret };
+}
 
-  let parsed: TakeoffWebhookPayload;
-  try {
-    const body: unknown = JSON.parse(rawBody);
-    parsed = TakeoffWebhookSchema.parse(body);
-  } catch (err) {
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Invalid payload' },
-      { status: 400 },
-    );
-  }
-
-  const supabase = createServiceClient();
-
+async function processWebhookPayload(
+  supabase: ReturnType<typeof createServiceClient>,
+  parsed: TakeoffWebhookPayload,
+): Promise<NextResponse> {
   const { data: jobs } = await supabase
     .from('takeoff_jobs')
     .select('id, config')
@@ -226,14 +215,8 @@ export async function POST(req: NextRequest) {
   }
 
   await updateJob(supabase, job.id, parsed);
-
-  if (parsed.pages && parsed.pages.length > 0) {
-    await upsertPages(supabase, job.id, parsed.pages);
-  }
-
-  if (parsed.lines && parsed.lines.length > 0) {
-    await insertLines(supabase, job.id, parsed.lines);
-  }
+  if (parsed.pages && parsed.pages.length > 0) await upsertPages(supabase, job.id, parsed.pages);
+  if (parsed.lines && parsed.lines.length > 0) await insertLines(supabase, job.id, parsed.lines);
 
   logger.info('Takeoff webhook: processed', {
     engineJobId: parsed.job_id,
@@ -244,4 +227,25 @@ export async function POST(req: NextRequest) {
   });
 
   return NextResponse.json({ ok: true });
+}
+
+export async function POST(req: NextRequest) {
+  const rl = await rateLimit(req, { limit: 30, window: '1 m' });
+  if (!rl.success) return rateLimitResponse(rl);
+
+  const rawBody = await req.text();
+  const verified = verifyWebhookRequest(rawBody, req);
+  if (verified instanceof NextResponse) return verified;
+
+  let parsed: TakeoffWebhookPayload;
+  try {
+    parsed = TakeoffWebhookSchema.parse(JSON.parse(rawBody));
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : 'Invalid payload' },
+      { status: 400 },
+    );
+  }
+
+  return processWebhookPayload(createServiceClient(), parsed);
 }

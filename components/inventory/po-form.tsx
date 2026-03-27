@@ -18,7 +18,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { useDivision } from '@/contexts/DivisionContext';
-import { useInventoryItems } from '@/hooks/useInventory';
+import { type InventoryItem, useInventoryItems } from '@/hooks/useInventory';
 import { useInventoryLocations } from '@/hooks/useInventoryLocations';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { usePortalAccounts } from '@/hooks/usePortals';
@@ -27,61 +27,63 @@ import { useCreatePurchaseOrder } from '@/hooks/usePurchaseOrders';
 import type { PoLineInput } from './po-line-editor';
 import { PoLineEditor } from './po-line-editor';
 
-export function PoForm() {
-  const { push: orgPush } = useOrgRouter();
-  const {
-    activeDivision,
-    isLoading: divisionsLoading,
-    userDivisions,
-    hasMultipleDivisions,
-    setActiveDivision,
-  } = useDivision();
-  const divisionId = activeDivision?.id ?? '';
-  const createPo = useCreatePurchaseOrder();
+interface PoFormState {
+  supplierId: string;
+  locationId: string;
+  expectedDate: string;
+  notes: string;
+  lines: PoLineInput[];
+}
 
-  const { data: suppliersResp } = usePortalAccounts({ actor_type: 'trade_partner' });
-  const suppliers = suppliersResp?.data ?? [];
-  const { data: locations } = useInventoryLocations({ divisionId, isActive: true });
-  const { data: items } = useInventoryItems({ divisionId, isActive: true });
+interface PoFormFieldsProps extends PoFormState {
+  divisionId: string;
+  divisionsLoading: boolean;
+  userDivisions: { id: string; name: string }[];
+  hasMultipleDivisions: boolean;
+  activeDivisionName?: string;
+  setActiveDivision: (id: string) => void;
+  suppliers: {
+    id: string;
+    company_name?: string | null;
+    contact_name?: string | null;
+    email: string;
+  }[];
+  locations: { id: string; name: string }[] | undefined;
+  items: InventoryItem[] | undefined;
+  setSupplierId: (v: string) => void;
+  setLocationId: (v: string) => void;
+  setExpectedDate: (v: string) => void;
+  setNotes: (v: string) => void;
+  setLines: (v: PoLineInput[]) => void;
+  isPending: boolean;
+  onCancel: () => void;
+}
 
-  const [supplierId, setSupplierId] = useState('');
-  const [locationId, setLocationId] = useState('');
-  const [expectedDate, setExpectedDate] = useState('');
-  const [notes, setNotes] = useState('');
-  const [lines, setLines] = useState<PoLineInput[]>([]);
-
-  const handleSubmit = useCallback(
-    (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!divisionId || !supplierId || lines.length === 0) return;
-
-      const subtotal = lines.reduce((s, l) => s + l.qty * l.unit_price, 0);
-      createPo.mutate(
-        {
-          supplier_id: supplierId,
-          division_id: divisionId,
-          delivery_location_id: locationId || undefined,
-          expected_delivery_date: expectedDate || undefined,
-          notes: notes || undefined,
-          subtotal,
-          total_amount: subtotal,
-          tax_amount: 0,
-          lines: lines.map((l) => ({
-            item_id: l.item_id,
-            qty_ordered: l.qty,
-            unit_cost: l.unit_price,
-            total_cost: l.qty * l.unit_price,
-            uom: l.uom,
-          })),
-        } as Parameters<typeof createPo.mutate>[0],
-        { onSuccess: () => orgPush('/inventory/purchase-orders') },
-      );
-    },
-    [divisionId, supplierId, locationId, expectedDate, notes, lines, createPo, orgPush],
-  );
-
+function PoFormFields({
+  divisionId,
+  divisionsLoading,
+  userDivisions,
+  hasMultipleDivisions,
+  activeDivisionName,
+  setActiveDivision,
+  suppliers,
+  locations,
+  items,
+  supplierId,
+  setSupplierId,
+  locationId,
+  setLocationId,
+  expectedDate,
+  setExpectedDate,
+  notes,
+  setNotes,
+  lines,
+  setLines,
+  isPending,
+  onCancel,
+}: PoFormFieldsProps) {
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <>
       <Card>
         <CardHeader>
           <CardTitle>Purchase Order Details</CardTitle>
@@ -111,12 +113,7 @@ export function PoForm() {
                 </SelectContent>
               </Select>
             ) : (
-              <Input
-                id="division"
-                value={activeDivision?.name ?? ''}
-                disabled
-                className="bg-muted"
-              />
+              <Input id="division" value={activeDivisionName ?? ''} disabled className="bg-muted" />
             )}
           </div>
           <div className="space-y-2">
@@ -179,11 +176,7 @@ export function PoForm() {
         </CardContent>
       </Card>
       <div className="flex justify-end gap-3">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => orgPush('/inventory/purchase-orders')}
-        >
+        <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
         <Button
@@ -193,13 +186,92 @@ export function PoForm() {
             userDivisions.length === 0 ||
             !supplierId ||
             lines.length === 0 ||
-            createPo.isPending
+            isPending
           }
         >
-          {createPo.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+          {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
           Create Purchase Order
         </Button>
       </div>
+    </>
+  );
+}
+
+export function PoForm() {
+  const { push: orgPush } = useOrgRouter();
+  const {
+    activeDivision,
+    isLoading: divisionsLoading,
+    userDivisions,
+    hasMultipleDivisions,
+    setActiveDivision,
+  } = useDivision();
+  const divisionId = activeDivision?.id ?? '';
+  const createPo = useCreatePurchaseOrder();
+  const { data: suppliersResp } = usePortalAccounts({ actor_type: 'trade_partner' });
+  const suppliers = suppliersResp?.data ?? [];
+  const { data: locations } = useInventoryLocations({ divisionId, isActive: true });
+  const { data: items } = useInventoryItems({ divisionId, isActive: true });
+  const [supplierId, setSupplierId] = useState('');
+  const [locationId, setLocationId] = useState('');
+  const [expectedDate, setExpectedDate] = useState('');
+  const [notes, setNotes] = useState('');
+  const [lines, setLines] = useState<PoLineInput[]>([]);
+
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!divisionId || !supplierId || lines.length === 0) return;
+      const subtotal = lines.reduce((s, l) => s + l.qty * l.unit_price, 0);
+      createPo.mutate(
+        {
+          supplier_id: supplierId,
+          division_id: divisionId,
+          delivery_location_id: locationId || undefined,
+          expected_delivery_date: expectedDate || undefined,
+          notes: notes || undefined,
+          subtotal,
+          total_amount: subtotal,
+          tax_amount: 0,
+          lines: lines.map((l) => ({
+            item_id: l.item_id,
+            qty_ordered: l.qty,
+            unit_cost: l.unit_price,
+            total_cost: l.qty * l.unit_price,
+            uom: l.uom,
+          })),
+        } as Parameters<typeof createPo.mutate>[0],
+        { onSuccess: () => orgPush('/inventory/purchase-orders') },
+      );
+    },
+    [divisionId, supplierId, locationId, expectedDate, notes, lines, createPo, orgPush],
+  );
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <PoFormFields
+        divisionId={divisionId}
+        divisionsLoading={divisionsLoading}
+        userDivisions={userDivisions}
+        hasMultipleDivisions={hasMultipleDivisions}
+        activeDivisionName={activeDivision?.name}
+        setActiveDivision={setActiveDivision}
+        suppliers={suppliers}
+        locations={locations}
+        items={items}
+        supplierId={supplierId}
+        setSupplierId={setSupplierId}
+        locationId={locationId}
+        setLocationId={setLocationId}
+        expectedDate={expectedDate}
+        setExpectedDate={setExpectedDate}
+        notes={notes}
+        setNotes={setNotes}
+        lines={lines}
+        setLines={setLines}
+        isPending={createPo.isPending}
+        onCancel={() => orgPush('/inventory/purchase-orders')}
+      />
     </form>
   );
 }

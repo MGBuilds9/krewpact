@@ -160,6 +160,43 @@ export async function getStockSummary(
 }
 
 // ============================================================
+// getLowStockItems helpers
+// ============================================================
+
+type StockRow = { item_id: string | null; location_id: string | null; qty_on_hand: number | null };
+type ItemRowBase = { id: string; name: string; sku: string | null; min_stock_level: number | null };
+type LowStockRaw<T extends ItemRowBase> = { item: T; qty_on_hand: number; location_id: string };
+
+function aggregateStockByItem(stockData: StockRow[]): Map<string, number> {
+  const map = new Map<string, number>();
+  for (const row of stockData) {
+    if (!row.item_id) continue;
+    map.set(row.item_id, (map.get(row.item_id) ?? 0) + Number(row.qty_on_hand ?? 0));
+  }
+  return map;
+}
+
+function findLowStockItems<T extends ItemRowBase>(
+  items: T[],
+  stockData: StockRow[],
+  stockByItem: Map<string, number>,
+): { lowStockRaw: LowStockRaw<T>[]; locationIds: Set<string> } {
+  const locationIds = new Set<string>();
+  const lowStockRaw: LowStockRaw<T>[] = [];
+  for (const item of items) {
+    const totalQty = stockByItem.get(item.id) ?? 0;
+    const minLevel = Number(item.min_stock_level ?? 0);
+    if (totalQty < minLevel) {
+      const primaryStock = stockData.find((s) => s.item_id === item.id);
+      const locId = primaryStock?.location_id ?? '';
+      if (locId) locationIds.add(locId);
+      lowStockRaw.push({ item, qty_on_hand: totalQty, location_id: locId });
+    }
+  }
+  return { lowStockRaw, locationIds };
+}
+
+// ============================================================
 // getLowStockItems
 // ============================================================
 
@@ -205,39 +242,8 @@ export async function getLowStockItems(
     throw new Error(`Low stock summary query failed: ${stockError.message}`);
   }
 
-  // Aggregate total stock per item across all locations
-  const stockByItem = new Map<string, number>();
-  for (const row of stockData ?? []) {
-    if (!row.item_id) continue;
-    const current = stockByItem.get(row.item_id) ?? 0;
-    stockByItem.set(row.item_id, current + Number(row.qty_on_hand ?? 0));
-  }
-
-  // Find items below threshold and get their location info
-  const locationIds = new Set<string>();
-  const lowStockRaw: Array<{
-    item: (typeof items)[number];
-    qty_on_hand: number;
-    location_id: string;
-  }> = [];
-
-  for (const item of items) {
-    const totalQty = stockByItem.get(item.id) ?? 0;
-    const minLevel = Number(item.min_stock_level ?? 0);
-
-    if (totalQty < minLevel) {
-      // Find the primary location for display purposes
-      const primaryStock = (stockData ?? []).find((s) => s.item_id === item.id);
-      const locId = primaryStock?.location_id ?? '';
-      if (locId) locationIds.add(locId);
-
-      lowStockRaw.push({
-        item,
-        qty_on_hand: totalQty,
-        location_id: locId,
-      });
-    }
-  }
+  const stockByItem = aggregateStockByItem(stockData ?? []);
+  const { lowStockRaw, locationIds } = findLowStockItems(items, stockData ?? [], stockByItem);
 
   // Resolve location names
   const locIds = [...locationIds];

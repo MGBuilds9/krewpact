@@ -33,8 +33,7 @@ function makeInvoiceChain(data: unknown[]) {
   chain.not = vi.fn().mockReturnValue(chain);
   chain.gt = vi.fn().mockReturnValue(chain);
   chain.order = vi.fn().mockReturnValue(chain);
-  chain.then = (resolve: (v: unknown) => void) =>
-    resolve({ data, error: null });
+  chain.then = (resolve: (v: unknown) => void) => resolve({ data, error: null });
   return chain;
 }
 
@@ -124,7 +123,8 @@ describe('calculateHoldbacks()', () => {
 
   it('returns empty array on supabase error', async () => {
     const chain = makeInvoiceChain([]);
-    chain.then = (resolve: (v: unknown) => void) => resolve({ data: null, error: { message: 'DB error' } });
+    chain.then = (resolve: (v: unknown) => void) =>
+      resolve({ data: null, error: { message: 'DB error' } });
     mockFrom.mockReturnValue(chain);
 
     const result = await calculateHoldbacks(PROJECT_ID);
@@ -236,7 +236,8 @@ describe('getAgedReceivables()', () => {
 
   it('returns empty report on supabase error', async () => {
     const chain = makeInvoiceChain([]);
-    chain.then = (resolve: (v: unknown) => void) => resolve({ data: null, error: { message: 'fail' } });
+    chain.then = (resolve: (v: unknown) => void) =>
+      resolve({ data: null, error: { message: 'fail' } });
     mockFrom.mockReturnValue(chain);
 
     const report = await getAgedReceivables(ORG_ID);
@@ -252,7 +253,7 @@ describe('getPaymentHistory()', () => {
 
   it('returns empty history when no payments', async () => {
     mockFrom
-      .mockReturnValueOnce(makeInvoiceChain([]))  // paid invoices query
+      .mockReturnValueOnce(makeInvoiceChain([])) // paid invoices query
       .mockReturnValueOnce(makeInvoiceChain([])); // all invoices query
 
     const history = await getPaymentHistory(PROJECT_ID);

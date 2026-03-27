@@ -109,9 +109,24 @@ export function ForecastChartInner({ forecast, isLoading = false }: ForecastChar
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                <XAxis dataKey="quarter" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
-                <YAxis tickFormatter={formatCAD} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={64} />
-                <Tooltip content={(props) => <CustomTooltip {...(props as unknown as CustomTooltipArgs)} />} />
+                <XAxis
+                  dataKey="quarter"
+                  tick={{ fontSize: 12 }}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis
+                  tickFormatter={formatCAD}
+                  tick={{ fontSize: 11 }}
+                  tickLine={false}
+                  axisLine={false}
+                  width={64}
+                />
+                <Tooltip
+                  content={(props) => (
+                    <CustomTooltip {...(props as unknown as CustomTooltipArgs)} />
+                  )}
+                />
                 {currentQuarter && (
                   <ReferenceLine
                     x={currentQuarter}

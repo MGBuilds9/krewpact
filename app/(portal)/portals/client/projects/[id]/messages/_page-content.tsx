@@ -10,7 +10,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
-import { type PortalMessage, usePortalMessages, useSendPortalMessage } from '@/hooks/usePortalMessages';
+import {
+  type PortalMessage,
+  usePortalMessages,
+  useSendPortalMessage,
+} from '@/hooks/usePortalMessages';
 
 const sendMessageSchema = z.object({
   subject: z.string().max(255).optional(),
@@ -133,7 +137,10 @@ export default function PortalMessagesPage() {
       </div>
       <ComposeForm projectId={projectId} />
       {isError && (
-        <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700" role="alert">
+        <div
+          className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700"
+          role="alert"
+        >
           {error.message}
         </div>
       )}

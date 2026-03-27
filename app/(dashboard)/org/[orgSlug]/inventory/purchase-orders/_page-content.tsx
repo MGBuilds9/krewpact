@@ -63,34 +63,56 @@ export default function PurchaseOrdersPageContent() {
 
       <div className="flex items-center gap-3">
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
-          <SelectContent>{PO_STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
+          <SelectTrigger className="w-[200px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {PO_STATUSES.map((s) => (
+              <SelectItem key={s.value} value={s.value}>
+                {s.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
         </Select>
       </div>
 
       {isLoading ? (
         <div className="space-y-2">
-          {['s0','s1','s2','s3','s4'].map((k) => <Skeleton key={k} className="h-12 w-full rounded" />)}
+          {['s0', 's1', 's2', 's3', 's4'].map((k) => (
+            <Skeleton key={k} className="h-12 w-full rounded" />
+          ))}
         </div>
       ) : !pos?.length ? (
-        <div className="text-center py-12 text-muted-foreground">No purchase orders found. Create your first PO to get started.</div>
+        <div className="text-center py-12 text-muted-foreground">
+          No purchase orders found. Create your first PO to get started.
+        </div>
       ) : (
         <div className="rounded-md border">
           <Table>
             <TableHeader>
               <TableRow>
-                {['PO Number','Supplier','Date','Status'].map((h) => <TableHead key={h}>{h}</TableHead>)}
+                {['PO Number', 'Supplier', 'Date', 'Status'].map((h) => (
+                  <TableHead key={h}>{h}</TableHead>
+                ))}
                 <TableHead className="text-right">Total</TableHead>
                 <TableHead className="text-right">Lines</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {pos.map((po) => (
-                <TableRow key={po.id} className="cursor-pointer hover:bg-muted/50" onClick={() => orgPush(`/inventory/purchase-orders/${po.id}`)}>
+                <TableRow
+                  key={po.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => orgPush(`/inventory/purchase-orders/${po.id}`)}
+                >
                   <TableCell className="font-medium">{po.po_number}</TableCell>
                   <TableCell>{po.supplier_name ?? '—'}</TableCell>
-                  <TableCell>{po.order_date ? format(new Date(po.order_date), 'MMM d, yyyy') : '—'}</TableCell>
-                  <TableCell><PoStatusBadge status={po.status} /></TableCell>
+                  <TableCell>
+                    {po.order_date ? format(new Date(po.order_date), 'MMM d, yyyy') : '—'}
+                  </TableCell>
+                  <TableCell>
+                    <PoStatusBadge status={po.status} />
+                  </TableCell>
                   <TableCell className="text-right">{fmtCAD(po.total_amount)}</TableCell>
                   <TableCell className="text-right">{po.lines?.length ?? 0}</TableCell>
                 </TableRow>

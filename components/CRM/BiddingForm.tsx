@@ -74,25 +74,21 @@ function buildFormDefaults(d?: Partial<BiddingOpportunity>) {
   };
 }
 
-export function BiddingForm({
-  defaultValues,
-  onSubmit,
-  isLoading,
-  submitLabel = 'Save',
-}: BiddingFormProps) {
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    formState: { errors },
-  } = useForm<FormData>({
-    resolver: zodResolver(formSchema),
-    defaultValues: buildFormDefaults(defaultValues),
-  });
+type FormMethods = ReturnType<typeof useForm<FormData>>;
 
+function BiddingFormFields({
+  register,
+  watch,
+  setValue,
+  errors,
+}: {
+  register: FormMethods['register'];
+  watch: FormMethods['watch'];
+  setValue: FormMethods['setValue'];
+  errors: FormMethods['formState']['errors'];
+}) {
   return (
-    <form onSubmit={handleSubmit((data) => onSubmit(buildPayload(data)))} className="space-y-4">
+    <>
       <div className="space-y-2">
         <Label htmlFor="title">Title *</Label>
         <Input id="title" {...register('title')} placeholder="Bid title" />
@@ -162,6 +158,29 @@ export function BiddingForm({
         <Label htmlFor="notes">Notes</Label>
         <Textarea id="notes" {...register('notes')} rows={3} />
       </div>
+    </>
+  );
+}
+
+export function BiddingForm({
+  defaultValues,
+  onSubmit,
+  isLoading,
+  submitLabel = 'Save',
+}: BiddingFormProps) {
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: buildFormDefaults(defaultValues),
+  });
+  return (
+    <form onSubmit={handleSubmit((data) => onSubmit(buildPayload(data)))} className="space-y-4">
+      <BiddingFormFields register={register} watch={watch} setValue={setValue} errors={errors} />
       <Button type="submit" disabled={isLoading}>
         {isLoading ? 'Saving...' : submitLabel}
       </Button>

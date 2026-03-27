@@ -7,9 +7,7 @@ const mockDeepSelect = vi.fn(() => ({
   limit: vi.fn(() => ({ abortSignal: mockAbortSignal })),
   order: vi.fn(() => ({ limit: vi.fn().mockResolvedValue({ data: [] }) })),
 }));
-const mockCountSelect = vi
-  .fn()
-  .mockResolvedValue({ count: 5, error: null });
+const mockCountSelect = vi.fn().mockResolvedValue({ count: 5, error: null });
 
 vi.mock('@clerk/nextjs/server', () => ({
   auth: vi.fn().mockResolvedValue({ userId: null }),

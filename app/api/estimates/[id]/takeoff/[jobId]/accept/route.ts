@@ -9,7 +9,7 @@ import { recalculateParentTotals } from '@/lib/estimating/totals';
 import { logger } from '@/lib/logger';
 import { queue } from '@/lib/queue/client';
 import { JobType } from '@/lib/queue/types';
-import { createUserClientSafe } from '@/lib/supabase/server';
+import { createUserClientSafe, UserClientType } from '@/lib/supabase/server';
 import { acceptTakeoffLinesSchema } from '@/lib/validators/takeoff';
 
 type RouteContext = { params: Promise<{ id: string; jobId: string }> };
@@ -33,6 +33,59 @@ interface SubmittedLine {
   unit: string;
   unit_cost: number;
   markup_pct: number;
+}
+
+interface ApplyDraftParams {
+  supabase: UserClientType;
+  lines: SubmittedLine[];
+  insertedLines: Array<{ id: string; metadata: unknown }>;
+  originals: Map<string, OriginalLine>;
+  krewpactUserId: string | null | undefined;
+  jobId: string;
+  now: string;
+}
+
+async function applyDraftLineUpdates(params: ApplyDraftParams): Promise<object[]> {
+  const { supabase, lines, insertedLines, originals, krewpactUserId, jobId, now } = params;
+  const feedbackInserts: object[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    const submitted = lines[i];
+    const inserted = insertedLines[i];
+    const original = originals.get(submitted.draft_line_id);
+    const changed = original ? hasChanges(original, submitted) : false;
+    await supabase
+      .from('takeoff_draft_lines')
+      .update({
+        final_line_id: inserted.id,
+        review_status: changed ? 'edited' : 'accepted',
+        reviewed_by: krewpactUserId ?? null,
+        reviewed_at: now,
+      })
+      .eq('id', submitted.draft_line_id);
+    feedbackInserts.push({
+      job_id: jobId,
+      draft_line_id: submitted.draft_line_id,
+      feedback_type: changed ? 'corrected' : 'accepted',
+      created_by: krewpactUserId ?? null,
+      original_value: original
+        ? {
+            description: original.description,
+            quantity: original.quantity,
+            unit: original.unit,
+            unit_cost: original.unit_cost,
+          }
+        : null,
+      corrected_value: changed
+        ? {
+            description: submitted.description,
+            quantity: submitted.quantity,
+            unit: submitted.unit,
+            unit_cost: submitted.unit_cost,
+          }
+        : null,
+    });
+  }
+  return feedbackInserts;
 }
 
 function hasChanges(original: OriginalLine, submitted: SubmittedLine): boolean {
@@ -140,49 +193,15 @@ export async function POST(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: 'Failed to insert lines' }, { status: 500 });
   }
 
-  // Per-line updates on draft lines + build feedback records
-  const feedbackInserts: object[] = [];
-
-  for (let i = 0; i < parsed.data.lines.length; i++) {
-    const submitted = parsed.data.lines[i];
-    const inserted = insertedLines[i];
-    const original = originals.get(submitted.draft_line_id);
-
-    const changed = original ? hasChanges(original, submitted) : false;
-
-    await supabase
-      .from('takeoff_draft_lines')
-      .update({
-        final_line_id: inserted.id,
-        review_status: changed ? 'edited' : 'accepted',
-        reviewed_by: krewpactUserId ?? null,
-        reviewed_at: now,
-      })
-      .eq('id', submitted.draft_line_id);
-
-    feedbackInserts.push({
-      job_id: jobId,
-      draft_line_id: submitted.draft_line_id,
-      feedback_type: changed ? 'corrected' : 'accepted',
-      created_by: krewpactUserId ?? null,
-      original_value: original
-        ? {
-            description: original.description,
-            quantity: original.quantity,
-            unit: original.unit,
-            unit_cost: original.unit_cost,
-          }
-        : null,
-      corrected_value: changed
-        ? {
-            description: submitted.description,
-            quantity: submitted.quantity,
-            unit: submitted.unit,
-            unit_cost: submitted.unit_cost,
-          }
-        : null,
-    });
-  }
+  const feedbackInserts = await applyDraftLineUpdates({
+    supabase,
+    lines: parsed.data.lines,
+    insertedLines,
+    originals,
+    krewpactUserId,
+    jobId,
+    now,
+  });
 
   if (feedbackInserts.length > 0) {
     const { error: feedbackError } = await supabase

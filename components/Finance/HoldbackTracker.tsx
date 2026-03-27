@@ -91,12 +91,12 @@ export function HoldbackTracker({ projectId }: HoldbackTrackerProps) {
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base">Holdback Schedule (10% — Ontario Construction Act)</CardTitle>
+          <CardTitle className="text-base">
+            Holdback Schedule (10% — Ontario Construction Act)
+          </CardTitle>
           {data && (
             <div className="flex gap-4 text-sm">
-              <span className="text-amber-600 font-medium">
-                Held: {CAD.format(data.totalHeld)}
-              </span>
+              <span className="text-amber-600 font-medium">Held: {CAD.format(data.totalHeld)}</span>
               <span className="text-green-600 font-medium">
                 Released: {CAD.format(data.totalReleased)}
               </span>

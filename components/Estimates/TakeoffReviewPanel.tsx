@@ -103,7 +103,13 @@ interface SubmitAcceptArgs {
   setIsSubmitting: (v: boolean) => void;
 }
 
-async function submitAcceptedLines({ estimateId, jobId, lines, onAccepted, setIsSubmitting }: SubmitAcceptArgs) {
+async function submitAcceptedLines({
+  estimateId,
+  jobId,
+  lines,
+  onAccepted,
+  setIsSubmitting,
+}: SubmitAcceptArgs) {
   const acceptedLines = lines
     .filter((l) => l.reviewStatus === 'accepted')
     .map((l) => ({
@@ -139,7 +145,15 @@ interface ReviewTableProps {
   onAccept: () => void;
 }
 
-function ReviewTable({ lines, accepted, rejected, pending, isSubmitting, onUpdate, onAccept }: ReviewTableProps) {
+function ReviewTable({
+  lines,
+  accepted,
+  rejected,
+  pending,
+  isSubmitting,
+  onUpdate,
+  onAccept,
+}: ReviewTableProps) {
   return (
     <CardContent className="p-0">
       <div className="overflow-x-auto">
@@ -180,12 +194,22 @@ interface BulkActionsBarProps {
   onRejectRemaining: () => void;
 }
 
-function BulkActionsBar({ onAcceptAll, onAcceptHighConfidence, onRejectRemaining }: BulkActionsBarProps) {
+function BulkActionsBar({
+  onAcceptAll,
+  onAcceptHighConfidence,
+  onRejectRemaining,
+}: BulkActionsBarProps) {
   return (
     <div className="flex gap-2">
-      <Button size="sm" variant="outline" onClick={onAcceptAll}>Accept All</Button>
-      <Button size="sm" variant="outline" onClick={onAcceptHighConfidence}>Accept High Confidence</Button>
-      <Button size="sm" variant="outline" onClick={onRejectRemaining}>Reject Remaining</Button>
+      <Button size="sm" variant="outline" onClick={onAcceptAll}>
+        Accept All
+      </Button>
+      <Button size="sm" variant="outline" onClick={onAcceptHighConfidence}>
+        Accept High Confidence
+      </Button>
+      <Button size="sm" variant="outline" onClick={onRejectRemaining}>
+        Reject Remaining
+      </Button>
     </div>
   );
 }

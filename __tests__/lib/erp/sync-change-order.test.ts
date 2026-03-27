@@ -27,9 +27,13 @@ const PROJECT_ID = 'proj-sync-test-222';
 function jobChain(id = 'job-1') {
   const c: Record<string, unknown> = {};
   const fns = ['update', 'insert', 'upsert', 'eq'];
-  fns.forEach((fn) => { c[fn] = vi.fn().mockReturnValue(c); });
+  fns.forEach((fn) => {
+    c[fn] = vi.fn().mockReturnValue(c);
+  });
   c.select = vi.fn().mockReturnValue(c);
-  c.single = vi.fn().mockResolvedValue({ data: { id, attempt_count: 1, max_attempts: 3 }, error: null });
+  c.single = vi
+    .fn()
+    .mockResolvedValue({ data: { id, attempt_count: 1, max_attempts: 3 }, error: null });
   c.maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
   return c;
 }
@@ -37,7 +41,9 @@ function jobChain(id = 'job-1') {
 function coChain(co: Record<string, unknown> | null) {
   const c: Record<string, unknown> = {};
   const fns = ['select', 'eq'];
-  fns.forEach((fn) => { c[fn] = vi.fn().mockReturnValue(c); });
+  fns.forEach((fn) => {
+    c[fn] = vi.fn().mockReturnValue(c);
+  });
   c.single = vi.fn().mockResolvedValue({ data: co, error: co ? null : { message: 'not found' } });
   return c;
 }
@@ -50,11 +56,11 @@ describe('syncChangeOrder', () => {
     const co = coChain(null);
     // insert (createSyncJob), then select CO, then insert error, then insert event, then update job
     mockFrom
-      .mockReturnValueOnce(j)   // createSyncJob insert
-      .mockReturnValueOnce(co)  // CO fetch
-      .mockReturnValueOnce(j)   // erp_sync_errors insert
-      .mockReturnValueOnce(j)   // erp_sync_events insert
-      .mockReturnValueOnce(j);  // erp_sync_jobs update
+      .mockReturnValueOnce(j) // createSyncJob insert
+      .mockReturnValueOnce(co) // CO fetch
+      .mockReturnValueOnce(j) // erp_sync_errors insert
+      .mockReturnValueOnce(j) // erp_sync_events insert
+      .mockReturnValueOnce(j); // erp_sync_jobs update
 
     const { syncChangeOrder } = await import('@/lib/erp/sync-handlers/sync-change-order');
     const result = await syncChangeOrder(CO_ID, 'user-1');
@@ -64,7 +70,13 @@ describe('syncChangeOrder', () => {
 
   it('fails when CO is not approved', async () => {
     const j = jobChain();
-    const co = coChain({ id: CO_ID, project_id: PROJECT_ID, co_number: 'CO-001', status: 'submitted', amount_delta: 5000 });
+    const co = coChain({
+      id: CO_ID,
+      project_id: PROJECT_ID,
+      co_number: 'CO-001',
+      status: 'submitted',
+      amount_delta: 5000,
+    });
     mockFrom
       .mockReturnValueOnce(j)
       .mockReturnValueOnce(co)
@@ -92,12 +104,12 @@ describe('syncChangeOrder', () => {
     });
     // createSyncJob, CO fetch, erp_sync_map lookup, upsert sync map, log event, update job status
     mockFrom
-      .mockReturnValueOnce(j)   // createSyncJob
-      .mockReturnValueOnce(co)  // CO select
-      .mockReturnValueOnce(j)   // sync_map maybeSingle
-      .mockReturnValueOnce(j)   // upsert sync_map
-      .mockReturnValueOnce(j)   // log event
-      .mockReturnValueOnce(j);  // updateJobStatus
+      .mockReturnValueOnce(j) // createSyncJob
+      .mockReturnValueOnce(co) // CO select
+      .mockReturnValueOnce(j) // sync_map maybeSingle
+      .mockReturnValueOnce(j) // upsert sync_map
+      .mockReturnValueOnce(j) // log event
+      .mockReturnValueOnce(j); // updateJobStatus
 
     const { syncChangeOrder } = await import('@/lib/erp/sync-handlers/sync-change-order');
     const result = await syncChangeOrder(CO_ID, 'user-1');

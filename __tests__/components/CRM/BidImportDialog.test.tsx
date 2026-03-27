@@ -1,4 +1,4 @@
-import { fireEvent,render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -49,7 +49,9 @@ describe('BidImportDialog', () => {
     const textarea = screen.getByRole('textbox');
     fireEvent.change(textarea, {
       target: {
-        value: JSON.stringify([{ title: 'JSON Bid', source: 'bids_tenders', estimated_value: 75000 }]),
+        value: JSON.stringify([
+          { title: 'JSON Bid', source: 'bids_tenders', estimated_value: 75000 },
+        ]),
       },
     });
     const parseBtn = screen.getByRole('button', { name: /parse/i });

@@ -42,9 +42,7 @@ function InvoiceRow({ inv, onClick }: { inv: Invoice; onClick: () => void }) {
       <TableCell>{inv.customer_name || '—'}</TableCell>
       <TableCell>{inv.invoice_date || '—'}</TableCell>
       <TableCell>{inv.due_date || '—'}</TableCell>
-      <TableCell>
-        {inv.status ? <StatusBadge status={inv.status} /> : '—'}
-      </TableCell>
+      <TableCell>{inv.status ? <StatusBadge status={inv.status} /> : '—'}</TableCell>
       <TableCell className="text-right">{formatCAD(inv.total_amount || null)}</TableCell>
       <TableCell className="text-right">{formatCAD(inv.amount_paid || null)}</TableCell>
     </TableRow>

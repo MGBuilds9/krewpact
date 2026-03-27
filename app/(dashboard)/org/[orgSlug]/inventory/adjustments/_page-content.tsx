@@ -93,7 +93,11 @@ export default function AdjustmentsPageContent() {
       {submitted && (
         <div className="rounded-md bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-800">
           Adjustment recorded.{' '}
-          <button className="underline font-medium" onClick={() => setSubmitted(false)} type="button">
+          <button
+            className="underline font-medium"
+            onClick={() => setSubmitted(false)}
+            type="button"
+          >
             Record another
           </button>
         </div>
@@ -176,7 +180,12 @@ export default function AdjustmentsPageContent() {
 
               <div className="space-y-2">
                 <Label htmlFor="notes">Notes</Label>
-                <Textarea id="notes" {...register('notes')} rows={2} placeholder="Optional context" />
+                <Textarea
+                  id="notes"
+                  {...register('notes')}
+                  rows={2}
+                  placeholder="Optional context"
+                />
               </div>
             </FormSection>
 

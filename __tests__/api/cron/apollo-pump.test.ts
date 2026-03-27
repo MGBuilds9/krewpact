@@ -97,7 +97,7 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 import { makeRequest, mockSupabaseClient } from '@/__tests__/helpers';
-import { POST } from '@/app/api/cron/apollo-pump/route';
+import { GET } from '@/app/api/cron/apollo-pump/route';
 import { createServiceClient } from '@/lib/supabase/server';
 
 const mockCreateServiceClient = vi.mocked(createServiceClient);
@@ -172,7 +172,7 @@ describe('POST /api/cron/apollo-pump', () => {
 
   it('returns 401 when cron auth fails', async () => {
     mockVerifyCronAuth.mockResolvedValue({ authorized: false });
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(401);
   });
 
@@ -180,7 +180,7 @@ describe('POST /api/cron/apollo-pump', () => {
     const supabase = makeFullSupabaseMock();
     mockCreateServiceClient.mockReturnValue(supabase);
 
-    const res = await POST(makeCronRequest('nonexistent-profile'));
+    const res = await GET(makeCronRequest('nonexistent-profile'));
     expect(res.status).toBe(400);
     const body = await res.json();
     expect(body.error).toContain('Profile not found');
@@ -192,7 +192,7 @@ describe('POST /api/cron/apollo-pump', () => {
     const supabase = makeFullSupabaseMock();
     mockCreateServiceClient.mockReturnValue(supabase);
 
-    const res = await POST(makeCronRequest('contracting-pharmacy-healthcare-on'));
+    const res = await GET(makeCronRequest('contracting-pharmacy-healthcare-on'));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);
@@ -208,7 +208,7 @@ describe('POST /api/cron/apollo-pump', () => {
     const supabase = makeFullSupabaseMock();
     mockCreateServiceClient.mockReturnValue(supabase);
 
-    const res = await POST(makeCronRequest('contracting-pharmacy-healthcare-on'));
+    const res = await GET(makeCronRequest('contracting-pharmacy-healthcare-on'));
     const body = await res.json();
     expect(body.profiles[0].divisionCode).toBe('contracting');
   });
@@ -219,7 +219,7 @@ describe('POST /api/cron/apollo-pump', () => {
     const supabase = makeFullSupabaseMock();
     mockCreateServiceClient.mockReturnValue(supabase);
 
-    const res = await POST(makeCronRequest('contracting-commercial-developers-gta'));
+    const res = await GET(makeCronRequest('contracting-commercial-developers-gta'));
     const body = await res.json();
     const profile = body.profiles[0];
     expect(typeof profile.leadsFound).toBe('number');
@@ -236,7 +236,7 @@ describe('POST /api/cron/apollo-pump', () => {
     const supabase = makeFullSupabaseMock();
     mockCreateServiceClient.mockReturnValue(supabase);
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.mode).toBe('auto-rotation');
@@ -250,7 +250,7 @@ describe('POST /api/cron/apollo-pump', () => {
     const supabase = makeFullSupabaseMock();
     mockCreateServiceClient.mockReturnValue(supabase);
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     const body = await res.json();
     expect(typeof body.totalImported).toBe('number');
     expect(typeof body.totalDuplicates).toBe('number');
@@ -270,7 +270,7 @@ describe('POST /api/cron/apollo-pump', () => {
     });
     mockCreateServiceClient.mockReturnValue(supabase);
 
-    const res = await POST(makeCronRequest('contracting-commercial-developers-gta'));
+    const res = await GET(makeCronRequest('contracting-commercial-developers-gta'));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);
@@ -284,7 +284,7 @@ describe('POST /api/cron/apollo-pump', () => {
     const supabase = makeFullSupabaseMock();
     mockCreateServiceClient.mockReturnValue(supabase);
 
-    const res = await POST(makeCronRequest('contracting-commercial-developers-gta'));
+    const res = await GET(makeCronRequest('contracting-commercial-developers-gta'));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);
@@ -299,7 +299,7 @@ describe('POST /api/cron/apollo-pump', () => {
       throw new Error('Apollo API error 429');
     });
 
-    const res = await POST(makeCronRequest('contracting-commercial-developers-gta'));
+    const res = await GET(makeCronRequest('contracting-commercial-developers-gta'));
     const body = await res.json();
     expect(res.status).toBe(500);
     expect(body.error).toBe('Apollo pump failed');
@@ -311,7 +311,7 @@ describe('POST /api/cron/apollo-pump', () => {
     const supabase = makeFullSupabaseMock();
     mockCreateServiceClient.mockReturnValue(supabase);
 
-    const res = await POST(makeCronRequest('contracting-commercial-developers-gta'));
+    const res = await GET(makeCronRequest('contracting-commercial-developers-gta'));
     const body = await res.json();
     expect(body.timestamp).toBeTruthy();
     expect(new Date(body.timestamp).getTime()).not.toBeNaN();

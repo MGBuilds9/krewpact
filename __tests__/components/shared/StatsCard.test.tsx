@@ -32,28 +32,18 @@ describe('StatsCard', () => {
   });
 
   it('renders an icon when provided', () => {
-    render(
-      <StatsCard
-        title="Projects"
-        value={5}
-        icon={<span data-testid="icon">📋</span>}
-      />,
-    );
+    render(<StatsCard title="Projects" value={5} icon={<span data-testid="icon">📋</span>} />);
     expect(screen.getByTestId('icon')).toBeDefined();
   });
 
   it('renders positive trend with up arrow', () => {
-    render(
-      <StatsCard title="Revenue" value={100} trend={{ value: 12, label: 'vs last month' }} />,
-    );
+    render(<StatsCard title="Revenue" value={100} trend={{ value: 12, label: 'vs last month' }} />);
     expect(screen.getByText(/↑/)).toBeDefined();
     expect(screen.getByText(/vs last month/)).toBeDefined();
   });
 
   it('renders negative trend with down arrow', () => {
-    render(
-      <StatsCard title="Revenue" value={100} trend={{ value: -5, label: 'vs last month' }} />,
-    );
+    render(<StatsCard title="Revenue" value={100} trend={{ value: -5, label: 'vs last month' }} />);
     expect(screen.getByText(/↓/)).toBeDefined();
   });
 

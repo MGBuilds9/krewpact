@@ -61,7 +61,10 @@ describe('submitForApproval', () => {
   });
 
   it('transitions draft CO to submitted', async () => {
-    const fetchChain = buildChain({ data: { id: CO_ID, project_id: PROJECT_ID, status: 'draft' }, error: null });
+    const fetchChain = buildChain({
+      data: { id: CO_ID, project_id: PROJECT_ID, status: 'draft' },
+      error: null,
+    });
     const updateChain = buildChain({ data: { id: CO_ID, status: 'submitted' }, error: null });
     const auditChain = buildChain({ data: null, error: null });
     mockFrom
@@ -80,7 +83,10 @@ describe('approveChangeOrder', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('returns error for wrong state', async () => {
-    const chain = buildChain({ data: { id: CO_ID, project_id: PROJECT_ID, status: 'draft' }, error: null });
+    const chain = buildChain({
+      data: { id: CO_ID, project_id: PROJECT_ID, status: 'draft' },
+      error: null,
+    });
     mockFrom.mockReturnValue(chain);
 
     const { approveChangeOrder } = await import('@/lib/services/change-order-workflow');
@@ -97,8 +103,14 @@ describe('approveChangeOrder', () => {
     const updateChain = buildChain({ data: { id: CO_ID, status: 'approved' }, error: null });
     const auditChain = buildChain({ data: null, error: null });
     // recalculateContractValue calls: project fetch, approved COs fetch, project update
-    const projectChain = buildChain({ data: { id: PROJECT_ID, baseline_budget: 100000 }, error: null });
-    const cosChain = { ...buildChain(null), then: (r: (v: unknown) => void) => r({ data: [{ amount_delta: 5000 }], error: null }) };
+    const projectChain = buildChain({
+      data: { id: PROJECT_ID, baseline_budget: 100000 },
+      error: null,
+    });
+    const cosChain = {
+      ...buildChain(null),
+      then: (r: (v: unknown) => void) => r({ data: [{ amount_delta: 5000 }], error: null }),
+    };
     const recalcChain = buildChain({ data: null, error: null });
 
     mockFrom
@@ -119,8 +131,14 @@ describe('rejectChangeOrder', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('rejects a submitted CO with reason', async () => {
-    const fetchChain = buildChain({ data: { id: CO_ID, project_id: PROJECT_ID, status: 'submitted' }, error: null });
-    const updateChain = buildChain({ data: { id: CO_ID, status: 'rejected', reason: 'Too costly' }, error: null });
+    const fetchChain = buildChain({
+      data: { id: CO_ID, project_id: PROJECT_ID, status: 'submitted' },
+      error: null,
+    });
+    const updateChain = buildChain({
+      data: { id: CO_ID, status: 'rejected', reason: 'Too costly' },
+      error: null,
+    });
     const auditChain = buildChain({ data: null, error: null });
     mockFrom
       .mockReturnValueOnce(fetchChain)
@@ -134,7 +152,10 @@ describe('rejectChangeOrder', () => {
   });
 
   it('returns error for draft CO', async () => {
-    const chain = buildChain({ data: { id: CO_ID, project_id: PROJECT_ID, status: 'draft' }, error: null });
+    const chain = buildChain({
+      data: { id: CO_ID, project_id: PROJECT_ID, status: 'draft' },
+      error: null,
+    });
     mockFrom.mockReturnValue(chain);
 
     const { rejectChangeOrder } = await import('@/lib/services/change-order-workflow');
@@ -148,7 +169,10 @@ describe('submitToClient', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('transitions submitted CO to client_review', async () => {
-    const fetchChain = buildChain({ data: { id: CO_ID, project_id: PROJECT_ID, status: 'submitted' }, error: null });
+    const fetchChain = buildChain({
+      data: { id: CO_ID, project_id: PROJECT_ID, status: 'submitted' },
+      error: null,
+    });
     const updateChain = buildChain({ data: { id: CO_ID, status: 'client_review' }, error: null });
     const auditChain = buildChain({ data: null, error: null });
     mockFrom
@@ -163,7 +187,10 @@ describe('submitToClient', () => {
   });
 
   it('returns error when CO is not submitted', async () => {
-    const chain = buildChain({ data: { id: CO_ID, project_id: PROJECT_ID, status: 'draft' }, error: null });
+    const chain = buildChain({
+      data: { id: CO_ID, project_id: PROJECT_ID, status: 'draft' },
+      error: null,
+    });
     mockFrom.mockReturnValue(chain);
 
     const { submitToClient } = await import('@/lib/services/change-order-workflow');
@@ -177,7 +204,10 @@ describe('recalculateContractValue', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('sums approved CO deltas and updates project contract_value', async () => {
-    const projectChain = buildChain({ data: { id: PROJECT_ID, baseline_budget: 200000 }, error: null });
+    const projectChain = buildChain({
+      data: { id: PROJECT_ID, baseline_budget: 200000 },
+      error: null,
+    });
     const cosChain = {
       ...buildChain(null),
       then: (r: (v: unknown) => void) =>

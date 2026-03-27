@@ -42,6 +42,63 @@ export interface TransactionFormData {
   notes?: string;
 }
 
+interface LocationSelectProps {
+  locations: { id: string; name: string }[];
+  locationId: string;
+  toLocationId: string;
+  isTransfer: boolean;
+  onLocationChange: (v: string) => void;
+  onToLocationChange: (v: string) => void;
+}
+
+function _LocationSelects({
+  locations,
+  locationId,
+  toLocationId,
+  isTransfer,
+  onLocationChange,
+  onToLocationChange,
+}: LocationSelectProps) {
+  return (
+    <>
+      <div className="space-y-2">
+        <Label>{isTransfer ? 'From Location' : 'Location'}</Label>
+        <Select value={locationId} onValueChange={onLocationChange}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select location" />
+          </SelectTrigger>
+          <SelectContent>
+            {locations.map((loc) => (
+              <SelectItem key={loc.id} value={loc.id}>
+                {loc.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      {isTransfer && (
+        <div className="space-y-2">
+          <Label>To Location</Label>
+          <Select value={toLocationId} onValueChange={onToLocationChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select destination" />
+            </SelectTrigger>
+            <SelectContent>
+              {locations
+                .filter((l) => l.id !== locationId)
+                .map((loc) => (
+                  <SelectItem key={loc.id} value={loc.id}>
+                    {loc.name}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+    </>
+  );
+}
+
 export function TransactionForm({ onSubmit, isPending, onCancel }: TransactionFormProps) {
   const { activeDivision } = useDivision();
   const divisionId = activeDivision?.id ?? '';

@@ -187,6 +187,78 @@ function UserDropdown({
   );
 }
 
+interface HeaderBarProps {
+  userName: string;
+  userImageUrl: string;
+  userEmail?: string;
+  isAdmin: boolean;
+  orgPush: (path: string) => void;
+  onMobileMenuOpen: () => void;
+  onCommandPaletteOpen: () => void;
+  onImpersonateOpen: () => void;
+  onSignOut: () => void;
+}
+
+function HeaderBar({
+  userName,
+  userImageUrl,
+  userEmail,
+  isAdmin,
+  orgPush,
+  onMobileMenuOpen,
+  onCommandPaletteOpen,
+  onImpersonateOpen,
+  onSignOut,
+}: HeaderBarProps) {
+  return (
+    <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/50 shadow-sm transition-colors duration-200">
+      <div className="container mx-auto px-4 md:px-6 py-3 md:py-4">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4 md:gap-6 flex-1 min-w-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden shrink-0"
+              onClick={onMobileMenuOpen}
+              aria-label="Open mobile menu"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+            <div className="flex items-center gap-3 shrink-0 group cursor-pointer hover:opacity-80 transition-opacity">
+              <MDMLogo size="md" showText={true} />
+            </div>
+            <nav className="hidden md:flex items-center flex-1 min-w-0">
+              <Navigation />
+            </nav>
+          </div>
+          <div className="flex items-center gap-2 md:gap-3 shrink-0">
+            <DivisionSelector className="hidden md:flex" />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onCommandPaletteOpen}
+              className="hover:bg-muted rounded-lg transition-colors duration-200"
+              aria-label="Search"
+            >
+              <Search className="h-5 w-5" />
+            </Button>
+            <NotificationBell />
+            <ThemeToggle />
+            <SettingsDropdown isAdmin={isAdmin} onImpersonate={onImpersonateOpen} onNav={orgPush} />
+            <UserDropdown
+              userName={userName}
+              userImageUrl={userImageUrl}
+              userEmail={userEmail}
+              onNav={orgPush}
+              onSignOut={onSignOut}
+            />
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}
+
 export function Header() {
   const { user } = useUser();
   const { signOut } = useClerk();
@@ -232,55 +304,17 @@ export function Header() {
   return (
     <>
       {isImpersonating && <ImpersonationBanner onStop={stopImpersonation} />}
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/50 shadow-sm transition-colors duration-200">
-        <div className="container mx-auto px-4 md:px-6 py-3 md:py-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4 md:gap-6 flex-1 min-w-0">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="md:hidden shrink-0"
-                onClick={() => setIsMobileMenuOpen(true)}
-                aria-label="Open mobile menu"
-              >
-                <Menu className="h-5 w-5" />
-              </Button>
-              <div className="flex items-center gap-3 shrink-0 group cursor-pointer hover:opacity-80 transition-opacity">
-                <MDMLogo size="md" showText={true} />
-              </div>
-              <nav className="hidden md:flex items-center flex-1 min-w-0">
-                <Navigation />
-              </nav>
-            </div>
-            <div className="flex items-center gap-2 md:gap-3 shrink-0">
-              <DivisionSelector className="hidden md:flex" />
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsCommandPaletteOpen(true)}
-                className="hover:bg-muted rounded-lg transition-colors duration-200"
-                aria-label="Search"
-              >
-                <Search className="h-5 w-5" />
-              </Button>
-              <NotificationBell />
-              <ThemeToggle />
-              <SettingsDropdown
-                isAdmin={isAdmin}
-                onImpersonate={() => setIsImpersonationOpen(true)}
-                onNav={orgPush}
-              />
-              <UserDropdown
-                userName={userName}
-                userImageUrl={user?.imageUrl ?? ''}
-                userEmail={user?.primaryEmailAddress?.emailAddress}
-                onNav={orgPush}
-                onSignOut={handleSignOut}
-              />
-            </div>
-          </div>
-        </div>
-      </header>
+      <HeaderBar
+        userName={userName}
+        userImageUrl={user?.imageUrl ?? ''}
+        userEmail={user?.primaryEmailAddress?.emailAddress}
+        isAdmin={isAdmin}
+        orgPush={orgPush}
+        onMobileMenuOpen={() => setIsMobileMenuOpen(true)}
+        onCommandPaletteOpen={() => setIsCommandPaletteOpen(true)}
+        onImpersonateOpen={() => setIsImpersonationOpen(true)}
+        onSignOut={handleSignOut}
+      />
       {showQuickAccessToolbar && <QuickAccessToolbar />}
       <MobileNavigationDrawer
         isOpen={isMobileMenuOpen}

@@ -1,10 +1,3 @@
-import { NextRequest, NextResponse } from 'next/server';
-
-import { verifyCronAuth } from '@/lib/api/cron-auth';
-import { sendEmail } from '@/lib/email/resend';
-import { logger } from '@/lib/logger';
-import { createServiceClient } from '@/lib/supabase/server';
-
 /**
  * Cron Watchdog — checks that all registered crons have run recently.
  * Alerts if any cron hasn't run in 2x its expected interval.
@@ -12,6 +5,13 @@ import { createServiceClient } from '@/lib/supabase/server';
  * Runs every hour. Alert cooldown: only emails when the set of overdue
  * crons changes (new overdue cron appears) to prevent repeated alerts.
  */
+
+import { NextResponse } from 'next/server';
+
+import { withApiRoute } from '@/lib/api/with-api-route';
+import { sendEmail } from '@/lib/email/resend';
+import { logger } from '@/lib/logger';
+import { createServiceClient } from '@/lib/supabase/server';
 
 // Expected cron intervals in minutes
 const CRON_SCHEDULE: Record<string, number> = {
@@ -104,12 +104,7 @@ async function sendWatchdogAlert(
   });
 }
 
-export async function POST(req: NextRequest): Promise<NextResponse> {
-  const { authorized } = await verifyCronAuth(req);
-  if (!authorized) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
+export const GET = withApiRoute({ auth: 'cron' }, async () => {
   const supabase = createServiceClient();
   const now = Date.now();
   const results: WatchdogResult[] = [];
@@ -192,6 +187,4 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     results,
     timestamp: new Date().toISOString(),
   });
-}
-
-export { POST as GET };
+});

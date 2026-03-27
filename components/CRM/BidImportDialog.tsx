@@ -67,6 +67,46 @@ function parseJson(text: string): ParsedBid[] {
   return [];
 }
 
+const CAD_FORMAT = new Intl.NumberFormat('en-CA', {
+  style: 'currency',
+  currency: 'CAD',
+  maximumFractionDigits: 0,
+});
+
+function BidPreviewTable({ preview }: { preview: ParsedBid[] }) {
+  if (preview.length === 0) return null;
+  return (
+    <div className="space-y-2">
+      <p className="text-sm font-medium">{preview.length} bid(s) ready to import</p>
+      <div className="rounded-md border overflow-auto max-h-52">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Title</TableHead>
+              <TableHead>Source</TableHead>
+              <TableHead>Value</TableHead>
+              <TableHead>Deadline</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {preview.map((bid, i) => (
+              // eslint-disable-next-line react/no-array-index-key
+              <TableRow key={i}>
+                <TableCell className="max-w-[200px] truncate">{bid.title}</TableCell>
+                <TableCell>{bid.source ?? '—'}</TableCell>
+                <TableCell>
+                  {bid.estimated_value != null ? CAD_FORMAT.format(bid.estimated_value) : '—'}
+                </TableCell>
+                <TableCell>{bid.deadline ?? '—'}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  );
+}
+
 export function BidImportDialog({ open, onOpenChange }: BidImportDialogProps) {
   const [raw, setRaw] = useState('');
   const [preview, setPreview] = useState<ParsedBid[]>([]);
@@ -89,12 +129,12 @@ export function BidImportDialog({ open, onOpenChange }: BidImportDialogProps) {
     setParseError(null);
     try {
       const trimmed = text.trim();
-      const bids = trimmed.startsWith('[') || trimmed.startsWith('{')
-        ? parseJson(trimmed)
-        : parseCsv(trimmed);
+      const bids =
+        trimmed.startsWith('[') || trimmed.startsWith('{') ? parseJson(trimmed) : parseCsv(trimmed);
       const valid = bids.filter((b) => b.title?.trim());
       setPreview(valid);
-      if (valid.length === 0) setParseError('No valid bids found. Ensure rows have a title column.');
+      if (valid.length === 0)
+        setParseError('No valid bids found. Ensure rows have a title column.');
     } catch {
       setParseError('Could not parse input. Provide valid CSV or JSON.');
       setPreview([]);
@@ -103,14 +143,20 @@ export function BidImportDialog({ open, onOpenChange }: BidImportDialogProps) {
 
   async function handleImport() {
     if (preview.length === 0) return;
-    await importBidding.mutateAsync({ items: preview as Parameters<typeof importBidding.mutateAsync>[0]['items'] });
+    await importBidding.mutateAsync({
+      items: preview as Parameters<typeof importBidding.mutateAsync>[0]['items'],
+    });
     setRaw('');
     setPreview([]);
     onOpenChange(false);
   }
 
   function handleClose(v: boolean) {
-    if (!v) { setRaw(''); setPreview([]); setParseError(null); }
+    if (!v) {
+      setRaw('');
+      setPreview([]);
+      setParseError(null);
+    }
     onOpenChange(v);
   }
 
@@ -124,7 +170,6 @@ export function BidImportDialog({ open, onOpenChange }: BidImportDialogProps) {
             columns: source, url, deadline, estimated_value, notes.
           </DialogDescription>
         </DialogHeader>
-
         <div className="flex flex-col gap-4 overflow-y-auto flex-1">
           <div className="flex items-center gap-3">
             <label className="flex items-center gap-2 cursor-pointer rounded-md border px-3 py-2 text-sm hover:bg-muted">
@@ -139,67 +184,25 @@ export function BidImportDialog({ open, onOpenChange }: BidImportDialogProps) {
             </label>
             <span className="text-sm text-muted-foreground">or paste below</span>
           </div>
-
           <Textarea
             placeholder={'title,source,estimated_value\n"New Bid",merx,50000'}
             rows={5}
             value={raw}
             onChange={(e) => setRaw(e.target.value)}
           />
-
           {parseError && (
             <div className="flex items-center gap-2 text-sm text-destructive">
               <AlertCircle className="h-4 w-4 shrink-0" />
               {parseError}
             </div>
           )}
-
-          {preview.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-sm font-medium">{preview.length} bid(s) ready to import</p>
-              <div className="rounded-md border overflow-auto max-h-52">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Title</TableHead>
-                      <TableHead>Source</TableHead>
-                      <TableHead>Value</TableHead>
-                      <TableHead>Deadline</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {preview.map((bid, i) => (
-                      // eslint-disable-next-line react/no-array-index-key
-                      <TableRow key={i}>
-                        <TableCell className="max-w-[200px] truncate">{bid.title}</TableCell>
-                        <TableCell>{bid.source ?? '—'}</TableCell>
-                        <TableCell>
-                          {bid.estimated_value != null
-                            ? new Intl.NumberFormat('en-CA', {
-                                style: 'currency',
-                                currency: 'CAD',
-                                maximumFractionDigits: 0,
-                              }).format(bid.estimated_value)
-                            : '—'}
-                        </TableCell>
-                        <TableCell>{bid.deadline ?? '—'}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-          )}
+          <BidPreviewTable preview={preview} />
         </div>
-
         <DialogFooter className="pt-2">
           <Button variant="outline" onClick={() => handleParse(raw)} disabled={!raw.trim()}>
             Parse
           </Button>
-          <Button
-            onClick={handleImport}
-            disabled={preview.length === 0 || importBidding.isPending}
-          >
+          <Button onClick={handleImport} disabled={preview.length === 0 || importBidding.isPending}>
             {importBidding.isPending ? 'Importing…' : `Import ${preview.length} Bid(s)`}
           </Button>
         </DialogFooter>

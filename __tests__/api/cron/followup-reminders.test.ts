@@ -15,7 +15,7 @@ import {
   mockSupabaseClient,
   resetFixtureCounter,
 } from '@/__tests__/helpers';
-import { POST } from '@/app/api/cron/followup-reminders/route';
+import { GET } from '@/app/api/cron/followup-reminders/route';
 import { createServiceClient } from '@/lib/supabase/server';
 
 const mockCreateServiceClient = vi.mocked(createServiceClient);
@@ -34,10 +34,10 @@ describe('POST /api/cron/followup-reminders', () => {
   it('returns 401 when cron auth fails', async () => {
     mockVerifyCronAuth.mockResolvedValue({ authorized: false });
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns { notified: 0 } when no overdue tasks', async () => {
@@ -50,7 +50,7 @@ describe('POST /api/cron/followup-reminders', () => {
       }) as any,
     );
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.notified).toBe(0);
@@ -76,7 +76,7 @@ describe('POST /api/cron/followup-reminders', () => {
       }) as any,
     );
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     // 2 users = 2 notifications
@@ -94,7 +94,7 @@ describe('POST /api/cron/followup-reminders', () => {
       }) as any,
     );
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(500);
     const body = await res.json();
     expect(body.error).toBe('connection refused');
@@ -113,7 +113,7 @@ describe('POST /api/cron/followup-reminders', () => {
       }) as any,
     );
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(500);
     const body = await res.json();
     expect(body.error).toBe('insert failed');
@@ -135,7 +135,7 @@ describe('POST /api/cron/followup-reminders', () => {
     });
     mockCreateServiceClient.mockReturnValue(client as any);
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
 
     // Verify the insert was called with notification containing task titles
@@ -165,7 +165,7 @@ describe('POST /api/cron/followup-reminders', () => {
       }) as any,
     );
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.notified).toBe(1);
@@ -182,7 +182,7 @@ describe('POST /api/cron/followup-reminders', () => {
       }) as any,
     );
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.notified).toBe(0);

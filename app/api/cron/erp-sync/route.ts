@@ -1,17 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server';
-
-import { verifyCronAuth } from '@/lib/api/cron-auth';
-import { createCronLogger } from '@/lib/api/cron-logger';
-import { ErpClient } from '@/lib/erp/client';
-import { isMockMode, SyncService } from '@/lib/erp/sync-service';
-import { logger } from '@/lib/logger';
-
 /**
  * GET /api/cron/erp-sync — Periodic inbound sync of Sales Invoices and Purchase Invoices.
  *
  * Called by QStash cron or Vercel cron. Fetches recently modified invoices from ERPNext
  * and syncs them into KrewPact's snapshot tables.
  */
+
+import { NextResponse } from 'next/server';
+
+import { createCronLogger } from '@/lib/api/cron-logger';
+import { withApiRoute } from '@/lib/api/with-api-route';
+import { ErpClient } from '@/lib/erp/client';
+import { isMockMode, SyncService } from '@/lib/erp/sync-service';
+import { logger } from '@/lib/logger';
 
 interface SyncSummary {
   invoices_synced: number;
@@ -101,10 +101,7 @@ async function syncPurchaseInvoices(
   }
 }
 
-export async function GET(request: NextRequest) {
-  const { authorized } = await verifyCronAuth(request);
-  if (!authorized) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
+export const GET = withApiRoute({ auth: 'cron' }, async () => {
   const cronLog = createCronLogger('erp-sync');
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 19);
 
@@ -116,21 +113,15 @@ export async function GET(request: NextRequest) {
     completed_at: '',
   };
 
-  try {
-    if (isMockMode()) {
-      summary.completed_at = new Date().toISOString();
-      return NextResponse.json(summary);
-    }
-
-    const client = new ErpClient();
-    const service = new SyncService();
-    await syncSalesInvoices(client, service, since, summary);
-    await syncPurchaseInvoices(client, service, since, summary);
-  } catch (err) {
-    const msg = `Cron sync failed: ${err instanceof Error ? err.message : String(err)}`;
-    logger.error('ERP cron sync failed', { error: msg });
-    summary.errors.push(msg);
+  if (isMockMode()) {
+    summary.completed_at = new Date().toISOString();
+    return NextResponse.json(summary);
   }
+
+  const client = new ErpClient();
+  const service = new SyncService();
+  await syncSalesInvoices(client, service, since, summary);
+  await syncPurchaseInvoices(client, service, since, summary);
 
   summary.completed_at = new Date().toISOString();
   logger.info('ERP cron sync completed', {
@@ -150,4 +141,4 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json(summary);
-}
+});

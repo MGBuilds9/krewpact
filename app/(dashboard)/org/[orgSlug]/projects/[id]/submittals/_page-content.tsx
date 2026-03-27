@@ -31,7 +31,6 @@ import { useAttachments } from '@/hooks/useDocumentControl';
 import type { Submittal } from '@/hooks/useFieldOps';
 import { useSubmittals } from '@/hooks/useFieldOps';
 
-
 function SubmittalAttachmentsDialog({ projectId, subId }: { projectId: string; subId: string }) {
   const [open, setOpen] = useState(false);
   const { data, isLoading } = useAttachments('submittal', projectId, subId);
@@ -85,7 +84,15 @@ function SubmittalDistributionDialog({ projectId, subId }: { projectId: string; 
   );
 }
 
-function SubRow({ sub, onReview, projectId }: { sub: Submittal; onReview: (id: string) => void; projectId: string }) {
+function SubRow({
+  sub,
+  onReview,
+  projectId,
+}: {
+  sub: Submittal;
+  onReview: (id: string) => void;
+  projectId: string;
+}) {
   return (
     <TableRow>
       <TableCell className="font-mono font-medium">{sub.submittal_number}</TableCell>
@@ -131,15 +138,30 @@ export default function SubmittalsPage() {
           </div>
         </div>
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />New Submittal</Button></DialogTrigger>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              New Submittal
+            </Button>
+          </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Create Submittal</DialogTitle></DialogHeader>
-            <SubmittalCreateForm projectId={projectId} onSuccess={() => setCreateOpen(false)} onCancel={() => setCreateOpen(false)} />
+            <DialogHeader>
+              <DialogTitle>Create Submittal</DialogTitle>
+            </DialogHeader>
+            <SubmittalCreateForm
+              projectId={projectId}
+              onSuccess={() => setCreateOpen(false)}
+              onCancel={() => setCreateOpen(false)}
+            />
           </DialogContent>
         </Dialog>
       </div>
       {isLoading ? (
-        <div className="space-y-2">{['s1','s2','s3','s4','s5'].map((k) => <Skeleton key={k} className="h-14 w-full" />)}</div>
+        <div className="space-y-2">
+          {['s1', 's2', 's3', 's4', 's5'].map((k) => (
+            <Skeleton key={k} className="h-14 w-full" />
+          ))}
+        </div>
       ) : submittals.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">
           <ClipboardList className="h-16 w-16 mx-auto mb-4 opacity-25" />
@@ -149,15 +171,38 @@ export default function SubmittalsPage() {
       ) : (
         <Table>
           <TableHeader>
-            <TableRow>{['Number','Title','Status','Due'].map((h) => <TableHead key={h}>{h}</TableHead>)}<TableHead className="text-right">Actions</TableHead></TableRow>
+            <TableRow>
+              {['Number', 'Title', 'Status', 'Due'].map((h) => (
+                <TableHead key={h}>{h}</TableHead>
+              ))}
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
           </TableHeader>
-          <TableBody>{submittals.map((sub) => <SubRow key={sub.id} sub={sub} onReview={setReviewSubId} projectId={projectId} />)}</TableBody>
+          <TableBody>
+            {submittals.map((sub) => (
+              <SubRow key={sub.id} sub={sub} onReview={setReviewSubId} projectId={projectId} />
+            ))}
+          </TableBody>
         </Table>
       )}
-      <Dialog open={!!reviewSubId} onOpenChange={(o) => { if (!o) setReviewSubId(null); }}>
+      <Dialog
+        open={!!reviewSubId}
+        onOpenChange={(o) => {
+          if (!o) setReviewSubId(null);
+        }}
+      >
         <DialogContent>
-          <DialogHeader><DialogTitle>Review Submittal</DialogTitle></DialogHeader>
-          {reviewSubId && <SubmittalReviewForm projectId={projectId} subId={reviewSubId} onSuccess={() => setReviewSubId(null)} onCancel={() => setReviewSubId(null)} />}
+          <DialogHeader>
+            <DialogTitle>Review Submittal</DialogTitle>
+          </DialogHeader>
+          {reviewSubId && (
+            <SubmittalReviewForm
+              projectId={projectId}
+              subId={reviewSubId}
+              onSuccess={() => setReviewSubId(null)}
+              onCancel={() => setReviewSubId(null)}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </div>

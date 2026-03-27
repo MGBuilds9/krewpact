@@ -107,6 +107,64 @@ function ConnectionLines({
   );
 }
 
+interface CanvasStepsProps {
+  sorted: FlowStep[];
+  connections: FlowConnection[];
+  svgHeight: number;
+  selectedStepId: string | null;
+  onSelect: (id: string) => void;
+  onRemove: (id: string) => void;
+}
+
+function CanvasSteps({
+  sorted,
+  connections,
+  svgHeight,
+  selectedStepId,
+  onSelect,
+  onRemove,
+}: CanvasStepsProps) {
+  if (sorted.length === 0) {
+    return (
+      <div className="flex h-full min-h-[300px] flex-col items-center justify-center gap-2 text-center text-muted-foreground">
+        <p className="text-sm font-medium">No steps yet</p>
+        <p className="text-xs">
+          Use the toolbar above to add email, task, wait, or condition steps.
+        </p>
+      </div>
+    );
+  }
+  return (
+    <div className="relative" style={{ minHeight: svgHeight + 20 }}>
+      <ConnectionLines sorted={sorted} connections={connections} svgHeight={svgHeight} />
+      <div className="relative z-10 flex flex-col gap-3" style={{ maxWidth: NODE_WIDTH }}>
+        {sorted.map((step) => {
+          const isSelected = step.id === selectedStepId;
+          if (step.action_type === 'condition')
+            return (
+              <ConditionNode
+                key={step.id}
+                step={step}
+                selected={isSelected}
+                onSelect={() => onSelect(step.id)}
+                onDelete={() => onRemove(step.id)}
+              />
+            );
+          return (
+            <StepNode
+              key={step.id}
+              step={step}
+              selected={isSelected}
+              onSelect={() => onSelect(step.id)}
+              onDelete={() => onRemove(step.id)}
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function FlowCanvas({
   sequenceId: _sequenceId,
   initialSteps = [],
@@ -172,42 +230,14 @@ export function FlowCanvas({
       <FlowToolbar onAddStep={addStep} onSave={handleSave} saving={saving} />
       <div className="flex flex-col lg:flex-row gap-4">
         <div className="relative min-h-[400px] flex-1 rounded-lg border bg-muted/30 p-4">
-          {sorted.length === 0 ? (
-            <div className="flex h-full min-h-[300px] flex-col items-center justify-center gap-2 text-center text-muted-foreground">
-              <p className="text-sm font-medium">No steps yet</p>
-              <p className="text-xs">
-                Use the toolbar above to add email, task, wait, or condition steps.
-              </p>
-            </div>
-          ) : (
-            <div className="relative" style={{ minHeight: svgHeight + 20 }}>
-              <ConnectionLines sorted={sorted} connections={connections} svgHeight={svgHeight} />
-              <div className="relative z-10 flex flex-col gap-3" style={{ maxWidth: NODE_WIDTH }}>
-                {sorted.map((step) => {
-                  const isSelected = step.id === selectedStepId;
-                  if (step.action_type === 'condition')
-                    return (
-                      <ConditionNode
-                        key={step.id}
-                        step={step}
-                        selected={isSelected}
-                        onSelect={() => setSelectedStepId(step.id)}
-                        onDelete={() => removeStep(step.id)}
-                      />
-                    );
-                  return (
-                    <StepNode
-                      key={step.id}
-                      step={step}
-                      selected={isSelected}
-                      onSelect={() => setSelectedStepId(step.id)}
-                      onDelete={() => removeStep(step.id)}
-                    />
-                  );
-                })}
-              </div>
-            </div>
-          )}
+          <CanvasSteps
+            sorted={sorted}
+            connections={connections}
+            svgHeight={svgHeight}
+            selectedStepId={selectedStepId}
+            onSelect={setSelectedStepId}
+            onRemove={removeStep}
+          />
         </div>
         {selectedStep && (
           <StepConfigPanel

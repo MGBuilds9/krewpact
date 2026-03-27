@@ -72,7 +72,9 @@ describe('GET /api/governance/reference-data', () => {
 
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
-    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
+    mockRequireRole.mockResolvedValue(
+      NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
+    );
     const res = await GET_LIST(makeRequest('/api/governance/reference-data'));
     expect(res.status).toBe(401);
   });
@@ -114,7 +116,9 @@ describe('POST /api/governance/reference-data', () => {
 
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
-    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
+    mockRequireRole.mockResolvedValue(
+      NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
+    );
     const res = await POST_CREATE(makeJsonRequest('/api/governance/reference-data', {}));
     expect(res.status).toBe(401);
   });

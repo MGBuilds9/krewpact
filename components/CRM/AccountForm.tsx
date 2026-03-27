@@ -31,6 +31,9 @@ import {
   accountUpdateSchema,
 } from '@/lib/validators/crm';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type FormProp = any;
+
 interface AccountFormProps {
   account?: Account;
   onSuccess?: (account: Account) => void;
@@ -60,6 +63,89 @@ function buildDefaultValues(account?: Account, divisionId?: string) {
   };
 }
 
+function AccountFormFields({
+  form,
+  isEdit,
+  isPending,
+  onCancel,
+}: {
+  form: FormProp;
+  isEdit: boolean;
+  isPending: boolean;
+  onCancel?: () => void;
+}) {
+  return (
+    <>
+      <FormField
+        control={form.control}
+        name="account_name"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Account Name *</FormLabel>
+            <FormControl>
+              <Input placeholder="e.g. Tim Hortons" {...field} value={field.value ?? ''} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="account_type"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Account Type *</FormLabel>
+            <Select onValueChange={field.onChange} value={field.value ?? 'prospect'}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {ACCOUNT_TYPES.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="notes"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Notes</FormLabel>
+            <FormControl>
+              <Textarea
+                placeholder="Notes about this account..."
+                rows={3}
+                {...field}
+                value={field.value ?? ''}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <div className="flex gap-2 justify-end pt-2">
+        {onCancel && (
+          <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
+            Cancel
+          </Button>
+        )}
+        <Button type="submit" disabled={isPending}>
+          {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+          {isEdit ? 'Save Changes' : 'Create Account'}
+        </Button>
+      </div>
+    </>
+  );
+}
+
 export function AccountForm({ account, onSuccess, onCancel }: AccountFormProps) {
   const isEdit = !!account;
   const createAccount = useCreateAccount();
@@ -86,72 +172,7 @@ export function AccountForm({ account, onSuccess, onCancel }: AccountFormProps) 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="account_name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Account Name *</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g. Tim Hortons" {...field} value={field.value ?? ''} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="account_type"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Account Type *</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value ?? 'prospect'}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {ACCOUNT_TYPES.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="notes"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Notes</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Notes about this account..."
-                  rows={3}
-                  {...field}
-                  value={field.value ?? ''}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="flex gap-2 justify-end pt-2">
-          {onCancel && (
-            <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
-              Cancel
-            </Button>
-          )}
-          <Button type="submit" disabled={isPending}>
-            {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            {isEdit ? 'Save Changes' : 'Create Account'}
-          </Button>
-        </div>
+        <AccountFormFields form={form} isEdit={isEdit} isPending={isPending} onCancel={onCancel} />
       </form>
     </Form>
   );

@@ -30,7 +30,10 @@ export async function GET(req: NextRequest) {
     const history = await getPaymentHistory(parsed.data.project_id);
     return NextResponse.json(history);
   } catch (err: unknown) {
-    logger.error('GET /api/finance/payment-entries failed', { projectId: parsed.data.project_id, err });
+    logger.error('GET /api/finance/payment-entries failed', {
+      projectId: parsed.data.project_id,
+      err,
+    });
     return NextResponse.json({ error: 'Failed to fetch payment history' }, { status: 500 });
   }
 }

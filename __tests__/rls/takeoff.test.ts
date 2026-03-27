@@ -5,7 +5,7 @@
  * Uses it.skipIf() to gracefully skip if the migration file does not exist yet
  * (the migration is created by a separate agent via Supabase MCP).
  */
-import { readdirSync,readFileSync } from 'fs';
+import { readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { describe, expect, it } from 'vitest';
 

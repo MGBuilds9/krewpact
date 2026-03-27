@@ -39,9 +39,7 @@ function PORow({ po, onClick }: { po: PO; onClick: () => void }) {
       <TableCell className="font-mono text-sm">{po.po_number}</TableCell>
       <TableCell>{po.supplier_name || '—'}</TableCell>
       <TableCell>{po.po_date || '—'}</TableCell>
-      <TableCell>
-        {po.status ? <StatusBadge status={po.status} /> : '—'}
-      </TableCell>
+      <TableCell>{po.status ? <StatusBadge status={po.status} /> : '—'}</TableCell>
       <TableCell className="text-right">{formatCAD(po.subtotal_amount || null)}</TableCell>
       <TableCell className="text-right">{formatCAD(po.tax_amount || null)}</TableCell>
       <TableCell className="text-right">{formatCAD(po.total_amount || null)}</TableCell>

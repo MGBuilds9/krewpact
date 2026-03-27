@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
 import { buildDigest } from '@/lib/ai/agents/digest-builder';
-import { verifyCronAuth } from '@/lib/api/cron-auth';
 import { createCronLogger } from '@/lib/api/cron-logger';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { sendEmail } from '@/lib/email/resend';
 import { logger } from '@/lib/logger';
 import { createServiceClient } from '@/lib/supabase/server';
@@ -88,16 +88,13 @@ async function processUser(
   return 'error';
 }
 
-export async function POST(req: NextRequest): Promise<NextResponse> {
+export const GET = withApiRoute({ auth: 'cron' }, async () => {
   if (process.env.AI_ENABLED !== 'true') {
     return NextResponse.json(
       { error: 'AI features are not enabled', disabled: true },
       { status: 503 },
     );
   }
-
-  const { authorized } = await verifyCronAuth(req);
-  if (!authorized) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const cronLog = createCronLogger('daily-digest');
   const supabase = createServiceClient();
@@ -141,6 +138,4 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   };
   await cronLog.success({ sent, errors, users_processed: users.length });
   return NextResponse.json(result);
-}
-
-export { POST as GET };
+});

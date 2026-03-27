@@ -1,6 +1,8 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
+import { generateRequestId } from '@/lib/request-context';
+
 const isPublicRoute = createRouteMatcher([
   '/auth(.*)',
   '/api/webhooks(.*)',
@@ -10,9 +12,9 @@ const isPublicRoute = createRouteMatcher([
   '/api/email/track(.*)',
 ]);
 
-const ALLOWED_DOMAINS = (process.env.ALLOWED_DOMAINS || 'mdmgroupinc.ca,mdmcontracting.ca').split(
-  ',',
-);
+const ALLOWED_DOMAINS = (
+  process.env.ALLOWED_DOMAINS || 'mdmgroupinc.ca,mdmcontracting.ca,krewpact.ca'
+).split(',');
 
 // Org slug regex: /org/{slug}/...
 const ORG_PATH_RE = /^\/org\/([a-z0-9-]+)(\/|$)/;
@@ -20,10 +22,11 @@ const ORG_PATH_RE = /^\/org\/([a-z0-9-]+)(\/|$)/;
 // Paths that don't need org context (API routes handle their own, auth pages, etc.)
 const SKIP_ORG_PATHS = ['/api/', '/auth', '/_next', '/favicon'];
 
-const DEFAULT_ORG_SLUG = 'mdm-group';
+const DEFAULT_ORG_SLUG = process.env.DEFAULT_ORG_SLUG || 'mdm-group';
 
 export const proxy = clerkMiddleware(
   async (auth, req) => {
+    const requestId = generateRequestId();
     const { userId, sessionClaims } = await auth();
 
     // Domain restriction
@@ -32,6 +35,17 @@ export const proxy = clerkMiddleware(
       if (email) {
         const domain = email.split('@')[1];
         if (ALLOWED_DOMAINS.length > 0 && !ALLOWED_DOMAINS.includes(domain)) {
+          // eslint-disable-next-line no-console
+          console.log(
+            JSON.stringify({
+              level: 'warn',
+              message: 'Domain restricted',
+              requestId,
+              email: email.split('@')[0] + '@***',
+              domain,
+              path: req.nextUrl.pathname,
+            }),
+          );
           const url = new URL('/auth?error=domain_restricted', req.url);
           return Response.redirect(url);
         }
@@ -43,15 +57,17 @@ export const proxy = clerkMiddleware(
     }
 
     const { pathname } = req.nextUrl;
+    const headers = new Headers(req.headers);
+    headers.set('x-request-id', requestId);
 
     // Skip org resolution for non-dashboard paths
     if (SKIP_ORG_PATHS.some((p) => pathname.startsWith(p))) {
-      return NextResponse.next();
+      return NextResponse.next({ request: { headers } });
     }
 
     // Org-scoped path — pass through (no DB validation needed, single-org app)
     if (ORG_PATH_RE.test(pathname)) {
-      return NextResponse.next();
+      return NextResponse.next({ request: { headers } });
     }
 
     // Authenticated user on a bare path (e.g., /dashboard, /crm/leads)
@@ -59,16 +75,21 @@ export const proxy = clerkMiddleware(
     if (userId) {
       const url = req.nextUrl.clone();
       url.pathname = `/org/${DEFAULT_ORG_SLUG}${pathname}`;
-      return NextResponse.redirect(url);
+      const response = NextResponse.redirect(url);
+      response.headers.set('x-request-id', requestId);
+      return response;
     }
 
-    return NextResponse.next();
+    return NextResponse.next({ request: { headers } });
   },
   {
     authorizedParties: [
       'https://hub.mdmgroupinc.ca',
       'https://dashboard.mdmgroupinc.ca',
       'https://portal.mdmgroupinc.ca',
+      'https://app.krewpact.ca',
+      'https://hub.krewpact.ca',
+      'https://portal.krewpact.ca',
       ...(process.env.NEXT_PUBLIC_APP_URL ? [process.env.NEXT_PUBLIC_APP_URL.trim()] : []),
       ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL.trim()}`] : []),
       ...(process.env.NODE_ENV !== 'production' ? ['http://localhost:3000'] : []),

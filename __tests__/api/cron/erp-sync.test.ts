@@ -1,8 +1,28 @@
+import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockReadSalesInvoice = vi.fn();
 const mockReadPurchaseInvoice = vi.fn();
 const mockList = vi.fn();
+
+vi.mock('@/lib/logger', () => ({
+  logger: {
+    warn: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+    child: vi.fn().mockReturnThis(),
+  },
+}));
+
+vi.mock('@/lib/request-context', () => ({
+  generateRequestId: vi.fn(() => 'test-req-id'),
+  requestContext: { run: vi.fn((_ctx: unknown, fn: () => unknown) => fn()) },
+}));
+
+vi.mock('@/lib/queue/verify', () => ({
+  verifyQStashSignature: vi.fn().mockResolvedValue({ valid: true, body: '' }),
+}));
 
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
@@ -30,11 +50,11 @@ import { isMockMode } from '@/lib/erp/sync-service';
 
 const CRON_SECRET = 'test-cron-secret';
 
-function makeCronRequest(authHeader?: string, qstashSig?: string): Request {
+function makeCronRequest(authHeader?: string, qstashSig?: string): NextRequest {
   const headers: Record<string, string> = {};
   if (authHeader) headers['authorization'] = authHeader;
   if (qstashSig) headers['upstash-signature'] = qstashSig;
-  return new Request('http://localhost/api/cron/erp-sync', {
+  return new NextRequest('http://localhost/api/cron/erp-sync', {
     method: 'GET',
     headers,
   });
@@ -48,28 +68,28 @@ describe('GET /api/cron/erp-sync', () => {
   });
 
   it('returns 401 without auth', async () => {
-    const res = await GET(makeCronRequest() as never);
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(401);
   });
 
   it('accepts Bearer token auth', async () => {
     mockList.mockResolvedValue([]);
 
-    const res = await GET(makeCronRequest(`Bearer ${CRON_SECRET}`) as never);
+    const res = await GET(makeCronRequest(`Bearer ${CRON_SECRET}`));
     expect(res.status).toBe(200);
   });
 
   it('accepts QStash signature auth', async () => {
     mockList.mockResolvedValue([]);
 
-    const res = await GET(makeCronRequest(undefined, 'qstash-sig-value') as never);
+    const res = await GET(makeCronRequest(undefined, 'qstash-sig-value'));
     expect(res.status).toBe(200);
   });
 
   it('returns empty summary in mock mode', async () => {
     vi.mocked(isMockMode).mockReturnValue(true);
 
-    const res = await GET(makeCronRequest(`Bearer ${CRON_SECRET}`) as never);
+    const res = await GET(makeCronRequest(`Bearer ${CRON_SECRET}`));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.invoices_synced).toBe(0);
@@ -84,7 +104,7 @@ describe('GET /api/cron/erp-sync', () => {
 
     mockReadSalesInvoice.mockResolvedValue({ status: 'succeeded' });
 
-    const res = await GET(makeCronRequest(`Bearer ${CRON_SECRET}`) as never);
+    const res = await GET(makeCronRequest(`Bearer ${CRON_SECRET}`));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.invoices_synced).toBe(2);
@@ -101,7 +121,7 @@ describe('GET /api/cron/erp-sync', () => {
 
     mockReadPurchaseInvoice.mockResolvedValue({ status: 'succeeded' });
 
-    const res = await GET(makeCronRequest(`Bearer ${CRON_SECRET}`) as never);
+    const res = await GET(makeCronRequest(`Bearer ${CRON_SECRET}`));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.invoices_synced).toBe(0);
@@ -118,7 +138,7 @@ describe('GET /api/cron/erp-sync', () => {
       .mockRejectedValueOnce(new Error('Fetch failed'))
       .mockResolvedValueOnce({ status: 'succeeded' });
 
-    const res = await GET(makeCronRequest(`Bearer ${CRON_SECRET}`) as never);
+    const res = await GET(makeCronRequest(`Bearer ${CRON_SECRET}`));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.invoices_synced).toBe(1);
@@ -130,7 +150,7 @@ describe('GET /api/cron/erp-sync', () => {
   it('handles ERPNext list API failure gracefully', async () => {
     mockList.mockRejectedValueOnce(new Error('ERPNext unavailable')).mockResolvedValueOnce([]);
 
-    const res = await GET(makeCronRequest(`Bearer ${CRON_SECRET}`) as never);
+    const res = await GET(makeCronRequest(`Bearer ${CRON_SECRET}`));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.invoices_synced).toBe(0);

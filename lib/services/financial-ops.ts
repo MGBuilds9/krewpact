@@ -96,9 +96,7 @@ export async function calculateHoldbacks(projectId: string): Promise<HoldbackIte
   const supabase = createServiceClient();
   const { data: invoices, error } = await supabase
     .from('invoice_snapshots')
-    .select(
-      'id, invoice_number, invoice_date, total_amount, snapshot_payload, status, created_at',
-    )
+    .select('id, invoice_number, invoice_date, total_amount, snapshot_payload, status, created_at')
     .eq('project_id', projectId)
     .in('status', ['submitted', 'paid']);
 

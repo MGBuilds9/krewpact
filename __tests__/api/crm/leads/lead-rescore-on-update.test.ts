@@ -27,7 +27,13 @@ vi.mock('@/lib/logger', () => ({
 
 import { auth } from '@clerk/nextjs/server';
 
-import { makeJsonRequest, makeLead, mockClerkAuth, mockClerkUnauth, mockSupabaseClient } from '@/__tests__/helpers';
+import {
+  makeJsonRequest,
+  makeLead,
+  mockClerkAuth,
+  mockClerkUnauth,
+  mockSupabaseClient,
+} from '@/__tests__/helpers';
 import { PATCH } from '@/app/api/crm/leads/[id]/route';
 import { scoreLead } from '@/lib/crm/scoring-engine';
 import { createUserClientSafe } from '@/lib/supabase/server';

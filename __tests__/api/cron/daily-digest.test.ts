@@ -6,10 +6,16 @@ vi.mock('@/lib/supabase/server', () => ({ createServiceClient: vi.fn() }));
 vi.mock('@/lib/ai/agents/digest-builder', () => ({ buildDigest: vi.fn() }));
 vi.mock('@/lib/email/resend', () => ({ sendEmail: vi.fn() }));
 vi.mock('@/lib/logger', () => ({
-  logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  logger: {
+    warn: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+    child: vi.fn().mockReturnThis(),
+  },
 }));
 
-import { POST } from '@/app/api/cron/daily-digest/route';
+import { GET as POST } from '@/app/api/cron/daily-digest/route';
 import { buildDigest } from '@/lib/ai/agents/digest-builder';
 import { verifyCronAuth } from '@/lib/api/cron-auth';
 import { sendEmail } from '@/lib/email/resend';
@@ -24,7 +30,7 @@ const mockBuildDigest = vi.mocked(buildDigest);
 const mockSendEmail = vi.mocked(sendEmail);
 
 function makeCronRequest() {
-  return makeRequest('/api/cron/daily-digest', { method: 'POST' });
+  return makeRequest('/api/cron/daily-digest', { method: 'GET' });
 }
 
 function mockChain(data: unknown, error: unknown = null) {
@@ -83,7 +89,7 @@ describe('POST /api/cron/daily-digest', () => {
     const res = await POST(makeCronRequest());
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns success with no users', async () => {

@@ -135,13 +135,87 @@ function SubRow({
   );
 }
 
+const TABLE_HEADERS = [
+  'Name',
+  'Category',
+  'Vendor',
+  'Monthly Cost',
+  'Billing Cycle',
+  'Renewal Date',
+  'Status',
+  'Actions',
+];
+
+function SubscriptionTableBody({
+  subscriptions,
+  onEdit,
+  onDelete,
+  isDeleting,
+}: {
+  subscriptions: Subscription[];
+  onEdit: (s: Subscription) => void;
+  onDelete: (s: Subscription) => void;
+  isDeleting: boolean;
+}) {
+  const totalMonthlyCost = subscriptions
+    .filter((s) => s.is_active)
+    .reduce((sum, s) => sum + (s.monthly_cost ?? 0), 0);
+  return (
+    <>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b bg-muted/30">
+              {TABLE_HEADERS.map((h, i) => (
+                <th
+                  key={h}
+                  className={`px-4 py-3 font-medium text-muted-foreground ${i === 3 || i === 7 ? 'text-right' : 'text-left'}`}
+                >
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {subscriptions.length === 0 && (
+              <tr>
+                <td colSpan={8} className="text-center py-10 text-muted-foreground text-sm">
+                  No subscriptions yet. Add your first one.
+                </td>
+              </tr>
+            )}
+            {subscriptions.map((sub) => (
+              <SubRow
+                key={sub.id}
+                sub={sub}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                isDeleting={isDeleting}
+              />
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {subscriptions.length > 0 && (
+        <div className="flex items-center justify-between px-4 py-3 border-t bg-muted/20 text-sm">
+          <span className="text-muted-foreground">
+            {subscriptions.filter((s) => s.is_active).length} active of {subscriptions.length} total
+          </span>
+          <span className="font-semibold">
+            Total active: {formatCurrency(totalMonthlyCost, 'CAD')}/mo
+          </span>
+        </div>
+      )}
+    </>
+  );
+}
+
 export function SubscriptionTable({ onEdit, onAdd }: SubscriptionTableProps) {
   const queryClient = useQueryClient();
   const { data, isLoading, isError } = useQuery({
     queryKey: queryKeys.executive.subscriptions.lists(),
     queryFn: () => apiFetch<SubscriptionsResponse>('/api/executive/subscriptions'),
   });
-
   const deleteMutation = useMutation({
     mutationFn: (id: string) =>
       apiFetch(`/api/executive/subscriptions/${id}`, { method: 'DELETE' }),
@@ -151,20 +225,13 @@ export function SubscriptionTable({ onEdit, onAdd }: SubscriptionTableProps) {
     },
     onError: () => showToast.error('Failed to delete subscription'),
   });
-
   const [deleteTarget, setDeleteTarget] = useState<Subscription | null>(null);
-
   function confirmDelete() {
     if (deleteTarget) {
       deleteMutation.mutate(deleteTarget.id);
       setDeleteTarget(null);
     }
   }
-
-  const subscriptions = data?.data ?? [];
-  const totalMonthlyCost = subscriptions
-    .filter((s) => s.is_active)
-    .reduce((sum, s) => sum + (s.monthly_cost ?? 0), 0);
 
   return (
     <Card>
@@ -189,62 +256,12 @@ export function SubscriptionTable({ onEdit, onAdd }: SubscriptionTableProps) {
           </p>
         )}
         {!isLoading && !isError && (
-          <>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b bg-muted/30">
-                    {[
-                      'Name',
-                      'Category',
-                      'Vendor',
-                      'Monthly Cost',
-                      'Billing Cycle',
-                      'Renewal Date',
-                      'Status',
-                      'Actions',
-                    ].map((h, i) => (
-                      <th
-                        key={h}
-                        className={`px-4 py-3 font-medium text-muted-foreground ${i === 3 || i === 7 ? 'text-right' : 'text-left'}`}
-                      >
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {subscriptions.length === 0 && (
-                    <tr>
-                      <td colSpan={8} className="text-center py-10 text-muted-foreground text-sm">
-                        No subscriptions yet. Add your first one.
-                      </td>
-                    </tr>
-                  )}
-                  {subscriptions.map((sub) => (
-                    <SubRow
-                      key={sub.id}
-                      sub={sub}
-                      onEdit={onEdit}
-                      onDelete={setDeleteTarget}
-                      isDeleting={deleteMutation.isPending}
-                    />
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {subscriptions.length > 0 && (
-              <div className="flex items-center justify-between px-4 py-3 border-t bg-muted/20 text-sm">
-                <span className="text-muted-foreground">
-                  {subscriptions.filter((s) => s.is_active).length} active of {subscriptions.length}{' '}
-                  total
-                </span>
-                <span className="font-semibold">
-                  Total active: {formatCurrency(totalMonthlyCost, 'CAD')}/mo
-                </span>
-              </div>
-            )}
-          </>
+          <SubscriptionTableBody
+            subscriptions={data?.data ?? []}
+            onEdit={onEdit}
+            onDelete={setDeleteTarget}
+            isDeleting={deleteMutation.isPending}
+          />
         )}
       </CardContent>
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>

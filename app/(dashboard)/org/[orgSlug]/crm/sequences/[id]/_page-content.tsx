@@ -37,37 +37,60 @@ export default function SequenceDetailPage() {
   const [enrollLeadOpen, setEnrollLeadOpen] = useState(false);
   const [enrollLeadId, setEnrollLeadId] = useState('');
 
-  if (isLoading) return (
-    <div className="space-y-6">
-      <Skeleton className="h-8 w-64" />
-      <Skeleton className="h-24 w-full rounded-xl" />
-      <Skeleton className="h-48 w-full rounded-xl" />
-    </div>
-  );
-  if (!sequence) return (
-    <div className="text-center py-12">
-      <h2 className="text-2xl font-bold mb-2">Sequence not found</h2>
-      <p className="text-muted-foreground mb-4">This sequence may have been deleted or you don&apos;t have access.</p>
-      <Button onClick={() => orgPush('/crm/sequences')}><ArrowLeft className="h-4 w-4 mr-2" />Back to Sequences</Button>
-    </div>
-  );
+  if (isLoading)
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-24 w-full rounded-xl" />
+        <Skeleton className="h-48 w-full rounded-xl" />
+      </div>
+    );
+  if (!sequence)
+    return (
+      <div className="text-center py-12">
+        <h2 className="text-2xl font-bold mb-2">Sequence not found</h2>
+        <p className="text-muted-foreground mb-4">
+          This sequence may have been deleted or you don&apos;t have access.
+        </p>
+        <Button onClick={() => orgPush('/crm/sequences')}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Sequences
+        </Button>
+      </div>
+    );
 
   const leadNameMap = new Map((leadsData?.data ?? []).map((l) => [l.id, l.company_name]));
   const steps = sequence.sequence_steps || [];
   return (
     <SequenceContent
-      sequence={sequence} sequenceId={sequenceId}
-      enrollmentList={enrollments || []} steps={steps as SequenceContentProps['steps']}
-      addStepOpen={addStepOpen} setAddStepOpen={setAddStepOpen}
-      editingStep={editingStep} setEditingStep={setEditingStep}
-      enrollLeadOpen={enrollLeadOpen} setEnrollLeadOpen={setEnrollLeadOpen}
-      enrollLeadId={enrollLeadId} setEnrollLeadId={setEnrollLeadId}
+      sequence={sequence}
+      sequenceId={sequenceId}
+      enrollmentList={enrollments || []}
+      steps={steps as SequenceContentProps['steps']}
+      addStepOpen={addStepOpen}
+      setAddStepOpen={setAddStepOpen}
+      editingStep={editingStep}
+      setEditingStep={setEditingStep}
+      enrollLeadOpen={enrollLeadOpen}
+      setEnrollLeadOpen={setEnrollLeadOpen}
+      enrollLeadId={enrollLeadId}
+      setEnrollLeadId={setEnrollLeadId}
       orgPush={orgPush}
       resolveLeadName={(id) => leadNameMap.get(id) ?? id.slice(0, 8)}
       onUpdateActive={(checked) => updateSequence.mutate({ id: sequence.id, is_active: checked })}
       onProcessNow={() => processSequences.mutate()}
       onDeleteStep={(stepId) => deleteStep.mutate({ sequenceId, stepId })}
-      onEnroll={(id) => enrollInSequence.mutate({ sequenceId, lead_id: id }, { onSuccess: () => { setEnrollLeadOpen(false); setEnrollLeadId(''); } })}
+      onEnroll={(id) =>
+        enrollInSequence.mutate(
+          { sequenceId, lead_id: id },
+          {
+            onSuccess: () => {
+              setEnrollLeadOpen(false);
+              setEnrollLeadId('');
+            },
+          },
+        )
+      }
       updatePending={updateSequence.isPending}
       processPending={processSequences.isPending}
       enrollPending={enrollInSequence.isPending}

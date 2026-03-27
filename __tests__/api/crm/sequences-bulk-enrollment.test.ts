@@ -110,9 +110,7 @@ describe('POST /api/crm/sequences/enrollments', () => {
   it('returns 400 for non-UUID lead_ids', async () => {
     mockCreateUserClientSafe.mockResolvedValue({ client: { from: vi.fn() } as never, error: null });
 
-    const res = await POST(
-      makeRequest({ sequence_id: SEQUENCE_ID, lead_ids: ['not-a-uuid'] }),
-    );
+    const res = await POST(makeRequest({ sequence_id: SEQUENCE_ID, lead_ids: ['not-a-uuid'] }));
     expect(res.status).toBe(400);
   });
 
@@ -124,9 +122,7 @@ describe('POST /api/crm/sequences/enrollments', () => {
     });
     mockCreateUserClientSafe.mockResolvedValue({ client: { from } as never, error: null });
 
-    const res = await POST(
-      makeRequest({ sequence_id: SEQUENCE_ID, lead_ids: [LEAD_1] }),
-    );
+    const res = await POST(makeRequest({ sequence_id: SEQUENCE_ID, lead_ids: [LEAD_1] }));
     expect(res.status).toBe(404);
     const body = await res.json();
     expect(body.error).toMatch(/not found/i);
@@ -140,9 +136,7 @@ describe('POST /api/crm/sequences/enrollments', () => {
     });
     mockCreateUserClientSafe.mockResolvedValue({ client: { from } as never, error: null });
 
-    const res = await POST(
-      makeRequest({ sequence_id: SEQUENCE_ID, lead_ids: [LEAD_1, LEAD_2] }),
-    );
+    const res = await POST(makeRequest({ sequence_id: SEQUENCE_ID, lead_ids: [LEAD_1, LEAD_2] }));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.enrolled).toBe(2);
@@ -158,9 +152,7 @@ describe('POST /api/crm/sequences/enrollments', () => {
     });
     mockCreateUserClientSafe.mockResolvedValue({ client: { from } as never, error: null });
 
-    const res = await POST(
-      makeRequest({ sequence_id: SEQUENCE_ID, lead_ids: [LEAD_1, LEAD_2] }),
-    );
+    const res = await POST(makeRequest({ sequence_id: SEQUENCE_ID, lead_ids: [LEAD_1, LEAD_2] }));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.enrolled).toBe(1);
@@ -175,9 +167,7 @@ describe('POST /api/crm/sequences/enrollments', () => {
     });
     mockCreateUserClientSafe.mockResolvedValue({ client: { from } as never, error: null });
 
-    const res = await POST(
-      makeRequest({ sequence_id: SEQUENCE_ID, lead_ids: [LEAD_1, LEAD_2] }),
-    );
+    const res = await POST(makeRequest({ sequence_id: SEQUENCE_ID, lead_ids: [LEAD_1, LEAD_2] }));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.enrolled).toBe(0);
@@ -193,9 +183,7 @@ describe('POST /api/crm/sequences/enrollments', () => {
     });
     mockCreateUserClientSafe.mockResolvedValue({ client: { from } as never, error: null });
 
-    const res = await POST(
-      makeRequest({ sequence_id: SEQUENCE_ID, lead_ids: [LEAD_1] }),
-    );
+    const res = await POST(makeRequest({ sequence_id: SEQUENCE_ID, lead_ids: [LEAD_1] }));
     expect(res.status).toBe(500);
     const body = await res.json();
     expect(body.error).toBe('DB write error');

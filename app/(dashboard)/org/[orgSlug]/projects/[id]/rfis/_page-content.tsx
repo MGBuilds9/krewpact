@@ -54,11 +54,7 @@ function RFIAttachmentsDialog({ projectId, rfiId }: { projectId: string; rfiId: 
           <DialogTitle>RFI Attachments</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <AttachmentUpload
-            entityType="rfi"
-            projectId={projectId}
-            entityId={rfiId}
-          />
+          <AttachmentUpload entityType="rfi" projectId={projectId} entityId={rfiId} />
           <AttachmentList
             entityType="rfi"
             projectId={projectId}
@@ -72,7 +68,15 @@ function RFIAttachmentsDialog({ projectId, rfiId }: { projectId: string; rfiId: 
   );
 }
 
-function RFIRow({ rfi, onRespond, projectId }: { rfi: RFIItem; onRespond: (id: string) => void; projectId: string }) {
+function RFIRow({
+  rfi,
+  onRespond,
+  projectId,
+}: {
+  rfi: RFIItem;
+  onRespond: (id: string) => void;
+  projectId: string;
+}) {
   return (
     <TableRow>
       <TableCell className="font-mono font-medium">{rfi.rfi_number}</TableCell>
@@ -120,19 +124,36 @@ export default function RFIsPage() {
           <HelpCircle className="h-6 w-6 text-muted-foreground" />
           <div>
             <h1 className="text-2xl font-bold">RFIs</h1>
-            <p className="text-sm text-muted-foreground">{data?.total ?? 0} requests for information</p>
+            <p className="text-sm text-muted-foreground">
+              {data?.total ?? 0} requests for information
+            </p>
           </div>
         </div>
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />New RFI</Button></DialogTrigger>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              New RFI
+            </Button>
+          </DialogTrigger>
           <DialogContent className="max-w-lg">
-            <DialogHeader><DialogTitle>Create RFI</DialogTitle></DialogHeader>
-            <RFICreateForm projectId={projectId} onSuccess={() => setCreateOpen(false)} onCancel={() => setCreateOpen(false)} />
+            <DialogHeader>
+              <DialogTitle>Create RFI</DialogTitle>
+            </DialogHeader>
+            <RFICreateForm
+              projectId={projectId}
+              onSuccess={() => setCreateOpen(false)}
+              onCancel={() => setCreateOpen(false)}
+            />
           </DialogContent>
         </Dialog>
       </div>
       {isLoading ? (
-        <div className="space-y-2">{['r1','r2','r3','r4','r5'].map((k) => <Skeleton key={k} className="h-14 w-full" />)}</div>
+        <div className="space-y-2">
+          {['r1', 'r2', 'r3', 'r4', 'r5'].map((k) => (
+            <Skeleton key={k} className="h-14 w-full" />
+          ))}
+        </div>
       ) : rfis.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">
           <HelpCircle className="h-16 w-16 mx-auto mb-4 opacity-25" />
@@ -142,15 +163,38 @@ export default function RFIsPage() {
       ) : (
         <Table>
           <TableHeader>
-            <TableRow>{['Number','Title','Status','Due'].map((h) => <TableHead key={h}>{h}</TableHead>)}<TableHead className="text-right">Actions</TableHead></TableRow>
+            <TableRow>
+              {['Number', 'Title', 'Status', 'Due'].map((h) => (
+                <TableHead key={h}>{h}</TableHead>
+              ))}
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
           </TableHeader>
-          <TableBody>{rfis.map((rfi) => <RFIRow key={rfi.id} rfi={rfi} onRespond={setRespondRfiId} projectId={projectId} />)}</TableBody>
+          <TableBody>
+            {rfis.map((rfi) => (
+              <RFIRow key={rfi.id} rfi={rfi} onRespond={setRespondRfiId} projectId={projectId} />
+            ))}
+          </TableBody>
         </Table>
       )}
-      <Dialog open={!!respondRfiId} onOpenChange={(o) => { if (!o) setRespondRfiId(null); }}>
+      <Dialog
+        open={!!respondRfiId}
+        onOpenChange={(o) => {
+          if (!o) setRespondRfiId(null);
+        }}
+      >
         <DialogContent>
-          <DialogHeader><DialogTitle>Post Response</DialogTitle></DialogHeader>
-          {respondRfiId && <RFIResponseForm projectId={projectId} rfiId={respondRfiId} onSuccess={() => setRespondRfiId(null)} onCancel={() => setRespondRfiId(null)} />}
+          <DialogHeader>
+            <DialogTitle>Post Response</DialogTitle>
+          </DialogHeader>
+          {respondRfiId && (
+            <RFIResponseForm
+              projectId={projectId}
+              rfiId={respondRfiId}
+              onSuccess={() => setRespondRfiId(null)}
+              onCancel={() => setRespondRfiId(null)}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </div>

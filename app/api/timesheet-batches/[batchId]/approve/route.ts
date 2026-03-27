@@ -5,7 +5,13 @@ import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { timesheetBatchApprovalSchema } from '@/lib/validators/time-expense';
 
-const APPROVAL_ROLES = ['platform_admin', 'executive', 'operations_manager', 'accounting', 'payroll_admin'];
+const APPROVAL_ROLES = [
+  'platform_admin',
+  'executive',
+  'operations_manager',
+  'accounting',
+  'payroll_admin',
+];
 
 type RouteContext = { params: Promise<{ batchId: string }> };
 

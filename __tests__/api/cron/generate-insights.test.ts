@@ -11,10 +11,16 @@ vi.mock('@/lib/ai/agents/insight-engine', () => ({
   generateInsights: vi.fn(),
 }));
 vi.mock('@/lib/logger', () => ({
-  logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  logger: {
+    warn: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+    child: vi.fn().mockReturnThis(),
+  },
 }));
 
-import { POST } from '@/app/api/cron/generate-insights/route';
+import { GET as POST } from '@/app/api/cron/generate-insights/route';
 import { generateInsights } from '@/lib/ai/agents/insight-engine';
 import { verifyCronAuth } from '@/lib/api/cron-auth';
 import { logger } from '@/lib/logger';
@@ -27,7 +33,7 @@ const mockCreateServiceClient = vi.mocked(createServiceClient);
 const mockGenerateInsights = vi.mocked(generateInsights);
 
 function makeCronRequest() {
-  return makeRequest('/api/cron/generate-insights', { method: 'POST' });
+  return makeRequest('/api/cron/generate-insights', { method: 'GET' });
 }
 
 function mockOrgsClient(orgs: { id: string }[], error: unknown = null) {
@@ -54,7 +60,7 @@ describe('POST /api/cron/generate-insights', () => {
     const res = await POST(makeCronRequest());
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns success with no orgs', async () => {

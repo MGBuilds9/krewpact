@@ -32,6 +32,9 @@ import {
   leadUpdateSchema,
 } from '@/lib/validators/crm';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type FormProp = any;
+
 interface LeadFormProps {
   lead?: Lead;
   onSuccess?: (lead: Lead) => void;
@@ -69,6 +72,164 @@ function buildDefaultValues(lead?: Lead, divisionId?: string) {
   };
 }
 
+function LeadFormFields({
+  form,
+  isEdit,
+  accounts,
+  isPending,
+  onCancel,
+}: {
+  form: FormProp;
+  isEdit: boolean;
+  accounts: { id: string; account_name: string }[];
+  isPending: boolean;
+  onCancel?: () => void;
+}) {
+  return (
+    <>
+      <FormField
+        control={form.control}
+        name="company_name"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Company Name *</FormLabel>
+            <FormControl>
+              <Input placeholder="e.g. Tim Hortons, Rogers" {...field} value={field.value ?? ''} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="industry"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Industry</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value ?? ''}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select industry" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {INDUSTRIES.map((ind) => (
+                    <SelectItem key={ind} value={ind}>
+                      {ind}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="source_channel"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Source</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value ?? ''}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="How did they find us?" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {SOURCE_CHANNELS.map((src) => (
+                    <SelectItem key={src} value={src}>
+                      {formatStatus(src)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+      {!isEdit && (
+        <FormField
+          control={form.control}
+          name="account_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Linked Account</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value ?? ''}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Link to existing account (optional)" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {accounts.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {a.account_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="city"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>City</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g. Mississauga" {...field} value={field.value ?? ''} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="province"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Province</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value ?? 'ON'}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Province" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {PROVINCES.map((prov) => (
+                    <SelectItem key={prov} value={prov}>
+                      {prov}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+      <div className="flex gap-2 justify-end pt-2">
+        {onCancel && (
+          <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
+            Cancel
+          </Button>
+        )}
+        <Button type="submit" disabled={isPending}>
+          {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+          {isEdit ? 'Save Changes' : 'Create Lead'}
+        </Button>
+      </div>
+    </>
+  );
+}
+
 export function LeadForm({ lead, onSuccess, onCancel }: LeadFormProps) {
   const isEdit = !!lead;
   const createLead = useCreateLead();
@@ -76,7 +237,6 @@ export function LeadForm({ lead, onSuccess, onCancel }: LeadFormProps) {
   const { activeDivision } = useDivision();
   const isPending = createLead.isPending || updateLead.isPending;
   const { data: accountsResponse } = useAccounts({ limit: 100 });
-
   const form = useForm<LeadCreate | LeadUpdate>({
     resolver: zodResolver(isEdit ? leadUpdateSchema : leadCreateSchema),
     defaultValues: buildDefaultValues(lead, activeDivision?.id),
@@ -95,149 +255,13 @@ export function LeadForm({ lead, onSuccess, onCancel }: LeadFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="company_name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Company Name *</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="e.g. Tim Hortons, Rogers"
-                  {...field}
-                  value={field.value ?? ''}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+        <LeadFormFields
+          form={form}
+          isEdit={isEdit}
+          accounts={accountsResponse?.data ?? []}
+          isPending={isPending}
+          onCancel={onCancel}
         />
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="industry"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Industry</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value ?? ''}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select industry" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {INDUSTRIES.map((ind) => (
-                      <SelectItem key={ind} value={ind}>
-                        {ind}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="source_channel"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Source</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value ?? ''}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="How did they find us?" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {SOURCE_CHANNELS.map((src) => (
-                      <SelectItem key={src} value={src}>
-                        {formatStatus(src)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        {!isEdit && (
-          <FormField
-            control={form.control}
-            name="account_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Linked Account</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value ?? ''}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Link to existing account (optional)" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {(accountsResponse?.data ?? []).map((account) => (
-                      <SelectItem key={account.id} value={account.id}>
-                        {account.account_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="city"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>City</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g. Mississauga" {...field} value={field.value ?? ''} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="province"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Province</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value ?? 'ON'}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Province" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {PROVINCES.map((prov) => (
-                      <SelectItem key={prov} value={prov}>
-                        {prov}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        <div className="flex gap-2 justify-end pt-2">
-          {onCancel && (
-            <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
-              Cancel
-            </Button>
-          )}
-          <Button type="submit" disabled={isPending}>
-            {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            {isEdit ? 'Save Changes' : 'Create Lead'}
-          </Button>
-        </div>
       </form>
     </Form>
   );

@@ -194,7 +194,9 @@ describe('POST /api/timesheet-batches/[batchId]/approve', () => {
 
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
-    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
+    mockRequireRole.mockResolvedValue(
+      NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
+    );
     const res = await POST_APPROVE(makeJsonRequest('/api/x/approve', {}), batchCtx());
     expect(res.status).toBe(401);
   });

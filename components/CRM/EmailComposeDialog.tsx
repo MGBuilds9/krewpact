@@ -29,6 +29,56 @@ export interface EmailComposeDialogProps {
   accountId?: string;
 }
 
+function EmailComposeBody({
+  to,
+  setTo,
+  subject,
+  setSubject,
+  body,
+  setBody,
+}: {
+  to: string;
+  setTo: (v: string) => void;
+  subject: string;
+  setSubject: (v: string) => void;
+  body: string;
+  setBody: (v: string) => void;
+}) {
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="email-to">To</Label>
+        <Input
+          id="email-to"
+          type="email"
+          value={to}
+          onChange={(e) => setTo(e.target.value)}
+          placeholder="recipient@example.com"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="email-subject">Subject</Label>
+        <Input
+          id="email-subject"
+          value={subject}
+          onChange={(e) => setSubject(e.target.value)}
+          placeholder="Email subject"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="email-body">Body</Label>
+        <Textarea
+          id="email-body"
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          placeholder="Write your message..."
+          rows={6}
+        />
+      </div>
+    </div>
+  );
+}
+
 export function EmailComposeDialog({
   open,
   onOpenChange,
@@ -72,37 +122,14 @@ export function EmailComposeDialog({
             Send an email from the CRM. Activity will be auto-logged.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email-to">To</Label>
-            <Input
-              id="email-to"
-              type="email"
-              value={to}
-              onChange={(e) => setTo(e.target.value)}
-              placeholder="recipient@example.com"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email-subject">Subject</Label>
-            <Input
-              id="email-subject"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              placeholder="Email subject"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email-body">Body</Label>
-            <Textarea
-              id="email-body"
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              placeholder="Write your message..."
-              rows={6}
-            />
-          </div>
-        </div>
+        <EmailComposeBody
+          to={to}
+          setTo={setTo}
+          subject={subject}
+          setSubject={setSubject}
+          body={body}
+          setBody={setBody}
+        />
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel

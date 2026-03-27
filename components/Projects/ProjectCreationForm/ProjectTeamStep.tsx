@@ -28,6 +28,71 @@ interface ProjectTeamStepProps {
   ) => void;
 }
 
+function MemberRow({
+  member,
+  users,
+  onRemove,
+  onUpdate,
+}: {
+  member: ProjectMember;
+  users: ReturnType<typeof useUsers>['data'];
+  onRemove: () => void;
+  onUpdate: (field: keyof ProjectMember, value: string | number | null) => void;
+}) {
+  return (
+    <Card className="p-4">
+      <div className="flex items-center gap-4">
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div>
+            <Label>Team Member</Label>
+            <Select value={member.user_id} onValueChange={(v) => onUpdate('user_id', v)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select member" />
+              </SelectTrigger>
+              <SelectContent>
+                {users
+                  ?.filter((u) => u.status === 'active')
+                  .map((u) => (
+                    <SelectItem key={u.id} value={u.id}>
+                      {u.first_name} {u.last_name}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Role</Label>
+            <Select value={member.member_role} onValueChange={(v) => onUpdate('member_role', v)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="worker">Worker</SelectItem>
+                <SelectItem value="supervisor">Supervisor</SelectItem>
+                <SelectItem value="manager">Manager</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Allocation %</Label>
+            <Input
+              type="number"
+              placeholder="0"
+              value={member.allocation_pct ?? ''}
+              onChange={(e) =>
+                onUpdate('allocation_pct', e.target.value ? parseFloat(e.target.value) : null)
+              }
+            />
+          </div>
+        </div>
+        <Button type="button" variant="ghost" size="sm" onClick={onRemove}>
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
 export function ProjectTeamStep({
   projectMembers,
   addProjectMember,
@@ -35,7 +100,6 @@ export function ProjectTeamStep({
   updateProjectMember,
 }: ProjectTeamStepProps) {
   const { data: users } = useUsers();
-
   return (
     <div className="space-y-6">
       <div>
@@ -51,71 +115,13 @@ export function ProjectTeamStep({
         </div>
         <div className="space-y-3">
           {projectMembers.map((member, idx) => (
-            <Card key={member.user_id || `member-${idx}`} className="p-4">
-              <div className="flex items-center gap-4">
-                <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <div>
-                    <Label>Team Member</Label>
-                    <Select
-                      value={member.user_id}
-                      onValueChange={(value) => updateProjectMember(idx, 'user_id', value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select member" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {users
-                          ?.filter((user) => user.status === 'active')
-                          .map((user) => (
-                            <SelectItem key={user.id} value={user.id}>
-                              {user.first_name} {user.last_name}
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Role</Label>
-                    <Select
-                      value={member.member_role}
-                      onValueChange={(value) => updateProjectMember(idx, 'member_role', value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="worker">Worker</SelectItem>
-                        <SelectItem value="supervisor">Supervisor</SelectItem>
-                        <SelectItem value="manager">Manager</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Allocation %</Label>
-                    <Input
-                      type="number"
-                      placeholder="0"
-                      value={member.allocation_pct ?? ''}
-                      onChange={(e) =>
-                        updateProjectMember(
-                          idx,
-                          'allocation_pct',
-                          e.target.value ? parseFloat(e.target.value) : null,
-                        )
-                      }
-                    />
-                  </div>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => removeProjectMember(idx)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </Card>
+            <MemberRow
+              key={member.user_id || `member-${idx}`}
+              member={member}
+              users={users}
+              onRemove={() => removeProjectMember(idx)}
+              onUpdate={(field, value) => updateProjectMember(idx, field, value)}
+            />
           ))}
         </div>
       </div>

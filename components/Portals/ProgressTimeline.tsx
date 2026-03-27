@@ -17,13 +17,7 @@ function ProgressBar({ pct }: { pct: number }) {
   );
 }
 
-function MilestoneItem({
-  milestone,
-  tasks,
-}: {
-  milestone: PortalMilestone;
-  tasks: PortalTask[];
-}) {
+function MilestoneItem({ milestone, tasks }: { milestone: PortalMilestone; tasks: PortalTask[] }) {
   const milestoneTasks = tasks.filter((t) => t.milestone_id === milestone.id);
   const isComplete = milestone.status === 'completed';
   const fmt = (d: string | null) => (d ? new Date(d).toLocaleDateString('en-CA') : '—');
@@ -32,9 +26,7 @@ function MilestoneItem({
     <div className="relative pl-8">
       <div
         className={`absolute left-0 top-1 w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-          isComplete
-            ? 'bg-green-500 border-green-500'
-            : 'bg-white border-gray-300'
+          isComplete ? 'bg-green-500 border-green-500' : 'bg-white border-gray-300'
         }`}
         aria-hidden="true"
       >
@@ -51,11 +43,15 @@ function MilestoneItem({
       <div className="pb-6">
         <div className="flex items-start justify-between gap-2 flex-wrap">
           <div>
-            <p className={`text-sm font-semibold ${isComplete ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
+            <p
+              className={`text-sm font-semibold ${isComplete ? 'text-gray-500 line-through' : 'text-gray-900'}`}
+            >
               {milestone.name}
             </p>
             <p className="text-xs text-gray-400 mt-0.5">
-              {isComplete ? `Completed ${fmt(milestone.completed_at)}` : `Due ${fmt(milestone.due_date)}`}
+              {isComplete
+                ? `Completed ${fmt(milestone.completed_at)}`
+                : `Due ${fmt(milestone.due_date)}`}
             </p>
           </div>
           <span

@@ -19,6 +19,9 @@ import { Textarea } from '@/components/ui/textarea';
 import type { DailyLog } from '@/hooks/useProjectExtended';
 import { useCreateDailyLog, useUpdateDailyLog } from '@/hooks/useProjectExtended';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type FormProp = any;
+
 const formSchema = z.object({
   log_date: z.string().min(1, 'Date is required'),
   crew_count: z.string().optional(),
@@ -67,23 +70,148 @@ function parseCrewCount(raw: string | undefined): number | undefined {
   return isNaN(n) ? undefined : n;
 }
 
+function DailyLogFormFields({
+  form,
+  isPending,
+  isEditing,
+  onCancel,
+}: {
+  form: FormProp;
+  isPending: boolean;
+  isEditing: boolean;
+  onCancel?: () => void;
+}) {
+  return (
+    <>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="log_date"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Date *</FormLabel>
+              <FormControl>
+                <Input type="date" {...field} disabled={isEditing} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="crew_count"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Crew Count</FormLabel>
+              <FormControl>
+                <Input type="number" min="0" placeholder="0" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="weather_condition"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Weather Condition</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g. sunny, rainy, cloudy" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="weather_temp"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Temperature (°C)</FormLabel>
+              <FormControl>
+                <Input type="number" step="0.1" placeholder="e.g. 12" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+      <FormField
+        control={form.control}
+        name="work_summary"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Work Summary</FormLabel>
+            <FormControl>
+              <Textarea placeholder="Describe work completed today..." rows={3} {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="delays"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Delays</FormLabel>
+            <FormControl>
+              <Textarea placeholder="Any delays or issues encountered..." rows={2} {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="safety_notes"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Safety Notes</FormLabel>
+            <FormControl>
+              <Textarea
+                placeholder="Safety observations, incidents, toolbox talks..."
+                rows={2}
+                {...field}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <div className="flex gap-2 justify-end pt-2">
+        {onCancel && (
+          <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
+            Cancel
+          </Button>
+        )}
+        <Button type="submit" disabled={isPending}>
+          {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+          {isEditing ? 'Update Log' : 'Create Log'}
+        </Button>
+      </div>
+    </>
+  );
+}
+
 export function DailyLogForm({ projectId, initialData, onSuccess, onCancel }: DailyLogFormProps) {
   const createLog = useCreateDailyLog(projectId);
   const updateLog = useUpdateDailyLog(projectId);
   const isEditing = !!initialData;
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: buildDefaultValues(initialData),
+  });
+  const isPending = createLog.isPending || updateLog.isPending;
   const cb = {
     onSuccess: () => {
       form.reset();
       onSuccess?.();
     },
   };
-
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: buildDefaultValues(initialData),
-  });
-
-  const isPending = createLog.isPending || updateLog.isPending;
 
   function onSubmit(values: FormValues) {
     const crewCount = parseCrewCount(values.crew_count);
@@ -122,116 +250,12 @@ export function DailyLogForm({ projectId, initialData, onSuccess, onCancel }: Da
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="log_date"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Date *</FormLabel>
-                <FormControl>
-                  <Input type="date" {...field} disabled={isEditing} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="crew_count"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Crew Count</FormLabel>
-                <FormControl>
-                  <Input type="number" min="0" placeholder="0" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="weather_condition"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Weather Condition</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g. sunny, rainy, cloudy" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="weather_temp"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Temperature (°C)</FormLabel>
-                <FormControl>
-                  <Input type="number" step="0.1" placeholder="e.g. 12" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        <FormField
-          control={form.control}
-          name="work_summary"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Work Summary</FormLabel>
-              <FormControl>
-                <Textarea placeholder="Describe work completed today..." rows={3} {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+        <DailyLogFormFields
+          form={form}
+          isPending={isPending}
+          isEditing={isEditing}
+          onCancel={onCancel}
         />
-        <FormField
-          control={form.control}
-          name="delays"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Delays</FormLabel>
-              <FormControl>
-                <Textarea placeholder="Any delays or issues encountered..." rows={2} {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="safety_notes"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Safety Notes</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Safety observations, incidents, toolbox talks..."
-                  rows={2}
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="flex gap-2 justify-end pt-2">
-          {onCancel && (
-            <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
-              Cancel
-            </Button>
-          )}
-          <Button type="submit" disabled={isPending}>
-            {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            {isEditing ? 'Update Log' : 'Create Log'}
-          </Button>
-        </div>
       </form>
     </Form>
   );

@@ -32,6 +32,9 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { useCreateActivity } from '@/hooks/useCRM';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type FormProp = any;
+
 const quickFollowUpSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200),
   activity_type: z.enum(['task', 'call', 'meeting', 'email']),
@@ -70,6 +73,107 @@ function getDefaultDueDate(): string {
   return tomorrow.toISOString().slice(0, 16);
 }
 
+function FollowUpFormFields({
+  form,
+  setPresetDue,
+  isPending,
+  onCancel,
+}: {
+  form: FormProp;
+  setPresetDue: (days: number) => void;
+  isPending: boolean;
+  onCancel: () => void;
+}) {
+  return (
+    <>
+      <FormField
+        control={form.control}
+        name="title"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>What needs to happen? *</FormLabel>
+            <FormControl>
+              <Input placeholder="e.g. Call to discuss proposal" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="activity_type"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Type</FormLabel>
+            <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem value="task">Task</SelectItem>
+                <SelectItem value="call">Call</SelectItem>
+                <SelectItem value="meeting">Meeting</SelectItem>
+                <SelectItem value="email">Email</SelectItem>
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="due_at"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>When? *</FormLabel>
+            <div className="flex gap-1 mb-2">
+              {QUICK_PRESETS.map((preset) => (
+                <Button
+                  key={preset.days}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="text-xs h-7"
+                  onClick={() => setPresetDue(preset.days)}
+                >
+                  {preset.label}
+                </Button>
+              ))}
+            </div>
+            <FormControl>
+              <Input type="datetime-local" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="details"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Notes</FormLabel>
+            <FormControl>
+              <Textarea placeholder="Any additional context..." rows={2} {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <div className="flex justify-end gap-2 pt-2">
+        <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={isPending}>
+          {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Schedule
+        </Button>
+      </div>
+    </>
+  );
+}
+
 export function QuickFollowUpDialog({
   open,
   onOpenChange,
@@ -79,7 +183,6 @@ export function QuickFollowUpDialog({
   defaultTitle,
 }: QuickFollowUpDialogProps) {
   const createActivity = useCreateActivity();
-
   const form = useForm<FormValues>({
     resolver: zodResolver(quickFollowUpSchema),
     defaultValues: {
@@ -125,96 +228,12 @@ export function QuickFollowUpDialog({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>What needs to happen? *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g. Call to discuss proposal" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+            <FollowUpFormFields
+              form={form}
+              setPresetDue={setPresetDue}
+              isPending={createActivity.isPending}
+              onCancel={() => onOpenChange(false)}
             />
-            <FormField
-              control={form.control}
-              name="activity_type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Type</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="task">Task</SelectItem>
-                      <SelectItem value="call">Call</SelectItem>
-                      <SelectItem value="meeting">Meeting</SelectItem>
-                      <SelectItem value="email">Email</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="due_at"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>When? *</FormLabel>
-                  <div className="flex gap-1 mb-2">
-                    {QUICK_PRESETS.map((preset) => (
-                      <Button
-                        key={preset.days}
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="text-xs h-7"
-                        onClick={() => setPresetDue(preset.days)}
-                      >
-                        {preset.label}
-                      </Button>
-                    ))}
-                  </div>
-                  <FormControl>
-                    <Input type="datetime-local" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="details"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Notes</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Any additional context..." rows={2} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="flex justify-end gap-2 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={createActivity.isPending}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={createActivity.isPending}>
-                {createActivity.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Schedule
-              </Button>
-            </div>
           </form>
         </Form>
       </DialogContent>

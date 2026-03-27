@@ -30,9 +30,14 @@ export async function submitForApproval(
     .eq('id', coId)
     .single();
 
-  if (fetchError || !co) return { success: false, error: 'Change order not found', code: 'NOT_FOUND' };
+  if (fetchError || !co)
+    return { success: false, error: 'Change order not found', code: 'NOT_FOUND' };
   if (co.status !== 'draft') {
-    return { success: false, error: `Cannot submit CO in status: ${co.status}`, code: 'INVALID_STATE' };
+    return {
+      success: false,
+      error: `Cannot submit CO in status: ${co.status}`,
+      code: 'INVALID_STATE',
+    };
   }
 
   const now = new Date().toISOString();
@@ -74,9 +79,14 @@ export async function approveChangeOrder(
     .eq('id', coId)
     .single();
 
-  if (fetchError || !co) return { success: false, error: 'Change order not found', code: 'NOT_FOUND' };
+  if (fetchError || !co)
+    return { success: false, error: 'Change order not found', code: 'NOT_FOUND' };
   if (co.status !== 'submitted' && co.status !== 'client_review') {
-    return { success: false, error: `Cannot approve CO in status: ${co.status}`, code: 'INVALID_STATE' };
+    return {
+      success: false,
+      error: `Cannot approve CO in status: ${co.status}`,
+      code: 'INVALID_STATE',
+    };
   }
 
   const now = new Date().toISOString();
@@ -120,10 +130,15 @@ export async function rejectChangeOrder(
     .eq('id', coId)
     .single();
 
-  if (fetchError || !co) return { success: false, error: 'Change order not found', code: 'NOT_FOUND' };
+  if (fetchError || !co)
+    return { success: false, error: 'Change order not found', code: 'NOT_FOUND' };
   const rejectableStatuses = ['submitted', 'client_review'];
   if (!rejectableStatuses.includes(co.status as string)) {
-    return { success: false, error: `Cannot reject CO in status: ${co.status}`, code: 'INVALID_STATE' };
+    return {
+      success: false,
+      error: `Cannot reject CO in status: ${co.status}`,
+      code: 'INVALID_STATE',
+    };
   }
 
   const now = new Date().toISOString();
@@ -161,9 +176,14 @@ export async function submitToClient(coId: string): Promise<WorkflowResult> {
     .eq('id', coId)
     .single();
 
-  if (fetchError || !co) return { success: false, error: 'Change order not found', code: 'NOT_FOUND' };
+  if (fetchError || !co)
+    return { success: false, error: 'Change order not found', code: 'NOT_FOUND' };
   if (co.status !== 'submitted') {
-    return { success: false, error: `CO must be in submitted state to send to client`, code: 'INVALID_STATE' };
+    return {
+      success: false,
+      error: `CO must be in submitted state to send to client`,
+      code: 'INVALID_STATE',
+    };
   }
 
   const now = new Date().toISOString();
@@ -228,7 +248,10 @@ export async function recalculateContractValue(projectId: string): Promise<void>
     .eq('id', projectId);
 
   if (updateError) {
-    logger.error('recalculateContractValue: update failed', { projectId, error: updateError.message });
+    logger.error('recalculateContractValue: update failed', {
+      projectId,
+      error: updateError.message,
+    });
   } else {
     logger.info('recalculateContractValue: updated', { projectId, contractValue });
   }

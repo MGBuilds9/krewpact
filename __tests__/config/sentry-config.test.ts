@@ -4,6 +4,8 @@ const mockInit = vi.fn();
 
 vi.mock('@sentry/nextjs', () => ({
   init: (...args: unknown[]) => mockInit(...args),
+  replayIntegration: vi.fn(() => 'replay-integration'),
+  browserTracingIntegration: vi.fn(() => 'browser-tracing-integration'),
   captureException: vi.fn(),
   captureMessage: vi.fn(),
 }));
@@ -31,9 +33,10 @@ describe('Sentry configuration', () => {
     );
   });
 
-  it('inits Sentry server when SENTRY_DSN is set', async () => {
+  it('inits Sentry server via instrumentation when SENTRY_DSN is set', async () => {
     process.env.SENTRY_DSN = 'https://test@sentry.io/456';
-    await import('@/sentry.server.config');
+    const { register } = await import('@/instrumentation');
+    await register();
     expect(mockInit).toHaveBeenCalledWith(
       expect.objectContaining({
         dsn: 'https://test@sentry.io/456',

@@ -24,65 +24,19 @@ interface ContactPreferencesCardProps {
   contactId: string;
 }
 
-export function ContactPreferencesCard({ contactId }: ContactPreferencesCardProps) {
-  const [prefs, setPrefs] = useState<CommunicationPrefs>({});
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function fetchPrefs() {
-      try {
-        const res = await fetch(`/api/crm/contacts/${contactId}/preferences`);
-        if (!res.ok) throw new Error('Failed to load preferences');
-        const data = await res.json();
-        setPrefs(data.communication_prefs ?? {});
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load preferences');
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchPrefs();
-  }, [contactId]);
-
-  const updatePrefs = useCallback(
-    async (update: Partial<CommunicationPrefs>) => {
-      setSaving(true);
-      setError(null);
-      const newPrefs = { ...prefs, ...update };
-      setPrefs(newPrefs);
-      try {
-        const res = await fetch(`/api/crm/contacts/${contactId}/preferences`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(update),
-        });
-        if (!res.ok) throw new Error('Failed to save preferences');
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to save');
-        setPrefs(prefs);
-      } finally {
-        setSaving(false);
-      }
-    },
-    [contactId, prefs],
-  );
-
-  if (loading)
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Communication Preferences</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">Loading...</p>
-        </CardContent>
-      </Card>
-    );
-
-  const disabled = !!prefs.do_not_contact;
-
+function PreferencesCardContent({
+  prefs,
+  saving,
+  error,
+  disabled,
+  updatePrefs,
+}: {
+  prefs: CommunicationPrefs;
+  saving: boolean;
+  error: string | null;
+  disabled: boolean;
+  updatePrefs: (u: Partial<CommunicationPrefs>) => void;
+}) {
   return (
     <Card>
       <CardHeader>
@@ -152,5 +106,73 @@ export function ContactPreferencesCard({ contactId }: ContactPreferencesCardProp
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+export function ContactPreferencesCard({ contactId }: ContactPreferencesCardProps) {
+  const [prefs, setPrefs] = useState<CommunicationPrefs>({});
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchPrefs() {
+      try {
+        const res = await fetch(`/api/crm/contacts/${contactId}/preferences`);
+        if (!res.ok) throw new Error('Failed to load preferences');
+        const data = await res.json();
+        setPrefs(data.communication_prefs ?? {});
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load preferences');
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchPrefs();
+  }, [contactId]);
+
+  const updatePrefs = useCallback(
+    async (update: Partial<CommunicationPrefs>) => {
+      setSaving(true);
+      setError(null);
+      const newPrefs = { ...prefs, ...update };
+      setPrefs(newPrefs);
+      try {
+        const res = await fetch(`/api/crm/contacts/${contactId}/preferences`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(update),
+        });
+        if (!res.ok) throw new Error('Failed to save preferences');
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to save');
+        setPrefs(prefs);
+      } finally {
+        setSaving(false);
+      }
+    },
+    [contactId, prefs],
+  );
+
+  if (loading)
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Communication Preferences</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">Loading...</p>
+        </CardContent>
+      </Card>
+    );
+
+  return (
+    <PreferencesCardContent
+      prefs={prefs}
+      saving={saving}
+      error={error}
+      disabled={!!prefs.do_not_contact}
+      updatePrefs={updatePrefs}
+    />
   );
 }

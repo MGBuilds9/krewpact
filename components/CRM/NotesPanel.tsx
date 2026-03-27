@@ -32,32 +32,95 @@ interface NoteItemProps {
   onDelete: (id: string) => void;
 }
 
-function NoteEditForm({ noteId, editContent, onEditContentChange, onSaveEdit, onCancelEdit }: {
-  noteId: string; editContent: string; onEditContentChange: (v: string) => void;
-  onSaveEdit: (id: string) => void; onCancelEdit: () => void;
+function NoteEditForm({
+  noteId,
+  editContent,
+  onEditContentChange,
+  onSaveEdit,
+  onCancelEdit,
+}: {
+  noteId: string;
+  editContent: string;
+  onEditContentChange: (v: string) => void;
+  onSaveEdit: (id: string) => void;
+  onCancelEdit: () => void;
 }) {
   return (
     <div className="space-y-2">
-      <Textarea value={editContent} onChange={(e) => onEditContentChange(e.target.value)} className="text-sm min-h-[80px]" autoFocus />
+      <Textarea
+        value={editContent}
+        onChange={(e) => onEditContentChange(e.target.value)}
+        className="text-sm min-h-[80px]"
+        autoFocus
+      />
       <div className="flex gap-1.5">
-        <Button size="sm" className="h-7 text-xs" onClick={() => onSaveEdit(noteId)} disabled={!editContent.trim()}>Save</Button>
-        <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={onCancelEdit}>Cancel</Button>
+        <Button
+          size="sm"
+          className="h-7 text-xs"
+          onClick={() => onSaveEdit(noteId)}
+          disabled={!editContent.trim()}
+        >
+          Save
+        </Button>
+        <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={onCancelEdit}>
+          Cancel
+        </Button>
       </div>
     </div>
   );
 }
 
-function NoteActions({ note, onPin, onStartEdit, onDelete }: { note: Note; onPin: (n: Note) => void; onStartEdit: (n: Note) => void; onDelete: (id: string) => void; }) {
+function NoteActions({
+  note,
+  onPin,
+  onStartEdit,
+  onDelete,
+}: {
+  note: Note;
+  onPin: (n: Note) => void;
+  onStartEdit: (n: Note) => void;
+  onDelete: (id: string) => void;
+}) {
   return (
     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-      <button onClick={() => onPin(note)} className={`p-1 rounded hover:bg-muted transition-colors ${note.is_pinned ? 'text-amber-500' : 'text-muted-foreground'}`} title={note.is_pinned ? 'Unpin' : 'Pin'}><Pin className="h-3.5 w-3.5" /></button>
-      <button onClick={() => onStartEdit(note)} className="p-1 rounded hover:bg-muted text-muted-foreground transition-colors" title="Edit"><Pencil className="h-3.5 w-3.5" /></button>
-      <button onClick={() => onDelete(note.id)} className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-destructive transition-colors" title="Delete"><Trash2 className="h-3.5 w-3.5" /></button>
+      <button
+        onClick={() => onPin(note)}
+        className={`p-1 rounded hover:bg-muted transition-colors ${note.is_pinned ? 'text-amber-500' : 'text-muted-foreground'}`}
+        title={note.is_pinned ? 'Unpin' : 'Pin'}
+      >
+        <Pin className="h-3.5 w-3.5" />
+      </button>
+      <button
+        onClick={() => onStartEdit(note)}
+        className="p-1 rounded hover:bg-muted text-muted-foreground transition-colors"
+        title="Edit"
+      >
+        <Pencil className="h-3.5 w-3.5" />
+      </button>
+      <button
+        onClick={() => onDelete(note.id)}
+        className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-destructive transition-colors"
+        title="Delete"
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+      </button>
     </div>
   );
 }
 
-function NoteItem({ note, isEditing, expanded, editContent, onEditContentChange, onSaveEdit, onCancelEdit, onStartEdit, onToggleExpand, onPin, onDelete }: NoteItemProps) {
+function NoteItem({
+  note,
+  isEditing,
+  expanded,
+  editContent,
+  onEditContentChange,
+  onSaveEdit,
+  onCancelEdit,
+  onStartEdit,
+  onToggleExpand,
+  onPin,
+  onDelete,
+}: NoteItemProps) {
   return (
     <div className="px-4 py-3 group">
       <div className="flex items-start justify-between gap-2">
@@ -69,20 +132,37 @@ function NoteItem({ note, isEditing, expanded, editContent, onEditContentChange,
             </div>
           )}
           {isEditing ? (
-            <NoteEditForm noteId={note.id} editContent={editContent} onEditContentChange={onEditContentChange} onSaveEdit={onSaveEdit} onCancelEdit={onCancelEdit} />
+            <NoteEditForm
+              noteId={note.id}
+              editContent={editContent}
+              onEditContentChange={onEditContentChange}
+              onSaveEdit={onSaveEdit}
+              onCancelEdit={onCancelEdit}
+            />
           ) : (
             <>
-              <p className={`text-sm whitespace-pre-wrap break-words ${!expanded ? 'line-clamp-3' : ''}`}>{note.content}</p>
+              <p
+                className={`text-sm whitespace-pre-wrap break-words ${!expanded ? 'line-clamp-3' : ''}`}
+              >
+                {note.content}
+              </p>
               {note.content.length > 160 && (
-                <button onClick={() => onToggleExpand(note.id)} className="text-xs text-muted-foreground hover:text-foreground mt-0.5">
+                <button
+                  onClick={() => onToggleExpand(note.id)}
+                  className="text-xs text-muted-foreground hover:text-foreground mt-0.5"
+                >
                   {expanded ? 'Show less' : 'Show more'}
                 </button>
               )}
-              <p className="text-xs text-muted-foreground mt-1">{new Date(note.created_at).toLocaleDateString()}</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {new Date(note.created_at).toLocaleDateString()}
+              </p>
             </>
           )}
         </div>
-        {!isEditing && <NoteActions note={note} onPin={onPin} onStartEdit={onStartEdit} onDelete={onDelete} />}
+        {!isEditing && (
+          <NoteActions note={note} onPin={onPin} onStartEdit={onStartEdit} onDelete={onDelete} />
+        )}
       </div>
     </div>
   );
@@ -131,7 +211,10 @@ function useNotesState(entityType: string, entityId: string) {
     try {
       const res = await fetch(`/api/crm/notes?entity_type=${entityType}&entity_id=${entityId}`);
       setNotes((await res.json()).data ?? []);
-    } catch {} finally { setLoading(false); }
+    } catch {
+    } finally {
+      setLoading(false);
+    }
   }, [entityType, entityId]);
 
   useEffect(() => {
@@ -170,7 +253,12 @@ function useNotesState(entityType: string, entityId: string) {
     } catch {}
   };
 
-  const deleteNote = async (id: string) => { try { await fetch(`/api/crm/notes/${id}`, { method: 'DELETE' }); setNotes((prev) => prev.filter((n) => n.id !== id)); } catch {} };
+  const deleteNote = async (id: string) => {
+    try {
+      await fetch(`/api/crm/notes/${id}`, { method: 'DELETE' });
+      setNotes((prev) => prev.filter((n) => n.id !== id));
+    } catch {}
+  };
 
   const togglePin = async (note: Note) => {
     try {
@@ -187,7 +275,11 @@ function useNotesState(entityType: string, entityId: string) {
   const toggleExpand = (id: string) => {
     setExpandedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) { next.delete(id); } else { next.add(id); }
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
       return next;
     });
   };
@@ -212,23 +304,57 @@ export function NotesPanel({ entityType, entityId }: NotesPanelProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [addingNote, setAddingNote] = useState(false);
   const [newContent, setNewContent] = useState('');
-  const { notes, loading, editingId, setEditingId, editContent, setEditContent, expandedIds, addNote, saveEdit, deleteNote, togglePin, toggleExpand } = useNotesState(entityType, entityId);
+  const {
+    notes,
+    loading,
+    editingId,
+    setEditingId,
+    editContent,
+    setEditContent,
+    expandedIds,
+    addNote,
+    saveEdit,
+    deleteNote,
+    togglePin,
+    toggleExpand,
+  } = useNotesState(entityType, entityId);
 
   const sorted = [...notes.filter((n) => n.is_pinned), ...notes.filter((n) => !n.is_pinned)];
-  const handleSaveNote = () => addNote(newContent, () => { setAddingNote(false); setNewContent(''); });
-  const handleCancelNote = () => { setAddingNote(false); setNewContent(''); };
-  const handleStartEdit = (n: Note) => { setEditingId(n.id); setEditContent(n.content); };
+  const handleSaveNote = () =>
+    addNote(newContent, () => {
+      setAddingNote(false);
+      setNewContent('');
+    });
+  const handleCancelNote = () => {
+    setAddingNote(false);
+    setNewContent('');
+  };
+  const handleStartEdit = (n: Note) => {
+    setEditingId(n.id);
+    setEditContent(n.content);
+  };
 
   return (
     <div className="border rounded-lg overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-2.5 bg-muted/50 cursor-pointer select-none" onClick={() => setCollapsed((c) => !c)}>
+      <div
+        className="flex items-center justify-between px-4 py-2.5 bg-muted/50 cursor-pointer select-none"
+        onClick={() => setCollapsed((c) => !c)}
+      >
         <div className="flex items-center gap-2">
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           <span className="text-sm font-medium">Notes</span>
           <span className="text-xs text-muted-foreground">({notes.length})</span>
         </div>
         {!collapsed && (
-          <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={(e) => { e.stopPropagation(); setAddingNote(true); }}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 px-2 text-xs"
+            onClick={(e) => {
+              e.stopPropagation();
+              setAddingNote(true);
+            }}
+          >
             <Plus className="h-3 w-3 mr-1" />
             Add
           </Button>

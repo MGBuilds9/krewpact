@@ -59,7 +59,13 @@ vi.mock('@/lib/email/resend', () => ({
 }));
 
 vi.mock('@/lib/logger', () => ({
-  logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+  logger: {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    child: vi.fn().mockReturnThis(),
+  },
 }));
 
 // Mock global fetch for external service checks
@@ -71,7 +77,7 @@ const mockFetch = vi.fn().mockResolvedValue({
 });
 vi.stubGlobal('fetch', mockFetch);
 
-describe('POST /api/cron/smoke-test', () => {
+describe('GET /api/cron/smoke-test', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Re-stub after clearAllMocks
@@ -79,11 +85,11 @@ describe('POST /api/cron/smoke-test', () => {
   });
 
   it('runs smoke checks and returns results', async () => {
-    const { POST } = await import('@/app/api/cron/smoke-test/route');
+    const { GET } = await import('@/app/api/cron/smoke-test/route');
     const req = new NextRequest('http://localhost:3000/api/cron/smoke-test', {
-      method: 'POST',
+      method: 'GET',
     });
-    const response = await POST(req);
+    const response = await GET(req);
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -112,11 +118,11 @@ describe('POST /api/cron/smoke-test', () => {
       error: null,
     });
 
-    const { POST } = await import('@/app/api/cron/smoke-test/route');
+    const { GET } = await import('@/app/api/cron/smoke-test/route');
     const req = new NextRequest('http://localhost:3000/api/cron/smoke-test', {
-      method: 'POST',
+      method: 'GET',
     });
-    const response = await POST(req);
+    const response = await GET(req);
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -139,11 +145,11 @@ describe('POST /api/cron/smoke-test', () => {
     const { verifyCronAuth } = await import('@/lib/api/cron-auth');
     vi.mocked(verifyCronAuth).mockResolvedValueOnce({ authorized: false });
 
-    const { POST } = await import('@/app/api/cron/smoke-test/route');
+    const { GET } = await import('@/app/api/cron/smoke-test/route');
     const req = new NextRequest('http://localhost:3000/api/cron/smoke-test', {
-      method: 'POST',
+      method: 'GET',
     });
-    const response = await POST(req);
+    const response = await GET(req);
     expect(response.status).toBe(401);
   });
 });

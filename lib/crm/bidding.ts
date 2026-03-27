@@ -2,11 +2,19 @@
  * Bidding opportunity business logic — status transitions, deadline alerts, validation.
  */
 
-export const BIDDING_STATUSES = ['new', 'reviewing', 'bidding', 'submitted', 'won', 'lost', 'expired'] as const;
-export type BiddingStatus = typeof BIDDING_STATUSES[number];
+export const BIDDING_STATUSES = [
+  'new',
+  'reviewing',
+  'bidding',
+  'submitted',
+  'won',
+  'lost',
+  'expired',
+] as const;
+export type BiddingStatus = (typeof BIDDING_STATUSES)[number];
 
 export const BIDDING_SOURCES = ['merx', 'bids_tenders', 'manual', 'referral'] as const;
-export type BiddingSource = typeof BIDDING_SOURCES[number];
+export type BiddingSource = (typeof BIDDING_SOURCES)[number];
 
 const VALID_TRANSITIONS: Record<BiddingStatus, BiddingStatus[]> = {
   new: ['reviewing', 'expired'],
@@ -32,7 +40,10 @@ export interface DeadlineAlert {
   label: string;
 }
 
-export function getDeadlineAlert(deadline: string | null, now: Date = new Date()): DeadlineAlert | null {
+export function getDeadlineAlert(
+  deadline: string | null,
+  now: Date = new Date(),
+): DeadlineAlert | null {
   if (!deadline) return null;
 
   const deadlineDate = new Date(deadline);

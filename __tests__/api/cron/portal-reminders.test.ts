@@ -17,7 +17,13 @@ vi.mock('@/lib/jobs/portalReminders', () => ({
 }));
 
 vi.mock('@/lib/logger', () => ({
-  logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  logger: {
+    warn: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+    child: vi.fn().mockReturnThis(),
+  },
 }));
 
 import { makeRequest } from '@/__tests__/helpers';
@@ -42,7 +48,7 @@ describe('GET /api/cron/portal-reminders', () => {
     const res = await GET(makeCronRequest());
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns success with job result on happy path', async () => {
@@ -73,8 +79,7 @@ describe('GET /api/cron/portal-reminders', () => {
     const res = await GET(makeCronRequest());
     expect(res.status).toBe(500);
     const body = await res.json();
-    expect(body.success).toBe(false);
-    expect(body.error).toBe('Supabase connection failed');
+    expect(body.error.code).toBe('INTERNAL_ERROR');
   });
 
   it('returns 500 with unknown error message when job throws non-Error', async () => {
@@ -83,7 +88,6 @@ describe('GET /api/cron/portal-reminders', () => {
     const res = await GET(makeCronRequest());
     expect(res.status).toBe(500);
     const body = await res.json();
-    expect(body.success).toBe(false);
-    expect(body.error).toBe('Unknown error');
+    expect(body.error.code).toBe('INTERNAL_ERROR');
   });
 });

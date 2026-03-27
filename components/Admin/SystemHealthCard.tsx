@@ -107,9 +107,7 @@ export function SystemHealthCard() {
         <CardTitle className="flex items-center justify-between text-base">
           System Health
           {!loading && (
-            <span className={`text-sm font-normal capitalize ${headerColor}`}>
-              {overallStatus}
-            </span>
+            <span className={`text-sm font-normal capitalize ${headerColor}`}>{overallStatus}</span>
           )}
         </CardTitle>
         {lastUpdated && (

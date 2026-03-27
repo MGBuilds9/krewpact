@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { verifyCronAuth } from '@/lib/api/cron-auth';
 import { createCronLogger } from '@/lib/api/cron-logger';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import type { EmailSender, TemplateResolver } from '@/lib/crm/sequence-processor';
 import { processSequences } from '@/lib/crm/sequence-processor';
 import { sendEmail } from '@/lib/email/resend';
@@ -11,12 +11,7 @@ import { createServiceClient } from '@/lib/supabase/server';
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.krewpact.com';
 
-export async function POST(req: NextRequest): Promise<NextResponse> {
-  const { authorized } = await verifyCronAuth(req);
-  if (!authorized) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
+export const GET = withApiRoute({ auth: 'cron' }, async () => {
   const cronLog = createCronLogger('sequence-processor');
   const supabase = createServiceClient();
 
@@ -79,7 +74,4 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     errors: result.errors.length,
   });
   return NextResponse.json(response);
-}
-
-// Vercel Cron Jobs sends GET requests
-export { POST as GET };
+});

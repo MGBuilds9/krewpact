@@ -50,12 +50,27 @@ function EntryCard({ entry }: { entry: TimeEntry }) {
   );
 }
 
-function StatCard({ icon, label, value, valueClass }: { icon: React.ReactNode; label: string; value: string; valueClass?: string }) {
+function StatCard({
+  icon,
+  label,
+  value,
+  valueClass,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  valueClass?: string;
+}) {
   return (
-    <Card><CardContent className="pt-6">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">{icon}{label}</div>
-      <div className={`text-2xl font-bold ${valueClass ?? ''}`}>{value}</div>
-    </CardContent></Card>
+    <Card>
+      <CardContent className="pt-6">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+          {icon}
+          {label}
+        </div>
+        <div className={`text-2xl font-bold ${valueClass ?? ''}`}>{value}</div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -75,31 +90,60 @@ export default function ProjectTimePage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Time Tracking</h1>
-          <p className="text-muted-foreground text-sm">Log and review time entries for this project</p>
+          <p className="text-muted-foreground text-sm">
+            Log and review time entries for this project
+          </p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button size="sm"><Plus className="h-4 w-4 mr-1" /> Log Time</Button></DialogTrigger>
+          <DialogTrigger asChild>
+            <Button size="sm">
+              <Plus className="h-4 w-4 mr-1" /> Log Time
+            </Button>
+          </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Log Time Entry</DialogTitle></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>Log Time Entry</DialogTitle>
+            </DialogHeader>
             {currentUser && (
-              <TimeEntryForm userId={currentUser.id}
-                onSubmit={(values) => createEntry.mutate(values, { onSuccess: () => setOpen(false) })}
-                isLoading={createEntry.isPending} />
+              <TimeEntryForm
+                userId={currentUser.id}
+                onSubmit={(values) =>
+                  createEntry.mutate(values, { onSuccess: () => setOpen(false) })
+                }
+                isLoading={createEntry.isPending}
+              />
             )}
           </DialogContent>
         </Dialog>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <StatCard icon={<Clock className="h-4 w-4" />} label="Regular Hours" value={`${totalRegular.toFixed(1)}h`} />
-        <StatCard icon={<TrendingUp className="h-4 w-4" />} label="Overtime Hours" value={`${totalOT.toFixed(1)}h`} valueClass="text-orange-500" />
+        <StatCard
+          icon={<Clock className="h-4 w-4" />}
+          label="Regular Hours"
+          value={`${totalRegular.toFixed(1)}h`}
+        />
+        <StatCard
+          icon={<TrendingUp className="h-4 w-4" />}
+          label="Overtime Hours"
+          value={`${totalOT.toFixed(1)}h`}
+          valueClass="text-orange-500"
+        />
         <StatCard icon={null} label="Total Entries" value={String(entries.length)} />
       </div>
       {isLoading ? (
-        <div className="space-y-3">{['t1','t2','t3'].map((k) => <Skeleton key={k} className="h-16 w-full rounded-lg" />)}</div>
+        <div className="space-y-3">
+          {['t1', 't2', 't3'].map((k) => (
+            <Skeleton key={k} className="h-16 w-full rounded-lg" />
+          ))}
+        </div>
       ) : (
         <div className="space-y-2">
-          {entries.length === 0 && <p className="text-muted-foreground text-sm">No time entries yet.</p>}
-          {entries.map((entry) => <EntryCard key={entry.id} entry={entry as TimeEntry} />)}
+          {entries.length === 0 && (
+            <p className="text-muted-foreground text-sm">No time entries yet.</p>
+          )}
+          {entries.map((entry) => (
+            <EntryCard key={entry.id} entry={entry as TimeEntry} />
+          ))}
         </div>
       )}
     </div>

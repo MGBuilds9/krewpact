@@ -25,7 +25,7 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 import { makeRequest, mockSupabaseClient } from '@/__tests__/helpers';
-import { POST } from '@/app/api/cron/sequence-processor/route';
+import { GET } from '@/app/api/cron/sequence-processor/route';
 import { createServiceClient } from '@/lib/supabase/server';
 
 const mockCreateServiceClient = vi.mocked(createServiceClient);
@@ -42,10 +42,10 @@ describe('POST /api/cron/sequence-processor', () => {
 
   it('returns 401 when cron auth fails', async () => {
     mockVerifyCronAuth.mockResolvedValue({ authorized: false });
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('processes sequences and returns results', async () => {
@@ -59,7 +59,7 @@ describe('POST /api/cron/sequence-processor', () => {
       deadLettered: 1,
     });
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);
@@ -99,7 +99,7 @@ describe('POST /api/cron/sequence-processor', () => {
       deadLettered: 0,
     });
 
-    await POST(makeCronRequest());
+    await GET(makeCronRequest());
 
     expect(mockProcessSequences).toHaveBeenCalledTimes(1);
     const [client, options] = mockProcessSequences.mock.calls[0];
@@ -133,7 +133,7 @@ describe('POST /api/cron/sequence-processor', () => {
       },
     );
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     expect(mockSendEmail).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -190,7 +190,7 @@ describe('POST /api/cron/sequence-processor', () => {
       },
     );
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
   });
 
@@ -217,7 +217,7 @@ describe('POST /api/cron/sequence-processor', () => {
       },
     );
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
   });
 
@@ -232,7 +232,7 @@ describe('POST /api/cron/sequence-processor', () => {
       deadLettered: 1,
     });
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.errors).toBe(2);

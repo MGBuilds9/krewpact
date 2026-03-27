@@ -43,7 +43,10 @@ function PaymentRow({ entry }: { entry: PaymentEntry }) {
         </span>
         <Badge
           variant="outline"
-          className={cn('border text-xs', STATUS_COLORS[entry.status] ?? 'bg-zinc-100 text-zinc-700 border-zinc-300')}
+          className={cn(
+            'border text-xs',
+            STATUS_COLORS[entry.status] ?? 'bg-zinc-100 text-zinc-700 border-zinc-300',
+          )}
         >
           {entry.status.charAt(0).toUpperCase() + entry.status.slice(1)}
         </Badge>

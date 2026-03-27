@@ -33,3 +33,11 @@ export function notFound(entity: string): ApiError {
 export function dbError(message: string): ApiError {
   return new ApiError('DB_ERROR', message, 500);
 }
+
+export function forbidden(message = 'Forbidden'): ApiError {
+  return new ApiError('FORBIDDEN', message, 403);
+}
+
+export function serverError(message = 'Internal server error'): ApiError {
+  return new ApiError('INTERNAL_ERROR', message, 500);
+}

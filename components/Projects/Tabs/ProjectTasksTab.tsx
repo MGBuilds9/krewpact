@@ -98,6 +98,79 @@ const COLUMNS: ColumnDef[] = [
   { id: 'done', title: 'Done', status: 'done' },
 ];
 
+function CreateTaskDialog({
+  isOpen,
+  setIsOpen,
+  users,
+  onCreateTask,
+  newTask,
+  setNewTask,
+  isPending,
+}: {
+  isOpen: boolean;
+  setIsOpen: (v: boolean) => void;
+  users: ReturnType<typeof useUsers>['data'];
+  onCreateTask: () => void;
+  newTask: { title: string; description: string; assigned_user_id: string };
+  setNewTask: (v: { title: string; description: string; assigned_user_id: string }) => void;
+  isPending: boolean;
+}) {
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button>
+          <Plus className="h-4 w-4 mr-2" />
+          Add Task
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Create New Task</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 pt-4">
+          <div>
+            <label className="text-sm font-medium">Title</label>
+            <Input
+              value={newTask.title}
+              onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+              placeholder="Task title"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium">Description</label>
+            <Textarea
+              value={newTask.description}
+              onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+              placeholder="Task description"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium">Assign To</label>
+            <Select
+              value={newTask.assigned_user_id}
+              onValueChange={(value) => setNewTask({ ...newTask, assigned_user_id: value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Unassigned" />
+              </SelectTrigger>
+              <SelectContent>
+                {users?.map((user) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {user.first_name} {user.last_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <Button onClick={onCreateTask} className="w-full" disabled={!newTask.title || isPending}>
+            Create Task
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function ProjectTasksTab({ projectId }: ProjectTasksTabProps) {
   const { data: tasks = [] } = useTasks(projectId);
   const { data: users } = useUsers();
@@ -136,58 +209,15 @@ export function ProjectTasksTab({ projectId }: ProjectTasksTabProps) {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Task Board</h2>
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Task
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create New Task</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 pt-4">
-              <div>
-                <label className="text-sm font-medium">Title</label>
-                <Input
-                  value={newTask.title}
-                  onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-                  placeholder="Task title"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Description</label>
-                <Textarea
-                  value={newTask.description}
-                  onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
-                  placeholder="Task description"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Assign To</label>
-                <Select
-                  value={newTask.assigned_user_id}
-                  onValueChange={(value) => setNewTask({ ...newTask, assigned_user_id: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Unassigned" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {users?.map((user) => (
-                      <SelectItem key={user.id} value={user.id}>
-                        {user.first_name} {user.last_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button onClick={handleCreateTask} className="w-full" disabled={!newTask.title}>
-                Create Task
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <CreateTaskDialog
+          isOpen={isOpen}
+          setIsOpen={setIsOpen}
+          users={users}
+          onCreateTask={handleCreateTask}
+          newTask={newTask}
+          setNewTask={setNewTask}
+          isPending={createTask.isPending}
+        />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {COLUMNS.map((column) => {

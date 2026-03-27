@@ -33,11 +33,17 @@ vi.mock('@/lib/crm/constants', () => ({
 }));
 
 vi.mock('@/lib/logger', () => ({
-  logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  logger: {
+    warn: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+    child: vi.fn().mockReturnThis(),
+  },
 }));
 
 import { makeRequest, mockSupabaseClient } from '@/__tests__/helpers';
-import { POST } from '@/app/api/cron/scoring/route';
+import { GET } from '@/app/api/cron/scoring/route';
 import { scoreLead } from '@/lib/crm/scoring-engine';
 import { createServiceClient } from '@/lib/supabase/server';
 
@@ -104,10 +110,10 @@ describe('POST /api/cron/scoring', () => {
   it('returns 401 when cron auth fails', async () => {
     mockVerifyCronAuth.mockResolvedValue({ authorized: false });
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns success with zero processed when no leads', async () => {
@@ -120,7 +126,7 @@ describe('POST /api/cron/scoring', () => {
       }) as never,
     );
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);
@@ -138,7 +144,7 @@ describe('POST /api/cron/scoring', () => {
       }) as never,
     );
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);
@@ -153,7 +159,7 @@ describe('POST /api/cron/scoring', () => {
       }) as never,
     );
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(500);
     const body = await res.json();
     expect(body.error).toBe('leads query error');
@@ -169,7 +175,7 @@ describe('POST /api/cron/scoring', () => {
       }) as never,
     );
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(500);
     const body = await res.json();
     expect(body.error).toBe('rules query error');
@@ -186,7 +192,7 @@ describe('POST /api/cron/scoring', () => {
       }) as never,
     );
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);
@@ -211,7 +217,7 @@ describe('POST /api/cron/scoring', () => {
       throw new Error('scoring engine failure');
     });
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);

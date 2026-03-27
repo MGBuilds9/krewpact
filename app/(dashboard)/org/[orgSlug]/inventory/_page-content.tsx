@@ -173,8 +173,11 @@ export default function OverviewPageContent() {
   const { data: items, isLoading: itemsLoading } = useInventoryItems({ divisionId, limit: 1 });
   const { data: lowStock, isLoading: lowStockLoading } = useLowStockItems(divisionId);
   const { data: stock, isLoading: stockLoading } = useInventoryStock({ divisionId, limit: 1 });
-  const { data: poData, isLoading: poLoading } = usePurchaseOrders({ status: 'submitted', limit: 100 });
-  const activePOCount = (poData?.length ?? 0);
+  const { data: poData, isLoading: poLoading } = usePurchaseOrders({
+    status: 'submitted',
+    limit: 100,
+  });
+  const activePOCount = poData?.length ?? 0;
 
   const summaryLoading = itemsLoading || lowStockLoading || stockLoading || poLoading;
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { Loader2, Save } from 'lucide-react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -82,42 +82,22 @@ function TimeField({
   );
 }
 
-export default function SequenceDefaultsForm() {
-  const { data: defaults, isLoading } = useSequenceDefaults();
-  const updateDefaults = useUpdateSequenceDefaults();
-  const [form, setForm] = useState<SeqFormState>(INITIAL_STATE);
-
-  const dataKey = JSON.stringify(defaults);
-  if (defaults && form._syncKey !== dataKey) {
-    setForm({
-      maxEnrollments: defaults.max_enrollments_per_day,
-      sendWindowStart: defaults.send_window_start,
-      sendWindowEnd: defaults.send_window_end,
-      throttlePerHour: defaults.throttle_per_hour,
-      autoUnenroll: defaults.auto_unenroll_on_reply,
-      _syncKey: dataKey,
-    });
-  }
-
+function SeqDefaultsContent({
+  form,
+  setForm,
+  onSave,
+  isPending,
+  isSuccess,
+  isError,
+}: {
+  form: SeqFormState;
+  setForm: React.Dispatch<React.SetStateAction<SeqFormState>>;
+  onSave: () => void;
+  isPending: boolean;
+  isSuccess: boolean;
+  isError: boolean;
+}) {
   const { maxEnrollments, sendWindowStart, sendWindowEnd, throttlePerHour, autoUnenroll } = form;
-
-  function handleSave() {
-    updateDefaults.mutate({
-      max_enrollments_per_day: maxEnrollments,
-      send_window_start: sendWindowStart,
-      send_window_end: sendWindowEnd,
-      throttle_per_hour: throttlePerHour,
-      auto_unenroll_on_reply: autoUnenroll,
-    });
-  }
-
-  if (isLoading)
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
-
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -168,8 +148,8 @@ export default function SequenceDefaultsForm() {
         />
       </div>
       <div className="flex justify-end">
-        <Button onClick={handleSave} disabled={updateDefaults.isPending}>
-          {updateDefaults.isPending ? (
+        <Button onClick={onSave} disabled={isPending}>
+          {isPending ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : (
             <Save className="mr-2 h-4 w-4" />
@@ -177,14 +157,58 @@ export default function SequenceDefaultsForm() {
           Save Sequence Defaults
         </Button>
       </div>
-      {updateDefaults.isSuccess && (
-        <p className="text-sm text-green-600">Sequence defaults saved successfully.</p>
-      )}
-      {updateDefaults.isError && (
+      {isSuccess && <p className="text-sm text-green-600">Sequence defaults saved successfully.</p>}
+      {isError && (
         <p className="text-sm text-destructive">
           Failed to save sequence defaults. Please try again.
         </p>
       )}
     </div>
+  );
+}
+
+export default function SequenceDefaultsForm() {
+  const { data: defaults, isLoading } = useSequenceDefaults();
+  const updateDefaults = useUpdateSequenceDefaults();
+  const [form, setForm] = useState<SeqFormState>(INITIAL_STATE);
+
+  const dataKey = JSON.stringify(defaults);
+  if (defaults && form._syncKey !== dataKey) {
+    setForm({
+      maxEnrollments: defaults.max_enrollments_per_day,
+      sendWindowStart: defaults.send_window_start,
+      sendWindowEnd: defaults.send_window_end,
+      throttlePerHour: defaults.throttle_per_hour,
+      autoUnenroll: defaults.auto_unenroll_on_reply,
+      _syncKey: dataKey,
+    });
+  }
+
+  function handleSave() {
+    const { maxEnrollments, sendWindowStart, sendWindowEnd, throttlePerHour, autoUnenroll } = form;
+    updateDefaults.mutate({
+      max_enrollments_per_day: maxEnrollments,
+      send_window_start: sendWindowStart,
+      send_window_end: sendWindowEnd,
+      throttle_per_hour: throttlePerHour,
+      auto_unenroll_on_reply: autoUnenroll,
+    });
+  }
+
+  if (isLoading)
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  return (
+    <SeqDefaultsContent
+      form={form}
+      setForm={setForm}
+      onSave={handleSave}
+      isPending={updateDefaults.isPending}
+      isSuccess={updateDefaults.isSuccess}
+      isError={updateDefaults.isError}
+    />
   );
 }

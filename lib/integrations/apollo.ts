@@ -58,9 +58,7 @@ export async function searchPeople(params: ApolloSearchParams): Promise<ApolloPe
   return pagination.people;
 }
 
-export async function searchPeopleWithPagination(
-  params: ApolloSearchParams,
-): Promise<{
+export async function searchPeopleWithPagination(params: ApolloSearchParams): Promise<{
   pagination: {
     people: ApolloPerson[];
     page: number;

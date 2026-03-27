@@ -33,9 +33,7 @@ describe('EmptyState', () => {
   });
 
   it('renders action when provided', () => {
-    render(
-      <EmptyState title="No projects" action={<button>Create Project</button>} />,
-    );
+    render(<EmptyState title="No projects" action={<button>Create Project</button>} />);
     expect(screen.getByRole('button', { name: 'Create Project' })).toBeDefined();
   });
 

@@ -21,7 +21,6 @@ const typeVariant: Record<string, string> = {
   other: 'bg-zinc-500/15 text-zinc-400 border-zinc-500/30',
 };
 
-
 export const fleetColumns: ColumnDef<FleetVehicle, unknown>[] = [
   {
     accessorKey: 'unit_number',

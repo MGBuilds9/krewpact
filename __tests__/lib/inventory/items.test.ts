@@ -66,7 +66,6 @@ function buildMockClient(resolveWith: MockResponse) {
   };
 }
 
- 
 type AnyClient = any;
 
 const ITEM_ROW = {

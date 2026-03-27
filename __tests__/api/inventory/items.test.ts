@@ -40,7 +40,7 @@ import {
   mockSupabaseClient,
   resetFixtureCounter,
 } from '@/__tests__/helpers';
-import { DELETE,GET as GET_ID, PATCH } from '@/app/api/inventory/items/[id]/route';
+import { DELETE, GET as GET_ID, PATCH } from '@/app/api/inventory/items/[id]/route';
 import { GET, POST } from '@/app/api/inventory/items/route';
 import { isFeatureEnabled } from '@/lib/feature-flags';
 import { createItem, deactivateItem, getItem, listItems, updateItem } from '@/lib/inventory/items';

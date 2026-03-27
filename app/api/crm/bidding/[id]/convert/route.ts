@@ -56,7 +56,10 @@ export async function POST(req: NextRequest, context: RouteContext) {
     .single();
 
   if (oppError) {
-    logger.error('Failed to create opportunity from bid', { message: oppError.message, code: oppError.code });
+    logger.error('Failed to create opportunity from bid', {
+      message: oppError.message,
+      code: oppError.code,
+    });
     return NextResponse.json({ error: 'Failed to create opportunity' }, { status: 500 });
   }
 

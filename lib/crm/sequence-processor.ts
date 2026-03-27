@@ -1,56 +1,18 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { evaluateCondition } from './sequence-conditions';
+import { createFinalDispositionTask } from './sequence-disposition';
 import { checkAndMoveToDLQ } from './sequence-dlq';
 import { executeEmailStep } from './sequence-email-executor';
+import type { ProcessorOptions, ProcessorResult } from './sequence-types';
 
 export { evaluateCondition } from './sequence-conditions';
-
-export interface ProcessorResult {
-  processed: number;
-  completed: number;
-  errors: string[];
-  deadLettered: number;
-}
-
-/**
- * Email sender callback — injected by the cron route to send real emails.
- * If not provided, the processor only creates outreach_event records.
- */
-export interface EmailSender {
-  send(params: {
-    to: string;
-    subject: string;
-    html: string;
-    text?: string;
-    enrollmentId: string;
-    leadId: string;
-  }): Promise<{ success: boolean; error?: string }>;
-}
-
-/**
- * Template resolver — injected by cron route to fetch and render email templates.
- * @param outreachEventId — when provided, enables open/click tracking pixel injection.
- */
-export interface TemplateResolver {
-  resolve(
-    templateId: string,
-    variables: Record<string, string>,
-    outreachEventId?: string,
-  ): Promise<{ subject: string; html: string; text?: string } | null>;
-}
-
-export interface ProcessorOptions {
-  emailSender?: EmailSender;
-  templateResolver?: TemplateResolver;
-  onTaskCreated?: (params: {
-    assigneeEmail: string;
-    assigneeName: string;
-    taskTitle: string;
-    leadCompany: string;
-    leadId: string;
-  }) => Promise<void>;
-}
+export type {
+  EmailSender,
+  ProcessorOptions,
+  ProcessorResult,
+  TemplateResolver,
+} from './sequence-types';
 
 /** Action types that create manual task reminders for salespeople */
 const MANUAL_ACTION_TYPES = ['call', 'linkedin', 'meeting', 'site_visit'] as const;
@@ -195,69 +157,88 @@ interface StepActionCtx {
   options: ProcessorOptions;
 }
 
+interface TaskNotifyCtx {
+  supabase: SupabaseClient;
+  enrollment: Record<string, unknown>;
+  assignedToId: string;
+  taskTitle: string;
+  lead: Record<string, unknown> | null;
+  options: ProcessorOptions;
+}
+
+async function notifyTaskAssignee(ctx: TaskNotifyCtx): Promise<void> {
+  const { supabase, enrollment, assignedToId, taskTitle, lead, options } = ctx;
+  if (!options.onTaskCreated) return;
+  const { data: assignee } = await supabase
+    .from('users')
+    .select('email, first_name, last_name')
+    .eq('id', assignedToId)
+    .single();
+  if (!assignee?.email) return;
+  const leadCompany = (lead?.company_name as string) ?? 'Unknown Company';
+  const assigneeName =
+    [assignee.first_name, assignee.last_name].filter(Boolean).join(' ') || 'Team Member';
+  await options.onTaskCreated({
+    assigneeEmail: assignee.email as string,
+    assigneeName,
+    taskTitle,
+    leadCompany,
+    leadId: enrollment.lead_id as string,
+  });
+}
+
+async function executeTaskStep(ctx: StepActionCtx): Promise<void> {
+  const { supabase, enrollment, actionConfig, now, options } = ctx;
+  const lead = enrollment.leads as Record<string, unknown> | null;
+  const assignedToId = lead?.assigned_to as string | null;
+  const taskTitle = (actionConfig.title as string) ?? 'Sequence task';
+  const { error } = await supabase.from('activities').insert({
+    activity_type: 'task',
+    title: taskTitle,
+    details: (actionConfig.description as string) ?? null,
+    lead_id: enrollment.lead_id,
+    contact_id: enrollment.contact_id ?? null,
+    owner_user_id: assignedToId ?? null,
+    due_at: now,
+  });
+  if (error) throw new Error(`Failed to create activity: ${error.message}`);
+  if (assignedToId)
+    await notifyTaskAssignee({ supabase, enrollment, assignedToId, taskTitle, lead, options });
+}
+
+async function executeManualStep(ctx: StepActionCtx): Promise<void> {
+  const { supabase, enrollment, step, actionType, actionConfig, now } = ctx;
+  const label = MANUAL_ACTION_LABELS[actionType] ?? actionType;
+  const { error } = await supabase.from('activities').insert({
+    activity_type: 'task',
+    title: (actionConfig.title as string) ?? `${label} — Sequence reminder`,
+    details: (actionConfig.description as string) ?? `Action required: ${label}`,
+    lead_id: enrollment.lead_id,
+    contact_id: enrollment.contact_id ?? null,
+    due_at: new Date().toISOString(),
+  });
+  if (error) throw new Error(`Failed to create ${actionType} reminder: ${error.message}`);
+  await supabase.from('outreach').insert({
+    lead_id: enrollment.lead_id,
+    contact_id: enrollment.contact_id ?? null,
+    channel: actionType,
+    direction: 'outbound',
+    subject: (actionConfig.title as string) ?? `${label} reminder`,
+    sequence_id: enrollment.sequence_id,
+    sequence_step: step.step_number,
+    is_automated: true,
+    occurred_at: now,
+  });
+}
+
 async function executeStepAction(ctx: StepActionCtx): Promise<void> {
   const { supabase, enrollment, step, actionType, actionConfig, now, options } = ctx;
   if (actionType === 'email') {
     await executeEmailStep({ supabase, enrollment, step, actionConfig, now, options });
   } else if (actionType === 'task') {
-    const lead = enrollment.leads as Record<string, unknown> | null;
-    const assignedToId = lead?.assigned_to as string | null;
-    const taskTitle = (actionConfig.title as string) ?? 'Sequence task';
-
-    const { error } = await supabase.from('activities').insert({
-      activity_type: 'task',
-      title: taskTitle,
-      details: (actionConfig.description as string) ?? null,
-      lead_id: enrollment.lead_id,
-      contact_id: enrollment.contact_id ?? null,
-      owner_user_id: assignedToId ?? null,
-      due_at: now,
-    });
-    if (error) throw new Error(`Failed to create activity: ${error.message}`);
-
-    if (assignedToId && options.onTaskCreated) {
-      const { data: assignee } = await supabase
-        .from('users')
-        .select('email, first_name, last_name')
-        .eq('id', assignedToId)
-        .single();
-
-      if (assignee?.email) {
-        const leadCompany = (lead?.company_name as string) ?? 'Unknown Company';
-        const assigneeName =
-          [assignee.first_name, assignee.last_name].filter(Boolean).join(' ') || 'Team Member';
-        await options.onTaskCreated({
-          assigneeEmail: assignee.email as string,
-          assigneeName,
-          taskTitle,
-          leadCompany,
-          leadId: enrollment.lead_id as string,
-        });
-      }
-    }
+    await executeTaskStep({ supabase, enrollment, step, actionType, actionConfig, now, options });
   } else if (MANUAL_ACTION_TYPES.includes(actionType as (typeof MANUAL_ACTION_TYPES)[number])) {
-    const label = MANUAL_ACTION_LABELS[actionType] ?? actionType;
-    const { error } = await supabase.from('activities').insert({
-      activity_type: 'task',
-      title: (actionConfig.title as string) ?? `${label} — Sequence reminder`,
-      details: (actionConfig.description as string) ?? `Action required: ${label}`,
-      lead_id: enrollment.lead_id,
-      contact_id: enrollment.contact_id ?? null,
-      due_at: new Date().toISOString(),
-    });
-    if (error) throw new Error(`Failed to create ${actionType} reminder: ${error.message}`);
-
-    await supabase.from('outreach').insert({
-      lead_id: enrollment.lead_id,
-      contact_id: enrollment.contact_id ?? null,
-      channel: actionType,
-      direction: 'outbound',
-      subject: (actionConfig.title as string) ?? `${label} reminder`,
-      sequence_id: enrollment.sequence_id,
-      sequence_step: step.step_number,
-      is_automated: true,
-      occurred_at: now,
-    });
+    await executeManualStep({ supabase, enrollment, step, actionType, actionConfig, now, options });
   }
   // 'wait' and 'condition' types — no action, just advance/branch
 }
@@ -347,64 +328,5 @@ async function advanceEnrollment(ctx: AdvanceEnrollmentCtx): Promise<void> {
     result.completed++;
 
     await createFinalDispositionTask(supabase, enrollment, options);
-  }
-}
-
-/**
- * Creates a "Final disposition" task when a sequence completes with no engagement.
- * Checks outreach records for any response (replied, opened, clicked) — if none found,
- * creates a task so the lead doesn't fall through the cracks.
- */
-async function createFinalDispositionTask(
-  supabase: SupabaseClient,
-  enrollment: Record<string, unknown>,
-  options: ProcessorOptions,
-): Promise<void> {
-  // Check if any outreach had engagement
-  const { count } = await supabase
-    .from('outreach')
-    .select('id', { count: 'exact', head: true })
-    .eq('lead_id', enrollment.lead_id as string)
-    .eq('sequence_id', enrollment.sequence_id as string)
-    .in('outcome', ['replied', 'opened', 'clicked']);
-
-  if (count && count > 0) return;
-
-  const lead = enrollment.leads as Record<string, unknown> | null;
-  const companyName = (lead?.company_name as string) ?? 'Unknown lead';
-  const assignedToId = lead?.assigned_to as string | null;
-
-  const { error: insertError } = await supabase.from('activities').insert({
-    activity_type: 'task',
-    title: `Final disposition: ${companyName}`,
-    details: 'Sequence completed with no response. Review and decide: follow up or mark as cold.',
-    lead_id: enrollment.lead_id,
-    contact_id: enrollment.contact_id ?? null,
-    owner_user_id: assignedToId ?? null,
-    due_at: new Date().toISOString(),
-  });
-
-  if (insertError) {
-    throw new Error(`Failed to create final disposition task: ${insertError.message}`);
-  }
-
-  if (assignedToId && options.onTaskCreated) {
-    const { data: assignee } = await supabase
-      .from('users')
-      .select('email, first_name, last_name')
-      .eq('id', assignedToId)
-      .single();
-
-    if (assignee?.email) {
-      const assigneeName =
-        [assignee.first_name, assignee.last_name].filter(Boolean).join(' ') || 'Team Member';
-      await options.onTaskCreated({
-        assigneeEmail: assignee.email as string,
-        assigneeName,
-        taskTitle: `Final disposition: ${companyName}`,
-        leadCompany: companyName,
-        leadId: enrollment.lead_id as string,
-      });
-    }
   }
 }

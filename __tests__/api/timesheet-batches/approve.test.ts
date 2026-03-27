@@ -32,7 +32,12 @@ vi.mock('@/lib/validators/time-expense', () => ({
 import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
-import { makeJsonRequest, mockClerkAuth, mockClerkUnauth, mockSupabaseClient } from '@/__tests__/helpers';
+import {
+  makeJsonRequest,
+  mockClerkAuth,
+  mockClerkUnauth,
+  mockSupabaseClient,
+} from '@/__tests__/helpers';
 import { POST } from '@/app/api/timesheet-batches/[batchId]/approve/route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
@@ -54,7 +59,9 @@ describe('POST /api/timesheet-batches/[batchId]/approve — RBAC', () => {
 
   it('returns 401 when not authenticated', async () => {
     mockClerkUnauth(mockAuth);
-    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
+    mockRequireRole.mockResolvedValue(
+      NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
+    );
 
     const res = await POST(makeApproveRequest(), makeContext(BATCH_ID));
     expect(res.status).toBe(401);

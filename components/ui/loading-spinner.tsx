@@ -36,8 +36,9 @@ export function LoadingCard({ className, lines = 3 }: LoadingCardProps) {
   return (
     <div className={cn('space-y-3', className)}>
       {Array.from({ length: lines }).map((_, i) => (
-        // eslint-disable-next-line react/no-array-index-key
-        <div key={i}
+         
+        <div
+          key={i}
           className={cn(
             'h-4 bg-gradient-to-r from-muted via-muted/50 to-muted rounded animate-pulse',
             i === 0 && 'w-3/4',

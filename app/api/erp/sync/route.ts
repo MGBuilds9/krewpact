@@ -115,97 +115,102 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const supabase = createScopedServiceClient('erp-sync:enqueue');
-    const { data: existingJob } = await supabase
-      .from('erp_sync_jobs')
-      .select('id, status')
-      .eq('entity_type', syncEntityType)
-      .eq('entity_id', entity_id)
-      .eq('sync_direction', 'outbound')
-      .in('status', ['queued', 'processing'])
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (existingJob) {
-      return NextResponse.json(
-        {
-          job_id: existingJob.id,
-          status: normalizeSyncJobStatus(existingJob.status),
-          entity_type: syncEntityType,
-          entity_id,
-          poll_url: `/api/erp/sync/${existingJob.id}`,
-        },
-        { status: 202 },
-      );
-    }
-
-    const { data: syncJob, error: insertError } = await supabase
-      .from('erp_sync_jobs')
-      .insert({
-        entity_type: syncEntityType,
-        entity_id,
-        sync_direction: 'outbound',
-        status: 'queued',
-        attempt_count: 0,
-        max_attempts: MAX_SYNC_ATTEMPTS,
-        payload: {
-          requested_by: userId,
-          enqueue_source: 'api',
-          requested_entity_type: entity_type,
-        },
-      })
-      .select('id, max_attempts')
-      .single();
-
-    if (insertError || !syncJob) {
-      logger.error('Failed to create ERP sync job', {
-        entity_type: syncEntityType,
-        entity_id,
-        error: insertError,
-      });
-      return NextResponse.json({ error: 'Failed to enqueue sync job' }, { status: 500 });
-    }
-
-    const queued = await queue.enqueue(
-      getJobType(entity_type),
-      {
-        entityId: entity_id,
-        userId,
-        meta: {
-          syncJobId: syncJob.id,
-          maxAttempts: syncJob.max_attempts,
-          requestedEntityType: entity_type,
-          wonDate: entity_type === 'contract' ? new Date().toISOString().slice(0, 10) : undefined,
-        },
-      },
-      syncJob.max_attempts,
-    );
-
-    await supabase
-      .from('erp_sync_jobs')
-      .update({
-        payload: {
-          requested_by: userId,
-          enqueue_source: 'api',
-          requested_entity_type: entity_type,
-          queue_job_id: queued.id,
-        },
-      })
-      .eq('id', syncJob.id);
-
-    return NextResponse.json(
-      {
-        job_id: syncJob.id,
-        status: 'queued',
-        entity_type: syncEntityType,
-        entity_id,
-        poll_url: `/api/erp/sync/${syncJob.id}`,
-      },
-      { status: 202 },
-    );
+    return await enqueueErpSync(entity_type, entity_id, syncEntityType, userId);
   } catch (err) {
     logger.error('ERP sync failed:', err as Record<string, unknown>);
     return NextResponse.json({ error: 'Failed to enqueue ERP sync' }, { status: 500 });
   }
+}
+
+async function enqueueErpSync(
+  entity_type: EntityType,
+  entity_id: string,
+  syncEntityType: string,
+  userId: string,
+): Promise<NextResponse> {
+  const supabase = createScopedServiceClient('erp-sync:enqueue');
+  const { data: existingJob } = await supabase
+    .from('erp_sync_jobs')
+    .select('id, status')
+    .eq('entity_type', syncEntityType)
+    .eq('entity_id', entity_id)
+    .eq('sync_direction', 'outbound')
+    .in('status', ['queued', 'processing'])
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (existingJob) {
+    return NextResponse.json(
+      {
+        job_id: existingJob.id,
+        status: normalizeSyncJobStatus(existingJob.status),
+        entity_type: syncEntityType,
+        entity_id,
+        poll_url: `/api/erp/sync/${existingJob.id}`,
+      },
+      { status: 202 },
+    );
+  }
+
+  const { data: syncJob, error: insertError } = await supabase
+    .from('erp_sync_jobs')
+    .insert({
+      entity_type: syncEntityType,
+      entity_id,
+      sync_direction: 'outbound',
+      status: 'queued',
+      attempt_count: 0,
+      max_attempts: MAX_SYNC_ATTEMPTS,
+      payload: { requested_by: userId, enqueue_source: 'api', requested_entity_type: entity_type },
+    })
+    .select('id, max_attempts')
+    .single();
+
+  if (insertError || !syncJob) {
+    logger.error('Failed to create ERP sync job', {
+      entity_type: syncEntityType,
+      entity_id,
+      error: insertError,
+    });
+    return NextResponse.json({ error: 'Failed to enqueue sync job' }, { status: 500 });
+  }
+
+  const queued = await queue.enqueue(
+    getJobType(entity_type),
+    {
+      entityId: entity_id,
+      userId,
+      meta: {
+        syncJobId: syncJob.id,
+        maxAttempts: syncJob.max_attempts,
+        requestedEntityType: entity_type,
+        wonDate: entity_type === 'contract' ? new Date().toISOString().slice(0, 10) : undefined,
+      },
+    },
+    syncJob.max_attempts,
+  );
+
+  await supabase
+    .from('erp_sync_jobs')
+    .update({
+      payload: {
+        requested_by: userId,
+        enqueue_source: 'api',
+        requested_entity_type: entity_type,
+        queue_job_id: queued.id,
+      },
+    })
+    .eq('id', syncJob.id);
+
+  return NextResponse.json(
+    {
+      job_id: syncJob.id,
+      status: 'queued',
+      entity_type: syncEntityType,
+      entity_id,
+      poll_url: `/api/erp/sync/${syncJob.id}`,
+    },
+    { status: 202 },
+  );
 }

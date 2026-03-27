@@ -40,7 +40,7 @@ describe('GET /api/projects', () => {
     expect(res.status).toBe(401);
 
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns 400 for invalid query params', async () => {
@@ -98,7 +98,7 @@ describe('GET /api/projects', () => {
     expect(res.status).toBe(500);
 
     const body = await res.json();
-    expect(body.error).toBe('Database error');
+    expect(body.error.code).toBe('DB_ERROR');
   });
 
   it('filters by status', async () => {

@@ -135,7 +135,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Internal Server Error', details: message }, { status: 500 });
   }
 }
-
-export async function GET() {
-  return NextResponse.json({ status: 'active', service: 'krewpact-lead-intake' });
-}

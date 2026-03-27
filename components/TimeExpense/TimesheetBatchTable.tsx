@@ -251,7 +251,12 @@ export function TimesheetBatchTable({
     if (!rejectTarget || !rejectReason.trim()) return;
     approveMutation.mutate(
       { id: rejectTarget, status: 'rejected', reason: rejectReason.trim() },
-      { onSettled: () => { setRejectTarget(null); setRejectReason(''); } },
+      {
+        onSettled: () => {
+          setRejectTarget(null);
+          setRejectReason('');
+        },
+      },
     );
   }
 

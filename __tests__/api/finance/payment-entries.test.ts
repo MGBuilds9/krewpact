@@ -63,9 +63,13 @@ describe('GET /api/finance/payment-entries', () => {
 
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
-    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
+    mockRequireRole.mockResolvedValue(
+      NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
+    );
     const { GET } = await import('@/app/api/finance/payment-entries/route');
-    const res = await GET(makeRequest(`/api/finance/payment-entries?project_id=${VALID_PROJECT_ID}`));
+    const res = await GET(
+      makeRequest(`/api/finance/payment-entries?project_id=${VALID_PROJECT_ID}`),
+    );
     expect(res.status).toBe(401);
   });
 
@@ -73,7 +77,9 @@ describe('GET /api/finance/payment-entries', () => {
     mockClerkAuth(mockAuth);
     mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Forbidden' }, { status: 403 }));
     const { GET } = await import('@/app/api/finance/payment-entries/route');
-    const res = await GET(makeRequest(`/api/finance/payment-entries?project_id=${VALID_PROJECT_ID}`));
+    const res = await GET(
+      makeRequest(`/api/finance/payment-entries?project_id=${VALID_PROJECT_ID}`),
+    );
     expect(res.status).toBe(403);
   });
 
@@ -82,7 +88,9 @@ describe('GET /api/finance/payment-entries', () => {
     mockRequireRole.mockResolvedValue({ userId: 'user_123', roles: ['executive'] });
     mockGetPaymentHistory.mockResolvedValue(SAMPLE_HISTORY);
     const { GET } = await import('@/app/api/finance/payment-entries/route');
-    const res = await GET(makeRequest(`/api/finance/payment-entries?project_id=${VALID_PROJECT_ID}`));
+    const res = await GET(
+      makeRequest(`/api/finance/payment-entries?project_id=${VALID_PROJECT_ID}`),
+    );
     expect(res.status).toBe(200);
   });
 
@@ -105,7 +113,9 @@ describe('GET /api/finance/payment-entries', () => {
     mockGetPaymentHistory.mockResolvedValue(SAMPLE_HISTORY);
 
     const { GET } = await import('@/app/api/finance/payment-entries/route');
-    const res = await GET(makeRequest(`/api/finance/payment-entries?project_id=${VALID_PROJECT_ID}`));
+    const res = await GET(
+      makeRequest(`/api/finance/payment-entries?project_id=${VALID_PROJECT_ID}`),
+    );
     expect(res.status).toBe(200);
 
     const body = await res.json();
@@ -125,7 +135,9 @@ describe('GET /api/finance/payment-entries', () => {
     });
 
     const { GET } = await import('@/app/api/finance/payment-entries/route');
-    const res = await GET(makeRequest(`/api/finance/payment-entries?project_id=${VALID_PROJECT_ID}`));
+    const res = await GET(
+      makeRequest(`/api/finance/payment-entries?project_id=${VALID_PROJECT_ID}`),
+    );
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.payments).toHaveLength(0);
@@ -137,7 +149,9 @@ describe('GET /api/finance/payment-entries', () => {
     mockGetPaymentHistory.mockRejectedValue(new Error('Unexpected error'));
 
     const { GET } = await import('@/app/api/finance/payment-entries/route');
-    const res = await GET(makeRequest(`/api/finance/payment-entries?project_id=${VALID_PROJECT_ID}`));
+    const res = await GET(
+      makeRequest(`/api/finance/payment-entries?project_id=${VALID_PROJECT_ID}`),
+    );
     expect(res.status).toBe(500);
   });
 });

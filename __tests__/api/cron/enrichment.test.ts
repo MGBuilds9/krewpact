@@ -22,7 +22,7 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 import { makeRequest, mockSupabaseClient } from '@/__tests__/helpers';
-import { POST } from '@/app/api/cron/enrichment/route';
+import { GET } from '@/app/api/cron/enrichment/route';
 import { createServiceClient } from '@/lib/supabase/server';
 
 const mockCreateServiceClient = vi.mocked(createServiceClient);
@@ -39,10 +39,10 @@ describe('POST /api/cron/enrichment', () => {
 
   it('returns 401 when cron auth fails', async () => {
     mockVerifyCronAuth.mockResolvedValue({ authorized: false });
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns { processed: 0 } when no leads need enrichment', async () => {
@@ -53,7 +53,7 @@ describe('POST /api/cron/enrichment', () => {
     });
     mockCreateServiceClient.mockReturnValue(supabase);
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);
@@ -68,7 +68,7 @@ describe('POST /api/cron/enrichment', () => {
     });
     mockCreateServiceClient.mockReturnValue(supabase);
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(500);
   });
 
@@ -103,7 +103,7 @@ describe('POST /api/cron/enrichment', () => {
     mockMergeEnrichmentData.mockReturnValue({ apollo: { revenue: 1000000 } });
     mockSummarizeEnrichment.mockResolvedValue('Test company summary');
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);
@@ -142,7 +142,7 @@ describe('POST /api/cron/enrichment', () => {
     mockMergeEnrichmentData.mockReturnValue({ brave: {} });
     mockSummarizeEnrichment.mockResolvedValue(null);
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.processed).toBe(1);
@@ -176,7 +176,7 @@ describe('POST /api/cron/enrichment', () => {
     mockMergeEnrichmentData.mockReturnValue({ apollo: {} });
     mockSummarizeEnrichment.mockRejectedValue(new Error('OpenAI rate limit'));
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.processed).toBe(1);
@@ -218,7 +218,7 @@ describe('POST /api/cron/enrichment', () => {
     mockMergeEnrichmentData.mockReturnValue({ apollo: {} });
     mockSummarizeEnrichment.mockResolvedValue(null);
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.processed).toBe(1);
@@ -247,7 +247,7 @@ describe('POST /api/cron/enrichment', () => {
 
     mockEnrichLead.mockRejectedValue(new Error('All sources failed'));
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.processed).toBe(0);
@@ -262,7 +262,7 @@ describe('POST /api/cron/enrichment', () => {
     });
     mockCreateServiceClient.mockReturnValue(supabase);
 
-    await POST(makeCronRequest());
+    await GET(makeCronRequest());
 
     // Verify the query includes a limit
     const fromCalls = (supabase.from as ReturnType<typeof vi.fn>).mock.calls;

@@ -5,10 +5,7 @@ import { ArrowLeft, CheckCircle, FileText, Save, Send, Sparkles, XCircle } from 
 import { ExportPdfButton } from '@/components/Estimates/ExportPdfButton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  useEstimate,
-  useEstimateLines,
-} from '@/hooks/useEstimates';
+import { useEstimate, useEstimateLines } from '@/hooks/useEstimates';
 import type { EstimateStatus } from '@/lib/estimating/estimate-status';
 import type { EstimatePdfData } from '@/lib/pdf/types';
 import { cn } from '@/lib/utils';
@@ -56,8 +53,15 @@ interface ActionButtonsProps {
 }
 
 function ActionButtons({
-  estimate, lines, allowedTransitions, isPending, isVersionPending,
-  onTransition, onSaveVersion, onProposal, onTakeoff,
+  estimate,
+  lines,
+  allowedTransitions,
+  isPending,
+  isVersionPending,
+  onTransition,
+  onSaveVersion,
+  onProposal,
+  onTakeoff,
 }: ActionButtonsProps) {
   return (
     <div className="flex gap-2 flex-shrink-0">
@@ -82,21 +86,23 @@ function ActionButtons({
       </Button>
       <ExportPdfButton
         estimateNumber={estimate.estimate_number}
-        estimateData={{
-          companyName: 'MDM Group Inc.',
-          estimateNumber: estimate.estimate_number,
-          date: new Date().toISOString().split('T')[0],
-          lineItems: lines.map((l) => ({
-            description: l.description,
-            quantity: l.quantity,
-            unit: l.unit || undefined,
-            unitCost: l.unit_cost,
-            markup: l.markup_pct || undefined,
-          })),
-          subtotal: estimate.subtotal_amount,
-          taxAmount: estimate.tax_amount,
-          total: estimate.total_amount,
-        } satisfies EstimatePdfData}
+        estimateData={
+          {
+            companyName: 'MDM Group Inc.',
+            estimateNumber: estimate.estimate_number,
+            date: new Date().toISOString().split('T')[0],
+            lineItems: lines.map((l) => ({
+              description: l.description,
+              quantity: l.quantity,
+              unit: l.unit || undefined,
+              unitCost: l.unit_cost,
+              markup: l.markup_pct || undefined,
+            })),
+            subtotal: estimate.subtotal_amount,
+            taxAmount: estimate.tax_amount,
+            total: estimate.total_amount,
+          } satisfies EstimatePdfData
+        }
       />
       {onTakeoff && (
         <Button size="sm" variant="outline" onClick={onTakeoff}>
@@ -126,18 +132,35 @@ export interface EstimateHeaderProps {
 }
 
 export function EstimateHeader({
-  estimate, lines, allowedTransitions, isPending, isVersionPending,
-  onTransition, onSaveVersion, onProposal, onTakeoff, onBack,
+  estimate,
+  lines,
+  allowedTransitions,
+  isPending,
+  isVersionPending,
+  onTransition,
+  onSaveVersion,
+  onProposal,
+  onTakeoff,
+  onBack,
 }: EstimateHeaderProps) {
   return (
     <div className="flex items-start gap-4">
-      <Button variant="ghost" size="icon" onClick={onBack} className="mt-1" aria-label="Back to estimates">
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={onBack}
+        className="mt-1"
+        aria-label="Back to estimates"
+      >
         <ArrowLeft className="h-5 w-5" />
       </Button>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold tracking-tight">{estimate.estimate_number}</h1>
-          <Badge variant="outline" className={cn('border', STATUS_BADGE_COLORS[estimate.status] || '')}>
+          <Badge
+            variant="outline"
+            className={cn('border', STATUS_BADGE_COLORS[estimate.status] || '')}
+          >
             {formatStatus(estimate.status)}
           </Badge>
         </div>
@@ -146,10 +169,15 @@ export function EstimateHeader({
         </p>
       </div>
       <ActionButtons
-        estimate={estimate} lines={lines} allowedTransitions={allowedTransitions}
-        isPending={isPending} isVersionPending={isVersionPending}
-        onTransition={onTransition} onSaveVersion={onSaveVersion}
-        onProposal={onProposal} onTakeoff={onTakeoff}
+        estimate={estimate}
+        lines={lines}
+        allowedTransitions={allowedTransitions}
+        isPending={isPending}
+        isVersionPending={isVersionPending}
+        onTransition={onTransition}
+        onSaveVersion={onSaveVersion}
+        onProposal={onProposal}
+        onTakeoff={onTakeoff}
       />
     </div>
   );

@@ -53,7 +53,10 @@ export async function POST(_req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: rulesResult.error.message }, { status: 500 });
   }
 
-  const result = scoreLead(lead as Record<string, unknown>, (rulesResult.data ?? []) as ScoringRule[]);
+  const result = scoreLead(
+    lead as Record<string, unknown>,
+    (rulesResult.data ?? []) as ScoringRule[],
+  );
   const previousScore = lead.lead_score ?? 0;
 
   const { error: updateError } = await supabase

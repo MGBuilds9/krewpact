@@ -27,9 +27,7 @@ describe('DataTableSkeleton', () => {
     const { container: noHeader } = render(
       <DataTableSkeleton showHeader={false} columns={4} rows={3} />,
     );
-    expect(countAnimatedElements(withHeader)).toBeGreaterThan(
-      countAnimatedElements(noHeader),
-    );
+    expect(countAnimatedElements(withHeader)).toBeGreaterThan(countAnimatedElements(noHeader));
   });
 
   it('renders correct number of row cells (rows * columns)', () => {

@@ -52,7 +52,7 @@ function buildSteps(
     {
       label: 'Client Review',
       status: stepStatus(2),
-      note: isRejected ? rejectionReason ?? null : null,
+      note: isRejected ? (rejectionReason ?? null) : null,
     },
     {
       label: 'Approved',
@@ -128,9 +128,7 @@ export function COApprovalChain({
                   {new Date(step.timestamp).toLocaleString()}
                 </time>
               )}
-              {step.note && (
-                <p className="mt-1 text-xs text-red-600 italic">{step.note}</p>
-              )}
+              {step.note && <p className="mt-1 text-xs text-red-600 italic">{step.note}</p>}
             </div>
           </li>
         ))}

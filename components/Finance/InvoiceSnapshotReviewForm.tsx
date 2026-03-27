@@ -51,6 +51,151 @@ const AMOUNT_FIELDS: { name: keyof FormValues; label: string }[] = [
   { name: 'amount_paid', label: 'Amount Paid (CAD)' },
 ];
 
+const INVOICE_DEFAULT_VALUES: FormValues = {
+  invoice_number: '',
+  customer_name: '',
+  invoice_date: '',
+  due_date: '',
+  subtotal_amount: '',
+  tax_amount: '',
+  total_amount: '',
+  amount_paid: '',
+  payment_link_url: '',
+  erp_docname: '',
+  status: undefined,
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function InvoiceSnapshotFields({ form, isLoading }: { form: any; isLoading?: boolean }) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <FormField
+        control={form.control}
+        name="invoice_number"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Invoice Number</FormLabel>
+            <FormControl>
+              <Input placeholder="INV-2026-001" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="customer_name"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Customer Name</FormLabel>
+            <FormControl>
+              <Input placeholder="Customer name" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="invoice_date"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Invoice Date</FormLabel>
+            <FormControl>
+              <Input type="date" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="due_date"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Due Date</FormLabel>
+            <FormControl>
+              <Input type="date" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="status"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Status</FormLabel>
+            <Select onValueChange={field.onChange} value={field.value}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="submitted">Submitted</SelectItem>
+                <SelectItem value="paid">Paid</SelectItem>
+                <SelectItem value="overdue">Overdue</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="erp_docname"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>ERP Doc Name</FormLabel>
+            <FormControl>
+              <Input placeholder="ERPNext document reference" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      {AMOUNT_FIELDS.map(({ name, label }) => (
+        <FormField
+          key={name}
+          control={form.control}
+          name={name}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{label}</FormLabel>
+              <FormControl>
+                <Input type="number" step="0.01" placeholder="0.00" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      ))}
+      <FormField
+        control={form.control}
+        name="payment_link_url"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Payment Link URL</FormLabel>
+            <FormControl>
+              <Input type="url" placeholder="https://..." {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <div className="col-span-2 flex justify-end">
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? 'Saving...' : 'Save Invoice Snapshot'}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export function InvoiceSnapshotReviewForm({
   defaultValues,
   onSubmit,
@@ -58,19 +203,7 @@ export function InvoiceSnapshotReviewForm({
 }: InvoiceSnapshotReviewFormProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      invoice_number: '',
-      customer_name: '',
-      invoice_date: '',
-      due_date: '',
-      subtotal_amount: '',
-      tax_amount: '',
-      total_amount: '',
-      amount_paid: '',
-      payment_link_url: '',
-      erp_docname: '',
-      ...defaultValues,
-    },
+    defaultValues: { ...INVOICE_DEFAULT_VALUES, ...defaultValues },
   });
 
   function handleSubmit(values: FormValues) {
@@ -88,131 +221,7 @@ export function InvoiceSnapshotReviewForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="invoice_number"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Invoice Number</FormLabel>
-                <FormControl>
-                  <Input placeholder="INV-2026-001" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="customer_name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Customer Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="Customer name" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="invoice_date"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Invoice Date</FormLabel>
-                <FormControl>
-                  <Input type="date" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="due_date"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Due Date</FormLabel>
-                <FormControl>
-                  <Input type="date" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="status"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Status</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="submitted">Submitted</SelectItem>
-                    <SelectItem value="paid">Paid</SelectItem>
-                    <SelectItem value="overdue">Overdue</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="erp_docname"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>ERP Doc Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="ERPNext document reference" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          {AMOUNT_FIELDS.map(({ name, label }) => (
-            <FormField
-              key={name}
-              control={form.control}
-              name={name}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{label}</FormLabel>
-                  <FormControl>
-                    <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          ))}
-          <FormField
-            control={form.control}
-            name="payment_link_url"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Payment Link URL</FormLabel>
-                <FormControl>
-                  <Input type="url" placeholder="https://..." {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        <div className="flex justify-end">
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? 'Saving...' : 'Save Invoice Snapshot'}
-          </Button>
-        </div>
+        <InvoiceSnapshotFields form={form} isLoading={isLoading} />
       </form>
     </Form>
   );

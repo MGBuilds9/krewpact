@@ -19,17 +19,10 @@ export function safeString() {
 
 /** Optional safe string. */
 export function optionalSafeString() {
-  return z
-    .string()
-    .transform(sanitizeText)
-    .optional();
+  return z.string().transform(sanitizeText).optional();
 }
 
 /** Nullable optional safe string. */
 export function nullableSafeString() {
-  return z
-    .string()
-    .transform(sanitizeText)
-    .optional()
-    .nullable();
+  return z.string().transform(sanitizeText).optional().nullable();
 }

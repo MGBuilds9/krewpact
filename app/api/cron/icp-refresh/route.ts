@@ -7,10 +7,10 @@
  * { "path": "/api/cron/icp-refresh", "schedule": "0 6 * * 1" }  — Monday 6 AM UTC
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { verifyCronAuth } from '@/lib/api/cron-auth';
 import { createCronLogger } from '@/lib/api/cron-logger';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import {
   type AccountForICP,
   generateICPsFromAccounts,
@@ -153,10 +153,53 @@ async function persistMatchRows(
   }
 }
 
-export async function GET(req: NextRequest): Promise<NextResponse> {
-  const { authorized } = await verifyCronAuth(req);
-  if (!authorized) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+async function rescoreLeadsAgainstIcps(
+  supabase: ServiceClient,
+  icpsUpdated: number,
+): Promise<number | NextResponse> {
+  const { data: activeICPs, error: icpFetchErr } = await supabase
+    .from('ideal_client_profiles')
+    .select(
+      'id, name, industry_match, geography_match, project_value_range, project_types, repeat_rate_weight, top_sources',
+    )
+    .eq('is_active', true);
 
+  if (icpFetchErr) {
+    logger.error('ICP refresh: failed to fetch active ICPs', { error: icpFetchErr.message });
+    return NextResponse.json({
+      success: true,
+      icps_updated: icpsUpdated,
+      leads_rescored: 0,
+      warning: 'Lead re-scoring skipped: ' + icpFetchErr.message,
+    });
+  }
+  if (!activeICPs || activeICPs.length === 0) {
+    return NextResponse.json({ success: true, icps_updated: icpsUpdated, leads_rescored: 0 });
+  }
+
+  const { data: rawLeads, error: leadsErr } = await supabase
+    .from('leads')
+    .select('id, industry, city, province, source_channel, enrichment_data')
+    .is('deleted_at', null)
+    .not('status', 'in', '("won","lost")');
+
+  if (leadsErr) {
+    logger.error('ICP refresh: failed to fetch leads', { error: leadsErr.message });
+    return NextResponse.json({
+      success: true,
+      icps_updated: icpsUpdated,
+      leads_rescored: 0,
+      warning: 'Lead re-scoring skipped: ' + leadsErr.message,
+    });
+  }
+
+  const leads = (rawLeads ?? []) as Array<Record<string, unknown>>;
+  const matchRows = buildLeadMatchRows(leads, activeICPs as Array<Record<string, unknown>>);
+  await persistMatchRows(supabase, matchRows, leads);
+  return leads.length;
+}
+
+export const GET = withApiRoute({ auth: 'cron' }, async () => {
   const cronLog = createCronLogger('icp-refresh');
   const supabase = createServiceClient();
 
@@ -198,47 +241,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   }
   const icpsUpdated = newProfiles.length;
 
-  const { data: activeICPs, error: icpFetchErr } = await supabase
-    .from('ideal_client_profiles')
-    .select(
-      'id, name, industry_match, geography_match, project_value_range, project_types, repeat_rate_weight, top_sources',
-    )
-    .eq('is_active', true);
+  const leadsRescored = await rescoreLeadsAgainstIcps(supabase, icpsUpdated);
+  if (leadsRescored instanceof NextResponse) return leadsRescored;
 
-  if (icpFetchErr) {
-    logger.error('ICP refresh: failed to fetch active ICPs', { error: icpFetchErr.message });
-    return NextResponse.json({
-      success: true,
-      icps_updated: icpsUpdated,
-      leads_rescored: 0,
-      warning: 'Lead re-scoring skipped: ' + icpFetchErr.message,
-    });
-  }
-  if (!activeICPs || activeICPs.length === 0) {
-    return NextResponse.json({ success: true, icps_updated: icpsUpdated, leads_rescored: 0 });
-  }
-
-  const { data: rawLeads, error: leadsErr } = await supabase
-    .from('leads')
-    .select('id, industry, city, province, source_channel, enrichment_data')
-    .is('deleted_at', null)
-    .not('status', 'in', '("won","lost")');
-
-  if (leadsErr) {
-    logger.error('ICP refresh: failed to fetch leads', { error: leadsErr.message });
-    return NextResponse.json({
-      success: true,
-      icps_updated: icpsUpdated,
-      leads_rescored: 0,
-      warning: 'Lead re-scoring skipped: ' + leadsErr.message,
-    });
-  }
-
-  const leads = (rawLeads ?? []) as Array<Record<string, unknown>>;
-  const matchRows = buildLeadMatchRows(leads, activeICPs as Array<Record<string, unknown>>);
-  await persistMatchRows(supabase, matchRows, leads);
-
-  const leadsRescored = leads.length;
   logger.info('ICP refresh complete', { icps_updated: icpsUpdated, leads_rescored: leadsRescored });
   const result = {
     success: true,
@@ -248,4 +253,4 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   };
   await cronLog.success({ icps_updated: icpsUpdated, leads_rescored: leadsRescored });
   return NextResponse.json(result);
-}
+});

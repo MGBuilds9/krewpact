@@ -32,11 +32,7 @@ export default function ProgressPageContent() {
         </div>
       )}
       {!loading && !error && data && (
-        <ProgressTimeline
-          milestones={data.milestones}
-          tasks={data.tasks}
-          summary={data.summary}
-        />
+        <ProgressTimeline milestones={data.milestones} tasks={data.tasks} summary={data.summary} />
       )}
     </div>
   );

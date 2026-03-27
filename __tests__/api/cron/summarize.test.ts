@@ -21,11 +21,17 @@ vi.mock('@/lib/integrations/enrichment-summarizer', () => ({
 }));
 
 vi.mock('@/lib/logger', () => ({
-  logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  logger: {
+    warn: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+    child: vi.fn().mockReturnThis(),
+  },
 }));
 
 import { makeRequest, mockSupabaseClient } from '@/__tests__/helpers';
-import { POST } from '@/app/api/cron/summarize/route';
+import { GET } from '@/app/api/cron/summarize/route';
 import { summarizeEnrichment } from '@/lib/integrations/enrichment-summarizer';
 import { logger } from '@/lib/logger';
 import { createServiceClient } from '@/lib/supabase/server';
@@ -60,10 +66,10 @@ describe('POST /api/cron/summarize', () => {
   it('returns 401 when cron auth fails', async () => {
     mockVerifyCronAuth.mockResolvedValue({ authorized: false });
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns success with zero processed when no leads', async () => {
@@ -71,7 +77,7 @@ describe('POST /api/cron/summarize', () => {
       mockSupabaseClient({ tables: { leads: { data: [], error: null } } }) as never,
     );
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);
@@ -86,7 +92,7 @@ describe('POST /api/cron/summarize', () => {
       }) as never,
     );
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(500);
     const body = await res.json();
     expect(body.error).toBe('DB connection error');
@@ -99,7 +105,7 @@ describe('POST /api/cron/summarize', () => {
       }) as never,
     );
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);
@@ -116,7 +122,7 @@ describe('POST /api/cron/summarize', () => {
       }) as never,
     );
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);
@@ -134,7 +140,7 @@ describe('POST /api/cron/summarize', () => {
     );
     mockSummarize.mockResolvedValue(null as unknown as string);
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);
@@ -150,7 +156,7 @@ describe('POST /api/cron/summarize', () => {
     );
     mockSummarize.mockRejectedValue(new Error('Gemini rate limit exceeded'));
 
-    const res = await POST(makeCronRequest());
+    const res = await GET(makeCronRequest());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);

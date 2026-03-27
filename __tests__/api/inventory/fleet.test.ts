@@ -39,7 +39,7 @@ import {
   mockSupabaseClient,
   resetFixtureCounter,
 } from '@/__tests__/helpers';
-import { DELETE,GET as GET_ID, PATCH } from '@/app/api/inventory/fleet/[id]/route';
+import { DELETE, GET as GET_ID, PATCH } from '@/app/api/inventory/fleet/[id]/route';
 import { GET, POST } from '@/app/api/inventory/fleet/route';
 import { isFeatureEnabled } from '@/lib/feature-flags';
 import {

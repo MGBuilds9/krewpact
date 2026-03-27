@@ -45,21 +45,20 @@ describe('POST /api/projects/[id]/change-orders/[coId]/approve', () => {
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
     mockGetRoles.mockResolvedValue([]);
-    const { POST } = await import(
-      '@/app/api/projects/[id]/change-orders/[coId]/approve/route'
+    const { POST } = await import('@/app/api/projects/[id]/change-orders/[coId]/approve/route');
+    const res = await POST(
+      makeRequest(`/api/projects/${PROJECT_ID}/change-orders/${CO_ID}/approve`),
+      {
+        params: Promise.resolve({ id: PROJECT_ID, coId: CO_ID }),
+      },
     );
-    const res = await POST(makeRequest(`/api/projects/${PROJECT_ID}/change-orders/${CO_ID}/approve`), {
-      params: Promise.resolve({ id: PROJECT_ID, coId: CO_ID }),
-    });
     expect(res.status).toBe(401);
   });
 
   it('returns 403 without required role', async () => {
     mockClerkAuth(mockAuth);
     mockGetRoles.mockResolvedValue(['field_supervisor']);
-    const { POST } = await import(
-      '@/app/api/projects/[id]/change-orders/[coId]/approve/route'
-    );
+    const { POST } = await import('@/app/api/projects/[id]/change-orders/[coId]/approve/route');
     const res = await POST(
       makeJsonRequest(`/api/projects/${PROJECT_ID}/change-orders/${CO_ID}/approve`, {}),
       { params: Promise.resolve({ id: PROJECT_ID, coId: CO_ID }) },
@@ -73,9 +72,7 @@ describe('POST /api/projects/[id]/change-orders/[coId]/approve', () => {
     const updated = { id: CO_ID, status: 'approved', approved_at: '2026-03-25T10:00:00Z' };
     mockApprove.mockResolvedValueOnce({ success: true, changeOrder: updated });
 
-    const { POST } = await import(
-      '@/app/api/projects/[id]/change-orders/[coId]/approve/route'
-    );
+    const { POST } = await import('@/app/api/projects/[id]/change-orders/[coId]/approve/route');
     const res = await POST(
       makeJsonRequest(`/api/projects/${PROJECT_ID}/change-orders/${CO_ID}/approve`, {
         comment: 'Looks good',
@@ -97,9 +94,7 @@ describe('POST /api/projects/[id]/change-orders/[coId]/approve', () => {
       code: 'INVALID_STATE',
     });
 
-    const { POST } = await import(
-      '@/app/api/projects/[id]/change-orders/[coId]/approve/route'
-    );
+    const { POST } = await import('@/app/api/projects/[id]/change-orders/[coId]/approve/route');
     const res = await POST(
       makeJsonRequest(`/api/projects/${PROJECT_ID}/change-orders/${CO_ID}/approve`, {}),
       { params: Promise.resolve({ id: PROJECT_ID, coId: CO_ID }) },
@@ -110,11 +105,13 @@ describe('POST /api/projects/[id]/change-orders/[coId]/approve', () => {
   it('returns 404 when CO not found', async () => {
     mockClerkAuth(mockAuth);
     mockGetRoles.mockResolvedValue(['executive']);
-    mockApprove.mockResolvedValueOnce({ success: false, error: 'Change order not found', code: 'NOT_FOUND' });
+    mockApprove.mockResolvedValueOnce({
+      success: false,
+      error: 'Change order not found',
+      code: 'NOT_FOUND',
+    });
 
-    const { POST } = await import(
-      '@/app/api/projects/[id]/change-orders/[coId]/approve/route'
-    );
+    const { POST } = await import('@/app/api/projects/[id]/change-orders/[coId]/approve/route');
     const res = await POST(
       makeJsonRequest(`/api/projects/${PROJECT_ID}/change-orders/${CO_ID}/approve`, {}),
       { params: Promise.resolve({ id: PROJECT_ID, coId: CO_ID }) },
@@ -131,21 +128,20 @@ describe('POST /api/projects/[id]/change-orders/[coId]/reject', () => {
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
     mockGetRoles.mockResolvedValue([]);
-    const { POST } = await import(
-      '@/app/api/projects/[id]/change-orders/[coId]/reject/route'
+    const { POST } = await import('@/app/api/projects/[id]/change-orders/[coId]/reject/route');
+    const res = await POST(
+      makeRequest(`/api/projects/${PROJECT_ID}/change-orders/${CO_ID}/reject`),
+      {
+        params: Promise.resolve({ id: PROJECT_ID, coId: CO_ID }),
+      },
     );
-    const res = await POST(makeRequest(`/api/projects/${PROJECT_ID}/change-orders/${CO_ID}/reject`), {
-      params: Promise.resolve({ id: PROJECT_ID, coId: CO_ID }),
-    });
     expect(res.status).toBe(401);
   });
 
   it('returns 400 when reason is missing', async () => {
     mockClerkAuth(mockAuth);
     mockGetRoles.mockResolvedValue(['project_manager']);
-    const { POST } = await import(
-      '@/app/api/projects/[id]/change-orders/[coId]/reject/route'
-    );
+    const { POST } = await import('@/app/api/projects/[id]/change-orders/[coId]/reject/route');
     const res = await POST(
       makeJsonRequest(`/api/projects/${PROJECT_ID}/change-orders/${CO_ID}/reject`, {}),
       { params: Promise.resolve({ id: PROJECT_ID, coId: CO_ID }) },
@@ -159,9 +155,7 @@ describe('POST /api/projects/[id]/change-orders/[coId]/reject', () => {
     const updated = { id: CO_ID, status: 'rejected', reason: 'Out of scope' };
     mockReject.mockResolvedValueOnce({ success: true, changeOrder: updated });
 
-    const { POST } = await import(
-      '@/app/api/projects/[id]/change-orders/[coId]/reject/route'
-    );
+    const { POST } = await import('@/app/api/projects/[id]/change-orders/[coId]/reject/route');
     const res = await POST(
       makeJsonRequest(`/api/projects/${PROJECT_ID}/change-orders/${CO_ID}/reject`, {
         reason: 'Out of scope',
@@ -177,9 +171,7 @@ describe('POST /api/projects/[id]/change-orders/[coId]/reject', () => {
   it('returns 403 without required role', async () => {
     mockClerkAuth(mockAuth);
     mockGetRoles.mockResolvedValue(['estimator']);
-    const { POST } = await import(
-      '@/app/api/projects/[id]/change-orders/[coId]/reject/route'
-    );
+    const { POST } = await import('@/app/api/projects/[id]/change-orders/[coId]/reject/route');
     const res = await POST(
       makeJsonRequest(`/api/projects/${PROJECT_ID}/change-orders/${CO_ID}/reject`, {
         reason: 'No budget',
@@ -198,9 +190,8 @@ describe('POST /api/projects/[id]/change-orders/[coId]/submit-to-client', () => 
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
     mockGetRoles.mockResolvedValue([]);
-    const { POST } = await import(
-      '@/app/api/projects/[id]/change-orders/[coId]/submit-to-client/route'
-    );
+    const { POST } =
+      await import('@/app/api/projects/[id]/change-orders/[coId]/submit-to-client/route');
     const res = await POST(
       makeRequest(`/api/projects/${PROJECT_ID}/change-orders/${CO_ID}/submit-to-client`),
       { params: Promise.resolve({ id: PROJECT_ID, coId: CO_ID }) },
@@ -214,9 +205,8 @@ describe('POST /api/projects/[id]/change-orders/[coId]/submit-to-client', () => 
     const updated = { id: CO_ID, status: 'client_review' };
     mockSubmitToClient.mockResolvedValueOnce({ success: true, changeOrder: updated });
 
-    const { POST } = await import(
-      '@/app/api/projects/[id]/change-orders/[coId]/submit-to-client/route'
-    );
+    const { POST } =
+      await import('@/app/api/projects/[id]/change-orders/[coId]/submit-to-client/route');
     const res = await POST(
       makeRequest(`/api/projects/${PROJECT_ID}/change-orders/${CO_ID}/submit-to-client`),
       { params: Promise.resolve({ id: PROJECT_ID, coId: CO_ID }) },
@@ -230,9 +220,8 @@ describe('POST /api/projects/[id]/change-orders/[coId]/submit-to-client', () => 
   it('returns 403 without required role', async () => {
     mockClerkAuth(mockAuth);
     mockGetRoles.mockResolvedValue(['field_supervisor']);
-    const { POST } = await import(
-      '@/app/api/projects/[id]/change-orders/[coId]/submit-to-client/route'
-    );
+    const { POST } =
+      await import('@/app/api/projects/[id]/change-orders/[coId]/submit-to-client/route');
     const res = await POST(
       makeRequest(`/api/projects/${PROJECT_ID}/change-orders/${CO_ID}/submit-to-client`),
       { params: Promise.resolve({ id: PROJECT_ID, coId: CO_ID }) },
@@ -249,9 +238,8 @@ describe('POST /api/projects/[id]/change-orders/[coId]/submit-to-client', () => 
       code: 'INVALID_STATE',
     });
 
-    const { POST } = await import(
-      '@/app/api/projects/[id]/change-orders/[coId]/submit-to-client/route'
-    );
+    const { POST } =
+      await import('@/app/api/projects/[id]/change-orders/[coId]/submit-to-client/route');
     const res = await POST(
       makeRequest(`/api/projects/${PROJECT_ID}/change-orders/${CO_ID}/submit-to-client`),
       { params: Promise.resolve({ id: PROJECT_ID, coId: CO_ID }) },

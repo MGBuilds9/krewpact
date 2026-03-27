@@ -26,9 +26,7 @@ function TableLayout({ rows = 5, columns = 4 }: { rows?: number; columns?: numbe
         </div>
         {Array.from({ length: rows }).map((_, rowIdx) => (
           // eslint-disable-next-line react/no-array-index-key
-          <div key={rowIdx}
-            className={cn('flex gap-3 px-4 py-3', rowIdx < rows - 1 && 'border-b')}
-          >
+          <div key={rowIdx} className={cn('flex gap-3 px-4 py-3', rowIdx < rows - 1 && 'border-b')}>
             {Array.from({ length: columns }).map((_, colIdx) => (
               // eslint-disable-next-line react/no-array-index-key
               <Skeleton key={colIdx} className="h-4 flex-1" />
@@ -105,9 +103,7 @@ function DashboardLayout({ rows = 4, columns = 4 }: { rows?: number; columns?: n
       <div className="rounded-md border">
         {Array.from({ length: rows }).map((_, rowIdx) => (
           // eslint-disable-next-line react/no-array-index-key
-          <div key={rowIdx}
-            className={cn('flex gap-3 px-4 py-3', rowIdx < rows - 1 && 'border-b')}
-          >
+          <div key={rowIdx} className={cn('flex gap-3 px-4 py-3', rowIdx < rows - 1 && 'border-b')}>
             <Skeleton className="h-4 flex-1" />
             <Skeleton className="h-4 flex-1" />
             <Skeleton className="h-4 w-24" />

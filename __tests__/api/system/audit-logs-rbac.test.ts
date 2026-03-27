@@ -38,9 +38,7 @@ describe('RBAC: GET /api/system/audit-logs', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('returns 403 for non-platform_admin', async () => {
-    mockRequireRole.mockResolvedValue(
-      NextResponse.json({ error: 'Forbidden' }, { status: 403 }),
-    );
+    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Forbidden' }, { status: 403 }));
     const { GET } = await import('@/app/api/system/audit-logs/route');
     const res = await GET(makeRequest('/api/system/audit-logs'));
     expect(res.status).toBe(403);

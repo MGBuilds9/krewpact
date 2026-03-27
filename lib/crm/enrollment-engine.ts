@@ -71,7 +71,9 @@ async function processSequenceEnrollment(
       .maybeSingle();
 
     if (existError) {
-      result.errors.push(`Sequence ${sequence.id}: Failed to check existing enrollment: ${existError.message}`);
+      result.errors.push(
+        `Sequence ${sequence.id}: Failed to check existing enrollment: ${existError.message}`,
+      );
       return;
     }
     if (existing) return;
@@ -85,7 +87,9 @@ async function processSequenceEnrollment(
       .maybeSingle();
 
     if (stepError) {
-      result.errors.push(`Sequence ${sequence.id}: Failed to fetch first step: ${stepError.message}`);
+      result.errors.push(
+        `Sequence ${sequence.id}: Failed to fetch first step: ${stepError.message}`,
+      );
       return;
     }
 
@@ -103,7 +107,9 @@ async function processSequenceEnrollment(
     });
 
     if (insertError) {
-      result.errors.push(`Sequence ${sequence.id}: Failed to create enrollment: ${insertError.message}`);
+      result.errors.push(
+        `Sequence ${sequence.id}: Failed to create enrollment: ${insertError.message}`,
+      );
       return;
     }
 

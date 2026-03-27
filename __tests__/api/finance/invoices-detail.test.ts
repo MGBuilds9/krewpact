@@ -65,7 +65,9 @@ describe('GET /api/finance/invoices/[id]', () => {
 
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
-    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
+    mockRequireRole.mockResolvedValue(
+      NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
+    );
     const res = await GET(makeRequest('/api/finance/invoices/inv-1'), makeContext('inv-1'));
     expect(res.status).toBe(401);
   });
@@ -118,7 +120,9 @@ describe('PATCH /api/finance/invoices/[id]', () => {
 
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
-    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
+    mockRequireRole.mockResolvedValue(
+      NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
+    );
     const res = await PATCH(
       makeJsonRequest('/api/finance/invoices/inv-1', { status: 'paid' }, 'PATCH'),
       makeContext('inv-1'),

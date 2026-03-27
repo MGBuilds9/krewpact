@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
 import { logger } from '@/lib/logger';
-import { createUserClientSafe } from '@/lib/supabase/server';
+import { createUserClientSafe, UserClientType } from '@/lib/supabase/server';
 
 const bulkEnrollSchema = z.object({
   sequence_id: z.string().uuid(),
@@ -34,12 +34,24 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const { sequence_id, lead_ids } = parsed.data;
 
-  const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
+  const result = await createUserClientSafe();
+  if (result.error) return result.error;
 
-  // Fetch sequence and its first step in parallel
+  return performBulkEnroll(result.client, sequence_id, lead_ids);
+}
+
+async function performBulkEnroll(
+  supabase: UserClientType,
+  sequence_id: string,
+  lead_ids: string[],
+): Promise<NextResponse> {
   const [seqResult, stepResult] = await Promise.all([
-    supabase.from('sequences').select('id').eq('id', sequence_id).eq('status', 'active').maybeSingle(),
+    supabase
+      .from('sequences')
+      .select('id')
+      .eq('id', sequence_id)
+      .eq('status', 'active')
+      .maybeSingle(),
     supabase
       .from('sequence_steps')
       .select('step_number, delay_days, delay_hours')
@@ -56,7 +68,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   if (!seqResult.data) {
     return NextResponse.json({ error: 'Sequence not found or inactive' }, { status: 404 });
   }
-
   if (stepResult.error) {
     logger.error('Bulk enroll: failed to fetch first step', {
       sequence_id,
@@ -75,7 +86,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const nextStepAt = now.toISOString();
   const enrolledAt = new Date().toISOString();
 
-  // Fetch already-active enrollments to skip duplicates
   const { data: existing, error: existError } = await supabase
     .from('sequence_enrollments')
     .select('lead_id')
@@ -88,7 +98,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: existError.message }, { status: 500 });
   }
 
-  const alreadyEnrolled = new Set((existing ?? []).map((e) => e.lead_id as string));
+  const alreadyEnrolled = new Set(
+    (existing ?? []).map((e: Record<string, unknown>) => e.lead_id as string),
+  );
   const toEnroll = lead_ids.filter((id) => !alreadyEnrolled.has(id));
 
   if (toEnroll.length === 0) {
@@ -105,7 +117,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }));
 
   const { error: insertError } = await supabase.from('sequence_enrollments').insert(rows);
-
   if (insertError) {
     logger.error('Bulk enroll: insert failed', { sequence_id, error: insertError });
     return NextResponse.json({ error: insertError.message }, { status: 500 });
@@ -116,7 +127,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     enrolled: toEnroll.length,
     skipped: alreadyEnrolled.size,
   });
-
   return NextResponse.json({
     enrolled: toEnroll.length,
     skipped: alreadyEnrolled.size,

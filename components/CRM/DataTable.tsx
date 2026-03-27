@@ -46,6 +46,173 @@ function getSortIcon(field: string, currentSort?: SortState | null) {
   return currentSort.direction === 'asc' ? ArrowUp : ArrowDown;
 }
 
+interface TableBodyRowsProps<T> {
+  rows: ReturnType<ReturnType<typeof useReactTable<T>>['getRowModel']>['rows'];
+  columns: ColumnDef<T, unknown>[];
+  onRowClick?: (row: T) => void;
+}
+
+function TableBodyRows<T>({ rows, columns, onRowClick }: TableBodyRowsProps<T>) {
+  if (!rows.length) {
+    return (
+      <TableRow>
+        <TableCell colSpan={columns.length} className="h-24 text-center">
+          No results.
+        </TableCell>
+      </TableRow>
+    );
+  }
+  return (
+    <>
+      {rows.map((row) => (
+        <TableRow
+          key={row.id}
+          className={cn(onRowClick && 'cursor-pointer')}
+          onClick={() => onRowClick?.(row.original)}
+          role={onRowClick ? 'button' : undefined}
+          tabIndex={onRowClick ? 0 : undefined}
+          onKeyDown={
+            onRowClick
+              ? (e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onRowClick(row.original);
+                  }
+                }
+              : undefined
+          }
+        >
+          {row.getVisibleCells().map((cell) => (
+            <TableCell key={cell.id}>
+              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+            </TableCell>
+          ))}
+        </TableRow>
+      ))}
+    </>
+  );
+}
+
+interface TablePaginationProps {
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  startRow: number;
+  endRow: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
+}
+
+function TablePagination({
+  total,
+  page,
+  pageSize,
+  totalPages,
+  startRow,
+  endRow,
+  onPageChange,
+  onPageSizeChange,
+}: TablePaginationProps) {
+  return (
+    <div className="flex items-center justify-between px-2">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <span>{total > 0 ? `Showing ${startRow}-${endRow} of ${total}` : 'No results'}</span>
+        <Select
+          value={String(pageSize)}
+          onValueChange={(val) => {
+            onPageSizeChange(Number(val));
+            onPageChange(0);
+          }}
+        >
+          <SelectTrigger className="h-8 w-[70px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="10">10</SelectItem>
+            <SelectItem value="25">25</SelectItem>
+            <SelectItem value="50">50</SelectItem>
+          </SelectContent>
+        </Select>
+        <span>per page</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-muted-foreground">
+          Page {totalPages > 0 ? page + 1 : 0} of {totalPages}
+        </span>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(page - 1)}
+          disabled={page === 0}
+          aria-label="Previous page"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(page + 1)}
+          disabled={page >= totalPages - 1}
+          aria-label="Next page"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+interface TableHeaderGroupsProps<T> {
+  headerGroups: ReturnType<ReturnType<typeof useReactTable<T>>['getHeaderGroups']>;
+  currentSort?: SortState | null;
+  onSortChange?: (sort: SortState | null) => void;
+  onHeaderClick: (columnId: string) => void;
+}
+
+function TableHeaderGroups<T>({
+  headerGroups,
+  currentSort,
+  onSortChange,
+  onHeaderClick,
+}: TableHeaderGroupsProps<T>) {
+  return (
+    <>
+      {headerGroups.map((headerGroup) => (
+        <TableRow key={headerGroup.id}>
+          {headerGroup.headers.map((header) => {
+            const canSort = onSortChange && header.column.getCanSort();
+            const SortIcon = getSortIcon(header.column.id, currentSort);
+            const ariaSortVal =
+              currentSort?.field === header.column.id
+                ? currentSort.direction === 'asc'
+                  ? 'ascending'
+                  : 'descending'
+                : canSort
+                  ? 'none'
+                  : undefined;
+            return (
+              <TableHead
+                key={header.id}
+                className={cn(canSort && 'cursor-pointer select-none')}
+                onClick={() => canSort && onHeaderClick(header.column.id)}
+                aria-sort={ariaSortVal}
+              >
+                <div className="flex items-center gap-1">
+                  {header.isPlaceholder
+                    ? null
+                    : flexRender(header.column.columnDef.header, header.getContext())}
+                  {canSort && <SortIcon className="h-3.5 w-3.5 text-muted-foreground" />}
+                </div>
+              </TableHead>
+            );
+          })}
+        </TableRow>
+      ))}
+    </>
+  );
+}
+
 export function DataTable<T>({
   columns,
   data,
@@ -96,120 +263,32 @@ export function DataTable<T>({
       <div className="overflow-x-auto rounded-md border">
         <Table>
           <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  const canSort = onSortChange && header.column.getCanSort();
-                  const SortIcon = getSortIcon(header.column.id, currentSort);
-                  const ariaSortVal =
-                    currentSort?.field === header.column.id
-                      ? currentSort.direction === 'asc'
-                        ? 'ascending'
-                        : 'descending'
-                      : canSort
-                        ? 'none'
-                        : undefined;
-                  return (
-                    <TableHead
-                      key={header.id}
-                      className={cn(canSort && 'cursor-pointer select-none')}
-                      onClick={() => canSort && handleHeaderClick(header.column.id)}
-                      aria-sort={ariaSortVal}
-                    >
-                      <div className="flex items-center gap-1">
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(header.column.columnDef.header, header.getContext())}
-                        {canSort && <SortIcon className="h-3.5 w-3.5 text-muted-foreground" />}
-                      </div>
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
+            <TableHeaderGroups
+              headerGroups={table.getHeaderGroups()}
+              currentSort={currentSort}
+              onSortChange={onSortChange}
+              onHeaderClick={handleHeaderClick}
+            />
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  className={cn(onRowClick && 'cursor-pointer')}
-                  onClick={() => onRowClick?.(row.original)}
-                  role={onRowClick ? 'button' : undefined}
-                  tabIndex={onRowClick ? 0 : undefined}
-                  onKeyDown={
-                    onRowClick
-                      ? (e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            onRowClick(row.original);
-                          }
-                        }
-                      : undefined
-                  }
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
+            <TableBodyRows
+              rows={table.getRowModel().rows}
+              columns={columns}
+              onRowClick={onRowClick}
+            />
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-between px-2">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span>{total > 0 ? `Showing ${startRow}-${endRow} of ${total}` : 'No results'}</span>
-          <Select
-            value={String(pageSize)}
-            onValueChange={(val) => {
-              onPageSizeChange(Number(val));
-              onPageChange(0);
-            }}
-          >
-            <SelectTrigger className="h-8 w-[70px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="10">10</SelectItem>
-              <SelectItem value="25">25</SelectItem>
-              <SelectItem value="50">50</SelectItem>
-            </SelectContent>
-          </Select>
-          <span>per page</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">
-            Page {totalPages > 0 ? page + 1 : 0} of {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onPageChange(page - 1)}
-            disabled={page === 0}
-            aria-label="Previous page"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onPageChange(page + 1)}
-            disabled={page >= totalPages - 1}
-            aria-label="Next page"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+      <TablePagination
+        total={total}
+        page={page}
+        pageSize={pageSize}
+        totalPages={totalPages}
+        startRow={startRow}
+        endRow={endRow}
+        onPageChange={onPageChange}
+        onPageSizeChange={onPageSizeChange}
+      />
     </div>
   );
 }

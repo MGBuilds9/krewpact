@@ -75,6 +75,43 @@ function NavButton({
   );
 }
 
+function DrawerUserCard({
+  user,
+  userName,
+  userRole,
+}: {
+  user: ReturnType<typeof useUser>['user'];
+  userName: string;
+  userRole: string;
+}) {
+  return (
+    <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-xl p-4 mb-6 border border-primary/20">
+      <div className="flex items-center gap-3 mb-3">
+        <Avatar className="h-12 w-12">
+          <AvatarImage src={user?.imageUrl || ''} alt={userName} />
+          <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-primary-foreground font-semibold text-lg">
+            {userName
+              .split(' ')
+              .map((n) => n[0])
+              .join('')}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex-1 min-w-0">
+          <div className="font-semibold text-foreground truncate">{userName}</div>
+          <div className="text-sm text-muted-foreground capitalize">{userRole}</div>
+          <div className="text-xs text-muted-foreground truncate">
+            {user?.primaryEmailAddress?.emailAddress}
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shadow-sm" />
+        <span className="text-sm text-green-600 dark:text-green-400 font-medium">Online</span>
+      </div>
+    </div>
+  );
+}
+
 export function MobileNavigationDrawer({ isOpen, onClose }: MobileNavigationDrawerProps) {
   const pathname = usePathname();
   const { push: orgPush } = useOrgRouter();
@@ -122,30 +159,7 @@ export function MobileNavigationDrawer({ isOpen, onClose }: MobileNavigationDraw
           </div>
         </SheetHeader>
         <div className="flex-1 overflow-y-auto px-6">
-          <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-xl p-4 mb-6 border border-primary/20">
-            <div className="flex items-center gap-3 mb-3">
-              <Avatar className="h-12 w-12">
-                <AvatarImage src={user?.imageUrl || ''} alt={userName} />
-                <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-primary-foreground font-semibold text-lg">
-                  {userName
-                    .split(' ')
-                    .map((n) => n[0])
-                    .join('')}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <div className="font-semibold text-foreground truncate">{userName}</div>
-                <div className="text-sm text-muted-foreground capitalize">{userRole}</div>
-                <div className="text-xs text-muted-foreground truncate">
-                  {user?.primaryEmailAddress?.emailAddress}
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shadow-sm" />
-              <span className="text-sm text-green-600 dark:text-green-400 font-medium">Online</span>
-            </div>
-          </div>
+          <DrawerUserCard user={user} userName={userName} userRole={userRole} />
           <div className="mb-6">
             <DivisionSelector className="w-full" />
           </div>

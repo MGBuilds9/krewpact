@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { verifyCronAuth } from '@/lib/api/cron-auth';
 import { createCronLogger } from '@/lib/api/cron-logger';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { summarizeEnrichment } from '@/lib/integrations/enrichment-summarizer';
 import { logger } from '@/lib/logger';
 import { createServiceClient } from '@/lib/supabase/server';
@@ -9,12 +9,7 @@ import { createServiceClient } from '@/lib/supabase/server';
 const BATCH_SIZE = 15; // Process 15 per call (Gemini rate limit)
 const FETCH_LIMIT = 200; // Fetch enough to find all pending leads
 
-export async function POST(req: NextRequest): Promise<NextResponse> {
-  const { authorized } = await verifyCronAuth(req);
-  if (!authorized) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
+export const GET = withApiRoute({ auth: 'cron' }, async () => {
   const cronLog = createCronLogger('summarize');
   const supabase = createServiceClient();
 
@@ -93,7 +88,4 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   };
   await cronLog.success({ processed, errors, total: needsSummary.length });
   return NextResponse.json(result);
-}
-
-// Vercel Cron Jobs sends GET requests
-export { POST as GET };
+});

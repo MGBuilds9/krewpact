@@ -76,10 +76,11 @@ export interface QuarterlyData {
   revenue: number;
 }
 
-export function calculateSeasonalAnalysis(
-  opportunities: DivisionOpportunity[],
-): QuarterlyData[] {
-  const quarterMap = new Map<string, { created: number; won: number; lost: number; revenue: number }>();
+export function calculateSeasonalAnalysis(opportunities: DivisionOpportunity[]): QuarterlyData[] {
+  const quarterMap = new Map<
+    string,
+    { created: number; won: number; lost: number; revenue: number }
+  >();
 
   for (const opp of opportunities) {
     const date = new Date(opp.created_at);
