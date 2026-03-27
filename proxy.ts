@@ -83,6 +83,7 @@ export const proxy = clerkMiddleware(
   },
   {
     authorizedParties: [
+      'https://krewpact.ca',
       'https://hub.krewpact.ca',
       'https://app.krewpact.ca',
       'https://portal.krewpact.ca',
