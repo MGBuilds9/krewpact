@@ -7,7 +7,7 @@ KrewPact deploys automatically via Vercel on push to `main`.
 | Item                | Value                                                 |
 | ------------------- | ----------------------------------------------------- |
 | **Vercel Project**  | `prj_zoqw9AOSqaUcuKfgzpBFWcIbvRiX` (team: MKG Builds) |
-| **Production URLs** | `krewpact.vercel.app`, `hub.mdmgroupinc.ca`           |
+| **Production URLs** | `krewpact.vercel.app`, `krewpact.ca`                  |
 | **Region**          | `iad1` (US East)                                      |
 | **Framework**       | Next.js 16 (App Router)                               |
 
@@ -38,7 +38,7 @@ This is instant — no rebuild required. The previous deployment is served immed
 ## Health Check
 
 ```bash
-curl https://hub.mdmgroupinc.ca/api/health
+curl https://krewpact.ca/api/health
 # Expected: { "status": "ok", "checks": { "supabase": "ok" } }
 ```
 
@@ -137,7 +137,7 @@ All seed scripts require `SUPABASE_SERVICE_ROLE_KEY` (bypasses RLS).
 
 | Environment    | Purpose     | URL                     | Branch      |
 | -------------- | ----------- | ----------------------- | ----------- |
-| **Production** | Live app    | `hub.mdmgroupinc.ca`    | `main`      |
+| **Production** | Live app    | `krewpact.ca`           | `main`      |
 | **Preview**    | PR review   | `*.vercel.app` (per-PR) | PR branches |
 | **Local**      | Development | `localhost:3000`        | any         |
 

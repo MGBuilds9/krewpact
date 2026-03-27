@@ -4,11 +4,11 @@
 
 KrewPact uses three layers of observability:
 
-| Layer | Tool | Purpose |
-|-------|------|---------|
-| Uptime | BetterStack | External ping every 60s, incident alerting |
-| Errors | Sentry | Stack traces, release tracking, performance |
-| Analytics | Vercel Analytics + Speed Insights | Web vitals, traffic, function duration |
+| Layer     | Tool                              | Purpose                                     |
+| --------- | --------------------------------- | ------------------------------------------- |
+| Uptime    | BetterStack                       | External ping every 60s, incident alerting  |
+| Errors    | Sentry                            | Stack traces, release tracking, performance |
+| Analytics | Vercel Analytics + Speed Insights | Web vitals, traffic, function duration      |
 
 ---
 
@@ -18,12 +18,12 @@ Dashboard: https://betterstack.com — login with team account.
 
 ### Recommended Monitors
 
-| Monitor Name | URL | Check Interval | Alert After |
-|---|---|---|---|
-| KrewPact Production | `https://hub.mdmgroupinc.ca/api/health` | 1 min | 2 consecutive failures |
-| KrewPact Health Deep | `https://hub.mdmgroupinc.ca/api/health?deep=true` | 5 min | 1 failure |
-| Supabase Pooler | _(set to Supabase project URL TCP check)_ | 1 min | 2 failures |
-| ERPNext Tunnel | `https://<erpnext-tunnel-url>/api/method/frappe.auth.get_logged_user` | 5 min | 1 failure |
+| Monitor Name         | URL                                                                   | Check Interval | Alert After            |
+| -------------------- | --------------------------------------------------------------------- | -------------- | ---------------------- |
+| KrewPact Production  | `https://krewpact.ca/api/health`                                      | 1 min          | 2 consecutive failures |
+| KrewPact Health Deep | `https://krewpact.ca/api/health?deep=true`                            | 5 min          | 1 failure              |
+| Supabase Pooler      | _(set to Supabase project URL TCP check)_                             | 1 min          | 2 failures             |
+| ERPNext Tunnel       | `https://<erpnext-tunnel-url>/api/method/frappe.auth.get_logged_user` | 5 min          | 1 failure              |
 
 ### Expected Health Response
 
@@ -92,6 +92,7 @@ Enabled in `app/layout.tsx` via `<Analytics />` and `<SpeedInsights />`.
 Access: Vercel Dashboard → KrewPact project → Analytics tab.
 
 Key metrics to watch:
+
 - **Web Vitals:** LCP < 2.5s, FID < 100ms, CLS < 0.1
 - **Function duration:** P99 < 10s (Vercel limit: 60s for Pro)
 - **Error rate:** < 0.1% of requests
@@ -100,18 +101,18 @@ Key metrics to watch:
 
 ## Health Check Deep — Checks Reference
 
-| Check Key | What it validates | Degraded means |
-|---|---|---|
-| `supabase` | DB connectivity (divisions query) | DB unreachable |
-| `supabase_data` | Row counts (divisions > 0) | Seed data missing |
-| `redis` | Upstash set/get/del round-trip | Rate limiting broken |
-| `clerk` | Clerk API reachable | Auth provider issue |
-| `auth_bridge` | Clerk + Supabase env vars present | RLS will fail |
-| `erpnext` | ERPNext tunnel auth call | ERP data unavailable |
-| `qstash` | QStash topics endpoint | Background jobs stalled |
-| `qstash_signing_keys` | Signing keys env vars present | Queue webhooks will fail |
-| `sentry` | SENTRY_DSN env var is valid URL | Errors not captured |
-| `crons` | Last cron run statuses | Scheduled jobs failing |
+| Check Key             | What it validates                 | Degraded means           |
+| --------------------- | --------------------------------- | ------------------------ |
+| `supabase`            | DB connectivity (divisions query) | DB unreachable           |
+| `supabase_data`       | Row counts (divisions > 0)        | Seed data missing        |
+| `redis`               | Upstash set/get/del round-trip    | Rate limiting broken     |
+| `clerk`               | Clerk API reachable               | Auth provider issue      |
+| `auth_bridge`         | Clerk + Supabase env vars present | RLS will fail            |
+| `erpnext`             | ERPNext tunnel auth call          | ERP data unavailable     |
+| `qstash`              | QStash topics endpoint            | Background jobs stalled  |
+| `qstash_signing_keys` | Signing keys env vars present     | Queue webhooks will fail |
+| `sentry`              | SENTRY_DSN env var is valid URL   | Errors not captured      |
+| `crons`               | Last cron run statuses            | Scheduled jobs failing   |
 
 ---
 
@@ -125,6 +126,6 @@ npm run health:deep      # All checks
 Or via curl against production:
 
 ```bash
-curl -s https://hub.mdmgroupinc.ca/api/health | jq .
-curl -s "https://hub.mdmgroupinc.ca/api/health?deep=true" | jq .checks
+curl -s https://krewpact.ca/api/health | jq .
+curl -s "https://krewpact.ca/api/health?deep=true" | jq .checks
 ```

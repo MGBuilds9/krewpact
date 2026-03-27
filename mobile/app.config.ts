@@ -65,7 +65,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   extra: {
     clerkPublishableKey: process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY,
-    apiBaseUrl: process.env.EXPO_PUBLIC_API_BASE_URL ?? 'https://hub.mdmgroupinc.ca',
+    apiBaseUrl: process.env.EXPO_PUBLIC_API_BASE_URL ?? 'https://krewpact.ca',
     eas: {
       projectId: 'd97fb73b-9d4b-4ebd-bd42-a3b705aa56bb',
     },

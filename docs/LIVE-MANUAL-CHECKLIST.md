@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-26
 **Tester:** Michael Guirguis (platform_admin)
-**URL:** https://hub.mdmgroupinc.ca (production) or http://localhost:3000 (dev)
+**URL:** https://krewpact.ca (production) or http://localhost:3000 (dev)
 **Email safety:** All dev-mode emails route to michael.guirguis@mdmgroupinc.ca
 
 ---
@@ -170,14 +170,14 @@
 
 ## Issues Found
 
-| # | Page | Issue | Severity | Screenshot |
-|---|------|-------|----------|------------|
-| 1 |      |       |          |            |
-| 2 |      |       |          |            |
-| 3 |      |       |          |            |
+| #   | Page | Issue | Severity | Screenshot |
+| --- | ---- | ----- | -------- | ---------- |
+| 1   |      |       |          |            |
+| 2   |      |       |          |            |
+| 3   |      |       |          |            |
 
 ## Sign-Off
 
-| Role | Name | Date | Notes |
-|------|------|------|-------|
-| Product Owner | Michael Guirguis | | |
+| Role          | Name             | Date | Notes |
+| ------------- | ---------------- | ---- | ----- |
+| Product Owner | Michael Guirguis |      |       |

@@ -111,8 +111,8 @@
 ### Medium Priority
 
 1. **BetterStack monitors not configured** — account exists, user to set up 2 monitors:
-   - `GET https://hub.mdmgroupinc.ca/api/health` (1min)
-   - `GET https://hub.mdmgroupinc.ca/api/health?deep=true` (5min)
+   - `GET https://krewpact.ca/api/health` (1min)
+   - `GET https://krewpact.ca/api/health?deep=true` (5min)
 
 2. **Sentry not in deep health check** — if DSN is wrong, errors silently disappear
 

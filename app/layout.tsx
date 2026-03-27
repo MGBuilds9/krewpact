@@ -46,7 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <ClerkProvider
       allowedRedirectOrigins={[
-        'https://hub.mdmgroupinc.ca',
+        'https://hub.krewpact.ca',
         'https://dashboard.mdmgroupinc.ca',
         'https://portal.mdmgroupinc.ca',
         ...(appUrl !== 'https://app.krewpact.com' ? [appUrl] : []),

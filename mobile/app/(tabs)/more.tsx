@@ -87,7 +87,7 @@ export default function MoreScreen() {
           onPress={() =>
             Alert.alert(
               'Safety Reports',
-              'Safety reports are available on the full web app at hub.mdmgroupinc.ca',
+              'Safety reports are available on the full web app at krewpact.ca',
             )
           }
         />
@@ -98,7 +98,7 @@ export default function MoreScreen() {
           onPress={() =>
             Alert.alert(
               'Expenses',
-              'Expense management is available on the full web app at hub.mdmgroupinc.ca',
+              'Expense management is available on the full web app at krewpact.ca',
             )
           }
         />

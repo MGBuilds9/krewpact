@@ -225,7 +225,7 @@ The architecture is multi-tenant ready. Every construction company above ~$10M r
 - **Codebase:** GitHub (private) — `MDM-Projects/krewpact`
 - **Database:** Supabase project `owfjnfdqpzpvzvdobpxa`
 - **ERPNext:** `erp-api.mdmgroupinc.ca` (via Cloudflare Tunnel)
-- **Auth:** Clerk org at `hub.mdmgroupinc.ca`
+- **Auth:** Clerk org at `krewpact.ca`
 
 ---
 

@@ -2,15 +2,15 @@
 
 ## Infrastructure: PASS
 
-| Check             | Status             | Evidence                                                                                |
-| ----------------- | ------------------ | --------------------------------------------------------------------------------------- |
-| Vercel deployment | READY              | Node 24, Turbopack, commit `a160d6f` deploying                                          |
-| Domain            | hub.mdmgroupinc.ca | DNS resolves, HTTPS active                                                              |
-| Health endpoint   | OK                 | `{"status":"ok","checks":{"supabase":"ok"}}`                                            |
-| Security headers  | ALL PRESENT        | CSP, HSTS, X-Frame-Options, Referrer-Policy, Permissions-Policy, X-Content-Type-Options |
-| Clerk auth        | PRODUCTION         | M365 SSO configured for @mdmgroupinc.ca                                                 |
-| Sentry            | CLEAN              | 0 issues in last 7 days, project `javascript-nextjs` under `mkg-builds`                 |
-| Supabase          | OK                 | Health check confirms connectivity                                                      |
+| Check             | Status      | Evidence                                                                                |
+| ----------------- | ----------- | --------------------------------------------------------------------------------------- |
+| Vercel deployment | READY       | Node 24, Turbopack, commit `a160d6f` deploying                                          |
+| Domain            | krewpact.ca | DNS resolves, HTTPS active                                                              |
+| Health endpoint   | OK          | `{"status":"ok","checks":{"supabase":"ok"}}`                                            |
+| Security headers  | ALL PRESENT | CSP, HSTS, X-Frame-Options, Referrer-Policy, Permissions-Policy, X-Content-Type-Options |
+| Clerk auth        | PRODUCTION  | M365 SSO configured for @mdmgroupinc.ca                                                 |
+| Sentry            | CLEAN       | 0 issues in last 7 days, project `javascript-nextjs` under `mkg-builds`                 |
+| Supabase          | OK          | Health check confirms connectivity                                                      |
 
 ## User Experience: ISSUES FOUND
 
