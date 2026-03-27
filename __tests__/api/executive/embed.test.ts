@@ -4,16 +4,31 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 // Set QSTASH_TOKEN before any imports so the route module reads it
 process.env.QSTASH_TOKEN = 'test-qstash-token';
 
+vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createServiceClient: vi.fn() }));
 vi.mock('@/lib/knowledge/embeddings', () => ({
   chunkDocument: vi.fn(),
   embedChunks: vi.fn(),
 }));
+vi.mock('@/lib/logger', () => ({
+  logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn(), child: vi.fn().mockReturnThis() },
+}));
+vi.mock('@/lib/api/rate-limit', () => ({
+  rateLimit: vi.fn().mockResolvedValue({ success: true }),
+  rateLimitResponse: vi.fn(),
+}));
+vi.mock('@/lib/request-context', () => ({
+  generateRequestId: vi.fn().mockReturnValue('test-request-id'),
+  requestContext: { run: vi.fn().mockImplementation((_ctx, fn) => fn()) },
+}));
+
+import { auth } from '@clerk/nextjs/server';
 
 import { POST } from '@/app/api/executive/knowledge/embed/route';
 import { chunkDocument, embedChunks } from '@/lib/knowledge/embeddings';
 import { createServiceClient } from '@/lib/supabase/server';
 
+const mockAuth = vi.mocked(auth);
 const mockCreateServiceClient = vi.mocked(createServiceClient);
 const mockChunkDocument = vi.mocked(chunkDocument);
 const mockEmbedChunks = vi.mocked(embedChunks);
@@ -31,13 +46,17 @@ describe('POST /api/executive/knowledge/embed', () => {
     vi.clearAllMocks();
   });
 
-  it('returns 401 without auth', async () => {
-    vi.doMock('@clerk/nextjs/server', () => ({
-      auth: vi.fn().mockResolvedValue({ userId: null, sessionClaims: null }),
-    }));
+  it('returns 403 without auth (embed uses public mode + internal role check)', async () => {
+    mockAuth.mockResolvedValue({
+      userId: null,
+      sessionClaims: null,
+    } as any as Awaited<ReturnType<typeof auth>>);
 
     const res = await POST(makeRequest({ stagingId: 'abc' }));
-    expect(res.status).toBe(401);
+    // embed route uses auth:'public' + internal verifyEmbedAuth which throws forbidden() on no userId
+    expect(res.status).toBe(403);
+    const body = await res.json();
+    expect(body.error.code).toBe('FORBIDDEN');
   });
 
   it('returns 404 if staging doc not found', async () => {

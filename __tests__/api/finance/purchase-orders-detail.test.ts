@@ -7,6 +7,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
+vi.mock('@/lib/logger', () => ({
+  logger: {
+    warn: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+    child: vi.fn().mockReturnThis(),
+  },
+}));
 
 import { auth } from '@clerk/nextjs/server';
 
@@ -50,6 +59,8 @@ describe('GET /api/finance/purchase-orders/[id]', () => {
     mockClerkUnauth(mockAuth);
     const res = await GET(makeRequest('/api/finance/purchase-orders/po-1'), makeContext('po-1'));
     expect(res.status).toBe(401);
+    const body = await res.json();
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns PO by id', async () => {
@@ -94,6 +105,8 @@ describe('PATCH /api/finance/purchase-orders/[id]', () => {
       makeContext('po-1'),
     );
     expect(res.status).toBe(401);
+    const body = await res.json();
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('updates PO fields', async () => {

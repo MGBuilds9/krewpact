@@ -18,6 +18,15 @@ vi.mock('@/lib/api/org', () => ({
   getOrgIdFromAuth: vi.fn().mockResolvedValue('mdm-group'),
 }));
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
+vi.mock('@/lib/logger', () => ({
+  logger: {
+    warn: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+    child: vi.fn().mockReturnThis(),
+  },
+}));
 
 const mockFrom = vi.fn();
 vi.mock('@/lib/supabase/server', () => ({

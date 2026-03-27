@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+// Mock Clerk auth (required by withApiRoute import even though auth: 'public' skips calling it)
+vi.mock('@clerk/nextjs/server', () => ({
+  auth: vi.fn(),
+}));
+
 // svix mock — must be hoisted so the route module sees it on import
 const mockVerify = vi.fn();
 vi.mock('svix', () => ({
@@ -15,25 +20,25 @@ vi.mock('@/lib/supabase/server', () => ({
   createServiceClient: vi.fn(),
 }));
 
-vi.mock('@/lib/api/rate-limit', () => ({
-  rateLimit: vi.fn().mockResolvedValue({ success: true }),
-  rateLimitResponse: vi.fn().mockReturnValue(new Response('Rate limited', { status: 429 })),
-}));
-
 vi.mock('@/lib/logger', () => ({
-  logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  logger: {
+    warn: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+    child: vi.fn().mockReturnThis(),
+  },
 }));
 
 import { headers } from 'next/headers';
+import { NextRequest } from 'next/server';
 import { Webhook } from 'svix';
 
 import { POST } from '@/app/api/webhooks/clerk/route';
-import { rateLimit } from '@/lib/api/rate-limit';
 import { createServiceClient } from '@/lib/supabase/server';
 
 const mockHeaders = vi.mocked(headers);
 const mockCreateServiceClient = vi.mocked(createServiceClient);
-const mockRateLimit = vi.mocked(rateLimit);
 const MockWebhookCtor = vi.mocked(Webhook);
 
 const WEBHOOK_SECRET = 'whsec_test-clerk-webhook-secret';
@@ -49,7 +54,7 @@ function makeHeadersMap(overrides: Record<string, string> = {}) {
 }
 
 function makeClerkRequest(body: Record<string, unknown>) {
-  return new Request('http://localhost/api/webhooks/clerk', {
+  return new NextRequest(new URL('http://localhost/api/webhooks/clerk'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -109,12 +114,11 @@ describe('POST /api/webhooks/clerk', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.CLERK_WEBHOOK_SECRET = WEBHOOK_SECRET;
-    mockRateLimit.mockResolvedValue({ success: true } as never);
     mockHeaders.mockResolvedValue(makeHeadersMap() as never);
     // Restore Webhook constructor mock (clearAllMocks resets it)
     MockWebhookCtor.mockImplementation(function () {
       return { verify: mockVerify };
-    } as never);
+    });
     // Default: svix verify returns the parsed event body (success path)
     mockVerify.mockImplementation((body: string) => JSON.parse(body));
   });
@@ -124,18 +128,6 @@ describe('POST /api/webhooks/clerk', () => {
   });
 
   // ── Auth / signature ────────────────────────────────────────────
-
-  it('returns 429 when rate limit is exceeded', async () => {
-    mockRateLimit.mockResolvedValue({
-      success: false,
-      limit: 100,
-      remaining: 0,
-      reset: Date.now(),
-    } as never);
-
-    const res = await POST(makeClerkRequest(TEST_USER_CREATED));
-    expect(res.status).toBe(429);
-  });
 
   it('returns 500 when CLERK_WEBHOOK_SECRET is not set', async () => {
     delete process.env.CLERK_WEBHOOK_SECRET;

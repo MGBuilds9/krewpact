@@ -6,18 +6,31 @@ vi.mock('@/lib/supabase/server', () => ({
   createUserClientSafe: vi.fn(),
   createServiceClient: vi.fn(),
 }));
+vi.mock('@/lib/api/org', () => ({
+  getOrgIdFromAuth: vi.fn().mockResolvedValue('org-1'),
+  getKrewpactRoles: vi.fn(),
+}));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
+}));
+vi.mock('@/lib/logger', () => ({
+  logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn(), child: vi.fn().mockReturnThis() },
+}));
+vi.mock('@/lib/request-context', () => ({
+  generateRequestId: vi.fn().mockReturnValue('test-request-id'),
+  requestContext: { run: vi.fn().mockImplementation((_ctx, fn) => fn()) },
 }));
 
 import { auth } from '@clerk/nextjs/server';
 
 import { GET, POST } from '@/app/api/executive/staging/route';
+import { getKrewpactRoles } from '@/lib/api/org';
 import { createServiceClient } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateServiceClient = vi.mocked(createServiceClient);
+const mockGetKrewpactRoles = vi.mocked(getKrewpactRoles);
 
 function makeRequest(params: Record<string, string> = {}, body?: unknown) {
   const url = new URL('http://localhost/api/executive/staging');
@@ -66,6 +79,8 @@ describe('GET /api/executive/staging', () => {
 
     const res = await GET(makeRequest());
     expect(res.status).toBe(401);
+    const body = await res.json();
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns 403 when user lacks executive role', async () => {
@@ -77,11 +92,12 @@ describe('GET /api/executive/staging', () => {
         krewpact_user_id: 'user_123',
       },
     } as unknown as Awaited<ReturnType<typeof auth>>);
+    mockGetKrewpactRoles.mockResolvedValue(['project_manager']);
 
     const res = await GET(makeRequest());
     expect(res.status).toBe(403);
     const body = await res.json();
-    expect(body.error).toContain('Forbidden');
+    expect(body.error.message).toContain('Forbidden');
   });
 
   it('returns 200 with staging documents for executive role', async () => {
@@ -98,6 +114,7 @@ describe('GET /api/executive/staging', () => {
         krewpact_org_id: 'org-1',
       },
     } as unknown as Awaited<ReturnType<typeof auth>>);
+    mockGetKrewpactRoles.mockResolvedValue(['executive']);
 
     const docs = [
       { id: 'doc-1', title: 'SOP Alpha', status: 'pending_review', org_id: 'org-1' },
@@ -138,6 +155,7 @@ describe('POST /api/executive/staging', () => {
         krewpact_user_id: 'user_exec',
       },
     } as unknown as Awaited<ReturnType<typeof auth>>);
+    mockGetKrewpactRoles.mockResolvedValue(['executive']);
 
     const res = await POST(
       makeRequest({}, { title: 'Test Doc', raw_content: 'content', source_type: 'upload' }),
@@ -159,6 +177,7 @@ describe('POST /api/executive/staging', () => {
         krewpact_org_id: 'org-1',
       },
     } as unknown as Awaited<ReturnType<typeof auth>>);
+    mockGetKrewpactRoles.mockResolvedValue(['platform_admin']);
 
     const newDoc = {
       id: 'doc-new',
@@ -193,6 +212,7 @@ describe('POST /api/executive/staging', () => {
         krewpact_user_id: 'user_admin',
       },
     } as unknown as Awaited<ReturnType<typeof auth>>);
+    mockGetKrewpactRoles.mockResolvedValue(['platform_admin']);
 
     const res = await POST(
       makeRequest({}, { title: '', raw_content: 'content', source_type: 'upload' }),

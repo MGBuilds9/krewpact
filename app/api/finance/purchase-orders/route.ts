@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { requireRole } from '@/lib/api/org';
 import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { poSnapshotSchema } from '@/lib/validators/finance';
 
@@ -20,23 +20,16 @@ const createSchema = poSnapshotSchema.extend({
   project_id: z.string().uuid(),
 });
 
-export async function GET(req: NextRequest) {
+export const GET = withApiRoute({ querySchema }, async ({ req, query }) => {
   const authResult = await requireRole(FINANCE_ROLES);
   if (authResult instanceof NextResponse) return authResult;
-  const { userId } = authResult;
 
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-  const params = Object.fromEntries(req.nextUrl.searchParams);
-  const parsed = querySchema.safeParse(params);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-
-  const { project_id, status } = parsed.data;
+  const { project_id, status } = query as z.infer<typeof querySchema>;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
-  let query = supabase
+  let dbQuery = supabase
     .from('po_snapshots')
     /* excluded from list: snapshot_payload */
     .select(
@@ -46,31 +39,28 @@ export async function GET(req: NextRequest) {
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 
-  if (project_id) query = query.eq('project_id', project_id);
-  if (status) query = query.eq('status', status);
+  if (project_id) dbQuery = dbQuery.eq('project_id', project_id);
+  if (status) dbQuery = dbQuery.eq('status', status);
 
-  const { data, error, count } = await query;
+  const { data, error, count } = await dbQuery;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   return NextResponse.json(paginatedResponse(data, count, limit, offset));
-}
+});
 
-export async function POST(req: NextRequest) {
+export const POST = withApiRoute({ bodySchema: createSchema }, async ({ body }) => {
   const authResult = await requireRole(FINANCE_ROLES);
   if (authResult instanceof NextResponse) return authResult;
-  const { userId } = authResult;
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-  const body = await req.json();
-  const parsed = createSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
   const { client: supabase, error: authError } = await createUserClientSafe();
-
   if (authError) return authError;
-  const { data, error } = await supabase.from('po_snapshots').insert(parsed.data).select().single();
+
+  const { data, error } = await supabase
+    .from('po_snapshots')
+    .insert(body as z.infer<typeof createSchema>)
+    .select()
+    .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data, { status: 201 });
-}
+});

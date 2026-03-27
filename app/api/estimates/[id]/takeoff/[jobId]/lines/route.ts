@@ -1,25 +1,16 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
 import { getKrewpactUserId } from '@/lib/api/org';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { logger } from '@/lib/logger';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { reviewDraftLinesSchema } from '@/lib/validators/takeoff';
 
-type RouteContext = { params: Promise<{ id: string; jobId: string }> };
-
 /**
  * GET /api/estimates/:id/takeoff/:jobId/lines — Draft lines for a completed job.
  */
-export async function GET(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id, jobId } = await context.params;
+export const GET = withApiRoute({}, async ({ params }) => {
+  const { id, jobId } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -35,19 +26,13 @@ export async function GET(req: NextRequest, context: RouteContext) {
   }
 
   return NextResponse.json(lines ?? []);
-}
+});
 
 /**
  * PATCH /api/estimates/:id/takeoff/:jobId/lines — Bulk update review_status.
  */
-export async function PATCH(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id, jobId } = await context.params;
+export const PATCH = withApiRoute({}, async ({ req, params }) => {
+  const { id, jobId } = params;
 
   let body: unknown;
   try {
@@ -89,4 +74,4 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
   }
 
   return NextResponse.json({ updated_count: updated?.length ?? 0 });
-}
+});

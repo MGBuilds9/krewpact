@@ -17,6 +17,16 @@ vi.mock('@/lib/api/org', () => ({
   getKrewpactRoles: vi.fn(),
 }));
 
+vi.mock('@/lib/logger', () => ({
+  logger: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
+    child: vi.fn().mockReturnThis(),
+  },
+}));
+
 import { auth } from '@clerk/nextjs/server';
 
 import {
@@ -45,7 +55,7 @@ describe('GET /api/admin/sync/status', () => {
     const res = await GET(makeRequest('/api/admin/sync/status'));
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns aggregated stats for all entity types', async () => {

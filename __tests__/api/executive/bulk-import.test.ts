@@ -6,9 +6,20 @@ const mockReadFile = vi.hoisted(() => vi.fn());
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createServiceClient: vi.fn() }));
+vi.mock('@/lib/api/org', () => ({
+  getOrgIdFromAuth: vi.fn().mockResolvedValue('org-1'),
+  getKrewpactRoles: vi.fn(),
+}));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
+}));
+vi.mock('@/lib/logger', () => ({
+  logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn(), child: vi.fn().mockReturnThis() },
+}));
+vi.mock('@/lib/request-context', () => ({
+  generateRequestId: vi.fn().mockReturnValue('test-request-id'),
+  requestContext: { run: vi.fn().mockImplementation((_ctx, fn) => fn()) },
 }));
 vi.mock('fs/promises', () => ({
   default: { readFile: mockReadFile, stat: mockStat },
@@ -19,10 +30,12 @@ vi.mock('fs/promises', () => ({
 import { auth } from '@clerk/nextjs/server';
 
 import { POST } from '@/app/api/executive/staging/bulk-import/route';
+import { getKrewpactRoles } from '@/lib/api/org';
 import { createServiceClient } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateServiceClient = vi.mocked(createServiceClient);
+const mockGetKrewpactRoles = vi.mocked(getKrewpactRoles);
 
 function makeRequest(body: unknown) {
   return new NextRequest('http://localhost/api/executive/staging/bulk-import', {
@@ -46,6 +59,7 @@ function mockAdminAuth(orgId = 'org-1') {
       krewpact_org_id: orgId,
     },
   } as unknown as Awaited<ReturnType<typeof auth>>);
+  mockGetKrewpactRoles.mockResolvedValue(['platform_admin']);
 }
 
 describe('POST /api/executive/staging/bulk-import', () => {
@@ -62,11 +76,12 @@ describe('POST /api/executive/staging/bulk-import', () => {
         krewpact_user_id: 'user_exec',
       },
     } as unknown as Awaited<ReturnType<typeof auth>>);
+    mockGetKrewpactRoles.mockResolvedValue(['executive']);
 
     const res = await POST(makeRequest({ files: [{ path: '/some/file.md' }] }));
     expect(res.status).toBe(403);
     const body = await res.json();
-    expect(body.error).toContain('Forbidden');
+    expect(body.error.message).toContain('Forbidden');
   });
 
   it('returns 400 for invalid body (empty files array)', async () => {

@@ -7,7 +7,15 @@ vi.mock('@clerk/nextjs/server', () => ({
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/api/org', () => ({ getOrgIdFromAuth: vi.fn(), getKrewpactRoles: vi.fn() }));
 vi.mock('@/lib/logger', () => ({
-  logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
+  logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn(), child: vi.fn().mockReturnThis() },
+}));
+vi.mock('@/lib/api/rate-limit', () => ({
+  rateLimit: vi.fn().mockResolvedValue({ success: true }),
+  rateLimitResponse: vi.fn(),
+}));
+vi.mock('@/lib/request-context', () => ({
+  generateRequestId: vi.fn().mockReturnValue('test-request-id'),
+  requestContext: { run: vi.fn().mockImplementation((_ctx, fn) => fn()) },
 }));
 
 import { auth } from '@clerk/nextjs/server';
@@ -72,7 +80,7 @@ describe('GET /api/executive/forecast', () => {
     const res = await GET(makeRequest());
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns 403 for non-executive role', async () => {
@@ -89,7 +97,7 @@ describe('GET /api/executive/forecast', () => {
     const res = await GET(makeRequest());
     expect(res.status).toBe(403);
     const body = await res.json();
-    expect(body.error).toBe('Forbidden');
+    expect(body.error.code).toBe('FORBIDDEN');
   });
 
   it('returns 200 with 8 quarterly buckets', async () => {

@@ -15,7 +15,13 @@ vi.mock('@/lib/api/rate-limit', () => ({
 }));
 
 vi.mock('@/lib/logger', () => ({
-  logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() },
+  logger: {
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+    debug: vi.fn(),
+    child: vi.fn().mockReturnThis(),
+  },
 }));
 
 import { auth, clerkClient } from '@clerk/nextjs/server';
@@ -53,7 +59,7 @@ describe('POST /api/admin/roles/assign', () => {
     );
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns 403 when user lacks platform_admin role', async () => {
@@ -65,7 +71,7 @@ describe('POST /api/admin/roles/assign', () => {
     );
     expect(res.status).toBe(403);
     const body = await res.json();
-    expect(body.error).toBe('Forbidden');
+    expect(body.error.code).toBe('FORBIDDEN');
   });
 
   it('returns 400 for missing user_id', async () => {
@@ -77,7 +83,7 @@ describe('POST /api/admin/roles/assign', () => {
     );
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toBe('Validation failed');
+    expect(body.error.code).toBe('VALIDATION_ERROR');
   });
 
   it('returns 400 for invalid role_key', async () => {
@@ -165,6 +171,6 @@ describe('POST /api/admin/roles/assign', () => {
     );
     expect(res.status).toBe(500);
     const body = await res.json();
-    expect(body.error).toBe('Clerk unavailable');
+    expect(body.error.code).toBe('INTERNAL_ERROR');
   });
 });

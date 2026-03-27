@@ -1,9 +1,8 @@
-import { auth } from '@clerk/nextjs/server';
 import * as Sentry from '@sentry/nextjs';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
 import { getKrewpactUserId } from '@/lib/api/org';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { calculateLineTotal } from '@/lib/estimating/calculations';
 import { recalculateParentTotals } from '@/lib/estimating/totals';
 import { logger } from '@/lib/logger';
@@ -11,8 +10,6 @@ import { queue } from '@/lib/queue/client';
 import { JobType } from '@/lib/queue/types';
 import { createUserClientSafe, UserClientType } from '@/lib/supabase/server';
 import { acceptTakeoffLinesSchema } from '@/lib/validators/takeoff';
-
-type RouteContext = { params: Promise<{ id: string; jobId: string }> };
 
 interface OriginalLine {
   id: string;
@@ -100,14 +97,8 @@ function hasChanges(original: OriginalLine, submitted: SubmittedLine): boolean {
 /**
  * POST /api/estimates/:id/takeoff/:jobId/accept — Accept reviewed lines into estimate_lines.
  */
-export async function POST(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id, jobId } = await context.params;
+export const POST = withApiRoute({}, async ({ req, params }) => {
+  const { id, jobId } = params;
 
   let body: unknown;
   try {
@@ -240,4 +231,4 @@ export async function POST(req: NextRequest, context: RouteContext) {
   }
 
   return NextResponse.json({ accepted_count: parsed.data.lines.length, totals });
-}
+});

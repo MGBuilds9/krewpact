@@ -1,11 +1,11 @@
-import { auth } from '@clerk/nextjs/server';
 import { createHash } from 'crypto';
 import { readFile, stat } from 'fs/promises';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import path from 'path';
 
+import { forbidden } from '@/lib/api/errors';
 import { getKrewpactRoles, getOrgIdFromAuth } from '@/lib/api/org';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createServiceClient } from '@/lib/supabase/server';
 import { stagingBulkImportSchema } from '@/lib/validators/executive';
 
@@ -92,18 +92,12 @@ async function processOneFile(
   return { status: 'imported' };
 }
 
-export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
+export const POST = withApiRoute({}, async ({ req }) => {
   const roles = await getKrewpactRoles();
   const hasAccess = roles.some((r) => ADMIN_ROLES.includes(r));
   if (!hasAccess) {
-    return NextResponse.json({ error: 'Forbidden: platform_admin role required' }, { status: 403 });
+    throw forbidden('Forbidden: platform_admin role required');
   }
-
-  const rl = await rateLimit(req, { limit: 5, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
 
   let body: unknown;
   try {
@@ -134,4 +128,4 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json({ imported, skipped, errors, details });
-}
+});

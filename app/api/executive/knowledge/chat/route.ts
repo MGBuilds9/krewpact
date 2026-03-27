@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
+import { forbidden } from '@/lib/api/errors';
 import { getKrewpactRoles, getKrewpactUserId } from '@/lib/api/org';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { embedChunks } from '@/lib/knowledge/embeddings';
-import { logger } from '@/lib/logger';
 import { createServiceClient } from '@/lib/supabase/server';
 
 const EXECUTIVE_ROLES = ['platform_admin', 'executive'];
@@ -50,10 +51,7 @@ async function resolveSessionId(
     .select('id')
     .single();
   if (error || !newSession) {
-    logger.error('Failed to create chat session:', {
-      message: error?.message ?? 'No session returned',
-    });
-    return NextResponse.json({ error: 'Failed to create chat session' }, { status: 500 });
+    throw new Error('Failed to create chat session');
   }
   return newSession.id;
 }
@@ -61,7 +59,7 @@ async function resolveSessionId(
 async function buildKnowledgeContext(
   supabase: ServiceClient,
   message: string,
-): Promise<{ sources: ChatSource[]; contextText: string } | NextResponse> {
+): Promise<{ sources: ChatSource[]; contextText: string }> {
   const [queryEmbedding] = await embedChunks([message]);
   const { data: matches, error: rpcError } = await supabase.rpc('match_knowledge', {
     query_embedding: JSON.stringify(queryEmbedding),
@@ -69,8 +67,7 @@ async function buildKnowledgeContext(
     match_count: 5,
   });
   if (rpcError) {
-    logger.error('match_knowledge RPC failed:', { message: rpcError.message });
-    return NextResponse.json({ error: 'Knowledge search failed' }, { status: 500 });
+    throw new Error('Knowledge search failed');
   }
 
   const knowledgeMatches = (matches ?? []) as KnowledgeMatch[];
@@ -99,7 +96,7 @@ async function callOpenAI(
   systemPrompt: string,
   history: ChatMessage[],
   userMessage: string,
-): Promise<{ content: string; totalTokens: number | null } | NextResponse> {
+): Promise<{ content: string; totalTokens: number | null }> {
   const chatResponse = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -119,8 +116,7 @@ async function callOpenAI(
   });
   if (!chatResponse.ok) {
     const errorText = await chatResponse.text();
-    logger.error('OpenAI chat completion failed:', { message: errorText });
-    return NextResponse.json({ error: 'AI response generation failed' }, { status: 500 });
+    throw new Error(`OpenAI chat completion failed: ${errorText}`);
   }
   const result = await chatResponse.json();
   return {
@@ -129,67 +125,16 @@ async function callOpenAI(
   };
 }
 
-async function handleChatRequest(
-  supabase: ServiceClient,
-  sessionId: unknown,
-  krewpactUserId: string,
-  trimmedMessage: string,
-): Promise<NextResponse> {
-  const sessionResult = await resolveSessionId(supabase, sessionId, krewpactUserId, trimmedMessage);
-  if (sessionResult instanceof NextResponse) return sessionResult;
-  const currentSessionId = sessionResult;
-
-  const { data: historyRows } = await supabase
-    .from('ai_chat_messages')
-    .select('role, content')
-    .eq('session_id', currentSessionId)
-    .order('created_at', { ascending: true })
-    .limit(10);
-  const conversationHistory: ChatMessage[] = (historyRows ?? []).map(
-    (r: { role: string; content: string }) => ({ role: r.role, content: r.content }),
-  );
-
-  const contextResult = await buildKnowledgeContext(supabase, trimmedMessage);
-  if (contextResult instanceof NextResponse) return contextResult;
-  const { sources, contextText } = contextResult;
-
-  const systemPrompt = contextText
-    ? `You are an AI assistant for MDM Group executives. Answer questions using ONLY the provided context from the company knowledge base. If the context doesn't contain enough information, say so clearly.\n\nContext from knowledge base:\n---\n${contextText}\n---\n\nBe concise, accurate, and cite which documents your answer is based on.`
-    : `You are an AI assistant for MDM Group executives. No relevant documents were found in the knowledge base for this query. Let the user know and suggest they try rephrasing or ask about a topic covered in the knowledge base.`;
-
-  const aiResult = await callOpenAI(systemPrompt, conversationHistory, trimmedMessage);
-  if (aiResult instanceof NextResponse) return aiResult;
-  const { content: assistantContent, totalTokens } = aiResult;
-
-  await supabase.from('ai_chat_messages').insert([
-    { session_id: currentSessionId, role: 'user', content: trimmedMessage },
-    {
-      session_id: currentSessionId,
-      role: 'assistant',
-      content: assistantContent,
-      sources: sources.length > 0 ? sources : null,
-      token_count: totalTokens,
-    },
-  ]);
-
-  return NextResponse.json({
-    sessionId: currentSessionId,
-    message: { role: 'assistant', content: assistantContent, sources },
-  });
-}
-
-export async function POST(req: NextRequest) {
-  const { auth } = await import('@clerk/nextjs/server');
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
+export const POST = withApiRoute({}, async ({ req, logger }) => {
   const roles = await getKrewpactRoles();
-  if (!roles.some((r) => EXECUTIVE_ROLES.includes(r)))
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!roles.some((r) => EXECUTIVE_ROLES.includes(r))) {
+    throw forbidden('Forbidden');
+  }
 
   const krewpactUserId = await getKrewpactUserId();
-  if (!krewpactUserId)
+  if (!krewpactUserId) {
     return NextResponse.json({ error: 'User identity not found in session' }, { status: 400 });
+  }
 
   let body: { message?: unknown; sessionId?: unknown };
   try {
@@ -203,11 +148,52 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'message must be a non-empty string' }, { status: 400 });
   }
 
+  const trimmedMessage = message.trim();
   const supabase = await createServiceClient();
-  try {
-    return await handleChatRequest(supabase, sessionId, krewpactUserId, message.trim());
-  } catch (err: unknown) {
-    logger.error('AI chat failed:', { message: err instanceof Error ? err.message : String(err) });
-    return NextResponse.json({ error: 'Chat failed' }, { status: 500 });
-  }
-}
+
+  const resolvedSessionId = await resolveSessionId(
+    supabase,
+    sessionId,
+    krewpactUserId,
+    trimmedMessage,
+  );
+  if (resolvedSessionId instanceof NextResponse) return resolvedSessionId;
+
+  const { data: historyRows } = await supabase
+    .from('ai_chat_messages')
+    .select('role, content')
+    .eq('session_id', resolvedSessionId)
+    .order('created_at', { ascending: true })
+    .limit(10);
+  const conversationHistory: ChatMessage[] = (historyRows ?? []).map(
+    (r: { role: string; content: string }) => ({ role: r.role, content: r.content }),
+  );
+
+  const { sources, contextText } = await buildKnowledgeContext(supabase, trimmedMessage);
+
+  const systemPrompt = contextText
+    ? `You are an AI assistant for MDM Group executives. Answer questions using ONLY the provided context from the company knowledge base. If the context doesn't contain enough information, say so clearly.\n\nContext from knowledge base:\n---\n${contextText}\n---\n\nBe concise, accurate, and cite which documents your answer is based on.`
+    : `You are an AI assistant for MDM Group executives. No relevant documents were found in the knowledge base for this query. Let the user know and suggest they try rephrasing or ask about a topic covered in the knowledge base.`;
+
+  const { content: assistantContent, totalTokens } = await callOpenAI(
+    systemPrompt,
+    conversationHistory,
+    trimmedMessage,
+  );
+
+  await supabase.from('ai_chat_messages').insert([
+    { session_id: resolvedSessionId, role: 'user', content: trimmedMessage },
+    {
+      session_id: resolvedSessionId,
+      role: 'assistant',
+      content: assistantContent,
+      sources: sources.length > 0 ? sources : null,
+      token_count: totalTokens,
+    },
+  ]);
+
+  return NextResponse.json({
+    sessionId: resolvedSessionId,
+    message: { role: 'assistant', content: assistantContent, sources },
+  });
+});

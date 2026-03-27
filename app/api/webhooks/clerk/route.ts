@@ -2,7 +2,7 @@ import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { Webhook } from 'svix';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { logger } from '@/lib/logger';
 import { createServiceClient } from '@/lib/supabase/server';
 
@@ -100,10 +100,7 @@ async function handleUserDeleted(
   return null;
 }
 
-export async function POST(req: Request) {
-  const rl = await rateLimit(req, { limit: 100, window: '1 m', identifier: 'webhook:clerk' });
-  if (!rl.success) return rateLimitResponse(rl);
-
+export const POST = withApiRoute({ auth: 'public', rateLimit: false }, async ({ req }) => {
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
   if (!WEBHOOK_SECRET) {
     return NextResponse.json({ error: 'CLERK_WEBHOOK_SECRET not configured' }, { status: 500 });
@@ -127,4 +124,4 @@ export async function POST(req: Request) {
   }
 
   return NextResponse.json({ received: true });
-}
+});

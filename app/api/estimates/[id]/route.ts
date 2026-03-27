@@ -1,7 +1,7 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import type { EstimateStatus } from '@/lib/estimating/estimate-status';
 import { validateStatusTransition } from '@/lib/estimating/estimate-status';
 import { logger } from '@/lib/logger';
@@ -9,7 +9,6 @@ import { dispatchNotification } from '@/lib/notifications/dispatcher';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { estimateUpdateSchema } from '@/lib/validators/estimating';
 
-type RouteContext = { params: Promise<{ id: string }> };
 type SupabaseClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
 
 function fireApprovalNotification(record: Record<string, unknown>, id: string): void {
@@ -47,14 +46,8 @@ async function validateEstimateStatus(
   return null;
 }
 
-export async function GET(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id } = await context.params;
+export const GET = withApiRoute({}, async ({ params }) => {
+  const { id } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -72,13 +65,10 @@ export async function GET(req: NextRequest, context: RouteContext) {
   }
 
   return NextResponse.json(data);
-}
+});
 
-export async function PATCH(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const { id } = await context.params;
+export const PATCH = withApiRoute({}, async ({ req, params }) => {
+  const { id } = params;
 
   let body: unknown;
   try {
@@ -117,18 +107,15 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
   }
 
   return NextResponse.json(data);
-}
+});
 
-export async function DELETE(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const { id } = await context.params;
+export const DELETE = withApiRoute({}, async ({ params }) => {
+  const { id } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
   const { error } = await supabase.from('estimates').delete().eq('id', id);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) throw dbError(error.message);
 
   return NextResponse.json({ success: true });
-}
+});

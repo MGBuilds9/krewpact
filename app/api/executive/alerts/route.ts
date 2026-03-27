@@ -138,14 +138,10 @@ export async function GET(_req: NextRequest) {
     await fetchAlertData(supabase, now);
 
   const candidates = [
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    makeStalledDealAlert(stalledDealsResult as any, createdAt),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    makeKnowledgeQueueAlert(knowledgeQueueResult as any, createdAt),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    makeSaasRenewalAlert(saasRenewalsResult as any, createdAt),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    makeStaleProjectAlert(staleProjectsResult as any, createdAt),
+    makeStalledDealAlert(stalledDealsResult as DataResult, createdAt),
+    makeKnowledgeQueueAlert(knowledgeQueueResult as CountResult, createdAt),
+    makeSaasRenewalAlert(saasRenewalsResult as DataResult, createdAt),
+    makeStaleProjectAlert(staleProjectsResult as DataResult, createdAt),
   ];
   const alerts = candidates.filter((a): a is Alert => a !== null);
   alerts.sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]);

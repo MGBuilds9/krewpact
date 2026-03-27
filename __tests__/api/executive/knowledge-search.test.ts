@@ -1,16 +1,30 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
 vi.mock('@/lib/knowledge/embeddings', () => ({ embedChunks: vi.fn() }));
-vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() } }));
+vi.mock('@/lib/logger', () => ({
+  logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn(), child: vi.fn().mockReturnThis() },
+}));
 vi.mock('@/lib/api/org', () => ({ getKrewpactRoles: vi.fn() }));
+vi.mock('@/lib/api/rate-limit', () => ({
+  rateLimit: vi.fn().mockResolvedValue({ success: true }),
+  rateLimitResponse: vi.fn(),
+}));
+vi.mock('@/lib/request-context', () => ({
+  generateRequestId: vi.fn().mockReturnValue('test-request-id'),
+  requestContext: { run: vi.fn().mockImplementation((_ctx, fn) => fn()) },
+}));
+
+import { auth } from '@clerk/nextjs/server';
 
 import { POST } from '@/app/api/executive/knowledge/search/route';
 import { getKrewpactRoles } from '@/lib/api/org';
 import { embedChunks } from '@/lib/knowledge/embeddings';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
+const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 const mockEmbedChunks = vi.mocked(embedChunks);
 const mockGetKrewpactRoles = vi.mocked(getKrewpactRoles);
@@ -23,18 +37,12 @@ function makeRequest(body: unknown) {
   });
 }
 
-function mockAuth(userId: string | null, roles: string[] = []) {
-  vi.doMock('@clerk/nextjs/server', () => ({
-    auth: vi.fn().mockResolvedValue({
-      userId,
-      sessionClaims: userId ? { krewpact_roles: roles } : null,
-    }),
-  }));
-  if (userId) {
-    mockGetKrewpactRoles.mockResolvedValue(roles);
-  } else {
-    mockGetKrewpactRoles.mockResolvedValue([]);
-  }
+function setupAuth(userId: string | null, roles: string[] = []) {
+  mockAuth.mockResolvedValue({
+    userId,
+    sessionClaims: userId ? { krewpact_roles: roles } : null,
+  } as any as Awaited<ReturnType<typeof auth>>);
+  mockGetKrewpactRoles.mockResolvedValue(userId ? roles : []);
 }
 
 describe('POST /api/executive/knowledge/search', () => {
@@ -43,23 +51,23 @@ describe('POST /api/executive/knowledge/search', () => {
   });
 
   it('returns 401 without auth', async () => {
-    mockAuth(null);
+    setupAuth(null);
     const res = await POST(makeRequest({ query: 'test query' }));
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns 403 for non-executive role', async () => {
-    mockAuth('user-123', ['project_manager']);
+    setupAuth('user-123', ['project_manager']);
     const res = await POST(makeRequest({ query: 'test query' }));
     expect(res.status).toBe(403);
     const body = await res.json();
-    expect(body.error).toBe('Forbidden');
+    expect(body.error.code).toBe('FORBIDDEN');
   });
 
   it('returns 400 for missing query', async () => {
-    mockAuth('user-123', ['executive']);
+    setupAuth('user-123', ['executive']);
     const res = await POST(makeRequest({}));
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -67,7 +75,7 @@ describe('POST /api/executive/knowledge/search', () => {
   });
 
   it('returns 400 for empty query string', async () => {
-    mockAuth('user-123', ['executive']);
+    setupAuth('user-123', ['executive']);
     const res = await POST(makeRequest({ query: '   ' }));
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -75,7 +83,7 @@ describe('POST /api/executive/knowledge/search', () => {
   });
 
   it('returns 200 with search results', async () => {
-    mockAuth('user-123', ['executive']);
+    setupAuth('user-123', ['executive']);
 
     const fakeEmbedding = Array(1536).fill(0.1);
     mockEmbedChunks.mockResolvedValue([fakeEmbedding]);
@@ -135,7 +143,7 @@ describe('POST /api/executive/knowledge/search', () => {
   });
 
   it('respects threshold and limit params', async () => {
-    mockAuth('user-123', ['platform_admin']);
+    setupAuth('user-123', ['platform_admin']);
 
     mockEmbedChunks.mockResolvedValue([Array(1536).fill(0.5)]);
 
@@ -160,7 +168,7 @@ describe('POST /api/executive/knowledge/search', () => {
   });
 
   it('caps limit at 50', async () => {
-    mockAuth('user-123', ['executive']);
+    setupAuth('user-123', ['executive']);
 
     mockEmbedChunks.mockResolvedValue([Array(1536).fill(0.5)]);
 
@@ -183,7 +191,7 @@ describe('POST /api/executive/knowledge/search', () => {
   });
 
   it('returns empty results array when no matches', async () => {
-    mockAuth('user-123', ['executive']);
+    setupAuth('user-123', ['executive']);
 
     mockEmbedChunks.mockResolvedValue([Array(1536).fill(0.1)]);
 

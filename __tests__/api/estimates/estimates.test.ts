@@ -47,7 +47,7 @@ describe('GET /api/estimates', () => {
     const res = await GET(makeRequest('/api/estimates'));
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns estimates list', async () => {

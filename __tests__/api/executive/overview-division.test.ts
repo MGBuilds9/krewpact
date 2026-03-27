@@ -5,17 +5,28 @@ vi.mock('@clerk/nextjs/server', () => ({
   auth: vi.fn(),
 }));
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
+vi.mock('@/lib/api/org', () => ({ getKrewpactRoles: vi.fn() }));
 vi.mock('@/lib/logger', () => ({
-  logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
+  logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn(), child: vi.fn().mockReturnThis() },
+}));
+vi.mock('@/lib/api/rate-limit', () => ({
+  rateLimit: vi.fn().mockResolvedValue({ success: true }),
+  rateLimitResponse: vi.fn(),
+}));
+vi.mock('@/lib/request-context', () => ({
+  generateRequestId: vi.fn().mockReturnValue('test-request-id'),
+  requestContext: { run: vi.fn().mockImplementation((_ctx, fn) => fn()) },
 }));
 
 import { auth } from '@clerk/nextjs/server';
 
 import { GET } from '@/app/api/executive/overview/route';
+import { getKrewpactRoles } from '@/lib/api/org';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
+const mockGetKrewpactRoles = vi.mocked(getKrewpactRoles);
 
 function makeRequest(url = 'http://localhost/api/executive/overview') {
   return new NextRequest(new URL(url));
@@ -30,6 +41,7 @@ function makeExecutiveAuth() {
       krewpact_user_id: 'user_exec',
     },
   } as any as Awaited<ReturnType<typeof auth>>);
+  mockGetKrewpactRoles.mockResolvedValue(['executive']);
 }
 
 /**
@@ -105,7 +117,7 @@ describe('GET /api/executive/overview', () => {
       const res = await GET(makeRequest());
       expect(res.status).toBe(401);
       const body = await res.json();
-      expect(body.error).toBe('Unauthorized');
+      expect(body.error.code).toBe('UNAUTHORIZED');
     });
 
     it('returns 403 for non-executive role', async () => {
@@ -117,11 +129,12 @@ describe('GET /api/executive/overview', () => {
           krewpact_user_id: 'user_pm',
         },
       } as any as Awaited<ReturnType<typeof auth>>);
+      mockGetKrewpactRoles.mockResolvedValue(['project_manager']);
 
       const res = await GET(makeRequest());
       expect(res.status).toBe(403);
       const body = await res.json();
-      expect(body.error).toBe('Forbidden');
+      expect(body.error.code).toBe('FORBIDDEN');
     });
 
     it('returns cached metrics when no division param is provided', async () => {

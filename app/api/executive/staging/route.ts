@@ -1,30 +1,21 @@
-import { auth } from '@clerk/nextjs/server';
 import { createHash } from 'crypto';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
+import { dbError, forbidden } from '@/lib/api/errors';
 import { getKrewpactRoles, getOrgIdFromAuth } from '@/lib/api/org';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createServiceClient } from '@/lib/supabase/server';
 import { stagingCreateSchema } from '@/lib/validators/executive';
 
 const READ_ROLES = ['executive', 'platform_admin'];
 const WRITE_ROLES = ['platform_admin'];
 
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
+export const GET = withApiRoute({}, async ({ req }) => {
   const roles = await getKrewpactRoles();
   const hasAccess = roles.some((r) => READ_ROLES.includes(r));
   if (!hasAccess) {
-    return NextResponse.json(
-      { error: 'Forbidden: executive or platform_admin role required' },
-      { status: 403 },
-    );
+    throw forbidden('Forbidden: executive or platform_admin role required');
   }
-
-  const rl = await rateLimit(req, { limit: 30, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
 
   const { searchParams } = new URL(req.url);
   const status = searchParams.get('status') ?? 'pending_review';
@@ -54,24 +45,18 @@ export async function GET(req: NextRequest) {
     .range(offset, offset + limit - 1);
 
   if (error) {
-    return NextResponse.json({ error: 'Failed to fetch staging documents' }, { status: 500 });
+    throw dbError('Failed to fetch staging documents');
   }
 
   return NextResponse.json({ data, total: count, page, limit });
-}
+});
 
-export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
+export const POST = withApiRoute({}, async ({ req }) => {
   const roles = await getKrewpactRoles();
   const hasAccess = roles.some((r) => WRITE_ROLES.includes(r));
   if (!hasAccess) {
-    return NextResponse.json({ error: 'Forbidden: platform_admin role required' }, { status: 403 });
+    throw forbidden('Forbidden: platform_admin role required');
   }
-
-  const rl = await rateLimit(req, { limit: 20, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
 
   let body: unknown;
   try {
@@ -96,8 +81,8 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (error) {
-    return NextResponse.json({ error: 'Failed to create staging document' }, { status: 500 });
+    throw dbError('Failed to create staging document');
   }
 
   return NextResponse.json(data, { status: 201 });
-}
+});

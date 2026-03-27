@@ -1,8 +1,8 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
+import { forbidden, serverError } from '@/lib/api/errors';
 import { getKrewpactRoles } from '@/lib/api/org';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { logger } from '@/lib/logger';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
@@ -41,24 +41,15 @@ function handleAuditError(
     return NextResponse.json({ data: [], total: 0, page, pageSize });
   }
   logger.error('Failed to query audit_log', { error: error.message });
-  return NextResponse.json({ error: 'Failed to fetch audit log' }, { status: 500 });
+  throw serverError('Failed to fetch audit log');
 }
 
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
+export const GET = withApiRoute({ rateLimit: { limit: 30, window: '1 m' } }, async ({ req }) => {
   const userRoles = await getKrewpactRoles();
   const hasAccess = userRoles.some((r: unknown) => ALLOWED_ROLES.includes(String(r)));
   if (!hasAccess) {
-    return NextResponse.json(
-      { error: 'Forbidden: platform_admin or executive role required' },
-      { status: 403 },
-    );
+    throw forbidden('platform_admin or executive role required');
   }
-
-  const rl = await rateLimit(req, { limit: 30, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
 
   const url = new URL(req.url);
   const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10));
@@ -95,4 +86,4 @@ export async function GET(req: NextRequest) {
   if (error) return handleAuditError(error, page, pageSize);
 
   return NextResponse.json({ data: data ?? [], total: count ?? 0, page, pageSize });
-}
+});

@@ -1,13 +1,12 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { calculateLineTotal } from '@/lib/estimating/calculations';
 import { recalculateParentTotals } from '@/lib/estimating/totals';
 import { createUserClient, createUserClientSafe } from '@/lib/supabase/server';
 import { estimateLineUpdateSchema } from '@/lib/validators/estimating';
 
-type RouteContext = { params: Promise<{ id: string; lineId: string }> };
 type SupabaseClient = Awaited<ReturnType<typeof createUserClient>>;
 
 async function resolveLineTotal(
@@ -33,14 +32,8 @@ async function resolveLineTotal(
   return { lineTotal: calculateLineTotal(qty, cost, markup) };
 }
 
-export async function PATCH(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id, lineId } = await context.params;
+export const PATCH = withApiRoute({}, async ({ req, params }) => {
+  const { id, lineId } = params;
 
   let body: unknown;
   try {
@@ -81,19 +74,16 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 
   await recalculateParentTotals(supabase, id);
   return NextResponse.json(data);
-}
+});
 
-export async function DELETE(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const { id, lineId } = await context.params;
+export const DELETE = withApiRoute({}, async ({ params }) => {
+  const { id, lineId } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
   const { error } = await supabase.from('estimate_lines').delete().eq('id', lineId);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) throw dbError(error.message);
 
   await recalculateParentTotals(supabase, id);
   return NextResponse.json({ success: true });
-}
+});

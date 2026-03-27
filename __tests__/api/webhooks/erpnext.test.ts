@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+// Mock Clerk auth (required by withApiRoute import even though auth: 'public' skips calling it)
+vi.mock('@clerk/nextjs/server', () => ({
+  auth: vi.fn(),
+}));
+
 const mockReadSalesInvoice = vi.fn();
 const mockReadPurchaseInvoice = vi.fn();
 
@@ -16,20 +21,32 @@ vi.mock('@/lib/erp/sync-service', () => ({
   },
 }));
 
+vi.mock('@/lib/logger', () => ({
+  logger: {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    child: vi.fn().mockReturnThis(),
+  },
+}));
+
+import { NextRequest } from 'next/server';
+
 import { POST } from '@/app/api/webhooks/erpnext/route';
 
 const WEBHOOK_SECRET = 'test-erpnext-webhook-secret';
 
-function makeWebhookRequest(payload: Record<string, unknown>, secret?: string): Request {
-  const headers: Record<string, string> = {
+function makeWebhookRequest(payload: Record<string, unknown>, secret?: string): NextRequest {
+  const hdrs: Record<string, string> = {
     'Content-Type': 'application/json',
   };
   if (secret !== undefined) {
-    headers['x-webhook-secret'] = secret;
+    hdrs['x-webhook-secret'] = secret;
   }
-  return new Request('http://localhost/api/webhooks/erpnext', {
+  return new NextRequest(new URL('http://localhost/api/webhooks/erpnext'), {
     method: 'POST',
-    headers,
+    headers: hdrs,
     body: JSON.stringify(payload),
   });
 }
@@ -46,7 +63,7 @@ describe('POST /api/webhooks/erpnext', () => {
         doctype: 'Sales Invoice',
         name: 'SINV-001',
         event: 'on_update',
-      }) as never,
+      }),
     );
     expect(res.status).toBe(401);
   });
@@ -56,7 +73,7 @@ describe('POST /api/webhooks/erpnext', () => {
       makeWebhookRequest(
         { doctype: 'Sales Invoice', name: 'SINV-001', event: 'on_update' },
         'wrong-secret',
-      ) as never,
+      ),
     );
     expect(res.status).toBe(401);
   });
@@ -67,7 +84,7 @@ describe('POST /api/webhooks/erpnext', () => {
       makeWebhookRequest(
         { doctype: 'Sales Invoice', name: 'SINV-001', event: 'on_update' },
         WEBHOOK_SECRET,
-      ) as never,
+      ),
     );
     expect(res.status).toBe(500);
   });
@@ -86,7 +103,7 @@ describe('POST /api/webhooks/erpnext', () => {
       makeWebhookRequest(
         { doctype: 'Sales Invoice', name: 'SINV-001', event: 'on_update' },
         WEBHOOK_SECRET,
-      ) as never,
+      ),
     );
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -109,7 +126,7 @@ describe('POST /api/webhooks/erpnext', () => {
       makeWebhookRequest(
         { doctype: 'Purchase Invoice', name: 'PINV-001', event: 'on_submit' },
         WEBHOOK_SECRET,
-      ) as never,
+      ),
     );
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -122,7 +139,7 @@ describe('POST /api/webhooks/erpnext', () => {
       makeWebhookRequest(
         { doctype: 'Customer', name: 'CUST-001', event: 'on_update' },
         WEBHOOK_SECRET,
-      ) as never,
+      ),
     );
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -138,7 +155,7 @@ describe('POST /api/webhooks/erpnext', () => {
       makeWebhookRequest(
         { doctype: 'Project', name: 'PROJ-001', event: 'on_update' },
         WEBHOOK_SECRET,
-      ) as never,
+      ),
     );
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -151,7 +168,7 @@ describe('POST /api/webhooks/erpnext', () => {
       makeWebhookRequest(
         { doctype: 'Journal Entry', name: 'JE-001', event: 'on_submit' },
         WEBHOOK_SECRET,
-      ) as never,
+      ),
     );
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -164,7 +181,7 @@ describe('POST /api/webhooks/erpnext', () => {
       makeWebhookRequest(
         { doctype: 'Sales Invoice', name: '', event: 'on_update' },
         WEBHOOK_SECRET,
-      ) as never,
+      ),
     );
     expect(res.status).toBe(400);
   });
@@ -176,7 +193,7 @@ describe('POST /api/webhooks/erpnext', () => {
       makeWebhookRequest(
         { doctype: 'Sales Invoice', name: 'SINV-002', event: 'on_update' },
         WEBHOOK_SECRET,
-      ) as never,
+      ),
     );
     expect(res.status).toBe(500);
     const body = await res.json();

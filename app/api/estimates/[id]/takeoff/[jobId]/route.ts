@@ -1,13 +1,10 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { logger } from '@/lib/logger';
 import { createUserClientSafe, UserClientType } from '@/lib/supabase/server';
 import { takeoffEngine } from '@/lib/takeoff/client';
 import { ACTIVE_JOB_STATUSES } from '@/lib/takeoff/types';
-
-type RouteContext = { params: Promise<{ id: string; jobId: string }> };
 
 /**
  * GET /api/estimates/:id/takeoff/:jobId — Job status with backup sync.
@@ -15,14 +12,8 @@ type RouteContext = { params: Promise<{ id: string; jobId: string }> };
  * Returns the job record from Supabase. If the engine reports completion
  * but Supabase has no draft lines, syncs results from engine (backup path).
  */
-export async function GET(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id, jobId } = await context.params;
+export const GET = withApiRoute({}, async ({ params }) => {
+  const { id, jobId } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -74,16 +65,13 @@ export async function GET(req: NextRequest, context: RouteContext) {
   }
 
   return NextResponse.json(job);
-}
+});
 
 /**
  * POST /api/estimates/:id/takeoff/:jobId — Cancel a job.
  */
-export async function POST(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const { id, jobId } = await context.params;
+export const POST = withApiRoute({}, async ({ req, params }) => {
+  const { id, jobId } = params;
 
   let body: Record<string, unknown>;
   try {
@@ -132,7 +120,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
   await supabase.from('takeoff_jobs').update({ status: 'cancelled' }).eq('id', jobId);
 
   return NextResponse.json({ success: true, status: 'cancelled' });
-}
+});
 
 // ---------------------------------------------------------------------------
 // Helpers

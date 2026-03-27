@@ -10,10 +10,10 @@
 
 import * as Sentry from '@sentry/nextjs';
 import { createHmac, timingSafeEqual } from 'crypto';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { logger } from '@/lib/logger';
 import { createServiceClient } from '@/lib/supabase/server';
 
@@ -177,10 +177,9 @@ async function insertLines(
 // Route handler
 // ============================================================
 
-function verifyWebhookRequest(
-  rawBody: string,
-  req: NextRequest,
-): NextResponse | { signature: string; secret: string } {
+export const POST = withApiRoute({ auth: 'public', rateLimit: false }, async ({ req }) => {
+  const rawBody = await req.text();
+
   const secret = process.env.TAKEOFF_ENGINE_TOKEN;
   if (!secret) {
     logger.error('Takeoff webhook: TAKEOFF_ENGINE_TOKEN not configured');
@@ -191,13 +190,19 @@ function verifyWebhookRequest(
     logger.warn('Takeoff webhook: invalid or missing signature');
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
   }
-  return { signature, secret };
-}
 
-async function processWebhookPayload(
-  supabase: ReturnType<typeof createServiceClient>,
-  parsed: TakeoffWebhookPayload,
-): Promise<NextResponse> {
+  let parsed: TakeoffWebhookPayload;
+  try {
+    parsed = TakeoffWebhookSchema.parse(JSON.parse(rawBody));
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : 'Invalid payload' },
+      { status: 400 },
+    );
+  }
+
+  const supabase = createServiceClient();
+
   const { data: jobs } = await supabase
     .from('takeoff_jobs')
     .select('id, config')
@@ -227,25 +232,4 @@ async function processWebhookPayload(
   });
 
   return NextResponse.json({ ok: true });
-}
-
-export async function POST(req: NextRequest) {
-  const rl = await rateLimit(req, { limit: 30, window: '1 m' });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const rawBody = await req.text();
-  const verified = verifyWebhookRequest(rawBody, req);
-  if (verified instanceof NextResponse) return verified;
-
-  let parsed: TakeoffWebhookPayload;
-  try {
-    parsed = TakeoffWebhookSchema.parse(JSON.parse(rawBody));
-  } catch (err) {
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Invalid payload' },
-      { status: 400 },
-    );
-  }
-
-  return processWebhookPayload(createServiceClient(), parsed);
-}
+});

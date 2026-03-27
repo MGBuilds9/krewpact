@@ -1,23 +1,12 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { estimateAlternateUpdateSchema } from '@/lib/validators/estimating';
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string; altId: string }> },
-) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id, altId } = await params;
+export const PATCH = withApiRoute({}, async ({ req, params }) => {
+  const { id, altId } = params;
 
   let body: unknown;
   try {
@@ -32,8 +21,8 @@ export async function PATCH(
   }
 
   const { client: supabase, error: authError } = await createUserClientSafe();
-
   if (authError) return authError;
+
   const { data, error } = await supabase
     .from('estimate_alternates')
     .update(parsed.data)
@@ -50,20 +39,13 @@ export async function PATCH(
   }
 
   return NextResponse.json(data);
-}
+});
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string; altId: string }> },
-) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const { id, altId } = await params;
+export const DELETE = withApiRoute({}, async ({ params }) => {
+  const { id, altId } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
+
   const { error } = await supabase
     .from('estimate_alternates')
     .delete()
@@ -71,8 +53,8 @@ export async function DELETE(
     .eq('estimate_id', id);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    throw dbError(error.message);
   }
 
   return NextResponse.json({ success: true });
-}
+});

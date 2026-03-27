@@ -19,9 +19,14 @@ vi.mock('@/lib/api/org', () => ({
 }));
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
-vi.mock('@/lib/api/rate-limit', () => ({
-  rateLimit: vi.fn().mockResolvedValue({ success: true }),
-  rateLimitResponse: vi.fn(),
+vi.mock('@/lib/logger', () => ({
+  logger: {
+    warn: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+    child: vi.fn().mockReturnThis(),
+  },
 }));
 
 import { auth } from '@clerk/nextjs/server';
@@ -54,7 +59,7 @@ describe('GET /api/finance/dashboard', () => {
     const res = await GET(makeRequest('/api/finance/dashboard'));
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns aggregated dashboard metrics', async () => {

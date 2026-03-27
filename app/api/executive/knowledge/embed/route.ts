@@ -1,26 +1,25 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
+import { forbidden, notFound, serverError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { chunkDocument, embedChunks } from '@/lib/knowledge/embeddings';
 import { createServiceClient } from '@/lib/supabase/server';
 
 type ServiceClient = Awaited<ReturnType<typeof createServiceClient>>;
 
-async function verifyEmbedAuth(req: NextRequest): Promise<true | NextResponse> {
+async function verifyEmbedAuth(req: Request): Promise<void> {
   const qstashSignature = req.headers.get('upstash-signature');
   const authHeader = req.headers.get('authorization');
 
-  if (qstashSignature || authHeader === `Bearer ${process.env.QSTASH_TOKEN}`) return true;
+  if (qstashSignature || authHeader === `Bearer ${process.env.QSTASH_TOKEN}`) return;
 
   const { auth } = await import('@clerk/nextjs/server');
   const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!userId) throw forbidden('Unauthorized');
 
   const { getKrewpactRoles } = await import('@/lib/api/org');
   const roles = await getKrewpactRoles();
-  if (!roles.includes('platform_admin'))
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-
-  return true;
+  if (!roles.includes('platform_admin')) throw forbidden('Forbidden');
 }
 
 async function upsertKnowledgeDoc(
@@ -45,9 +44,8 @@ async function upsertKnowledgeDoc(
     .single();
 }
 
-export async function POST(req: NextRequest) {
-  const authResult = await verifyEmbedAuth(req);
-  if (authResult instanceof NextResponse) return authResult;
+export const POST = withApiRoute({ auth: 'public' }, async ({ req }) => {
+  await verifyEmbedAuth(req);
 
   let body: { stagingId?: string };
   try {
@@ -69,10 +67,7 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (stagingError || !stagingDoc) {
-    return NextResponse.json(
-      { error: 'Staging document not found or not approved' },
-      { status: 404 },
-    );
+    throw notFound('Staging document');
   }
 
   const content = (stagingDoc.edited_content || stagingDoc.raw_content) as string;
@@ -85,7 +80,7 @@ export async function POST(req: NextRequest) {
     filePath,
   );
   if (upsertError || !knowledgeDoc) {
-    return NextResponse.json({ error: 'Failed to upsert knowledge doc' }, { status: 500 });
+    throw serverError('Failed to upsert knowledge doc');
   }
 
   const docId = (knowledgeDoc as { id: string }).id;
@@ -102,9 +97,8 @@ export async function POST(req: NextRequest) {
   }));
 
   const { error: insertError } = await supabase.from('knowledge_embeddings').insert(rows);
-  if (insertError)
-    return NextResponse.json({ error: 'Failed to insert embeddings' }, { status: 500 });
+  if (insertError) throw serverError('Failed to insert embeddings');
 
   await supabase.from('knowledge_staging').update({ status: 'ingested' }).eq('id', stagingId);
   return NextResponse.json({ doc_id: docId, chunks: chunks.length });
-}
+});

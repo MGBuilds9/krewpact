@@ -1,26 +1,19 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
+import { forbidden } from '@/lib/api/errors';
 import { getKrewpactRoles } from '@/lib/api/org';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 const ALLOWED_ROLES = ['platform_admin', 'executive'];
 
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
+export const GET = withApiRoute({ rateLimit: { limit: 30, window: '1 m' } }, async () => {
   const roles = await getKrewpactRoles();
   if (!roles.some((r) => ALLOWED_ROLES.includes(r))) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    throw forbidden('Forbidden');
   }
 
-  const rl = await rateLimit(req, { limit: 30, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
   const { client: supabase, error: authError } = await createUserClientSafe();
-
   if (authError) return authError;
 
   // Get counts by entity_type and status
@@ -80,4 +73,4 @@ export async function GET(req: NextRequest) {
     recent_errors: recentErrors || [],
     total_jobs: (jobs || []).length,
   });
-}
+});

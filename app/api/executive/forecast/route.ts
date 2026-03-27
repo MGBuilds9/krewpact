@@ -1,8 +1,8 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
+import { forbidden } from '@/lib/api/errors';
 import { getKrewpactRoles, getOrgIdFromAuth } from '@/lib/api/org';
-import { logger } from '@/lib/logger';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 const EXECUTIVE_ROLES = ['platform_admin', 'executive'];
@@ -65,54 +65,44 @@ function accumulateOpportunities(
   }
 }
 
-export async function GET(_req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
+export const GET = withApiRoute({}, async ({ logger }) => {
   const roles = await getKrewpactRoles();
   if (!roles.some((r) => EXECUTIVE_ROLES.includes(r))) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    throw forbidden('Forbidden');
   }
 
-  try {
-    const { client: supabase, error: authError } = await createUserClientSafe();
-    if (authError) return authError;
-    const orgId = await getOrgIdFromAuth();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
+  const orgId = await getOrgIdFromAuth();
 
-    const { data: opportunities, error } = await supabase
-      .from('opportunities')
-      .select('id, stage, estimated_revenue, expected_close_date')
-      .eq('org_id', orgId)
-      .not('stage', 'eq', 'closed_lost')
-      .not('expected_close_date', 'is', null)
-      .not('estimated_revenue', 'is', null);
+  const { data: opportunities, error } = await supabase
+    .from('opportunities')
+    .select('id, stage, estimated_revenue, expected_close_date')
+    .eq('org_id', orgId)
+    .not('stage', 'eq', 'closed_lost')
+    .not('expected_close_date', 'is', null)
+    .not('estimated_revenue', 'is', null);
 
-    if (error) {
-      logger.error('Failed to fetch opportunities for forecast', { message: error.message });
-      return NextResponse.json({ error: 'Failed to fetch forecast data' }, { status: 500 });
-    }
-
-    const now = new Date();
-    const buckets = buildForecastBuckets(now);
-    accumulateOpportunities(buckets, (opportunities ?? []) as Array<Record<string, unknown>>);
-
-    const forecast: ForecastQuarter[] = Object.entries(buckets).map(([quarter, data]) => {
-      const signed = Math.round(data.signed);
-      const weighted = Math.round(data.weighted);
-      return {
-        quarter,
-        signed,
-        weighted,
-        total: signed + weighted,
-        isCurrent: isCurrentQuarter(data.year, data.quarterIndex, now),
-      };
-    });
-
-    return NextResponse.json({ forecast });
-  } catch (err: unknown) {
-    logger.error('Forecast fetch failed', {
-      message: err instanceof Error ? err.message : String(err),
-    });
-    return NextResponse.json({ error: 'Failed to fetch forecast' }, { status: 500 });
+  if (error) {
+    logger.error('Failed to fetch opportunities for forecast', { message: error.message });
+    throw new Error('Failed to fetch forecast data');
   }
-}
+
+  const now = new Date();
+  const buckets = buildForecastBuckets(now);
+  accumulateOpportunities(buckets, (opportunities ?? []) as Array<Record<string, unknown>>);
+
+  const forecast: ForecastQuarter[] = Object.entries(buckets).map(([quarter, data]) => {
+    const signed = Math.round(data.signed);
+    const weighted = Math.round(data.weighted);
+    return {
+      quarter,
+      signed,
+      weighted,
+      total: signed + weighted,
+      isCurrent: isCurrentQuarter(data.year, data.quarterIndex, now),
+    };
+  });
+
+  return NextResponse.json({ forecast });
+});

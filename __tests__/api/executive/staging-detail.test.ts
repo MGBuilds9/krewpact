@@ -6,18 +6,31 @@ vi.mock('@/lib/supabase/server', () => ({
   createUserClientSafe: vi.fn(),
   createServiceClient: vi.fn(),
 }));
+vi.mock('@/lib/api/org', () => ({
+  getKrewpactRoles: vi.fn(),
+  getKrewpactUserId: vi.fn().mockResolvedValue('kp-user-1'),
+}));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
+}));
+vi.mock('@/lib/logger', () => ({
+  logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn(), child: vi.fn().mockReturnThis() },
+}));
+vi.mock('@/lib/request-context', () => ({
+  generateRequestId: vi.fn().mockReturnValue('test-request-id'),
+  requestContext: { run: vi.fn().mockImplementation((_ctx, fn) => fn()) },
 }));
 
 import { auth } from '@clerk/nextjs/server';
 
 import { DELETE, GET, PATCH } from '@/app/api/executive/staging/[id]/route';
+import { getKrewpactRoles } from '@/lib/api/org';
 import { createServiceClient } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateServiceClient = vi.mocked(createServiceClient);
+const mockGetKrewpactRoles = vi.mocked(getKrewpactRoles);
 
 function makeRequest(method = 'GET', body?: unknown) {
   const url = new URL('http://localhost/api/executive/staging/doc-1');
@@ -47,6 +60,7 @@ describe('GET /api/executive/staging/[id]', () => {
         krewpact_user_id: 'user_exec',
       },
     } as unknown as Awaited<ReturnType<typeof auth>>);
+    mockGetKrewpactRoles.mockResolvedValue(['executive']);
 
     const singleFn = vi.fn().mockReturnValue({ data: null, error: { code: 'PGRST116' } });
     const eqFn = vi.fn().mockReturnValue({ single: singleFn });
@@ -69,6 +83,7 @@ describe('GET /api/executive/staging/[id]', () => {
         krewpact_user_id: 'user_exec',
       },
     } as unknown as Awaited<ReturnType<typeof auth>>);
+    mockGetKrewpactRoles.mockResolvedValue(['executive']);
 
     const doc = { id: 'doc-1', title: 'Test SOP', status: 'pending_review' };
     const singleFn = vi.fn().mockReturnValue({ data: doc, error: null });
@@ -100,6 +115,7 @@ describe('PATCH /api/executive/staging/[id]', () => {
         krewpact_user_id: 'user_exec',
       },
     } as unknown as Awaited<ReturnType<typeof auth>>);
+    mockGetKrewpactRoles.mockResolvedValue(['executive']);
 
     const res = await PATCH(makeRequest('PATCH', { status: 'approved' }), { params: PARAMS });
     expect(res.status).toBe(403);
@@ -117,6 +133,7 @@ describe('PATCH /api/executive/staging/[id]', () => {
         krewpact_user_id: 'kp-user-1',
       },
     } as unknown as Awaited<ReturnType<typeof auth>>);
+    mockGetKrewpactRoles.mockResolvedValue(['platform_admin']);
 
     const updatedDoc = {
       id: 'doc-1',
@@ -150,6 +167,7 @@ describe('PATCH /api/executive/staging/[id]', () => {
         krewpact_user_id: 'user_admin',
       },
     } as unknown as Awaited<ReturnType<typeof auth>>);
+    mockGetKrewpactRoles.mockResolvedValue(['platform_admin']);
 
     const res = await PATCH(makeRequest('PATCH', { status: 'invalid_status_value' }), {
       params: PARAMS,
@@ -172,6 +190,7 @@ describe('DELETE /api/executive/staging/[id]', () => {
         krewpact_user_id: 'user_exec',
       },
     } as unknown as Awaited<ReturnType<typeof auth>>);
+    mockGetKrewpactRoles.mockResolvedValue(['executive']);
 
     const res = await DELETE(makeRequest('DELETE'), { params: PARAMS });
     expect(res.status).toBe(403);
@@ -186,6 +205,7 @@ describe('DELETE /api/executive/staging/[id]', () => {
         krewpact_user_id: 'user_admin',
       },
     } as unknown as Awaited<ReturnType<typeof auth>>);
+    mockGetKrewpactRoles.mockResolvedValue(['platform_admin']);
 
     const eqFn = vi.fn().mockReturnValue({ error: null });
     const deleteFn = vi.fn().mockReturnValue({ eq: eqFn });

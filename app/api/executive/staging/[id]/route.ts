@@ -1,31 +1,22 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
+import { dbError, forbidden, notFound } from '@/lib/api/errors';
 import { getKrewpactRoles, getKrewpactUserId } from '@/lib/api/org';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createServiceClient } from '@/lib/supabase/server';
 import { stagingUpdateSchema } from '@/lib/validators/executive';
 
 const READ_ROLES = ['executive', 'platform_admin'];
 const WRITE_ROLES = ['platform_admin'];
 
-export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export const GET = withApiRoute({}, async ({ params }) => {
+  const { id } = params;
 
   const roles = await getKrewpactRoles();
   const hasAccess = roles.some((r) => READ_ROLES.includes(r));
   if (!hasAccess) {
-    return NextResponse.json(
-      { error: 'Forbidden: executive or platform_admin role required' },
-      { status: 403 },
-    );
+    throw forbidden('Forbidden: executive or platform_admin role required');
   }
-
-  const rl = await rateLimit(req, { limit: 30, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
 
   const supabase = await createServiceClient();
   const { data, error } = await supabase
@@ -35,26 +26,20 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     .single();
 
   if (error || !data) {
-    return NextResponse.json({ error: 'Document not found' }, { status: 404 });
+    throw notFound('Document');
   }
 
   return NextResponse.json(data);
-}
+});
 
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export const PATCH = withApiRoute({}, async ({ req, params }) => {
+  const { id } = params;
 
   const roles = await getKrewpactRoles();
   const hasAccess = roles.some((r) => WRITE_ROLES.includes(r));
   if (!hasAccess) {
-    return NextResponse.json({ error: 'Forbidden: platform_admin role required' }, { status: 403 });
+    throw forbidden('Forbidden: platform_admin role required');
   }
-
-  const rl = await rateLimit(req, { limit: 20, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
 
   let body: unknown;
   try {
@@ -85,33 +70,27 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     .single();
 
   if (error || !data) {
-    return NextResponse.json({ error: 'Failed to update document' }, { status: 500 });
+    throw dbError('Failed to update document');
   }
 
   return NextResponse.json(data);
-}
+});
 
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export const DELETE = withApiRoute({}, async ({ params }) => {
+  const { id } = params;
 
   const roles = await getKrewpactRoles();
   const hasAccess = roles.some((r) => WRITE_ROLES.includes(r));
   if (!hasAccess) {
-    return NextResponse.json({ error: 'Forbidden: platform_admin role required' }, { status: 403 });
+    throw forbidden('Forbidden: platform_admin role required');
   }
-
-  const rl = await rateLimit(req, { limit: 20, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
 
   const supabase = await createServiceClient();
   const { error } = await supabase.from('knowledge_staging').delete().eq('id', id);
 
   if (error) {
-    return NextResponse.json({ error: 'Failed to delete document' }, { status: 500 });
+    throw dbError('Failed to delete document');
   }
 
   return NextResponse.json({ success: true });
-}
+});

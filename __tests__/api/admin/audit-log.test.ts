@@ -19,17 +19,24 @@ vi.mock('@/lib/logger', () => ({
     warn: vi.fn(),
     error: vi.fn(),
     debug: vi.fn(),
+    child: vi.fn().mockReturnThis(),
   },
+}));
+
+vi.mock('@/lib/api/org', () => ({
+  getKrewpactRoles: vi.fn(),
 }));
 
 import { auth } from '@clerk/nextjs/server';
 
 import { makeRequest, mockClerkUnauth, mockSupabaseClient } from '@/__tests__/helpers';
 import { GET } from '@/app/api/admin/audit-log/route';
+import { getKrewpactRoles } from '@/lib/api/org';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
+const mockGetKrewpactRoles = vi.mocked(getKrewpactRoles);
 
 function mockClerkWithRoles(userId: string, roles: string[]) {
   mockAuth.mockResolvedValue({
@@ -48,6 +55,7 @@ function mockClerkWithRoles(userId: string, roles: string[]) {
       krewpact_org_id: 'org_test_default',
     },
   } as never);
+  mockGetKrewpactRoles.mockResolvedValue(roles);
 }
 
 const sampleAuditEntries = [
@@ -94,7 +102,7 @@ describe('GET /api/admin/audit-log', () => {
     const res = await GET(makeRequest('/api/admin/audit-log'));
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns 403 when user lacks admin/executive role', async () => {
@@ -103,7 +111,7 @@ describe('GET /api/admin/audit-log', () => {
     const res = await GET(makeRequest('/api/admin/audit-log'));
     expect(res.status).toBe(403);
     const body = await res.json();
-    expect(body.error).toContain('Forbidden');
+    expect(body.error.code).toBe('FORBIDDEN');
   });
 
   it('allows platform_admin role', async () => {
@@ -353,7 +361,7 @@ describe('GET /api/admin/audit-log', () => {
     const res = await GET(makeRequest('/api/admin/audit-log'));
     expect(res.status).toBe(500);
     const body = await res.json();
-    expect(body.error).toBe('Failed to fetch audit log');
+    expect(body.error.code).toBe('INTERNAL_ERROR');
   });
 
   it('returns correct response shape with all expected fields', async () => {

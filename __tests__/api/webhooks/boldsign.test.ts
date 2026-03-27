@@ -1,6 +1,11 @@
 import { createHmac } from 'crypto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+// Mock Clerk auth (required by withApiRoute import even though auth: 'public' skips calling it)
+vi.mock('@clerk/nextjs/server', () => ({
+  auth: vi.fn(),
+}));
+
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
   createServiceClient: vi.fn(),
@@ -27,6 +32,7 @@ vi.mock('@/lib/logger', () => ({
     info: vi.fn(),
     warn: vi.fn(),
     error: vi.fn(),
+    child: vi.fn().mockReturnThis(),
   },
 }));
 

@@ -12,9 +12,9 @@
  */
 
 import { createHmac, timingSafeEqual } from 'crypto';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { BoldSignClient } from '@/lib/esign/boldsign-client';
 import { logger } from '@/lib/logger';
 import { dispatchNotification } from '@/lib/notifications/dispatcher';
@@ -322,10 +322,7 @@ async function handleGenericEvent(
 // Route handler
 // ============================================================
 
-export async function POST(req: NextRequest) {
-  const rl = await rateLimit(req, { limit: 100, window: '1 m', identifier: 'webhook:boldsign' });
-  if (!rl.success) return rateLimitResponse(rl);
-
+export const POST = withApiRoute({ auth: 'public', rateLimit: false }, async ({ req }) => {
   const rawBody = await req.text();
 
   // BoldSign sends a verification POST when adding a webhook — respond 200
@@ -383,4 +380,4 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json({ received: true });
-}
+});

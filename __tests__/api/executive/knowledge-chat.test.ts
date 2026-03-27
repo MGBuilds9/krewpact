@@ -1,16 +1,30 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createServiceClient: vi.fn() }));
 vi.mock('@/lib/knowledge/embeddings', () => ({ embedChunks: vi.fn() }));
-vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() } }));
+vi.mock('@/lib/logger', () => ({
+  logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn(), child: vi.fn().mockReturnThis() },
+}));
 vi.mock('@/lib/api/org', () => ({ getKrewpactRoles: vi.fn(), getKrewpactUserId: vi.fn() }));
+vi.mock('@/lib/api/rate-limit', () => ({
+  rateLimit: vi.fn().mockResolvedValue({ success: true }),
+  rateLimitResponse: vi.fn(),
+}));
+vi.mock('@/lib/request-context', () => ({
+  generateRequestId: vi.fn().mockReturnValue('test-request-id'),
+  requestContext: { run: vi.fn().mockImplementation((_ctx, fn) => fn()) },
+}));
+
+import { auth } from '@clerk/nextjs/server';
 
 import { POST } from '@/app/api/executive/knowledge/chat/route';
 import { getKrewpactRoles, getKrewpactUserId } from '@/lib/api/org';
 import { embedChunks } from '@/lib/knowledge/embeddings';
 import { createServiceClient } from '@/lib/supabase/server';
 
+const mockAuth = vi.mocked(auth);
 const mockCreateServiceClient = vi.mocked(createServiceClient);
 const mockEmbedChunks = vi.mocked(embedChunks);
 const mockGetKrewpactRoles = vi.mocked(getKrewpactRoles);
@@ -24,18 +38,16 @@ function makeRequest(body: unknown) {
   });
 }
 
-function mockAuth(userId: string | null, roles: string[] = [], krewpactUserId?: string) {
-  vi.doMock('@clerk/nextjs/server', () => ({
-    auth: vi.fn().mockResolvedValue({
-      userId,
-      sessionClaims: userId
-        ? {
-            krewpact_roles: roles,
-            krewpact_user_id: krewpactUserId ?? 'user-uuid-123',
-          }
-        : null,
-    }),
-  }));
+function setupAuth(userId: string | null, roles: string[] = [], krewpactUserId?: string) {
+  mockAuth.mockResolvedValue({
+    userId,
+    sessionClaims: userId
+      ? {
+          krewpact_roles: roles,
+          krewpact_user_id: krewpactUserId ?? 'user-uuid-123',
+        }
+      : null,
+  } as any as Awaited<ReturnType<typeof auth>>);
   if (userId) {
     mockGetKrewpactRoles.mockResolvedValue(roles);
     mockGetKrewpactUserId.mockResolvedValue(krewpactUserId ?? 'user-uuid-123');
@@ -51,35 +63,29 @@ describe('POST /api/executive/knowledge/chat', () => {
   });
 
   it('returns 401 without auth', async () => {
-    mockAuth(null);
+    setupAuth(null);
     const res = await POST(makeRequest({ message: 'hello' }));
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns 403 for non-executive role', async () => {
-    mockAuth('user-123', ['project_manager']);
-
-    // Need a minimal supabase mock so it doesn't crash before role check
-    mockCreateServiceClient.mockReturnValue({
-      from: vi.fn(),
-      rpc: vi.fn(),
-    } as unknown as ReturnType<typeof createServiceClient>);
+    setupAuth('user-123', ['project_manager']);
 
     const res = await POST(makeRequest({ message: 'hello' }));
     expect(res.status).toBe(403);
     const body = await res.json();
-    expect(body.error).toBe('Forbidden');
+    expect(body.error.code).toBe('FORBIDDEN');
   });
 
   it('returns 400 for missing message', async () => {
-    mockAuth('user-123', ['executive']);
+    setupAuth('user-123', ['executive']);
 
-    mockCreateServiceClient.mockReturnValue({
+    mockCreateServiceClient.mockResolvedValue({
       from: vi.fn(),
       rpc: vi.fn(),
-    } as unknown as ReturnType<typeof createServiceClient>);
+    } as unknown as Awaited<ReturnType<typeof createServiceClient>>);
 
     const res = await POST(makeRequest({}));
     expect(res.status).toBe(400);
@@ -88,7 +94,7 @@ describe('POST /api/executive/knowledge/chat', () => {
   });
 
   it('returns 200 with AI response for executive', async () => {
-    mockAuth('user-123', ['executive'], 'user-uuid-abc');
+    setupAuth('user-123', ['executive'], 'user-uuid-abc');
 
     const fakeEmbedding = Array(1536).fill(0.1);
     mockEmbedChunks.mockResolvedValue([fakeEmbedding]);
@@ -142,10 +148,10 @@ describe('POST /api/executive/knowledge/chat', () => {
 
     const mockRpc = vi.fn().mockResolvedValue({ data: matches, error: null });
 
-    mockCreateServiceClient.mockReturnValue({
+    mockCreateServiceClient.mockResolvedValue({
       from: mockFrom,
       rpc: mockRpc,
-    } as unknown as ReturnType<typeof createServiceClient>);
+    } as unknown as Awaited<ReturnType<typeof createServiceClient>>);
 
     // Mock global fetch for OpenAI call
     const originalFetch = global.fetch;
@@ -184,7 +190,7 @@ describe('POST /api/executive/knowledge/chat', () => {
   });
 
   it('reuses existing sessionId when provided', async () => {
-    mockAuth('user-123', ['platform_admin'], 'user-uuid-xyz');
+    setupAuth('user-123', ['platform_admin'], 'user-uuid-xyz');
 
     const fakeEmbedding = Array(1536).fill(0.2);
     mockEmbedChunks.mockResolvedValue([fakeEmbedding]);
@@ -214,10 +220,10 @@ describe('POST /api/executive/knowledge/chat', () => {
       return {};
     });
 
-    mockCreateServiceClient.mockReturnValue({
+    mockCreateServiceClient.mockResolvedValue({
       from: mockFrom,
       rpc: vi.fn().mockResolvedValue({ data: [], error: null }),
-    } as unknown as ReturnType<typeof createServiceClient>);
+    } as unknown as Awaited<ReturnType<typeof createServiceClient>>);
 
     const originalFetch = global.fetch;
     global.fetch = vi.fn().mockResolvedValue({

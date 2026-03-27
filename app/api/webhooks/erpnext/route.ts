@@ -1,7 +1,7 @@
 import { timingSafeEqual } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { SyncService } from '@/lib/erp/sync-service';
 import { logger } from '@/lib/logger';
 
@@ -59,16 +59,13 @@ async function dispatchDoctype(
   return null;
 }
 
-export async function POST(request: NextRequest) {
-  const rl = await rateLimit(request, { limit: 100, window: '1 m', identifier: 'webhook:erpnext' });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const secretError = verifyWebhookSecret(request);
+export const POST = withApiRoute({ auth: 'public', rateLimit: false }, async ({ req }) => {
+  const secretError = verifyWebhookSecret(req);
   if (secretError) return secretError;
 
   let payload: Record<string, unknown>;
   try {
-    payload = await request.json();
+    payload = await req.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
@@ -93,4 +90,4 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json({ received: true, doctype, name: docname, event });
-}
+});

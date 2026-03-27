@@ -8,9 +8,14 @@ vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/services/financial-ops', () => ({
   getPaymentHistory: vi.fn(),
 }));
-vi.mock('@/lib/api/rate-limit', () => ({
-  rateLimit: vi.fn().mockResolvedValue({ success: true, remaining: 59 }),
-  rateLimitResponse: vi.fn(),
+vi.mock('@/lib/logger', () => ({
+  logger: {
+    warn: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+    child: vi.fn().mockReturnThis(),
+  },
 }));
 
 const mockRequireRole = vi.fn();
