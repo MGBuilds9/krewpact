@@ -336,6 +336,13 @@ Start with `KrewPact-Architecture-Resolution.md` (all contradictions resolved). 
 
 > Full log: `docs/session-log.md`
 
+### Mar 27, 2026 — RBAC System Overhaul: Dual-Write Roles, Onboarding Fix, Management UI
+
+- **Changes:** (1) Root cause: Clerk publicMetadata.role_keys empty after key rotation → zero permissions → admin lockout. (2) Created `syncRolesToBothStores()` — dual-writes roles to Clerk publicMetadata + Supabase user_roles. (3) Fixed role assign API, webhook (default `project_coordinator` for internal users), provisioning form (added role checkboxes). (4) Removed phantom `CurrentUser.role` field (didn't exist in DB). Fixed impersonation check (`system.admin` → `admin.system`). (5) Fixed `getOrgIdFromAuth()` fallback — was returning slug `'mdm-group'` instead of org UUID, breaking all executive queries. (6) Built role management UI: API route, `UserRoleEditor` sheet, "Manage Roles" button on settings/users. (7) Fixed portal RLS policies: regex-on-text → JSONB `?|` operators (10 policies). (8) Reconciliation script (`fix-rbac-sync.ts`) — ran `--apply`, fixed 2 divergent users, set `krewpact_org_id` in Clerk.
+- **Decisions:** Single `syncRolesToBothStores()` is the only way to write roles. Webhook assigns default `project_coordinator` for `ALLOWED_DOMAINS` emails. `getOrgFromHeaders()` is effectively dead code (proxy never sets those headers) — left for now.
+- **Tests:** 4,851/4,851 passing (438 files). 0 type errors. 0 lint errors.
+- **Next:** Apply RLS migration to production Supabase. Verify admin pages work in production after deploy. Consider adding `DEFAULT_ORG_ID` to Vercel env vars.
+
 ### Mar 27, 2026 — A-Z Audit, Agent Teams, Production Auth Fix, AI Connected
 
 - **Changes:** (1) Full A-Z audit + agent-team remediation (19 commits). (2) 5 ERP sync handlers created (RFQ, Bid, Award, Compliance, Selection Sheet) + address sync for Customer/Supplier. (3) AI Gateway reverted to direct `@ai-sdk/google` provider (gateway OIDC not confirmed). NL Query Bar now connected and working. (4) DNS cleanup: all 14 `hub.mdmgroupinc.ca` refs → `krewpact.ca`. BetterStack monitors updated. (5) Clerk auth fixed: rotated publishable key (old key had `hub.mdmgroupinc.ca` baked in), added `krewpact.ca` to `authorizedParties` + `allowedRedirectOrigins`. Azure OAuth redirect URI updated. (6) Sentry edge config added, SENTRY_PROJECT corrected to `krewpact`. (7) Notification dispatch type safety, feature flag env kill-switch, MERX/BetterStack env vars. (8) 10 loading.tsx + Wave G file splits (8 files). (9) Dashboard layout: 4 stat cards horizontal. (10) 48 new tests (utils, sanitize, date, portal reminders, address mapper). Proxy: stale domains removed, console.log → console.warn. CI mobile TLD fixed (.com → .ca).
