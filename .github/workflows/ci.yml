@@ -169,7 +169,7 @@ jobs:
   mobile:
     runs-on: ubuntu-latest
     env:
-      EXPO_PUBLIC_API_BASE_URL: https://staging.krewpact.com
+      EXPO_PUBLIC_API_BASE_URL: https://krewpact.ca
       EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY }}
     steps:
       - uses: actions/checkout@v4

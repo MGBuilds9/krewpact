@@ -35,8 +35,7 @@ export const proxy = clerkMiddleware(
       if (email) {
         const domain = email.split('@')[1];
         if (ALLOWED_DOMAINS.length > 0 && !ALLOWED_DOMAINS.includes(domain)) {
-          // eslint-disable-next-line no-console
-          console.log(
+          console.warn(
             JSON.stringify({
               level: 'warn',
               message: 'Domain restricted',
@@ -85,10 +84,7 @@ export const proxy = clerkMiddleware(
   {
     authorizedParties: [
       'https://hub.krewpact.ca',
-      'https://dashboard.mdmgroupinc.ca',
-      'https://portal.mdmgroupinc.ca',
       'https://app.krewpact.ca',
-      'https://hub.krewpact.ca',
       'https://portal.krewpact.ca',
       ...(process.env.NEXT_PUBLIC_APP_URL ? [process.env.NEXT_PUBLIC_APP_URL.trim()] : []),
       ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL.trim()}`] : []),
