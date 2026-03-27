@@ -1,4 +1,3 @@
-import { google } from '@ai-sdk/google';
 import { generateText } from 'ai';
 
 import { trackAIAction } from '../cost-tracker';
@@ -18,7 +17,7 @@ export async function generateWithGemini({
   const start = Date.now();
 
   const { text, usage } = await generateText({
-    model: google('gemini-2.0-flash'),
+    model: 'google/gemini-2.0-flash',
     prompt,
     maxOutputTokens: maxTokens,
   });

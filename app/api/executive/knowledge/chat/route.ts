@@ -1,4 +1,3 @@
-import { openai } from '@ai-sdk/openai';
 import { streamText } from 'ai';
 import { NextResponse } from 'next/server';
 
@@ -147,37 +146,23 @@ export const POST = withApiRoute({}, async ({ req, logger }) => {
     : `You are an AI assistant for MDM Group executives. No relevant documents were found in the knowledge base for this query. Let the user know and suggest they try rephrasing or ask about a topic covered in the knowledge base.`;
 
   const result = streamText({
-    model: openai('gpt-4o-mini'),
+    model: 'openai/gpt-4o-mini',
     system: systemPrompt,
     messages: [...conversationHistory, { role: 'user', content: trimmedMessage }],
     temperature: 0.3,
     maxOutputTokens: 1000,
     onFinish: async ({ text, usage }) => {
-      try {
-        const { error: insertError } = await supabase.from('ai_chat_messages').insert([
-          { session_id: resolvedSessionId, role: 'user', content: trimmedMessage },
-          {
-            session_id: resolvedSessionId,
-            role: 'assistant',
-            content: text,
-            sources: sources.length > 0 ? sources : null,
-            token_count: usage.totalTokens ?? null,
-          },
-        ]);
-        if (insertError) {
-          logger.error('Failed to persist knowledge chat messages', {
-            sessionId: resolvedSessionId,
-            error: insertError.message,
-          });
-        } else {
-          logger.info('Knowledge chat message persisted', { sessionId: resolvedSessionId });
-        }
-      } catch (err) {
-        logger.error('Unexpected error persisting knowledge chat messages', {
-          sessionId: resolvedSessionId,
-          error: err instanceof Error ? err.message : String(err),
-        });
-      }
+      await supabase.from('ai_chat_messages').insert([
+        { session_id: resolvedSessionId, role: 'user', content: trimmedMessage },
+        {
+          session_id: resolvedSessionId,
+          role: 'assistant',
+          content: text,
+          sources: sources.length > 0 ? sources : null,
+          token_count: usage.totalTokens ?? null,
+        },
+      ]);
+      logger.info('Knowledge chat message persisted', { sessionId: resolvedSessionId });
     },
   });
 
