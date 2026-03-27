@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { safeString, sanitizeText } from '@/lib/sanitize';
+import { nullableSafeString, optionalSafeString, safeString, sanitizeText } from '@/lib/sanitize';
 
 describe('sanitizeText', () => {
   it('strips HTML script tags', () => {
@@ -41,5 +41,44 @@ describe('safeString', () => {
     const schema = safeString();
     const result = schema.parse('<b>bold</b> text');
     expect(result).toBe('bold text');
+  });
+
+  it('rejects non-string input', () => {
+    const schema = safeString();
+    expect(() => schema.parse(42)).toThrow();
+  });
+
+  it('passes plain text through unchanged', () => {
+    const schema = safeString();
+    expect(schema.parse('Hello, world!')).toBe('Hello, world!');
+  });
+});
+
+describe('optionalSafeString', () => {
+  it('accepts a string value and sanitizes', () => {
+    const schema = optionalSafeString();
+    expect(schema.parse('<em>italics</em>')).toBe('italics');
+  });
+
+  it('accepts undefined', () => {
+    const schema = optionalSafeString();
+    expect(schema.parse(undefined)).toBeUndefined();
+  });
+});
+
+describe('nullableSafeString', () => {
+  it('accepts null', () => {
+    const schema = nullableSafeString();
+    expect(schema.parse(null)).toBeNull();
+  });
+
+  it('accepts undefined', () => {
+    const schema = nullableSafeString();
+    expect(schema.parse(undefined)).toBeUndefined();
+  });
+
+  it('sanitizes a string value', () => {
+    const schema = nullableSafeString();
+    expect(schema.parse('<div>content</div>')).toBe('content');
   });
 });
