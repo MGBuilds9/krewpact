@@ -167,16 +167,8 @@ describe('POST /api/executive/knowledge/chat', () => {
       const res = await POST(makeRequest({ message: 'What are our safety procedures?' }));
       expect(res.status).toBe(200);
 
-      const body = await res.json();
-      expect(body.sessionId).toBe('session-uuid-1');
-      expect(body.message.role).toBe('assistant');
-      expect(body.message.content).toBe('AI response about safety');
-      expect(body.message.sources).toHaveLength(1);
-      expect(body.message.sources[0]).toMatchObject({
-        doc_id: 'doc-1',
-        title: 'Safety SOP',
-        similarity: 0.88,
-      });
+      // Route returns a text stream, not JSON — verify status and session header
+      expect(res.headers.get('X-Session-Id')).toBe('session-uuid-1');
 
       expect(mockEmbedChunks).toHaveBeenCalledWith(['What are our safety procedures?']);
       expect(mockRpc).toHaveBeenCalledWith('match_knowledge', {
@@ -240,9 +232,8 @@ describe('POST /api/executive/knowledge/chat', () => {
       );
       expect(res.status).toBe(200);
 
-      const body = await res.json();
-      // Should use the provided sessionId, not create a new one
-      expect(body.sessionId).toBe('existing-session-id');
+      // Route returns a text stream — verify session ID from header
+      expect(res.headers.get('X-Session-Id')).toBe('existing-session-id');
     } finally {
       global.fetch = originalFetch;
     }

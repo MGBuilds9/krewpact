@@ -94,7 +94,6 @@ async function buildKnowledgeContext(
   return { sources, contextText };
 }
 
-// @ts-expect-error — AI SDK streamText types don't match NextResponse, works at runtime
 export const POST = withApiRoute({}, async ({ req, logger }) => {
   const roles = await getKrewpactRoles();
   if (!roles.some((r) => EXECUTIVE_ROLES.includes(r))) {
