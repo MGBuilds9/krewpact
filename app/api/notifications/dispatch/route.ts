@@ -5,8 +5,8 @@ import { withApiRoute } from '@/lib/api/with-api-route';
 import type { NotificationEvent } from '@/lib/notifications/dispatcher';
 import { dispatchNotification } from '@/lib/notifications/dispatcher';
 
-// Accept any object — the dispatcher validates the shape internally
-const dispatchBodySchema = z.record(z.string(), z.unknown());
+// Require `type` — the dispatcher validates the full shape internally
+const dispatchBodySchema = z.object({ type: z.string() }).passthrough();
 
 /**
  * POST /api/notifications/dispatch
@@ -18,10 +18,6 @@ const dispatchBodySchema = z.record(z.string(), z.unknown());
  * The body must match one of the NotificationEvent shapes.
  */
 export const POST = withApiRoute({ bodySchema: dispatchBodySchema }, async ({ body, logger }) => {
-  if (!body || typeof body !== 'object' || !('type' in (body as object))) {
-    return NextResponse.json({ error: 'Missing required field: type' }, { status: 400 });
-  }
-
   try {
     await dispatchNotification(body as unknown as NotificationEvent);
     return NextResponse.json({ success: true });

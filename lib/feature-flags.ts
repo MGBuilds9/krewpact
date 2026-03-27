@@ -30,5 +30,9 @@ export const features = {
 export type FeatureKey = keyof typeof features;
 
 export function isFeatureEnabled(key: FeatureKey): boolean {
+  // Emergency kill-switch: FEATURE_DISABLE_<FLAG_NAME_UPPERCASED>=true disables a flag
+  // without requiring a code deploy. Example: FEATURE_DISABLE_AI_SUGGESTIONS=true
+  const envKey = `FEATURE_DISABLE_${key.toUpperCase()}`;
+  if (process.env[envKey] === 'true') return false;
   return features[key];
 }

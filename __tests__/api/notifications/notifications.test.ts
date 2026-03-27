@@ -334,7 +334,9 @@ describe('POST /api/notifications/dispatch', () => {
     const res = await POST_DISPATCH(makeJsonRequest('/api/notifications/dispatch', { foo: 'bar' }));
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toContain('type');
+    // withApiRoute Zod validation returns a structured error object
+    const errorStr = JSON.stringify(body.error);
+    expect(errorStr).toContain('type');
   });
 
   it('dispatches notification on success', async () => {

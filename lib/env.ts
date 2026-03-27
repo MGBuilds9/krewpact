@@ -64,6 +64,13 @@ const envSchema = z
     TAVILY_API_KEY: z.string().min(1).optional(),
     GOOGLE_MAPS_API_KEY: z.string().min(1).optional(),
 
+    // ── MERX (optional — bidding sync skipped when missing) ──
+    MERX_API_URL: z.string().optional(),
+    MERX_API_KEY: z.string().min(1).optional(),
+
+    // ── BetterStack (optional — uptime reporting skipped when missing) ──
+    BETTERSTACK_API_TOKEN: z.string().min(1).optional(),
+
     // ── Takeoff Engine (optional — mock mode when missing) ──
     TAKEOFF_ENGINE_URL: z.string().url().optional(),
     TAKEOFF_ENGINE_TOKEN: z.string().min(1).optional(),
