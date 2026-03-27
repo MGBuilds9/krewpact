@@ -12,7 +12,7 @@ interface Task {
   project_id: string;
   title: string;
   description: string | null;
-  status: 'pending' | 'in_progress' | 'completed' | 'blocked';
+  status: 'todo' | 'in_progress' | 'done' | 'blocked';
   priority: 'low' | 'medium' | 'high' | 'critical';
   due_at: string | null;
   blocked_reason: string | null;
@@ -34,9 +34,9 @@ const PRIORITY_MAP: Record<Task['priority'], { label: string; className: string 
 };
 
 const STATUS_LABELS: Record<Task['status'], string> = {
-  pending: 'Pending',
+  todo: 'To Do',
   in_progress: 'In Progress',
-  completed: 'Completed',
+  done: 'Done',
   blocked: 'Blocked',
 };
 

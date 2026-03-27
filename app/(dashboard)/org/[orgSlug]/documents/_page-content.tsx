@@ -1,5 +1,6 @@
 'use client';
 
+import { useUser } from '@clerk/nextjs';
 import { FileText, Search } from 'lucide-react';
 import { useRef, useState } from 'react';
 
@@ -23,6 +24,8 @@ type FileItem = NonNullable<ReturnType<typeof useFiles>['data']>['data'][number]
 
 export default function DocumentsPage() {
   const { activeDivision } = useDivision();
+  const { user } = useUser();
+  const orgId = (user?.publicMetadata?.krewpact_org_id as string | undefined) ?? undefined;
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebouncedValue(search);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
@@ -38,7 +41,7 @@ export default function DocumentsPage() {
   const { data: filesResponse } = useFiles(selectedProjectId ?? '', selectedFolderId);
   const createFolder = useCreateFolder(selectedProjectId ?? '');
   const deleteFile = useDeleteFile(selectedProjectId ?? '');
-  const uploadFile = useUploadFile(selectedProjectId ?? '', selectedFolderId);
+  const uploadFile = useUploadFile(selectedProjectId ?? '', selectedFolderId, orgId);
   const downloadFile = useDownloadFile();
 
   const folders = foldersResponse?.data ?? [];

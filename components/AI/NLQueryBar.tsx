@@ -6,12 +6,12 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { type NLQueryResult,useNLQuery } from '@/hooks/use-ai';
+import { type NLQueryResult, useNLQuery } from '@/hooks/use-ai';
 
 export function NLQueryBar() {
   const [question, setQuestion] = useState('');
   const [result, setResult] = useState<NLQueryResult | null>(null);
-  const { mutate, isPending } = useNLQuery();
+  const { mutate, isPending, isError } = useNLQuery();
 
   function handleSubmit() {
     const trimmed = question.trim();
@@ -58,6 +58,12 @@ export function NLQueryBar() {
           )}
         </Button>
       </div>
+
+      {isError && (
+        <p className="text-sm text-red-600 px-1" role="alert">
+          Query failed. Please try again.
+        </p>
+      )}
 
       {result && (
         <Card className="rounded-2xl border-0 shadow-sm bg-white dark:bg-card">

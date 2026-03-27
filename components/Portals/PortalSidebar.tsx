@@ -41,7 +41,7 @@ export function PortalSidebar({ roles }: PortalSidebarProps) {
   const isTrade = roles.some((r) => r === 'trade_partner_admin' || r === 'trade_partner_user');
   const isClient = roles.some((r) => r === 'client_owner' || r === 'client_delegate');
 
-  const navItems: NavItem[] = isTrade ? TRADE_NAV : isClient ? CLIENT_NAV : [];
+  const navItems: NavItem[] = [...(isTrade ? TRADE_NAV : []), ...(isClient ? CLIENT_NAV : [])];
 
   if (navItems.length === 0) return null;
 

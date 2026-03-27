@@ -1,0 +1,331 @@
+'use client';
+
+import { useUser } from '@clerk/nextjs';
+import {
+  Briefcase,
+  ClipboardList,
+  DollarSign,
+  FolderOpen,
+  LucideIcon,
+  MapPin,
+  TrendingUp,
+} from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useDashboard } from '@/hooks/useDashboard';
+import { formatStatus } from '@/lib/format-status';
+import { cn } from '@/lib/utils';
+
+// ============================================================
+// Types
+// ============================================================
+
+type ClerkUser = ReturnType<typeof useUser>['user'];
+
+export function getUserName(user: ClerkUser): string {
+  if (user && user.firstName) return user.firstName;
+  const addresses = user && user.emailAddresses;
+  const email = addresses && addresses[0] && addresses[0].emailAddress;
+  return email ? email.split('@')[0] : 'there';
+}
+
+export function getTimeGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+
+const STATUS_COLORS: Record<string, string> = {
+  active: 'bg-green-500',
+  planning: 'bg-blue-500',
+  on_hold: 'bg-yellow-500',
+  completed: 'bg-gray-500',
+};
+
+export function getStatusColor(status: string) {
+  return STATUS_COLORS[status] || 'bg-gray-400';
+}
+
+type DashboardData = NonNullable<ReturnType<typeof useDashboard>['data']>;
+export type RecentProject = DashboardData['recentProjects'][number];
+
+// ============================================================
+// StatCard (generic metric tile)
+// ============================================================
+
+export function StatCard({
+  value,
+  label,
+  Icon,
+  colorClass,
+  bgClass,
+  gridClass,
+  onClick,
+  showPulse,
+}: {
+  value: number;
+  label: string;
+  Icon: LucideIcon;
+  colorClass: string;
+  bgClass: string;
+  gridClass: string;
+  onClick: () => void;
+  showPulse?: boolean;
+}) {
+  return (
+    <Card
+      className={`${gridClass} group cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-300 rounded-3xl border-0 bg-white dark:bg-card`}
+      onClick={onClick}
+    >
+      <CardContent className="p-6 flex items-center justify-between h-full">
+        <div>
+          <p
+            className={`text-3xl font-bold tracking-tight group-hover:${colorClass} transition-colors`}
+          >
+            {value}
+          </p>
+          <p className="text-sm text-muted-foreground font-medium mt-1">{label}</p>
+        </div>
+        <div className={`p-4 ${bgClass} rounded-2xl ${colorClass} relative`}>
+          <Icon className="h-8 w-8" />
+          {showPulse && (
+            <span className="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-full border-2 border-white dark:border-card animate-pulse" />
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ============================================================
+// QuickLinksGrid
+// ============================================================
+
+export function QuickLinksGrid({ orgPush }: { orgPush: (path: string) => void }) {
+  const links = [
+    { label: 'Log Expense', path: '/expenses', Icon: DollarSign },
+    { label: 'New Report', path: '/reports/new', Icon: ClipboardList },
+    { label: 'Documents', path: '/documents', Icon: FolderOpen },
+    { label: 'Projects', path: '/projects', Icon: Briefcase },
+  ] as const;
+
+  return (
+    <div className="col-span-1 md:col-span-4 lg:col-span-2 grid grid-cols-2 gap-4">
+      {links.map(({ label, path, Icon }) => (
+        <Card
+          key={label}
+          className="cursor-pointer hover:shadow-md transition-all duration-200 rounded-2xl border bg-card"
+          onClick={() => orgPush(path)}
+        >
+          <CardContent className="p-4 flex flex-col items-center text-center gap-2">
+            <div className="p-2 bg-muted rounded-xl">
+              <Icon className="h-5 w-5 text-foreground" />
+            </div>
+            <p className="text-sm font-medium">{label}</p>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+// ============================================================
+// ProjectsAndExpensesCards
+// ============================================================
+
+export function ProjectsAndExpensesCards({
+  activeProjects,
+  pendingExpenses,
+  orgPush,
+}: {
+  activeProjects: number;
+  pendingExpenses: number;
+  orgPush: (path: string) => void;
+}) {
+  return (
+    <div className="col-span-1 md:col-span-4 lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-6">
+      <Card
+        className="group cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-300 rounded-3xl overflow-hidden border-0 bg-white dark:bg-card relative"
+        onClick={() => orgPush('/projects')}
+      >
+        <CardContent className="p-6">
+          <div className="flex justify-between items-start mb-4">
+            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-2xl text-blue-600 dark:text-blue-400">
+              <Briefcase className="h-6 w-6" />
+            </div>
+          </div>
+          <div>
+            <p className="text-4xl font-bold tracking-tight group-hover:text-blue-600 transition-colors">
+              {activeProjects}
+            </p>
+            <p className="text-sm text-muted-foreground font-medium mt-1">Active Projects</p>
+          </div>
+        </CardContent>
+      </Card>
+      <Card
+        className="group cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-300 rounded-3xl overflow-hidden border-0 bg-white dark:bg-card"
+        onClick={() => orgPush('/expenses')}
+      >
+        <CardContent className="p-6">
+          <div className="flex justify-between items-start mb-4">
+            <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-2xl text-green-600 dark:text-green-400">
+              <DollarSign className="h-6 w-6" />
+            </div>
+          </div>
+          <div>
+            <p className="text-4xl font-bold tracking-tight group-hover:text-green-600 transition-colors">
+              {pendingExpenses}
+            </p>
+            <p className="text-sm text-muted-foreground font-medium mt-1">Pending Expenses</p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ============================================================
+// WelcomeCard
+// ============================================================
+
+interface WelcardProps {
+  userName: string;
+  greeting: string;
+  roles: { role_name: string; is_primary: boolean }[];
+}
+
+export function WelcomeCard({ userName, greeting, roles }: WelcardProps) {
+  return (
+    <Card className="col-span-1 md:col-span-4 lg:col-span-4 bg-gradient-to-br from-primary/10 via-background to-secondary/10 border-0 shadow-sm rounded-3xl overflow-hidden">
+      <CardContent className="p-6 flex flex-col justify-center">
+        <h1
+          className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-2"
+          suppressHydrationWarning
+        >
+          {greeting ? `${greeting}, ${userName}` : userName}
+        </h1>
+        <div className="flex gap-3 flex-wrap">
+          {roles.length > 0 ? (
+            roles.map((role) => (
+              <Badge
+                key={role.role_name}
+                variant={role.is_primary ? 'default' : 'secondary'}
+                className="text-sm px-3 py-1 rounded-full shadow-sm"
+              >
+                {formatStatus(role.role_name)}
+              </Badge>
+            ))
+          ) : (
+            <Badge variant="secondary" className="text-sm px-3 py-1 rounded-full shadow-sm">
+              Employee
+            </Badge>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ============================================================
+// RecentProjectRow
+// ============================================================
+
+export function RecentProjectRow({
+  project,
+  orgPush,
+}: {
+  project: RecentProject;
+  orgPush: (path: string) => void;
+}) {
+  const street =
+    typeof project.site_address === 'object'
+      ? (project.site_address as Record<string, string>)?.street || ''
+      : '';
+  return (
+    <div
+      className="flex items-center justify-between p-5 hover:bg-muted/30 cursor-pointer transition-colors"
+      onClick={() => orgPush(`/projects/${project.id}`)}
+    >
+      <div className="flex items-center gap-4 flex-1 min-w-0">
+        <div
+          className={cn(
+            'w-3 h-3 rounded-full flex-shrink-0 shadow-inner',
+            getStatusColor(project.status),
+          )}
+        />
+        <div className="min-w-0">
+          <p className="font-bold text-base truncate tracking-tight">{project.project_name}</p>
+          {street && (
+            <p className="text-sm text-muted-foreground flex items-center gap-1.5 truncate mt-0.5">
+              <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+              {street}
+            </p>
+          )}
+        </div>
+      </div>
+      <div className="flex flex-col items-end gap-1 flex-shrink-0">
+        <Badge
+          variant="outline"
+          className="text-xs uppercase tracking-wider font-semibold rounded-full bg-background/50"
+        >
+          {project.status.replace('_', ' ')}
+        </Badge>
+        {project.baseline_budget && (
+          <span className="text-sm font-medium text-foreground hidden sm:inline">
+            ${(project.baseline_budget / 1000).toFixed(0)}k
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// RecentProjectsCard
+// ============================================================
+
+interface RecentProjectsProps {
+  projects: RecentProject[];
+  orgPush: (path: string) => void;
+}
+
+export function RecentProjectsCard({ projects, orgPush }: RecentProjectsProps) {
+  return (
+    <Card className="lg:col-span-2 rounded-3xl border-0 shadow-sm overflow-hidden bg-white dark:bg-card">
+      <CardHeader className="pb-4 bg-muted/20 border-b border-border/40">
+        <CardTitle className="flex items-center justify-between">
+          <span className="flex items-center gap-2 text-xl tracking-tight">
+            <TrendingUp className="h-6 w-6 text-primary" />
+            Recent Projects
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => orgPush('/projects')}
+            className="rounded-full hover:bg-primary/10"
+          >
+            View all
+          </Button>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-0">
+        {projects.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground bg-muted/5">
+            <Briefcase className="h-12 w-12 mx-auto mb-4 opacity-30" />
+            <p className="font-semibold text-lg">No projects yet</p>
+            <p className="text-sm mt-1">Create your first project to get started</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-border/50">
+            {projects.map((project) => (
+              <RecentProjectRow key={project.id} project={project} orgPush={orgPush} />
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}

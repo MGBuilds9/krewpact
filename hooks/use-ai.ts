@@ -81,7 +81,7 @@ export function useNLQuery() {
     mutationFn: (question: string) =>
       apiFetch<NLQueryResult>('/api/ai/query', {
         method: 'POST',
-        body: { question },
+        body: { query: question },
       }),
   });
 }

@@ -153,17 +153,31 @@ export const POST = withApiRoute({}, async ({ req, logger }) => {
     temperature: 0.3,
     maxOutputTokens: 1000,
     onFinish: async ({ text, usage }) => {
-      await supabase.from('ai_chat_messages').insert([
-        { session_id: resolvedSessionId, role: 'user', content: trimmedMessage },
-        {
-          session_id: resolvedSessionId,
-          role: 'assistant',
-          content: text,
-          sources: sources.length > 0 ? sources : null,
-          token_count: usage.totalTokens ?? null,
-        },
-      ]);
-      logger.info('Knowledge chat message persisted', { sessionId: resolvedSessionId });
+      try {
+        const { error: insertError } = await supabase.from('ai_chat_messages').insert([
+          { session_id: resolvedSessionId, role: 'user', content: trimmedMessage },
+          {
+            session_id: resolvedSessionId,
+            role: 'assistant',
+            content: text,
+            sources: sources.length > 0 ? sources : null,
+            token_count: usage.totalTokens ?? null,
+          },
+        ]);
+        if (insertError) {
+          logger.error('Failed to persist knowledge chat messages', {
+            sessionId: resolvedSessionId,
+            error: insertError.message,
+          });
+        } else {
+          logger.info('Knowledge chat message persisted', { sessionId: resolvedSessionId });
+        }
+      } catch (err) {
+        logger.error('Unexpected error persisting knowledge chat messages', {
+          sessionId: resolvedSessionId,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
     },
   });
 

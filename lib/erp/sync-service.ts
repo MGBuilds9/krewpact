@@ -35,6 +35,8 @@ import { syncEstimate } from './sync-handlers/sync-quotation';
 import { syncSupplier } from './sync-handlers/sync-supplier';
 import { syncTask } from './sync-handlers/sync-task';
 import { syncTimesheet } from './sync-handlers/sync-timesheet';
+// TODO: import { syncRfqPackage } from './sync-handlers/sync-rfq'; — create when handler is ready
+// TODO: import { syncBid } from './sync-handlers/sync-bid'; — create when handler is ready
 
 // Re-export shared type so existing consumers don't break
 export type { SyncResult } from './sync-handlers/sync-helpers';
@@ -131,6 +133,36 @@ export class SyncService {
 
   async readPaymentEntry(erpDocname: string, jobContext?: SyncJobContext) {
     return readPaymentEntry(erpDocname, jobContext);
+  }
+
+  async syncRfqPackage(rfqId: string, _userId: string, _jobContext?: SyncJobContext) {
+    // TODO: Wire to sync-handlers/sync-rfq.ts when handler is created
+    void rfqId;
+    throw new Error('RFQ sync handler not yet implemented');
+  }
+
+  async syncBid(bidId: string, _userId: string, _jobContext?: SyncJobContext) {
+    // TODO: Wire to sync-handlers/sync-bid.ts when handler is created
+    void bidId;
+    throw new Error('Bid sync handler not yet implemented');
+  }
+
+  async syncAward(awardId: string, _userId: string, _jobContext?: SyncJobContext) {
+    // TODO: Wire to sync-handlers/sync-award.ts when handler is created
+    void awardId;
+    throw new Error('Award sync handler not yet implemented');
+  }
+
+  async syncComplianceDoc(docId: string, _userId: string, _jobContext?: SyncJobContext) {
+    // TODO: Wire to sync-handlers/sync-compliance-doc.ts when handler is created
+    void docId;
+    throw new Error('Compliance doc sync handler not yet implemented');
+  }
+
+  async syncSelectionSheet(sheetId: string, _userId: string, _jobContext?: SyncJobContext) {
+    // TODO: Wire to sync-handlers/sync-selection-sheet.ts when handler is created
+    void sheetId;
+    throw new Error('Selection sheet sync handler not yet implemented');
   }
 
   async getSyncStatus(

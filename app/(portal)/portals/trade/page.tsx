@@ -6,6 +6,8 @@ export const metadata: Metadata = {
 };
 
 import { auth } from '@clerk/nextjs/server';
+import { CheckSquare, ClipboardList, FolderOpen, ShieldCheck } from 'lucide-react';
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
 /**
@@ -16,15 +18,20 @@ import { redirect } from 'next/navigation';
 const QUICK_ACTIONS = [
   {
     label: 'Compliance',
-    icon: '🛡️',
+    icon: ShieldCheck,
     href: '/portals/trade/compliance',
     desc: 'View & upload docs',
   },
-  { label: 'Bid Opportunities', icon: '📋', href: '/portals/trade/bids', desc: 'Submit proposals' },
-  { label: 'My Tasks', icon: '✅', href: '/portals/trade/tasks', desc: 'Field work items' },
+  {
+    label: 'Bid Opportunities',
+    icon: ClipboardList,
+    href: '/portals/trade/bids',
+    desc: 'Submit proposals',
+  },
+  { label: 'My Tasks', icon: CheckSquare, href: '/portals/trade/tasks', desc: 'Field work items' },
   {
     label: 'Submittals',
-    icon: '📁',
+    icon: FolderOpen,
     href: '/portals/trade/submittals',
     desc: 'Shop drawings & RFIs',
   },
@@ -32,26 +39,31 @@ const QUICK_ACTIONS = [
 
 function QuickActionCard({
   label,
-  icon,
+  icon: Icon,
   href,
   desc,
 }: {
   label: string;
-  icon: string;
+  icon: React.ElementType;
   href: string;
   desc: string;
 }) {
   return (
-    <a
+    <Link
       href={href}
       className="group rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md hover:border-orange-300 transition-all text-center"
     >
-      <div className="text-3xl mb-2">{icon}</div>
+      <div className="flex justify-center mb-2">
+        <Icon
+          className="h-8 w-8 text-orange-500 group-hover:text-orange-700 transition-colors"
+          aria-hidden="true"
+        />
+      </div>
       <p className="font-semibold text-gray-900 text-sm group-hover:text-orange-700 transition-colors">
         {label}
       </p>
       <p className="text-xs text-gray-400 mt-0.5">{desc}</p>
-    </a>
+    </Link>
   );
 }
 
@@ -77,13 +89,13 @@ export default async function TradeDashboardPage() {
       </div>
       <div id="compliance-status" className="rounded-xl border border-amber-200 bg-amber-50 p-5">
         <h3 className="font-semibold text-amber-800 flex items-center gap-2">
-          <span>⚠️</span> Compliance Status
+          <ShieldCheck className="h-4 w-4" aria-hidden="true" /> Compliance Status
         </h3>
         <p className="text-sm text-amber-700 mt-1">
           Visit{' '}
-          <a href="/portals/trade/compliance" className="underline font-medium">
+          <Link href="/portals/trade/compliance" className="underline font-medium">
             Compliance
-          </a>{' '}
+          </Link>{' '}
           to review your documentation status and upload any expiring certificates.
         </p>
       </div>
@@ -91,19 +103,19 @@ export default async function TradeDashboardPage() {
         <h3 className="font-semibold text-gray-800 mb-3">Assigned Projects</h3>
         <p className="text-sm text-gray-400">
           Projects are loaded from your portal permissions. Visit{' '}
-          <a href="/portals/projects" className="text-orange-600 underline ml-1">
-            Projects
-          </a>{' '}
-          to view them.
+          <Link href="/portals/trade/submittals" className="text-orange-600 underline ml-1">
+            Submittals
+          </Link>{' '}
+          to view your project work.
         </p>
       </div>
       <div id="trade-messages" className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
         <h3 className="font-semibold text-gray-800 mb-3">Recent Messages</h3>
         <p className="text-sm text-gray-400">
-          Visit{' '}
-          <a href="/portals/messages" className="text-orange-600 underline">
-            Messages
-          </a>{' '}
+          Contact your project manager or visit{' '}
+          <Link href="/portals/trade/tasks" className="text-orange-600 underline">
+            Tasks
+          </Link>{' '}
           to communicate with the project team.
         </p>
       </div>
