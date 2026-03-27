@@ -4,6 +4,7 @@
 
 import { createScopedServiceClient } from '@/lib/supabase/server';
 
+import { toErpAddress } from '../address-mapper';
 import { mockSupplierResponse } from '../mock-responses';
 import { mapSupplierToErp } from '../supplier-mapper';
 import { isMockMode } from '../sync-service';
@@ -43,6 +44,7 @@ export async function syncSupplier(
     }
 
     const pa = portalAccount as Record<string, unknown>;
+    const billingAddr = pa.billing_address as Record<string, unknown> | null;
     let erpDocname: string;
 
     if (isMockMode()) {
@@ -51,6 +53,15 @@ export async function syncSupplier(
         company_name: pa.company_name as string,
       });
       erpDocname = mockResp.name;
+
+      if (billingAddr && Object.keys(billingAddr).length > 0) {
+        await logEvent(supabase, job.id, 'address_synced', {
+          entity_type: 'supplier',
+          entity_id: portalAccountId,
+          erp_docname: erpDocname,
+          mock: true,
+        });
+      }
     } else {
       const { ErpClient } = await import('../client');
       const client = new ErpClient();
@@ -58,11 +69,28 @@ export async function syncSupplier(
         id: portalAccountId,
         company_name: pa.company_name as string,
         account_type: pa.account_type as string | null,
-        billing_address: pa.billing_address as Record<string, unknown> | null,
+        billing_address: billingAddr,
         division_id: pa.division_id as string | null,
       });
       const result = await client.create<{ name: string }>('Supplier', mapped);
       erpDocname = result.name;
+
+      if (billingAddr && Object.keys(billingAddr).length > 0) {
+        const addrPayload = toErpAddress({
+          address: billingAddr,
+          ownerName: pa.company_name as string,
+          linkDoctype: 'Supplier',
+          linkName: erpDocname,
+        });
+        if (addrPayload) {
+          await client.create('Address', addrPayload);
+          await logEvent(supabase, job.id, 'address_synced', {
+            entity_type: 'supplier',
+            entity_id: portalAccountId,
+            erp_docname: erpDocname,
+          });
+        }
+      }
     }
 
     await upsertSyncMap(supabase, 'supplier', portalAccountId, 'Supplier', erpDocname);

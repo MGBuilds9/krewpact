@@ -23,10 +23,8 @@ export function mapSupplierToErp(supplier: SupplierMapInput): Record<string, unk
     default_currency: 'CAD',
     krewpact_id: supplier.id,
     supplier_details: supplier.account_type || '',
-    // Note: billing_address is serialised as JSON here for storage reference, but
-    // ERPNext Address is a separate linked doctype. This field will be silently
-    // ignored by ERPNext on Supplier creation. A follow-up Address document POST
-    // is required to link the address properly. See TODO: ADDR-SYNC.
+    // Note: billing_address is stored as JSON reference. Actual ERPNext Address
+    // document is created separately by the sync handler after entity creation.
     primary_address: supplier.billing_address ? JSON.stringify(supplier.billing_address) : null,
   };
 }

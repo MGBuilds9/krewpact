@@ -48,10 +48,8 @@ export function toErpCustomer(account: CustomerMapInput): Record<string, unknown
     custom_division: account.division_id || '',
     website: account.website || '',
     industry: account.industry || '',
-    // Note: billing_address is serialised as JSON here for storage reference, but
-    // ERPNext Address is a separate linked doctype. This field will be silently
-    // ignored by ERPNext on Customer creation. A follow-up Address document POST
-    // is required to link the address properly. See TODO: ADDR-SYNC.
+    // Note: billing_address is stored as JSON reference. Actual ERPNext Address
+    // document is created separately by the sync handler after entity creation.
     primary_address: account.billing_address ? JSON.stringify(account.billing_address) : null,
   };
 }

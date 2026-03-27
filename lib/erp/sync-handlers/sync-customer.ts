@@ -4,6 +4,7 @@
 
 import { createScopedServiceClient } from '@/lib/supabase/server';
 
+import { toErpAddress } from '../address-mapper';
 import { toErpCustomer } from '../customer-mapper';
 import { mockCustomerResponse } from '../mock-responses';
 import { isMockMode } from '../sync-service';
@@ -45,14 +46,25 @@ export async function syncAccount(
     const accountData = account as Record<string, unknown>;
     let erpDocname: string;
 
+    const billingAddr = accountData.billing_address as Record<string, unknown> | null;
+
     if (isMockMode()) {
       const mockResp = mockCustomerResponse({
         id: accountId,
         account_name: accountData.account_name as string,
         account_type: accountData.account_type as string | undefined,
-        billing_address: accountData.billing_address as Record<string, unknown> | null,
+        billing_address: billingAddr,
       });
       erpDocname = mockResp.name;
+
+      if (billingAddr && Object.keys(billingAddr).length > 0) {
+        await logEvent(supabase, job.id, 'address_synced', {
+          entity_type: 'account',
+          entity_id: accountId,
+          erp_docname: erpDocname,
+          mock: true,
+        });
+      }
     } else {
       const { ErpClient } = await import('../client');
       const client = new ErpClient();
@@ -62,13 +74,30 @@ export async function syncAccount(
         account_type: accountData.account_type as string | null,
         division_id: accountData.division_id as string | null,
         status: accountData.status as string | null,
-        billing_address: accountData.billing_address as Record<string, unknown> | null,
+        billing_address: billingAddr,
         phone: accountData.phone as string | null,
         website: accountData.website as string | null,
         industry: accountData.industry as string | null,
       });
       const result = await client.create<{ name: string }>('Customer', mapped);
       erpDocname = result.name;
+
+      if (billingAddr && Object.keys(billingAddr).length > 0) {
+        const addrPayload = toErpAddress({
+          address: billingAddr,
+          ownerName: accountData.account_name as string,
+          linkDoctype: 'Customer',
+          linkName: erpDocname,
+        });
+        if (addrPayload) {
+          await client.create('Address', addrPayload);
+          await logEvent(supabase, job.id, 'address_synced', {
+            entity_type: 'account',
+            entity_id: accountId,
+            erp_docname: erpDocname,
+          });
+        }
+      }
     }
 
     await upsertSyncMap(supabase, 'account', accountId, 'Customer', erpDocname);
