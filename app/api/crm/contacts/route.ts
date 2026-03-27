@@ -1,9 +1,9 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { dbError } from '@/lib/api/errors';
 import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { contactCreateSchema } from '@/lib/validators/crm';
 
@@ -15,86 +15,42 @@ const querySchema = z.object({
   sort_dir: z.enum(['asc', 'desc']).optional(),
 });
 
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+const CONTACT_SELECT =
+  'id, first_name, last_name, full_name, email, phone, mobile, title, role, linkedin_url, is_primary, is_decision_maker, lead_id, preferred_channel, email_opted_in, phone_opted_in, last_contacted_at, total_touches, created_at, updated_at';
 
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const params = Object.fromEntries(req.nextUrl.searchParams);
-  const parsed = querySchema.safeParse(params);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
-  const { account_id, lead_id, search, sort_by, sort_dir } = parsed.data;
+export const GET = withApiRoute({ querySchema }, async ({ req, query }) => {
+  const { account_id, lead_id, search, sort_by, sort_dir } = query as z.infer<typeof querySchema>;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
-  let query = supabase
+  let dbQuery = supabase
     .from('contacts')
-    .select(
-      'id, first_name, last_name, full_name, email, phone, mobile, title, role, linkedin_url, is_primary, is_decision_maker, lead_id, preferred_channel, email_opted_in, phone_opted_in, last_contacted_at, total_touches, created_at, updated_at',
-      { count: 'exact' },
-    )
+    .select(CONTACT_SELECT, { count: 'exact' })
     .order(sort_by ?? 'created_at', { ascending: sort_dir === 'asc' });
 
-  if (account_id) {
-    query = query.eq('account_id', account_id);
-  }
+  if (account_id) dbQuery = dbQuery.eq('account_id', account_id);
+  if (lead_id) dbQuery = dbQuery.eq('lead_id', lead_id);
+  if (search) dbQuery = dbQuery.or(`first_name.ilike.%${search}%,last_name.ilike.%${search}%`);
+  dbQuery = dbQuery.range(offset, offset + limit - 1);
 
-  if (lead_id) {
-    query = query.eq('lead_id', lead_id);
-  }
-
-  if (search) {
-    query = query.or(`first_name.ilike.%${search}%,last_name.ilike.%${search}%`);
-  }
-
-  query = query.range(offset, offset + limit - 1);
-
-  const { data, error, count } = await query;
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  const { data, error, count } = await dbQuery;
+  if (error) throw dbError(error.message);
 
   return NextResponse.json(paginatedResponse(data, count, limit, offset));
-}
+});
 
-export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = contactCreateSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
+export const POST = withApiRoute({ bodySchema: contactCreateSchema }, async ({ body }) => {
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
+
   const { data, error } = await supabase
     .from('contacts')
-    .insert({ ...parsed.data })
+    .insert({ ...(body as z.infer<typeof contactCreateSchema>) })
     .select()
     .single();
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  if (error) throw dbError(error.message);
 
   return NextResponse.json(data, { status: 201 });
-}
+});

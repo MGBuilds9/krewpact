@@ -1,37 +1,13 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { sequenceEnrollSchema } from '@/lib/validators/crm';
 
-type RouteContext = { params: Promise<{ id: string }> };
-
-export async function POST(req: NextRequest, context: RouteContext): Promise<NextResponse> {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id: sequence_id } = await context.params;
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = sequenceEnrollSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
+export const POST = withApiRoute({ bodySchema: sequenceEnrollSchema }, async ({ params, body }) => {
+  const { id: sequence_id } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
-
   if (authError) return authError;
 
   // Fetch the first step to calculate next_step_at
@@ -44,7 +20,7 @@ export async function POST(req: NextRequest, context: RouteContext): Promise<Nex
     .single();
 
   if (stepError && stepError.code !== 'PGRST116') {
-    return NextResponse.json({ error: stepError.message }, { status: 500 });
+    throw dbError(stepError.message);
   }
 
   const now = new Date();
@@ -57,7 +33,7 @@ export async function POST(req: NextRequest, context: RouteContext): Promise<Nex
   const { data, error } = await supabase
     .from('sequence_enrollments')
     .insert({
-      ...parsed.data,
+      ...body,
       sequence_id,
       status: 'active',
       next_step_at: now.toISOString(),
@@ -65,9 +41,7 @@ export async function POST(req: NextRequest, context: RouteContext): Promise<Nex
     .select()
     .single();
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  if (error) throw dbError(error.message);
 
   return NextResponse.json(data, { status: 201 });
-}
+});

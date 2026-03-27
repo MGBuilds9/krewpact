@@ -1,21 +1,13 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 const ALLOWED_ENTITIES = ['leads', 'contacts', 'accounts', 'opportunities'] as const;
 type EntityType = (typeof ALLOWED_ENTITIES)[number];
 
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
+export const GET = withApiRoute({}, async ({ req }) => {
   const url = new URL(req.url);
   const entity = url.searchParams.get('entity') as EntityType | null;
 
@@ -27,13 +19,11 @@ export async function GET(req: NextRequest) {
   }
 
   const { client: supabase, error: authError } = await createUserClientSafe();
-
   if (authError) return authError;
+
   const { data, error } = await supabase.from(entity).select('*').limit(5000);
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  if (error) throw dbError(error.message);
 
   if (!data || data.length === 0) {
     return new NextResponse('', {
@@ -71,4 +61,4 @@ export async function GET(req: NextRequest) {
       'Content-Disposition': `attachment; filename="${entity}-export.csv"`,
     },
   });
-}
+});

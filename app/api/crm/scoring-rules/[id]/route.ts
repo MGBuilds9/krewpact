@@ -1,11 +1,9 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError, notFound } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
-
-type RouteContext = { params: Promise<{ id: string }> };
 
 const scoringRuleUpdateSchema = z.object({
   name: z.string().min(1).max(200).optional(),
@@ -17,61 +15,37 @@ const scoringRuleUpdateSchema = z.object({
   is_active: z.boolean().optional(),
 });
 
-export async function PUT(req: NextRequest, context: RouteContext): Promise<NextResponse> {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+export const PUT = withApiRoute(
+  { bodySchema: scoringRuleUpdateSchema },
+  async ({ params, body }) => {
+    const { id } = params;
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
+    const { data, error } = await supabase
+      .from('scoring_rules')
+      .update(body)
+      .eq('id', id)
+      .select()
+      .single();
 
-  const { id } = await context.params;
+    if (error) {
+      if (error.code === 'PGRST116') throw notFound('Scoring rule');
+      throw dbError(error.message);
+    }
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
+    return NextResponse.json(data);
+  },
+);
 
-  const parsed = scoringRuleUpdateSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
-  const { client: supabase, error: authError } = await createUserClientSafe();
-
-  if (authError) return authError;
-  const { data, error } = await supabase
-    .from('scoring_rules')
-    .update(parsed.data)
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (error) {
-    const status = error.code === 'PGRST116' ? 404 : 500;
-    return NextResponse.json({ error: error.message }, { status });
-  }
-
-  return NextResponse.json(data);
-}
-
-export async function DELETE(_req: NextRequest, context: RouteContext): Promise<NextResponse> {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const { id } = await context.params;
+export const DELETE = withApiRoute({}, async ({ params }) => {
+  const { id } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
+
   const { error } = await supabase.from('scoring_rules').delete().eq('id', id);
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  if (error) throw dbError(error.message);
 
   return NextResponse.json({ success: true });
-}
+});

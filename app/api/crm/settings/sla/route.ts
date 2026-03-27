@@ -1,10 +1,9 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { dbError } from '@/lib/api/errors';
 import { getOrgIdFromAuth } from '@/lib/api/org';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
-import { logger } from '@/lib/logger';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 const stageSchema = z.object({
@@ -34,62 +33,31 @@ const DEFAULT_SLA_SETTINGS = {
   ],
 };
 
-export async function GET(req: NextRequest): Promise<NextResponse> {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+export const GET = withApiRoute({}, async (): Promise<NextResponse> => {
+  const orgId = await getOrgIdFromAuth();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
+  const { data, error } = await supabase
+    .from('org_settings')
+    .select('workflow')
+    .eq('org_id', orgId)
+    .single();
 
-  try {
+  if (error && error.code !== 'PGRST116') throw dbError(error.message);
+
+  const slaConfig = data?.workflow?.sla_config ?? DEFAULT_SLA_SETTINGS;
+  return NextResponse.json(slaConfig);
+});
+
+export const PATCH = withApiRoute(
+  { rateLimit: { limit: 30, window: '1 m' }, bodySchema: slaSettingsSchema },
+  async ({ body }): Promise<NextResponse> => {
+    const parsed = body as z.infer<typeof slaSettingsSchema>;
     const orgId = await getOrgIdFromAuth();
     const { client: supabase, error: authError } = await createUserClientSafe();
     if (authError) return authError;
 
-    const { data, error } = await supabase
-      .from('org_settings')
-      .select('workflow')
-      .eq('org_id', orgId)
-      .single();
-
-    if (error && error.code !== 'PGRST116') {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    const slaConfig = data?.workflow?.sla_config ?? DEFAULT_SLA_SETTINGS;
-    return NextResponse.json(slaConfig);
-  } catch (err: unknown) {
-    logger.error('Failed to fetch SLA settings', { error: err });
-    return NextResponse.json({ error: 'Failed to fetch SLA settings' }, { status: 500 });
-  }
-}
-
-export async function PATCH(req: NextRequest): Promise<NextResponse> {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(req, { limit: 30, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  try {
-    const body = await req.json();
-    const parsed = slaSettingsSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: 'Invalid input', details: parsed.error.flatten() },
-        { status: 400 },
-      );
-    }
-
-    const orgId = await getOrgIdFromAuth();
-    const { client: supabase, error: authError } = await createUserClientSafe();
-    if (authError) return authError;
-
-    // Read current workflow settings
     const { data: existing } = await supabase
       .from('org_settings')
       .select('workflow')
@@ -97,7 +65,7 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
       .single();
 
     const currentWorkflow = existing?.workflow ?? {};
-    const updatedWorkflow = { ...currentWorkflow, sla_config: parsed.data };
+    const updatedWorkflow = { ...currentWorkflow, sla_config: parsed };
 
     const { data, error } = await supabase
       .from('org_settings')
@@ -105,13 +73,8 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
       .select('workflow')
       .single();
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
+    if (error) throw dbError(error.message);
 
-    return NextResponse.json(data?.workflow?.sla_config ?? parsed.data);
-  } catch (err: unknown) {
-    logger.error('Failed to update SLA settings', { error: err });
-    return NextResponse.json({ error: 'Failed to update SLA settings' }, { status: 500 });
-  }
-}
+    return NextResponse.json(data?.workflow?.sla_config ?? parsed);
+  },
+);

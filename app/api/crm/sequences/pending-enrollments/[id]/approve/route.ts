@@ -1,35 +1,20 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError, serverError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { approveEnrollment } from '@/lib/crm/enrollment-engine';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
-export async function POST(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(_request, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id } = await params;
-  if (!id) {
-    return NextResponse.json({ error: 'Missing enrollment id' }, { status: 400 });
-  }
+export const POST = withApiRoute({}, async ({ params }) => {
+  const { id } = params;
 
   const { client: supabase, error: authError } = await createUserClientSafe();
-
   if (authError) return authError;
 
   const result = await approveEnrollment(supabase, id);
 
   if (!result.success) {
-    return NextResponse.json(
-      { error: 'Failed to approve enrollment', detail: result.error },
-      { status: 500 },
-    );
+    throw serverError(`Failed to approve enrollment: ${result.error}`);
   }
 
   const { data: enrollment, error: fetchError } = await supabase
@@ -41,14 +26,8 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
     .single();
 
   if (fetchError || !enrollment) {
-    return NextResponse.json(
-      {
-        error: 'Enrollment approved but failed to fetch updated record',
-        detail: fetchError?.message,
-      },
-      { status: 500 },
-    );
+    throw dbError(fetchError?.message ?? 'Failed to fetch updated record');
   }
 
   return NextResponse.json({ data: enrollment });
-}
+});

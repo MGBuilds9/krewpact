@@ -1,77 +1,69 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
-import { logger } from '@/lib/logger';
+import { dbError, notFound, serverError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
-type RouteContext = { params: Promise<{ id: string }> };
+export const POST = withApiRoute(
+  { rateLimit: { limit: 30, window: '1 m' } },
+  async ({ params, logger }) => {
+    const { id } = params;
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
-export async function POST(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+    // Fetch the bid
+    const { data: bid, error: bidError } = await supabase
+      .from('bidding_opportunities')
+      .select('*')
+      .eq('id', id)
+      .single();
 
-  const rl = await rateLimit(req, { limit: 30, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
+    if (bidError) {
+      if (bidError.code === 'PGRST116') throw notFound('Bidding opportunity');
+      throw dbError(bidError.message);
+    }
 
-  const { id } = await context.params;
-  const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
+    if (bid.opportunity_id) {
+      return NextResponse.json(
+        { error: 'Bid is already linked to an opportunity', opportunity_id: bid.opportunity_id },
+        { status: 409 },
+      );
+    }
 
-  // Fetch the bid
-  const { data: bid, error: bidError } = await supabase
-    .from('bidding_opportunities')
-    .select('*')
-    .eq('id', id)
-    .single();
+    // Build opportunity payload from bid fields
+    const opportunityPayload = {
+      opportunity_name: bid.title,
+      division_id: bid.division_id ?? undefined,
+      estimated_revenue: bid.estimated_value ?? undefined,
+      target_close_date: bid.deadline ?? undefined,
+      stage: 'intake',
+    };
 
-  if (bidError) {
-    const status = bidError.code === 'PGRST116' ? 404 : 500;
-    return NextResponse.json({ error: bidError.message }, { status });
-  }
+    // Create the opportunity
+    const { data: opportunity, error: oppError } = await supabase
+      .from('opportunities')
+      .insert(opportunityPayload)
+      .select('id')
+      .single();
 
-  if (bid.opportunity_id) {
-    return NextResponse.json(
-      { error: 'Bid is already linked to an opportunity', opportunity_id: bid.opportunity_id },
-      { status: 409 },
-    );
-  }
+    if (oppError) {
+      logger.error('Failed to create opportunity from bid', {
+        message: oppError.message,
+        code: oppError.code,
+      });
+      throw serverError('Failed to create opportunity');
+    }
 
-  // Build opportunity payload from bid fields
-  const opportunityPayload = {
-    opportunity_name: bid.title,
-    division_id: bid.division_id ?? undefined,
-    estimated_revenue: bid.estimated_value ?? undefined,
-    target_close_date: bid.deadline ?? undefined,
-    stage: 'intake',
-  };
+    // Link bid back to new opportunity
+    const { error: linkError } = await supabase
+      .from('bidding_opportunities')
+      .update({ opportunity_id: opportunity.id })
+      .eq('id', id);
 
-  // Create the opportunity
-  const { data: opportunity, error: oppError } = await supabase
-    .from('opportunities')
-    .insert(opportunityPayload)
-    .select('id')
-    .single();
+    if (linkError) {
+      logger.error('Created opportunity but failed to link bid', { message: linkError.message });
+    }
 
-  if (oppError) {
-    logger.error('Failed to create opportunity from bid', {
-      message: oppError.message,
-      code: oppError.code,
-    });
-    return NextResponse.json({ error: 'Failed to create opportunity' }, { status: 500 });
-  }
-
-  // Link bid back to new opportunity
-  const { error: linkError } = await supabase
-    .from('bidding_opportunities')
-    .update({ opportunity_id: opportunity.id })
-    .eq('id', id);
-
-  if (linkError) {
-    logger.error('Created opportunity but failed to link bid', { message: linkError.message });
-  }
-
-  return NextResponse.json({ opportunity_id: opportunity.id }, { status: 201 });
-}
+    return NextResponse.json({ opportunity_id: opportunity.id }, { status: 201 });
+  },
+);

@@ -1,8 +1,8 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mergeSchema = z.object({
@@ -62,26 +62,12 @@ async function reassignRelations(
   return reassigned;
 }
 
-export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export const POST = withApiRoute({ bodySchema: mergeSchema }, async ({ body }) => {
+  const { primary_id, secondary_id } = body as z.infer<typeof mergeSchema>;
 
-  const rl = await rateLimit(req, { limit: 30, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = mergeSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-
-  const { primary_id, secondary_id } = parsed.data;
-  if (primary_id === secondary_id)
+  if (primary_id === secondary_id) {
     return NextResponse.json({ error: 'Cannot merge an account with itself' }, { status: 400 });
+  }
 
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
@@ -117,4 +103,4 @@ export async function POST(req: NextRequest) {
     mergedFields,
     reassignedRelations: reassigned,
   });
-}
+});

@@ -10,6 +10,17 @@ vi.mock('@/lib/supabase/server', () => ({
   createUserClientSafe: vi.fn(),
 }));
 
+vi.mock('@/lib/logger', () => {
+  const m = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), child: vi.fn() };
+  m.child.mockReturnValue(m);
+  return { logger: m };
+});
+vi.mock('@/lib/request-context', () => ({
+  requestContext: { run: (_: unknown, fn: () => unknown) => fn() },
+  generateRequestId: () => 'req_test',
+  getRequestContext: () => undefined,
+}));
+
 import { auth } from '@clerk/nextjs/server';
 
 import {
@@ -43,7 +54,7 @@ describe('GET /api/crm/accounts', () => {
     const res = await GET(makeRequest('/api/crm/accounts'));
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 
   it('returns accounts list', async () => {
@@ -101,7 +112,7 @@ describe('GET /api/crm/accounts', () => {
     const res = await GET(makeRequest('/api/crm/accounts'));
     expect(res.status).toBe(500);
     const body = await res.json();
-    expect(body.error).toBe('DB error');
+    expect(body.error.message).toBe('DB error');
   });
 });
 

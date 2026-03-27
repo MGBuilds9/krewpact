@@ -12,6 +12,18 @@ vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
+vi.mock('@/lib/logger', () => ({
+  logger: {
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+    child: vi.fn().mockReturnValue({ info: vi.fn(), error: vi.fn(), warn: vi.fn() }),
+  },
+}));
+vi.mock('@/lib/request-context', () => ({
+  requestContext: { run: vi.fn().mockImplementation((_ctx: unknown, fn: () => unknown) => fn()) },
+  generateRequestId: vi.fn().mockReturnValue('test-req-id'),
+}));
 
 import { auth } from '@clerk/nextjs/server';
 
@@ -56,7 +68,7 @@ describe('GET /api/crm/sequences/analytics', () => {
     const res = await GET(req());
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.message ?? body.error).toMatch(/auth/i);
   });
 
   it('returns analytics with correct enrollment counts', async () => {
@@ -183,6 +195,6 @@ describe('GET /api/crm/sequences/analytics', () => {
     const res = await GET(req());
     expect(res.status).toBe(500);
     const body = await res.json();
-    expect(body.error).toBe('Connection refused');
+    expect(body.error.message ?? body.error).toBe('Connection refused');
   });
 });

@@ -10,6 +10,21 @@ vi.mock('@/lib/supabase/server', () => ({
   createUserClientSafe: vi.fn(),
 }));
 
+vi.mock('@/lib/request-context', () => ({
+  requestContext: { run: vi.fn((_ctx, fn) => fn()) },
+  generateRequestId: vi.fn().mockReturnValue('req_test'),
+}));
+
+vi.mock('@/lib/logger', () => ({
+  logger: {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    child: vi.fn().mockReturnThis(),
+  },
+}));
+
 import { auth } from '@clerk/nextjs/server';
 
 import {
@@ -92,5 +107,7 @@ describe('GET /api/crm/dashboard/metrics', () => {
 
     const res = await GET(makeRequest('/api/crm/dashboard/metrics'));
     expect(res.status).toBe(500);
+    const body = await res.json();
+    expect(body.error).toBeDefined();
   });
 });

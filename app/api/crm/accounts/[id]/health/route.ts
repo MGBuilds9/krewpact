@@ -1,38 +1,24 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError, notFound } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { calculateAccountHealth, determineLifecycleStage } from '@/lib/crm/account-health';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
-type RouteContext = { params: Promise<{ id: string }> };
-
-export async function GET(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id } = await context.params;
+export const GET = withApiRoute({}, async ({ params }) => {
+  const { id } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
-  // Verify account exists
   const { data: account, error: accError } = await supabase
     .from('accounts')
     .select('id, account_name')
     .eq('id', id)
     .single();
 
-  if (accError) {
-    const status = accError.code === 'PGRST116' ? 404 : 500;
-    return NextResponse.json({ error: accError.message }, { status });
-  }
+  if (accError)
+    throw accError.code === 'PGRST116' ? notFound('Account') : dbError(accError.message);
 
-  // Fetch opportunities for this account
   const { data: opportunities } = await supabase
     .from('opportunities')
     .select('id, stage, estimated_revenue, updated_at')
@@ -43,7 +29,6 @@ export async function GET(req: NextRequest, context: RouteContext) {
   const activeOpps = opps.filter((o) => !['contracted', 'closed_lost'].includes(o.stage));
   const totalRevenue = wonOpps.reduce((sum, o) => sum + (o.estimated_revenue ?? 0), 0);
 
-  // Fetch most recent activity
   const { data: recentActivity } = await supabase
     .from('activities')
     .select('created_at')
@@ -84,4 +69,4 @@ export async function GET(req: NextRequest, context: RouteContext) {
       last_activity_at: lastActivityAt,
     },
   });
-}
+});

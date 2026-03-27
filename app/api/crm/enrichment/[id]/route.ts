@@ -1,21 +1,11 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError, notFound } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
-type RouteContext = { params: Promise<{ id: string }> };
-
-export async function GET(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id } = await context.params;
+export const GET = withApiRoute({}, async ({ params }) => {
+  const { id } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -26,45 +16,36 @@ export async function GET(req: NextRequest, context: RouteContext) {
     .single();
 
   if (error) {
-    if (error.code === 'PGRST116') {
-      return NextResponse.json({ error: 'Not found' }, { status: 404 });
-    }
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error.code === 'PGRST116') throw notFound('Enrichment job');
+    throw dbError(error.message);
   }
 
   return NextResponse.json(data);
-}
+});
 
-export async function POST(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+export const POST = withApiRoute(
+  { rateLimit: { limit: 30, window: '1 m' } },
+  async ({ params }) => {
+    const { id } = params;
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
-  const rl = await rateLimit(req, { limit: 30, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
+    const { data, error } = await supabase
+      .from('enrichment_jobs')
+      .update({
+        status: 'pending',
+        error_message: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .select('id, lead_id, status, source, result, error_message, created_at, updated_at')
+      .single();
 
-  const { id } = await context.params;
-  const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
-
-  const { data, error } = await supabase
-    .from('enrichment_jobs')
-    .update({
-      status: 'pending',
-      error_message: null,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', id)
-    .select('id, lead_id, status, source, result, error_message, created_at, updated_at')
-    .single();
-
-  if (error) {
-    if (error.code === 'PGRST116') {
-      return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    if (error) {
+      if (error.code === 'PGRST116') throw notFound('Enrichment job');
+      throw dbError(error.message);
     }
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
 
-  return NextResponse.json(data);
-}
+    return NextResponse.json(data);
+  },
+);

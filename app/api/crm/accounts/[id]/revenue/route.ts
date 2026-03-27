@@ -1,37 +1,23 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError, notFound } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
-type RouteContext = { params: Promise<{ id: string }> };
-
-export async function GET(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id } = await context.params;
+export const GET = withApiRoute({}, async ({ params }) => {
+  const { id } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
-  // Verify account exists
   const { data: account, error: accError } = await supabase
     .from('accounts')
     .select('id, account_name')
     .eq('id', id)
     .single();
 
-  if (accError) {
-    const status = accError.code === 'PGRST116' ? 404 : 500;
-    return NextResponse.json({ error: accError.message }, { status });
-  }
+  if (accError)
+    throw accError.code === 'PGRST116' ? notFound('Account') : dbError(accError.message);
 
-  // Fetch all won opportunities with revenue data
   const { data: wonOpps } = await supabase
     .from('opportunities')
     .select('id, opportunity_name, estimated_revenue, created_at, updated_at')
@@ -42,14 +28,12 @@ export async function GET(req: NextRequest, context: RouteContext) {
   const opportunities = wonOpps ?? [];
   const lifetimeValue = opportunities.reduce((sum, o) => sum + (o.estimated_revenue ?? 0), 0);
 
-  // Revenue by year
   const revenueByYear: Record<string, number> = {};
   for (const opp of opportunities) {
     const year = new Date(opp.created_at).getFullYear().toString();
     revenueByYear[year] = (revenueByYear[year] ?? 0) + (opp.estimated_revenue ?? 0);
   }
 
-  // Fetch related projects count
   const { count: projectCount } = await supabase
     .from('projects')
     .select('id', { count: 'exact', head: true })
@@ -69,4 +53,4 @@ export async function GET(req: NextRequest, context: RouteContext) {
       closed_at: o.updated_at,
     })),
   });
-}
+});

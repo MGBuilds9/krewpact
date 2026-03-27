@@ -1,8 +1,7 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
-import { logger } from '@/lib/logger';
+import { dbError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 type SupabaseClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
@@ -15,11 +14,7 @@ async function calcIcpAccuracy(supabase: SupabaseClient, monthStart: string): Pr
     .gte('updated_at', monthStart)
     .not('lead_id', 'is', null);
 
-  if (wonLeadsErr) {
-    logger.error('closed-loop: won_with_leads failed', { error: wonLeadsErr.message });
-    return 0;
-  }
-  if (!wonWithLeads || wonWithLeads.length === 0) return 0;
+  if (wonLeadsErr || !wonWithLeads || wonWithLeads.length === 0) return 0;
 
   const leadIds = wonWithLeads
     .map((r) => (r as Record<string, unknown>).lead_id as string)
@@ -30,24 +25,12 @@ async function calcIcpAccuracy(supabase: SupabaseClient, monthStart: string): Pr
     .in('lead_id', leadIds)
     .gte('match_score', 50);
 
-  if (matchErr) {
-    logger.error('closed-loop: icp_lead_matches failed', { error: matchErr.message });
-    return 0;
-  }
-  if (!matched) return 0;
+  if (matchErr || !matched) return 0;
   const matchedSet = new Set(matched.map((r) => (r as Record<string, unknown>).lead_id as string));
   return Math.round((matchedSet.size / leadIds.length) * 100);
 }
 
-export async function GET(req: NextRequest): Promise<NextResponse> {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
+export const GET = withApiRoute({}, async (): Promise<NextResponse> => {
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -55,55 +38,41 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const now = new Date();
   const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
 
-  try {
-    // 1. Won deals this month — opportunities with stage='contracted' updated this month
-    const { count: wonCount, error: wonErr } = await supabase
-      .from('opportunities')
-      .select('id', { count: 'exact', head: true })
-      .eq('stage', 'contracted')
-      .gte('updated_at', monthStart);
+  // 1. Won deals this month — opportunities with stage='contracted' updated this month
+  const { count: wonCount, error: wonErr } = await supabase
+    .from('opportunities')
+    .select('id', { count: 'exact', head: true })
+    .eq('stage', 'contracted')
+    .gte('updated_at', monthStart);
 
-    if (wonErr) {
-      logger.error('closed-loop stats: won_deals query failed', { error: wonErr.message });
-      return NextResponse.json({ error: wonErr.message }, { status: 500 });
-    }
+  if (wonErr) throw dbError(wonErr.message);
 
-    // 2. Accounts created from wins this month (source='conversion')
-    const { count: accountsFromWins, error: accErr } = await supabase
-      .from('accounts')
-      .select('id', { count: 'exact', head: true })
-      .eq('source', 'conversion')
-      .gte('created_at', monthStart)
-      .is('deleted_at', null);
+  // 2. Accounts created from wins this month (source='conversion')
+  const { count: accountsFromWins, error: accErr } = await supabase
+    .from('accounts')
+    .select('id', { count: 'exact', head: true })
+    .eq('source', 'conversion')
+    .gte('created_at', monthStart)
+    .is('deleted_at', null);
 
-    if (accErr) {
-      logger.error('closed-loop stats: accounts_from_wins query failed', { error: accErr.message });
-      return NextResponse.json({ error: accErr.message }, { status: 500 });
-    }
+  if (accErr) throw dbError(accErr.message);
 
-    // 3. Active ICP profiles
-    const { count: activeICPs, error: icpErr } = await supabase
-      .from('ideal_client_profiles')
-      .select('id', { count: 'exact', head: true })
-      .eq('is_active', true);
+  // 3. Active ICP profiles
+  const { count: activeICPs, error: icpErr } = await supabase
+    .from('ideal_client_profiles')
+    .select('id', { count: 'exact', head: true })
+    .eq('is_active', true);
 
-    if (icpErr) {
-      logger.error('closed-loop stats: active_icps query failed', { error: icpErr.message });
-      return NextResponse.json({ error: icpErr.message }, { status: 500 });
-    }
+  if (icpErr) throw dbError(icpErr.message);
 
-    // 4. ICP accuracy: of won deals this month with a lead_id,
-    //    what % had an icp_lead_matches row with match_score >= 50?
-    const icpAccuracyPct = await calcIcpAccuracy(supabase, monthStart);
+  // 4. ICP accuracy: of won deals this month with a lead_id,
+  //    what % had an icp_lead_matches row with match_score >= 50?
+  const icpAccuracyPct = await calcIcpAccuracy(supabase, monthStart);
 
-    return NextResponse.json({
-      won_deals_this_month: wonCount ?? 0,
-      accounts_from_wins: accountsFromWins ?? 0,
-      active_icps: activeICPs ?? 0,
-      icp_accuracy_pct: icpAccuracyPct,
-    });
-  } catch (err: unknown) {
-    logger.error('closed-loop stats: unexpected error', { error: err });
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
-}
+  return NextResponse.json({
+    won_deals_this_month: wonCount ?? 0,
+    accounts_from_wins: accountsFromWins ?? 0,
+    active_icps: activeICPs ?? 0,
+    icp_accuracy_pct: icpAccuracyPct,
+  });
+});

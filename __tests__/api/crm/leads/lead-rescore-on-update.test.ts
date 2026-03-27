@@ -21,8 +21,15 @@ vi.mock('@/lib/crm/scoring-engine', () => ({
   scoreLead: vi.fn(),
 }));
 
-vi.mock('@/lib/logger', () => ({
-  logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
+vi.mock('@/lib/logger', () => {
+  const m = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), child: vi.fn() };
+  m.child.mockReturnValue(m);
+  return { logger: m };
+});
+vi.mock('@/lib/request-context', () => ({
+  requestContext: { run: (_: unknown, fn: () => unknown) => fn() },
+  generateRequestId: () => 'req_test',
+  getRequestContext: () => undefined,
 }));
 
 import { auth } from '@clerk/nextjs/server';

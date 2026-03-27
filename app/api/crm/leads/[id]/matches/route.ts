@@ -1,39 +1,19 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import {
-  dbError,
-  errorResponse,
-  INVALID_JSON,
-  notFound,
-  UNAUTHORIZED,
-  validationError,
-} from '@/lib/api/errors';
+import { dbError, notFound } from '@/lib/api/errors';
 import { getKrewpactUserId } from '@/lib/api/org';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { logger } from '@/lib/logger';
 import { createUserClientSafe } from '@/lib/supabase/server';
-
-type RouteContext = { params: Promise<{ id: string }> };
 
 const patchSchema = z.object({
   match_id: z.string().uuid(),
   is_confirmed: z.boolean(),
 });
 
-/**
- * GET /api/crm/leads/[id]/matches
- * Returns all account matches for a lead, joined with account data.
- */
-export async function GET(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return errorResponse(UNAUTHORIZED);
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id } = await context.params;
+export const GET = withApiRoute({}, async ({ params }) => {
+  const { id } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -48,42 +28,19 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
   if (error) {
     logger.error('Failed to fetch lead account matches', { lead_id: id, error });
-    return errorResponse(dbError(error.message));
+    throw dbError(error.message);
   }
 
   return NextResponse.json(data ?? []);
-}
+});
 
-/**
- * PATCH /api/crm/leads/[id]/matches
- * Confirm or dismiss a lead-account match.
- * Body: { match_id: string, is_confirmed: boolean }
- */
-export async function PATCH(req: NextRequest, context: RouteContext) {
-  const { userId } = await auth();
-  if (!userId) return errorResponse(UNAUTHORIZED);
-
-  const rl = await rateLimit(req, { limit: 30, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id } = await context.params;
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return errorResponse(INVALID_JSON);
-  }
-
-  const parsed = patchSchema.safeParse(body);
-  if (!parsed.success) return errorResponse(validationError(parsed.error.flatten()));
-
-  const { match_id, is_confirmed } = parsed.data;
+export const PATCH = withApiRoute({ bodySchema: patchSchema }, async ({ params, body }) => {
+  const { id } = params;
+  const { match_id, is_confirmed } = body as z.infer<typeof patchSchema>;
 
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
-  // Verify the match belongs to this lead
   const { data: existing, error: fetchError } = await supabase
     .from('lead_account_matches')
     .select('id, lead_id')
@@ -91,9 +48,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     .eq('lead_id', id)
     .single();
 
-  if (fetchError || !existing) {
-    return errorResponse(notFound('Match not found'));
-  }
+  if (fetchError || !existing) throw notFound('Match not found');
 
   const krewpactUserId = await getKrewpactUserId();
 
@@ -113,8 +68,8 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 
   if (error) {
     logger.error('Failed to update lead account match', { match_id, error });
-    return errorResponse(dbError(error.message));
+    throw dbError(error.message);
   }
 
   return NextResponse.json(data);
-}
+});

@@ -13,8 +13,15 @@ vi.mock('@/lib/api/rate-limit', () => ({
   rateLimitResponse: vi.fn(),
 }));
 
-vi.mock('@/lib/logger', () => ({
-  logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
+vi.mock('@/lib/logger', () => {
+  const m = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), child: vi.fn() };
+  m.child.mockReturnValue(m);
+  return { logger: m };
+});
+vi.mock('@/lib/request-context', () => ({
+  requestContext: { run: (_: unknown, fn: () => unknown) => fn() },
+  generateRequestId: () => 'req_test',
+  getRequestContext: () => undefined,
 }));
 
 import { auth } from '@clerk/nextjs/server';
@@ -65,12 +72,13 @@ describe('POST /api/crm/leads/[id]/stage', () => {
   it('returns 400 for invalid JSON body', async () => {
     const supabase = mockSupabaseClient();
     mockCreateUserClientSafe.mockResolvedValue({ client: supabase, error: null });
-    const req = new Request('http://localhost/api/crm/leads/' + LEAD_ID + '/stage', {
+    const { NextRequest: NR } = await import('next/server');
+    const req = new NR('http://localhost/api/crm/leads/' + LEAD_ID + '/stage', {
       method: 'POST',
       body: 'not-json',
       headers: { 'Content-Type': 'application/json' },
     });
-    const res = await POST(req as unknown as import('next/server').NextRequest, makeCtx());
+    const res = await POST(req, makeCtx());
     expect(res.status).toBe(400);
   });
 

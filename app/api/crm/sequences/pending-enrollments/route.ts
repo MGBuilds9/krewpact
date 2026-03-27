@@ -1,26 +1,17 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
-export async function GET(request: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(request, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { searchParams } = request.nextUrl;
+export const GET = withApiRoute({}, async ({ req }) => {
+  const { searchParams } = req.nextUrl;
   const divisionId = searchParams.get('division_id');
   const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10));
   const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get('page_size') ?? '20', 10)));
   const offset = (page - 1) * pageSize;
 
   const { client: supabase, error: authError } = await createUserClientSafe();
-
   if (authError) return authError;
 
   let query = supabase
@@ -48,18 +39,12 @@ export async function GET(request: NextRequest) {
     .range(offset, offset + pageSize - 1);
 
   if (divisionId) {
-    // Filter via sequence's division_id using a subquery approach
     query = query.eq('outreach_sequences.division_id', divisionId);
   }
 
   const { data, error, count } = await query;
 
-  if (error) {
-    return NextResponse.json(
-      { error: 'Failed to fetch pending enrollments', detail: error.message },
-      { status: 500 },
-    );
-  }
+  if (error) throw dbError(error.message);
 
   return NextResponse.json({
     data: data ?? [],
@@ -70,4 +55,4 @@ export async function GET(request: NextRequest) {
       total_pages: Math.ceil((count ?? 0) / pageSize),
     },
   });
-}
+});

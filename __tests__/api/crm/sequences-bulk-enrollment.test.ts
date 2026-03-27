@@ -14,7 +14,16 @@ vi.mock('@/lib/api/rate-limit', () => ({
 }));
 
 vi.mock('@/lib/logger', () => ({
-  logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn() },
+  logger: {
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+    child: vi.fn().mockReturnValue({ info: vi.fn(), error: vi.fn(), warn: vi.fn() }),
+  },
+}));
+vi.mock('@/lib/request-context', () => ({
+  requestContext: { run: vi.fn().mockImplementation((_ctx: unknown, fn: () => unknown) => fn()) },
+  generateRequestId: vi.fn().mockReturnValue('test-req-id'),
 }));
 
 import { auth } from '@clerk/nextjs/server';
@@ -97,7 +106,7 @@ describe('POST /api/crm/sequences/enrollments', () => {
     const res = await POST(makeRequest({ sequence_id: SEQUENCE_ID, lead_ids: [LEAD_1] }));
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error.message ?? body.error).toMatch(/auth/i);
   });
 
   it('returns 400 for invalid body (missing sequence_id)', async () => {
@@ -186,6 +195,6 @@ describe('POST /api/crm/sequences/enrollments', () => {
     const res = await POST(makeRequest({ sequence_id: SEQUENCE_ID, lead_ids: [LEAD_1] }));
     expect(res.status).toBe(500);
     const body = await res.json();
-    expect(body.error).toBe('DB write error');
+    expect(body.error.message ?? body.error).toBe('DB write error');
   });
 });

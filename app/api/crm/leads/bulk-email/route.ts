@@ -1,8 +1,8 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { sendEmail } from '@/lib/email/resend';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
@@ -70,52 +70,39 @@ async function sendToContact(
   };
 }
 
-export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export const POST = withApiRoute(
+  { bodySchema: bulkEmailSchema, rateLimit: { limit: 10, window: '1 m' } },
+  async ({ body }) => {
+    const { lead_ids, subject, html, text } = body as z.infer<typeof bulkEmailSchema>;
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
-  const rl = await rateLimit(req, { limit: 10, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
+    const { data: contacts, error: contactError } = await supabase
+      .from('contacts')
+      .select('id, email, first_name, last_name, lead_id')
+      .in('lead_id', lead_ids)
+      .not('email', 'is', null);
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
+    if (contactError) throw dbError(contactError.message);
+    if (!contacts || contacts.length === 0)
+      return NextResponse.json(
+        { error: 'No contacts with email found for selected leads' },
+        { status: 400 },
+      );
 
-  const parsed = bulkEmailSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    const seen = new Set<string>();
+    const uniqueContacts = contacts.filter((c) => {
+      if (!c.email || seen.has(c.email)) return false;
+      seen.add(c.email);
+      return true;
+    });
 
-  const { lead_ids, subject, html, text } = parsed.data;
-  const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
-
-  const { data: contacts, error: contactError } = await supabase
-    .from('contacts')
-    .select('id, email, first_name, last_name, lead_id')
-    .in('lead_id', lead_ids)
-    .not('email', 'is', null);
-
-  if (contactError) return NextResponse.json({ error: contactError.message }, { status: 500 });
-  if (!contacts || contacts.length === 0)
-    return NextResponse.json(
-      { error: 'No contacts with email found for selected leads' },
-      { status: 400 },
+    const results = await Promise.all(
+      uniqueContacts.map((c) => sendToContact(supabase, c as Contact, { subject, html, text })),
     );
+    const sent = results.filter((r) => r.success).length;
+    const failed = results.filter((r) => !r.success).length;
 
-  const seen = new Set<string>();
-  const uniqueContacts = contacts.filter((c) => {
-    if (!c.email || seen.has(c.email)) return false;
-    seen.add(c.email);
-    return true;
-  });
-
-  const results = await Promise.all(
-    uniqueContacts.map((c) => sendToContact(supabase, c as Contact, { subject, html, text })),
-  );
-  const sent = results.filter((r) => r.success).length;
-  const failed = results.filter((r) => !r.success).length;
-
-  return NextResponse.json({ sent, failed, total: results.length, results });
-}
+    return NextResponse.json({ sent, failed, total: results.length, results });
+  },
+);

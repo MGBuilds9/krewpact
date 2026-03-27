@@ -1,43 +1,20 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError, notFound } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
-
-type RouteContext = { params: Promise<{ enrollmentId: string }> };
 
 const patchSchema = z.object({
   action: z.enum(['pause', 'resume']),
 });
 
-export async function PATCH(req: NextRequest, context: RouteContext): Promise<NextResponse> {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { enrollmentId } = await context.params;
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = patchSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
+export const PATCH = withApiRoute({ bodySchema: patchSchema }, async ({ params, body }) => {
+  const { enrollmentId } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
-
   if (authError) return authError;
-  const { action } = parsed.data;
+
+  const { action } = body;
 
   if (action === 'pause') {
     const { data, error } = await supabase
@@ -48,12 +25,8 @@ export async function PATCH(req: NextRequest, context: RouteContext): Promise<Ne
       .select()
       .single();
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-    if (!data) {
-      return NextResponse.json({ error: 'Enrollment not found or not active' }, { status: 404 });
-    }
+    if (error) throw dbError(error.message);
+    if (!data) throw notFound('Enrollment (not active)');
     return NextResponse.json(data);
   }
 
@@ -66,11 +39,7 @@ export async function PATCH(req: NextRequest, context: RouteContext): Promise<Ne
     .select()
     .single();
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-  if (!data) {
-    return NextResponse.json({ error: 'Enrollment not found or not paused' }, { status: 404 });
-  }
+  if (error) throw dbError(error.message);
+  if (!data) throw notFound('Enrollment (not paused)');
   return NextResponse.json(data);
-}
+});

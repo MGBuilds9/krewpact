@@ -1,23 +1,13 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
+export const GET = withApiRoute({}, async () => {
   const { client: supabase, error: authError } = await createUserClientSafe();
-
   if (authError) return authError;
 
-  // Fetch counts by status and total in parallel
   const [totalResult, pendingResult, completedResult, failedResult, lastRunResult] =
     await Promise.all([
       supabase.from('enrichment_jobs').select('id', { count: 'exact', head: true }),
@@ -40,9 +30,7 @@ export async function GET(req: NextRequest) {
         .limit(1),
     ]);
 
-  if (totalResult.error) {
-    return NextResponse.json({ error: totalResult.error.message }, { status: 500 });
-  }
+  if (totalResult.error) throw dbError(totalResult.error.message);
 
   const lastRunAt =
     lastRunResult.data && lastRunResult.data.length > 0
@@ -56,4 +44,4 @@ export async function GET(req: NextRequest) {
     failed: failedResult.count ?? 0,
     lastRunAt,
   });
-}
+});

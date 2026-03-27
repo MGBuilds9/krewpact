@@ -1,8 +1,8 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { findAccountDuplicates } from '@/lib/crm/duplicate-detector';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
@@ -10,13 +10,6 @@ const matchSchema = z.object({
   limit: z.number().int().min(1).max(500).default(100),
   threshold: z.number().min(0).max(1).default(0.6),
 });
-
-/**
- * POST /api/crm/leads/match-accounts
- *
- * Runs batch matching across unmatched leads against all accounts.
- * Inserts results into lead_account_matches.
- */
 
 type SupabaseClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
 
@@ -80,69 +73,54 @@ async function insertLeadMatches({
   if (insertedAny) results.matched++;
 }
 
-export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export const POST = withApiRoute(
+  { bodySchema: matchSchema, rateLimit: { limit: 10, window: '1 m' } },
+  async ({ body }) => {
+    const { limit, threshold } = body as z.infer<typeof matchSchema>;
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
-  const rl = await rateLimit(req, { limit: 10, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
+    const [matchedRowsRes, allLeadsRes, allAccountsRes] = await Promise.all([
+      supabase.from('lead_account_matches').select('lead_id'),
+      supabase
+        .from('leads')
+        .select('id, company_name, email, city')
+        .is('deleted_at', null)
+        .limit(limit * 2),
+      supabase
+        .from('accounts')
+        .select('id, account_name, email, phone')
+        .is('deleted_at', null)
+        .limit(2000),
+    ]);
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    body = {};
-  }
+    if (allLeadsRes.error) throw dbError(allLeadsRes.error.message);
+    if (allAccountsRes.error) throw dbError(allAccountsRes.error.message);
 
-  const parsed = matchSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    const matchedLeadIds = new Set(
+      (matchedRowsRes.data ?? []).map((r: { lead_id: string }) => r.lead_id),
+    );
+    const unmatchedLeads = (allLeadsRes.data ?? [])
+      .filter((l: { id: string }) => !matchedLeadIds.has(l.id))
+      .slice(0, limit);
 
-  const { limit, threshold } = parsed.data;
-  const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
+    if (unmatchedLeads.length === 0)
+      return NextResponse.json({ data: { processed: 0, matched: 0, skipped: 0, errors: [] } });
 
-  const [matchedRowsRes, allLeadsRes, allAccountsRes] = await Promise.all([
-    supabase.from('lead_account_matches').select('lead_id'),
-    supabase
-      .from('leads')
-      .select('id, company_name, email, city')
-      .is('deleted_at', null)
-      .limit(limit * 2),
-    supabase
-      .from('accounts')
-      .select('id, account_name, email, phone')
-      .is('deleted_at', null)
-      .limit(2000),
-  ]);
+    const accounts: Array<Record<string, unknown>> = allAccountsRes.data ?? [];
+    const results: MatchResults = { processed: 0, matched: 0, skipped: 0, errors: [] };
 
-  if (allLeadsRes.error)
-    return NextResponse.json({ error: allLeadsRes.error.message }, { status: 500 });
-  if (allAccountsRes.error)
-    return NextResponse.json({ error: allAccountsRes.error.message }, { status: 500 });
+    for (const lead of unmatchedLeads) {
+      results.processed++;
+      await insertLeadMatches({
+        supabase,
+        lead: lead as Record<string, unknown>,
+        accounts,
+        threshold,
+        results,
+      });
+    }
 
-  const matchedLeadIds = new Set(
-    (matchedRowsRes.data ?? []).map((r: { lead_id: string }) => r.lead_id),
-  );
-  const unmatchedLeads = (allLeadsRes.data ?? [])
-    .filter((l: { id: string }) => !matchedLeadIds.has(l.id))
-    .slice(0, limit);
-
-  if (unmatchedLeads.length === 0)
-    return NextResponse.json({ data: { processed: 0, matched: 0, skipped: 0, errors: [] } });
-
-  const accounts: Array<Record<string, unknown>> = allAccountsRes.data ?? [];
-  const results: MatchResults = { processed: 0, matched: 0, skipped: 0, errors: [] };
-
-  for (const lead of unmatchedLeads) {
-    results.processed++;
-    await insertLeadMatches({
-      supabase,
-      lead: lead as Record<string, unknown>,
-      accounts,
-      threshold,
-      results,
-    });
-  }
-
-  return NextResponse.json({ data: results });
-}
+    return NextResponse.json({ data: results });
+  },
+);

@@ -1,9 +1,8 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
-import { logger } from '@/lib/logger';
+import { dbError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 const CreateICPSchema = z.object({
@@ -27,15 +26,7 @@ const CreateICPSchema = z.object({
  * List all ICPs. Filterable by division_id and is_active.
  * Paginated via limit/offset.
  */
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
+export const GET = withApiRoute({}, async ({ req }) => {
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -45,91 +36,55 @@ export async function GET(req: NextRequest) {
   const limit = Math.min(parseInt(searchParams.get('limit') ?? '50', 10), 200);
   const offset = parseInt(searchParams.get('offset') ?? '0', 10);
 
-  try {
-    let query = supabase
-      .from('ideal_client_profiles')
-      .select(
-        'id, division_id, name, description, is_auto_generated, is_active, industry_match, geography_match, project_value_range, project_types, company_size_range, repeat_rate_weight, sample_size, confidence_score, avg_deal_value, avg_project_duration_days, top_sources, metadata, created_at, updated_at',
-        { count: 'exact' },
-      )
-      .order('confidence_score', { ascending: false })
-      .range(offset, offset + limit - 1);
+  let query = supabase
+    .from('ideal_client_profiles')
+    .select(
+      'id, division_id, name, description, is_auto_generated, is_active, industry_match, geography_match, project_value_range, project_types, company_size_range, repeat_rate_weight, sample_size, confidence_score, avg_deal_value, avg_project_duration_days, top_sources, metadata, created_at, updated_at',
+      { count: 'exact' },
+    )
+    .order('confidence_score', { ascending: false })
+    .range(offset, offset + limit - 1);
 
-    if (divisionId) {
-      query = query.eq('division_id', divisionId);
-    }
-
-    if (isActiveParam !== null) {
-      query = query.eq('is_active', isActiveParam === 'true');
-    }
-
-    const { data, error, count } = await query;
-
-    if (error) {
-      logger.error('ICP list query failed', { error: error.message });
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json({
-      data: data ?? [],
-      total: count ?? 0,
-      hasMore: offset + limit < (count ?? 0),
-    });
-  } catch (err) {
-    logger.error('GET /api/crm/icp error', { error: err });
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  if (divisionId) {
+    query = query.eq('division_id', divisionId);
   }
-}
+
+  if (isActiveParam !== null) {
+    query = query.eq('is_active', isActiveParam === 'true');
+  }
+
+  const { data, error, count } = await query;
+
+  if (error) throw dbError(error.message);
+
+  return NextResponse.json({
+    data: data ?? [],
+    total: count ?? 0,
+    hasMore: offset + limit < (count ?? 0),
+  });
+});
 
 /**
  * POST /api/crm/icp
  * Create a manual (non-auto-generated) ICP.
  */
-export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+export const POST = withApiRoute(
+  { rateLimit: { limit: 20, window: '1 m' }, bodySchema: CreateICPSchema },
+  async ({ body }) => {
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
-  const rl = await rateLimit(req, { limit: 20, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = CreateICPSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: 'Validation error', issues: parsed.error.issues },
-      { status: 400 },
-    );
-  }
-
-  try {
     const { data, error } = await supabase
       .from('ideal_client_profiles')
       .insert({
-        ...parsed.data,
+        ...(body as z.infer<typeof CreateICPSchema>),
         is_auto_generated: false,
       })
       .select()
       .single();
 
-    if (error) {
-      logger.error('ICP create failed', { error: error.message });
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
+    if (error) throw dbError(error.message);
 
     return NextResponse.json(data, { status: 201 });
-  } catch (err) {
-    logger.error('POST /api/crm/icp error', { error: err });
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
-}
+  },
+);

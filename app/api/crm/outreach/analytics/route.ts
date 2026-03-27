@@ -1,7 +1,7 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 type SupabaseClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
@@ -42,13 +42,7 @@ async function fetchOutreachCounts(
   };
 }
 
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
+export const GET = withApiRoute({}, async ({ req }) => {
   const params = req.nextUrl.searchParams;
   const templateId = params.get('template_id');
   const sequenceId = params.get('sequence_id');
@@ -61,12 +55,15 @@ export async function GET(req: NextRequest) {
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
-  const { sent, opened, clicked, replied } = await fetchOutreachCounts(
-    supabase,
-    since,
-    templateId,
-    sequenceId,
-  );
+  const countsResult = await Promise.allSettled([
+    fetchOutreachCounts(supabase, since, templateId, sequenceId),
+  ]);
+
+  if (countsResult[0].status === 'rejected') {
+    throw dbError('Failed to fetch outreach analytics');
+  }
+
+  const { sent, opened, clicked, replied } = countsResult[0].value;
 
   return NextResponse.json({
     data: {
@@ -79,4 +76,4 @@ export async function GET(req: NextRequest) {
       reply_rate: sent > 0 ? Math.round((replied / sent) * 1000) / 10 : 0,
     },
   });
-}
+});

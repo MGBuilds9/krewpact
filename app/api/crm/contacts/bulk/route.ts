@@ -1,8 +1,8 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { exportToCSV } from '@/lib/csv/exporter';
 import { logger } from '@/lib/logger';
 import { createUserClientSafe } from '@/lib/supabase/server';
@@ -13,28 +13,8 @@ const bulkSchema = z.object({
   value: z.string().optional(),
 });
 
-export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(req, { limit: 30, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = bulkSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
-  const { action, ids, value } = parsed.data;
+export const POST = withApiRoute({ bodySchema: bulkSchema }, async ({ body }) => {
+  const { action, ids, value } = body as z.infer<typeof bulkSchema>;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -49,7 +29,7 @@ export async function POST(req: NextRequest) {
         .in('id', ids);
       if (error) {
         logger.error('Bulk contact assign failed', { error: error.message });
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        throw dbError(error.message);
       }
       return NextResponse.json({ data: { updated: ids.length } });
     }
@@ -61,7 +41,7 @@ export async function POST(req: NextRequest) {
         .in('id', ids);
       if (error) {
         logger.error('Bulk contact soft-delete failed', { error: error.message });
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        throw dbError(error.message);
       }
       return NextResponse.json({ data: { deleted: ids.length } });
     }
@@ -73,7 +53,7 @@ export async function POST(req: NextRequest) {
         .in('id', ids);
       if (error) {
         logger.error('Bulk contact export failed', { error: error.message });
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        throw dbError(error.message);
       }
       const columns = ['first_name', 'last_name', 'email', 'phone', 'title', 'created_at'];
       const csv = exportToCSV((data ?? []) as Record<string, unknown>[], columns);
@@ -86,4 +66,4 @@ export async function POST(req: NextRequest) {
       });
     }
   }
-}
+});

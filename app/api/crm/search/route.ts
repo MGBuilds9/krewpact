@@ -1,7 +1,6 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 interface SearchResult {
@@ -75,13 +74,7 @@ async function searchEntities(supabase: SupabaseClient, pattern: string): Promis
   return results;
 }
 
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
+export const GET = withApiRoute({}, async ({ req }) => {
   const q = req.nextUrl.searchParams.get('q')?.trim();
   if (!q || q.length < 2) return NextResponse.json({ data: [], total: 0 });
 
@@ -90,4 +83,4 @@ export async function GET(req: NextRequest) {
 
   const results = await searchEntities(supabase, `%${q}%`);
   return NextResponse.json({ data: results, total: results.length });
-}
+});

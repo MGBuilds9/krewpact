@@ -1,10 +1,9 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { dbError } from '@/lib/api/errors';
 import { getOrgIdFromAuth } from '@/lib/api/org';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
-import { logger } from '@/lib/logger';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -25,62 +24,31 @@ const DEFAULT_SEQUENCE_DEFAULTS = {
   auto_unenroll_on_reply: true,
 };
 
-export async function GET(req: NextRequest): Promise<NextResponse> {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+export const GET = withApiRoute({}, async (): Promise<NextResponse> => {
+  const orgId = await getOrgIdFromAuth();
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
+  const { data, error } = await supabase
+    .from('org_settings')
+    .select('workflow')
+    .eq('org_id', orgId)
+    .single();
 
-  try {
+  if (error && error.code !== 'PGRST116') throw dbError(error.message);
+
+  const sequenceDefaults = data?.workflow?.sequence_defaults ?? DEFAULT_SEQUENCE_DEFAULTS;
+  return NextResponse.json(sequenceDefaults);
+});
+
+export const PATCH = withApiRoute(
+  { rateLimit: { limit: 30, window: '1 m' }, bodySchema: sequenceDefaultsSchema },
+  async ({ body }): Promise<NextResponse> => {
+    const parsed = body as z.infer<typeof sequenceDefaultsSchema>;
     const orgId = await getOrgIdFromAuth();
     const { client: supabase, error: authError } = await createUserClientSafe();
     if (authError) return authError;
 
-    const { data, error } = await supabase
-      .from('org_settings')
-      .select('workflow')
-      .eq('org_id', orgId)
-      .single();
-
-    if (error && error.code !== 'PGRST116') {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    const sequenceDefaults = data?.workflow?.sequence_defaults ?? DEFAULT_SEQUENCE_DEFAULTS;
-    return NextResponse.json(sequenceDefaults);
-  } catch (err: unknown) {
-    logger.error('Failed to fetch sequence defaults', { error: err });
-    return NextResponse.json({ error: 'Failed to fetch sequence defaults' }, { status: 500 });
-  }
-}
-
-export async function PATCH(req: NextRequest): Promise<NextResponse> {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(req, { limit: 30, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  try {
-    const body = await req.json();
-    const parsed = sequenceDefaultsSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: 'Invalid input', details: parsed.error.flatten() },
-        { status: 400 },
-      );
-    }
-
-    const orgId = await getOrgIdFromAuth();
-    const { client: supabase, error: authError } = await createUserClientSafe();
-    if (authError) return authError;
-
-    // Read current workflow settings
     const { data: existing } = await supabase
       .from('org_settings')
       .select('workflow')
@@ -88,7 +56,7 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
       .single();
 
     const currentWorkflow = existing?.workflow ?? {};
-    const updatedWorkflow = { ...currentWorkflow, sequence_defaults: parsed.data };
+    const updatedWorkflow = { ...currentWorkflow, sequence_defaults: parsed };
 
     const { data, error } = await supabase
       .from('org_settings')
@@ -96,13 +64,8 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
       .select('workflow')
       .single();
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
+    if (error) throw dbError(error.message);
 
-    return NextResponse.json(data?.workflow?.sequence_defaults ?? parsed.data);
-  } catch (err: unknown) {
-    logger.error('Failed to update sequence defaults', { error: err });
-    return NextResponse.json({ error: 'Failed to update sequence defaults' }, { status: 500 });
-  }
-}
+    return NextResponse.json(data?.workflow?.sequence_defaults ?? parsed);
+  },
+);

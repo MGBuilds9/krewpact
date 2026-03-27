@@ -1,16 +1,9 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import {
-  dbError,
-  errorResponse,
-  INVALID_JSON,
-  UNAUTHORIZED,
-  validationError,
-} from '@/lib/api/errors';
+import { dbError } from '@/lib/api/errors';
 import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 const entityTypes = ['lead', 'contact', 'account', 'opportunity'] as const;
@@ -29,21 +22,13 @@ const querySchema = z.object({
   entity_type: z.enum(entityTypes).optional(),
 });
 
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return errorResponse(UNAUTHORIZED);
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const params = Object.fromEntries(req.nextUrl.searchParams);
-  const parsed = querySchema.safeParse(params);
-  if (!parsed.success) return errorResponse(validationError(parsed.error.flatten()));
-
+export const GET = withApiRoute({ querySchema }, async ({ req, query }) => {
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
-  let query = supabase
+
+  const typedQuery = query as z.infer<typeof querySchema>;
+  let dbQuery = supabase
     .from('crm_saved_views')
     .select(
       'id, name, entity_type, filters, sort_by, sort_dir, columns, is_default, created_by, created_at, updated_at',
@@ -52,52 +37,35 @@ export async function GET(req: NextRequest) {
     .order('is_default', { ascending: false })
     .order('name', { ascending: true });
 
-  if (parsed.data.entity_type) {
-    query = query.eq('entity_type', parsed.data.entity_type);
+  if (typedQuery.entity_type) {
+    dbQuery = dbQuery.eq('entity_type', typedQuery.entity_type);
   }
 
-  query = query.range(offset, offset + limit - 1);
+  dbQuery = dbQuery.range(offset, offset + limit - 1);
 
-  const { data, error, count } = await query;
+  const { data, error, count } = await dbQuery;
 
-  if (error) return errorResponse(dbError(error.message));
+  if (error) throw dbError(error.message);
 
   return NextResponse.json(paginatedResponse(data, count, limit, offset));
-}
+});
 
-export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return errorResponse(UNAUTHORIZED);
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return errorResponse(INVALID_JSON);
-  }
-
-  const parsed = savedViewCreateSchema.safeParse(body);
-  if (!parsed.success) return errorResponse(validationError(parsed.error.flatten()));
-
+export const POST = withApiRoute({ bodySchema: savedViewCreateSchema }, async ({ body }) => {
+  const parsed = body as z.infer<typeof savedViewCreateSchema>;
   const { client: supabase, error: authError } = await createUserClientSafe();
-
   if (authError) return authError;
 
   // If is_default, unset other defaults for same entity_type
-  if (parsed.data.is_default) {
+  if (parsed.is_default) {
     await supabase
       .from('crm_saved_views')
       .update({ is_default: false })
-      .eq('entity_type', parsed.data.entity_type);
+      .eq('entity_type', parsed.entity_type);
   }
 
-  const { data, error } = await supabase
-    .from('crm_saved_views')
-    .insert(parsed.data)
-    .select()
-    .single();
+  const { data, error } = await supabase.from('crm_saved_views').insert(parsed).select().single();
 
-  if (error) return errorResponse(dbError(error.message));
+  if (error) throw dbError(error.message);
 
   return NextResponse.json(data, { status: 201 });
-}
+});

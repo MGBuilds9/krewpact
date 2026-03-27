@@ -10,6 +10,22 @@ vi.mock('@/lib/supabase/server', () => ({
   createUserClientSafe: vi.fn(),
 }));
 
+vi.mock('@/lib/api/rate-limit', () => ({
+  rateLimit: vi.fn().mockResolvedValue({ success: true }),
+  rateLimitResponse: vi.fn(),
+}));
+
+vi.mock('@/lib/logger', () => {
+  const m = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), child: vi.fn() };
+  m.child.mockReturnValue(m);
+  return { logger: m };
+});
+vi.mock('@/lib/request-context', () => ({
+  requestContext: { run: (_: unknown, fn: () => unknown) => fn() },
+  generateRequestId: () => 'req_test',
+  getRequestContext: () => undefined,
+}));
+
 import { auth } from '@clerk/nextjs/server';
 
 import {
@@ -147,7 +163,7 @@ describe('POST /api/crm/leads/[id]/convert', () => {
     mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const res = await POST(
-      makeRequest('/api/crm/leads/lead-1/convert', { method: 'POST' }),
+      makeJsonRequest('/api/crm/leads/lead-1/convert', {}, 'POST'),
       makeContext('lead-1'),
     );
     expect(res.status).toBe(201);

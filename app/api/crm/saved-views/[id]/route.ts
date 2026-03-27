@@ -1,15 +1,8 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import {
-  dbError,
-  errorResponse,
-  INVALID_JSON,
-  UNAUTHORIZED,
-  validationError,
-} from '@/lib/api/errors';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 const savedViewUpdateSchema = z.object({
@@ -21,14 +14,8 @@ const savedViewUpdateSchema = z.object({
   is_default: z.boolean().optional(),
 });
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { userId } = await auth();
-  if (!userId) return errorResponse(UNAUTHORIZED);
-
-  const rl = await rateLimit(_req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const { id } = await params;
+export const GET = withApiRoute({}, async ({ params }) => {
+  const { id } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -40,72 +27,57 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     .eq('id', id)
     .single();
 
-  if (error) return errorResponse(dbError(error.message));
+  if (error) throw dbError(error.message);
 
   return NextResponse.json(data);
-}
+});
 
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { userId } = await auth();
-  if (!userId) return errorResponse(UNAUTHORIZED);
+export const PATCH = withApiRoute(
+  { bodySchema: savedViewUpdateSchema },
+  async ({ params, body }) => {
+    const { id } = params;
+    const parsed = body as z.infer<typeof savedViewUpdateSchema>;
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
-  const { id } = await params;
+    // If setting as default, unset others first
+    if (parsed.is_default) {
+      const { data: existing } = await supabase
+        .from('crm_saved_views')
+        .select('entity_type')
+        .eq('id', id)
+        .single();
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return errorResponse(INVALID_JSON);
-  }
+      if (existing) {
+        await supabase
+          .from('crm_saved_views')
+          .update({ is_default: false })
+          .eq('entity_type', existing.entity_type)
+          .neq('id', id);
+      }
+    }
 
-  const parsed = savedViewUpdateSchema.safeParse(body);
-  if (!parsed.success) return errorResponse(validationError(parsed.error.flatten()));
-
-  const { client: supabase, error: authError } = await createUserClientSafe();
-
-  if (authError) return authError;
-
-  // If setting as default, unset others first
-  if (parsed.data.is_default) {
-    // Need to know entity_type to scope the unset
-    const { data: existing } = await supabase
+    const { data, error } = await supabase
       .from('crm_saved_views')
-      .select('entity_type')
+      .update(parsed)
       .eq('id', id)
+      .select()
       .single();
 
-    if (existing) {
-      await supabase
-        .from('crm_saved_views')
-        .update({ is_default: false })
-        .eq('entity_type', existing.entity_type)
-        .neq('id', id);
-    }
-  }
+    if (error) throw dbError(error.message);
 
-  const { data, error } = await supabase
-    .from('crm_saved_views')
-    .update(parsed.data)
-    .eq('id', id)
-    .select()
-    .single();
+    return NextResponse.json(data);
+  },
+);
 
-  if (error) return errorResponse(dbError(error.message));
-
-  return NextResponse.json(data);
-}
-
-export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { userId } = await auth();
-  if (!userId) return errorResponse(UNAUTHORIZED);
-
-  const { id } = await params;
+export const DELETE = withApiRoute({}, async ({ params }) => {
+  const { id } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
   const { error } = await supabase.from('crm_saved_views').delete().eq('id', id);
 
-  if (error) return errorResponse(dbError(error.message));
+  if (error) throw dbError(error.message);
 
   return NextResponse.json({ success: true });
-}
+});

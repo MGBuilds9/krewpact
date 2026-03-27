@@ -1,8 +1,8 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import {
   calculateConversionMetrics,
   calculateForecastMetrics,
@@ -73,13 +73,7 @@ function buildOwnership(
   };
 }
 
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
+export const GET = withApiRoute({ querySchema }, async ({ req }) => {
   const params = Object.fromEntries(req.nextUrl.searchParams);
   const parsed = querySchema.safeParse(params);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
@@ -107,8 +101,8 @@ export async function GET(req: NextRequest) {
   const [{ data: opportunities, error: oppError }, { data: leads, error: leadError }] =
     await Promise.all([oppQuery, leadQuery]);
 
-  if (oppError) return NextResponse.json({ error: oppError.message }, { status: 500 });
-  if (leadError) return NextResponse.json({ error: leadError.message }, { status: 500 });
+  if (oppError) throw dbError(oppError.message);
+  if (leadError) throw dbError(leadError.message);
 
   const opps = opportunities ?? [];
   const leadList = leads ?? [];
@@ -120,4 +114,4 @@ export async function GET(req: NextRequest) {
   const ownership = buildOwnership(leadList);
 
   return NextResponse.json({ pipeline, conversion, velocity, sources, forecast, ownership });
-}
+});

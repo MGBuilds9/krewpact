@@ -1,9 +1,8 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
-import { logger } from '@/lib/logger';
+import { dbError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe, UserClientType } from '@/lib/supabase/server';
 
 const bulkEnrollSchema = z.object({
@@ -11,39 +10,23 @@ const bulkEnrollSchema = z.object({
   lead_ids: z.array(z.string().uuid()).min(1).max(200),
 });
 
-export async function POST(req: NextRequest): Promise<NextResponse> {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(req, { limit: 30, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = bulkEnrollSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
-  const { sequence_id, lead_ids } = parsed.data;
+export const POST = withApiRoute({ bodySchema: bulkEnrollSchema }, async ({ body, logger }) => {
+  const { sequence_id, lead_ids } = body;
 
   const result = await createUserClientSafe();
   if (result.error) return result.error;
 
-  return performBulkEnroll(result.client, sequence_id, lead_ids);
-}
+  return performBulkEnroll(result.client, sequence_id, lead_ids, logger);
+});
 
 async function performBulkEnroll(
   supabase: UserClientType,
   sequence_id: string,
   lead_ids: string[],
+  logger: {
+    error: (msg: string, meta?: Record<string, unknown>) => void;
+    info: (msg: string, meta?: Record<string, unknown>) => void;
+  },
 ): Promise<NextResponse> {
   const [seqResult, stepResult] = await Promise.all([
     supabase
@@ -63,7 +46,7 @@ async function performBulkEnroll(
 
   if (seqResult.error) {
     logger.error('Bulk enroll: failed to fetch sequence', { sequence_id, error: seqResult.error });
-    return NextResponse.json({ error: seqResult.error.message }, { status: 500 });
+    throw dbError(seqResult.error.message);
   }
   if (!seqResult.data) {
     return NextResponse.json({ error: 'Sequence not found or inactive' }, { status: 404 });
@@ -73,7 +56,7 @@ async function performBulkEnroll(
       sequence_id,
       error: stepResult.error,
     });
-    return NextResponse.json({ error: stepResult.error.message }, { status: 500 });
+    throw dbError(stepResult.error.message);
   }
 
   const firstStep = stepResult.data;
@@ -95,7 +78,7 @@ async function performBulkEnroll(
 
   if (existError) {
     logger.error('Bulk enroll: failed to check existing enrollments', { error: existError });
-    return NextResponse.json({ error: existError.message }, { status: 500 });
+    throw dbError(existError.message);
   }
 
   const alreadyEnrolled = new Set(
@@ -119,7 +102,7 @@ async function performBulkEnroll(
   const { error: insertError } = await supabase.from('sequence_enrollments').insert(rows);
   if (insertError) {
     logger.error('Bulk enroll: insert failed', { sequence_id, error: insertError });
-    return NextResponse.json({ error: insertError.message }, { status: 500 });
+    throw dbError(insertError.message);
   }
 
   logger.info('Bulk enroll: success', {

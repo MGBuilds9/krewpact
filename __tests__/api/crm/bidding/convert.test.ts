@@ -6,7 +6,18 @@ vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
-vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn() } }));
+vi.mock('@/lib/logger', () => ({
+  logger: {
+    error: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    child: vi.fn().mockReturnValue({ error: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+  },
+}));
+vi.mock('@/lib/request-context', () => ({
+  requestContext: { run: vi.fn().mockImplementation((_ctx: unknown, fn: () => unknown) => fn()) },
+  generateRequestId: vi.fn().mockReturnValue('test-req-id'),
+}));
 
 import { auth } from '@clerk/nextjs/server';
 

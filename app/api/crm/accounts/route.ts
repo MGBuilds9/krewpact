@@ -1,9 +1,9 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { dbError } from '@/lib/api/errors';
 import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { accountCreateSchema } from '@/lib/validators/crm';
 
@@ -15,27 +15,15 @@ const querySchema = z.object({
   sort_dir: z.enum(['asc', 'desc']).optional(),
 });
 
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const params = Object.fromEntries(req.nextUrl.searchParams);
-  const parsed = querySchema.safeParse(params);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
-  const { division_id, account_type, search, sort_by, sort_dir } = parsed.data;
+export const GET = withApiRoute({ querySchema }, async ({ req, query }) => {
+  const { division_id, account_type, search, sort_by, sort_dir } = query as z.infer<
+    typeof querySchema
+  >;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
-  let query = supabase
+  let dbQuery = supabase
     .from('accounts')
     .select(
       'id, account_name, account_type, division_id, billing_address, shipping_address, notes, industry, phone, email, website, address, company_code, source, total_projects, lifetime_revenue, first_project_date, last_project_date, is_repeat_client, tags, metadata, deleted_at, created_by, created_at, updated_at',
@@ -44,61 +32,28 @@ export async function GET(req: NextRequest) {
     .is('deleted_at', null)
     .order(sort_by ?? 'created_at', { ascending: sort_dir === 'asc' });
 
-  if (division_id) {
-    query = query.eq('division_id', division_id);
-  }
+  if (division_id) dbQuery = dbQuery.eq('division_id', division_id);
+  if (account_type) dbQuery = dbQuery.eq('account_type', account_type);
+  if (search) dbQuery = dbQuery.ilike('account_name', `%${search}%`);
+  dbQuery = dbQuery.range(offset, offset + limit - 1);
 
-  if (account_type) {
-    query = query.eq('account_type', account_type);
-  }
-
-  if (search) {
-    query = query.ilike('account_name', `%${search}%`);
-  }
-
-  query = query.range(offset, offset + limit - 1);
-
-  const { data, error, count } = await query;
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  const { data, error, count } = await dbQuery;
+  if (error) throw dbError(error.message);
 
   return NextResponse.json(paginatedResponse(data, count, limit, offset));
-}
+});
 
-export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(req, { limit: 30, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = accountCreateSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
+export const POST = withApiRoute({ bodySchema: accountCreateSchema }, async ({ body, userId }) => {
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
+
   const { data, error } = await supabase
     .from('accounts')
-    .insert({ ...parsed.data })
+    .insert({ ...(body as z.infer<typeof accountCreateSchema>) })
     .select()
     .single();
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  if (error) throw dbError(error.message);
 
   return NextResponse.json(data, { status: 201 });
-}
+});

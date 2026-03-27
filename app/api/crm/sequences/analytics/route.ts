@@ -1,7 +1,7 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 export interface SequenceAnalytics {
@@ -42,13 +42,7 @@ function aggregateEnrollments(enrollments: Array<{ sequence_id: string; status: 
   return countMap;
 }
 
-export async function GET(req: NextRequest): Promise<NextResponse> {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
+export const GET = withApiRoute({}, async ({ req }) => {
   const divisionId = req.nextUrl.searchParams.get('divisionId');
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
@@ -60,7 +54,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   if (divisionId) seqQuery = seqQuery.eq('division_id', divisionId);
 
   const { data: sequences, error: seqError } = await seqQuery;
-  if (seqError) return NextResponse.json({ error: seqError.message }, { status: 500 });
+  if (seqError) throw dbError(seqError.message);
   if (!sequences?.length) return NextResponse.json({ data: [] });
 
   const seqIds = sequences.map((s) => s.id);
@@ -69,7 +63,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     .select('sequence_id, status')
     .in('sequence_id', seqIds);
 
-  if (enrollError) return NextResponse.json({ error: enrollError.message }, { status: 500 });
+  if (enrollError) throw dbError(enrollError.message);
 
   const countMap = aggregateEnrollments(enrollments ?? []);
 
@@ -88,4 +82,4 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   });
 
   return NextResponse.json({ data: analytics });
-}
+});

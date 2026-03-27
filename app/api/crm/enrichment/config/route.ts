@@ -1,8 +1,8 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 const DEFAULT_CONFIG = {
@@ -26,17 +26,8 @@ const configSchema = z.object({
     .min(1),
 });
 
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
+export const GET = withApiRoute({}, async () => {
   const { client: supabase, error: authError } = await createUserClientSafe();
-
   if (authError) return authError;
 
   const { data, error } = await supabase
@@ -45,54 +36,30 @@ export async function GET(req: NextRequest) {
     .eq('key', 'enrichment_config')
     .maybeSingle();
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  if (error) throw dbError(error.message);
 
-  if (!data) {
-    return NextResponse.json(DEFAULT_CONFIG);
-  }
+  if (!data) return NextResponse.json(DEFAULT_CONFIG);
 
   return NextResponse.json(data.value ?? DEFAULT_CONFIG);
-}
+});
 
-export async function PATCH(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+export const PATCH = withApiRoute(
+  { bodySchema: configSchema, rateLimit: { limit: 30, window: '1 m' } },
+  async ({ body }) => {
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
-  const rl = await rateLimit(req, { limit: 30, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
+    const { data, error } = await supabase
+      .from('crm_settings')
+      .upsert(
+        { key: 'enrichment_config', value: body, updated_at: new Date().toISOString() },
+        { onConflict: 'key' },
+      )
+      .select('value')
+      .single();
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
+    if (error) throw dbError(error.message);
 
-  const parsed = configSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
-  const { client: supabase, error: authError } = await createUserClientSafe();
-
-  if (authError) return authError;
-
-  const { data, error } = await supabase
-    .from('crm_settings')
-    .upsert(
-      { key: 'enrichment_config', value: parsed.data, updated_at: new Date().toISOString() },
-      { onConflict: 'key' },
-    )
-    .select('value')
-    .single();
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  return NextResponse.json(data.value);
-}
+    return NextResponse.json(data.value);
+  },
+);

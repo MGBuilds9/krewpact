@@ -15,6 +15,18 @@ vi.mock('@/lib/supabase/server', () => ({
 vi.mock('@/lib/crm/sequence-processor', () => ({
   processSequences: vi.fn(),
 }));
+vi.mock('@/lib/logger', () => ({
+  logger: {
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+    child: vi.fn().mockReturnValue({ info: vi.fn(), error: vi.fn(), warn: vi.fn() }),
+  },
+}));
+vi.mock('@/lib/request-context', () => ({
+  requestContext: { run: vi.fn().mockImplementation((_ctx: unknown, fn: () => unknown) => fn()) },
+  generateRequestId: vi.fn().mockReturnValue('test-req-id'),
+}));
 
 import { auth } from '@clerk/nextjs/server';
 

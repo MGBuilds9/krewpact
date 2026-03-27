@@ -1,15 +1,8 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import {
-  dbError,
-  errorResponse,
-  INVALID_JSON,
-  UNAUTHORIZED,
-  validationError,
-} from '@/lib/api/errors';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { matchLeadToAccounts } from '@/lib/crm/lead-account-matcher';
 import { assignLead } from '@/lib/crm/lead-assignment';
 import type { ScoringRule } from '@/lib/crm/scoring-engine';
@@ -39,54 +32,6 @@ const querySchema = z.object({
   sort_by: z.string().optional(),
   sort_dir: z.enum(['asc', 'desc']).optional(),
 });
-
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return errorResponse(UNAUTHORIZED);
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const params = Object.fromEntries(req.nextUrl.searchParams);
-  const parsed = querySchema.safeParse(params);
-  if (!parsed.success) return errorResponse(validationError(parsed.error.flatten()));
-
-  const { division_id, status, assigned_to, search, limit, offset, sort_by, sort_dir } =
-    parsed.data;
-  const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
-
-  const effectiveLimit = limit ?? 25;
-  const effectiveOffset = offset ?? 0;
-
-  const eqFilters = Object.entries({ division_id, status, assigned_to }).filter(
-    (entry): entry is [string, string] => entry[1] != null,
-  );
-
-  let query = supabase
-    .from('leads')
-    .select(
-      'id, company_name, status, lead_score, fit_score, intent_score, engagement_score, source_channel, utm_campaign, source_detail, assigned_to, division_id, created_at, updated_at, city, province, address, postal_code, industry, next_followup_at, last_touch_at, is_qualified, automation_paused, current_sequence_id, domain, enrichment_status, deleted_at',
-      { count: 'exact' },
-    )
-    .is('deleted_at', null)
-    .order(sort_by ?? 'lead_score', { ascending: sort_dir === 'asc', nullsFirst: false });
-
-  eqFilters.forEach(([field, value]) => {
-    query = query.eq(field, value);
-  });
-  if (search) query = query.ilike('company_name', `%${search}%`);
-  query = query.range(effectiveOffset, effectiveOffset + effectiveLimit - 1);
-
-  const { data, error, count } = await query;
-  if (error) return errorResponse(dbError(error.message));
-
-  return NextResponse.json({
-    data: data ?? [],
-    total: count ?? 0,
-    hasMore: effectiveOffset + (data?.length ?? 0) < (count ?? 0),
-  });
-}
 
 type SupabaseClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
 
@@ -143,57 +88,79 @@ async function autoMatchAccounts(
     .upsert(matchInserts, { onConflict: 'lead_id,account_id' });
 }
 
-export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return errorResponse(UNAUTHORIZED);
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return errorResponse(INVALID_JSON);
-  }
-
-  const parsed = leadCreateSchema.safeParse(body);
-  if (!parsed.success) return errorResponse(validationError(parsed.error.flatten()));
+export const GET = withApiRoute({ querySchema }, async ({ query }) => {
+  const { division_id, status, assigned_to, search, limit, offset, sort_by, sort_dir } =
+    query as z.infer<typeof querySchema>;
 
   const { client: supabase, error: authError } = await createUserClientSafe();
-
   if (authError) return authError;
 
-  // Auto-assign owner if not explicitly set
-  let ownerId: string | undefined = parsed.data.assigned_to;
+  const effectiveLimit = limit ?? 25;
+  const effectiveOffset = offset ?? 0;
+
+  const eqFilters = Object.entries({ division_id, status, assigned_to }).filter(
+    (entry): entry is [string, string] => entry[1] != null,
+  );
+
+  let dbQuery = supabase
+    .from('leads')
+    .select(
+      'id, company_name, status, lead_score, fit_score, intent_score, engagement_score, source_channel, utm_campaign, source_detail, assigned_to, division_id, created_at, updated_at, city, province, address, postal_code, industry, next_followup_at, last_touch_at, is_qualified, automation_paused, current_sequence_id, domain, enrichment_status, deleted_at',
+      { count: 'exact' },
+    )
+    .is('deleted_at', null)
+    .order(sort_by ?? 'lead_score', { ascending: sort_dir === 'asc', nullsFirst: false });
+
+  eqFilters.forEach(([field, value]) => {
+    dbQuery = dbQuery.eq(field, value);
+  });
+  if (search) dbQuery = dbQuery.ilike('company_name', `%${search}%`);
+  dbQuery = dbQuery.range(effectiveOffset, effectiveOffset + effectiveLimit - 1);
+
+  const { data, error, count } = await dbQuery;
+  if (error) throw dbError(error.message);
+
+  return NextResponse.json({
+    data: data ?? [],
+    total: count ?? 0,
+    hasMore: effectiveOffset + (data?.length ?? 0) < (count ?? 0),
+  });
+});
+
+export const POST = withApiRoute({ bodySchema: leadCreateSchema }, async ({ body, userId }) => {
+  const parsed = body as z.infer<typeof leadCreateSchema>;
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
+
+  let ownerId: string | undefined = parsed.assigned_to;
   if (!ownerId) {
     try {
       const assignment = await assignLead(supabase, {
-        division_id: parsed.data.division_id ?? null,
-        source_channel: parsed.data.source_channel ?? null,
+        division_id: parsed.division_id ?? null,
+        source_channel: parsed.source_channel ?? null,
       });
       if (assignment.assigned && assignment.assigned_to) {
         ownerId = assignment.assigned_to;
       }
     } catch (e) {
-      // Assignment failure should not block lead creation
       logger.error('Auto-assign on create failed', { error: e });
     }
   }
 
   const { data, error } = await supabase
     .from('leads')
-    .insert({ ...parsed.data, status: 'new', assigned_to: ownerId })
+    .insert({ ...parsed, status: 'new', assigned_to: ownerId })
     .select()
     .single();
 
-  if (error) return errorResponse(dbError(error.message));
+  if (error) throw dbError(error.message);
 
-  // Auto-score the new lead (non-blocking)
   try {
     await autoScoreLead(supabase, data as Record<string, unknown>, data.id);
   } catch (e) {
     logger.error('Auto-score on create failed', { error: e });
   }
 
-  // Auto-match against existing accounts (non-blocking)
   try {
     await autoMatchAccounts(supabase, data as Record<string, unknown>, data.id);
   } catch (e) {
@@ -201,4 +168,4 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json(data, { status: 201 });
-}
+});

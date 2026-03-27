@@ -1,9 +1,9 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { dbError } from '@/lib/api/errors';
 import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 const categoryEnum = z.enum(['outreach', 'follow_up', 'nurture', 'event', 'referral']);
@@ -23,17 +23,9 @@ const createSchema = z.object({
   division_id: z.string().uuid().optional().nullable(),
 });
 
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
-  const params = Object.fromEntries(req.nextUrl.searchParams);
-  const parsed = getQuerySchema.safeParse(params);
+export const GET = withApiRoute({ querySchema: getQuerySchema }, async ({ req }) => {
+  const rawParams = Object.fromEntries(req.nextUrl.searchParams);
+  const parsed = getQuerySchema.safeParse(rawParams);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
@@ -41,6 +33,7 @@ export async function GET(req: NextRequest) {
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
+
   let query = supabase
     .from('email_templates')
     .select(
@@ -57,43 +50,18 @@ export async function GET(req: NextRequest) {
 
   const { data, error, count } = await query;
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  if (error) throw dbError(error.message);
 
   return NextResponse.json(paginatedResponse(data, count, limit, offset));
-}
+});
 
-export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = createSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
+export const POST = withApiRoute({ bodySchema: createSchema }, async ({ body }) => {
   const { client: supabase, error: authError } = await createUserClientSafe();
-
   if (authError) return authError;
-  const { data, error } = await supabase
-    .from('email_templates')
-    .insert(parsed.data)
-    .select()
-    .single();
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  const { data, error } = await supabase.from('email_templates').insert(body).select().single();
+
+  if (error) throw dbError(error.message);
 
   return NextResponse.json({ data }, { status: 201 });
-}
+});

@@ -1,22 +1,14 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-import { rateLimit, rateLimitResponse } from '@/lib/api/rate-limit';
+import { dbError } from '@/lib/api/errors';
+import { withApiRoute } from '@/lib/api/with-api-route';
 import { calculateSLAStatus, LEAD_SLA_CONFIG, OPPORTUNITY_SLA_CONFIG } from '@/lib/crm/sla-config';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
-export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rl = await rateLimit(req, { limit: 60, window: '1 m', identifier: userId });
-  if (!rl.success) return rateLimitResponse(rl);
-
+export const GET = withApiRoute({}, async () => {
   const { client: supabase, error: authError } = await createUserClientSafe();
-
   if (authError) return authError;
+
   const now = new Date();
 
   // Fetch leads in active stages (not won/lost)
@@ -26,9 +18,7 @@ export async function GET(req: NextRequest) {
     .is('deleted_at', null)
     .not('status', 'in', '("won","lost")');
 
-  if (leadsError) {
-    return NextResponse.json({ error: leadsError.message }, { status: 500 });
-  }
+  if (leadsError) throw dbError(leadsError.message);
 
   // Fetch opportunities in active stages (not contracted/closed_lost)
   const { data: opportunities, error: oppsError } = await supabase
@@ -36,9 +26,7 @@ export async function GET(req: NextRequest) {
     .select('id, opportunity_name, stage, stage_entered_at, division_id, owner_user_id')
     .not('stage', 'in', '("contracted","closed_lost")');
 
-  if (oppsError) {
-    return NextResponse.json({ error: oppsError.message }, { status: 500 });
-  }
+  if (oppsError) throw dbError(oppsError.message);
 
   // Calculate SLA status for each
   const overdueLeads = (leads ?? [])
@@ -63,4 +51,4 @@ export async function GET(req: NextRequest) {
       total: overdueLeads.length + overdueOpportunities.length,
     },
   });
-}
+});

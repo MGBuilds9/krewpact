@@ -6,8 +6,15 @@ vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
-vi.mock('@/lib/logger', () => ({
-  logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn(), debug: vi.fn() },
+vi.mock('@/lib/logger', () => {
+  const m = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), child: vi.fn() };
+  m.child.mockReturnValue(m);
+  return { logger: m };
+});
+vi.mock('@/lib/request-context', () => ({
+  requestContext: { run: (_: unknown, fn: () => unknown) => fn() },
+  generateRequestId: () => 'req_test',
+  getRequestContext: () => undefined,
 }));
 
 import { auth } from '@clerk/nextjs/server';
@@ -84,11 +91,12 @@ describe('POST /api/crm/leads/bulk', () => {
 
   it('returns 400 for invalid JSON body', async () => {
     mockClerkAuth(mockAuth);
-    const req = new Request('http://localhost/api/crm/leads/bulk', {
+    const { NextRequest: NR } = await import('next/server');
+    const req = new NR('http://localhost/api/crm/leads/bulk', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: 'not-json',
-    }) as unknown as import('next/server').NextRequest;
+    });
     const res = await leadsBulk(req);
     expect(res.status).toBe(400);
   });

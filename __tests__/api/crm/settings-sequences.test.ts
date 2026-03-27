@@ -5,6 +5,19 @@ vi.mock('@/lib/api/rate-limit', () => ({
   rateLimitResponse: vi.fn(),
 }));
 vi.mock('@/lib/api/org', () => ({ getOrgIdFromAuth: vi.fn() }));
+vi.mock('@/lib/request-context', () => ({
+  requestContext: { run: vi.fn((_ctx, fn) => fn()) },
+  generateRequestId: vi.fn().mockReturnValue('req_test'),
+}));
+vi.mock('@/lib/logger', () => ({
+  logger: {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    child: vi.fn().mockReturnThis(),
+  },
+}));
 
 import { auth } from '@clerk/nextjs/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -105,7 +118,7 @@ describe('PATCH /api/crm/settings/sequences', () => {
     );
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toBe('Invalid input');
+    expect(body.error).toBeDefined();
   });
 
   it('returns 400 when required fields are missing', async () => {

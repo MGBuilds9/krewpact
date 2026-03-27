@@ -6,8 +6,19 @@ vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
+vi.mock('@/lib/logger', () => {
+  const m = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), child: vi.fn() };
+  m.child.mockReturnValue(m);
+  return { logger: m };
+});
+vi.mock('@/lib/request-context', () => ({
+  requestContext: { run: (_: unknown, fn: () => unknown) => fn() },
+  generateRequestId: () => 'req_test',
+  getRequestContext: () => undefined,
+}));
 
 import { auth } from '@clerk/nextjs/server';
+import { NextRequest } from 'next/server';
 
 import { POST } from '@/app/api/crm/accounts/merge/route';
 import { createUserClientSafe } from '@/lib/supabase/server';
@@ -26,11 +37,11 @@ function mockChain(result: { data: unknown; error: unknown }) {
 }
 
 function makeRequest(body: unknown) {
-  return new Request('http://localhost/api/crm/accounts/merge', {
+  return new NextRequest('http://localhost/api/crm/accounts/merge', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-  }) as unknown as import('next/server').NextRequest;
+  });
 }
 
 describe('POST /api/crm/accounts/merge', () => {
