@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 
 import { PortalHeader } from '@/components/Layout/PortalHeader';
+import { PortalSidebar } from '@/components/Portals/PortalSidebar';
 
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
   const { sessionClaims } = await auth();
@@ -50,10 +51,9 @@ export default async function PortalLayout({ children }: { children: React.React
       {/* Simplified Portal Header */}
       <PortalHeader />
 
-      {/* Main content grid. Could include a sidebar in the future if needed */}
+      {/* Main content grid with role-based sidebar */}
       <div className="flex-1 flex flex-col sm:flex-row">
-        {/* Placeholder for optional Sidebar */}
-        {/* <PortalSidebar /> */}
+        <PortalSidebar roles={roles} />
 
         <main id="main-content" className="flex-1 container mx-auto px-4 py-8">
           {children}

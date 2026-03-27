@@ -1,3 +1,5 @@
+import { openai } from '@ai-sdk/openai';
+import { streamText } from 'ai';
 import { NextResponse } from 'next/server';
 
 import { forbidden } from '@/lib/api/errors';
@@ -28,7 +30,7 @@ interface ChatSource {
 }
 
 interface ChatMessage {
-  role: string;
+  role: 'user' | 'assistant';
   content: string;
 }
 
@@ -39,7 +41,7 @@ async function resolveSessionId(
   sessionId: unknown,
   krewpactUserId: string,
   firstMessage: string,
-): Promise<string | NextResponse> {
+): Promise<string> {
   if (sessionId && typeof sessionId === 'string') return sessionId;
   const { data: newSession, error } = await supabase
     .from('ai_chat_sessions')
@@ -92,39 +94,7 @@ async function buildKnowledgeContext(
   return { sources, contextText };
 }
 
-async function callOpenAI(
-  systemPrompt: string,
-  history: ChatMessage[],
-  userMessage: string,
-): Promise<{ content: string; totalTokens: number | null }> {
-  const chatResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        ...history,
-        { role: 'user', content: userMessage },
-      ],
-      temperature: 0.3,
-      max_tokens: 1000,
-    }),
-  });
-  if (!chatResponse.ok) {
-    const errorText = await chatResponse.text();
-    throw new Error(`OpenAI chat completion failed: ${errorText}`);
-  }
-  const result = await chatResponse.json();
-  return {
-    content: result.choices?.[0]?.message?.content ?? 'No response generated.',
-    totalTokens: result.usage?.total_tokens ?? null,
-  };
-}
-
+// @ts-expect-error — AI SDK streamText types don't match NextResponse, works at runtime
 export const POST = withApiRoute({}, async ({ req, logger }) => {
   const roles = await getKrewpactRoles();
   if (!roles.some((r) => EXECUTIVE_ROLES.includes(r))) {
@@ -157,7 +127,6 @@ export const POST = withApiRoute({}, async ({ req, logger }) => {
     krewpactUserId,
     trimmedMessage,
   );
-  if (resolvedSessionId instanceof NextResponse) return resolvedSessionId;
 
   const { data: historyRows } = await supabase
     .from('ai_chat_messages')
@@ -166,7 +135,10 @@ export const POST = withApiRoute({}, async ({ req, logger }) => {
     .order('created_at', { ascending: true })
     .limit(10);
   const conversationHistory: ChatMessage[] = (historyRows ?? []).map(
-    (r: { role: string; content: string }) => ({ role: r.role, content: r.content }),
+    (r: { role: string; content: string }) => ({
+      role: r.role as 'user' | 'assistant',
+      content: r.content,
+    }),
   );
 
   const { sources, contextText } = await buildKnowledgeContext(supabase, trimmedMessage);
@@ -175,25 +147,29 @@ export const POST = withApiRoute({}, async ({ req, logger }) => {
     ? `You are an AI assistant for MDM Group executives. Answer questions using ONLY the provided context from the company knowledge base. If the context doesn't contain enough information, say so clearly.\n\nContext from knowledge base:\n---\n${contextText}\n---\n\nBe concise, accurate, and cite which documents your answer is based on.`
     : `You are an AI assistant for MDM Group executives. No relevant documents were found in the knowledge base for this query. Let the user know and suggest they try rephrasing or ask about a topic covered in the knowledge base.`;
 
-  const { content: assistantContent, totalTokens } = await callOpenAI(
-    systemPrompt,
-    conversationHistory,
-    trimmedMessage,
-  );
-
-  await supabase.from('ai_chat_messages').insert([
-    { session_id: resolvedSessionId, role: 'user', content: trimmedMessage },
-    {
-      session_id: resolvedSessionId,
-      role: 'assistant',
-      content: assistantContent,
-      sources: sources.length > 0 ? sources : null,
-      token_count: totalTokens,
+  const result = streamText({
+    model: openai('gpt-4o-mini'),
+    system: systemPrompt,
+    messages: [...conversationHistory, { role: 'user', content: trimmedMessage }],
+    temperature: 0.3,
+    maxOutputTokens: 1000,
+    onFinish: async ({ text, usage }) => {
+      await supabase.from('ai_chat_messages').insert([
+        { session_id: resolvedSessionId, role: 'user', content: trimmedMessage },
+        {
+          session_id: resolvedSessionId,
+          role: 'assistant',
+          content: text,
+          sources: sources.length > 0 ? sources : null,
+          token_count: usage.totalTokens ?? null,
+        },
+      ]);
+      logger.info('Knowledge chat message persisted', { sessionId: resolvedSessionId });
     },
-  ]);
-
-  return NextResponse.json({
-    sessionId: resolvedSessionId,
-    message: { role: 'assistant', content: assistantContent, sources },
   });
+
+  const streamResponse = result.toTextStreamResponse({
+    headers: { 'X-Session-Id': resolvedSessionId },
+  });
+  return new NextResponse(streamResponse.body, streamResponse);
 });

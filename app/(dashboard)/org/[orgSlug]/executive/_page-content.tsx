@@ -5,6 +5,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { Clock } from 'lucide-react';
 import { useState } from 'react';
 
+import { InsightAnalyticsCard } from '@/components/AI/InsightAnalyticsCard';
 import type { Alert } from '@/components/Executive/AlertsRibbon';
 import { AlertsRibbon } from '@/components/Executive/AlertsRibbon';
 import { DivisionScorecard } from '@/components/Executive/DivisionScorecard';
@@ -190,6 +191,7 @@ export default function ExecutiveOverviewPage() {
               <DivisionScorecard portfolio={primary.portfolio} isLoading={overviewLoading} />
               <SubscriptionWidget summary={primary.subscriptions} isLoading={overviewLoading} />
             </div>
+            <InsightAnalyticsCard />
           </>
         )}
       </div>

@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { apiFetch } from '@/lib/api-client';
+import { createBrowserClient } from '@/lib/supabase/client';
 
 // ============================================================
 // Interfaces
@@ -205,6 +206,69 @@ export function useDeleteFile(projectId: string) {
       apiFetch(`/api/projects/${projectId}/files/${fileId}`, { method: 'DELETE' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['files', projectId] });
+    },
+  });
+}
+
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
+const STORAGE_BUCKET = 'project-files';
+
+export function useUploadFile(projectId: string, folderId?: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (file: File) => {
+      if (file.size > MAX_FILE_SIZE) {
+        throw new Error('File exceeds 50 MB limit');
+      }
+      const supabase = createBrowserClient();
+      const ext = file.name.split('.').pop() ?? '';
+      const safeName = `${Date.now()}-${Math.random().toString(36).slice(2)}${ext ? `.${ext}` : ''}`;
+      const storagePath = `${projectId}/${folderId ?? 'root'}/${safeName}`;
+      const { error: uploadError } = await supabase.storage
+        .from(STORAGE_BUCKET)
+        .upload(storagePath, file, { contentType: file.type || undefined });
+      if (uploadError) throw new Error(uploadError.message);
+      return apiFetch<FileMetadata>(`/api/projects/${projectId}/files`, {
+        method: 'POST',
+        body: {
+          storage_bucket: STORAGE_BUCKET,
+          file_path: storagePath,
+          filename: safeName,
+          original_filename: file.name,
+          mime_type: file.type || null,
+          file_size_bytes: file.size,
+          folder_id: folderId ?? null,
+        },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['files', projectId] });
+    },
+  });
+}
+
+export function useDownloadFile() {
+  return useMutation({
+    mutationFn: async ({
+      storageBucket,
+      filePath,
+      originalFilename,
+    }: {
+      storageBucket: string;
+      filePath: string;
+      originalFilename: string;
+    }) => {
+      const supabase = createBrowserClient();
+      const { data, error } = await supabase.storage
+        .from(storageBucket)
+        .createSignedUrl(filePath, 3600);
+      if (error) throw new Error(error.message);
+      const a = document.createElement('a');
+      a.href = data.signedUrl;
+      a.download = originalFilename;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.click();
     },
   });
 }

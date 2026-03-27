@@ -1,16 +1,6 @@
 'use client';
 
-import {
-  ArrowLeft,
-  ArrowRight,
-  FileText,
-  MessageSquarePlus,
-  Pencil,
-  Plus,
-  Trash2,
-  Trophy,
-  XCircle,
-} from 'lucide-react';
+import { ArrowLeft, FileText, MessageSquarePlus, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 
@@ -20,7 +10,6 @@ import { ActivityTimeline } from '@/components/CRM/ActivityTimeline';
 import { LinkedEstimateCard } from '@/components/CRM/LinkedEstimateCard';
 import { LostDealDialog } from '@/components/CRM/LostDealDialog';
 import { NotesPanel } from '@/components/CRM/NotesPanel';
-import { OpportunityForm } from '@/components/CRM/OpportunityForm';
 import { OpportunityStageProgressBar } from '@/components/CRM/OpportunityStageProgressBar';
 import { WonDealDialog } from '@/components/CRM/WonDealDialog';
 import { Button } from '@/components/ui/button';
@@ -39,196 +28,14 @@ import {
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 import type { OpportunityStage } from '@/lib/crm/opportunity-stages';
 import { ALLOWED_TRANSITIONS } from '@/lib/crm/opportunity-stages';
-import { formatStatus } from '@/lib/format-status';
+
+import { OppInfoCard } from './_components/OppInfoCard';
+import { OppSidePanel } from './_components/OppSidePanel';
+import { OppStageActions } from './_components/OppStageActions';
 
 function formatCurrency(value: number | null): string {
   if (value == null) return '-';
   return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(value);
-}
-
-type OppData = NonNullable<ReturnType<typeof useOpportunity>['data']>;
-type ActivityItem = NonNullable<ReturnType<typeof useActivities>['data']>['data'][number];
-
-interface OppInfoCardProps {
-  opp: OppData;
-  isEditing: boolean;
-  setIsEditing: (v: boolean) => void;
-  currentStage: OpportunityStage;
-}
-function OppInfoCard({ opp, isEditing, setIsEditing, currentStage }: OppInfoCardProps) {
-  const closeDate = opp.target_close_date
-    ? new Date(opp.target_close_date).toLocaleDateString('en-CA', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      })
-    : '-';
-  const createdDate = new Date(opp.created_at).toLocaleDateString('en-CA', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{isEditing ? 'Edit Opportunity' : 'Opportunity Information'}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {isEditing ? (
-          <OpportunityForm
-            opportunity={opp}
-            onSuccess={() => setIsEditing(false)}
-            onCancel={() => setIsEditing(false)}
-          />
-        ) : (
-          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <dt className="text-sm font-medium text-muted-foreground">Stage</dt>
-              <dd className="text-sm">{formatStatus(currentStage)}</dd>
-            </div>
-            <div>
-              <dt className="text-sm font-medium text-muted-foreground">Estimated Revenue</dt>
-              <dd className="text-sm">{formatCurrency(opp.estimated_revenue)}</dd>
-            </div>
-            <div>
-              <dt className="text-sm font-medium text-muted-foreground">Probability</dt>
-              <dd className="text-sm">
-                {opp.probability_pct != null ? `${opp.probability_pct}%` : '-'}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-sm font-medium text-muted-foreground">Target Close</dt>
-              <dd className="text-sm">{closeDate}</dd>
-            </div>
-            <div>
-              <dt className="text-sm font-medium text-muted-foreground">Created</dt>
-              <dd className="text-sm">{createdDate}</dd>
-            </div>
-          </dl>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-interface DealSummaryProps {
-  opp: OppData;
-  currentStage: OpportunityStage;
-  activityCount: number;
-  estimateCount: number;
-}
-function DealSummaryCard({ opp, currentStage, activityCount, estimateCount }: DealSummaryProps) {
-  const weightedValue = (opp.estimated_revenue ?? 0) * ((opp.probability_pct ?? 0) / 100);
-  const targetClose = opp.target_close_date
-    ? new Date(opp.target_close_date).toLocaleDateString('en-CA', {
-        month: 'short',
-        day: 'numeric',
-      })
-    : '-';
-  return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base">Deal Summary</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3 text-sm">
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Revenue</span>
-          <span className="font-medium">{formatCurrency(opp.estimated_revenue)}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Weighted Value</span>
-          <span className="font-medium">{formatCurrency(weightedValue)}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Probability</span>
-          <span>{opp.probability_pct ?? 0}%</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Target Close</span>
-          <span>{targetClose}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Stage</span>
-          <span>{formatStatus(currentStage)}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Activities</span>
-          <span>{activityCount}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Estimates</span>
-          <span>{estimateCount}</span>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-interface StageActionsProps {
-  nextRegularStage: string | undefined;
-  nextStageLabel: string;
-  canMarkWon: boolean;
-  canMarkLost: boolean;
-  isPending: boolean;
-  onNext: (stage: string) => void;
-  onWon: () => void;
-  onLost: () => void;
-}
-function StageActions({
-  nextRegularStage,
-  nextStageLabel,
-  canMarkWon,
-  canMarkLost,
-  isPending,
-  onNext,
-  onWon,
-  onLost,
-}: StageActionsProps) {
-  return (
-    <div className="flex gap-2 mt-4 justify-end">
-      {nextRegularStage && (
-        <Button size="sm" onClick={() => onNext(nextRegularStage)} disabled={isPending}>
-          <ArrowRight className="h-4 w-4 mr-1" />
-          {nextStageLabel}
-        </Button>
-      )}
-      {canMarkWon && (
-        <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={onWon}>
-          <Trophy className="h-4 w-4 mr-1" />
-          Mark Won
-        </Button>
-      )}
-      {canMarkLost && (
-        <Button size="sm" variant="destructive" onClick={onLost} disabled={isPending}>
-          <XCircle className="h-4 w-4 mr-1" />
-          Mark Lost
-        </Button>
-      )}
-    </div>
-  );
-}
-
-interface ProposalCardProps {
-  isFetching: boolean;
-  onGenerate: () => void;
-}
-function ProposalCard({ isFetching, onGenerate }: ProposalCardProps) {
-  return (
-    <Card>
-      <CardContent className="pt-6 flex items-center justify-between">
-        <div>
-          <h3 className="text-sm font-semibold">Proposal</h3>
-          <p className="text-sm text-muted-foreground">
-            Generate proposal data from this opportunity and linked estimates.
-          </p>
-        </div>
-        <Button size="sm" variant="outline" onClick={onGenerate} disabled={isFetching}>
-          <FileText className="h-4 w-4 mr-1" />
-          {isFetching ? 'Generating...' : 'Generate Proposal'}
-        </Button>
-      </CardContent>
-    </Card>
-  );
 }
 
 interface StageHistoryEntry {
@@ -236,58 +43,6 @@ interface StageHistoryEntry {
   from_stage: string;
   to_stage: string;
   created_at: string;
-}
-function StageHistoryCard({ history }: { history: StageHistoryEntry[] }) {
-  if (!history.length) return null;
-  return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base">Stage History</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
-          {history.map((entry) => (
-            <div key={entry.id} className="flex items-center justify-between text-sm">
-              <div>
-                <span className="capitalize text-muted-foreground">
-                  {formatStatus(entry.from_stage)}
-                </span>
-                <span className="mx-1.5 text-muted-foreground">&rarr;</span>
-                <span className="font-medium">{formatStatus(entry.to_stage)}</span>
-              </div>
-              <span className="text-xs text-muted-foreground">
-                {new Date(entry.created_at).toLocaleDateString('en-CA', {
-                  month: 'short',
-                  day: 'numeric',
-                })}
-              </span>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-interface ActivityCardProps {
-  activities: ActivityItem[];
-  onLogActivity: () => void;
-}
-function OppActivityCard({ activities, onLogActivity }: ActivityCardProps) {
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Activity Timeline</CardTitle>
-        <Button size="sm" variant="outline" onClick={onLogActivity}>
-          <Plus className="h-4 w-4 mr-1" />
-          Log Activity
-        </Button>
-      </CardHeader>
-      <CardContent>
-        <ActivityTimeline activities={activities} />
-      </CardContent>
-    </Card>
-  );
 }
 
 export default function OpportunityDetailPage() {
@@ -393,7 +148,7 @@ export default function OpportunityDetailPage() {
       <Card>
         <CardContent className="pt-6">
           <OpportunityStageProgressBar currentStage={currentStage} />
-          <StageActions
+          <OppStageActions
             nextRegularStage={nextRegularStage}
             nextStageLabel={nextStageLabel}
             canMarkWon={canMarkWon}
@@ -427,25 +182,46 @@ export default function OpportunityDetailPage() {
               });
             }}
           />
-          <ProposalCard
-            isFetching={proposalQuery.isFetching}
-            onGenerate={() => proposalQuery.refetch()}
-          />
+          <Card>
+            <CardContent className="pt-6 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold">Proposal</h3>
+                <p className="text-sm text-muted-foreground">
+                  Generate proposal data from this opportunity and linked estimates.
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => proposalQuery.refetch()}
+                disabled={proposalQuery.isFetching}
+              >
+                <FileText className="h-4 w-4 mr-1" />
+                {proposalQuery.isFetching ? 'Generating...' : 'Generate Proposal'}
+              </Button>
+            </CardContent>
+          </Card>
           <NotesPanel entityType="opportunity" entityId={opportunityId} />
-          <OppActivityCard
-            activities={activities}
-            onLogActivity={() => setActivityDialogOpen(true)}
-          />
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Activity Timeline</CardTitle>
+              <Button size="sm" variant="outline" onClick={() => setActivityDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-1" />
+                Log Activity
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <ActivityTimeline activities={activities} />
+            </CardContent>
+          </Card>
         </div>
-        <div className="space-y-6">
-          <DealSummaryCard
-            opp={opportunity}
-            currentStage={currentStage}
-            activityCount={activities.length}
-            estimateCount={estimateCount}
-          />
-          <StageHistoryCard history={stageHistory} />
-        </div>
+        <OppSidePanel
+          opp={opportunity}
+          currentStage={currentStage}
+          activityCount={activities.length}
+          estimateCount={estimateCount}
+          stageHistory={stageHistory}
+        />
       </div>
 
       <ActivityLogDialog

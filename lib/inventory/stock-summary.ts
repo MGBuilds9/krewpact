@@ -3,50 +3,18 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
 import type { Database } from '@/types/supabase';
 
-type _LedgerRow = Database['public']['Tables']['inventory_ledger']['Row'];
-
-// ============================================================
-// Types
-// ============================================================
-
-export interface StockFilters {
-  divisionId?: string;
-  locationId?: string;
-  itemId?: string;
-  search?: string;
-  limit?: number;
-  offset?: number;
-}
-
-export interface StockSummaryRow {
-  item_id: string;
-  item_name: string;
-  item_sku: string;
-  location_id: string;
-  location_name: string;
-  spot_id: string | null;
-  qty_on_hand: number;
-  total_value: number;
-  last_transaction_at: string | null;
-}
-
-export interface LowStockItem {
-  item_id: string;
-  item_name: string;
-  item_sku: string;
-  location_id: string;
-  location_name: string;
-  qty_on_hand: number;
-  min_stock_level: number;
-  deficit: number;
-}
-
-export interface ProjectMaterialItem {
-  item_id: string;
-  item_name: string;
-  total_qty: number;
-  total_value: number;
-}
+export type {
+  LowStockItem,
+  ProjectMaterialItem,
+  StockFilters,
+  StockSummaryRow,
+} from './stock-types';
+import type {
+  LowStockItem,
+  ProjectMaterialItem,
+  StockFilters,
+  StockSummaryRow,
+} from './stock-types';
 
 // ============================================================
 // getStockSummary

@@ -35,51 +35,61 @@ export const POST = withApiRoute({ auth: 'public' }, async ({ req, logger }) => 
     computeSubscriptionSummary(supabase),
   ]);
 
-  // Upsert into executive_metrics_cache
-  // Use a fixed org_id placeholder — in production this would iterate orgs
-  // For now use the first org or a known org
-  const { data: orgs } = await supabase.from('organizations').select('id').limit(1).single();
-  const orgId = orgs?.id;
+  // Upsert into executive_metrics_cache for all orgs
+  const { data: allOrgs, error: orgError } = await supabase.from('organizations').select('id');
 
-  if (!orgId) {
-    throw serverError('No organization found');
+  if (orgError || !allOrgs?.length) {
+    throw serverError('No organizations found');
   }
 
-  const metrics = [
-    {
-      org_id: orgId,
-      metric_key: 'pipeline_summary',
-      metric_value: pipeline,
-      computed_at: new Date().toISOString(),
-    },
-    {
-      org_id: orgId,
-      metric_key: 'project_portfolio',
-      metric_value: portfolio,
-      computed_at: new Date().toISOString(),
-    },
-    {
-      org_id: orgId,
-      metric_key: 'estimating_velocity',
-      metric_value: estimating,
-      computed_at: new Date().toISOString(),
-    },
-    {
-      org_id: orgId,
-      metric_key: 'subscription_summary',
-      metric_value: subscriptions,
-      computed_at: new Date().toISOString(),
-    },
-  ];
+  // Process metrics for each org
+  const results = await Promise.allSettled(
+    allOrgs.map(async (org) => {
+      const orgMetrics = [
+        {
+          org_id: org.id,
+          metric_key: 'pipeline_summary',
+          metric_value: pipeline,
+          computed_at: new Date().toISOString(),
+        },
+        {
+          org_id: org.id,
+          metric_key: 'project_portfolio',
+          metric_value: portfolio,
+          computed_at: new Date().toISOString(),
+        },
+        {
+          org_id: org.id,
+          metric_key: 'estimating_velocity',
+          metric_value: estimating,
+          computed_at: new Date().toISOString(),
+        },
+        {
+          org_id: org.id,
+          metric_key: 'subscription_summary',
+          metric_value: subscriptions,
+          computed_at: new Date().toISOString(),
+        },
+      ];
+      const { error: upsertError } = await supabase
+        .from('executive_metrics_cache')
+        .upsert(orgMetrics, { onConflict: 'org_id,metric_key' });
+      if (upsertError) throw upsertError;
+      return org.id;
+    }),
+  );
 
-  const { error: upsertError } = await supabase
-    .from('executive_metrics_cache')
-    .upsert(metrics, { onConflict: 'org_id,metric_key' });
+  const succeeded = results.filter((r) => r.status === 'fulfilled').length;
+  const failed = results.filter((r) => r.status === 'rejected').length;
 
-  if (upsertError) {
-    logger.error('Failed to upsert metrics cache:', { message: upsertError.message });
-    throw serverError('Failed to cache metrics');
+  if (failed > 0) {
+    logger.error('Some org metric upserts failed', { succeeded, failed });
   }
 
-  return NextResponse.json({ refreshed: metrics.length, computed_at: new Date().toISOString() });
+  return NextResponse.json({
+    refreshed: succeeded * 4,
+    orgs_processed: succeeded,
+    orgs_failed: failed,
+    computed_at: new Date().toISOString(),
+  });
 });

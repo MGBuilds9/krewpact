@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { apiFetch } from '@/lib/api-client';
 
 interface ChatSource {
   doc_id: string;
@@ -22,21 +21,17 @@ interface Message {
   content: string;
   sources?: ChatSource[];
 }
-interface ChatResponse {
-  sessionId: string;
-  message: Message;
-}
 
 interface ChatMessageListProps {
   messages: Message[];
-  isLoading: boolean;
+  isStreaming: boolean;
   messagesEndRef: React.RefObject<HTMLDivElement | null>;
 }
 
-function ChatMessageList({ messages, isLoading, messagesEndRef }: ChatMessageListProps) {
+function ChatMessageList({ messages, isStreaming, messagesEndRef }: ChatMessageListProps) {
   return (
     <div className="flex-1 overflow-y-auto space-y-4 pr-1 pb-4">
-      {messages.length === 0 && !isLoading && (
+      {messages.length === 0 && !isStreaming && (
         <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
           <div className="text-center space-y-2">
             <p className="font-medium">Ask anything about the MDM knowledge base</p>
@@ -58,7 +53,7 @@ function ChatMessageList({ messages, isLoading, messagesEndRef }: ChatMessageLis
           )}
         </div>
       ))}
-      {isLoading && (
+      {isStreaming && (
         <div className="flex justify-start">
           <Card className="max-w-[85%] shadow-sm">
             <CardContent className="p-4 space-y-2">
@@ -135,16 +130,63 @@ function AssistantMessage({ msg }: { msg: Message }) {
   );
 }
 
+interface StreamChatOptions {
+  message: string;
+  sessionId: string | null;
+  setSessionId: (id: string) => void;
+  setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
+  setIsStreaming: (v: boolean) => void;
+}
+
+async function streamChatResponse({
+  message,
+  sessionId,
+  setSessionId,
+  setMessages,
+  setIsStreaming,
+}: StreamChatOptions) {
+  const response = await fetch('/api/executive/knowledge/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, sessionId }),
+  });
+  if (!response.ok) throw new Error(`Request failed: ${response.status}`);
+
+  const resolvedSessionId = response.headers.get('X-Session-Id');
+  if (resolvedSessionId) setSessionId(resolvedSessionId);
+
+  const reader = response.body?.getReader();
+  if (!reader) throw new Error('No response body');
+
+  const decoder = new TextDecoder();
+  const assistantId = `a-${Date.now()}`;
+  let assistantContent = '';
+
+  setMessages((prev) => [...prev, { id: assistantId, role: 'assistant', content: '' }]);
+  setIsStreaming(false);
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    assistantContent += decoder.decode(value, { stream: true });
+    const captured = assistantContent;
+    setMessages((prev) =>
+      prev.map((m) => (m.id === assistantId ? { ...m, content: captured } : m)),
+    );
+  }
+}
+
 export function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isLoading]);
+  }, [messages, isStreaming]);
 
   async function handleSend() {
     const trimmed = input.trim();
@@ -152,20 +194,24 @@ export function ChatInterface() {
     setMessages((prev) => [...prev, { id: `u-${Date.now()}`, role: 'user', content: trimmed }]);
     setInput('');
     setIsLoading(true);
+    setIsStreaming(true);
     try {
-      const data = await apiFetch<ChatResponse>('/api/executive/knowledge/chat', {
-        method: 'POST',
-        body: { message: trimmed, sessionId },
+      await streamChatResponse({
+        message: trimmed,
+        sessionId,
+        setSessionId: (id) => setSessionId(id),
+        setMessages,
+        setIsStreaming,
       });
-      setSessionId(data.sessionId);
-      setMessages((prev) => [...prev, data.message]);
     } catch {
+      setIsStreaming(false);
       setMessages((prev) => [
         ...prev,
         { role: 'assistant', content: 'Sorry, something went wrong. Please try again.' },
       ]);
     } finally {
       setIsLoading(false);
+      setIsStreaming(false);
     }
   }
 
@@ -184,7 +230,11 @@ export function ChatInterface() {
           GPT-4o-mini
         </Badge>
       </div>
-      <ChatMessageList messages={messages} isLoading={isLoading} messagesEndRef={messagesEndRef} />
+      <ChatMessageList
+        messages={messages}
+        isStreaming={isStreaming}
+        messagesEndRef={messagesEndRef}
+      />
       <ChatInputBar
         input={input}
         isLoading={isLoading}

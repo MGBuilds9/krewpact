@@ -11,6 +11,8 @@ import {
   TrendingUp,
 } from 'lucide-react';
 
+import { DailyDigestWidget } from '@/components/AI/DailyDigestWidget';
+import { NLQueryBar } from '@/components/AI/NLQueryBar';
 import CalendarWidget from '@/components/Dashboard/CalendarWidget';
 import InboxPreview from '@/components/Dashboard/InboxPreview';
 import { Badge } from '@/components/ui/badge';
@@ -200,6 +202,9 @@ export default function DashboardView() {
     <div className="space-y-6 max-w-7xl mx-auto">
       <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-6 auto-rows-min">
         <WelcomeCard userName={userName} greeting={greeting} roles={roles} />
+        <div className="col-span-1 md:col-span-4 lg:col-span-6">
+          <NLQueryBar />
+        </div>
         <div className="col-span-1 md:col-span-4 lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-6">
           <Card
             className="group cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-300 rounded-3xl overflow-hidden border-0 bg-white dark:bg-card relative"
@@ -300,6 +305,9 @@ export default function DashboardView() {
         <div className="lg:col-span-1 space-y-6">
           <div className="rounded-3xl overflow-hidden border-0 shadow-sm bg-white dark:bg-card">
             <CalendarWidget />
+          </div>
+          <div className="rounded-3xl overflow-hidden border-0 shadow-sm bg-white dark:bg-card">
+            <DailyDigestWidget />
           </div>
           <div className="rounded-3xl overflow-hidden border-0 shadow-sm bg-white dark:bg-card">
             <InboxPreview />

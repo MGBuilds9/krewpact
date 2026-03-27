@@ -1,45 +1,25 @@
 /**
  * Mock ERPNext response generators for development/testing.
  * Generate realistic ERPNext API response shapes without hitting a real instance.
+ *
+ * Finance mocks: mock-finance-responses.ts
+ * Inventory mocks: mock-inventory-responses.ts
  */
 
-interface AccountData {
-  id: string;
-  account_name: string;
-  account_type?: string;
-  billing_address?: Record<string, unknown> | null;
-}
+export {
+  mockPaymentEntryResponse,
+  mockPurchaseInvoiceResponse,
+  mockSalesInvoiceResponse,
+} from './mock-finance-responses';
+export {
+  mockJournalEntryResponse,
+  mockPurchaseOrderResponse,
+  mockPurchaseReceiptResponse,
+} from './mock-inventory-responses';
+export { resetMockCounter } from './mock-types';
 
-interface EstimateData {
-  id: string;
-  estimate_number: string;
-  subtotal_amount: number;
-  tax_amount: number;
-  total_amount: number;
-  currency_code?: string;
-  account_id?: string | null;
-  contact_id?: string | null;
-}
-
-interface EstimateLineData {
-  description: string;
-  quantity: number;
-  unit_cost: number;
-  unit?: string | null;
-  line_total: number;
-}
-
-let mockCounter = 0;
-
-function nextMockId(prefix: string): string {
-  mockCounter++;
-  return `${prefix}-MOCK-${String(mockCounter).padStart(3, '0')}`;
-}
-
-/** Reset mock counter (for testing) */
-export function resetMockCounter(): void {
-  mockCounter = 0;
-}
+import type { AccountData, EstimateData, EstimateLineData } from './mock-types';
+import { nextMockId } from './mock-types';
 
 /**
  * Generate a mock ERPNext Customer response from a KrewPact account.
@@ -70,9 +50,6 @@ export function mockCustomerResponse(account: AccountData): {
   };
 }
 
-/**
- * Generate a mock ERPNext Quotation response from a KrewPact estimate.
- */
 /**
  * Generate a mock ERPNext Opportunity response from a KrewPact opportunity.
  */
@@ -316,97 +293,6 @@ export function mockTimesheetResponse(timesheet: {
   };
 }
 
-/**
- * Generate a mock ERPNext Sales Invoice response (inbound read).
- */
-export function mockSalesInvoiceResponse(docname: string): {
-  doctype: string;
-  name: string;
-  data: Record<string, unknown>;
-} {
-  return {
-    doctype: 'Sales Invoice',
-    name: docname,
-    data: {
-      name: docname,
-      doctype: 'Sales Invoice',
-      customer: 'MOCK-CUSTOMER',
-      posting_date: new Date().toISOString().split('T')[0],
-      grand_total: 10000,
-      outstanding_amount: 10000,
-      status: 'Unpaid',
-      currency: 'CAD',
-      creation: new Date().toISOString(),
-      modified: new Date().toISOString(),
-      docstatus: 1,
-    },
-  };
-}
-
-/**
- * Generate a mock ERPNext Purchase Invoice response (inbound read).
- */
-export function mockPurchaseInvoiceResponse(docname: string): {
-  doctype: string;
-  name: string;
-  data: Record<string, unknown>;
-} {
-  return {
-    doctype: 'Purchase Invoice',
-    name: docname,
-    data: {
-      name: docname,
-      doctype: 'Purchase Invoice',
-      supplier: 'MOCK-SUPPLIER',
-      posting_date: new Date().toISOString().split('T')[0],
-      grand_total: 5000,
-      outstanding_amount: 5000,
-      status: 'Unpaid',
-      currency: 'CAD',
-      creation: new Date().toISOString(),
-      modified: new Date().toISOString(),
-      docstatus: 1,
-    },
-  };
-}
-
-/**
- * Generate a mock ERPNext Payment Entry response (inbound read).
- */
-export function mockPaymentEntryResponse(docname: string): {
-  doctype: string;
-  name: string;
-  data: Record<string, unknown>;
-} {
-  return {
-    doctype: 'Payment Entry',
-    name: docname,
-    data: {
-      name: docname,
-      doctype: 'Payment Entry',
-      payment_type: 'Receive',
-      party_type: 'Customer',
-      party: 'MOCK-CUSTOMER',
-      posting_date: new Date().toISOString().split('T')[0],
-      paid_amount: 5000,
-      received_amount: 5000,
-      currency: 'CAD',
-      status: 'Submitted',
-      references: [
-        {
-          reference_doctype: 'Sales Invoice',
-          reference_name: 'SINV-001',
-          total_amount: 10000,
-          allocated_amount: 5000,
-        },
-      ],
-      creation: new Date().toISOString(),
-      modified: new Date().toISOString(),
-      docstatus: 1,
-    },
-  };
-}
-
 export function mockQuotationResponse(
   estimate: EstimateData,
   lines: EstimateLineData[],
@@ -439,109 +325,6 @@ export function mockQuotationResponse(
         uom: line.unit || 'Nos',
         amount: line.line_total,
       })),
-      creation: new Date().toISOString(),
-      modified: new Date().toISOString(),
-      docstatus: 0,
-    },
-  };
-}
-
-/**
- * Generate a mock ERPNext Purchase Order response from a KrewPact inventory PO.
- */
-export function mockPurchaseOrderResponse(po: {
-  id: string;
-  po_number: string;
-  supplier_name: string;
-  total_amount: number;
-  items: Record<string, unknown>[];
-}): {
-  doctype: string;
-  name: string;
-  data: Record<string, unknown>;
-} {
-  const docname = nextMockId('PUR-ORD');
-  return {
-    doctype: 'Purchase Order',
-    name: docname,
-    data: {
-      name: docname,
-      doctype: 'Purchase Order',
-      title: po.po_number,
-      supplier: po.supplier_name,
-      transaction_date: new Date().toISOString().split('T')[0],
-      grand_total: po.total_amount,
-      currency: 'CAD',
-      krewpact_id: po.id,
-      items: po.items,
-      creation: new Date().toISOString(),
-      modified: new Date().toISOString(),
-      docstatus: 0,
-    },
-  };
-}
-
-/**
- * Generate a mock ERPNext Purchase Receipt response from a KrewPact goods receipt.
- */
-export function mockPurchaseReceiptResponse(gr: {
-  id: string;
-  gr_number: string;
-  po_name: string;
-  items: Record<string, unknown>[];
-}): {
-  doctype: string;
-  name: string;
-  data: Record<string, unknown>;
-} {
-  const docname = nextMockId('MAT-PRE');
-  return {
-    doctype: 'Purchase Receipt',
-    name: docname,
-    data: {
-      name: docname,
-      doctype: 'Purchase Receipt',
-      title: gr.gr_number,
-      posting_date: new Date().toISOString().split('T')[0],
-      purchase_order: gr.po_name,
-      currency: 'CAD',
-      krewpact_id: gr.id,
-      items: gr.items,
-      creation: new Date().toISOString(),
-      modified: new Date().toISOString(),
-      docstatus: 0,
-    },
-  };
-}
-
-/**
- * Generate a mock ERPNext Journal Entry response for material cost sync.
- */
-export function mockJournalEntryResponse(entry: {
-  id: string;
-  amount: number;
-  projectRef: string;
-  startDate: string;
-  endDate: string;
-}): {
-  doctype: string;
-  name: string;
-  data: Record<string, unknown>;
-} {
-  const docname = nextMockId('JV');
-  return {
-    doctype: 'Journal Entry',
-    name: docname,
-    data: {
-      name: docname,
-      doctype: 'Journal Entry',
-      voucher_type: 'Journal Entry',
-      posting_date: entry.endDate,
-      total_debit: entry.amount,
-      total_credit: entry.amount,
-      user_remark: `Material cost for ${entry.projectRef} (${entry.startDate} to ${entry.endDate})`,
-      currency: 'CAD',
-      krewpact_id: entry.id,
       creation: new Date().toISOString(),
       modified: new Date().toISOString(),
       docstatus: 0,

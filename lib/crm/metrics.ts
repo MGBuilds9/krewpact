@@ -3,99 +3,32 @@
  * No database or auth dependencies.
  */
 
-import type { SourceCategory } from '@/lib/crm/constants';
 import { getSourceCategory } from '@/lib/crm/constants';
 
-// --- Input data interfaces (minimal fields needed for calculations) ---
+export type {
+  ConversionMetrics,
+  DashboardMetrics,
+  ForecastBucket,
+  ForecastMetrics,
+  ForecastOpportunityData,
+  LeadData,
+  OpportunityData,
+  PipelineMetrics,
+  SourceMetrics,
+  StageHistoryData,
+  VelocityMetrics,
+} from './metrics-types';
 
-export interface OpportunityData {
-  id: string;
-  stage: string;
-  estimated_revenue: number | null;
-  probability_pct: number | null;
-  created_at: string;
-  updated_at: string;
-  /** Only present on won deals */
-  won_date?: string | null;
-  opportunity_stage_history?: StageHistoryData[];
-}
-
-export interface StageHistoryData {
-  from_stage: string;
-  to_stage: string;
-  created_at: string;
-}
-
-export interface LeadData {
-  id: string;
-  status: string;
-  source_channel: string | null;
-  created_at: string;
-}
-
-// --- Output interfaces ---
-
-export interface PipelineMetrics {
-  totalPipelineValue: number;
-  weightedPipelineValue: number;
-  opportunityCount: number;
-  averageDealSize: number;
-  stageBreakdown: {
-    stage: string;
-    count: number;
-    value: number;
-    weightedValue: number;
-  }[];
-}
-
-export interface ConversionMetrics {
-  totalLeads: number;
-  qualifiedLeads: number;
-  convertedLeads: number;
-  lostLeads: number;
-  qualificationRate: number;
-  conversionRate: number;
-  lossRate: number;
-}
-
-export interface VelocityMetrics {
-  averageDaysToClose: number;
-  averageDaysInStage: Record<string, number>;
-  dealsClosed: number;
-  dealsClosedValue: number;
-}
-
-export interface SourceMetrics {
-  sources: {
-    source: string;
-    category: SourceCategory;
-    count: number;
-    value: number;
-    conversionRate: number;
-  }[];
-}
-
-export interface ForecastBucket {
-  month: string; // YYYY-MM format
-  label: string; // e.g., "Mar 2026"
-  dealCount: number;
-  totalRevenue: number;
-  weightedRevenue: number;
-}
-
-export interface ForecastMetrics {
-  buckets: ForecastBucket[];
-  totalForecastedRevenue: number;
-  totalWeightedRevenue: number;
-}
-
-export interface DashboardMetrics {
-  pipeline: PipelineMetrics;
-  conversion: ConversionMetrics;
-  velocity: VelocityMetrics;
-  sources: SourceMetrics;
-  forecast: ForecastMetrics;
-}
+import type {
+  ConversionMetrics,
+  ForecastMetrics,
+  ForecastOpportunityData,
+  LeadData,
+  OpportunityData,
+  PipelineMetrics,
+  SourceMetrics,
+  VelocityMetrics,
+} from './metrics-types';
 
 // --- Stage definitions ---
 
@@ -110,10 +43,24 @@ const ACTIVE_STAGES = [
 
 const TERMINAL_STAGES = ['contracted', 'closed_lost'];
 
+const MONTH_LABELS = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
+
 // --- Pure functions ---
 
 export function calculatePipelineMetrics(opportunities: OpportunityData[]): PipelineMetrics {
-  // Only count active pipeline (exclude terminal states)
   const active = opportunities.filter((o) => !TERMINAL_STAGES.includes(o.stage));
 
   const stageMap = new Map<string, { count: number; value: number; weightedValue: number }>();
@@ -166,7 +113,6 @@ export function calculatePipelineMetrics(opportunities: OpportunityData[]): Pipe
 export function calculateConversionMetrics(leads: LeadData[]): ConversionMetrics {
   const total = leads.length;
 
-  // Qualified = any stage beyond 'new' and 'contacted'
   const qualifiedStages = ['qualified', 'won', 'proposal', 'negotiation'];
   const wonStages = ['won'];
   const lostStages = ['lost'];
@@ -176,7 +122,6 @@ export function calculateConversionMetrics(leads: LeadData[]): ConversionMetrics
   ).length;
 
   const won = leads.filter((l) => wonStages.includes(l.status)).length;
-
   const lost = leads.filter((l) => lostStages.includes(l.status)).length;
 
   return {
@@ -202,7 +147,6 @@ export function calculateVelocityMetrics(opportunities: OpportunityData[]): Velo
   for (const opp of wonDeals) {
     dealsClosedValue += opp.estimated_revenue ?? 0;
 
-    // Calculate days to close from created_at to won_date or updated_at
     const startDate = new Date(opp.created_at);
     const endDate = new Date(opp.won_date ?? opp.updated_at);
     const daysToClose = Math.max(
@@ -212,7 +156,6 @@ export function calculateVelocityMetrics(opportunities: OpportunityData[]): Velo
     totalDaysToClose += daysToClose;
     dealsWithCloseTime += 1;
 
-    // Calculate time per stage from history
     if (opp.opportunity_stage_history && opp.opportunity_stage_history.length > 0) {
       const sortedHistory = [...opp.opportunity_stage_history].sort(
         (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
@@ -288,29 +231,6 @@ export function calculateSourceMetrics(leads: LeadData[]): SourceMetrics {
   return { sources };
 }
 
-export interface ForecastOpportunityData {
-  id: string;
-  stage: string;
-  estimated_revenue: number | null;
-  probability_pct: number | null;
-  target_close_date: string | null;
-}
-
-const MONTH_LABELS = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-];
-
 /**
  * Groups open opportunities by target_close_date month,
  * weighted by probability. Returns 6 months of forecast from now.
@@ -320,13 +240,20 @@ export function calculateForecastMetrics(
   now: Date = new Date(),
   monthsAhead: number = 6,
 ): ForecastMetrics {
-  // Only include active (non-terminal) opportunities with a close date
   const active = opportunities.filter(
     (o) => !TERMINAL_STAGES.includes(o.stage) && o.target_close_date,
   );
 
-  // Build month buckets
-  const bucketMap = new Map<string, ForecastBucket>();
+  const bucketMap = new Map<
+    string,
+    {
+      month: string;
+      label: string;
+      dealCount: number;
+      totalRevenue: number;
+      weightedRevenue: number;
+    }
+  >();
   for (let i = 0; i < monthsAhead; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
