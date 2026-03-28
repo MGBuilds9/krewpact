@@ -456,13 +456,13 @@ describe('refreshStockSummary', () => {
     expect(mock.rpc).toHaveBeenCalledWith('refresh_inventory_stock_summary');
   });
 
-  it('falls back to exec_sql when rpc fails', async () => {
+  it('throws when rpc fails', async () => {
     const mock = createMockSupabase();
     mock.rpc.mockResolvedValueOnce({ data: null, error: { message: 'function not found' } });
-    mock.rpc.mockResolvedValueOnce({ data: null, error: null });
 
-    await refreshStockSummary(mock.client);
-
-    expect(mock.rpc).toHaveBeenCalledTimes(2);
+    await expect(refreshStockSummary(mock.client)).rejects.toThrow(
+      'Stock summary refresh failed: function not found',
+    );
+    expect(mock.rpc).toHaveBeenCalledTimes(1);
   });
 });

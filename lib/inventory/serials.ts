@@ -25,7 +25,7 @@ export async function createSerial(
   const { data: serial, error } = await supabase
     .from('inventory_serials')
     .insert({ ...data, status: 'in_stock' })
-    .select()
+    .select('id, item_id, division_id, serial_number, status, current_location_id, current_spot_id, checked_out_to, acquisition_cost, condition_notes, almyta_rec_id, org_id, purchase_date, secondary_serial, warranty_expiry, created_at, updated_at')
     .single();
 
   if (error) {
@@ -139,7 +139,7 @@ export async function checkoutSerial(
     .from('inventory_serials')
     .update({ status: 'checked_out', checked_out_to: data.checked_out_to })
     .eq('id', serialId)
-    .select()
+    .select('id, item_id, division_id, serial_number, status, current_location_id, current_spot_id, checked_out_to, acquisition_cost, condition_notes, almyta_rec_id, org_id, purchase_date, secondary_serial, warranty_expiry, created_at, updated_at')
     .single();
 
   if (error) {
@@ -198,7 +198,7 @@ export async function returnSerial(
     .from('inventory_serials')
     .update(updateData)
     .eq('id', serialId)
-    .select()
+    .select('id, item_id, division_id, serial_number, status, current_location_id, current_spot_id, checked_out_to, acquisition_cost, condition_notes, almyta_rec_id, org_id, purchase_date, secondary_serial, warranty_expiry, created_at, updated_at')
     .single();
 
   if (error) {
@@ -233,7 +233,7 @@ export async function updateSerialStatus(
     .from('inventory_serials')
     .update(updateData)
     .eq('id', id)
-    .select()
+    .select('id, item_id, division_id, serial_number, status, current_location_id, current_spot_id, checked_out_to, acquisition_cost, condition_notes, almyta_rec_id, org_id, purchase_date, secondary_serial, warranty_expiry, created_at, updated_at')
     .single();
 
   if (error) {
@@ -253,7 +253,7 @@ export async function getSerialHistory(
 ): Promise<LedgerRow[]> {
   const { data, error } = await supabase
     .from('inventory_ledger')
-    .select('*')
+    .select('id, item_id, division_id, transaction_type, qty_change, valuation_rate, value_change, location_id, counterpart_location_id, spot_id, serial_id, lot_number, project_id, reason_code, reference_id, reference_type, notes, transacted_by, transacted_at, org_id, created_at')
     .eq('serial_id', serialId)
     .order('transacted_at', { ascending: false });
 

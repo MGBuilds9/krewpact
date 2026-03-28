@@ -42,7 +42,7 @@ export async function createLedgerEntry(
   const { data, error } = await supabase
     .from('inventory_ledger')
     .insert(row as LedgerInsert)
-    .select()
+    .select('id, item_id, division_id, transaction_type, qty_change, valuation_rate, value_change, location_id, counterpart_location_id, spot_id, serial_id, lot_number, project_id, reason_code, reference_id, reference_type, notes, transacted_by, transacted_at, org_id, created_at')
     .single();
 
   if (error) {
@@ -120,7 +120,7 @@ export async function createTransferEntries(
   const { data, error } = await supabase
     .from('inventory_ledger')
     .insert([sourceEntry as LedgerInsert, destEntry as LedgerInsert])
-    .select();
+    .select('id, item_id, division_id, transaction_type, qty_change, valuation_rate, value_change, location_id, counterpart_location_id, spot_id, serial_id, lot_number, project_id, reason_code, reference_id, reference_type, notes, transacted_by, transacted_at, org_id, created_at');
 
   if (error) {
     logger.error('Failed to create transfer entries', { error: error.message });
@@ -169,7 +169,7 @@ export async function getJobMaterialCost(
 ): Promise<{ total_cost: number; entries: LedgerRow[] }> {
   const { data, error } = await supabase
     .from('inventory_ledger')
-    .select('*')
+    .select('id, item_id, division_id, transaction_type, qty_change, valuation_rate, value_change, location_id, counterpart_location_id, spot_id, serial_id, lot_number, project_id, reason_code, reference_id, reference_type, notes, transacted_by, transacted_at, org_id, created_at')
     .eq('project_id', projectId)
     .order('transacted_at', { ascending: true });
 
@@ -195,24 +195,8 @@ export async function refreshStockSummary(supabase: SupabaseClient<Database>): P
   const { error } = await supabase.rpc('refresh_inventory_stock_summary' as never);
 
   if (error) {
-    // Fall back to raw SQL if the RPC doesn't exist
-    logger.warn('RPC refresh failed, attempting raw SQL', { error: error.message });
-
-    const { error: sqlError } = await (
-      supabase as unknown as {
-        rpc: (
-          fn: string,
-          args?: Record<string, unknown>,
-        ) => Promise<{ error: { message: string } | null }>;
-      }
-    ).rpc('exec_sql', {
-      query: 'REFRESH MATERIALIZED VIEW CONCURRENTLY inventory_stock_summary',
-    });
-
-    if (sqlError) {
-      logger.error('Failed to refresh stock summary', { error: sqlError.message });
-      throw new Error(`Stock summary refresh failed: ${sqlError.message}`);
-    }
+    logger.error('Failed to refresh stock summary', { error: error.message });
+    throw new Error(`Stock summary refresh failed: ${error.message}`);
   }
 }
 
