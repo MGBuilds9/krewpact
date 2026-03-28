@@ -44,7 +44,9 @@ export default function NewSequencePage() {
     defaultValues: { trigger_type: 'manual', division: 'contracting' },
   });
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const triggerType = watch('trigger_type');
+
   const division = watch('division');
 
   const onSubmit = async (values: SequenceFormValues) => {

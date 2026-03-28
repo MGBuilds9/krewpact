@@ -43,17 +43,20 @@ export const GET = withApiRoute({ querySchema }, async ({ req, query }) => {
   return NextResponse.json(paginatedResponse(data, count, limit, offset));
 });
 
-export const POST = withApiRoute({ bodySchema: accountCreateSchema }, async ({ body, userId }) => {
-  const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
+export const POST = withApiRoute(
+  { bodySchema: accountCreateSchema },
+  async ({ body, userId: _userId }) => {
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
-  const { data, error } = await supabase
-    .from('accounts')
-    .insert({ ...(body as z.infer<typeof accountCreateSchema>) })
-    .select()
-    .single();
+    const { data, error } = await supabase
+      .from('accounts')
+      .insert({ ...(body as z.infer<typeof accountCreateSchema>) })
+      .select()
+      .single();
 
-  if (error) throw dbError(error.message);
+    if (error) throw dbError(error.message);
 
-  return NextResponse.json(data, { status: 201 });
-});
+    return NextResponse.json(data, { status: 201 });
+  },
+);

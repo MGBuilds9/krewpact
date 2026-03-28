@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { dbError, forbidden, serverError } from '@/lib/api/errors';
+import { dbError, forbidden } from '@/lib/api/errors';
 import { getKrewpactRoles } from '@/lib/api/org';
 import { withApiRoute } from '@/lib/api/with-api-route';
 import { ErpClient } from '@/lib/erp/client';

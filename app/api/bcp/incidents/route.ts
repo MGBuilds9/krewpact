@@ -15,7 +15,7 @@ const querySchema = z.object({
   offset: z.coerce.number().int().min(0).optional(),
 });
 
-export const GET = withApiRoute({ querySchema }, async ({ req, userId }) => {
+export const GET = withApiRoute({ querySchema }, async ({ req, userId: _userId }) => {
   // Role check — BCP is restricted
   const { getKrewpactRoles } = await import('@/lib/api/org');
   const roles = await getKrewpactRoles();

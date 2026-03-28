@@ -3,7 +3,6 @@ import { NextResponse } from 'next/server';
 import { dbError, notFound } from '@/lib/api/errors';
 import { withApiRoute } from '@/lib/api/with-api-route';
 import { deepResearchLead } from '@/lib/integrations/deep-research';
-import { logger } from '@/lib/logger';
 import { createServiceClient } from '@/lib/supabase/server';
 
 export const POST = withApiRoute({ rateLimit: { limit: 5, window: '1 m' } }, async ({ params }) => {

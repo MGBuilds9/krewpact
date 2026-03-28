@@ -19,8 +19,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRolePermissions, useRoles } from '@/hooks/useOrg';
-import { EXTERNAL_ROLES, INTERNAL_ROLES } from '@/lib/rbac/role-registry';
 import type { KrewpactRole } from '@/lib/rbac/permissions.shared';
+import { EXTERNAL_ROLES, INTERNAL_ROLES } from '@/lib/rbac/role-registry';
 
 type RoleKey = KrewpactRole;
 

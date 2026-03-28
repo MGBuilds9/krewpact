@@ -19,8 +19,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { SequenceStep } from '@/hooks/useCRM';
 import { useSequence, useSequenceEnrollments } from '@/hooks/useCRM';
 
-import { DetailsTab, EnrollmentsTab } from './SequenceTabs';
 import { SequenceDialogs } from './SequenceDialogs';
+import { DetailsTab, EnrollmentsTab } from './SequenceTabs';
 
 type SequenceData = NonNullable<ReturnType<typeof useSequence>['data']>;
 type EnrollmentItem = NonNullable<ReturnType<typeof useSequenceEnrollments>['data']>[number];

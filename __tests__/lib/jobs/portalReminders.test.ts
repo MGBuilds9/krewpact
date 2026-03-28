@@ -43,8 +43,8 @@ vi.mock('@/lib/supabase/server', () => ({
   createServiceClient: vi.fn(),
 }));
 
-import { createServiceClient } from '@/lib/supabase/server';
 import { runPortalReminderJob } from '@/lib/jobs/portalReminders';
+import { createServiceClient } from '@/lib/supabase/server';
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -52,14 +52,18 @@ beforeEach(() => {
 
 describe('runPortalReminderJob', () => {
   it('returns zeros when no pending change orders', async () => {
-    vi.mocked(createServiceClient).mockReturnValue(makeSupabase() as unknown as ReturnType<typeof createServiceClient>);
+    vi.mocked(createServiceClient).mockReturnValue(
+      makeSupabase() as unknown as ReturnType<typeof createServiceClient>,
+    );
     const result = await runPortalReminderJob();
     expect(result).toEqual({ sent: 0, skipped: 0, errors: [] });
   });
 
   it('returns DB error immediately on CO query failure', async () => {
     vi.mocked(createServiceClient).mockReturnValue(
-      makeSupabase({ coError: { message: 'DB down' } }) as unknown as ReturnType<typeof createServiceClient>,
+      makeSupabase({ coError: { message: 'DB down' } }) as unknown as ReturnType<
+        typeof createServiceClient
+      >,
     );
     const result = await runPortalReminderJob();
     expect(result.errors).toEqual(['DB down']);
@@ -67,10 +71,21 @@ describe('runPortalReminderJob', () => {
   });
 
   it('skips when idempotency key already exists', async () => {
-    const co = { id: 'co-1', project_id: 'proj-1', co_number: '001', title: 'Demo', total_amount: 5000, submitted_at: '2026-01-01' };
+    const co = {
+      id: 'co-1',
+      project_id: 'proj-1',
+      co_number: '001',
+      title: 'Demo',
+      total_amount: 5000,
+      submitted_at: '2026-01-01',
+    };
     const perm = { portal_account_id: 'pa-1', permission_set: { approve_change_orders: true } };
     vi.mocked(createServiceClient).mockReturnValue(
-      makeSupabase({ pendingCOs: [co], permissions: [perm], existingKey: { id: 'key-1' } }) as unknown as ReturnType<typeof createServiceClient>,
+      makeSupabase({
+        pendingCOs: [co],
+        permissions: [perm],
+        existingKey: { id: 'key-1' },
+      }) as unknown as ReturnType<typeof createServiceClient>,
     );
     const result = await runPortalReminderJob();
     expect(result.skipped).toBe(1);
@@ -78,10 +93,19 @@ describe('runPortalReminderJob', () => {
   });
 
   it('skips portal accounts without approve_change_orders permission', async () => {
-    const co = { id: 'co-2', project_id: 'proj-2', co_number: '002', title: 'Test', total_amount: 1000, submitted_at: '2026-01-01' };
+    const co = {
+      id: 'co-2',
+      project_id: 'proj-2',
+      co_number: '002',
+      title: 'Test',
+      total_amount: 1000,
+      submitted_at: '2026-01-01',
+    };
     const perm = { portal_account_id: 'pa-2', permission_set: { view_only: true } };
     vi.mocked(createServiceClient).mockReturnValue(
-      makeSupabase({ pendingCOs: [co], permissions: [perm] }) as unknown as unknown as ReturnType<typeof createServiceClient>,
+      makeSupabase({ pendingCOs: [co], permissions: [perm] }) as unknown as unknown as ReturnType<
+        typeof createServiceClient
+      >,
     );
     const result = await runPortalReminderJob();
     expect(result.sent).toBe(0);

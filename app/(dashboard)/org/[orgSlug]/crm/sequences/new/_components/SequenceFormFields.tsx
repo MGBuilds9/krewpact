@@ -1,6 +1,6 @@
 'use client';
 
-import type { UseFormRegister, FieldErrors } from 'react-hook-form';
+import type { FieldErrors, UseFormRegister } from 'react-hook-form';
 import { z } from 'zod';
 
 import { Input } from '@/components/ui/input';
@@ -134,9 +134,7 @@ export function SequenceFormFields({
             ))}
           </SelectContent>
         </Select>
-        {errors.division && (
-          <p className="text-xs text-destructive">{errors.division.message}</p>
-        )}
+        {errors.division && <p className="text-xs text-destructive">{errors.division.message}</p>}
       </div>
     </>
   );

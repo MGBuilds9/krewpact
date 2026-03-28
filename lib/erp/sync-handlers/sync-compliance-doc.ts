@@ -4,8 +4,8 @@
 
 import { createScopedServiceClient } from '@/lib/supabase/server';
 
-import { nextMockId } from '../mock-types';
 import { type ComplianceDocInput, toErpComplianceDoc } from '../compliance-mapper';
+import { nextMockId } from '../mock-types';
 import { isMockMode } from '../sync-service';
 import {
   createSyncJob,

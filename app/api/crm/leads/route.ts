@@ -127,45 +127,48 @@ export const GET = withApiRoute({ querySchema }, async ({ query }) => {
   });
 });
 
-export const POST = withApiRoute({ bodySchema: leadCreateSchema }, async ({ body, userId }) => {
-  const parsed = body as z.infer<typeof leadCreateSchema>;
-  const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
+export const POST = withApiRoute(
+  { bodySchema: leadCreateSchema },
+  async ({ body, userId: _userId }) => {
+    const parsed = body as z.infer<typeof leadCreateSchema>;
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
-  let ownerId: string | undefined = parsed.assigned_to;
-  if (!ownerId) {
-    try {
-      const assignment = await assignLead(supabase, {
-        division_id: parsed.division_id ?? null,
-        source_channel: parsed.source_channel ?? null,
-      });
-      if (assignment.assigned && assignment.assigned_to) {
-        ownerId = assignment.assigned_to;
+    let ownerId: string | undefined = parsed.assigned_to;
+    if (!ownerId) {
+      try {
+        const assignment = await assignLead(supabase, {
+          division_id: parsed.division_id ?? null,
+          source_channel: parsed.source_channel ?? null,
+        });
+        if (assignment.assigned && assignment.assigned_to) {
+          ownerId = assignment.assigned_to;
+        }
+      } catch (e) {
+        logger.error('Auto-assign on create failed', { error: e });
       }
-    } catch (e) {
-      logger.error('Auto-assign on create failed', { error: e });
     }
-  }
 
-  const { data, error } = await supabase
-    .from('leads')
-    .insert({ ...parsed, status: 'new', assigned_to: ownerId })
-    .select()
-    .single();
+    const { data, error } = await supabase
+      .from('leads')
+      .insert({ ...parsed, status: 'new', assigned_to: ownerId })
+      .select()
+      .single();
 
-  if (error) throw dbError(error.message);
+    if (error) throw dbError(error.message);
 
-  try {
-    await autoScoreLead(supabase, data as Record<string, unknown>, data.id);
-  } catch (e) {
-    logger.error('Auto-score on create failed', { error: e });
-  }
+    try {
+      await autoScoreLead(supabase, data as Record<string, unknown>, data.id);
+    } catch (e) {
+      logger.error('Auto-score on create failed', { error: e });
+    }
 
-  try {
-    await autoMatchAccounts(supabase, data as Record<string, unknown>, data.id);
-  } catch (e) {
-    logger.error('Lead-account matching failed', { error: e });
-  }
+    try {
+      await autoMatchAccounts(supabase, data as Record<string, unknown>, data.id);
+    } catch (e) {
+      logger.error('Lead-account matching failed', { error: e });
+    }
 
-  return NextResponse.json(data, { status: 201 });
-});
+    return NextResponse.json(data, { status: 201 });
+  },
+);

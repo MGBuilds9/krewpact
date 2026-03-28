@@ -28,7 +28,7 @@ const MESSAGE_SELECT = [
 
 export const GET = withApiRoute(
   { querySchema: emailQuerySchema },
-  async ({ req, userId, query }) => {
+  async ({ req: _req, userId, query }) => {
     const { mailbox, top, skip, search, folder } = query as {
       mailbox?: string;
       top: number;

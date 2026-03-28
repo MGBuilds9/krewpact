@@ -14,8 +14,8 @@ import { queryKeys } from '@/lib/query-keys';
 import { showToast } from '@/lib/toast';
 import { subscriptionCreateSchema } from '@/lib/validators/executive';
 
-import type { Subscription } from './SubscriptionTable';
 import { SubscriptionFormFields } from './SubscriptionFormFields';
+import type { Subscription } from './SubscriptionTable';
 
 export type SubscriptionFormInput = z.input<typeof subscriptionCreateSchema>;
 type SubscriptionFormOutput = z.output<typeof subscriptionCreateSchema>;

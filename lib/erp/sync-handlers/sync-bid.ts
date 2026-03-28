@@ -4,8 +4,8 @@
 
 import { createScopedServiceClient } from '@/lib/supabase/server';
 
-import { nextMockId } from '../mock-types';
 import { type BidInput, type BidLineInput, toErpSupplierQuotation } from '../bid-mapper';
+import { nextMockId } from '../mock-types';
 import { isMockMode } from '../sync-service';
 import {
   createSyncJob,
@@ -72,13 +72,7 @@ export async function syncBid(
       .single();
 
     if (bidError || !bid) {
-      return failJob(
-        supabase,
-        job,
-        'bid',
-        bidId,
-        `Bid not found: ${bidError?.message || 'null'}`,
-      );
+      return failJob(supabase, job, 'bid', bidId, `Bid not found: ${bidError?.message || 'null'}`);
     }
 
     const bidData = bid as Record<string, unknown>;

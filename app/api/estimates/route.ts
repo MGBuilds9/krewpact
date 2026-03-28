@@ -54,28 +54,31 @@ export const GET = withApiRoute({ querySchema }, async ({ req, query: qp }) => {
   return NextResponse.json(paginatedResponse(data, count, limit, offset));
 });
 
-export const POST = withApiRoute({ bodySchema: estimateCreateSchema }, async ({ body, userId }) => {
-  const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
+export const POST = withApiRoute(
+  { bodySchema: estimateCreateSchema },
+  async ({ body, userId: _userId }) => {
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
-  // Count existing estimates to generate next number
-  const { count } = await supabase.from('estimates').select('*', { count: 'exact', head: true });
+    // Count existing estimates to generate next number
+    const { count } = await supabase.from('estimates').select('*', { count: 'exact', head: true });
 
-  const estimate_number = generateEstimateNumber(count ?? 0);
+    const estimate_number = generateEstimateNumber(count ?? 0);
 
-  const { data, error } = await supabase
-    .from('estimates')
-    .insert({
-      ...body,
-      estimate_number,
-      status: 'draft',
-    })
-    .select()
-    .single();
+    const { data, error } = await supabase
+      .from('estimates')
+      .insert({
+        ...body,
+        estimate_number,
+        status: 'draft',
+      })
+      .select()
+      .single();
 
-  if (error) {
-    throw dbError(error.message);
-  }
+    if (error) {
+      throw dbError(error.message);
+    }
 
-  return NextResponse.json(data, { status: 201 });
-});
+    return NextResponse.json(data, { status: 201 });
+  },
+);

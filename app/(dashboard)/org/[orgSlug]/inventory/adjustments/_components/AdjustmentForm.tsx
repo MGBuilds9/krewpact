@@ -1,6 +1,7 @@
 'use client';
 
-import type { UseFormRegister, FieldErrors } from 'react-hook-form';
+import { SlidersHorizontal } from 'lucide-react';
+import type { FieldErrors, UseFormRegister } from 'react-hook-form';
 import { z } from 'zod';
 
 import { FormSection } from '@/components/shared/FormSection';
@@ -15,7 +16,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { SlidersHorizontal } from 'lucide-react';
 
 export const REASON_CODES = [
   { value: 'cycle_count', label: 'Cycle Count' },
@@ -87,9 +87,7 @@ export function AdjustmentForm({
             ))}
           </SelectContent>
         </Select>
-        {errors.item_id && (
-          <p className="text-sm text-destructive">{errors.item_id.message}</p>
-        )}
+        {errors.item_id && <p className="text-sm text-destructive">{errors.item_id.message}</p>}
       </div>
 
       <div className="space-y-2">
@@ -146,12 +144,7 @@ export function AdjustmentForm({
 
       <div className="space-y-2">
         <Label htmlFor="notes">Notes</Label>
-        <Textarea
-          id="notes"
-          {...register('notes')}
-          rows={2}
-          placeholder="Optional context"
-        />
+        <Textarea id="notes" {...register('notes')} rows={2} placeholder="Optional context" />
       </div>
 
       <div className="flex items-center gap-3 pt-2">

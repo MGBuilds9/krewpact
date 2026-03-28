@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { dbError } from '@/lib/api/errors';
 import { withApiRoute } from '@/lib/api/with-api-route';
 import { computeLeadMerge } from '@/lib/crm/duplicate-detector';
 import { createUserClientSafe } from '@/lib/supabase/server';

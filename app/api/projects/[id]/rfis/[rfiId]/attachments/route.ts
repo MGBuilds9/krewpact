@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 
 import { dbError, notFound } from '@/lib/api/errors';
 import { withApiRoute } from '@/lib/api/with-api-route';
-import { logger } from '@/lib/logger';
 import {
   deleteAttachment,
   getAttachmentSignedUrl,

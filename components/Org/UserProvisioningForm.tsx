@@ -38,6 +38,7 @@ export function UserProvisioningForm({ onSuccess, onCancel }: UserProvisioningFo
     defaultValues: { email: '', first_name: '', last_name: '', role_keys: [], division_ids: [] },
   });
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const selectedRoles = form.watch('role_keys');
 
   function toggleRole(roleKey: string) {

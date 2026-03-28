@@ -26,7 +26,7 @@ export const GET = withApiRoute({}, async ({ params }) => {
 
 export const PATCH = withApiRoute(
   { bodySchema: leadUpdateSchema },
-  async ({ params, body, logger: reqLogger }) => {
+  async ({ params, body, logger: _reqLogger }) => {
     const { id } = params;
     const parsed = body as Record<string, unknown>;
     const { client: supabase, error: authError } = await createUserClientSafe();

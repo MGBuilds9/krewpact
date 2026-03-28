@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 
-import { serverError } from '@/lib/api/errors';
 import { withApiRoute } from '@/lib/api/with-api-route';
 import { confirmGoodsReceipt } from '@/lib/inventory/goods-receipts';
 import { createUserClientSafe } from '@/lib/supabase/server';

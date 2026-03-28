@@ -16,7 +16,7 @@ const querySchema = z.object({
   offset: z.coerce.number().int().min(0).optional(),
 });
 
-export const GET = withApiRoute({ querySchema }, async ({ req, userId }) => {
+export const GET = withApiRoute({ querySchema }, async ({ req, userId: _userId }) => {
   const roles = await getKrewpactRoles();
   if (!roles.some((r: string) => ADMIN_ROLES.includes(r)))
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });

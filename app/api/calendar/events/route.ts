@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 
-import { dbError } from '@/lib/api/errors';
 import { withApiRoute } from '@/lib/api/with-api-route';
 import {
   buildGraphUrl,

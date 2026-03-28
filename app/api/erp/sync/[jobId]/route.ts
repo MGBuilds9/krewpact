@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { dbError, forbidden, notFound } from '@/lib/api/errors';
+import { forbidden, notFound } from '@/lib/api/errors';
 import { getKrewpactRoles } from '@/lib/api/org';
 import { withApiRoute } from '@/lib/api/with-api-route';
 import { normalizeSyncJobStatus } from '@/lib/erp/sync-handlers/sync-helpers';

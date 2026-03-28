@@ -182,6 +182,7 @@ export function StepTrades({
     defaultValues: { trade_specialties: [], ...defaults },
   });
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const selected = watch('trade_specialties') ?? [];
 
   const toggleTrade = (trade: string) => {

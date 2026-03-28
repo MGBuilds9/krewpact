@@ -138,6 +138,7 @@ function NewSubmittalDialog({ onSuccess }: { onSuccess: () => void }) {
     formState: { errors },
   } = useForm<SubmittalForm>({ resolver: zodResolver(submittalSchema) });
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const selectedType = watch('submittal_type');
 
   const mutation = useMutation({

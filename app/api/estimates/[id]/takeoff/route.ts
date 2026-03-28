@@ -84,7 +84,7 @@ export const GET = withApiRoute({}, async ({ params }) => {
 
 export const POST = withApiRoute(
   { rateLimit: { limit: 20, window: '1 m' } },
-  async ({ req, params, userId }) => {
+  async ({ req, params, userId: _userId }) => {
     const { id } = params;
 
     // Retrieve session claims for krewpact_user_id

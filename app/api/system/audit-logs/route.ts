@@ -51,20 +51,23 @@ function buildAuditQuery(supabase: SupabaseClient, params: AuditQueryParams) {
   return { query, limit, offset };
 }
 
-export const GET = withApiRoute({ querySchema: auditLogQuerySchema }, async ({ req, userId }) => {
-  const roles = await getKrewpactRoles();
-  if (!roles.some((r: string) => ADMIN_ROLES.includes(r)))
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+export const GET = withApiRoute(
+  { querySchema: auditLogQuerySchema },
+  async ({ req, userId: _userId }) => {
+    const roles = await getKrewpactRoles();
+    if (!roles.some((r: string) => ADMIN_ROLES.includes(r)))
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-  const parsed = auditLogQuerySchema.parse(Object.fromEntries(req.nextUrl.searchParams));
+    const parsed = auditLogQuerySchema.parse(Object.fromEntries(req.nextUrl.searchParams));
 
-  const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
-  const { query, limit, offset } = buildAuditQuery(supabase, parsed);
-  const { data, error, count } = await query;
-  if (error) throw dbError(error.message);
+    const { query, limit, offset } = buildAuditQuery(supabase, parsed);
+    const { data, error, count } = await query;
+    if (error) throw dbError(error.message);
 
-  const total = count ?? 0;
-  return NextResponse.json({ data, total, hasMore: offset + limit < total });
-});
+    const total = count ?? 0;
+    return NextResponse.json({ data, total, hasMore: offset + limit < total });
+  },
+);

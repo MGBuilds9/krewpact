@@ -12,9 +12,7 @@ const isPublicRoute = createRouteMatcher([
   '/api/email/track(.*)',
 ]);
 
-const ALLOWED_DOMAINS = (
-  process.env.ALLOWED_DOMAINS || ''
-).split(',');
+const ALLOWED_DOMAINS = (process.env.ALLOWED_DOMAINS || '').split(',');
 
 // Org slug regex: /org/{slug}/...
 const ORG_PATH_RE = /^\/org\/([a-z0-9-]+)(\/|$)/;
@@ -35,7 +33,6 @@ export const proxy = clerkMiddleware(
       if (email) {
         const domain = email.split('@')[1];
         if (ALLOWED_DOMAINS.length > 0 && !ALLOWED_DOMAINS.includes(domain)) {
-          // eslint-disable-next-line no-console
           console.warn(
             JSON.stringify({
               level: 'warn',
