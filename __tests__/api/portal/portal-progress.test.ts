@@ -99,8 +99,8 @@ describe('GET /api/portal/projects/[id]/progress', () => {
         tables: {
           portal_accounts: { data: { id: 'pa-1', status: 'active' }, error: null },
           portal_permissions: { data: { id: 'perm-1' }, error: null },
-          project_milestones: { data: [sampleMilestone], error: null },
-          project_tasks: { data: [sampleTask], error: null },
+          milestones: { data: [sampleMilestone], error: null },
+          tasks: { data: [sampleTask], error: null },
           portal_view_logs: { data: null, error: null },
         },
       }),

@@ -44,12 +44,12 @@ export const GET = withApiRoute({}, async ({ userId, params }) => {
 
   const [milestonesResult, tasksResult] = await Promise.all([
     supabase
-      .from('project_milestones')
+      .from('milestones')
       .select('id, name, due_date, completed_at, status, sort_order')
       .eq('project_id', projectId)
       .order('sort_order', { ascending: true }),
     supabase
-      .from('project_tasks')
+      .from('tasks')
       .select('id, title, status, milestone_id, due_date, completed_at')
       .eq('project_id', projectId)
       .order('created_at', { ascending: true }),
