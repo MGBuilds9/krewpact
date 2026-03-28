@@ -44,6 +44,7 @@ function makeRequest(body: unknown, headers: Record<string, string> = {}) {
 describe('POST /api/executive/knowledge/embed', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.AI_ENABLED = 'true';
   });
 
   it('returns 403 without auth (embed uses public mode + internal role check)', async () => {

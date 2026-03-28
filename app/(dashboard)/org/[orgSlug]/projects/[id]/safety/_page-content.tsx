@@ -76,27 +76,17 @@ export default function ProjectSafetyPage() {
             Inspections ({inspections.length})
           </TabsTrigger>
         </TabsList>
-        <FormsTab
-          forms={forms}
-          loading={loadingForms}
-          onCreate={(v) => createForm.mutate(v as Parameters<typeof createForm.mutate>[0])}
-        />
+        <FormsTab forms={forms} loading={loadingForms} onCreate={(v) => createForm.mutate(v)} />
         <IncidentsTab
           incidents={incidents}
           loading={loadingIncidents}
-          onCreate={(v) => createIncident.mutate(v as Parameters<typeof createIncident.mutate>[0])}
+          onCreate={(v) => createIncident.mutate(v)}
         />
-        <TalksTab
-          talks={talks}
-          loading={loadingTalks}
-          onCreate={(v) => createTalk.mutate(v as Parameters<typeof createTalk.mutate>[0])}
-        />
+        <TalksTab talks={talks} loading={loadingTalks} onCreate={(v) => createTalk.mutate(v)} />
         <InspectionsTab
           inspections={inspections}
           loading={loadingInspections}
-          onCreate={(v) =>
-            createInspection.mutate(v as Parameters<typeof createInspection.mutate>[0])
-          }
+          onCreate={(v) => createInspection.mutate(v)}
         />
       </Tabs>
     </div>

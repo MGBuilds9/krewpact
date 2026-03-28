@@ -45,6 +45,10 @@ async function upsertKnowledgeDoc(
 }
 
 export const POST = withApiRoute({ auth: 'public' }, async ({ req }) => {
+  if (process.env.AI_ENABLED !== 'true') {
+    return NextResponse.json({ error: 'AI features are disabled' }, { status: 503 });
+  }
+
   await verifyEmbedAuth(req);
 
   let body: { stagingId?: string };

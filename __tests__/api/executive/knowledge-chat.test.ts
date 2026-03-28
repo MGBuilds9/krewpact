@@ -69,6 +69,7 @@ function setupAuth(userId: string | null, roles: string[] = [], krewpactUserId?:
 describe('POST /api/executive/knowledge/chat', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.AI_ENABLED = 'true';
   });
 
   it('returns 401 without auth', async () => {

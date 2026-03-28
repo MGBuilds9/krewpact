@@ -95,81 +95,88 @@ async function buildKnowledgeContext(
   return { sources, contextText };
 }
 
-export const POST = withApiRoute({ rateLimit: { limit: 10, window: '1 m' } }, async ({ req, logger }) => {
-  const roles = await getKrewpactRoles();
-  if (!roles.some((r) => EXECUTIVE_ROLES.includes(r))) {
-    throw forbidden('Forbidden');
-  }
+export const POST = withApiRoute(
+  { rateLimit: { limit: 10, window: '1 m' } },
+  async ({ req, logger }) => {
+    if (process.env.AI_ENABLED !== 'true') {
+      return NextResponse.json({ error: 'AI features are disabled' }, { status: 503 });
+    }
 
-  const krewpactUserId = await getKrewpactUserId();
-  if (!krewpactUserId) {
-    return NextResponse.json({ error: 'User identity not found in session' }, { status: 400 });
-  }
+    const roles = await getKrewpactRoles();
+    if (!roles.some((r) => EXECUTIVE_ROLES.includes(r))) {
+      throw forbidden('Forbidden');
+    }
 
-  let body: { message?: unknown; sessionId?: unknown };
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
-  }
+    const krewpactUserId = await getKrewpactUserId();
+    if (!krewpactUserId) {
+      return NextResponse.json({ error: 'User identity not found in session' }, { status: 400 });
+    }
 
-  const { message, sessionId } = body;
-  if (!message || typeof message !== 'string' || message.trim().length === 0) {
-    return NextResponse.json({ error: 'message must be a non-empty string' }, { status: 400 });
-  }
+    let body: { message?: unknown; sessionId?: unknown };
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
 
-  const trimmedMessage = message.trim();
-  const supabase = await createServiceClient();
+    const { message, sessionId } = body;
+    if (!message || typeof message !== 'string' || message.trim().length === 0) {
+      return NextResponse.json({ error: 'message must be a non-empty string' }, { status: 400 });
+    }
 
-  const resolvedSessionId = await resolveSessionId(
-    supabase,
-    sessionId,
-    krewpactUserId,
-    trimmedMessage,
-  );
+    const trimmedMessage = message.trim();
+    const supabase = await createServiceClient();
 
-  const { data: historyRows } = await supabase
-    .from('ai_chat_messages')
-    .select('role, content')
-    .eq('session_id', resolvedSessionId)
-    .order('created_at', { ascending: true })
-    .limit(10);
-  const conversationHistory: ChatMessage[] = (historyRows ?? []).map(
-    (r: { role: string; content: string }) => ({
-      role: r.role as 'user' | 'assistant',
-      content: r.content,
-    }),
-  );
+    const resolvedSessionId = await resolveSessionId(
+      supabase,
+      sessionId,
+      krewpactUserId,
+      trimmedMessage,
+    );
 
-  const { sources, contextText } = await buildKnowledgeContext(supabase, trimmedMessage);
+    const { data: historyRows } = await supabase
+      .from('ai_chat_messages')
+      .select('role, content')
+      .eq('session_id', resolvedSessionId)
+      .order('created_at', { ascending: true })
+      .limit(10);
+    const conversationHistory: ChatMessage[] = (historyRows ?? []).map(
+      (r: { role: string; content: string }) => ({
+        role: r.role as 'user' | 'assistant',
+        content: r.content,
+      }),
+    );
 
-  const systemPrompt = contextText
-    ? `You are an AI assistant for MDM Group executives. Answer questions using ONLY the provided context from the company knowledge base. If the context doesn't contain enough information, say so clearly.\n\nContext from knowledge base:\n---\n${contextText}\n---\n\nBe concise, accurate, and cite which documents your answer is based on.`
-    : `You are an AI assistant for MDM Group executives. No relevant documents were found in the knowledge base for this query. Let the user know and suggest they try rephrasing or ask about a topic covered in the knowledge base.`;
+    const { sources, contextText } = await buildKnowledgeContext(supabase, trimmedMessage);
 
-  const result = streamText({
-    model: google(AI_MODELS.flash),
-    system: systemPrompt,
-    messages: [...conversationHistory, { role: 'user', content: trimmedMessage }],
-    temperature: 0.3,
-    maxOutputTokens: 1000,
-    onFinish: async ({ text, usage }) => {
-      await supabase.from('ai_chat_messages').insert([
-        { session_id: resolvedSessionId, role: 'user', content: trimmedMessage },
-        {
-          session_id: resolvedSessionId,
-          role: 'assistant',
-          content: text,
-          sources: sources.length > 0 ? sources : null,
-          token_count: usage.totalTokens ?? null,
-        },
-      ]);
-      logger.info('Knowledge chat message persisted', { sessionId: resolvedSessionId });
-    },
-  });
+    const systemPrompt = contextText
+      ? `You are an AI assistant for MDM Group executives. Answer questions using ONLY the provided context from the company knowledge base. If the context doesn't contain enough information, say so clearly.\n\nContext from knowledge base:\n---\n${contextText}\n---\n\nBe concise, accurate, and cite which documents your answer is based on.`
+      : `You are an AI assistant for MDM Group executives. No relevant documents were found in the knowledge base for this query. Let the user know and suggest they try rephrasing or ask about a topic covered in the knowledge base.`;
 
-  const streamResponse = result.toTextStreamResponse({
-    headers: { 'X-Session-Id': resolvedSessionId },
-  });
-  return new NextResponse(streamResponse.body, streamResponse);
-});
+    const result = streamText({
+      model: google(AI_MODELS.flash),
+      system: systemPrompt,
+      messages: [...conversationHistory, { role: 'user', content: trimmedMessage }],
+      temperature: 0.3,
+      maxOutputTokens: 1000,
+      onFinish: async ({ text, usage }) => {
+        await supabase.from('ai_chat_messages').insert([
+          { session_id: resolvedSessionId, role: 'user', content: trimmedMessage },
+          {
+            session_id: resolvedSessionId,
+            role: 'assistant',
+            content: text,
+            sources: sources.length > 0 ? sources : null,
+            token_count: usage.totalTokens ?? null,
+          },
+        ]);
+        logger.info('Knowledge chat message persisted', { sessionId: resolvedSessionId });
+      },
+    });
+
+    const streamResponse = result.toTextStreamResponse({
+      headers: { 'X-Session-Id': resolvedSessionId },
+    });
+    return new NextResponse(streamResponse.body, streamResponse);
+  },
+);
