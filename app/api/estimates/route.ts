@@ -16,14 +16,8 @@ const querySchema = z.object({
   offset: z.coerce.number().int().min(0).optional(),
 });
 
-export const GET = withApiRoute({}, async ({ req, userId }) => {
-  const params = Object.fromEntries(req.nextUrl.searchParams);
-  const parsed = querySchema.safeParse(params);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
-  const { division_id, status, opportunity_id } = parsed.data;
+export const GET = withApiRoute({ querySchema }, async ({ req, query: qp }) => {
+  const { division_id, status, opportunity_id } = qp;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
@@ -60,19 +54,7 @@ export const GET = withApiRoute({}, async ({ req, userId }) => {
   return NextResponse.json(paginatedResponse(data, count, limit, offset));
 });
 
-export const POST = withApiRoute({}, async ({ req, userId }) => {
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = estimateCreateSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
+export const POST = withApiRoute({ bodySchema: estimateCreateSchema }, async ({ body, userId }) => {
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -84,7 +66,7 @@ export const POST = withApiRoute({}, async ({ req, userId }) => {
   const { data, error } = await supabase
     .from('estimates')
     .insert({
-      ...parsed.data,
+      ...body,
       estimate_number,
       status: 'draft',
     })

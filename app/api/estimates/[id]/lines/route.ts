@@ -33,22 +33,10 @@ export const GET = withApiRoute({}, async ({ req, params }) => {
   return NextResponse.json(paginatedResponse(data, count, limit, offset));
 });
 
-export const POST = withApiRoute({}, async ({ req, params }) => {
+export const POST = withApiRoute({ bodySchema: estimateLineCreateSchema }, async ({ body, params }) => {
   const { id } = params;
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = estimateLineCreateSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
-  const { quantity, unit_cost, markup_pct } = parsed.data;
+  const { quantity, unit_cost, markup_pct } = body;
   const line_total = calculateLineTotal(quantity, unit_cost, markup_pct ?? 0);
 
   const { client: supabase, error: authError } = await createUserClientSafe();
@@ -57,7 +45,7 @@ export const POST = withApiRoute({}, async ({ req, params }) => {
   const { data, error } = await supabase
     .from('estimate_lines')
     .insert({
-      ...parsed.data,
+      ...body,
       estimate_id: id,
       line_total,
     })
@@ -75,20 +63,8 @@ export const POST = withApiRoute({}, async ({ req, params }) => {
 
 const batchCreateSchema = z.array(estimateLineCreateSchema);
 
-export const PUT = withApiRoute({}, async ({ req, params }) => {
+export const PUT = withApiRoute({ bodySchema: batchCreateSchema }, async ({ body, params }) => {
   const { id } = params;
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = batchCreateSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
 
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
@@ -97,7 +73,7 @@ export const PUT = withApiRoute({}, async ({ req, params }) => {
   await supabase.from('estimate_lines').delete().eq('estimate_id', id);
 
   // Insert new lines with calculated line_totals
-  const linesWithTotals = parsed.data.map((line) => ({
+  const linesWithTotals = body.map((line) => ({
     ...line,
     estimate_id: id,
     line_total: calculateLineTotal(line.quantity, line.unit_cost, line.markup_pct ?? 0),

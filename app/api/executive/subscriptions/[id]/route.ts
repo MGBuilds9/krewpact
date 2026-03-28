@@ -34,7 +34,7 @@ export const GET = withApiRoute({}, async ({ params, logger }) => {
   return NextResponse.json({ data });
 });
 
-export const PATCH = withApiRoute({}, async ({ req, params, logger }) => {
+export const PATCH = withApiRoute({ bodySchema: subscriptionUpdateSchema }, async ({ body, params, logger }) => {
   const { id } = params;
 
   const roles = await getKrewpactRoles();
@@ -43,24 +43,12 @@ export const PATCH = withApiRoute({}, async ({ req, params, logger }) => {
     throw forbidden('Forbidden: platform_admin role required');
   }
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
-  }
-
-  const parsed = subscriptionUpdateSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
   const { data, error } = await supabase
     .from('executive_subscriptions')
-    .update({ ...parsed.data, updated_at: new Date().toISOString() })
+    .update({ ...body, updated_at: new Date().toISOString() })
     .eq('id', id)
     .select()
     .single();

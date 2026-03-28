@@ -28,27 +28,15 @@ export const GET = withApiRoute({}, async ({ req, params }) => {
   return NextResponse.json(paginatedResponse(data, count, limit, offset));
 });
 
-export const POST = withApiRoute({}, async ({ req, params }) => {
+export const POST = withApiRoute({ bodySchema: estimateAllowanceCreateSchema }, async ({ body, params }) => {
   const { id } = params;
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = estimateAllowanceCreateSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
 
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
   const { data, error } = await supabase
     .from('estimate_allowances')
-    .insert({ ...parsed.data, estimate_id: id })
+    .insert({ ...body, estimate_id: id })
     .select()
     .single();
 

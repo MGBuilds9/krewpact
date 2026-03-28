@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { requireRole } from '@/lib/api/org';
 import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
 import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
@@ -19,10 +18,7 @@ const createSchema = jobCostSnapshotSchema.extend({
   project_id: z.string().uuid(),
 });
 
-export const GET = withApiRoute({ querySchema }, async ({ req, query }) => {
-  const authResult = await requireRole(FINANCE_ROLES);
-  if (authResult instanceof NextResponse) return authResult;
-
+export const GET = withApiRoute({ querySchema, roles: FINANCE_ROLES }, async ({ req, query }) => {
   const { project_id } = query as z.infer<typeof querySchema>;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const { client: supabase, error: authError } = await createUserClientSafe();
@@ -46,10 +42,7 @@ export const GET = withApiRoute({ querySchema }, async ({ req, query }) => {
   return NextResponse.json(paginatedResponse(data, count, limit, offset));
 });
 
-export const POST = withApiRoute({ bodySchema: createSchema }, async ({ body }) => {
-  const authResult = await requireRole(FINANCE_ROLES);
-  if (authResult instanceof NextResponse) return authResult;
-
+export const POST = withApiRoute({ bodySchema: createSchema, roles: FINANCE_ROLES }, async ({ body }) => {
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 

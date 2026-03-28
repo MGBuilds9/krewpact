@@ -1,16 +1,12 @@
 import { NextResponse } from 'next/server';
 
-import { requireRole } from '@/lib/api/org';
 import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { invoiceSnapshotSchema } from '@/lib/validators/finance';
 
 const FINANCE_ROLES = ['platform_admin', 'executive', 'accounting', 'operations_manager'];
 
-export const GET = withApiRoute({}, async ({ params }) => {
-  const authResult = await requireRole(FINANCE_ROLES);
-  if (authResult instanceof NextResponse) return authResult;
-
+export const GET = withApiRoute({ roles: FINANCE_ROLES }, async ({ params }) => {
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -27,11 +23,8 @@ export const GET = withApiRoute({}, async ({ params }) => {
 });
 
 export const PATCH = withApiRoute(
-  { bodySchema: invoiceSnapshotSchema.partial() },
+  { bodySchema: invoiceSnapshotSchema.partial(), roles: FINANCE_ROLES },
   async ({ params, body }) => {
-    const authResult = await requireRole(FINANCE_ROLES);
-    if (authResult instanceof NextResponse) return authResult;
-
     const { client: supabase, error: authError } = await createUserClientSafe();
     if (authError) return authError;
 

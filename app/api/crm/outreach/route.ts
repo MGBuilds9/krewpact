@@ -11,14 +11,8 @@ const querySchema = z.object({
   lead_id: z.string().uuid(),
 });
 
-export const GET = withApiRoute({ querySchema }, async ({ req }) => {
-  const rawParams = Object.fromEntries(req.nextUrl.searchParams);
-  const parsed = querySchema.safeParse(rawParams);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
-  const { lead_id } = parsed.data;
+export const GET = withApiRoute({ querySchema }, async ({ req, query }) => {
+  const { lead_id } = query;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;

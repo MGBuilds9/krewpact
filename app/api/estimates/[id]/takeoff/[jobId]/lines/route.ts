@@ -31,23 +31,8 @@ export const GET = withApiRoute({}, async ({ params }) => {
 /**
  * PATCH /api/estimates/:id/takeoff/:jobId/lines — Bulk update review_status.
  */
-export const PATCH = withApiRoute({}, async ({ req, params }) => {
+export const PATCH = withApiRoute({ bodySchema: reviewDraftLinesSchema }, async ({ body, params }) => {
   const { id, jobId } = params;
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = reviewDraftLinesSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: 'Invalid request', details: parsed.error.flatten() },
-      { status: 422 },
-    );
-  }
 
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
@@ -57,11 +42,11 @@ export const PATCH = withApiRoute({}, async ({ req, params }) => {
   const { data: updated, error } = await supabase
     .from('takeoff_draft_lines')
     .update({
-      review_status: parsed.data.status,
+      review_status: body.status,
       reviewed_by: krewpactUserId ?? null,
       reviewed_at: new Date().toISOString(),
     })
-    .in('id', parsed.data.line_ids)
+    .in('id', body.line_ids)
     .select('id');
 
   if (error) {

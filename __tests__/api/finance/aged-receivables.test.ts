@@ -18,9 +18,9 @@ vi.mock('@/lib/logger', () => ({
   },
 }));
 
-const mockRequireRole = vi.fn();
+const mockGetKrewpactRoles = vi.fn();
 vi.mock('@/lib/api/org', () => ({
-  requireRole: (...args: unknown[]) => mockRequireRole(...args),
+  getKrewpactRoles: (...args: unknown[]) => mockGetKrewpactRoles(...args),
   getOrgIdFromAuth: vi.fn().mockResolvedValue('org-uuid-test'),
 }));
 vi.mock('@/lib/api/rate-limit', () => ({
@@ -29,7 +29,6 @@ vi.mock('@/lib/api/rate-limit', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { NextResponse } from 'next/server';
 
 import { makeRequest, mockClerkAuth, mockClerkUnauth } from '@/__tests__/helpers';
 import { getAgedReceivables } from '@/lib/services/financial-ops';
@@ -71,14 +70,11 @@ const SAMPLE_REPORT = {
 describe('GET /api/finance/aged-receivables', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRequireRole.mockResolvedValue({ userId: 'user_123', roles: ['accounting'] });
+    mockGetKrewpactRoles.mockResolvedValue(['accounting']);
   });
 
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
-    mockRequireRole.mockResolvedValue(
-      NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
-    );
     const { GET } = await import('@/app/api/finance/aged-receivables/route');
     const res = await GET(makeRequest('/api/finance/aged-receivables'));
     expect(res.status).toBe(401);
@@ -86,7 +82,7 @@ describe('GET /api/finance/aged-receivables', () => {
 
   it('returns 403 for unauthorized role (estimator)', async () => {
     mockClerkAuth(mockAuth);
-    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Forbidden' }, { status: 403 }));
+    mockGetKrewpactRoles.mockResolvedValue(['estimator']);
     const { GET } = await import('@/app/api/finance/aged-receivables/route');
     const res = await GET(makeRequest('/api/finance/aged-receivables'));
     expect(res.status).toBe(403);
@@ -94,7 +90,7 @@ describe('GET /api/finance/aged-receivables', () => {
 
   it('allows access for operations_manager role', async () => {
     mockClerkAuth(mockAuth);
-    mockRequireRole.mockResolvedValue({ userId: 'user_123', roles: ['operations_manager'] });
+    mockGetKrewpactRoles.mockResolvedValue(['operations_manager']);
     mockGetAgedReceivables.mockResolvedValue(SAMPLE_REPORT);
     const { GET } = await import('@/app/api/finance/aged-receivables/route');
     const res = await GET(makeRequest('/api/finance/aged-receivables'));

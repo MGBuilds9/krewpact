@@ -23,13 +23,7 @@ const createSchema = z.object({
   division_id: z.string().uuid().optional().nullable(),
 });
 
-export const GET = withApiRoute({ querySchema: getQuerySchema }, async ({ req }) => {
-  const rawParams = Object.fromEntries(req.nextUrl.searchParams);
-  const parsed = getQuerySchema.safeParse(rawParams);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
+export const GET = withApiRoute({ querySchema: getQuerySchema }, async ({ req, query: qp }) => {
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
@@ -42,8 +36,8 @@ export const GET = withApiRoute({ querySchema: getQuerySchema }, async ({ req })
     )
     .order('updated_at', { ascending: false });
 
-  if (parsed.data.category) {
-    query = query.eq('category', parsed.data.category);
+  if (qp.category) {
+    query = query.eq('category', qp.category);
   }
 
   query = query.range(offset, offset + limit - 1);

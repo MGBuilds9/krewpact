@@ -1,15 +1,11 @@
 import { NextResponse } from 'next/server';
 
-import { requireRole } from '@/lib/api/org';
 import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 const FINANCE_ROLES = ['platform_admin', 'executive', 'accounting', 'operations_manager'];
 
-export const GET = withApiRoute({}, async () => {
-  const authResult = await requireRole(FINANCE_ROLES);
-  if (authResult instanceof NextResponse) return authResult;
-
+export const GET = withApiRoute({ roles: FINANCE_ROLES }, async () => {
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 

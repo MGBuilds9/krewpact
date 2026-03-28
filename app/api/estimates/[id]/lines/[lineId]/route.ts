@@ -32,30 +32,20 @@ async function resolveLineTotal(
   return { lineTotal: calculateLineTotal(qty, cost, markup) };
 }
 
-export const PATCH = withApiRoute({}, async ({ req, params }) => {
+export const PATCH = withApiRoute({ bodySchema: estimateLineUpdateSchema }, async ({ body, params }) => {
   const { id, lineId } = params;
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = estimateLineUpdateSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
-  const updateData: Record<string, unknown> = { ...parsed.data };
+  const updateData: Record<string, unknown> = { ...body };
 
   const needsRecalc =
-    parsed.data.quantity !== undefined ||
-    parsed.data.unit_cost !== undefined ||
-    parsed.data.markup_pct !== undefined;
+    body.quantity !== undefined ||
+    body.unit_cost !== undefined ||
+    body.markup_pct !== undefined;
   if (needsRecalc) {
-    const { lineTotal, error } = await resolveLineTotal(supabase, lineId, parsed.data);
+    const { lineTotal, error } = await resolveLineTotal(supabase, lineId, body);
     if (error) return error;
     updateData.line_total = lineTotal;
   }

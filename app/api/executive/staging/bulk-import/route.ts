@@ -91,20 +91,7 @@ async function processOneFile(
   return { status: 'imported' };
 }
 
-export const POST = withApiRoute({ roles: ADMIN_ROLES }, async ({ req }) => {
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
-  }
-
-  const parsed = stagingBulkImportSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
+export const POST = withApiRoute({ roles: ADMIN_ROLES, bodySchema: stagingBulkImportSchema }, async ({ body }) => {
   const supabase = await createServiceClient();
 
   let imported = 0;
@@ -112,7 +99,7 @@ export const POST = withApiRoute({ roles: ADMIN_ROLES }, async ({ req }) => {
   let errors = 0;
   const details: FileDetail[] = [];
 
-  for (const file of parsed.data.files) {
+  for (const file of body.files) {
     const result = await processOneFile(supabase, file);
     details.push({ path: file.path, status: result.status, reason: result.reason });
     if (result.status === 'imported') imported++;

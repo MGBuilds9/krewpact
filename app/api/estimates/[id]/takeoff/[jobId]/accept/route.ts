@@ -97,23 +97,8 @@ function hasChanges(original: OriginalLine, submitted: SubmittedLine): boolean {
 /**
  * POST /api/estimates/:id/takeoff/:jobId/accept — Accept reviewed lines into estimate_lines.
  */
-export const POST = withApiRoute({}, async ({ req, params }) => {
+export const POST = withApiRoute({ bodySchema: acceptTakeoffLinesSchema }, async ({ body, params }) => {
   const { id, jobId } = params;
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = acceptTakeoffLinesSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: 'Invalid request', details: parsed.error.flatten() },
-      { status: 422 },
-    );
-  }
 
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
@@ -127,7 +112,7 @@ export const POST = withApiRoute({}, async ({ req, params }) => {
     .select('id, trade, csi_code, description, unit, quantity, unit_cost, confidence, source_pages')
     .in(
       'id',
-      parsed.data.lines.map((l) => l.draft_line_id),
+      body.lines.map((l) => l.draft_line_id),
     );
 
   const originals = new Map<string, OriginalLine>(
@@ -145,7 +130,7 @@ export const POST = withApiRoute({}, async ({ req, params }) => {
   const maxSortOrder = sortRows?.[0]?.sort_order ?? 0;
 
   // Build inserts
-  const lineInserts = parsed.data.lines.map((line: SubmittedLine, index: number) => {
+  const lineInserts = body.lines.map((line: SubmittedLine, index: number) => {
     const original = originals.get(line.draft_line_id);
     return {
       estimate_id: id,
@@ -186,7 +171,7 @@ export const POST = withApiRoute({}, async ({ req, params }) => {
 
   const feedbackInserts = await applyDraftLineUpdates({
     supabase,
-    lines: parsed.data.lines,
+    lines: body.lines,
     insertedLines,
     originals,
     krewpactUserId,
@@ -230,5 +215,5 @@ export const POST = withApiRoute({}, async ({ req, params }) => {
       });
   }
 
-  return NextResponse.json({ accepted_count: parsed.data.lines.length, totals });
+  return NextResponse.json({ accepted_count: body.lines.length, totals });
 });

@@ -10,15 +10,9 @@ const querySchema = z.object({
   status: z.string().optional(),
 });
 
-export const GET = withApiRoute({ querySchema }, async ({ req, params }) => {
+export const GET = withApiRoute({ querySchema }, async ({ req, params, query: qp }) => {
   const { id } = params;
-  const rawParams = Object.fromEntries(req.nextUrl.searchParams);
-  const parsed = querySchema.safeParse(rawParams);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
-  const { status } = parsed.data;
+  const { status } = qp;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 

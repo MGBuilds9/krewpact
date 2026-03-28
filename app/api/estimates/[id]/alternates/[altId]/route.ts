@@ -5,27 +5,15 @@ import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { estimateAlternateUpdateSchema } from '@/lib/validators/estimating';
 
-export const PATCH = withApiRoute({}, async ({ req, params }) => {
+export const PATCH = withApiRoute({ bodySchema: estimateAlternateUpdateSchema }, async ({ body, params }) => {
   const { id, altId } = params;
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = estimateAlternateUpdateSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
 
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
   const { data, error } = await supabase
     .from('estimate_alternates')
-    .update(parsed.data)
+    .update(body)
     .eq('id', altId)
     .eq('estimate_id', id)
     .select()

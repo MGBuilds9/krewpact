@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { dbError } from '@/lib/api/errors';
-import { requireRole } from '@/lib/api/org';
 import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
@@ -12,9 +11,7 @@ const querySchema = z.object({
   offset: z.coerce.number().int().min(0).optional(),
 });
 
-export const GET = withApiRoute({ querySchema }, async ({ req, query }) => {
-  const authResult = await requireRole(['platform_admin']);
-  if (authResult instanceof NextResponse) return authResult;
+export const GET = withApiRoute({ querySchema, roles: ['platform_admin'] }, async ({ req, query }) => {
 
   const {
     role_type,

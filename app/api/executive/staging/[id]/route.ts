@@ -32,7 +32,7 @@ export const GET = withApiRoute({}, async ({ params }) => {
   return NextResponse.json(data);
 });
 
-export const PATCH = withApiRoute({}, async ({ req, params }) => {
+export const PATCH = withApiRoute({ bodySchema: stagingUpdateSchema }, async ({ body, params }) => {
   const { id } = params;
 
   const roles = await getKrewpactRoles();
@@ -41,21 +41,9 @@ export const PATCH = withApiRoute({}, async ({ req, params }) => {
     throw forbidden('Forbidden: platform_admin role required');
   }
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
-  }
+  const updatePayload: Record<string, unknown> = { ...body };
 
-  const parsed = stagingUpdateSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
-  const updatePayload: Record<string, unknown> = { ...parsed.data };
-
-  if (parsed.data.status === 'approved' || parsed.data.status === 'rejected') {
+  if (body.status === 'approved' || body.status === 'rejected') {
     const krewpactUserId = await getKrewpactUserId();
     updatePayload.reviewed_by = krewpactUserId || null;
     updatePayload.reviewed_at = new Date().toISOString();

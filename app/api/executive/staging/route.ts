@@ -52,31 +52,19 @@ export const GET = withApiRoute({}, async ({ req }) => {
   return NextResponse.json({ data, total: count, page, limit });
 });
 
-export const POST = withApiRoute({}, async ({ req }) => {
+export const POST = withApiRoute({ bodySchema: stagingCreateSchema }, async ({ body }) => {
   const roles = await getKrewpactRoles();
   const hasAccess = roles.some((r) => WRITE_ROLES.includes(r));
   if (!hasAccess) {
     throw forbidden('Forbidden: platform_admin role required');
   }
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
-  }
-
-  const parsed = stagingCreateSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
-  const content_checksum = createHash('sha256').update(parsed.data.raw_content).digest('hex');
+  const content_checksum = createHash('sha256').update(body.raw_content).digest('hex');
 
   const supabase = await createServiceClient();
   const { data, error } = await supabase
     .from('knowledge_staging')
-    .insert({ ...parsed.data, org_id: DEFAULT_ORG_ID, content_checksum, status: 'pending_review' })
+    .insert({ ...body, org_id: DEFAULT_ORG_ID, content_checksum, status: 'pending_review' })
     .select()
     .single();
 

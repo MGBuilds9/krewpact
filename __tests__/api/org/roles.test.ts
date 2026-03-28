@@ -11,9 +11,9 @@ vi.mock('@/lib/api/rate-limit', () => ({
   rateLimitResponse: vi.fn(),
 }));
 
-const mockRequireRole = vi.fn();
+const mockGetKrewpactRoles = vi.fn();
 vi.mock('@/lib/api/org', () => ({
-  requireRole: (...args: unknown[]) => mockRequireRole(...args),
+  getKrewpactRoles: (...args: unknown[]) => mockGetKrewpactRoles(...args),
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
@@ -21,7 +21,6 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { NextResponse } from 'next/server';
 
 import {
   makeRequest,
@@ -57,13 +56,13 @@ const SAMPLE_ROLES = [
 ];
 
 describe('GET /api/org/roles — RBAC', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetKrewpactRoles.mockResolvedValue(['platform_admin']);
+  });
 
   it('returns 401 when not authenticated', async () => {
     mockClerkUnauth(mockAuth);
-    mockRequireRole.mockResolvedValue(
-      NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
-    );
 
     const res = await GET(makeRequest('/api/org/roles'));
     expect(res.status).toBe(401);
@@ -71,7 +70,7 @@ describe('GET /api/org/roles — RBAC', () => {
 
   it('returns 403 for executive role', async () => {
     mockClerkAuth(mockAuth);
-    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Forbidden' }, { status: 403 }));
+    mockGetKrewpactRoles.mockResolvedValue(['executive']);
 
     const res = await GET(makeRequest('/api/org/roles'));
     expect(res.status).toBe(403);
@@ -79,7 +78,7 @@ describe('GET /api/org/roles — RBAC', () => {
 
   it('returns 403 for operations_manager role', async () => {
     mockClerkAuth(mockAuth);
-    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Forbidden' }, { status: 403 }));
+    mockGetKrewpactRoles.mockResolvedValue(['operations_manager']);
 
     const res = await GET(makeRequest('/api/org/roles'));
     expect(res.status).toBe(403);
@@ -87,7 +86,7 @@ describe('GET /api/org/roles — RBAC', () => {
 
   it('returns 403 for accounting role', async () => {
     mockClerkAuth(mockAuth);
-    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Forbidden' }, { status: 403 }));
+    mockGetKrewpactRoles.mockResolvedValue(['accounting']);
 
     const res = await GET(makeRequest('/api/org/roles'));
     expect(res.status).toBe(403);
@@ -95,7 +94,7 @@ describe('GET /api/org/roles — RBAC', () => {
 
   it('allows access for platform_admin only', async () => {
     mockClerkAuth(mockAuth, 'user_admin');
-    mockRequireRole.mockResolvedValue({ userId: 'user_admin', roles: ['platform_admin'] });
+    mockGetKrewpactRoles.mockResolvedValue(['platform_admin']);
 
     function makeChain(data: unknown[], count: number) {
       const chain: Record<string, unknown> = {};
@@ -121,7 +120,7 @@ describe('GET /api/org/roles — RBAC', () => {
 
   it('filters by role_type when provided', async () => {
     mockClerkAuth(mockAuth, 'user_admin');
-    mockRequireRole.mockResolvedValue({ userId: 'user_admin', roles: ['platform_admin'] });
+    mockGetKrewpactRoles.mockResolvedValue(['platform_admin']);
 
     function makeChain(data: unknown[], count: number) {
       const chain: Record<string, unknown> = {};

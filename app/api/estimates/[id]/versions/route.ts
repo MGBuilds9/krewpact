@@ -31,22 +31,10 @@ export const GET = withApiRoute({}, async ({ req, params }) => {
   return NextResponse.json(paginatedResponse(data, count, limit, offset));
 });
 
-export const POST = withApiRoute({}, async ({ req, params, userId }) => {
+export const POST = withApiRoute({ bodySchema: versionCreateSchema }, async ({ body, params, userId }) => {
   const { id } = params;
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = versionCreateSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
-  const reason = parsed.data.reason || null;
+  const reason = body.reason || null;
 
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;

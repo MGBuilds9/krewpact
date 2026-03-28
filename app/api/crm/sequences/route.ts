@@ -12,14 +12,8 @@ const querySchema = z.object({
   is_active: z.coerce.boolean().optional(),
 });
 
-export const GET = withApiRoute({ querySchema }, async ({ req }) => {
-  const params = Object.fromEntries(req.nextUrl.searchParams);
-  const parsed = querySchema.safeParse(params);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
-  const { division_id, is_active } = parsed.data;
+export const GET = withApiRoute({ querySchema }, async ({ req, query: qp }) => {
+  const { division_id, is_active } = qp;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;

@@ -18,13 +18,7 @@ const querySchema = z.object({
   sort_dir: z.enum(['asc', 'desc']).optional(),
 });
 
-export const GET = withApiRoute({ querySchema }, async ({ req }) => {
-  const rawParams = Object.fromEntries(req.nextUrl.searchParams);
-  const parsed = querySchema.safeParse(rawParams);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  }
-
+export const GET = withApiRoute({ querySchema }, async ({ req, query: qp }) => {
   const {
     status,
     source,
@@ -34,7 +28,7 @@ export const GET = withApiRoute({ querySchema }, async ({ req }) => {
     search,
     sort_by,
     sort_dir,
-  } = parsed.data;
+  } = qp;
   const { limit, offset } = parsePagination(req.nextUrl.searchParams);
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;

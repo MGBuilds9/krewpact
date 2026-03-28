@@ -18,13 +18,12 @@ vi.mock('@/lib/logger', () => ({
   },
 }));
 
-const mockRequireRole = vi.fn();
+const mockGetKrewpactRoles = vi.fn();
 vi.mock('@/lib/api/org', () => ({
-  requireRole: (...args: unknown[]) => mockRequireRole(...args),
+  getKrewpactRoles: (...args: unknown[]) => mockGetKrewpactRoles(...args),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { NextResponse } from 'next/server';
 
 import { makeRequest, mockClerkAuth, mockClerkUnauth } from '@/__tests__/helpers';
 import { getPaymentHistory } from '@/lib/services/financial-ops';
@@ -63,14 +62,11 @@ const SAMPLE_HISTORY = {
 describe('GET /api/finance/payment-entries', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRequireRole.mockResolvedValue({ userId: 'user_123', roles: ['accounting'] });
+    mockGetKrewpactRoles.mockResolvedValue(['accounting']);
   });
 
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
-    mockRequireRole.mockResolvedValue(
-      NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
-    );
     const { GET } = await import('@/app/api/finance/payment-entries/route');
     const res = await GET(
       makeRequest(`/api/finance/payment-entries?project_id=${VALID_PROJECT_ID}`),
@@ -80,7 +76,7 @@ describe('GET /api/finance/payment-entries', () => {
 
   it('returns 403 for unauthorized role (project_manager)', async () => {
     mockClerkAuth(mockAuth);
-    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Forbidden' }, { status: 403 }));
+    mockGetKrewpactRoles.mockResolvedValue(['project_manager']);
     const { GET } = await import('@/app/api/finance/payment-entries/route');
     const res = await GET(
       makeRequest(`/api/finance/payment-entries?project_id=${VALID_PROJECT_ID}`),
@@ -90,7 +86,7 @@ describe('GET /api/finance/payment-entries', () => {
 
   it('allows access for executive role', async () => {
     mockClerkAuth(mockAuth);
-    mockRequireRole.mockResolvedValue({ userId: 'user_123', roles: ['executive'] });
+    mockGetKrewpactRoles.mockResolvedValue(['executive']);
     mockGetPaymentHistory.mockResolvedValue(SAMPLE_HISTORY);
     const { GET } = await import('@/app/api/finance/payment-entries/route');
     const res = await GET(

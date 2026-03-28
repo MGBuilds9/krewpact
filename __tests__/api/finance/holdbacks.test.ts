@@ -18,14 +18,13 @@ vi.mock('@/lib/logger', () => ({
   },
 }));
 
-const mockRequireRole = vi.fn();
+const mockGetKrewpactRoles = vi.fn();
 vi.mock('@/lib/api/org', () => ({
-  requireRole: (...args: unknown[]) => mockRequireRole(...args),
+  getKrewpactRoles: (...args: unknown[]) => mockGetKrewpactRoles(...args),
   getOrgIdFromAuth: vi.fn().mockResolvedValue('mdm-group'),
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { NextResponse } from 'next/server';
 
 import { makeRequest, mockClerkAuth, mockClerkUnauth } from '@/__tests__/helpers';
 import { getHoldbackSchedule } from '@/lib/services/financial-ops';
@@ -69,14 +68,11 @@ const SAMPLE_SCHEDULE = {
 describe('GET /api/finance/holdbacks', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRequireRole.mockResolvedValue({ userId: 'user_123', roles: ['accounting'] });
+    mockGetKrewpactRoles.mockResolvedValue(['accounting']);
   });
 
   it('returns 401 without auth', async () => {
     mockClerkUnauth(mockAuth);
-    mockRequireRole.mockResolvedValue(
-      NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
-    );
     const { GET } = await import('@/app/api/finance/holdbacks/route');
     const res = await GET(makeRequest(`/api/finance/holdbacks?project_id=${VALID_PROJECT_ID}`));
     expect(res.status).toBe(401);
@@ -84,7 +80,7 @@ describe('GET /api/finance/holdbacks', () => {
 
   it('returns 403 for unauthorized role (field_supervisor)', async () => {
     mockClerkAuth(mockAuth);
-    mockRequireRole.mockResolvedValue(NextResponse.json({ error: 'Forbidden' }, { status: 403 }));
+    mockGetKrewpactRoles.mockResolvedValue(['field_supervisor']);
     const { GET } = await import('@/app/api/finance/holdbacks/route');
     const res = await GET(makeRequest(`/api/finance/holdbacks?project_id=${VALID_PROJECT_ID}`));
     expect(res.status).toBe(403);
@@ -92,7 +88,7 @@ describe('GET /api/finance/holdbacks', () => {
 
   it('allows access for accounting role', async () => {
     mockClerkAuth(mockAuth);
-    mockRequireRole.mockResolvedValue({ userId: 'user_123', roles: ['accounting'] });
+    mockGetKrewpactRoles.mockResolvedValue(['accounting']);
     mockGetHoldbackSchedule.mockResolvedValue(SAMPLE_SCHEDULE);
     const { GET } = await import('@/app/api/finance/holdbacks/route');
     const res = await GET(makeRequest(`/api/finance/holdbacks?project_id=${VALID_PROJECT_ID}`));
