@@ -169,7 +169,7 @@ export class SyncService {
     const supabase = createScopedServiceClient('erp-sync:get-status');
     const { data } = await supabase
       .from('erp_sync_map')
-      .select('*')
+      .select('id, entity_type, local_id, erp_doctype, erp_docname, synced_at, created_at')
       .eq('entity_type', entityType)
       .eq('local_id', entityId)
       .maybeSingle();

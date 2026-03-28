@@ -31,6 +31,7 @@ interface EnrollmentCtx {
   now: string;
   options: ProcessorOptions;
   result: ProcessorResult;
+  stepsBySequence: Map<string, Record<string, unknown>[]>;
 }
 
 async function processEnrollmentSafe(ctx: EnrollmentCtx): Promise<void> {
@@ -95,8 +96,27 @@ export async function processSequences(
       break;
     }
 
+    // Pre-fetch all sequence steps for active sequences in this batch — avoids N+1
+    const sequenceIds = [...new Set(enrollments.map((e) => e.sequence_id as string))];
+    const { data: allSteps, error: stepsError } = await supabase
+      .from('sequence_steps')
+      .select('id, sequence_id, step_number, action_type, action_config, condition_type, condition_config, true_next_step_id, false_next_step_id, delay_days, delay_hours')
+      .in('sequence_id', sequenceIds);
+
+    if (stepsError) {
+      result.errors.push(`Failed to pre-fetch sequence steps: ${stepsError.message}`);
+      return result;
+    }
+
+    const stepsBySequence = new Map<string, Record<string, unknown>[]>();
+    for (const step of allSteps ?? []) {
+      const seqId = step.sequence_id as string;
+      if (!stepsBySequence.has(seqId)) stepsBySequence.set(seqId, []);
+      stepsBySequence.get(seqId)!.push(step as Record<string, unknown>);
+    }
+
     for (const enrollment of enrollments) {
-      await processEnrollmentSafe({ supabase, enrollment, now, options, result });
+      await processEnrollmentSafe({ supabase, enrollment, now, options, result, stepsBySequence });
     }
 
     if (enrollments.length < BATCH_SIZE) {
@@ -110,22 +130,18 @@ export async function processSequences(
 }
 
 async function processEnrollment(ctx: EnrollmentCtx): Promise<void> {
-  const { supabase, enrollment, now, options, result } = ctx;
+  const { supabase, enrollment, now, options, result, stepsBySequence } = ctx;
 
-  let stepQuery = supabase
-    .from('sequence_steps')
-    .select('*')
-    .eq('sequence_id', enrollment.sequence_id);
+  const seqSteps = stepsBySequence.get(enrollment.sequence_id as string) ?? [];
+  let step: Record<string, unknown> | undefined;
 
   if (enrollment.current_step_id) {
-    stepQuery = stepQuery.eq('id', enrollment.current_step_id);
+    step = seqSteps.find((s) => s.id === enrollment.current_step_id);
   } else {
-    stepQuery = stepQuery.eq('step_number', enrollment.current_step);
+    step = seqSteps.find((s) => s.step_number === enrollment.current_step);
   }
 
-  const { data: step, error: stepError } = await stepQuery.single();
-
-  if (stepError || !step) {
+  if (!step) {
     await supabase
       .from('sequence_enrollments')
       .update({ status: 'completed', next_step_at: null })
@@ -142,7 +158,7 @@ async function processEnrollment(ctx: EnrollmentCtx): Promise<void> {
   await executeStepAction({ supabase, enrollment, step, actionType, actionConfig, now, options });
 
   const nextStepId = await resolveNextStepId({ supabase, enrollment, step, conditionType });
-  await advanceEnrollment({ supabase, enrollment, step, nextStepId, result, options });
+  await advanceEnrollment({ supabase, enrollment, step, nextStepId, result, options, stepsBySequence });
 
   result.processed++;
 }
@@ -278,33 +294,23 @@ interface AdvanceEnrollmentCtx {
   nextStepId: string | null;
   result: ProcessorResult;
   options: ProcessorOptions;
+  stepsBySequence: Map<string, Record<string, unknown>[]>;
 }
 
 async function advanceEnrollment(ctx: AdvanceEnrollmentCtx): Promise<void> {
-  const { supabase, enrollment, step, nextStepId, result, options } = ctx;
-  let nextStep: {
-    id: string;
-    step_number: number;
-    delay_days: number | null;
-    delay_hours: number | null;
-  } | null = null;
+  const { supabase, enrollment, step, nextStepId, result, options, stepsBySequence } = ctx;
+  const seqSteps = stepsBySequence.get(enrollment.sequence_id as string) ?? [];
+
+  type NextStep = { id: string; step_number: number; delay_days: number | null; delay_hours: number | null };
+  let nextStep: NextStep | null = null;
 
   if (nextStepId) {
-    const { data } = await supabase
-      .from('sequence_steps')
-      .select('id, step_number, delay_days, delay_hours')
-      .eq('id', nextStepId)
-      .single();
-    nextStep = data ?? null;
+    const found = seqSteps.find((s) => s.id === nextStepId);
+    nextStep = found ? (found as unknown as NextStep) : null;
   } else {
     const nextStepNumber = (step.step_number as number) + 1;
-    const { data } = await supabase
-      .from('sequence_steps')
-      .select('id, step_number, delay_days, delay_hours')
-      .eq('sequence_id', enrollment.sequence_id)
-      .eq('step_number', nextStepNumber)
-      .single();
-    nextStep = data ?? null;
+    const found = seqSteps.find((s) => s.step_number === nextStepNumber);
+    nextStep = found ? (found as unknown as NextStep) : null;
   }
 
   if (nextStep) {

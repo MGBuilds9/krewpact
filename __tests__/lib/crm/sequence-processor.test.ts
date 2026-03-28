@@ -168,55 +168,26 @@ describe('processSequences', () => {
       action_config: { subject: 'Follow up', body: 'Hello!' },
       delay_days: 0,
       delay_hours: 0,
+      condition_type: null,
+      condition_config: null,
+      true_next_step_id: null,
+      false_next_step_id: null,
     };
 
-    let singleCallIndex = 0;
     const mockClient = {
       from: vi.fn().mockImplementation((table: string) => {
         const createChain = (): Record<string, unknown> => {
           const c: Record<string, unknown> = {};
           const methods = [
-            'select',
-            'insert',
-            'update',
-            'delete',
-            'eq',
-            'lte',
-            'order',
-            'limit',
-            'range',
-            'neq',
-            'gt',
-            'gte',
-            'lt',
-            'ilike',
-            'is',
-            'or',
-            'not',
-            'contains',
-            'containedBy',
-            'filter',
-            'match',
-            'in',
+            'select', 'insert', 'update', 'delete', 'eq', 'lte', 'order',
+            'limit', 'range', 'neq', 'gt', 'gte', 'lt', 'ilike', 'is',
+            'or', 'not', 'contains', 'containedBy', 'filter', 'match', 'in',
           ];
           for (const m of methods) {
             c[m] = vi.fn().mockImplementation(() => createChain());
           }
           c.single = vi.fn().mockImplementation(() => {
-            singleCallIndex++;
-            if (table === 'sequence_steps' && singleCallIndex === 1) {
-              // First call: get current step
-              return Promise.resolve({ data: stepData, error: null });
-            }
-            if (table === 'sequence_steps' && singleCallIndex === 2) {
-              // Second call: check next step — doesn't exist
-              return Promise.resolve({
-                data: null,
-                error: { code: 'PGRST116', message: 'not found' },
-              });
-            }
             if (table === 'outreach') {
-              // Return created outreach record with ID (create-before-send pattern)
               return Promise.resolve({ data: { id: 'outreach-1' }, error: null });
             }
             return Promise.resolve({ data: null, error: null });
@@ -224,6 +195,9 @@ describe('processSequences', () => {
           c.then = (resolve: (v: unknown) => void) => {
             if (table === 'sequence_enrollments') {
               return resolve({ data: enrollmentData, error: null });
+            }
+            if (table === 'sequence_steps') {
+              return resolve({ data: [stepData], error: null });
             }
             return resolve({ data: [], error: null });
           };
@@ -262,56 +236,31 @@ describe('processSequences', () => {
       action_config: { title: 'Call prospect', description: 'Follow up call' },
       delay_days: 0,
       delay_hours: 0,
+      condition_type: null,
+      condition_config: null,
+      true_next_step_id: null,
+      false_next_step_id: null,
     };
 
-    let singleCallIndex = 0;
     const mockClient = {
       from: vi.fn().mockImplementation((table: string) => {
         const createChain = (): Record<string, unknown> => {
           const c: Record<string, unknown> = {};
           const methods = [
-            'select',
-            'insert',
-            'update',
-            'delete',
-            'eq',
-            'lte',
-            'order',
-            'limit',
-            'range',
-            'neq',
-            'gt',
-            'gte',
-            'lt',
-            'ilike',
-            'is',
-            'or',
-            'not',
-            'contains',
-            'containedBy',
-            'filter',
-            'match',
-            'in',
+            'select', 'insert', 'update', 'delete', 'eq', 'lte', 'order',
+            'limit', 'range', 'neq', 'gt', 'gte', 'lt', 'ilike', 'is',
+            'or', 'not', 'contains', 'containedBy', 'filter', 'match', 'in',
           ];
           for (const m of methods) {
             c[m] = vi.fn().mockImplementation(() => createChain());
           }
-          c.single = vi.fn().mockImplementation(() => {
-            singleCallIndex++;
-            if (table === 'sequence_steps' && singleCallIndex === 1) {
-              return Promise.resolve({ data: stepData, error: null });
-            }
-            if (table === 'sequence_steps' && singleCallIndex === 2) {
-              return Promise.resolve({
-                data: null,
-                error: { code: 'PGRST116', message: 'not found' },
-              });
-            }
-            return Promise.resolve({ data: null, error: null });
-          });
+          c.single = vi.fn().mockImplementation(() => Promise.resolve({ data: null, error: null }));
           c.then = (resolve: (v: unknown) => void) => {
             if (table === 'sequence_enrollments') {
               return resolve({ data: enrollmentData, error: null });
+            }
+            if (table === 'sequence_steps') {
+              return resolve({ data: [stepData], error: null });
             }
             return resolve({ data: [], error: null });
           };
@@ -350,37 +299,21 @@ describe('processSequences', () => {
       action_config: { title: 'Call prospect', description: 'Follow up call' },
       delay_days: 0,
       delay_hours: 0,
+      condition_type: null,
+      condition_config: null,
+      true_next_step_id: null,
+      false_next_step_id: null,
     };
 
-    let singleCallIndex = 0;
     const insertedActivities: Record<string, unknown>[] = [];
     const mockClient = {
       from: vi.fn().mockImplementation((table: string) => {
         const createChain = (): Record<string, unknown> => {
           const c: Record<string, unknown> = {};
           const methods = [
-            'select',
-            'insert',
-            'update',
-            'delete',
-            'eq',
-            'lte',
-            'order',
-            'limit',
-            'range',
-            'neq',
-            'gt',
-            'gte',
-            'lt',
-            'ilike',
-            'is',
-            'or',
-            'not',
-            'contains',
-            'containedBy',
-            'filter',
-            'match',
-            'in',
+            'select', 'insert', 'update', 'delete', 'eq', 'lte', 'order',
+            'limit', 'range', 'neq', 'gt', 'gte', 'lt', 'ilike', 'is',
+            'or', 'not', 'contains', 'containedBy', 'filter', 'match', 'in',
           ];
           for (const m of methods) {
             if (m === 'insert') {
@@ -393,20 +326,10 @@ describe('processSequences', () => {
             }
           }
           c.single = vi.fn().mockImplementation(() => {
-            singleCallIndex++;
-            if (table === 'sequence_steps' && singleCallIndex === 1) {
-              return Promise.resolve({ data: stepData, error: null });
-            }
             if (table === 'users') {
               return Promise.resolve({
                 data: { email: 'david@mdm.ca', first_name: 'David', last_name: 'Sales' },
                 error: null,
-              });
-            }
-            if (table === 'sequence_steps') {
-              return Promise.resolve({
-                data: null,
-                error: { code: 'PGRST116', message: 'not found' },
               });
             }
             return Promise.resolve({ data: null, error: null });
@@ -414,6 +337,9 @@ describe('processSequences', () => {
           c.then = (resolve: (v: unknown) => void) => {
             if (table === 'sequence_enrollments') {
               return resolve({ data: enrollmentData, error: null });
+            }
+            if (table === 'sequence_steps') {
+              return resolve({ data: [stepData], error: null });
             }
             // outreach: no engagement for final disposition check
             if (table === 'outreach') {
@@ -474,56 +400,31 @@ describe('processSequences', () => {
       action_config: { title: 'Review lead' },
       delay_days: 0,
       delay_hours: 0,
+      condition_type: null,
+      condition_config: null,
+      true_next_step_id: null,
+      false_next_step_id: null,
     };
 
-    let singleCallIndex = 0;
     const mockClient = {
       from: vi.fn().mockImplementation((table: string) => {
         const createChain = (): Record<string, unknown> => {
           const c: Record<string, unknown> = {};
           const methods = [
-            'select',
-            'insert',
-            'update',
-            'delete',
-            'eq',
-            'lte',
-            'order',
-            'limit',
-            'range',
-            'neq',
-            'gt',
-            'gte',
-            'lt',
-            'ilike',
-            'is',
-            'or',
-            'not',
-            'contains',
-            'containedBy',
-            'filter',
-            'match',
-            'in',
+            'select', 'insert', 'update', 'delete', 'eq', 'lte', 'order',
+            'limit', 'range', 'neq', 'gt', 'gte', 'lt', 'ilike', 'is',
+            'or', 'not', 'contains', 'containedBy', 'filter', 'match', 'in',
           ];
           for (const m of methods) {
             c[m] = vi.fn().mockImplementation(() => createChain());
           }
-          c.single = vi.fn().mockImplementation(() => {
-            singleCallIndex++;
-            if (table === 'sequence_steps' && singleCallIndex === 1) {
-              return Promise.resolve({ data: stepData, error: null });
-            }
-            if (table === 'sequence_steps') {
-              return Promise.resolve({
-                data: null,
-                error: { code: 'PGRST116', message: 'not found' },
-              });
-            }
-            return Promise.resolve({ data: null, error: null });
-          });
+          c.single = vi.fn().mockImplementation(() => Promise.resolve({ data: null, error: null }));
           c.then = (resolve: (v: unknown) => void) => {
             if (table === 'sequence_enrollments') {
               return resolve({ data: enrollmentData, error: null });
+            }
+            if (table === 'sequence_steps') {
+              return resolve({ data: [stepData], error: null });
             }
             return resolve({ data: [], error: null });
           };
@@ -565,58 +466,45 @@ describe('processSequences', () => {
       action_config: {},
       delay_days: 0,
       delay_hours: 0,
+      condition_type: null,
+      condition_config: null,
+      true_next_step_id: null,
+      false_next_step_id: null,
     };
 
     const nextStep = {
+      id: 'step-3b',
+      sequence_id: 'seq-3',
+      step_number: 2,
+      action_type: 'wait',
+      action_config: {},
       delay_days: 2,
       delay_hours: 4,
+      condition_type: null,
+      condition_config: null,
+      true_next_step_id: null,
+      false_next_step_id: null,
     };
 
-    let singleCallIndex = 0;
     const mockClient = {
       from: vi.fn().mockImplementation((table: string) => {
         const createChain = (): Record<string, unknown> => {
           const c: Record<string, unknown> = {};
           const methods = [
-            'select',
-            'insert',
-            'update',
-            'delete',
-            'eq',
-            'lte',
-            'order',
-            'limit',
-            'range',
-            'neq',
-            'gt',
-            'gte',
-            'lt',
-            'ilike',
-            'is',
-            'or',
-            'not',
-            'contains',
-            'containedBy',
-            'filter',
-            'match',
-            'in',
+            'select', 'insert', 'update', 'delete', 'eq', 'lte', 'order',
+            'limit', 'range', 'neq', 'gt', 'gte', 'lt', 'ilike', 'is',
+            'or', 'not', 'contains', 'containedBy', 'filter', 'match', 'in',
           ];
           for (const m of methods) {
             c[m] = vi.fn().mockImplementation(() => createChain());
           }
-          c.single = vi.fn().mockImplementation(() => {
-            singleCallIndex++;
-            if (table === 'sequence_steps' && singleCallIndex === 1) {
-              return Promise.resolve({ data: currentStep, error: null });
-            }
-            if (table === 'sequence_steps' && singleCallIndex === 2) {
-              return Promise.resolve({ data: nextStep, error: null });
-            }
-            return Promise.resolve({ data: null, error: null });
-          });
+          c.single = vi.fn().mockImplementation(() => Promise.resolve({ data: null, error: null }));
           c.then = (resolve: (v: unknown) => void) => {
             if (table === 'sequence_enrollments') {
               return resolve({ data: enrollmentData, error: null });
+            }
+            if (table === 'sequence_steps') {
+              return resolve({ data: [currentStep, nextStep], error: null });
             }
             return resolve({ data: [], error: null });
           };
@@ -655,45 +543,25 @@ describe('processSequences', () => {
       action_config: { subject: 'Test' },
       delay_days: 0,
       delay_hours: 0,
+      condition_type: null,
+      condition_config: null,
+      true_next_step_id: null,
+      false_next_step_id: null,
     };
 
-    let singleCallIndex = 0;
     const mockClient = {
       from: vi.fn().mockImplementation((table: string) => {
         const createChain = (): Record<string, unknown> => {
           const c: Record<string, unknown> = {};
           const methods = [
-            'select',
-            'insert',
-            'update',
-            'delete',
-            'eq',
-            'lte',
-            'order',
-            'limit',
-            'range',
-            'neq',
-            'gt',
-            'gte',
-            'lt',
-            'ilike',
-            'is',
-            'or',
-            'not',
-            'contains',
-            'containedBy',
-            'filter',
-            'match',
-            'in',
+            'select', 'insert', 'update', 'delete', 'eq', 'lte', 'order',
+            'limit', 'range', 'neq', 'gt', 'gte', 'lt', 'ilike', 'is',
+            'or', 'not', 'contains', 'containedBy', 'filter', 'match', 'in',
           ];
           for (const m of methods) {
             c[m] = vi.fn().mockImplementation(() => createChain());
           }
           c.single = vi.fn().mockImplementation(() => {
-            singleCallIndex++;
-            if (table === 'sequence_steps' && singleCallIndex === 1) {
-              return Promise.resolve({ data: stepData, error: null });
-            }
             if (table === 'outreach') {
               // Simulate insert error (create-before-send: insert().select().single())
               return Promise.resolve({ data: null, error: { message: 'Insert failed' } });
@@ -703,6 +571,9 @@ describe('processSequences', () => {
           c.then = (resolve: (v: unknown) => void) => {
             if (table === 'sequence_enrollments') {
               return resolve({ data: enrollmentData, error: null });
+            }
+            if (table === 'sequence_steps') {
+              return resolve({ data: [stepData], error: null });
             }
             return resolve({ data: [], error: null });
           };
@@ -741,37 +612,21 @@ describe('processSequences', () => {
       action_config: {},
       delay_days: 0,
       delay_hours: 0,
+      condition_type: null,
+      condition_config: null,
+      true_next_step_id: null,
+      false_next_step_id: null,
     };
 
-    let singleCallIndex = 0;
     let insertedActivity: Record<string, unknown> | null = null;
     const mockClient = {
       from: vi.fn().mockImplementation((table: string) => {
         const createChain = (): Record<string, unknown> => {
           const c: Record<string, unknown> = {};
           const methods = [
-            'select',
-            'insert',
-            'update',
-            'delete',
-            'eq',
-            'lte',
-            'order',
-            'limit',
-            'range',
-            'neq',
-            'gt',
-            'gte',
-            'lt',
-            'ilike',
-            'is',
-            'or',
-            'not',
-            'contains',
-            'containedBy',
-            'filter',
-            'match',
-            'in',
+            'select', 'insert', 'update', 'delete', 'eq', 'lte', 'order',
+            'limit', 'range', 'neq', 'gt', 'gte', 'lt', 'ilike', 'is',
+            'or', 'not', 'contains', 'containedBy', 'filter', 'match', 'in',
           ];
           for (const m of methods) {
             if (m === 'insert') {
@@ -784,19 +639,6 @@ describe('processSequences', () => {
             }
           }
           c.single = vi.fn().mockImplementation(() => {
-            singleCallIndex++;
-            // First sequence_steps call: return the current (last) step
-            if (table === 'sequence_steps' && singleCallIndex === 1) {
-              return Promise.resolve({ data: lastStep, error: null });
-            }
-            // Second sequence_steps call: no next step exists
-            if (table === 'sequence_steps' && singleCallIndex === 2) {
-              return Promise.resolve({
-                data: null,
-                error: { code: 'PGRST116', message: 'not found' },
-              });
-            }
-            // users table: return assignee info
             if (table === 'users') {
               return Promise.resolve({
                 data: { email: 'sarah@mdm.ca', first_name: 'Sarah', last_name: 'Rep' },
@@ -808,6 +650,9 @@ describe('processSequences', () => {
           c.then = (resolve: (v: unknown) => void) => {
             if (table === 'sequence_enrollments') {
               return resolve({ data: enrollmentData, error: null });
+            }
+            if (table === 'sequence_steps') {
+              return resolve({ data: [lastStep], error: null });
             }
             // outreach: return count 0 (no engagement)
             if (table === 'outreach') {
@@ -872,37 +717,21 @@ describe('processSequences', () => {
       action_config: {},
       delay_days: 0,
       delay_hours: 0,
+      condition_type: null,
+      condition_config: null,
+      true_next_step_id: null,
+      false_next_step_id: null,
     };
 
-    let singleCallIndex = 0;
     let insertedActivity: Record<string, unknown> | null = null;
     const mockClient = {
       from: vi.fn().mockImplementation((table: string) => {
         const createChain = (): Record<string, unknown> => {
           const c: Record<string, unknown> = {};
           const methods = [
-            'select',
-            'insert',
-            'update',
-            'delete',
-            'eq',
-            'lte',
-            'order',
-            'limit',
-            'range',
-            'neq',
-            'gt',
-            'gte',
-            'lt',
-            'ilike',
-            'is',
-            'or',
-            'not',
-            'contains',
-            'containedBy',
-            'filter',
-            'match',
-            'in',
+            'select', 'insert', 'update', 'delete', 'eq', 'lte', 'order',
+            'limit', 'range', 'neq', 'gt', 'gte', 'lt', 'ilike', 'is',
+            'or', 'not', 'contains', 'containedBy', 'filter', 'match', 'in',
           ];
           for (const m of methods) {
             if (m === 'insert') {
@@ -914,22 +743,13 @@ describe('processSequences', () => {
               c[m] = vi.fn().mockImplementation(() => createChain());
             }
           }
-          c.single = vi.fn().mockImplementation(() => {
-            singleCallIndex++;
-            if (table === 'sequence_steps' && singleCallIndex === 1) {
-              return Promise.resolve({ data: lastStep, error: null });
-            }
-            if (table === 'sequence_steps') {
-              return Promise.resolve({
-                data: null,
-                error: { code: 'PGRST116', message: 'not found' },
-              });
-            }
-            return Promise.resolve({ data: null, error: null });
-          });
+          c.single = vi.fn().mockImplementation(() => Promise.resolve({ data: null, error: null }));
           c.then = (resolve: (v: unknown) => void) => {
             if (table === 'sequence_enrollments') {
               return resolve({ data: enrollmentData, error: null });
+            }
+            if (table === 'sequence_steps') {
+              return resolve({ data: [lastStep], error: null });
             }
             // outreach: return count > 0 (has engagement)
             if (table === 'outreach') {

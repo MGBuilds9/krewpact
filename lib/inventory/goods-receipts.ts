@@ -93,7 +93,7 @@ export async function createGoodsReceipt(
   const { data: gr, error: grError } = await supabase
     .from('inventory_goods_receipts')
     .insert(grInsert)
-    .select()
+    .select('id, gr_number, po_id, division_id, location_id, received_by, created_by, received_date, notes, status, org_id, created_at, updated_at')
     .single();
 
   if (grError || !gr) {
@@ -116,7 +116,7 @@ export async function createGoodsReceipt(
   const { data: lines, error: linesError } = await supabase
     .from('inventory_gr_lines')
     .insert(lineInserts)
-    .select();
+    .select('id, gr_id, po_line_id, item_id, qty_received, unit_price, spot_id, serial_number, lot_number, condition_notes, created_at');
 
   if (linesError || !lines) {
     logger.error('Failed to create GR lines', { error: linesError?.message });
@@ -269,7 +269,7 @@ export async function confirmGoodsReceipt(
     .from('inventory_goods_receipts')
     .update({ status: 'confirmed' })
     .eq('id', grId)
-    .select()
+    .select('id, gr_number, po_id, division_id, location_id, received_by, created_by, received_date, notes, status, org_id, created_at, updated_at')
     .single();
 
   if (confirmError || !confirmedGr) {

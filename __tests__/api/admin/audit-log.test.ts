@@ -120,7 +120,7 @@ describe('GET /api/admin/audit-log', () => {
     mockCreateUserClientSafe.mockResolvedValue({
       client: mockSupabaseClient({
         tables: {
-          audit_log: { data: sampleAuditEntries, error: null, count: 3 },
+          audit_logs: { data: sampleAuditEntries, error: null, count: 3 },
         },
       }),
       error: null,
@@ -139,7 +139,7 @@ describe('GET /api/admin/audit-log', () => {
     mockCreateUserClientSafe.mockResolvedValue({
       client: mockSupabaseClient({
         tables: {
-          audit_log: { data: sampleAuditEntries, error: null, count: 3 },
+          audit_logs: { data: sampleAuditEntries, error: null, count: 3 },
         },
       }),
       error: null,
@@ -157,7 +157,7 @@ describe('GET /api/admin/audit-log', () => {
     mockCreateUserClientSafe.mockResolvedValue({
       client: mockSupabaseClient({
         tables: {
-          audit_log: { data: sampleAuditEntries, error: null, count: 50 },
+          audit_logs: { data: sampleAuditEntries, error: null, count: 50 },
         },
       }),
       error: null,
@@ -177,7 +177,7 @@ describe('GET /api/admin/audit-log', () => {
     mockCreateUserClientSafe.mockResolvedValue({
       client: mockSupabaseClient({
         tables: {
-          audit_log: { data: [sampleAuditEntries[0]], error: null, count: 100 },
+          audit_logs: { data: [sampleAuditEntries[0]], error: null, count: 100 },
         },
       }),
       error: null,
@@ -196,7 +196,7 @@ describe('GET /api/admin/audit-log', () => {
     mockCreateUserClientSafe.mockResolvedValue({
       client: mockSupabaseClient({
         tables: {
-          audit_log: { data: [], error: null, count: 0 },
+          audit_logs: { data: [], error: null, count: 0 },
         },
       }),
       error: null,
@@ -214,7 +214,7 @@ describe('GET /api/admin/audit-log', () => {
     mockCreateUserClientSafe.mockResolvedValue({
       client: mockSupabaseClient({
         tables: {
-          audit_log: { data: [], error: null, count: 0 },
+          audit_logs: { data: [], error: null, count: 0 },
         },
       }),
       error: null,
@@ -231,7 +231,7 @@ describe('GET /api/admin/audit-log', () => {
 
     const client = mockSupabaseClient({
       tables: {
-        audit_log: { data: [sampleAuditEntries[0]], error: null, count: 1 },
+        audit_logs: { data: [sampleAuditEntries[0]], error: null, count: 1 },
       },
     });
     mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
@@ -240,7 +240,7 @@ describe('GET /api/admin/audit-log', () => {
     expect(res.status).toBe(200);
 
     // Verify the eq filter was called on the chain
-    expect(client.from).toHaveBeenCalledWith('audit_log');
+    expect(client.from).toHaveBeenCalledWith('audit_logs');
   });
 
   it('applies action filter', async () => {
@@ -248,7 +248,7 @@ describe('GET /api/admin/audit-log', () => {
 
     const client = mockSupabaseClient({
       tables: {
-        audit_log: { data: [sampleAuditEntries[2]], error: null, count: 1 },
+        audit_logs: { data: [sampleAuditEntries[2]], error: null, count: 1 },
       },
     });
     mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
@@ -265,7 +265,7 @@ describe('GET /api/admin/audit-log', () => {
 
     const client = mockSupabaseClient({
       tables: {
-        audit_log: { data: [sampleAuditEntries[1]], error: null, count: 1 },
+        audit_logs: { data: [sampleAuditEntries[1]], error: null, count: 1 },
       },
     });
     mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
@@ -281,7 +281,7 @@ describe('GET /api/admin/audit-log', () => {
 
     const client = mockSupabaseClient({
       tables: {
-        audit_log: { data: sampleAuditEntries, error: null, count: 3 },
+        audit_logs: { data: sampleAuditEntries, error: null, count: 3 },
       },
     });
     mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
@@ -301,7 +301,7 @@ describe('GET /api/admin/audit-log', () => {
 
     const client = mockSupabaseClient({
       tables: {
-        audit_log: { data: [sampleAuditEntries[0]], error: null, count: 1 },
+        audit_logs: { data: [sampleAuditEntries[0]], error: null, count: 1 },
       },
     });
     mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
@@ -317,15 +317,15 @@ describe('GET /api/admin/audit-log', () => {
     expect(body.total).toBe(1);
   });
 
-  it('returns empty results when audit_log table does not exist', async () => {
+  it('returns empty results when audit_logs table does not exist', async () => {
     mockClerkWithRoles('user_admin', ['platform_admin']);
 
     mockCreateUserClientSafe.mockResolvedValue({
       client: mockSupabaseClient({
         tables: {
-          audit_log: {
+          audit_logs: {
             data: null,
-            error: { message: 'relation "public.audit_log" does not exist', code: '42P01' },
+            error: { message: 'relation "public.audit_logs" does not exist', code: '42P01' },
             count: null,
           },
         },
@@ -348,7 +348,7 @@ describe('GET /api/admin/audit-log', () => {
     mockCreateUserClientSafe.mockResolvedValue({
       client: mockSupabaseClient({
         tables: {
-          audit_log: {
+          audit_logs: {
             data: null,
             error: { message: 'connection timeout' },
             count: null,
@@ -370,7 +370,7 @@ describe('GET /api/admin/audit-log', () => {
     mockCreateUserClientSafe.mockResolvedValue({
       client: mockSupabaseClient({
         tables: {
-          audit_log: { data: [sampleAuditEntries[0]], error: null, count: 1 },
+          audit_logs: { data: [sampleAuditEntries[0]], error: null, count: 1 },
         },
       }),
       error: null,
@@ -404,7 +404,7 @@ describe('GET /api/admin/audit-log', () => {
     mockCreateUserClientSafe.mockResolvedValue({
       client: mockSupabaseClient({
         tables: {
-          audit_log: { data: [], error: null, count: 0 },
+          audit_logs: { data: [], error: null, count: 0 },
         },
       }),
       error: null,

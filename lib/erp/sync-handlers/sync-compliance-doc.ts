@@ -27,7 +27,7 @@ export async function syncComplianceDoc(
 
   try {
     const { data: doc, error: docError } = await supabase
-      .from('compliance_documents')
+      .from('trade_partner_compliance_docs')
       .select('*')
       .eq('id', complianceDocId)
       .single();

@@ -68,7 +68,7 @@ export async function syncAward(
 
   try {
     const { data: bid, error: bidError } = await supabase
-      .from('bids')
+      .from('rfq_bids')
       .select('*, bid_lines(*)')
       .eq('id', bidId)
       .eq('status', 'awarded')

@@ -37,10 +37,10 @@ function handleAuditError(
     error.code === '42P01' ||
     error.message?.includes('relation');
   if (isTableMissing) {
-    logger.warn('audit_log table not found, returning empty results', { error: error.message });
+    logger.warn('audit_logs table not found, returning empty results', { error: error.message });
     return NextResponse.json({ data: [], total: 0, page, pageSize });
   }
-  logger.error('Failed to query audit_log', { error: error.message });
+  logger.error('Failed to query audit_logs', { error: error.message });
   throw serverError('Failed to fetch audit log');
 }
 
@@ -70,7 +70,7 @@ export const GET = withApiRoute({ rateLimit: { limit: 30, window: '1 m' } }, asy
   if (authError) return authError;
 
   const baseQuery = supabase
-    .from('audit_log')
+    .from('audit_logs')
     .select('id, user_id, action, entity_type, entity_id, entity_name, details, created_at', {
       count: 'exact',
     });
