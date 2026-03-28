@@ -2,13 +2,16 @@ import { createHash } from 'crypto';
 import { NextResponse } from 'next/server';
 
 import { dbError, forbidden } from '@/lib/api/errors';
-import { getKrewpactRoles, getOrgIdFromAuth } from '@/lib/api/org';
+import { getKrewpactRoles } from '@/lib/api/org';
 import { withApiRoute } from '@/lib/api/with-api-route';
 import { createServiceClient } from '@/lib/supabase/server';
 import { stagingCreateSchema } from '@/lib/validators/executive';
 
 const READ_ROLES = ['executive', 'platform_admin'];
 const WRITE_ROLES = ['platform_admin'];
+
+// Single-org app — org_id scoping is redundant; RLS handles data isolation.
+const DEFAULT_ORG_ID = process.env.DEFAULT_ORG_ID || 'e076c9b9-72ce-4fdc-a031-e5808e73d92c';
 
 export const GET = withApiRoute({}, async ({ req }) => {
   const roles = await getKrewpactRoles();
@@ -24,13 +27,11 @@ export const GET = withApiRoute({}, async ({ req }) => {
   const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') ?? '50', 10)));
   const offset = (page - 1) * limit;
 
-  const orgId = await getOrgIdFromAuth();
   const supabase = await createServiceClient();
 
   let query = supabase
     .from('knowledge_staging')
-    .select('*', { count: 'exact' })
-    .eq('org_id', orgId);
+    .select('*', { count: 'exact' });
 
   if (status !== 'all') {
     query = query.eq('status', status);
@@ -70,13 +71,12 @@ export const POST = withApiRoute({}, async ({ req }) => {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const orgId = await getOrgIdFromAuth();
   const content_checksum = createHash('sha256').update(parsed.data.raw_content).digest('hex');
 
   const supabase = await createServiceClient();
   const { data, error } = await supabase
     .from('knowledge_staging')
-    .insert({ ...parsed.data, org_id: orgId, content_checksum, status: 'pending_review' })
+    .insert({ ...parsed.data, org_id: DEFAULT_ORG_ID, content_checksum, status: 'pending_review' })
     .select()
     .single();
 

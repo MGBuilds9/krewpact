@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { withApiRoute } from '@/lib/api/with-api-route';
-import { isFeatureEnabled } from '@/lib/feature-flags';
 import { checkoutSerial } from '@/lib/inventory/serials';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
@@ -15,10 +14,6 @@ const checkoutSchema = z.object({
 export const POST = withApiRoute(
   { bodySchema: checkoutSchema },
   async ({ body, params, userId }) => {
-    if (!isFeatureEnabled('inventory_management')) {
-      return NextResponse.json({ error: 'Feature not enabled' }, { status: 404 });
-    }
-
     const { id } = params;
     const { client: supabase, error: authError } = await createUserClientSafe();
     if (authError) return authError;

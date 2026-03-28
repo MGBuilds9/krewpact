@@ -1,13 +1,16 @@
 import { NextResponse } from 'next/server';
 
 import { dbError, forbidden } from '@/lib/api/errors';
-import { getKrewpactRoles, getOrgIdFromAuth } from '@/lib/api/org';
+import { getKrewpactRoles } from '@/lib/api/org';
 import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { subscriptionCreateSchema } from '@/lib/validators/executive';
 
 const READ_ROLES = ['executive', 'platform_admin'];
 const WRITE_ROLES = ['platform_admin'];
+
+// Single-org app — org_id scoping is redundant; RLS handles data isolation.
+const DEFAULT_ORG_ID = process.env.DEFAULT_ORG_ID || 'e076c9b9-72ce-4fdc-a031-e5808e73d92c';
 
 export const GET = withApiRoute({}, async ({ req, logger }) => {
   const roles = await getKrewpactRoles();
@@ -16,7 +19,6 @@ export const GET = withApiRoute({}, async ({ req, logger }) => {
     throw forbidden('Forbidden: executive or platform_admin role required');
   }
 
-  const orgId = await getOrgIdFromAuth();
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -24,7 +26,7 @@ export const GET = withApiRoute({}, async ({ req, logger }) => {
   const isActiveParam = searchParams.get('is_active');
   const category = searchParams.get('category');
 
-  let query = supabase.from('executive_subscriptions').select('*').eq('org_id', orgId);
+  let query = supabase.from('executive_subscriptions').select('*');
 
   if (isActiveParam !== null) {
     query = query.eq('is_active', isActiveParam === 'true');
@@ -63,13 +65,12 @@ export const POST = withApiRoute({}, async ({ req, logger }) => {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const orgId = await getOrgIdFromAuth();
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
   const { data, error } = await supabase
     .from('executive_subscriptions')
-    .insert({ ...parsed.data, org_id: orgId })
+    .insert({ ...parsed.data, org_id: DEFAULT_ORG_ID })
     .select()
     .single();
 

@@ -2,16 +2,11 @@ import { NextResponse } from 'next/server';
 
 import { dbError } from '@/lib/api/errors';
 import { withApiRoute } from '@/lib/api/with-api-route';
-import { isFeatureEnabled } from '@/lib/feature-flags';
 import { createSerial, listSerials } from '@/lib/inventory/serials';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { createSerialSchema } from '@/lib/validators/inventory';
 
 export const GET = withApiRoute({}, async ({ req }) => {
-  if (!isFeatureEnabled('inventory_management')) {
-    return NextResponse.json({ error: 'Feature not enabled' }, { status: 404 });
-  }
-
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -34,10 +29,6 @@ export const GET = withApiRoute({}, async ({ req }) => {
 });
 
 export const POST = withApiRoute({ bodySchema: createSerialSchema }, async ({ body }) => {
-  if (!isFeatureEnabled('inventory_management')) {
-    return NextResponse.json({ error: 'Feature not enabled' }, { status: 404 });
-  }
-
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 

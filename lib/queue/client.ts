@@ -12,6 +12,8 @@
  *   process() → runs all pending jobs locally
  */
 
+import * as Sentry from '@sentry/nextjs';
+
 import { logger } from '@/lib/logger';
 
 import { processJob } from './processor';
@@ -98,9 +100,14 @@ export class Queue {
         job.status = 'pending';
         logger.info('Job enqueued via QStash', { jobId: job.id, type: job.type });
       } catch (err) {
+        const errMsg = err instanceof Error ? err.message : String(err);
         logger.error('QStash publish failed, falling back to in-memory', {
           type: job.type,
           error: err instanceof Error ? err : undefined,
+        });
+        Sentry.captureMessage('QStash publish failed, using in-memory fallback', {
+          level: 'warning',
+          extra: { jobType: job.type, error: errMsg },
         });
         // Fall back to in-memory on QStash failure
         this.jobs.set(job.id, job);

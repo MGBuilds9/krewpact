@@ -3,11 +3,12 @@ import { readFile, stat } from 'fs/promises';
 import { NextResponse } from 'next/server';
 import path from 'path';
 
-import { forbidden } from '@/lib/api/errors';
-import { getKrewpactRoles, getOrgIdFromAuth } from '@/lib/api/org';
 import { withApiRoute } from '@/lib/api/with-api-route';
 import { createServiceClient } from '@/lib/supabase/server';
 import { stagingBulkImportSchema } from '@/lib/validators/executive';
+
+// Single-org app — org_id scoping is redundant; RLS handles data isolation.
+const DEFAULT_ORG_ID = process.env.DEFAULT_ORG_ID || 'e076c9b9-72ce-4fdc-a031-e5808e73d92c';
 
 const ADMIN_ROLES = ['platform_admin'];
 
@@ -34,7 +35,6 @@ interface ProcessResult {
 async function processOneFile(
   supabase: SupabaseClient,
   file: FileInput,
-  orgId: string,
 ): Promise<ProcessResult> {
   const filePath = file.path;
 
@@ -67,7 +67,6 @@ async function processOneFile(
   const { data: existing } = await supabase
     .from('knowledge_staging')
     .select('id')
-    .eq('org_id', orgId)
     .eq('content_checksum', contentChecksum);
 
   if (existing && existing.length > 0) return { status: 'skipped', reason: 'duplicate checksum' };
@@ -80,7 +79,7 @@ async function processOneFile(
     source_type: 'vault_import',
     source_path: filePath,
     content_checksum: contentChecksum,
-    org_id: orgId,
+    org_id: DEFAULT_ORG_ID,
     status: 'pending_review',
     ...(file.category && { category: file.category }),
     ...(file.division_id && { division_id: file.division_id }),
@@ -92,12 +91,7 @@ async function processOneFile(
   return { status: 'imported' };
 }
 
-export const POST = withApiRoute({}, async ({ req }) => {
-  const roles = await getKrewpactRoles();
-  const hasAccess = roles.some((r) => ADMIN_ROLES.includes(r));
-  if (!hasAccess) {
-    throw forbidden('Forbidden: platform_admin role required');
-  }
+export const POST = withApiRoute({ roles: ADMIN_ROLES }, async ({ req }) => {
 
   let body: unknown;
   try {
@@ -111,7 +105,6 @@ export const POST = withApiRoute({}, async ({ req }) => {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const orgId = await getOrgIdFromAuth();
   const supabase = await createServiceClient();
 
   let imported = 0;
@@ -120,7 +113,7 @@ export const POST = withApiRoute({}, async ({ req }) => {
   const details: FileDetail[] = [];
 
   for (const file of parsed.data.files) {
-    const result = await processOneFile(supabase, file, orgId);
+    const result = await processOneFile(supabase, file);
     details.push({ path: file.path, status: result.status, reason: result.reason });
     if (result.status === 'imported') imported++;
     else if (result.status === 'skipped') skipped++;

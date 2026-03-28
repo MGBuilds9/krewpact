@@ -48,8 +48,8 @@ interface SeedData {
 // Default MDM Group seed data (inline — no file required)
 const MDM_SEED: SeedData = {
   organization: {
-    name: 'MDM Group Inc.',
-    slug: 'mdm-group',
+    name: 'Acme Construction Inc.',
+    slug: 'acme-construction',
     timezone: 'America/Toronto',
     locale: 'en-CA',
     metadata: {
@@ -57,12 +57,12 @@ const MDM_SEED: SeedData = {
       address: process.env.COMPANY_ADDRESS ?? '123 Main St, Suite 100, City, ON A1B 2C3',
       phone: process.env.COMPANY_PHONE ?? '(555) 555-0100',
       email: process.env.COMPANY_EMAIL ?? 'info@example.com',
-      website: 'https://mdmgroupinc.ca',
+      website: 'https://example.com',
     },
   },
   org_settings: {
     branding: {
-      company_name: 'MDM Group Inc.',
+      company_name: 'Acme Construction Inc.',
       primary_color: '#0f172a',
       logo_url: '',
     },
@@ -70,12 +70,12 @@ const MDM_SEED: SeedData = {
     feature_flags: {},
   },
   divisions: [
-    { code: 'contracting', name: 'MDM Contracting', description: 'General contracting division' },
-    { code: 'homes', name: 'MDM Homes', description: 'Residential construction division' },
-    { code: 'wood', name: 'MDM Wood', description: 'Wood/lumber division' },
-    { code: 'telecom', name: 'MDM Telecom', description: 'Telecommunications division' },
-    { code: 'group-inc', name: 'MDM Group Inc.', description: 'Parent company / corporate' },
-    { code: 'management', name: 'MDM Management', description: 'Property management division' },
+    { code: 'contracting', name: 'Acme Contracting', description: 'General contracting division' },
+    { code: 'homes', name: 'Acme Homes', description: 'Residential construction division' },
+    { code: 'wood', name: 'Acme Lumber', description: 'Wood/lumber division' },
+    { code: 'telecom', name: 'Acme Telecom', description: 'Telecommunications division' },
+    { code: 'group-inc', name: 'Acme Construction Inc.', description: 'Parent company / corporate' },
+    { code: 'management', name: 'Acme Management', description: 'Property management division' },
   ],
   roles: [
     // Internal (9)

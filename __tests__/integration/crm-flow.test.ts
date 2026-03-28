@@ -92,8 +92,8 @@ describe('CRM Integration: Full happy path', () => {
     // Step 2: Add a primary contact to the account
     const contact = makeContact({
       account_id: account.id,
-      first_name: 'Michael',
-      last_name: 'Guirguis',
+      first_name: 'Jane',
+      last_name: 'Smith',
       is_primary: true,
     });
     mockCreateUserClientSafe.mockResolvedValue({
@@ -103,8 +103,8 @@ describe('CRM Integration: Full happy path', () => {
 
     const contactRes = await contactsPOST(
       makeJsonRequest('/api/crm/contacts', {
-        first_name: 'Michael',
-        last_name: 'Guirguis',
+        first_name: 'Jane',
+        last_name: 'Smith',
         account_id: VALID_ACCOUNT_ID,
         is_primary: true,
       }),

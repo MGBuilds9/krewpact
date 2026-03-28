@@ -57,7 +57,7 @@ export const fixtures = {
  * Org slug used in URL paths for the test organization.
  * Defaults to 'mdm-group' (the primary MDM org).
  */
-export const TEST_ORG_SLUG = process.env.E2E_ORG_SLUG ?? 'mdm-group';
+export const TEST_ORG_SLUG = process.env.E2E_ORG_SLUG ?? 'acme-construction';
 
 /**
  * Build a dashboard URL with the test org slug.

@@ -1,6 +1,7 @@
 import { google } from '@ai-sdk/google';
 import { generateText } from 'ai';
 
+import { AI_MODELS } from '@/lib/ai/models';
 import { logger } from '@/lib/logger';
 
 interface DeepResearchResult {
@@ -97,7 +98,7 @@ export async function deepResearchLead(
 
   // 3. Gemini synthesis
   const { text } = await generateText({
-    model: google('gemini-2.0-flash'),
+    model: google(AI_MODELS.flash),
     prompt: `You are a construction industry analyst for MDM Group Inc., a construction conglomerate in the Greater Toronto Area (GTA), Ontario, Canada. MDM offers general contracting, residential construction, wood/lumber, telecom, and property management services.
 
 Write a structured research report (~200 words) about "${companyName}" based on the following data:

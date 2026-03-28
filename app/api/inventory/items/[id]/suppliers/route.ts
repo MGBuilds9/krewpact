@@ -3,7 +3,6 @@ import { z } from 'zod';
 
 import { dbError, notFound } from '@/lib/api/errors';
 import { withApiRoute } from '@/lib/api/with-api-route';
-import { isFeatureEnabled } from '@/lib/feature-flags';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 const addSupplierSchema = z.object({
@@ -16,10 +15,6 @@ const addSupplierSchema = z.object({
 });
 
 export const GET = withApiRoute({}, async ({ params }) => {
-  if (!isFeatureEnabled('inventory_management')) {
-    return NextResponse.json({ error: 'Feature not enabled' }, { status: 404 });
-  }
-
   const itemId = params.id;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
@@ -73,10 +68,6 @@ export const GET = withApiRoute({}, async ({ params }) => {
 });
 
 export const POST = withApiRoute({ bodySchema: addSupplierSchema }, async ({ body, params }) => {
-  if (!isFeatureEnabled('inventory_management')) {
-    return NextResponse.json({ error: 'Feature not enabled' }, { status: 404 });
-  }
-
   const itemId = params.id;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
@@ -100,10 +91,6 @@ export const POST = withApiRoute({ bodySchema: addSupplierSchema }, async ({ bod
 });
 
 export const DELETE = withApiRoute({}, async ({ req, params }) => {
-  if (!isFeatureEnabled('inventory_management')) {
-    return NextResponse.json({ error: 'Feature not enabled' }, { status: 404 });
-  }
-
   const itemId = params.id;
   const supplierId = req.nextUrl.searchParams.get('supplierId');
   if (!supplierId) {

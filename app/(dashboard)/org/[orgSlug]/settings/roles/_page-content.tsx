@@ -19,24 +19,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRolePermissions, useRoles } from '@/hooks/useOrg';
+import { EXTERNAL_ROLES, INTERNAL_ROLES } from '@/lib/rbac/role-registry';
+import type { KrewpactRole } from '@/lib/rbac/permissions.shared';
 
-const CANONICAL_ROLES = [
-  { key: 'platform_admin', label: 'Platform Admin', group: 'Internal' },
-  { key: 'executive', label: 'Executive', group: 'Internal' },
-  { key: 'operations_manager', label: 'Operations Manager', group: 'Internal' },
-  { key: 'project_manager', label: 'Project Manager', group: 'Internal' },
-  { key: 'project_coordinator', label: 'Project Coordinator', group: 'Internal' },
-  { key: 'estimator', label: 'Estimator', group: 'Internal' },
-  { key: 'field_supervisor', label: 'Field Supervisor', group: 'Internal' },
-  { key: 'accounting', label: 'Accounting', group: 'Internal' },
-  { key: 'payroll_admin', label: 'Payroll Admin', group: 'Internal' },
-  { key: 'client_owner', label: 'Client Owner', group: 'External' },
-  { key: 'client_delegate', label: 'Client Delegate', group: 'External' },
-  { key: 'trade_partner_admin', label: 'Trade Partner Admin', group: 'External' },
-  { key: 'trade_partner_user', label: 'Trade Partner User', group: 'External' },
-] as const;
-
-type RoleKey = (typeof CANONICAL_ROLES)[number]['key'];
+type RoleKey = KrewpactRole;
 
 interface AssignRoleDialogProps {
   open: boolean;
@@ -81,8 +67,8 @@ function AssignRoleDialog({ open, onClose }: AssignRoleDialogProps) {
     }
   }
 
-  const internalRoles = CANONICAL_ROLES.filter((r) => r.group === 'Internal');
-  const externalRoles = CANONICAL_ROLES.filter((r) => r.group === 'External');
+  const internalRoles = INTERNAL_ROLES;
+  const externalRoles = EXTERNAL_ROLES;
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>

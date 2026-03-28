@@ -17,7 +17,6 @@ import { useEstimateAllowances, useEstimateAlternates } from '@/hooks/useEstimat
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 import type { EstimateStatus } from '@/lib/estimating/estimate-status';
 import { ALLOWED_STATUS_TRANSITIONS } from '@/lib/estimating/estimate-status';
-import { isFeatureEnabled } from '@/lib/feature-flags';
 
 import { EstimateCardsSection } from './_components/EstimateCardsSection';
 import { EstimateHeader } from './_components/EstimateHeader';
@@ -40,7 +39,7 @@ export default function EstimateBuilderPage() {
   const [activeTakeoffJobId, setActiveTakeoffJobId] = useState<string | null>(null);
   const [takeoffReviewJobId, setTakeoffReviewJobId] = useState<string | null>(null);
   const [completedTakeoffJobId, setCompletedTakeoffJobId] = useState<string | null>(null);
-  const showTakeoff = isFeatureEnabled('ai_takeoff');
+  const showTakeoff = true;
 
   const { data: estimate, isLoading } = useEstimate(estimateId);
   const { data: lines } = useEstimateLines(estimateId);

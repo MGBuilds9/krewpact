@@ -8,10 +8,6 @@ vi.mock('@/lib/supabase/server', () => ({
   createUserClientSafe: vi.fn(),
 }));
 
-vi.mock('@/lib/feature-flags', () => ({
-  isFeatureEnabled: vi.fn(),
-}));
-
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
@@ -46,13 +42,11 @@ import {
   mockSupabaseClient,
 } from '@/__tests__/helpers';
 import { POST } from '@/app/api/inventory/adjustments/route';
-import { isFeatureEnabled } from '@/lib/feature-flags';
 import { createLedgerEntry } from '@/lib/inventory/ledger';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
-const mockIsFeatureEnabled = vi.mocked(isFeatureEnabled);
 const mockCreateLedgerEntry = vi.mocked(createLedgerEntry);
 
 const VALID_BODY = {
@@ -67,7 +61,6 @@ const VALID_BODY = {
 describe('POST /api/inventory/adjustments', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockIsFeatureEnabled.mockReturnValue(true);
   });
 
   it('returns 401 when unauthenticated', async () => {
@@ -76,13 +69,6 @@ describe('POST /api/inventory/adjustments', () => {
     expect(res.status).toBe(401);
     const body = await res.json();
     expect(body.error.code).toBe('UNAUTHORIZED');
-  });
-
-  it('returns 404 when feature is disabled', async () => {
-    mockClerkAuth(mockAuth);
-    mockIsFeatureEnabled.mockReturnValue(false);
-    const res = await POST(makeJsonRequest('/api/inventory/adjustments', VALID_BODY));
-    expect(res.status).toBe(404);
   });
 
   it('returns 400 when qty_change is 0', async () => {

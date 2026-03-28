@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { dbError, forbidden, notFound } from '@/lib/api/errors';
-import { getKrewpactRoles, getOrgIdFromAuth } from '@/lib/api/org';
+import { getKrewpactRoles } from '@/lib/api/org';
 import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { subscriptionUpdateSchema } from '@/lib/validators/executive';
@@ -18,7 +18,6 @@ export const GET = withApiRoute({}, async ({ params, logger }) => {
     throw forbidden('Forbidden: executive or platform_admin role required');
   }
 
-  const orgId = await getOrgIdFromAuth();
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -26,7 +25,6 @@ export const GET = withApiRoute({}, async ({ params, logger }) => {
     .from('executive_subscriptions')
     .select('*')
     .eq('id', id)
-    .eq('org_id', orgId)
     .single();
 
   if (error || !data) {
@@ -57,7 +55,6 @@ export const PATCH = withApiRoute({}, async ({ req, params, logger }) => {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const orgId = await getOrgIdFromAuth();
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -65,7 +62,6 @@ export const PATCH = withApiRoute({}, async ({ req, params, logger }) => {
     .from('executive_subscriptions')
     .update({ ...parsed.data, updated_at: new Date().toISOString() })
     .eq('id', id)
-    .eq('org_id', orgId)
     .select()
     .single();
 
@@ -85,7 +81,6 @@ export const DELETE = withApiRoute({}, async ({ params, logger }) => {
     throw forbidden('Forbidden: platform_admin role required');
   }
 
-  const orgId = await getOrgIdFromAuth();
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -94,7 +89,6 @@ export const DELETE = withApiRoute({}, async ({ params, logger }) => {
     .from('executive_subscriptions')
     .select('id')
     .eq('id', id)
-    .eq('org_id', orgId)
     .single();
 
   if (!existing) {
@@ -104,8 +98,7 @@ export const DELETE = withApiRoute({}, async ({ params, logger }) => {
   const { error } = await supabase
     .from('executive_subscriptions')
     .delete()
-    .eq('id', id)
-    .eq('org_id', orgId);
+    .eq('id', id);
 
   if (error) {
     logger.error('Failed to delete subscription', { message: error.message });

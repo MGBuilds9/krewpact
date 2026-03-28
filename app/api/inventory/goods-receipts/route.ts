@@ -2,16 +2,11 @@ import { NextResponse } from 'next/server';
 
 import { dbError } from '@/lib/api/errors';
 import { withApiRoute } from '@/lib/api/with-api-route';
-import { isFeatureEnabled } from '@/lib/feature-flags';
 import { createGoodsReceipt, listGoodsReceipts } from '@/lib/inventory/goods-receipts';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { createGoodsReceiptSchema } from '@/lib/validators/inventory';
 
 export const GET = withApiRoute({}, async ({ req }) => {
-  if (!isFeatureEnabled('inventory_management')) {
-    return NextResponse.json({ error: 'Feature not enabled' }, { status: 404 });
-  }
-
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -33,10 +28,6 @@ export const GET = withApiRoute({}, async ({ req }) => {
 export const POST = withApiRoute(
   { bodySchema: createGoodsReceiptSchema },
   async ({ body, userId }) => {
-    if (!isFeatureEnabled('inventory_management')) {
-      return NextResponse.json({ error: 'Feature not enabled' }, { status: 404 });
-    }
-
     const { client: supabase, error: authError } = await createUserClientSafe();
     if (authError) return authError;
 

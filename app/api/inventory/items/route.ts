@@ -3,7 +3,6 @@ import { z } from 'zod';
 
 import { dbError } from '@/lib/api/errors';
 import { withApiRoute } from '@/lib/api/with-api-route';
-import { isFeatureEnabled } from '@/lib/feature-flags';
 import { createItem, listItems } from '@/lib/inventory/items';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { createItemSchema } from '@/lib/validators/inventory';
@@ -19,10 +18,6 @@ const querySchema = z.object({
 });
 
 export const GET = withApiRoute({ querySchema }, async ({ query }) => {
-  if (!isFeatureEnabled('inventory_management')) {
-    return NextResponse.json({ error: 'Feature not enabled' }, { status: 404 });
-  }
-
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -46,10 +41,6 @@ export const GET = withApiRoute({ querySchema }, async ({ query }) => {
 });
 
 export const POST = withApiRoute({ bodySchema: createItemSchema }, async ({ body, userId }) => {
-  if (!isFeatureEnabled('inventory_management')) {
-    return NextResponse.json({ error: 'Feature not enabled' }, { status: 404 });
-  }
-
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 

@@ -20,21 +20,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useProvisionUser } from '@/hooks/useOrg';
+import { INTERNAL_ROLES } from '@/lib/rbac/role-registry';
 import { userProvisioningSchema } from '@/lib/validators/org';
 
 type FormValues = z.infer<typeof userProvisioningSchema>;
-
-const ROLE_OPTIONS = [
-  { key: 'platform_admin', label: 'Platform Admin' },
-  { key: 'executive', label: 'Executive' },
-  { key: 'operations_manager', label: 'Operations Manager' },
-  { key: 'project_manager', label: 'Project Manager' },
-  { key: 'project_coordinator', label: 'Project Coordinator' },
-  { key: 'estimator', label: 'Estimator' },
-  { key: 'field_supervisor', label: 'Field Supervisor' },
-  { key: 'accounting', label: 'Accounting' },
-  { key: 'payroll_admin', label: 'Payroll Admin' },
-];
 
 interface UserProvisioningFormProps {
   onSuccess?: () => void;
@@ -80,7 +69,7 @@ export function UserProvisioningForm({ onSuccess, onCancel }: UserProvisioningFo
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input type="email" placeholder="user@mdmgroupinc.ca" {...field} />
+                <Input type="email" placeholder="user@yourcompany.com" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -121,7 +110,7 @@ export function UserProvisioningForm({ onSuccess, onCancel }: UserProvisioningFo
         <div className="space-y-2">
           <p className="text-sm font-medium">Roles (optional)</p>
           <div className="grid grid-cols-2 gap-2">
-            {ROLE_OPTIONS.map(({ key, label }) => (
+            {INTERNAL_ROLES.map(({ key, label }) => (
               <div key={key} className="flex items-center gap-2">
                 <Checkbox
                   id={`prov-role-${key}`}

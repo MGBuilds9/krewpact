@@ -23,8 +23,8 @@ describe('profileUpdateSchema', () => {
 
   it('accepts valid full profile update', () => {
     const result = profileUpdateSchema.safeParse({
-      full_name: 'Michael Guirguis',
-      email: 'michael@mdmgroupinc.ca',
+      full_name: 'Jane Smith',
+      email: 'jane@example.com',
       phone: '+1-905-555-0100',
     });
     expect(result.success).toBe(true);
@@ -92,7 +92,7 @@ describe('divisionSetupCreateSchema', () => {
 describe('userProvisioningSchema', () => {
   it('accepts valid input with all required fields', () => {
     const result = userProvisioningSchema.safeParse({
-      email: 'david@mdmgroupinc.ca',
+      email: 'john@example.com',
       first_name: 'David',
       last_name: 'COO',
       role_keys: ['platform_admin'],
@@ -113,7 +113,7 @@ describe('userProvisioningSchema', () => {
 
   it('accepts empty role_keys (roles are optional)', () => {
     const result = userProvisioningSchema.safeParse({
-      email: 'david@mdmgroupinc.ca',
+      email: 'john@example.com',
       first_name: 'David',
       last_name: 'COO',
       role_keys: [],
@@ -124,7 +124,7 @@ describe('userProvisioningSchema', () => {
 
   it('accepts empty division_ids (divisions are optional)', () => {
     const result = userProvisioningSchema.safeParse({
-      email: 'david@mdmgroupinc.ca',
+      email: 'john@example.com',
       first_name: 'David',
       last_name: 'COO',
       role_keys: ['project_coordinator'],
@@ -135,7 +135,7 @@ describe('userProvisioningSchema', () => {
 
   it('fails when role_keys is missing', () => {
     const result = userProvisioningSchema.safeParse({
-      email: 'david@mdmgroupinc.ca',
+      email: 'john@example.com',
       first_name: 'David',
       last_name: 'COO',
     });
@@ -144,7 +144,7 @@ describe('userProvisioningSchema', () => {
 
   it('accepts multiple role_keys and division_ids', () => {
     const result = userProvisioningSchema.safeParse({
-      email: 'david@mdmgroupinc.ca',
+      email: 'john@example.com',
       first_name: 'David',
       last_name: 'COO',
       role_keys: ['project_manager', 'estimator'],

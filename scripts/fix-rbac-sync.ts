@@ -14,7 +14,7 @@ config({ path: '.env.local' });
 import { createClient } from '@supabase/supabase-js';
 
 const APPLY = process.argv.includes('--apply');
-const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL ?? 'michael.guirguis@mdmgroupinc.ca';
+const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL ?? 'admin@example.com';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;

@@ -292,7 +292,7 @@ describe('meetingMinutesSchema', () => {
     const result = meetingMinutesSchema.safeParse({
       meeting_date: '2026-02-26',
       title: 'Site Progress Meeting',
-      attendees: ['David G.', 'Mina T.'],
+      attendees: ['John D.', 'Sara T.'],
       notes: 'Discussed framing progress.',
     });
     expect(result.success).toBe(true);
@@ -302,7 +302,7 @@ describe('meetingMinutesSchema', () => {
     const result = meetingMinutesSchema.safeParse({
       meeting_date: '2026-02-26',
       title: 'Kickoff',
-      attendees: ['Michael', 'Ehab'],
+      attendees: ['Michael', 'Alex'],
       agenda: 'Review scope and timeline',
       notes: 'All systems go.',
       action_items: [

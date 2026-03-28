@@ -161,6 +161,13 @@ export const queryKeys = {
     lists: () => [...queryKeys.transactionLedger.all, 'list'] as const,
     list: (filters: object) => [...queryKeys.transactionLedger.lists(), filters] as const,
   },
+  expenses: {
+    all: ['expenses'] as const,
+    lists: () => [...queryKeys.expenses.all, 'list'] as const,
+    list: (filters: object) => [...queryKeys.expenses.lists(), filters] as const,
+    details: () => [...queryKeys.expenses.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.expenses.details(), id] as const,
+  },
   takeoff: {
     all: ['takeoff'] as const,
     byEstimate: (estimateId: string) => ['takeoff', 'estimate', estimateId] as const,

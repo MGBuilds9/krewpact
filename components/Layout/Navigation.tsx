@@ -29,7 +29,6 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { useUserRBAC } from '@/hooks/useRBAC';
-import { type FeatureKey, isFeatureEnabled } from '@/lib/feature-flags';
 import { cn } from '@/lib/utils';
 
 const MAX_VISIBLE = 7;
@@ -45,7 +44,6 @@ interface NavItem {
   description: string;
   adminOnly?: boolean;
   requiredRoles?: string[];
-  featureFlag?: FeatureKey;
 }
 
 const navigationItems: NavItem[] = [
@@ -79,14 +77,12 @@ const navigationItems: NavItem[] = [
     label: 'Inventory',
     path: '/inventory',
     description: 'Items, stock & purchasing',
-    featureFlag: 'inventory_management' as FeatureKey,
   },
   {
     icon: Calendar,
     label: 'Schedule',
     path: '/schedule',
     description: 'Calendar & events',
-    featureFlag: 'schedule',
   },
   { icon: Users, label: 'Team', path: '/team', description: 'Employee directory' },
   {
@@ -94,7 +90,6 @@ const navigationItems: NavItem[] = [
     label: 'Finance',
     path: '/finance',
     description: 'Financial overview',
-    featureFlag: 'finance',
   },
   {
     icon: ClipboardList,
@@ -107,7 +102,6 @@ const navigationItems: NavItem[] = [
     label: 'Executive',
     path: '/executive',
     description: 'Executive dashboard',
-    featureFlag: 'executive',
     requiredRoles: ['executive', 'platform_admin'],
   },
   {
@@ -252,7 +246,6 @@ export function Navigation({ isMobile = false }: NavigationProps) {
   const filteredItems = useMemo(
     () =>
       navigationItems.filter((item) => {
-        if (item.featureFlag && !isFeatureEnabled(item.featureFlag)) return false;
         if (item.adminOnly && !isAdmin) return false;
         if (item.requiredRoles && !item.requiredRoles.some((r) => hasRole(r)) && !isAdmin)
           return false;

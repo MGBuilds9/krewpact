@@ -40,12 +40,6 @@ vi.mock('@/hooks/useRBAC', () => ({
   useUserRBAC: () => mockUseUserRBAC(),
 }));
 
-const mockIsFeatureEnabled = vi.fn((_key: string) => false);
-
-vi.mock('@/lib/feature-flags', () => ({
-  isFeatureEnabled: (key: string) => mockIsFeatureEnabled(key),
-}));
-
 // Mock lucide-react icons to avoid SVG issues
 vi.mock('lucide-react', () => ({
   BarChart3: () => <span>BarChart3</span>,
@@ -129,14 +123,6 @@ function setHasRole(roleFn: (role: string) => boolean) {
   mockHasRole.mockImplementation(roleFn);
 }
 
-function setFeatureFlag(key: string, enabled: boolean) {
-  mockIsFeatureEnabled.mockImplementation((k) => (k === key ? enabled : false));
-}
-
-function enableFeatureFlags(...keys: string[]) {
-  mockIsFeatureEnabled.mockImplementation((k) => keys.includes(k));
-}
-
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
@@ -144,7 +130,7 @@ function enableFeatureFlags(...keys: string[]) {
 describe('Navigation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Default: not admin, no roles, all feature flags off
+    // Default: not admin, no roles
     mockUseUserRBAC.mockReturnValue({
       isAdmin: false,
       hasRole: mockHasRole,
@@ -156,13 +142,12 @@ describe('Navigation', () => {
       divisionIds: [],
     });
     mockHasRole.mockReturnValue(false);
-    mockIsFeatureEnabled.mockReturnValue(false);
   });
 
   // -------------------------------------------------------------------------
-  // Case 1 — Default visible items (no feature flag required)
+  // Case 1 — Default visible items
   // -------------------------------------------------------------------------
-  it('shows Dashboard, CRM, Estimates, Projects, Documents, Team, Reports by default', () => {
+  it('shows Dashboard, CRM, Estimates, Projects, Documents, Inventory, Schedule, Team, Finance, Reports by default', () => {
     render(<Navigation />);
     expect(screen.getByText('Dashboard')).toBeInTheDocument();
     expect(screen.getByText('CRM')).toBeInTheDocument();
@@ -171,30 +156,6 @@ describe('Navigation', () => {
     expect(screen.getByText('Documents')).toBeInTheDocument();
     expect(screen.getByText('Team')).toBeInTheDocument();
     expect(screen.getByText('Reports')).toBeInTheDocument();
-  });
-
-  // -------------------------------------------------------------------------
-  // Case 2 — Schedule hidden when flag is false
-  // -------------------------------------------------------------------------
-  it('hides Schedule when schedule feature flag is false', () => {
-    render(<Navigation />);
-    expect(screen.queryByText('Schedule')).not.toBeInTheDocument();
-  });
-
-  // -------------------------------------------------------------------------
-  // Case 3 — Finance hidden when flag is false
-  // -------------------------------------------------------------------------
-  it('hides Finance when finance feature flag is false', () => {
-    render(<Navigation />);
-    expect(screen.queryByText('Finance')).not.toBeInTheDocument();
-  });
-
-  // -------------------------------------------------------------------------
-  // Case 4 — Executive hidden when flag is false
-  // -------------------------------------------------------------------------
-  it('hides Executive when executive feature flag is false', () => {
-    render(<Navigation />);
-    expect(screen.queryByText('Executive')).not.toBeInTheDocument();
   });
 
   // -------------------------------------------------------------------------
@@ -215,30 +176,27 @@ describe('Navigation', () => {
   });
 
   // -------------------------------------------------------------------------
-  // Case 7 — Executive shown when flag true AND user hasRole('executive')
+  // Case 7 — Executive shown when user has executive role
   // -------------------------------------------------------------------------
-  it('shows Executive when feature flag is true and user has executive role', () => {
-    enableFeatureFlags('executive');
+  it('shows Executive when user has executive role', () => {
     setHasRole((role) => role === 'executive');
     render(<Navigation />);
     expect(screen.getByText('Executive')).toBeInTheDocument();
   });
 
   // -------------------------------------------------------------------------
-  // Case 8 — Executive shown when flag true AND user isAdmin
+  // Case 8 — Executive shown when user isAdmin
   // -------------------------------------------------------------------------
-  it('shows Executive when feature flag is true and user isAdmin', () => {
-    enableFeatureFlags('executive');
+  it('shows Executive when user isAdmin', () => {
     setAdmin(true);
     render(<Navigation />);
     expect(screen.getByText('Executive')).toBeInTheDocument();
   });
 
   // -------------------------------------------------------------------------
-  // Case 9 — Executive hidden when flag true but user has neither role
+  // Case 9 — Executive hidden when user has neither required role
   // -------------------------------------------------------------------------
-  it('hides Executive when feature flag is true but user has no required role and is not admin', () => {
-    enableFeatureFlags('executive');
+  it('hides Executive when user has no required role and is not admin', () => {
     // hasRole returns false (default), isAdmin false (default)
     render(<Navigation />);
     expect(screen.queryByText('Executive')).not.toBeInTheDocument();
@@ -284,18 +242,6 @@ describe('Navigation', () => {
     render(<Navigation isMobile />);
     const dashboardLink = screen.getByText('Dashboard').closest('a');
     expect(dashboardLink?.className).toContain('bg-primary');
-  });
-
-  it('shows Schedule in mobile mode when feature flag is enabled', () => {
-    setFeatureFlag('schedule', true);
-    render(<Navigation isMobile />);
-    expect(screen.getByText('Schedule')).toBeInTheDocument();
-  });
-
-  it('shows Finance in mobile mode when feature flag is enabled', () => {
-    setFeatureFlag('finance', true);
-    render(<Navigation isMobile />);
-    expect(screen.getByText('Finance')).toBeInTheDocument();
   });
 
   it('shows Admin in mobile mode when isAdmin is true', () => {

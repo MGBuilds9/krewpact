@@ -1,3 +1,4 @@
+import { INTERNAL_ROLES as REGISTRY_INTERNAL_ROLES } from '@/lib/rbac/role-registry';
 import type { DivisionCode } from '@/lib/validators/org';
 
 export const TOTAL_STEPS = 4;
@@ -11,17 +12,8 @@ export const DIVISION_LABELS: Record<DivisionCode, string> = {
   management: 'MDM Management',
 };
 
-export const INTERNAL_ROLES = [
-  { value: 'platform_admin', label: 'Platform Admin' },
-  { value: 'executive', label: 'Executive' },
-  { value: 'operations_manager', label: 'Operations Manager' },
-  { value: 'project_manager', label: 'Project Manager' },
-  { value: 'project_coordinator', label: 'Project Coordinator' },
-  { value: 'estimator', label: 'Estimator' },
-  { value: 'field_supervisor', label: 'Field Supervisor' },
-  { value: 'accounting', label: 'Accounting' },
-  { value: 'payroll_admin', label: 'Payroll Admin' },
-];
+// Re-export with `value` shape for backwards compatibility with onboarding UI
+export const INTERNAL_ROLES = REGISTRY_INTERNAL_ROLES.map((r) => ({ value: r.key, label: r.label }));
 
 export interface PendingInvite {
   email: string;

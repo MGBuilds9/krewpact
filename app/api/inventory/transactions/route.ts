@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 
 import { dbError } from '@/lib/api/errors';
 import { withApiRoute } from '@/lib/api/with-api-route';
-import { isFeatureEnabled } from '@/lib/feature-flags';
 import { createLedgerEntry, createTransferEntries } from '@/lib/inventory/ledger';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { createTransactionSchema } from '@/lib/validators/inventory';
@@ -10,10 +9,6 @@ import { createTransactionSchema } from '@/lib/validators/inventory';
 export const POST = withApiRoute(
   { bodySchema: createTransactionSchema },
   async ({ body, userId }) => {
-    if (!isFeatureEnabled('inventory_management')) {
-      return NextResponse.json({ error: 'Feature not enabled' }, { status: 404 });
-    }
-
     const { client: supabase, error: authError } = await createUserClientSafe();
     if (authError) return authError;
 

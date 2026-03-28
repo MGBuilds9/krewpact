@@ -1,3 +1,4 @@
+import { AI_MODELS } from './models';
 import type { AIProviderConfig, AITask } from './types';
 
 export function getAIProvider(task: AITask): AIProviderConfig {
@@ -5,10 +6,10 @@ export function getAIProvider(task: AITask): AIProviderConfig {
     case 'nudge':
     case 'draft':
     case 'summarize':
-      return { provider: 'google', model: 'gemini-2.0-flash' };
+      return { provider: 'google', model: AI_MODELS.flash };
     case 'query':
-      return { provider: 'anthropic', model: 'claude-haiku-4-5-20251001' };
+      return { provider: 'anthropic', model: AI_MODELS.haiku };
     case 'embed':
-      return { provider: 'openai', model: 'text-embedding-ada-002' };
+      return { provider: 'openai', model: AI_MODELS.embedding };
   }
 }

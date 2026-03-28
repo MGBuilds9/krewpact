@@ -6,7 +6,7 @@ import { deepResearchLead } from '@/lib/integrations/deep-research';
 import { logger } from '@/lib/logger';
 import { createServiceClient } from '@/lib/supabase/server';
 
-export const POST = withApiRoute({}, async ({ params }) => {
+export const POST = withApiRoute({ rateLimit: { limit: 5, window: '1 m' } }, async ({ params }) => {
   const { id } = params;
   const supabase = createServiceClient();
 

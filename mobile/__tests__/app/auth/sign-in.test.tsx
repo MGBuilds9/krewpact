@@ -33,6 +33,6 @@ describe('SignInScreen', () => {
 
   it('renders email input with correct placeholder', () => {
     render(<SignInScreen />);
-    expect(screen.getByPlaceholderText('you@mdmgroupinc.ca')).toBeTruthy();
+    expect(screen.getByPlaceholderText('you@yourcompany.com')).toBeTruthy();
   });
 });

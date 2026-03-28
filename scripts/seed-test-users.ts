@@ -18,7 +18,7 @@
  *   SUPABASE_SERVICE_ROLE_KEY — Supabase service role key
  *   CLERK_SECRET_KEY          — Clerk Backend API key (required for full UAT seed)
  *   SEED_ADMIN_CLERK_ID       — Existing Clerk user ID for admin-only mode
- *   SEED_ADMIN_EMAIL          — Admin email (optional, defaults to info@mdmgroupinc.ca)
+ *   SEED_ADMIN_EMAIL          — Admin email (optional, defaults to admin@example.com)
  */
 import { config } from 'dotenv';
 config({ path: '.env.local' });
@@ -31,7 +31,7 @@ const CLERK_SECRET_KEY = process.env.CLERK_SECRET_KEY;
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const SEED_ADMIN_CLERK_ID = process.env.SEED_ADMIN_CLERK_ID;
-const SEED_ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL ?? 'info@mdmgroupinc.ca';
+const SEED_ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL ?? 'admin@example.com';
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
   console.error('Missing required env vars: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY');
@@ -197,7 +197,7 @@ async function getOrgId(): Promise<string> {
   const { data, error } = await supabase
     .from('organizations')
     .select('id')
-    .eq('slug', 'mdm-group')
+    .eq('slug', 'acme-construction')
     .single();
 
   if (error || !data) throw new Error(`Org not found. Run seed-org.ts first: ${error?.message}`);

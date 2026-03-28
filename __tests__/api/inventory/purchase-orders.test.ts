@@ -4,9 +4,6 @@ vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn(),
   rateLimitResponse: vi.fn(),
 }));
-vi.mock('@/lib/feature-flags', () => ({
-  isFeatureEnabled: vi.fn(),
-}));
 vi.mock('@/lib/request-context', () => ({
   requestContext: { run: vi.fn((_, fn) => fn()) },
   generateRequestId: vi.fn().mockReturnValue('req_test'),
@@ -39,7 +36,6 @@ import { GET as GET_BY_ID } from '@/app/api/inventory/purchase-orders/[id]/route
 import { POST as POST_SUBMIT } from '@/app/api/inventory/purchase-orders/[id]/submit/route';
 import { GET, POST } from '@/app/api/inventory/purchase-orders/route';
 import { rateLimit } from '@/lib/api/rate-limit';
-import { isFeatureEnabled } from '@/lib/feature-flags';
 import {
   approvePo,
   cancelPo,
@@ -53,7 +49,6 @@ import { createUserClientSafe } from '@/lib/supabase/server';
 const mockAuth = vi.mocked(auth);
 const mockCreateClient = vi.mocked(createUserClientSafe);
 const mockRateLimit = vi.mocked(rateLimit);
-const mockFeatureEnabled = vi.mocked(isFeatureEnabled);
 const mockCreatePO = vi.mocked(createPurchaseOrder);
 const mockListPOs = vi.mocked(listPurchaseOrders);
 const mockGetPO = vi.mocked(getPurchaseOrder);
@@ -80,7 +75,6 @@ describe('GET /api/inventory/purchase-orders', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockClerkAuth(mockAuth, 'user-1');
-    mockFeatureEnabled.mockReturnValue(true);
     mockRateLimit.mockResolvedValue({ success: true, remaining: 60, reset: 0 });
     mockCreateClient.mockResolvedValue({ client: fakeSb, error: null } as never);
   });
@@ -91,12 +85,6 @@ describe('GET /api/inventory/purchase-orders', () => {
     expect(res.status).toBe(401);
     const body = await res.json();
     expect(body.error.code).toBe('UNAUTHORIZED');
-  });
-
-  it('returns 404 when feature disabled', async () => {
-    mockFeatureEnabled.mockReturnValue(false);
-    const res = await GET(makeRequest('/api/inventory/purchase-orders'));
-    expect(res.status).toBe(404);
   });
 
   it('returns list with filters', async () => {
@@ -120,7 +108,6 @@ describe('POST /api/inventory/purchase-orders', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockClerkAuth(mockAuth, 'user-1');
-    mockFeatureEnabled.mockReturnValue(true);
     mockRateLimit.mockResolvedValue({ success: true, remaining: 60, reset: 0 });
     mockCreateClient.mockResolvedValue({ client: fakeSb, error: null } as never);
   });
@@ -167,7 +154,6 @@ describe('GET /api/inventory/purchase-orders/[id]', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockClerkAuth(mockAuth, 'user-1');
-    mockFeatureEnabled.mockReturnValue(true);
     mockRateLimit.mockResolvedValue({ success: true, remaining: 60, reset: 0 });
     mockCreateClient.mockResolvedValue({ client: fakeSb, error: null } as never);
   });
@@ -200,7 +186,6 @@ describe('POST /api/inventory/purchase-orders/[id]/approve', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockClerkAuth(mockAuth, 'user-1');
-    mockFeatureEnabled.mockReturnValue(true);
     mockRateLimit.mockResolvedValue({ success: true, remaining: 60, reset: 0 });
     mockCreateClient.mockResolvedValue({ client: fakeSb, error: null } as never);
   });
@@ -234,7 +219,6 @@ describe('POST /api/inventory/purchase-orders/[id]/submit', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockClerkAuth(mockAuth, 'user-1');
-    mockFeatureEnabled.mockReturnValue(true);
     mockRateLimit.mockResolvedValue({ success: true, remaining: 60, reset: 0 });
     mockCreateClient.mockResolvedValue({ client: fakeSb, error: null } as never);
   });
@@ -256,7 +240,6 @@ describe('POST /api/inventory/purchase-orders/[id]/cancel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockClerkAuth(mockAuth, 'user-1');
-    mockFeatureEnabled.mockReturnValue(true);
     mockRateLimit.mockResolvedValue({ success: true, remaining: 60, reset: 0 });
     mockCreateClient.mockResolvedValue({ client: fakeSb, error: null } as never);
   });

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 
-import DashboardView from './DashboardView';
+import DashboardView from './_page-content';
 
 export const metadata: Metadata = {
   title: 'Dashboard — KrewPact',

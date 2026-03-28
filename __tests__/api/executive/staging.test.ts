@@ -7,7 +7,6 @@ vi.mock('@/lib/supabase/server', () => ({
   createServiceClient: vi.fn(),
 }));
 vi.mock('@/lib/api/org', () => ({
-  getOrgIdFromAuth: vi.fn().mockResolvedValue('org-1'),
   getKrewpactRoles: vi.fn(),
 }));
 vi.mock('@/lib/api/rate-limit', () => ({
@@ -124,12 +123,11 @@ describe('GET /api/executive/staging', () => {
     const rangeFn = vi.fn().mockReturnValue({ data: docs, count: 2, error: null });
     const orderFn = vi.fn().mockReturnValue({ range: rangeFn });
     const eqStatusFn = vi.fn().mockReturnValue({ order: orderFn });
-    const eqOrgFn = vi.fn().mockReturnValue({ eq: eqStatusFn });
-    const selectFn = vi.fn().mockReturnValue({ eq: eqOrgFn });
+    const selectFn = vi.fn().mockReturnValue({ eq: eqStatusFn });
 
-    mockCreateServiceClient.mockResolvedValue({
+    mockCreateServiceClient.mockReturnValue({
       from: vi.fn().mockReturnValue({ select: selectFn }),
-    } as unknown as Awaited<ReturnType<typeof createServiceClient>>);
+    } as unknown as ReturnType<typeof createServiceClient>);
 
     const res = await GET(makeRequest());
     expect(res.status).toBe(200);

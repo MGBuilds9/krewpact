@@ -2,6 +2,7 @@ import { google } from '@ai-sdk/google';
 import { streamText } from 'ai';
 import { NextResponse } from 'next/server';
 
+import { AI_MODELS } from '@/lib/ai/models';
 import { forbidden } from '@/lib/api/errors';
 import { getKrewpactRoles, getKrewpactUserId } from '@/lib/api/org';
 import { withApiRoute } from '@/lib/api/with-api-route';
@@ -94,7 +95,7 @@ async function buildKnowledgeContext(
   return { sources, contextText };
 }
 
-export const POST = withApiRoute({}, async ({ req, logger }) => {
+export const POST = withApiRoute({ rateLimit: { limit: 10, window: '1 m' } }, async ({ req, logger }) => {
   const roles = await getKrewpactRoles();
   if (!roles.some((r) => EXECUTIVE_ROLES.includes(r))) {
     throw forbidden('Forbidden');
@@ -147,7 +148,7 @@ export const POST = withApiRoute({}, async ({ req, logger }) => {
     : `You are an AI assistant for MDM Group executives. No relevant documents were found in the knowledge base for this query. Let the user know and suggest they try rephrasing or ask about a topic covered in the knowledge base.`;
 
   const result = streamText({
-    model: google('gemini-2.0-flash'),
+    model: google(AI_MODELS.flash),
     system: systemPrompt,
     messages: [...conversationHistory, { role: 'user', content: trimmedMessage }],
     temperature: 0.3,

@@ -3,7 +3,6 @@ import { z } from 'zod';
 
 import { dbError } from '@/lib/api/errors';
 import { withApiRoute } from '@/lib/api/with-api-route';
-import { isFeatureEnabled } from '@/lib/feature-flags';
 import { createLedgerEntry } from '@/lib/inventory/ledger';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
@@ -18,10 +17,6 @@ const adjustmentBodySchema = z.object({
 });
 
 export const POST = withApiRoute({ bodySchema: adjustmentBodySchema }, async ({ body, userId }) => {
-  if (!isFeatureEnabled('inventory_management')) {
-    return NextResponse.json({ error: 'Feature not enabled' }, { status: 404 });
-  }
-
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 

@@ -15,25 +15,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { useUpdateUserRoles, useUserRoles } from '@/hooks/useUserRoles';
-
-const INTERNAL_ROLES: { key: string; label: string }[] = [
-  { key: 'platform_admin', label: 'Platform Admin' },
-  { key: 'executive', label: 'Executive' },
-  { key: 'operations_manager', label: 'Operations Manager' },
-  { key: 'project_manager', label: 'Project Manager' },
-  { key: 'project_coordinator', label: 'Project Coordinator' },
-  { key: 'estimator', label: 'Estimator' },
-  { key: 'field_supervisor', label: 'Field Supervisor' },
-  { key: 'accounting', label: 'Accounting' },
-  { key: 'payroll_admin', label: 'Payroll Admin' },
-];
-
-const EXTERNAL_ROLES: { key: string; label: string }[] = [
-  { key: 'client_owner', label: 'Client Owner' },
-  { key: 'client_delegate', label: 'Client Delegate' },
-  { key: 'trade_partner_admin', label: 'Trade Partner Admin' },
-  { key: 'trade_partner_user', label: 'Trade Partner User' },
-];
+import { EXTERNAL_ROLES, INTERNAL_ROLES } from '@/lib/rbac/role-registry';
 
 interface UserRoleEditorProps {
   userId: string;
@@ -77,7 +59,7 @@ export function UserRoleEditor({ userId, userName, open, onOpenChange }: UserRol
     onOpenChange(isOpen);
   }
 
-  function renderRoleGroup(roles: { key: string; label: string }[]) {
+  function renderRoleGroup(roles: readonly { key: string; label: string }[]) {
     return roles.map(({ key, label }) => (
       <div key={key} className="flex items-center gap-3">
         <Checkbox

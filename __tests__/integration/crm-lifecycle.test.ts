@@ -66,9 +66,9 @@ describe('CRM Lifecycle: Lead → Contact → Opportunity', () => {
     mockClerkAuth(mockAuth);
     const contactData = {
       id: UUID2,
-      first_name: 'Michael',
-      last_name: 'Guirguis',
-      email: 'michael@mdm.ca',
+      first_name: 'Jane',
+      last_name: 'Smith',
+      email: 'jane@example.com',
       lead_id: UUID1,
     };
     const client = mockSupabaseClient({
@@ -77,9 +77,9 @@ describe('CRM Lifecycle: Lead → Contact → Opportunity', () => {
     mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest('/api/crm/contacts', {
-      first_name: 'Michael',
-      last_name: 'Guirguis',
-      email: 'michael@mdm.ca',
+      first_name: 'Jane',
+      last_name: 'Smith',
+      email: 'jane@example.com',
       lead_id: UUID1,
     });
     const res = await createContact(req);
@@ -184,7 +184,7 @@ describe('CRM Lifecycle: Search', () => {
     mockClerkAuth(mockAuth);
     const leads = [{ id: UUID1, company_name: 'MDM Contracting', stage: 'qualified' }];
     const contacts = [
-      { id: UUID2, first_name: 'Michael', last_name: 'MDM', email: 'michael@mdm.ca' },
+      { id: UUID2, first_name: 'Michael', last_name: 'MDM', email: 'jane@example.com' },
     ];
     const client = mockSupabaseClient({
       tables: {

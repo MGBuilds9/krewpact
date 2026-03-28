@@ -4,6 +4,7 @@ import { generateText } from 'ai';
 import { logger } from '@/lib/logger';
 
 import { trackAIAction } from '../cost-tracker';
+import { AI_MODELS } from '../models';
 import { executeToolCall, queryTools } from '../tools';
 
 interface NLQueryInput {
@@ -21,7 +22,7 @@ interface NLQueryOutput {
 async function generateAnswer(input: NLQueryInput, summary: string): Promise<string> {
   const start = Date.now();
   const { text: answer, usage } = await generateText({
-    model: google('gemini-2.0-flash'),
+    model: google(AI_MODELS.flash),
     prompt: `You are a helpful assistant for a construction company's CRM. The user asked: "${input.query}"
 
 Here is the data retrieved:
@@ -34,7 +35,7 @@ Write a concise, helpful answer (2-4 sentences max). Use specific numbers from t
     orgId: input.orgId,
     userId: input.userId,
     actionType: 'query_answered',
-    modelUsed: 'gemini-2.0-flash',
+    modelUsed: AI_MODELS.flash,
     inputTokens: usage?.inputTokens ?? undefined,
     outputTokens: usage?.outputTokens ?? undefined,
     latencyMs: Date.now() - start,
@@ -54,7 +55,7 @@ export async function executeNLQuery(input: NLQueryInput): Promise<NLQueryOutput
     .join('\n\n');
 
   const { text: toolCallText, usage } = await generateText({
-    model: google('gemini-2.0-flash'),
+    model: google(AI_MODELS.flash),
     prompt: `You are a data query assistant for a construction CRM. Given the user's question, determine which tool to call and with what parameters.
 
 Available tools:
@@ -77,7 +78,7 @@ ARGS: {}`,
     orgId: input.orgId,
     userId: input.userId,
     actionType: 'query_planned',
-    modelUsed: 'gemini-2.0-flash',
+    modelUsed: AI_MODELS.flash,
     inputTokens: usage?.inputTokens ?? undefined,
     outputTokens: usage?.outputTokens ?? undefined,
     latencyMs: Date.now() - start,

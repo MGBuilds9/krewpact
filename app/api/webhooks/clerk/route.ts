@@ -22,7 +22,7 @@ type ClerkWebhookEvent = {
 type ServiceClient = ReturnType<typeof createServiceClient>;
 
 const INTERNAL_DOMAINS = (
-  process.env.ALLOWED_DOMAINS || 'mdmgroupinc.ca,mdmcontracting.ca,krewpact.ca'
+  process.env.ALLOWED_DOMAINS || ''
 ).split(',');
 
 const DEFAULT_INTERNAL_ROLE = 'project_coordinator';

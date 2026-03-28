@@ -3,7 +3,6 @@ import { z } from 'zod';
 
 import { dbError } from '@/lib/api/errors';
 import { withApiRoute } from '@/lib/api/with-api-route';
-import { isFeatureEnabled } from '@/lib/feature-flags';
 import { createVehicle, listVehicles } from '@/lib/inventory/fleet';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { createFleetVehicleSchema } from '@/lib/validators/inventory';
@@ -22,10 +21,6 @@ const createBodySchema = createFleetVehicleSchema.extend({
 });
 
 export const GET = withApiRoute({ querySchema }, async ({ query }) => {
-  if (!isFeatureEnabled('inventory_management')) {
-    return NextResponse.json({ error: 'Feature not enabled' }, { status: 404 });
-  }
-
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -48,10 +43,6 @@ export const GET = withApiRoute({ querySchema }, async ({ query }) => {
 });
 
 export const POST = withApiRoute({ bodySchema: createBodySchema }, async ({ body }) => {
-  if (!isFeatureEnabled('inventory_management')) {
-    return NextResponse.json({ error: 'Feature not enabled' }, { status: 404 });
-  }
-
   const { auto_create_location, ...vehicleData } = body;
 
   const { client: supabase, error: authError } = await createUserClientSafe();

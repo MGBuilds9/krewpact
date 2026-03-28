@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { apiFetch, apiFetchList } from '@/lib/api-client';
+import { queryKeys } from '@/lib/query-keys';
 
 export interface Expense {
   id: string;
@@ -35,7 +36,7 @@ export interface ExpenseCreate {
 
 export function useExpenses(options?: { status?: string; projectId?: string }) {
   return useQuery({
-    queryKey: ['expenses', options?.status, options?.projectId],
+    queryKey: queryKeys.expenses.list({ status: options?.status, projectId: options?.projectId }),
     queryFn: () =>
       apiFetchList<Expense>('/api/expenses', {
         params: {
@@ -53,7 +54,7 @@ export function useCreateExpense() {
     mutationFn: (data: ExpenseCreate) =>
       apiFetch<Expense>('/api/expenses', { method: 'POST', body: data }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.expenses.all });
     },
   });
 }
@@ -65,7 +66,7 @@ export function useUpdateExpense() {
     mutationFn: ({ id, ...data }: Partial<Expense> & { id: string }) =>
       apiFetch<Expense>(`/api/expenses/${id}`, { method: 'PATCH', body: data }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.expenses.all });
     },
   });
 }
@@ -76,7 +77,7 @@ export function useDeleteExpense() {
   return useMutation({
     mutationFn: (id: string) => apiFetch(`/api/expenses/${id}`, { method: 'DELETE' }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.expenses.all });
     },
   });
 }

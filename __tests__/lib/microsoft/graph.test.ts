@@ -22,8 +22,8 @@ describe('buildGraphUrl', () => {
   });
 
   it('builds /users/{mailbox} path for shared mailbox', () => {
-    const url = buildGraphUrl('/messages', 'shared@mdmgroupinc.ca');
-    expect(url).toBe('https://graph.microsoft.com/v1.0/users/shared@mdmgroupinc.ca/messages');
+    const url = buildGraphUrl('/messages', 'shared@example.com');
+    expect(url).toBe('https://graph.microsoft.com/v1.0/users/shared@example.com/messages');
   });
 
   it('builds calendar events path without shared mailbox', () => {
@@ -32,8 +32,8 @@ describe('buildGraphUrl', () => {
   });
 
   it('builds calendar events path with shared mailbox', () => {
-    const url = buildGraphUrl('/events', 'calendar@mdmgroupinc.ca');
-    expect(url).toBe('https://graph.microsoft.com/v1.0/users/calendar@mdmgroupinc.ca/events');
+    const url = buildGraphUrl('/events', 'calendar@example.com');
+    expect(url).toBe('https://graph.microsoft.com/v1.0/users/calendar@example.com/events');
   });
 
   it('handles paths with query parameters', () => {

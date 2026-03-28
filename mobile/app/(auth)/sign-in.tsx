@@ -78,7 +78,7 @@ export default function SignInScreen() {
               style={styles.input}
               value={email}
               onChangeText={setEmail}
-              placeholder="you@mdmgroupinc.ca"
+              placeholder="you@yourcompany.com"
               placeholderTextColor={COLORS.muted}
               autoCapitalize="none"
               autoCorrect={false}

@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 
 import { dbError, notFound } from '@/lib/api/errors';
 import { withApiRoute } from '@/lib/api/with-api-route';
-import { isFeatureEnabled } from '@/lib/feature-flags';
 import { decommissionVehicle, updateVehicle } from '@/lib/inventory/fleet';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { createFleetVehicleSchema } from '@/lib/validators/inventory';
@@ -10,10 +9,6 @@ import { createFleetVehicleSchema } from '@/lib/validators/inventory';
 const updateVehicleSchema = createFleetVehicleSchema.partial();
 
 export const GET = withApiRoute({}, async ({ params }) => {
-  if (!isFeatureEnabled('inventory_management')) {
-    return NextResponse.json({ error: 'Feature not enabled' }, { status: 404 });
-  }
-
   const { id } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
@@ -28,10 +23,6 @@ export const GET = withApiRoute({}, async ({ params }) => {
 });
 
 export const PATCH = withApiRoute({ bodySchema: updateVehicleSchema }, async ({ body, params }) => {
-  if (!isFeatureEnabled('inventory_management')) {
-    return NextResponse.json({ error: 'Feature not enabled' }, { status: 404 });
-  }
-
   const { id } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
@@ -44,10 +35,6 @@ export const PATCH = withApiRoute({ bodySchema: updateVehicleSchema }, async ({ 
 });
 
 export const DELETE = withApiRoute({}, async ({ params }) => {
-  if (!isFeatureEnabled('inventory_management')) {
-    return NextResponse.json({ error: 'Feature not enabled' }, { status: 404 });
-  }
-
   const { id } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;

@@ -8,10 +8,6 @@ vi.mock('@/lib/supabase/server', () => ({
   createUserClientSafe: vi.fn(),
 }));
 
-vi.mock('@/lib/feature-flags', () => ({
-  isFeatureEnabled: vi.fn(),
-}));
-
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
@@ -52,13 +48,11 @@ import {
 } from '@/__tests__/helpers';
 import { DELETE, GET as GET_ID, PATCH } from '@/app/api/inventory/items/[id]/route';
 import { GET, POST } from '@/app/api/inventory/items/route';
-import { isFeatureEnabled } from '@/lib/feature-flags';
 import { createItem, deactivateItem, getItem, listItems, updateItem } from '@/lib/inventory/items';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
-const mockIsFeatureEnabled = vi.mocked(isFeatureEnabled);
 const mockListItems = vi.mocked(listItems);
 const mockCreateItem = vi.mocked(createItem);
 const mockGetItem = vi.mocked(getItem);
@@ -80,7 +74,6 @@ describe('GET /api/inventory/items', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     resetFixtureCounter();
-    mockIsFeatureEnabled.mockReturnValue(true);
   });
 
   it('returns 401 when unauthenticated', async () => {
@@ -89,15 +82,6 @@ describe('GET /api/inventory/items', () => {
     expect(res.status).toBe(401);
     const body = await res.json();
     expect(body.error.code).toBe('UNAUTHORIZED');
-  });
-
-  it('returns 404 when feature disabled', async () => {
-    mockClerkAuth(mockAuth);
-    mockIsFeatureEnabled.mockReturnValue(false);
-    const res = await GET(makeRequest('/api/inventory/items'));
-    expect(res.status).toBe(404);
-    const body = await res.json();
-    expect(body.error).toBe('Feature not enabled');
   });
 
   it('returns items list with pagination', async () => {
@@ -144,7 +128,6 @@ describe('POST /api/inventory/items', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     resetFixtureCounter();
-    mockIsFeatureEnabled.mockReturnValue(true);
   });
 
   it('creates item with valid data', async () => {
@@ -194,7 +177,6 @@ describe('GET /api/inventory/items/[id]', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     resetFixtureCounter();
-    mockIsFeatureEnabled.mockReturnValue(true);
   });
 
   it('returns single item', async () => {
@@ -234,7 +216,6 @@ describe('PATCH /api/inventory/items/[id]', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     resetFixtureCounter();
-    mockIsFeatureEnabled.mockReturnValue(true);
   });
 
   it('updates item with valid partial data', async () => {
@@ -260,7 +241,6 @@ describe('DELETE /api/inventory/items/[id]', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     resetFixtureCounter();
-    mockIsFeatureEnabled.mockReturnValue(true);
   });
 
   it('soft deletes item', async () => {

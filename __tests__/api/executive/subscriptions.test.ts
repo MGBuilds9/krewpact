@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
-vi.mock('@/lib/api/org', () => ({ getOrgIdFromAuth: vi.fn(), getKrewpactRoles: vi.fn() }));
+vi.mock('@/lib/api/org', () => ({ getKrewpactRoles: vi.fn() }));
 vi.mock('@/lib/logger', () => ({
   logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn(), child: vi.fn().mockReturnThis() },
 }));
@@ -20,12 +20,11 @@ import { auth } from '@clerk/nextjs/server';
 
 import { DELETE, GET as GET_DETAIL, PATCH } from '@/app/api/executive/subscriptions/[id]/route';
 import { GET, POST } from '@/app/api/executive/subscriptions/route';
-import { getKrewpactRoles, getOrgIdFromAuth } from '@/lib/api/org';
+import { getKrewpactRoles } from '@/lib/api/org';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
-const mockGetOrgIdFromAuth = vi.mocked(getOrgIdFromAuth);
 const mockGetKrewpactRoles = vi.mocked(getKrewpactRoles);
 
 const PARAMS = Promise.resolve({ id: 'sub-1' });
@@ -99,18 +98,13 @@ describe('GET /api/executive/subscriptions', () => {
       },
     } as any as Awaited<ReturnType<typeof auth>>);
 
-    mockGetOrgIdFromAuth.mockResolvedValue('org-1');
-
     const subs = [
       { id: 'sub-1', name: 'GitHub Enterprise', org_id: 'org-1' },
       { id: 'sub-2', name: 'Vercel Pro', org_id: 'org-1' },
     ];
 
     const orderFn = vi.fn().mockReturnValue({ data: subs, error: null });
-    const eqFn = vi
-      .fn()
-      .mockReturnValue({ order: orderFn, eq: vi.fn().mockReturnValue({ order: orderFn }) });
-    const selectFn = vi.fn().mockReturnValue({ eq: eqFn });
+    const selectFn = vi.fn().mockReturnValue({ order: orderFn });
 
     mockCreateUserClientSafe.mockResolvedValue({
       client: {
@@ -164,8 +158,6 @@ describe('POST /api/executive/subscriptions', () => {
         krewpact_org_id: 'org-1',
       },
     } as any as Awaited<ReturnType<typeof auth>>);
-
-    mockGetOrgIdFromAuth.mockResolvedValue('org-1');
 
     const newSub = { id: 'sub-new', ...VALID_SUBSCRIPTION, org_id: 'org-1' };
     const singleFn = vi.fn().mockReturnValue({ data: newSub, error: null });
@@ -231,12 +223,9 @@ describe('GET /api/executive/subscriptions/[id]', () => {
       },
     } as any as Awaited<ReturnType<typeof auth>>);
 
-    mockGetOrgIdFromAuth.mockResolvedValue('org-1');
-
     const sub = { id: 'sub-1', name: 'GitHub Enterprise', org_id: 'org-1' };
     const singleFn = vi.fn().mockReturnValue({ data: sub, error: null });
-    const eqOrgFn = vi.fn().mockReturnValue({ single: singleFn });
-    const eqIdFn = vi.fn().mockReturnValue({ eq: eqOrgFn });
+    const eqIdFn = vi.fn().mockReturnValue({ single: singleFn });
     const selectFn = vi.fn().mockReturnValue({ eq: eqIdFn });
 
     mockCreateUserClientSafe.mockResolvedValue({
@@ -271,13 +260,10 @@ describe('PATCH /api/executive/subscriptions/[id]', () => {
       },
     } as any as Awaited<ReturnType<typeof auth>>);
 
-    mockGetOrgIdFromAuth.mockResolvedValue('org-1');
-
     const updatedSub = { id: 'sub-1', name: 'GitHub Enterprise Updated', org_id: 'org-1' };
     const singleFn = vi.fn().mockReturnValue({ data: updatedSub, error: null });
     const selectFn = vi.fn().mockReturnValue({ single: singleFn });
-    const eqOrgFn = vi.fn().mockReturnValue({ select: selectFn });
-    const eqIdFn = vi.fn().mockReturnValue({ eq: eqOrgFn });
+    const eqIdFn = vi.fn().mockReturnValue({ select: selectFn });
     const updateFn = vi.fn().mockReturnValue({ eq: eqIdFn });
 
     mockCreateUserClientSafe.mockResolvedValue({
@@ -314,18 +300,14 @@ describe('DELETE /api/executive/subscriptions/[id]', () => {
       },
     } as any as Awaited<ReturnType<typeof auth>>);
 
-    mockGetOrgIdFromAuth.mockResolvedValue('org-1');
-
     const existing = { id: 'sub-1' };
-    // Mock for the existence check (.select().eq().eq().single())
+    // Mock for the existence check (.select().eq().single())
     const existSingleFn = vi.fn().mockReturnValue({ data: existing, error: null });
-    const existEqOrgFn = vi.fn().mockReturnValue({ single: existSingleFn });
-    const existEqIdFn = vi.fn().mockReturnValue({ eq: existEqOrgFn });
+    const existEqIdFn = vi.fn().mockReturnValue({ single: existSingleFn });
     const existSelectFn = vi.fn().mockReturnValue({ eq: existEqIdFn });
 
-    // Mock for delete().eq().eq()
-    const deleteEqOrgFn = vi.fn().mockReturnValue({ error: null });
-    const deleteEqIdFn = vi.fn().mockReturnValue({ eq: deleteEqOrgFn });
+    // Mock for delete().eq()
+    const deleteEqIdFn = vi.fn().mockReturnValue({ error: null });
     const deleteFn = vi.fn().mockReturnValue({ eq: deleteEqIdFn });
 
     mockCreateUserClientSafe.mockResolvedValue({

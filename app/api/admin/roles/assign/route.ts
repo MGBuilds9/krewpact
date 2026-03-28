@@ -1,47 +1,26 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { forbidden, serverError } from '@/lib/api/errors';
-import { getKrewpactRoles } from '@/lib/api/org';
+import { serverError } from '@/lib/api/errors';
 import { withApiRoute } from '@/lib/api/with-api-route';
 import { logger } from '@/lib/logger';
+import { CANONICAL_ROLE_KEYS } from '@/lib/rbac/role-registry';
 import { syncRolesToBothStores } from '@/lib/rbac/sync-roles';
 import { createServiceClient } from '@/lib/supabase/server';
 
-const ALLOWED_ROLES = ['platform_admin'];
-
-const CANONICAL_ROLES = [
-  'platform_admin',
-  'executive',
-  'operations_manager',
-  'project_manager',
-  'project_coordinator',
-  'estimator',
-  'field_supervisor',
-  'accounting',
-  'payroll_admin',
-  'client_owner',
-  'client_delegate',
-  'trade_partner_admin',
-  'trade_partner_user',
-] as const;
-
 const assignSchema = z.object({
   user_id: z.string().min(1),
-  role_keys: z.array(z.enum(CANONICAL_ROLES)).min(0),
+  role_keys: z.array(z.enum(CANONICAL_ROLE_KEYS)).min(0),
   division_ids: z.array(z.string().uuid()).optional(),
 });
 
 export const POST = withApiRoute(
   {
+    roles: ['platform_admin'],
     rateLimit: { limit: 20, window: '1 m' },
     bodySchema: assignSchema,
   },
   async ({ body, userId, logger: reqLogger }) => {
-    const roles = await getKrewpactRoles();
-    if (!roles.some((r) => ALLOWED_ROLES.includes(r))) {
-      throw forbidden('Forbidden');
-    }
 
     const { user_id: clerkUserId, role_keys, division_ids } = body;
 

@@ -8,10 +8,6 @@ vi.mock('@/lib/supabase/server', () => ({
   createUserClientSafe: vi.fn(),
 }));
 
-vi.mock('@/lib/feature-flags', () => ({
-  isFeatureEnabled: vi.fn(),
-}));
-
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
@@ -51,7 +47,6 @@ import {
 } from '@/__tests__/helpers';
 import { DELETE, GET as GET_ID, PATCH } from '@/app/api/inventory/fleet/[id]/route';
 import { GET, POST } from '@/app/api/inventory/fleet/route';
-import { isFeatureEnabled } from '@/lib/feature-flags';
 import {
   createVehicle,
   decommissionVehicle,
@@ -62,7 +57,6 @@ import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
-const mockIsFeatureEnabled = vi.mocked(isFeatureEnabled);
 const mockListVehicles = vi.mocked(listVehicles);
 const mockCreateVehicle = vi.mocked(createVehicle);
 const mockDecommissionVehicle = vi.mocked(decommissionVehicle);
@@ -81,7 +75,6 @@ describe('GET /api/inventory/fleet', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     resetFixtureCounter();
-    mockIsFeatureEnabled.mockReturnValue(true);
   });
 
   it('returns 401 when unauthenticated', async () => {
@@ -90,13 +83,6 @@ describe('GET /api/inventory/fleet', () => {
     expect(res.status).toBe(401);
     const body = await res.json();
     expect(body.error.code).toBe('UNAUTHORIZED');
-  });
-
-  it('returns 404 when feature disabled', async () => {
-    mockClerkAuth(mockAuth);
-    mockIsFeatureEnabled.mockReturnValue(false);
-    const res = await GET(makeRequest('/api/inventory/fleet'));
-    expect(res.status).toBe(404);
   });
 
   it('returns vehicle list', async () => {
@@ -120,7 +106,6 @@ describe('POST /api/inventory/fleet', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     resetFixtureCounter();
-    mockIsFeatureEnabled.mockReturnValue(true);
   });
 
   it('creates vehicle with valid data', async () => {
@@ -181,7 +166,6 @@ describe('GET /api/inventory/fleet/[id]', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     resetFixtureCounter();
-    mockIsFeatureEnabled.mockReturnValue(true);
   });
 
   it('returns single vehicle', async () => {
@@ -203,7 +187,6 @@ describe('DELETE /api/inventory/fleet/[id]', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     resetFixtureCounter();
-    mockIsFeatureEnabled.mockReturnValue(true);
   });
 
   it('decommissions vehicle', async () => {

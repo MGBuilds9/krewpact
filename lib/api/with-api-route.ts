@@ -25,6 +25,12 @@ interface RouteConfig<TBody = unknown, TQuery = unknown> {
 
   /** Zod schema for query/search params. */
   querySchema?: ZodSchema<TQuery>;
+
+  /** Single permission check (e.g. 'users.manage'). User must have this permission. */
+  permission?: string;
+
+  /** Role-based access. User must have at least one of these roles. */
+  roles?: string[];
 }
 
 interface RouteContext<TBody = unknown, TQuery = unknown> {
@@ -158,6 +164,33 @@ export function withApiRoute<TBody = unknown, TQuery = unknown>(
 
         const rlResponse = await applyRateLimit(req, config as RouteConfig, userId, authMode);
         if (rlResponse) return rlResponse;
+
+        if (config.permission || config.roles) {
+          const { getKrewpactRoles } = await import('@/lib/api/org');
+          const userRoles = await getKrewpactRoles();
+
+          if (config.permission) {
+            const { hasPermission: checkPerm, isInternalRole, isExternalRole } = await import(
+              '@/lib/rbac/permissions.shared'
+            );
+            const typedRoles = userRoles.filter(
+              (r): r is import('@/lib/rbac/permissions.shared').KrewpactRole =>
+                isInternalRole(r) || isExternalRole(r),
+            );
+            if (
+              !checkPerm(
+                typedRoles,
+                config.permission as import('@/lib/rbac/permissions.shared').Permission,
+              )
+            ) {
+              throw new ApiError('FORBIDDEN', 'Insufficient permissions', 403);
+            }
+          }
+
+          if (config.roles && !config.roles.some((r) => userRoles.includes(r))) {
+            throw new ApiError('FORBIDDEN', 'Insufficient permissions', 403);
+          }
+        }
 
         const queryResult = await validateQuery(req, config.querySchema);
         if (queryResult instanceof NextResponse) return queryResult;

@@ -68,7 +68,7 @@ describe('GET /api/onboarding/status', () => {
     const sb = mockSupabaseClient({
       tables: {
         organizations: {
-          data: { id: 'org-1', name: 'MDM Group', address: '123 Main St', phone: '905-555-0100' },
+          data: { id: 'org-1', name: 'Acme Construction', address: '123 Main St', phone: '905-555-0100' },
           error: null,
         },
         divisions: { data: null, error: null, count: 0 },
@@ -89,7 +89,7 @@ describe('GET /api/onboarding/status', () => {
     const sb = mockSupabaseClient({
       tables: {
         organizations: {
-          data: { id: 'org-1', name: 'MDM Group', address: '123 Main St', phone: '905-555-0100' },
+          data: { id: 'org-1', name: 'Acme Construction', address: '123 Main St', phone: '905-555-0100' },
           error: null,
         },
         divisions: { data: null, error: null, count: 2 },
@@ -110,7 +110,7 @@ describe('GET /api/onboarding/status', () => {
     const sb = mockSupabaseClient({
       tables: {
         organizations: {
-          data: { id: 'org-1', name: 'MDM Group', address: '123 Main St', phone: '905-555-0100' },
+          data: { id: 'org-1', name: 'Acme Construction', address: '123 Main St', phone: '905-555-0100' },
           error: null,
         },
         divisions: { data: null, error: null, count: 3 },
@@ -146,7 +146,7 @@ describe('GET /api/onboarding/status', () => {
     const sb = mockSupabaseClient({
       tables: {
         organizations: {
-          data: { id: 'org-1', name: 'MDM Group', address: '123 Main St', phone: '905-555-0100' },
+          data: { id: 'org-1', name: 'Acme Construction', address: '123 Main St', phone: '905-555-0100' },
           error: null,
         },
         divisions: { data: null, error: { message: 'DB error' } },
@@ -164,7 +164,7 @@ describe('GET /api/onboarding/status', () => {
     const sb = mockSupabaseClient({
       tables: {
         organizations: {
-          data: { id: 'org-1', name: 'MDM Group', address: '123 Main St', phone: '905-555-0100' },
+          data: { id: 'org-1', name: 'Acme Construction', address: '123 Main St', phone: '905-555-0100' },
           error: null,
         },
         divisions: { data: null, error: null, count: 1 },
@@ -182,7 +182,7 @@ describe('GET /api/onboarding/status', () => {
     const sb = mockSupabaseClient({
       tables: {
         organizations: {
-          data: { id: 'org-1', name: 'MDM Group', address: null, phone: null },
+          data: { id: 'org-1', name: 'Acme Construction', address: null, phone: null },
           error: null,
         },
         divisions: { data: null, error: null, count: 0 },

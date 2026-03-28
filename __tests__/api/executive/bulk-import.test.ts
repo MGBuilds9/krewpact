@@ -7,7 +7,6 @@ const mockReadFile = vi.hoisted(() => vi.fn());
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createServiceClient: vi.fn() }));
 vi.mock('@/lib/api/org', () => ({
-  getOrgIdFromAuth: vi.fn().mockResolvedValue('org-1'),
   getKrewpactRoles: vi.fn(),
 }));
 vi.mock('@/lib/api/rate-limit', () => ({
@@ -81,7 +80,7 @@ describe('POST /api/executive/staging/bulk-import', () => {
     const res = await POST(makeRequest({ files: [{ path: '/some/file.md' }] }));
     expect(res.status).toBe(403);
     const body = await res.json();
-    expect(body.error.message).toContain('Forbidden');
+    expect(body.error.message).toContain('Insufficient permissions');
   });
 
   it('returns 400 for invalid body (empty files array)', async () => {
@@ -106,11 +105,10 @@ describe('POST /api/executive/staging/bulk-import', () => {
 
     // Mock supabase: no existing checksum (dedup check returns empty), insert succeeds
     const eqChecksumFn = vi.fn().mockReturnValue({ data: [], error: null });
-    const eqOrgFn = vi.fn().mockReturnValue({ eq: eqChecksumFn });
-    const selectFn = vi.fn().mockReturnValue({ eq: eqOrgFn });
+    const selectFn = vi.fn().mockReturnValue({ eq: eqChecksumFn });
     const insertFn = vi.fn().mockReturnValue({ error: null });
 
-    mockCreateServiceClient.mockResolvedValue({
+    mockCreateServiceClient.mockReturnValue({
       from: vi.fn().mockReturnValue({ select: selectFn, insert: insertFn }),
     } as unknown as Awaited<ReturnType<typeof createServiceClient>>);
 
@@ -135,10 +133,9 @@ describe('POST /api/executive/staging/bulk-import', () => {
       data: [{ id: 'existing-doc' }],
       error: null,
     });
-    const eqOrgFn = vi.fn().mockReturnValue({ eq: eqChecksumFn });
-    const selectFn = vi.fn().mockReturnValue({ eq: eqOrgFn });
+    const selectFn = vi.fn().mockReturnValue({ eq: eqChecksumFn });
 
-    mockCreateServiceClient.mockResolvedValue({
+    mockCreateServiceClient.mockReturnValue({
       from: vi.fn().mockReturnValue({ select: selectFn }),
     } as unknown as Awaited<ReturnType<typeof createServiceClient>>);
 
@@ -156,7 +153,7 @@ describe('POST /api/executive/staging/bulk-import', () => {
 
     mockStat.mockRejectedValue(Object.assign(new Error('ENOENT'), { code: 'ENOENT' }));
 
-    mockCreateServiceClient.mockResolvedValue({
+    mockCreateServiceClient.mockReturnValue({
       from: vi.fn(),
     } as unknown as Awaited<ReturnType<typeof createServiceClient>>);
 
