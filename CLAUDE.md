@@ -330,11 +330,16 @@ Deferred: Azure/M365, ADP, BoldSign (Week 7+). Full template: `docs/local-dev.md
 
 ## Planning Documents
 
-Start with `KrewPact-Architecture-Resolution.md` (all contradictions resolved). Then: `Master-Plan.md` (scope), `Technology-Stack-ADRs.md` (25 ADRs), `Backend-SQL-Schema-Draft.sql`, `Feature-Function-PRD-Checklist.md` (16 epics), `Access-and-Workflow-Plan.md` (setup), `Integration-Contracts.md` (ERPNext mappings). All prefixed `KrewPact-` in project root.
+Architecture docs in `docs/architecture/`: `Master-Plan.md` (scope), `Technology-Stack-ADRs.md` (25 ADRs), `Feature-Function-PRD-Checklist.md` (16 epics), `Integration-Contracts.md` (ERPNext mappings). Internal planning docs (decisions register, cost analysis, strategy brief) archived to OneDrive.
 
 ## Session Log
 
-> Full log: `docs/session-log.md`
+### Mar 28, 2026 — Repo Sanitization & Contributor Readiness
+
+- **Changes:** (1) Applied portal RLS migration to production Supabase (JSONB `?|` operators, 10 policies). (2) Full repo sanitization for contributor onboarding: removed all MDM PII (names, emails, phone, address, revenue), internal infrastructure details (Supabase project IDs, ERPNext URLs, Clerk domains), and business-sensitive data (budgets, vendor pricing). (3) 43 files changed across source, tests, docs, config, email templates, migrations. (4) 14 internal planning docs moved to OneDrive, cost analysis deleted, session log truncated. (5) Email templates rebranded MDM→KrewPact. Seed scripts genericized (Acme Construction). Domain allowlists moved to env-var-only (no hardcoded fallbacks). CSP cleaned. (6) Added MIT LICENSE and CODE_OF_CONDUCT.md. Updated CONTRIBUTING.md with PR guidelines and SECURITY.md reference.
+- **Decisions:** Division names kept in CLAUDE.md/AGENTS.md (architecture context, not PII). Git history not rewritten (prior scrub commit + low-risk narrative). Contributors set up own Supabase project (no production DB access). Empty string fallback for ALLOWED_DOMAINS forces explicit env var config.
+- **Tests:** 4,799/4,799 passing (435 files). 0 type errors. 0 lint errors. Build clean.
+- **Next:** Update production Supabase email templates to match sanitized migration. Push to remote. Invite first contributor.
 
 ### Mar 27, 2026 — RBAC System Overhaul: Dual-Write Roles, Onboarding Fix, Management UI
 
@@ -343,39 +348,10 @@ Start with `KrewPact-Architecture-Resolution.md` (all contradictions resolved). 
 - **Tests:** 4,851/4,851 passing (438 files). 0 type errors. 0 lint errors.
 - **Next:** Apply RLS migration to production Supabase. Verify admin pages work in production after deploy. Consider adding `DEFAULT_ORG_ID` to Vercel env vars.
 
-### Mar 27, 2026 — A-Z Audit, Agent Teams, Production Auth Fix, AI Connected
-
-- **Changes:** (1) Full A-Z audit + agent-team remediation (19 commits). (2) 5 ERP sync handlers created (RFQ, Bid, Award, Compliance, Selection Sheet) + address sync for Customer/Supplier. (3) AI Gateway reverted to direct `@ai-sdk/google` provider (gateway OIDC not confirmed). NL Query Bar now connected and working. (4) DNS cleanup: all 14 legacy domain refs → `krewpact.ca`. BetterStack monitors updated. (5) Clerk auth fixed: rotated publishable key (old key had legacy domain baked in), added `krewpact.ca` to `authorizedParties` + `allowedRedirectOrigins`. Azure OAuth redirect URI updated. (6) Sentry edge config added, SENTRY_PROJECT corrected to `krewpact`. (7) Notification dispatch type safety, feature flag env kill-switch, MERX/BetterStack env vars. (8) 10 loading.tsx + Wave G file splits (8 files). (9) Dashboard layout: 4 stat cards horizontal. (10) 48 new tests (utils, sanitize, date, portal reminders, address mapper). Proxy: stale domains removed, console.log → console.warn. CI mobile TLD fixed (.com → .ca).
-- **Decisions:** Direct Google provider over AI Gateway (OIDC not set up yet — revisit when gateway enabled). Clerk key rotation required because publishable key embeds the Clerk frontend API domain. `noUncheckedIndexedAccess` deferred (572 TS errors). Feature flags get `FEATURE_DISABLE_<FLAG>=true` env override.
-- **Tests:** 4,850/4,850 passing (438 files). 0 type errors. 0 lint errors.
-- **Next:** Rotate Clerk secret key if still needed. Enable AI Gateway on Vercel for OIDC auth. Remaining P2: offline/PWA, mobile Expo, ADP payroll live, white-label portals.
-
-### Mar 27, 2026 — P2 Buildout: AI Streaming, Trade Portal, ERPNext Mappers, MERX, 19-Issue Remediation
-- **Changes:** Blueprint audit (93→98/100). 4 trade portal pages. AI streaming chat. 5 ERPNext mappers. MERX client + cron. 19-issue code review fix. Auth fix (ClerkProvider → accounts.krewpact.ca).
-- **Tests:** 4,792/4,792 (435 files). 0 TS errors.
-
-### Mar 26-27, 2026 — Gap Audit Remediation: 342 Routes Migrated, DNS to krewpact.ca, 36 Files Split
-
-- **Changes:** (1) Full gap audit (32 findings) — 28 fixed: CI pipeline (actions v4, Node 22), Sentry replay+tracing, offline page fix, CSP hardening, env validation, 12 `form: any` → FormProp aliases. (2) All 342 API routes migrated to `withApiRoute()` in 6 waves (A-E + mop-up): webhooks (public auth), cron (cron auth), CRM (89), Projects (68), Inventory (23), Portal (24), Finance (10), Estimates (14), Executive (12), Admin (4), + 75 misc. (3) 18 error boundaries + 3 not-found pages added. (4) CRM sequence-email-executor: skipped vs pending outcomes, DLQ propagation. (5) DNS migrated: krewpact.ca on Cloudflare (3 Vercel CNAMEs + 5 Clerk CNAMEs), krewpact.ca deleted. (6) Wave F: 36 oversized files split — 14 page-content files, 5 components, 11 lib files extracted to sub-modules. (7) Vercel env vars: LOG_LEVEL, ALLOWED_DOMAINS, DEFAULT_ORG_SLUG, BETTERSTACK_API_TOKEN, CRON_SECRET (dev/preview). (8) Supabase edge functions added to CI (Deno check).
-- **Decisions:** `withApiRoute()` migration is opt-in per-route (not big-bang). Webhook routes use `auth: 'public'` (own HMAC auth). Health route excluded by design. `form: any` solved with `type FormProp = any` alias (survives prettier). Root krewpact.ca proxied through Cloudflare for CNAME flattening.
-- **Tests:** 4,714/4,714 passing (428 files). 0 type errors. 0 lint errors. Build clean.
-- **Next:** Verify Clerk primary domain is krewpact.ca (DNS verified, SSL issued). Update BetterStack monitors to krewpact.ca URLs. AI SDK gateway migration (gpt-4o-mini → gateway model). GitHub secret: EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY.
-
-### Mar 26, 2026 — BetterStack Uptime Monitors + Status Page
-
-- **Changes:** 5 BetterStack uptime monitors created via REST API (App Health, Deep Health, Homepage, ERPNext Tunnel, Clerk Auth). All 3-min intervals. Public status page at `https://krewpact.betteruptime.com`. CRON_SECRET + BETTERSTACK_API_TOKEN added to `.env.local`. URLs corrected to `krewpact.ca`. Paused duplicate pre-existing monitor.
-- **Decisions:** BetterStack MCP OAuth broken — used REST API directly. Homepage monitor accepts 200/404 (no root page). Free tier alerts go to account owner email by default.
-- **Next:** Add root page or redirect at `/`.
-
-### Mar 26, 2026 — Dependency Audit: 35 Vulnerabilities → 0 Production
-
-- **Changes:** (1) Removed unused `xlsx` (SheetJS) — never imported, had unfixable high-severity prototype pollution + ReDoS. (2) Removed `vercel` CLI from production deps (should be global). (3) Upgraded `@serwist/next` 8.4.4→9.5.7 and moved to devDeps. (4) Moved `@axe-core/playwright` and `@testing-library/dom` to devDeps. Net: 258 packages removed from node_modules.
-- **Decisions:** `npm audit fix` alone couldn't resolve transitive deps in `vercel` CLI (32.7.2) — removing it entirely was cleaner since it's installed globally. `@serwist/next` was version-mismatched with `serwist` (8.x vs 9.x).
-- **Tests:** 4,715 passing (428 files). 0 lint errors.
-- **Next:** Remaining 10 moderate dev-only vulns are in `eslint-config-next` and `@serwist/next` transitive deps (brace-expansion) — will resolve when upstream updates.
-
-- Mar 26: Go-Live Audit — 14/16 WS verified, lint 304→93, ERPNext 13/13 mappers. 4,715 tests.
-- Mar 26: Observability & Monitoring Stack — Sentry, request tracing, withApiRoute(), BetterStack monitors.
+- Mar 27: A-Z Audit, Agent Teams, Production Auth Fix, AI Connected. 4,850 tests.
+- Mar 27: P2 Buildout — AI streaming, trade portal, ERPNext mappers, MERX, 19-issue fix. 4,792 tests.
+- Mar 27: Gap Audit — 342 routes migrated, DNS to krewpact.ca, 36 files split. 4,714 tests.
+- Mar 26: BetterStack monitors, dependency audit, go-live audit, observability.
 - Mar 25-26: Production Hardening — RBAC, UAT, security sanitization. 4,715 tests.
 - Mar 25: Full Platform Completion — shared components, 5/5 P1 epics, all 17 flags enabled. 4,568 tests.
 - Mar 23-24: Playbook v2 + KrewPact docs rewrite + production UX fixes. 4,316 tests.
