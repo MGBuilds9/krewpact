@@ -74,7 +74,7 @@ export default function ExecutiveDashboardPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['executive-dashboard'],
-    queryFn: () => apiFetch<ExecutiveDashboardData>('/api/dashboard/executive'),
+    queryFn: () => apiFetch<ExecutiveDashboardData>('/api/executive/overview'),
     staleTime: 30_000,
     enabled: !rbacLoading,
   });

@@ -46,8 +46,8 @@ function makeExecutiveAuth() {
 
 /**
  * Build a mock Supabase client that handles:
- * - .from(table).select(...) — resolves directly (for estimates, cache)
- * - .from(table).select(...).eq('division_id', div) — resolves with same data (for division filter)
+ * - .rpc(name, params?) — for all metrics computed via RPC (pipeline, portfolio, subs, estimating)
+ * - .from(table).select(...) — for the cache-read path (executive_metrics_cache)
  */
 function makeDivisionSupabaseMock(
   overrides: {
@@ -64,40 +64,82 @@ function makeDivisionSupabaseMock(
   const estimates = overrides.estimates ?? [];
   const cache = overrides.executive_metrics_cache ?? [];
 
-  // Creates a chain where select() returns a Promise that also has .eq()
-  // This allows both: `await supabase.from(t).select(...)` and
-  // `await supabase.from(t).select(...).eq('division_id', x)`
-  function makeFilterableChain(data: unknown[]) {
-    const selectResult = Object.assign(Promise.resolve({ data, error: null }), {
-      eq: vi.fn().mockResolvedValue({ data, error: null }),
-    });
-    return {
-      select: vi.fn().mockReturnValue(selectResult),
-    };
-  }
-
-  function makeCacheChain(data: unknown[]) {
-    return {
-      select: vi.fn().mockResolvedValue({ data, error: null }),
-    };
+  // Map RPC names to their pre-aggregated row shapes
+  function rpcData(name: string): unknown[] {
+    switch (name) {
+      case 'get_pipeline_summary':
+        // Convert raw opportunity rows into pre-aggregated stage rows
+        if (opportunities.length === 0) return [];
+        {
+          const stageMap: Record<string, { count: number; value: number }> = {};
+          for (const opp of opportunities as {
+            stage: string | null;
+            estimated_revenue: number | null;
+          }[]) {
+            const stage = opp.stage ?? 'unknown';
+            if (!stageMap[stage]) stageMap[stage] = { count: 0, value: 0 };
+            stageMap[stage].count++;
+            stageMap[stage].value += opp.estimated_revenue ?? 0;
+          }
+          return Object.entries(stageMap).map(([stage, d]) => ({
+            stage,
+            count: d.count,
+            value: d.value,
+          }));
+        }
+      case 'get_project_portfolio':
+        if (projects.length === 0) return [];
+        {
+          const statusMap: Record<string, number> = {};
+          for (const p of projects as { status: string | null }[]) {
+            const s = p.status ?? 'unknown';
+            statusMap[s] = (statusMap[s] ?? 0) + 1;
+          }
+          return Object.entries(statusMap).map(([status, count]) => ({ status, count }));
+        }
+      case 'get_estimating_velocity':
+        if (estimates.length === 0) return [];
+        {
+          const statusMap: Record<string, number> = {};
+          for (const e of estimates as { status: string | null }[]) {
+            const s = e.status ?? 'unknown';
+            statusMap[s] = (statusMap[s] ?? 0) + 1;
+          }
+          return Object.entries(statusMap).map(([status, count]) => ({ status, count }));
+        }
+      case 'get_subscription_summary':
+        if (subscriptions.length === 0) return [];
+        {
+          const active = (
+            subscriptions as {
+              monthly_cost: number;
+              is_active: boolean;
+              renewal_date: string | null;
+            }[]
+          ).filter((s) => s.is_active);
+          const total_monthly = active.reduce((sum, s) => sum + (Number(s.monthly_cost) || 0), 0);
+          const active_count = active.length;
+          const sevenDaysFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+            .toISOString()
+            .split('T')[0];
+          const today = new Date().toISOString().split('T')[0];
+          const expiring_soon_count = active.filter(
+            (s) => s.renewal_date && s.renewal_date >= today && s.renewal_date <= sevenDaysFromNow,
+          ).length;
+          return [{ total_monthly, active_count, expiring_soon_count }];
+        }
+      default:
+        return [];
+    }
   }
 
   return {
+    rpc: vi.fn((name: string) => Promise.resolve({ data: rpcData(name), error: null })),
     from: vi.fn((table: string) => {
-      switch (table) {
-        case 'opportunities':
-          return makeFilterableChain(opportunities);
-        case 'projects':
-          return makeFilterableChain(projects);
-        case 'executive_subscriptions':
-          return makeFilterableChain(subscriptions);
-        case 'estimates':
-          return makeFilterableChain(estimates);
-        case 'executive_metrics_cache':
-          return makeCacheChain(cache);
-        default:
-          return { select: vi.fn().mockResolvedValue({ data: [], error: null }) };
+      if (table === 'executive_metrics_cache') {
+        return { select: vi.fn().mockResolvedValue({ data: cache, error: null }) };
       }
+      return { select: vi.fn().mockResolvedValue({ data: [], error: null }) };
     }),
   };
 }

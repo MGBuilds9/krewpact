@@ -8,22 +8,19 @@ import {
   computeSubscriptionSummary,
 } from '@/lib/executive/metrics';
 
-function mockSupabase(tableData: Record<string, unknown[]>) {
+function mockSupabase(rpcData: Record<string, unknown[]>) {
   return {
-    from: vi.fn((table: string) => ({
-      select: vi.fn().mockResolvedValue({ data: tableData[table] ?? [], error: null }),
-    })),
+    rpc: vi.fn((name: string) => Promise.resolve({ data: rpcData[name] ?? [], error: null })),
   } as unknown as SupabaseClient;
 }
 
 describe('computePipelineSummary', () => {
   it('returns correct totals, stage breakdown, and win rate', async () => {
     const supabase = mockSupabase({
-      opportunities: [
-        { id: '1', stage: 'closed_won', estimated_revenue: 10000 },
-        { id: '2', stage: 'closed_won', estimated_revenue: 20000 },
-        { id: '3', stage: 'proposal', estimated_revenue: 5000 },
-        { id: '4', stage: 'lead', estimated_revenue: 15000 },
+      get_pipeline_summary: [
+        { stage: 'closed_won', count: 2, value: 30000 },
+        { stage: 'proposal', count: 1, value: 5000 },
+        { stage: 'lead', count: 1, value: 15000 },
       ],
     });
 
@@ -41,7 +38,7 @@ describe('computePipelineSummary', () => {
   });
 
   it('handles empty data', async () => {
-    const supabase = mockSupabase({ opportunities: [] });
+    const supabase = mockSupabase({ get_pipeline_summary: [] });
 
     const result = await computePipelineSummary(supabase);
 
@@ -51,11 +48,11 @@ describe('computePipelineSummary', () => {
     expect(result.stageBreakdown).toHaveLength(0);
   });
 
-  it('handles null estimated_revenue gracefully', async () => {
+  it('handles no closed_won stage gracefully', async () => {
     const supabase = mockSupabase({
-      opportunities: [
-        { id: '1', stage: 'lead', estimated_revenue: null },
-        { id: '2', stage: 'proposal', estimated_revenue: 5000 },
+      get_pipeline_summary: [
+        { stage: 'lead', count: 1, value: 0 },
+        { stage: 'proposal', count: 1, value: 5000 },
       ],
     });
 
@@ -70,12 +67,10 @@ describe('computePipelineSummary', () => {
 describe('computeProjectPortfolio', () => {
   it('returns correct active count and status breakdown', async () => {
     const supabase = mockSupabase({
-      projects: [
-        { id: '1', status: 'active' },
-        { id: '2', status: 'active' },
-        { id: '3', status: 'completed' },
-        { id: '4', status: 'on_hold' },
-        { id: '5', status: 'active' },
+      get_project_portfolio: [
+        { status: 'active', count: 3 },
+        { status: 'completed', count: 1 },
+        { status: 'on_hold', count: 1 },
       ],
     });
 
@@ -92,7 +87,7 @@ describe('computeProjectPortfolio', () => {
   });
 
   it('handles empty projects list', async () => {
-    const supabase = mockSupabase({ projects: [] });
+    const supabase = mockSupabase({ get_project_portfolio: [] });
 
     const result = await computeProjectPortfolio(supabase);
 
@@ -104,11 +99,10 @@ describe('computeProjectPortfolio', () => {
 describe('computeEstimatingVelocity', () => {
   it('returns correct totals and status breakdown', async () => {
     const supabase = mockSupabase({
-      estimates: [
-        { id: '1', status: 'draft' },
-        { id: '2', status: 'sent' },
-        { id: '3', status: 'approved' },
-        { id: '4', status: 'draft' },
+      get_estimating_velocity: [
+        { status: 'draft', count: 2 },
+        { status: 'sent', count: 1 },
+        { status: 'approved', count: 1 },
       ],
     });
 
@@ -125,7 +119,7 @@ describe('computeEstimatingVelocity', () => {
   });
 
   it('handles empty estimates list', async () => {
-    const supabase = mockSupabase({ estimates: [] });
+    const supabase = mockSupabase({ get_estimating_velocity: [] });
 
     const result = await computeEstimatingVelocity(supabase);
 
@@ -135,20 +129,10 @@ describe('computeEstimatingVelocity', () => {
 });
 
 describe('computeSubscriptionSummary', () => {
-  it('calculates monthly cost correctly for active subscriptions', async () => {
-    const today = new Date();
-    const inFiveDays = new Date(today.getTime() + 5 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split('T')[0];
-    const inTenDays = new Date(today.getTime() + 10 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split('T')[0];
-
+  it('returns correct summary from RPC row', async () => {
     const supabase = mockSupabase({
-      executive_subscriptions: [
-        { id: '1', monthly_cost: '99.99', is_active: true, renewal_date: inFiveDays },
-        { id: '2', monthly_cost: '199.00', is_active: true, renewal_date: inTenDays },
-        { id: '3', monthly_cost: '49.00', is_active: false, renewal_date: inFiveDays },
+      get_subscription_summary: [
+        { total_monthly: 298.99, active_count: 2, expiring_soon_count: 1 },
       ],
     });
 
@@ -156,11 +140,11 @@ describe('computeSubscriptionSummary', () => {
 
     expect(result.activeCount).toBe(2);
     expect(result.totalMonthlyCost).toBeCloseTo(298.99, 2);
-    expect(result.upcomingRenewals).toBe(1); // only inFiveDays is within 7 days and active
+    expect(result.upcomingRenewals).toBe(1);
   });
 
   it('handles empty subscriptions', async () => {
-    const supabase = mockSupabase({ executive_subscriptions: [] });
+    const supabase = mockSupabase({ get_subscription_summary: [] });
 
     const result = await computeSubscriptionSummary(supabase);
 
@@ -169,14 +153,9 @@ describe('computeSubscriptionSummary', () => {
     expect(result.upcomingRenewals).toBe(0);
   });
 
-  it('excludes inactive subscriptions from cost and renewals', async () => {
-    const inThreeDays = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-
+  it('handles zero active subscriptions', async () => {
     const supabase = mockSupabase({
-      executive_subscriptions: [
-        { id: '1', monthly_cost: '500', is_active: false, renewal_date: inThreeDays },
-        { id: '2', monthly_cost: '100', is_active: false, renewal_date: inThreeDays },
-      ],
+      get_subscription_summary: [{ total_monthly: 0, active_count: 0, expiring_soon_count: 0 }],
     });
 
     const result = await computeSubscriptionSummary(supabase);
