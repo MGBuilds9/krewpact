@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Search, X } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useDeferredValue, useEffect, useRef, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { formatStatus } from '@/lib/format-status';
@@ -139,17 +139,22 @@ export function GlobalSearch() {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const debouncedQuery = useDeferredValue(query);
 
-  const { data: results = [] } = useQuery<SearchResult[]>({
-    queryKey: ['crm-search', query],
-    queryFn: async () => {
-      if (query.length < 2) return [];
-      const res = await fetch(`/api/crm/search?q=${encodeURIComponent(query)}`);
+  const { data: resultsData = [] } = useQuery<SearchResult[]>({
+    queryKey: ['crm-search', debouncedQuery],
+    queryFn: async ({ signal }) => {
+      if (debouncedQuery.length < 2) return [];
+      const res = await fetch(`/api/crm/search?q=${encodeURIComponent(debouncedQuery)}`, {
+        signal,
+      });
       const json = await res.json();
       return json.data ?? [];
     },
-    enabled: query.length >= 2,
+    enabled: open && debouncedQuery.length >= 2,
+    staleTime: 30_000,
   });
+  const results = query.length >= 2 && query === debouncedQuery ? resultsData : [];
 
   const handleOpen = useCallback(() => {
     setOpen(true);
@@ -159,6 +164,7 @@ export function GlobalSearch() {
   const handleClose = useCallback(() => {
     setOpen(false);
     setQuery('');
+    setSelectedIndex(0);
   }, []);
   const handleSelect = useCallback(
     (result: SearchResult) => {

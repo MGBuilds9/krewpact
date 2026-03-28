@@ -26,9 +26,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { useCurrentUser } from '@/hooks/useCurrentUser';
-import { useUserRBAC } from '@/hooks/useRBAC';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
+import { useUserRBAC } from '@/hooks/useRBAC';
 
 import { DivisionSelector } from './DivisionSelector';
 
@@ -116,7 +115,6 @@ function DrawerUserCard({
 export function MobileNavigationDrawer({ isOpen, onClose }: MobileNavigationDrawerProps) {
   const pathname = usePathname();
   const { push: orgPush } = useOrgRouter();
-  const { data: currentUser } = useCurrentUser();
   const { user } = useUser();
   const { signOut } = useClerk();
   const { isAdmin } = useUserRBAC();
@@ -137,8 +135,9 @@ export function MobileNavigationDrawer({ isOpen, onClose }: MobileNavigationDraw
     orgPush(path);
     onClose();
   };
-  const filteredItems = navigationItems.filter(
-    (item) => !item.adminOnly || isAdmin,
+  const filteredItems = React.useMemo(
+    () => navigationItems.filter((item) => !item.adminOnly || isAdmin),
+    [isAdmin],
   );
 
   return (

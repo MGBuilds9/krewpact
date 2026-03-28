@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
-import React, { createContext, ReactNode, useContext } from 'react';
+import React, { createContext, ReactNode, useContext, useMemo } from 'react';
 
 import { apiFetch } from '@/lib/api-client';
 
@@ -50,19 +50,18 @@ export function OrgProvider({ children }: { children: ReactNode }) {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  return (
-    <OrgContext.Provider
-      value={{
-        currentOrg,
-        orgSlug,
-        isLoading,
-        isError,
-        error: error as Error | null,
-      }}
-    >
-      {children}
-    </OrgContext.Provider>
+  const contextValue = useMemo(
+    () => ({
+      currentOrg,
+      orgSlug,
+      isLoading,
+      isError,
+      error: error as Error | null,
+    }),
+    [currentOrg, orgSlug, isLoading, isError, error],
   );
+
+  return <OrgContext.Provider value={contextValue}>{children}</OrgContext.Provider>;
 }
 
 export function useOrg() {

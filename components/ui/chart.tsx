@@ -45,9 +45,10 @@ const ChartContainer = React.forwardRef<
 >(({ id, className, children, config, ...props }, ref) => {
   const uniqueId = React.useId();
   const chartId = `chart-${id || uniqueId.replace(/:/g, '')}`;
+  const contextValue = React.useMemo(() => ({ config }), [config]);
 
   return (
-    <ChartContext.Provider value={{ config }}>
+    <ChartContext.Provider value={contextValue}>
       <div
         data-chart={chartId}
         ref={ref}
@@ -73,18 +74,16 @@ const ChartContainer = React.forwardRef<
 ChartContainer.displayName = 'Chart';
 
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
-  const colorConfig = Object.entries(config).filter(([_, config]) => config.theme || config.color);
+  const styleText = React.useMemo(() => {
+    const colorConfig = Object.entries(config).filter(([_, item]) => item.theme || item.color);
 
-  if (!colorConfig.length) {
-    return null;
-  }
+    if (!colorConfig.length) {
+      return null;
+    }
 
-  return (
-    <style
-      dangerouslySetInnerHTML={{
-        __html: Object.entries(THEMES)
-          .map(
-            ([theme, prefix]) => `
+    return Object.entries(THEMES)
+      .map(
+        ([theme, prefix]) => `
 ${prefix} [data-chart=${id}] {
 ${colorConfig
   .map(([key, itemConfig]) => {
@@ -94,11 +93,15 @@ ${colorConfig
   .join('\n')}
 }
 `,
-          )
-          .join('\n'),
-      }}
-    />
-  );
+      )
+      .join('\n');
+  }, [config, id]);
+
+  if (!styleText) {
+    return null;
+  }
+
+  return <style dangerouslySetInnerHTML={{ __html: styleText }} />;
 };
 
 const ChartTooltip = RechartsPrimitive.Tooltip;

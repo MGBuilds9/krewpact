@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 interface ImpersonationContextType {
@@ -28,31 +28,32 @@ export function ImpersonationProvider({ children }: { children: React.ReactNode 
     }
   }, [impersonatedUserId]);
 
-  const startImpersonation = (userId: string) => {
+  const startImpersonation = useCallback((userId: string) => {
     setImpersonatedUserId(userId);
     toast.success('Simulation Started', {
       description: 'You are now viewing the app as this user.',
     });
-  };
+  }, []);
 
-  const stopImpersonation = () => {
+  const stopImpersonation = useCallback(() => {
     setImpersonatedUserId(null);
     toast.info('Simulation Ended', {
       description: 'Returned to your admin account.',
     });
-  };
+  }, []);
+
+  const contextValue = useMemo(
+    () => ({
+      impersonatedUserId,
+      isImpersonating: !!impersonatedUserId,
+      startImpersonation,
+      stopImpersonation,
+    }),
+    [impersonatedUserId, startImpersonation, stopImpersonation],
+  );
 
   return (
-    <ImpersonationContext.Provider
-      value={{
-        impersonatedUserId,
-        isImpersonating: !!impersonatedUserId,
-        startImpersonation,
-        stopImpersonation,
-      }}
-    >
-      {children}
-    </ImpersonationContext.Provider>
+    <ImpersonationContext.Provider value={contextValue}>{children}</ImpersonationContext.Provider>
   );
 }
 

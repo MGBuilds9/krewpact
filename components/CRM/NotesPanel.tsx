@@ -65,7 +65,6 @@ export function NotesPanel({ entityType, entityId }: NotesPanelProps) {
     toggleExpand,
   } = useNotesPanel(entityType, entityId);
 
-  const sorted = [...notes.filter((n) => n.is_pinned), ...notes.filter((n) => !n.is_pinned)];
   const handleSaveNote = () =>
     addNote(newContent, () => {
       setAddingNote(false);
@@ -117,10 +116,10 @@ export function NotesPanel({ entityType, entityId }: NotesPanelProps) {
             />
           )}
           {loading && <p className="text-xs text-muted-foreground px-4 py-3">Loading notes...</p>}
-          {!loading && sorted.length === 0 && !addingNote && (
+          {!loading && notes.length === 0 && !addingNote && (
             <p className="text-xs text-muted-foreground px-4 py-3">No notes yet.</p>
           )}
-          {sorted.map((note) => (
+          {notes.map((note) => (
             <NoteItem
               key={note.id}
               note={note}

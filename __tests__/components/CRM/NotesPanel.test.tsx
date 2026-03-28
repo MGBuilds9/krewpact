@@ -1,4 +1,6 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { NotesPanel } from '@/components/CRM/NotesPanel';
@@ -32,13 +34,28 @@ beforeEach(() => {
 });
 
 describe('NotesPanel', () => {
+  function renderNotesPanel() {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+
+    return render(
+      <QueryClientProvider client={queryClient}>
+        <NotesPanel entityId="lead-1" entityType="lead" />
+      </QueryClientProvider>,
+    );
+  }
+
   it('renders "Notes" header', () => {
-    render(<NotesPanel entityId="lead-1" entityType="lead" />);
+    renderNotesPanel();
     expect(screen.getByText('Notes')).toBeDefined();
   });
 
   it('shows notes after loading', async () => {
-    render(<NotesPanel entityId="lead-1" entityType="lead" />);
+    renderNotesPanel();
     await waitFor(() => {
       expect(screen.getByText('First note')).toBeDefined();
       expect(screen.getByText('Second note')).toBeDefined();
@@ -46,7 +63,7 @@ describe('NotesPanel', () => {
   });
 
   it('shows pinned notes with pin indicator', async () => {
-    render(<NotesPanel entityId="lead-1" entityType="lead" />);
+    renderNotesPanel();
     await waitFor(() => {
       expect(screen.getByText('Pinned')).toBeDefined();
     });
@@ -57,19 +74,19 @@ describe('NotesPanel', () => {
       ok: true,
       json: async () => ({ data: [], total: 0, hasMore: false }),
     });
-    render(<NotesPanel entityId="lead-1" entityType="lead" />);
+    renderNotesPanel();
     await waitFor(() => {
       expect(screen.getByText('No notes yet.')).toBeDefined();
     });
   });
 
   it('shows "Add" button in header', () => {
-    render(<NotesPanel entityId="lead-1" entityType="lead" />);
+    renderNotesPanel();
     expect(screen.getByText('Add')).toBeDefined();
   });
 
   it('toggles collapsed state on header click', async () => {
-    render(<NotesPanel entityId="lead-1" entityType="lead" />);
+    renderNotesPanel();
     await waitFor(() => screen.getByText('First note'));
     fireEvent.click(screen.getByText('Notes'));
     await waitFor(() => {

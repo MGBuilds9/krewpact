@@ -1,6 +1,11 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMemo, useState } from 'react';
+
+import { apiFetch, apiFetchList } from '@/lib/api-client';
+import { updateArrayQueryData } from '@/lib/query-cache';
+import { queryKeys } from '@/lib/query-keys';
 
 export interface Note {
   id: string;
@@ -9,76 +14,146 @@ export interface Note {
   created_at: string;
 }
 
+function sortNotes(notes: Note[]) {
+  return [...notes].sort((a, b) => {
+    if (a.is_pinned !== b.is_pinned) {
+      return Number(b.is_pinned) - Number(a.is_pinned);
+    }
+
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+}
+
 export function useNotesPanel(entityType: string, entityId: string) {
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const queryKey = useMemo(
+    () => queryKeys.notes.list(entityType, entityId),
+    [entityType, entityId],
+  );
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
 
-  const fetchNotes = useCallback(async () => {
-    try {
-      const res = await fetch(`/api/crm/notes?entity_type=${entityType}&entity_id=${entityId}`);
-      setNotes((await res.json()).data ?? []);
-    } catch {
-    } finally {
-      setLoading(false);
-    }
-  }, [entityType, entityId]);
+  const notesQuery = useQuery({
+    queryKey,
+    queryFn: () =>
+      apiFetchList<Note>('/api/crm/notes', {
+        params: {
+          entity_type: entityType,
+          entity_id: entityId,
+        },
+      }),
+    enabled: !!entityType && !!entityId,
+    staleTime: 30_000,
+  });
 
-  useEffect(() => {
-    fetchNotes();
-  }, [fetchNotes]);
+  const updateNotesCache = (updater: (current: Note[]) => Note[]) => {
+    updateArrayQueryData<Note>(queryClient, queryKey, (current) => sortNotes(updater(current)));
+  };
 
-  const addNote = async (content: string, onDone: () => void) => {
-    if (!content.trim()) return;
-    try {
-      const res = await fetch('/api/crm/notes', {
+  const addNoteMutation = useMutation({
+    mutationFn: (content: string) =>
+      apiFetch<Note>('/api/crm/notes', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: {
           entity_type: entityType,
           entity_id: entityId,
           content: content.trim(),
-        }),
-      });
-      const note: Note = await res.json();
-      setNotes((prev) => [note, ...prev]);
+        },
+      }),
+    onSuccess: (createdNote) => {
+      updateNotesCache((current) => [
+        createdNote,
+        ...current.filter((note) => note.id !== createdNote.id),
+      ]);
+    },
+  });
+
+  const saveEditMutation = useMutation({
+    mutationFn: ({ id, content }: { id: string; content: string }) =>
+      apiFetch<Note>(`/api/crm/notes/${id}`, {
+        method: 'PATCH',
+        body: { content: content.trim() },
+      }),
+    onSuccess: (updatedNote) => {
+      updateNotesCache((current) =>
+        current.map((note) => (note.id === updatedNote.id ? updatedNote : note)),
+      );
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) =>
+      apiFetch(`/api/crm/notes/${id}`, {
+        method: 'DELETE',
+      }),
+    onSuccess: (_result, deletedId) => {
+      updateNotesCache((current) => current.filter((note) => note.id !== deletedId));
+    },
+  });
+
+  const togglePinMutation = useMutation({
+    mutationFn: (note: Note) =>
+      apiFetch<Note>(`/api/crm/notes/${note.id}`, {
+        method: 'PATCH',
+        body: { is_pinned: !note.is_pinned },
+      }),
+    onSuccess: (updatedNote) => {
+      updateNotesCache((current) =>
+        current.map((note) => (note.id === updatedNote.id ? updatedNote : note)),
+      );
+    },
+  });
+
+  const notes = useMemo(() => sortNotes(notesQuery.data ?? []), [notesQuery.data]);
+
+  const addNote = async (content: string, onDone: () => void) => {
+    const trimmed = content.trim();
+    if (!trimmed) return;
+
+    try {
+      await queryClient.cancelQueries({ queryKey });
+      await addNoteMutation.mutateAsync(trimmed);
       onDone();
-    } catch {}
+    } catch {
+      // Swallow errors to preserve the panel's previous behavior.
+    }
   };
 
   const saveEdit = async (id: string) => {
-    if (!editContent.trim()) return;
+    const trimmed = editContent.trim();
+    if (!trimmed) return;
+
     try {
-      const res = await fetch(`/api/crm/notes/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: editContent.trim() }),
-      });
-      const updated: Note = await res.json();
-      setNotes((prev) => prev.map((n) => (n.id === id ? updated : n)));
+      await queryClient.cancelQueries({ queryKey });
+      await saveEditMutation.mutateAsync({ id, content: trimmed });
       setEditingId(null);
-    } catch {}
+      setEditContent('');
+    } catch {
+      // Swallow errors to preserve the panel's previous behavior.
+    }
   };
 
   const deleteNote = async (id: string) => {
     try {
-      await fetch(`/api/crm/notes/${id}`, { method: 'DELETE' });
-      setNotes((prev) => prev.filter((n) => n.id !== id));
-    } catch {}
+      await queryClient.cancelQueries({ queryKey });
+      await deleteMutation.mutateAsync(id);
+      if (editingId === id) {
+        setEditingId(null);
+        setEditContent('');
+      }
+    } catch {
+      // Swallow errors to preserve the panel's previous behavior.
+    }
   };
 
   const togglePin = async (note: Note) => {
     try {
-      const res = await fetch(`/api/crm/notes/${note.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ is_pinned: !note.is_pinned }),
-      });
-      const updated: Note = await res.json();
-      setNotes((prev) => prev.map((n) => (n.id === note.id ? updated : n)));
-    } catch {}
+      await queryClient.cancelQueries({ queryKey });
+      await togglePinMutation.mutateAsync(note);
+    } catch {
+      // Swallow errors to preserve the panel's previous behavior.
+    }
   };
 
   const toggleExpand = (id: string) => {
@@ -95,7 +170,7 @@ export function useNotesPanel(entityType: string, entityId: string) {
 
   return {
     notes,
-    loading,
+    loading: notesQuery.isLoading,
     editingId,
     setEditingId,
     editContent,

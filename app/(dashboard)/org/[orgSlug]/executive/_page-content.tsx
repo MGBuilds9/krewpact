@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { Clock } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { InsightAnalyticsCard } from '@/components/AI/InsightAnalyticsCard';
 import type { Alert } from '@/components/Executive/AlertsRibbon';
@@ -128,11 +128,12 @@ export default function ExecutiveOverviewPage() {
     queryFn: () => apiFetch<ForecastResponse>('/api/executive/forecast'),
   });
 
-  const primary = extractMetrics(overviewData);
-  const compare = extractMetrics(compareData);
-  const alerts = alertsData ? alertsData.alerts || [] : [];
-  const forecast = forecastData ? forecastData.forecast : undefined;
+  const primary = useMemo(() => extractMetrics(overviewData), [overviewData]);
+  const compare = useMemo(() => extractMetrics(compareData), [compareData]);
+  const alerts = useMemo(() => alertsData?.alerts || [], [alertsData]);
+  const forecast = useMemo(() => forecastData?.forecast, [forecastData]);
   const showComparison = isComparing && compareDivision !== null && compareData !== undefined;
+  const showInsights = !showComparison && overviewData !== undefined;
 
   return (
     <>
@@ -191,7 +192,7 @@ export default function ExecutiveOverviewPage() {
               <DivisionScorecard portfolio={primary.portfolio} isLoading={overviewLoading} />
               <SubscriptionWidget summary={primary.subscriptions} isLoading={overviewLoading} />
             </div>
-            <InsightAnalyticsCard />
+            {showInsights && <InsightAnalyticsCard />}
           </>
         )}
       </div>

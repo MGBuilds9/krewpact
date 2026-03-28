@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import {
   View,
   Text,
@@ -22,7 +22,13 @@ const STATUS_COLORS: Record<string, string> = {
   cancelled: COLORS.danger,
 };
 
-function ProjectCard({ project, onPress }: { project: Project; onPress: () => void }) {
+const ProjectCard = memo(function ProjectCard({
+  project,
+  onPress,
+}: {
+  project: Project;
+  onPress: () => void;
+}) {
   const statusColor = STATUS_COLORS[project.status] ?? COLORS.muted;
 
   return (
@@ -50,7 +56,7 @@ function ProjectCard({ project, onPress }: { project: Project; onPress: () => vo
       )}
     </TouchableOpacity>
   );
-}
+});
 
 export default function ProjectsScreen() {
   const router = useRouter();
@@ -87,6 +93,11 @@ export default function ProjectsScreen() {
       refreshControl={<RefreshControl refreshing={isFetching && !isLoading} onRefresh={refetch} />}
       ListHeaderComponent={<Text style={styles.header}>Projects</Text>}
       ListEmptyComponent={<Text style={styles.empty}>No projects found.</Text>}
+      initialNumToRender={8}
+      maxToRenderPerBatch={8}
+      updateCellsBatchingPeriod={16}
+      windowSize={5}
+      removeClippedSubviews
       renderItem={({ item }) => (
         <ProjectCard project={item} onPress={() => router.push(`/project/${item.id}`)} />
       )}

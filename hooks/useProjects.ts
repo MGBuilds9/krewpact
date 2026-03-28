@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { apiFetch, apiFetchList } from '@/lib/api-client';
+import { prependById, removeById, replaceById, updateArrayQueryFamily } from '@/lib/query-cache';
 import { queryKeys } from '@/lib/query-keys';
 
 export interface Project {
@@ -63,8 +64,11 @@ export function useCreateProject() {
   return useMutation({
     mutationFn: (data: Partial<Project>) =>
       apiFetch<Project>('/api/projects', { method: 'POST', body: data }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
+    onSuccess: (createdProject) => {
+      updateArrayQueryFamily<Project>(queryClient, queryKeys.projects.lists(), (current) =>
+        prependById(current, createdProject),
+      );
+      queryClient.setQueryData(queryKeys.projects.detail(createdProject.id), createdProject);
     },
   });
 }
@@ -75,9 +79,11 @@ export function useUpdateProject() {
   return useMutation({
     mutationFn: ({ id, ...data }: Partial<Project> & { id: string }) =>
       apiFetch<Project>(`/api/projects/${id}`, { method: 'PATCH', body: data }),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.projects.detail(variables.id) });
+    onSuccess: (updatedProject, variables) => {
+      updateArrayQueryFamily<Project>(queryClient, queryKeys.projects.lists(), (current) =>
+        replaceById(current, updatedProject),
+      );
+      queryClient.setQueryData(queryKeys.projects.detail(variables.id), updatedProject);
     },
   });
 }
@@ -87,8 +93,11 @@ export function useDeleteProject() {
 
   return useMutation({
     mutationFn: (id: string) => apiFetch(`/api/projects/${id}`, { method: 'DELETE' }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
+    onSuccess: (_result, deletedProjectId) => {
+      updateArrayQueryFamily<Project>(queryClient, queryKeys.projects.lists(), (current) =>
+        removeById(current, deletedProjectId),
+      );
+      queryClient.removeQueries({ queryKey: queryKeys.projects.detail(deletedProjectId) });
     },
   });
 }

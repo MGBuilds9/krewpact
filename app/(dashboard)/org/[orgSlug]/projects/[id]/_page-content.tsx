@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useParams } from 'next/navigation';
+import { useState } from 'react';
 
 import { AiInsightBanner } from '@/components/AI/AiInsightBanner';
 import { ProjectOverviewTab } from '@/components/Projects/Tabs/ProjectOverviewTab';
@@ -90,6 +91,7 @@ export default function ProjectDetailPage() {
   const { push: orgPush } = useOrgRouter();
   const projectId = params.id as string;
   const { data: project, isLoading } = useProject(projectId);
+  const [activeTab, setActiveTab] = useState('overview');
 
   if (isLoading)
     return (
@@ -145,7 +147,7 @@ export default function ProjectDetailPage() {
         </div>
       </div>
       <AiInsightBanner entityType="project" entityId={projectId} />
-      <Tabs defaultValue="overview" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="w-full justify-start overflow-x-auto flex-nowrap">
           {TABS.map((tab) => (
             <TabsTrigger key={tab.value} value={tab.value} className="gap-1.5">
@@ -154,11 +156,9 @@ export default function ProjectDetailPage() {
             </TabsTrigger>
           ))}
         </TabsList>
-        {TABS.map((tab) => (
-          <TabsContent key={tab.value} value={tab.value} className="mt-6">
-            <TabContent value={tab.value} project={project} projectId={projectId} />
-          </TabsContent>
-        ))}
+        <TabsContent value={activeTab} className="mt-6">
+          <TabContent value={activeTab} project={project} projectId={projectId} />
+        </TabsContent>
       </Tabs>
     </div>
   );

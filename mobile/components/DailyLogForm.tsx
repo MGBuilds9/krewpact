@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
-import { api, DailyLogCreate } from '@/lib/api-client';
+import { api, DailyLog, DailyLogCreate } from '@/lib/api-client';
 import { queryKeys } from '@/lib/query-client';
 import { COLORS, SPACING } from '@/constants/config';
 
@@ -43,8 +43,11 @@ export function DailyLogForm({ projectId, onClose, onSuccess }: DailyLogFormProp
       };
       return api.projects.dailyLogs.create(projectId, payload);
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.projectDailyLogs(projectId) });
+    onSuccess: (created) => {
+      qc.setQueryData<DailyLog[]>(queryKeys.projectDailyLogs(projectId), (current) => [
+        created,
+        ...(current ?? []),
+      ]);
       onSuccess();
     },
     onError: () => Alert.alert('Error', 'Failed to save daily log. Please try again.'),

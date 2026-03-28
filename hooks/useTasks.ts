@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { apiFetch, apiFetchList } from '@/lib/api-client';
+import { prependById, removeById, replaceById, updateArrayQueryFamily } from '@/lib/query-cache';
 import { queryKeys } from '@/lib/query-keys';
 
 export interface Task {
@@ -76,8 +77,11 @@ export function useCreateTask() {
         method: 'POST',
         body: task,
       }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.tasks.all });
+    onSuccess: (createdTask) => {
+      updateArrayQueryFamily<Task>(queryClient, queryKeys.tasks.lists(), (current) =>
+        prependById(current, createdTask),
+      );
+      queryClient.setQueryData(queryKeys.tasks.detail(createdTask.id), createdTask);
     },
   });
 }
@@ -91,8 +95,11 @@ export function useUpdateTask() {
         method: 'PATCH',
         body: updates,
       }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.tasks.all });
+    onSuccess: (updatedTask) => {
+      updateArrayQueryFamily<Task>(queryClient, queryKeys.tasks.lists(), (current) =>
+        replaceById(current, updatedTask),
+      );
+      queryClient.setQueryData(queryKeys.tasks.detail(updatedTask.id), updatedTask);
     },
   });
 }
@@ -102,8 +109,11 @@ export function useDeleteTask() {
 
   return useMutation({
     mutationFn: (id: string) => apiFetch(`/api/tasks/${id}`, { method: 'DELETE' }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.tasks.all });
+    onSuccess: (_result, deletedTaskId) => {
+      updateArrayQueryFamily<Task>(queryClient, queryKeys.tasks.lists(), (current) =>
+        removeById(current, deletedTaskId),
+      );
+      queryClient.removeQueries({ queryKey: queryKeys.tasks.detail(deletedTaskId) });
     },
   });
 }

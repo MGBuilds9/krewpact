@@ -48,7 +48,7 @@ vi.mock('@/lib/logger', () => {
 
 import { auth } from '@clerk/nextjs/server';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { NextRequest } from 'next/server';
 import React from 'react';
 
@@ -91,7 +91,7 @@ describe('US-005 Checkpoint: Realtime + PDF Integration', () => {
   });
 
   describe('Realtime subscription lifecycle', () => {
-    it('full lifecycle: subscribe → receive event → invalidate cache → unsubscribe', () => {
+    it('full lifecycle: subscribe → receive event → invalidate cache → unsubscribe', async () => {
       const { Wrapper, queryClient } = createWrapper();
       const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
       const onEvent = vi.fn();
@@ -133,8 +133,10 @@ describe('US-005 Checkpoint: Realtime + PDF Integration', () => {
       expect(onEvent).toHaveBeenCalledWith(expect.objectContaining({ eventType: 'INSERT' }));
 
       // Step 3: Cache invalidation
-      expect(invalidateSpy).toHaveBeenCalledWith({
-        queryKey: ['notifications'],
+      await waitFor(() => {
+        expect(invalidateSpy).toHaveBeenCalledWith({
+          queryKey: ['notifications'],
+        });
       });
 
       // Step 4: Unsubscribe on unmount

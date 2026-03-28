@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { View, Text, FlatList, RefreshControl, StyleSheet, ActivityIndicator } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { api, Lead } from '@/lib/api-client';
@@ -17,7 +17,7 @@ const STATUS_COLORS: Record<string, string> = {
   lost: COLORS.danger,
 };
 
-function LeadCard({ lead }: { lead: Lead }) {
+const LeadCard = memo(function LeadCard({ lead }: { lead: Lead }) {
   const statusColor = STATUS_COLORS[lead.status] ?? COLORS.muted;
 
   return (
@@ -50,7 +50,7 @@ function LeadCard({ lead }: { lead: Lead }) {
       </View>
     </View>
   );
-}
+});
 
 export default function CRMScreen() {
   const { data, isLoading, isError, refetch, isFetching } = useQuery<Lead[]>({
@@ -91,6 +91,11 @@ export default function CRMScreen() {
         </View>
       }
       ListEmptyComponent={<Text style={styles.empty}>No leads found.</Text>}
+      initialNumToRender={8}
+      maxToRenderPerBatch={8}
+      updateCellsBatchingPeriod={16}
+      windowSize={5}
+      removeClippedSubviews
       renderItem={({ item }) => <LeadCard lead={item} />}
       ItemSeparatorComponent={() => <View style={styles.separator} />}
     />

@@ -1,7 +1,7 @@
 'use client';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -222,7 +222,7 @@ describe('useRealtimeSubscription', () => {
     expect(onEvent).toHaveBeenCalledWith(expect.objectContaining({ eventType: 'DELETE' }));
   });
 
-  it('invalidates React Query cache on events', () => {
+  it('invalidates React Query cache on events', async () => {
     const { Wrapper, queryClient } = createWrapper();
     const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
     const onEvent = vi.fn();
@@ -256,7 +256,9 @@ describe('useRealtimeSubscription', () => {
       });
     });
 
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['notifications'] });
+    await waitFor(() => {
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['notifications'] });
+    });
   });
 
   it('applies filter when provided', () => {

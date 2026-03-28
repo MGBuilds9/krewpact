@@ -226,27 +226,12 @@ function PanelContent({
   );
 }
 
-export function StagingReviewPanel({ docId }: StagingReviewPanelProps) {
+function StagingReviewPanelContent({ doc, docId }: { doc: StagingDocDetail; docId: string }) {
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
-  const [editedContent, setEditedContent] = useState('');
-  const [reviewNotes, setReviewNotes] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
-
-  const {
-    data: doc,
-    isLoading,
-    isError,
-  } = useQuery({
-    queryKey: queryKeys.executive.staging.detail(docId),
-    queryFn: () => apiFetch<StagingDocDetail>(`/api/executive/staging/${docId}`),
-    select(d) {
-      setEditedContent((prev) => (prev === '' ? (d.content ?? '') : prev));
-      setReviewNotes((prev) => (prev === '' ? (d.review_notes ?? '') : prev));
-      setSelectedCategory((prev) => (prev === '' ? (d.category ?? '') : prev));
-      return d;
-    },
-  });
+  const [editedContent, setEditedContent] = useState(doc.content ?? '');
+  const [reviewNotes, setReviewNotes] = useState(doc.review_notes ?? '');
+  const [selectedCategory, setSelectedCategory] = useState<string>(doc.category ?? '');
 
   const { mutate: patch, isPending } = useMutation({
     mutationFn: (payload: PatchPayload) =>
@@ -254,14 +239,45 @@ export function StagingReviewPanel({ docId }: StagingReviewPanelProps) {
         method: 'PATCH',
         body: payload,
       }),
-    onSuccess: (_, variables) => {
+    onSuccess: (updated, variables) => {
+      queryClient.setQueryData(queryKeys.executive.staging.detail(docId), updated);
       queryClient.invalidateQueries({ queryKey: queryKeys.executive.staging.all });
+      setEditedContent(updated.content ?? '');
+      setReviewNotes(updated.review_notes ?? '');
+      setSelectedCategory(updated.category ?? '');
       if (variables.status === 'approved') showToast.success('Document approved');
       else if (variables.status === 'rejected') showToast.success('Document rejected');
       else showToast.success('Changes saved');
       setIsEditing(false);
     },
     onError: () => showToast.error('Failed to update document'),
+  });
+
+  return (
+    <PanelContent
+      doc={doc}
+      isPending={isPending}
+      isEditing={isEditing}
+      editedContent={editedContent}
+      reviewNotes={reviewNotes}
+      selectedCategory={selectedCategory}
+      setEditedContent={setEditedContent}
+      setReviewNotes={setReviewNotes}
+      setSelectedCategory={setSelectedCategory}
+      setIsEditing={setIsEditing}
+      patch={patch}
+    />
+  );
+}
+
+export function StagingReviewPanel({ docId }: StagingReviewPanelProps) {
+  const {
+    data: doc,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: queryKeys.executive.staging.detail(docId),
+    queryFn: () => apiFetch<StagingDocDetail>(`/api/executive/staging/${docId}`),
   });
 
   if (isLoading)
@@ -280,19 +296,5 @@ export function StagingReviewPanel({ docId }: StagingReviewPanelProps) {
       </div>
     );
 
-  return (
-    <PanelContent
-      doc={doc}
-      isPending={isPending}
-      isEditing={isEditing}
-      editedContent={editedContent}
-      reviewNotes={reviewNotes}
-      selectedCategory={selectedCategory}
-      setEditedContent={setEditedContent}
-      setReviewNotes={setReviewNotes}
-      setSelectedCategory={setSelectedCategory}
-      setIsEditing={setIsEditing}
-      patch={patch}
-    />
-  );
+  return <StagingReviewPanelContent key={doc.id} doc={doc} docId={docId} />;
 }

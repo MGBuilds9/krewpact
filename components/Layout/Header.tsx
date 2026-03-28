@@ -157,19 +157,25 @@ export function Header() {
         onSignOut={handleSignOut}
       />
       {showQuickAccessToolbar && <QuickAccessToolbar />}
-      <MobileNavigationDrawer
-        isOpen={isMobileMenuOpen}
-        onClose={() => setIsMobileMenuOpen(false)}
-      />
-      <CommandPalette
-        isOpen={isCommandPaletteOpen}
-        onClose={() => setIsCommandPaletteOpen(false)}
-      />
-      <ShortcutsHelpOverlay
-        isOpen={isShortcutsHelpOpen}
-        onClose={() => setIsShortcutsHelpOpen(false)}
-      />
-      {isAdmin && (
+      {isMobileMenuOpen && (
+        <MobileNavigationDrawer
+          isOpen={isMobileMenuOpen}
+          onClose={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+      {isCommandPaletteOpen && (
+        <CommandPalette
+          isOpen={isCommandPaletteOpen}
+          onClose={() => setIsCommandPaletteOpen(false)}
+        />
+      )}
+      {isShortcutsHelpOpen && (
+        <ShortcutsHelpOverlay
+          isOpen={isShortcutsHelpOpen}
+          onClose={() => setIsShortcutsHelpOpen(false)}
+        />
+      )}
+      {isAdmin && isImpersonationOpen && (
         <ImpersonationSelector open={isImpersonationOpen} onOpenChange={setIsImpersonationOpen} />
       )}
     </>

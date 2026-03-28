@@ -58,6 +58,14 @@ export function useCommandPalette(isOpen: boolean, onClose: () => void): UseComm
   const [nlAnswer, setNlAnswer] = useState<string | null>(null);
   const [isNlQuery, setIsNlQuery] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const searchRequestRef = useRef<{ id: number; controller: AbortController } | null>(null);
+  const searchRequestSeqRef = useRef(0);
+  const selectedIndexRef = useRef(selectedIndex);
+  const flatResultsRef = useRef<FlatSearchResult[]>([]);
+  const filteredNavItemsRef = useRef<NavItem[]>([]);
+  const handleNavigationRef = useRef<(path: string) => void>(() => {});
+  const handleEntityNavigationRef = useRef<(entityType: EntityType, id: string) => void>(() => {});
+  const onCloseRef = useRef<() => void>(() => {});
 
   const [recentPages, setRecentPages] = useState<string[]>(() => {
     if (typeof window === 'undefined') return [];
@@ -91,52 +99,94 @@ export function useCommandPalette(isOpen: boolean, onClose: () => void): UseComm
     }
   }, [pathname]);
 
+  React.useEffect(() => {
+    selectedIndexRef.current = selectedIndex;
+  }, [selectedIndex]);
+
   // Search with debounce
   useEffect(() => {
+    if (searchRequestRef.current) {
+      searchRequestRef.current.controller.abort();
+      searchRequestRef.current = null;
+    }
+
     if (searchQuery.length < 2) {
       setSearchResults(null);
       setIsNlQuery(false);
       setNlAnswer(null);
+      setIsSearching(false);
       return;
     }
 
     if (isNaturalLanguageQuery(searchQuery) && searchQuery.length >= 5) {
+      const controller = new AbortController();
+      const requestId = ++searchRequestSeqRef.current;
       const nlTimeout = setTimeout(async () => {
+        searchRequestRef.current = { id: requestId, controller };
         setIsNlQuery(true);
         setIsSearching(true);
         try {
           const res = await apiFetch<{ answer: string; data?: unknown }>('/api/ai/query', {
             method: 'POST',
             body: { query: searchQuery },
+            signal: controller.signal,
           });
+          if (controller.signal.aborted || searchRequestRef.current?.id !== requestId) {
+            return;
+          }
           setNlAnswer(res.answer);
         } catch {
+          if (controller.signal.aborted) {
+            return;
+          }
           setNlAnswer(null);
         } finally {
-          setIsSearching(false);
+          if (searchRequestRef.current?.id === requestId) {
+            setIsSearching(false);
+            searchRequestRef.current = null;
+          }
         }
       }, 600);
-      return () => clearTimeout(nlTimeout);
+      return () => {
+        clearTimeout(nlTimeout);
+        controller.abort();
+      };
     }
 
     setIsNlQuery(false);
     setNlAnswer(null);
 
+    const controller = new AbortController();
+    const requestId = ++searchRequestSeqRef.current;
     const timeout = setTimeout(async () => {
+      searchRequestRef.current = { id: requestId, controller };
       setIsSearching(true);
       try {
         const res = await apiFetch<{ results: GlobalSearchResults }>('/api/search/global', {
           params: { q: searchQuery },
+          signal: controller.signal,
         });
+        if (controller.signal.aborted || searchRequestRef.current?.id !== requestId) {
+          return;
+        }
         setSearchResults(res.results);
       } catch {
+        if (controller.signal.aborted) {
+          return;
+        }
         setSearchResults(null);
       } finally {
-        setIsSearching(false);
+        if (searchRequestRef.current?.id === requestId) {
+          setIsSearching(false);
+          searchRequestRef.current = null;
+        }
       }
     }, 300);
 
-    return () => clearTimeout(timeout);
+    return () => {
+      clearTimeout(timeout);
+      controller.abort();
+    };
   }, [searchQuery]);
 
   // Reset on close
@@ -167,36 +217,69 @@ export function useCommandPalette(isOpen: boolean, onClose: () => void): UseComm
     [orgPush, onClose],
   );
 
-  const toggleSection = (title: string) => {
+  React.useEffect(() => {
+    handleNavigationRef.current = handleNavigation;
+  }, [handleNavigation]);
+
+  React.useEffect(() => {
+    handleEntityNavigationRef.current = handleEntityNavigation;
+  }, [handleEntityNavigation]);
+
+  React.useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  const toggleSection = useCallback((title: string) => {
     setOpenSections((prev) => ({ ...prev, [title]: !prev[title] }));
-  };
+  }, []);
 
-  const filteredSections = navigationSections.map((section) => ({
-    ...section,
-    items: section.items.filter(
-      (item) =>
-        (!item.adminOnly || isAdmin) &&
-        item.label.toLowerCase().includes(searchQuery.toLowerCase()),
-    ),
-  }));
+  const filteredSections = React.useMemo(
+    () =>
+      navigationSections.map((section) => ({
+        ...section,
+        items: section.items.filter(
+          (item) =>
+            (!item.adminOnly || isAdmin) &&
+            item.label.toLowerCase().includes(searchQuery.toLowerCase()),
+        ),
+      })),
+    [isAdmin, searchQuery],
+  );
 
-  const filteredNavItems = filteredSections.flatMap((s) => s.items);
+  const filteredNavItems = React.useMemo(
+    () => filteredSections.flatMap((section) => section.items),
+    [filteredSections],
+  );
 
   // Flat results for keyboard nav
-  const flatResults: FlatSearchResult[] = [];
-  if (searchResults) {
+  const flatResults = React.useMemo<FlatSearchResult[]>(() => {
+    if (!searchResults) {
+      return [];
+    }
+
+    const results: FlatSearchResult[] = [];
     for (const entityType of ENTITY_TYPE_ORDER) {
       for (const result of searchResults[entityType]) {
-        flatResults.push({ entityType, result });
+        results.push({ entityType, result });
       }
     }
-  }
+    return results;
+  }, [searchResults]);
 
   const hasSearchResults = flatResults.length > 0;
 
-  const groupedEntityTypes = searchResults
-    ? ENTITY_TYPE_ORDER.filter((type) => searchResults[type].length > 0)
-    : [];
+  const groupedEntityTypes = React.useMemo(
+    () => (searchResults ? ENTITY_TYPE_ORDER.filter((type) => searchResults[type].length > 0) : []),
+    [searchResults],
+  );
+
+  React.useEffect(() => {
+    flatResultsRef.current = flatResults;
+  }, [flatResults]);
+
+  React.useEffect(() => {
+    filteredNavItemsRef.current = filteredNavItems;
+  }, [filteredNavItems]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -205,15 +288,17 @@ export function useCommandPalette(isOpen: boolean, onClose: () => void): UseComm
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (e.key === 'Escape') {
-        onClose();
+        onCloseRef.current();
         return;
       }
 
-      const totalItems = flatResults.length + filteredNavItems.length;
+      const flat = flatResultsRef.current;
+      const navItems = filteredNavItemsRef.current;
+      const totalItems = flat.length + navItems.length;
       if (e.key === 'ArrowDown') {
         e.preventDefault();
         setSelectedIndex((prev) => {
@@ -236,13 +321,14 @@ export function useCommandPalette(isOpen: boolean, onClose: () => void): UseComm
         });
       } else if (e.key === 'Enter') {
         e.preventDefault();
-        if (selectedIndex < flatResults.length) {
-          const item = flatResults[selectedIndex];
-          handleEntityNavigation(item.entityType, item.result.id);
+        const currentIndex = selectedIndexRef.current;
+        if (currentIndex < flat.length) {
+          const item = flat[currentIndex];
+          handleEntityNavigationRef.current(item.entityType, item.result.id);
         } else {
-          const navIndex = selectedIndex - flatResults.length;
-          if (filteredNavItems[navIndex]) {
-            handleNavigation(filteredNavItems[navIndex].href);
+          const navIndex = currentIndex - flat.length;
+          if (navItems[navIndex]) {
+            handleNavigationRef.current(navItems[navIndex].href);
           }
         }
       }
@@ -250,7 +336,7 @@ export function useCommandPalette(isOpen: boolean, onClose: () => void): UseComm
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  });
+  }, [isOpen]);
 
   const getRecentPageLabel = (path: string) => {
     for (const section of navigationSections) {

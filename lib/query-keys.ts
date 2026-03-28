@@ -72,6 +72,11 @@ export const queryKeys = {
     details: () => [...queryKeys.notifications.all, 'detail'] as const,
     detail: (id: string) => [...queryKeys.notifications.details(), id] as const,
   },
+  notes: {
+    all: ['crm', 'notes'] as const,
+    list: (entityType: string, entityId: string) =>
+      [...queryKeys.notes.all, entityType, entityId] as const,
+  },
   dashboard: {
     all: ['dashboard'] as const,
     executive: () => [...queryKeys.dashboard.all, 'executive'] as const,

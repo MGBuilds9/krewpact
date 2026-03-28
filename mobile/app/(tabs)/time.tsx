@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { memo, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -21,7 +21,7 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString();
 }
 
-function ProjectPicker({
+const ProjectPicker = memo(function ProjectPicker({
   projects,
   selected,
   onSelect,
@@ -54,9 +54,9 @@ function ProjectPicker({
       ))}
     </ScrollView>
   );
-}
+});
 
-function TimeEntryRow({ entry }: { entry: TimeEntry }) {
+const TimeEntryRow = memo(function TimeEntryRow({ entry }: { entry: TimeEntry }) {
   const total = entry.hours_regular + entry.hours_overtime;
   return (
     <View style={styles.entryRow}>
@@ -74,7 +74,7 @@ function TimeEntryRow({ entry }: { entry: TimeEntry }) {
       </View>
     </View>
   );
-}
+});
 
 export default function TimeScreen() {
   const qc = useQueryClient();
@@ -101,8 +101,11 @@ export default function TimeScreen() {
 
   const submitMutation = useMutation({
     mutationFn: (data: TimeEntryCreate) => api.projects.timeEntries.create(selectedProject!, data),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.projectTimeEntries(selectedProject!) });
+    onSuccess: (created) => {
+      qc.setQueryData<TimeEntry[]>(queryKeys.projectTimeEntries(selectedProject!), (current) => [
+        created,
+        ...(current ?? []),
+      ]);
       setHoursRegular('');
       setHoursOvertime('');
       setNotes('');
@@ -130,9 +133,15 @@ export default function TimeScreen() {
     });
   }
 
-  const todayStr = new Date().toISOString().split('T')[0];
-  const todayEntries = entries.filter((e) => e.work_date === todayStr);
-  const todayTotal = todayEntries.reduce((sum, e) => sum + e.hours_regular + e.hours_overtime, 0);
+  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+  const todayEntries = useMemo(
+    () => entries.filter((e) => e.work_date === todayStr),
+    [entries, todayStr],
+  );
+  const todayTotal = useMemo(
+    () => todayEntries.reduce((sum, e) => sum + e.hours_regular + e.hours_overtime, 0),
+    [todayEntries],
+  );
 
   return (
     <ScrollView

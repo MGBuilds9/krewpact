@@ -1,7 +1,6 @@
 'use client';
-
-import { Calendar, Plus, User } from 'lucide-react';
-import { useState } from 'react';
+import { Calendar, Plus, User as UserIcon } from 'lucide-react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Badge } from '@/components/ui/badge';
@@ -23,28 +22,32 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useCreateTask, useTasks, useUpdateTask } from '@/hooks/useTasks';
-import { useUsers } from '@/hooks/useUsers';
+import { type Task, useCreateTask, useTasks, useUpdateTask } from '@/hooks/useTasks';
+import { type User, useUsers } from '@/hooks/useUsers';
 
 interface ProjectTasksTabProps {
   projectId: string;
 }
 
-type Task = ReturnType<typeof useTasks>['data'] extends (infer T)[] | undefined ? T : never;
 type ColumnDef = { id: string; title: string; status: string };
 
-function TaskCard({
+const COLUMNS: ColumnDef[] = [
+  { id: 'todo', title: 'To Do', status: 'todo' },
+  { id: 'in_progress', title: 'In Progress', status: 'in_progress' },
+  { id: 'done', title: 'Done', status: 'done' },
+];
+
+const TaskCard = memo(function TaskCard({
   task,
   column,
-  users,
+  assignedUser,
   onStatusChange,
 }: {
   task: Task;
   column: ColumnDef;
-  users: ReturnType<typeof useUsers>['data'];
+  assignedUser: User | undefined;
   onStatusChange: (id: string, status: string) => void;
 }) {
-  const assignedUser = users?.find((u) => u.id === task.assigned_user_id);
   return (
     <Card className="p-4 hover:shadow-md transition-shadow">
       <h4 className="font-medium mb-2">{task.title}</h4>
@@ -60,7 +63,7 @@ function TaskCard({
         )}
         {task.assigned_user_id && (
           <div className="flex items-center gap-1">
-            <User className="h-3 w-3" />
+            <UserIcon className="h-3 w-3" />
             {assignedUser?.first_name || 'Assigned'}
           </div>
         )}
@@ -90,36 +93,113 @@ function TaskCard({
       </div>
     </Card>
   );
+});
+
+function TaskColumn({
+  column,
+  tasks,
+  users,
+  onStatusChange,
+}: {
+  column: ColumnDef;
+  tasks: Task[];
+  users: Map<string, User>;
+  onStatusChange: (id: string, status: string) => void;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center justify-between">
+          <span>{column.title}</span>
+          <Badge variant="secondary">{tasks.length}</Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {tasks.map((task) => (
+          <TaskCard
+            key={task.id}
+            task={task}
+            column={column}
+            assignedUser={task.assigned_user_id ? users.get(task.assigned_user_id) : undefined}
+            onStatusChange={onStatusChange}
+          />
+        ))}
+        {tasks.length === 0 && (
+          <p className="py-8 text-center text-sm text-muted-foreground">No tasks in this column</p>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
 
-const COLUMNS: ColumnDef[] = [
-  { id: 'todo', title: 'To Do', status: 'todo' },
-  { id: 'in_progress', title: 'In Progress', status: 'in_progress' },
-  { id: 'done', title: 'Done', status: 'done' },
-];
-
-function CreateTaskDialog({
-  isOpen,
-  setIsOpen,
+function TaskBoard({
+  tasks,
   users,
-  onCreateTask,
-  newTask,
-  setNewTask,
-  isPending,
+  onStatusChange,
 }: {
-  isOpen: boolean;
-  setIsOpen: (v: boolean) => void;
-  users: ReturnType<typeof useUsers>['data'];
-  onCreateTask: () => void;
-  newTask: { title: string; description: string; assigned_user_id: string };
-  setNewTask: (v: { title: string; description: string; assigned_user_id: string }) => void;
-  isPending: boolean;
+  tasks: Task[];
+  users: User[] | undefined;
+  onStatusChange: (id: string, status: string) => void;
 }) {
+  const usersById = useMemo(
+    () => new Map((users ?? []).map((user) => [user.id, user] as const)),
+    [users],
+  );
+  const tasksByStatus = useMemo(() => {
+    const grouped: Record<string, Task[]> = { todo: [], in_progress: [], done: [] };
+    for (const task of tasks) {
+      grouped[task.status]?.push(task);
+    }
+    return grouped;
+  }, [tasks]);
+
+  return (
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+      {COLUMNS.map((column) => (
+        <TaskColumn
+          key={column.id}
+          column={column}
+          tasks={tasksByStatus[column.status]}
+          users={usersById}
+          onStatusChange={onStatusChange}
+        />
+      ))}
+    </div>
+  );
+}
+
+function CreateTaskDialog({ projectId, users }: { projectId: string; users: User[] | undefined }) {
+  const createTask = useCreateTask();
+  const [isOpen, setIsOpen] = useState(false);
+  const [newTask, setNewTask] = useState({
+    title: '',
+    description: '',
+    assigned_user_id: '',
+  });
+
+  const handleCreateTask = useCallback(async () => {
+    try {
+      await createTask.mutateAsync({
+        title: newTask.title,
+        description: newTask.description,
+        project_id: projectId,
+        assigned_user_id: newTask.assigned_user_id || undefined,
+        status: 'todo',
+        priority: 'medium',
+      });
+      setNewTask({ title: '', description: '', assigned_user_id: '' });
+      setIsOpen(false);
+      toast.success('Task created successfully');
+    } catch {
+      toast.error('Error creating task');
+    }
+  }, [createTask, newTask, projectId]);
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button>
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="mr-2 h-4 w-4" />
           Add Task
         </Button>
       </DialogTrigger>
@@ -162,7 +242,11 @@ function CreateTaskDialog({
               </SelectContent>
             </Select>
           </div>
-          <Button onClick={onCreateTask} className="w-full" disabled={!newTask.title || isPending}>
+          <Button
+            onClick={handleCreateTask}
+            className="w-full"
+            disabled={!newTask.title || createTask.isPending}
+          >
             Create Task
           </Button>
         </div>
@@ -174,82 +258,26 @@ function CreateTaskDialog({
 export function ProjectTasksTab({ projectId }: ProjectTasksTabProps) {
   const { data: tasks = [] } = useTasks(projectId);
   const { data: users } = useUsers();
-  const createTask = useCreateTask();
   const updateTask = useUpdateTask();
-  const [isOpen, setIsOpen] = useState(false);
-  const [newTask, setNewTask] = useState({ title: '', description: '', assigned_user_id: '' });
 
-  const handleCreateTask = async () => {
-    try {
-      await createTask.mutateAsync({
-        title: newTask.title,
-        description: newTask.description,
-        project_id: projectId,
-        assigned_user_id: newTask.assigned_user_id || undefined,
-        status: 'todo',
-        priority: 'medium',
-      });
-      setNewTask({ title: '', description: '', assigned_user_id: '' });
-      setIsOpen(false);
-      toast.success('Task created successfully');
-    } catch {
-      toast.error('Error creating task');
-    }
-  };
-
-  const handleStatusChange = async (taskId: string, newStatus: string) => {
-    try {
-      await updateTask.mutateAsync({ id: taskId, updates: { status: newStatus } });
-    } catch {
-      toast.error('Error updating task');
-    }
-  };
+  const handleStatusChange = useCallback(
+    async (taskId: string, newStatus: string) => {
+      try {
+        await updateTask.mutateAsync({ id: taskId, updates: { status: newStatus } });
+      } catch {
+        toast.error('Error updating task');
+      }
+    },
+    [updateTask],
+  );
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Task Board</h2>
-        <CreateTaskDialog
-          isOpen={isOpen}
-          setIsOpen={setIsOpen}
-          users={users}
-          onCreateTask={handleCreateTask}
-          newTask={newTask}
-          setNewTask={setNewTask}
-          isPending={createTask.isPending}
-        />
+        <CreateTaskDialog projectId={projectId} users={users} />
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {COLUMNS.map((column) => {
-          const colTasks = tasks.filter((t) => t.status === column.status);
-          return (
-            <Card key={column.id}>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>{column.title}</span>
-                  <Badge variant="secondary">{colTasks.length}</Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {colTasks.map((task) => (
-                  <TaskCard
-                    key={task.id}
-                    task={task}
-                    column={column}
-                    users={users}
-                    onStatusChange={handleStatusChange}
-                  />
-                ))}
-                {colTasks.length === 0 && (
-                  <p className="text-center text-sm text-muted-foreground py-8">
-                    No tasks in this column
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+      <TaskBoard tasks={tasks} users={users} onStatusChange={handleStatusChange} />
     </div>
   );
 }
