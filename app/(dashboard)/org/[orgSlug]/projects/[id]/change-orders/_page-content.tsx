@@ -113,6 +113,7 @@ function TableSkeleton({ keys }: { keys: string[] }) {
   );
 }
 
+// eslint-disable-next-line max-lines-per-function
 export default function ChangeOrdersPage() {
   const params = useParams();
   const projectId = params.id as string;

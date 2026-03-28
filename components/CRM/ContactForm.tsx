@@ -59,6 +59,7 @@ function buildDefaultValues(contact?: Contact, defaultAccountId?: string, defaul
   };
 }
 
+// eslint-disable-next-line max-lines-per-function
 function ContactFormFields({
   form,
   isEdit,

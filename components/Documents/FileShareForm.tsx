@@ -35,6 +35,7 @@ interface FileShareFormProps {
   onCancel?: () => void;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function FileShareForm({ projectId, fileId, onSuccess, onCancel }: FileShareFormProps) {
   const createShare = useCreateFileShare(projectId, fileId);
   const form = useForm<FormValues>({

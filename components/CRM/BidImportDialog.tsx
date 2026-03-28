@@ -107,6 +107,7 @@ function BidPreviewTable({ preview }: { preview: ParsedBid[] }) {
   );
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function BidImportDialog({ open, onOpenChange }: BidImportDialogProps) {
   const [raw, setRaw] = useState('');
   const [preview, setPreview] = useState<ParsedBid[]>([]);

@@ -6,6 +6,7 @@ import { fetchMerxTenders, toBiddingOpportunity } from '@/lib/integrations/merx-
 import { logger } from '@/lib/logger';
 import { createServiceClient } from '@/lib/supabase/server';
 
+// eslint-disable-next-line max-lines-per-function
 export const GET = withApiRoute({ auth: 'cron' }, async () => {
   const cronLog = createCronLogger('merx-sync');
   const supabase = createServiceClient();

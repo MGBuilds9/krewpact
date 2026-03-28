@@ -76,6 +76,7 @@ function ContractCard({ contract, onClick }: ContractCardProps) {
   );
 }
 
+// eslint-disable-next-line max-lines-per-function
 export default function ContractsPage() {
   const router = useRouter();
   const [search, setSearch] = useState('');

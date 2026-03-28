@@ -33,6 +33,7 @@ interface BidSubmissionFormProps {
   inviteId?: string;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function BidSubmissionForm({ onSubmit, isLoading, inviteId }: BidSubmissionFormProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),

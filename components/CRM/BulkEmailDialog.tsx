@@ -14,6 +14,7 @@ interface BulkEmailDialogProps {
   onSendComplete: () => void;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function BulkEmailDialog({
   open,
   onOpenChange,

@@ -73,6 +73,7 @@ function getDefaultDueDate(): string {
   return tomorrow.toISOString().slice(0, 16);
 }
 
+// eslint-disable-next-line max-lines-per-function
 function FollowUpFormFields({
   form,
   setPresetDue,

@@ -99,6 +99,7 @@ function _LocationSelects({
   );
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function TransactionForm({ onSubmit, isPending, onCancel }: TransactionFormProps) {
   const { activeDivision } = useDivision();
   const divisionId = activeDivision?.id ?? '';

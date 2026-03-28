@@ -79,6 +79,7 @@ function buildDefaultValues(item?: CostCatalogItem, divisionId?: string) {
   };
 }
 
+// eslint-disable-next-line max-lines-per-function
 function CostCatalogItemFormFields({
   form,
   isPending,

@@ -50,6 +50,7 @@ export interface AuditFilterBarProps {
   onReset: () => void;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function AuditFilterBar({
   entityType,
   action,

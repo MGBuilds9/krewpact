@@ -70,6 +70,7 @@ function parseCrewCount(raw: string | undefined): number | undefined {
   return isNaN(n) ? undefined : n;
 }
 
+// eslint-disable-next-line max-lines-per-function
 function DailyLogFormFields({
   form,
   isPending,

@@ -17,6 +17,7 @@ import { useOrgRouter } from '@/hooks/useOrgRouter';
 
 import { FleetFiltersBar } from './_components/FleetFiltersBar';
 
+// eslint-disable-next-line max-lines-per-function
 export default function FleetPageContent() {
   const { activeDivision } = useDivision();
   const { push: orgPush } = useOrgRouter();

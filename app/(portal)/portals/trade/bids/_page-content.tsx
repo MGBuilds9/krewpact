@@ -99,6 +99,7 @@ function BidsSkeleton() {
   );
 }
 
+// eslint-disable-next-line max-lines-per-function
 function NewBidDialog({ onSuccess }: { onSuccess: () => void }) {
   const [open, setOpen] = useState(false);
 

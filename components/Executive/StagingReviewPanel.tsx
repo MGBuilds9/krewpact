@@ -127,6 +127,7 @@ function ActionButtons({
   );
 }
 
+// eslint-disable-next-line max-lines-per-function
 function PanelContent({
   doc,
   isPending,

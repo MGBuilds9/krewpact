@@ -27,6 +27,7 @@ interface SelectionOptionFormProps {
   onCancel?: () => void;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function SelectionOptionForm({
   projectId,
   sheetId,

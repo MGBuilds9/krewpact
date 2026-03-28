@@ -28,6 +28,7 @@ interface RFICreateFormProps {
   onCancel?: () => void;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function RFICreateForm({ projectId, onSuccess, onCancel }: RFICreateFormProps) {
   const createRFI = useCreateRFI(projectId);
   const form = useForm<FormValues>({

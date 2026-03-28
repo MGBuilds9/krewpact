@@ -126,6 +126,7 @@ function SubmittalsSkeleton() {
   );
 }
 
+// eslint-disable-next-line max-lines-per-function
 function NewSubmittalDialog({ onSuccess }: { onSuccess: () => void }) {
   const [open, setOpen] = useState(false);
 

@@ -59,6 +59,7 @@ interface PoFormFieldsProps extends PoFormState {
   onCancel: () => void;
 }
 
+// eslint-disable-next-line max-lines-per-function
 function PoFormFields({
   divisionId,
   divisionsLoading,

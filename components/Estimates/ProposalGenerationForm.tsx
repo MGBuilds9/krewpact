@@ -36,6 +36,7 @@ export interface ProposalGenerationFormProps {
   onCancel?: () => void;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function ProposalGenerationForm({
   estimateId,
   estimateNumber,

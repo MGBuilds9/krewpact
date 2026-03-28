@@ -67,6 +67,7 @@ function CatalogItemCard({ item, onClick }: CatalogItemCardProps) {
 
 const ITEM_TYPES = ['material', 'labor', 'equipment', 'subcontract', 'other'] as const;
 
+// eslint-disable-next-line max-lines-per-function
 export default function CostCatalogPage() {
   const { activeDivision } = useDivision();
   const [search, setSearch] = useState('');

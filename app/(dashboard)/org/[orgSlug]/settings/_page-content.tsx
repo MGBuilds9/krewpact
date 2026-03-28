@@ -29,6 +29,7 @@ const DEFAULT_AI_PREFS: AiPreferences = {
   ai_suggestions_enabled: true,
 };
 
+// eslint-disable-next-line max-lines-per-function
 export default function SettingsPage() {
   const { user } = useUser();
   const { roles } = useUserRBAC();

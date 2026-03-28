@@ -76,6 +76,7 @@ function CustomTooltip({ active, payload, label }: CustomTooltipArgs) {
   );
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function ForecastChartInner({ forecast, isLoading = false }: ForecastChartInnerProps) {
   const currentQuarter = forecast?.find((q) => q.isCurrent)?.quarter;
 

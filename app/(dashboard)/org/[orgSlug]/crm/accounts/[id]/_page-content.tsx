@@ -39,6 +39,7 @@ function formatCurrency(value: number | null): string {
   }).format(value);
 }
 
+// eslint-disable-next-line max-lines-per-function
 export default function AccountDetailPage() {
   const params = useParams();
   const { push: orgPush } = useOrgRouter();

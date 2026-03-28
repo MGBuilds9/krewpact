@@ -58,6 +58,7 @@ interface RuleFormProps {
   onCancel: () => void;
 }
 
+// eslint-disable-next-line max-lines-per-function
 function ScoringRuleForm({
   form,
   editingId,

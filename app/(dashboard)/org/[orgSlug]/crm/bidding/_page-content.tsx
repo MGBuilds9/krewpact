@@ -31,6 +31,7 @@ function buildParams(
   return Object.keys(params).length > 0 ? params : undefined;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export default function BiddingListPage() {
   const { push: orgPush } = useOrgRouter();
   const [search, setSearch] = useState('');

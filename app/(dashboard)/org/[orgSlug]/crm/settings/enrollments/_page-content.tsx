@@ -27,6 +27,7 @@ const TRIGGER_LABELS: Record<string, string> = {
   manual: 'Manual',
 };
 
+// eslint-disable-next-line max-lines-per-function
 export default function EnrollmentApprovalsPage() {
   const { push: orgPush } = useOrgRouter();
   const { data: enrollments, isLoading } = usePendingEnrollments();

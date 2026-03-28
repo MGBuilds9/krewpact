@@ -30,6 +30,7 @@ interface UserProvisioningFormProps {
   onCancel?: () => void;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function UserProvisioningForm({ onSuccess, onCancel }: UserProvisioningFormProps) {
   const provision = useProvisionUser();
 

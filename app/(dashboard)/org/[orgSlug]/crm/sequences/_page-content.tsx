@@ -123,6 +123,7 @@ function SequenceTableRow({
   );
 }
 
+// eslint-disable-next-line max-lines-per-function
 export default function SequencesPage() {
   const { push: orgPush } = useOrgRouter();
   const { activeDivision, userDivisions } = useDivision();

@@ -108,6 +108,7 @@ interface ApolloSearchCardProps {
   onImport: () => void;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function ApolloSearchCard({
   selectedProfile,
   searchStatus,

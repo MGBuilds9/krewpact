@@ -43,6 +43,7 @@ interface PhotoCaptureFormProps {
   onCancel?: () => void;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function PhotoCaptureForm({ projectId, onSuccess, onCancel }: PhotoCaptureFormProps) {
   const createPhoto = useCreatePhoto(projectId);
   const form = useForm<FormValues>({

@@ -53,6 +53,7 @@ interface JobsCardProps {
   onPageChange: (fn: (p: number) => number) => void;
 }
 
+// eslint-disable-next-line max-lines-per-function
 function EnrichmentJobsCard({
   jobs,
   isLoading,

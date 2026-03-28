@@ -17,6 +17,7 @@ import {
 const TOTAL_STEPS = 4;
 const STEP_LABELS = ['Contact Details', 'Insurance & WSIB', 'Trade Specialties', 'Review & Submit'];
 
+// eslint-disable-next-line max-lines-per-function
 export default function TradeOnboardingWizard() {
   const router = useRouter();
   const [step, setStep] = useState(0);

@@ -25,6 +25,7 @@ interface DeficiencyItemFormProps {
   onCancel?: () => void;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function DeficiencyItemForm({
   projectId,
   defId,

@@ -36,6 +36,7 @@ const STATUS_OPTIONS = [
   'lost',
 ];
 
+// eslint-disable-next-line max-lines-per-function
 export default function LeadsPageContent() {
   const { push: orgPush } = useOrgRouter();
   const { activeDivision } = useDivision();

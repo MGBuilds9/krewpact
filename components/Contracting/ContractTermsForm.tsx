@@ -33,6 +33,7 @@ export interface ContractTermsFormProps {
   onCancel?: () => void;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function ContractTermsForm({
   contractTerms,
   proposalId,

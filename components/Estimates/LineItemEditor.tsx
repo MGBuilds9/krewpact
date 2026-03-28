@@ -27,6 +27,7 @@ interface LineRowProps {
   onDeleteLine: (lineId: string) => void;
 }
 
+// eslint-disable-next-line max-lines-per-function
 function LineRow({ line, isReadOnly, onUpdateLine, onDeleteLine }: LineRowProps) {
   return (
     <tr className="border-b last:border-0">

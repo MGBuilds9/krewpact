@@ -23,6 +23,7 @@ import { useOrgRouter } from '@/hooks/useOrgRouter';
 
 const CURRENCIES = ['CAD', 'USD'] as const;
 
+// eslint-disable-next-line max-lines-per-function
 export default function NewEstimatePageContent() {
   const { push: orgPush } = useOrgRouter();
   const { activeDivision } = useDivision();

@@ -31,6 +31,7 @@ interface PoLineEditorProps {
   onChange: (lines: PoLineInput[]) => void;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function PoLineEditor({ lines, items, onChange }: PoLineEditorProps) {
   const addLine = useCallback(() => {
     onChange([

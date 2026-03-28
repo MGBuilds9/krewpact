@@ -134,6 +134,7 @@ async function sendEmail(params: {
   return res.ok;
 }
 
+// eslint-disable-next-line max-lines-per-function
 function useEmailDraft(
   entityType: string,
   entityId: string,

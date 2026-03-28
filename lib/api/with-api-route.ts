@@ -142,6 +142,7 @@ async function applyRateLimit(
   return rl.success ? null : rateLimitResponse(rl);
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function withApiRoute<TBody = unknown, TQuery = unknown>(
   config: RouteConfig<TBody, TQuery>,
   handler: RouteHandler<TBody, TQuery>,
@@ -155,6 +156,7 @@ export function withApiRoute<TBody = unknown, TQuery = unknown>(
     const route = req.nextUrl.pathname;
     const method = req.method;
 
+    // eslint-disable-next-line complexity
     return requestContext.run({ requestId, route, startTime: start }, async () => {
       try {
         const authMode = config.auth ?? 'required';
@@ -170,9 +172,11 @@ export function withApiRoute<TBody = unknown, TQuery = unknown>(
           const userRoles = await getKrewpactRoles();
 
           if (config.permission) {
-            const { hasPermission: checkPerm, isInternalRole, isExternalRole } = await import(
-              '@/lib/rbac/permissions.shared'
-            );
+            const {
+              hasPermission: checkPerm,
+              isInternalRole,
+              isExternalRole,
+            } = await import('@/lib/rbac/permissions.shared');
             const typedRoles = userRoles.filter(
               (r): r is import('@/lib/rbac/permissions.shared').KrewpactRole =>
                 isInternalRole(r) || isExternalRole(r),

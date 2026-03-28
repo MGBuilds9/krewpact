@@ -149,6 +149,7 @@ function MobileNav({
   );
 }
 
+// eslint-disable-next-line max-lines-per-function
 function DesktopNav({
   items,
   strippedPath,

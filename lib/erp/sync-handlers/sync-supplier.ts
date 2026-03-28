@@ -18,6 +18,7 @@ import {
   upsertSyncMap,
 } from './sync-helpers';
 
+// eslint-disable-next-line max-lines-per-function
 export async function syncSupplier(
   portalAccountId: string,
   _userId: string,

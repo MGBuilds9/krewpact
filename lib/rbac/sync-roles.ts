@@ -3,6 +3,7 @@ import { clerkClient } from '@clerk/nextjs/server';
 import { logger } from '@/lib/logger';
 import { createServiceClient } from '@/lib/supabase/server';
 
+// eslint-disable-next-line max-lines-per-function, complexity
 export async function syncRolesToBothStores(params: {
   supabaseUserId: string;
   clerkUserId: string;

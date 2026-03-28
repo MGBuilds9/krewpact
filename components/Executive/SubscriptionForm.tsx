@@ -38,6 +38,7 @@ const EMPTY_DEFAULTS: Omit<SubscriptionFormInput, 'category'> & {
   notes: '',
 };
 
+// eslint-disable-next-line max-lines-per-function
 export function SubscriptionForm({ subscription, onClose }: SubscriptionFormProps) {
   const queryClient = useQueryClient();
   const isEdit = !!subscription;

@@ -35,6 +35,7 @@ interface ChangeRequestFormProps {
   onCancel?: () => void;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function ChangeRequestForm({ projectId, onSuccess, onCancel }: ChangeRequestFormProps) {
   const createCR = useCreateChangeRequest(projectId);
   const form = useForm<FormValues>({

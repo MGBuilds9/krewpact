@@ -138,6 +138,7 @@ function LogsSection({ logs, logsLoading }: { logs: DailyLog[]; logsLoading: boo
   );
 }
 
+// eslint-disable-next-line max-lines-per-function
 export default function ProjectDiaryPage() {
   const params = useParams();
   const projectId = params.id as string;

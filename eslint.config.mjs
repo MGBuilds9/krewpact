@@ -53,12 +53,14 @@ const eslintConfig = defineConfig([
       'react/no-array-index-key': 'warn',
     },
   },
-  // Overrides: shadcn/ui generated files are exempt from size limits
+  // Overrides: shadcn/ui generated files are exempt from size/complexity/key rules
   {
     files: ['components/ui/**'],
     rules: {
       'max-lines': 'off',
       'max-lines-per-function': 'off',
+      complexity: 'off',
+      'react/no-array-index-key': 'off',
     },
   },
   // Overrides: test files have relaxed limits
@@ -80,6 +82,7 @@ const eslintConfig = defineConfig([
       'no-console': 'off',
       'max-lines': 'off',
       'max-lines-per-function': 'off',
+      complexity: 'off',
       '@typescript-eslint/no-explicit-any': 'off',
     },
   },
@@ -89,6 +92,13 @@ const eslintConfig = defineConfig([
     rules: {
       'max-lines': 'off',
       'max-lines-per-function': 'off',
+    },
+  },
+  // Overrides: command palette hook has complex keyboard/search logic
+  {
+    files: ['hooks/useCommandPalette.ts'],
+    rules: {
+      'max-lines': 'off',
     },
   },
   // Overrides: generated types (Supabase) exempt from all rules

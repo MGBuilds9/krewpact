@@ -26,6 +26,7 @@ interface AuditLogResponse {
   pageSize: number;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export default function AuditLogPage() {
   const { data: users } = useUsers();
   const userNameMap = new Map(

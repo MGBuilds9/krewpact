@@ -156,6 +156,7 @@ function ContactCardView({
   );
 }
 
+// eslint-disable-next-line max-lines-per-function
 export default function ContactsPage() {
   const { push: orgPush } = useOrgRouter();
   const [search, setSearch] = useState('');

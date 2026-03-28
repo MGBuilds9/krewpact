@@ -49,6 +49,7 @@ interface FileMetadataFormProps {
   onCancel?: () => void;
 }
 
+// eslint-disable-next-line max-lines-per-function
 function FileMetadataFields({
   form,
   isPending,

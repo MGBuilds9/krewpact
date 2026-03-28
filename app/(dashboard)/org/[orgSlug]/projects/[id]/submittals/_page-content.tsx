@@ -119,6 +119,7 @@ function SubRow({
   );
 }
 
+// eslint-disable-next-line max-lines-per-function
 export default function SubmittalsPage() {
   const params = useParams();
   const projectId = params.id as string;

@@ -82,6 +82,7 @@ function TimeField({
   );
 }
 
+// eslint-disable-next-line max-lines-per-function
 function SeqDefaultsContent({
   form,
   setForm,

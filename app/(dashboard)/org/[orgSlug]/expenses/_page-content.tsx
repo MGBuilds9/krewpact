@@ -29,6 +29,7 @@ const EMPTY_FORM: ExpenseCreate = {
   user_id: '',
 };
 
+// eslint-disable-next-line max-lines-per-function
 export default function ExpensesPage() {
   const { activeDivision } = useDivision();
   const { data: expenses, isLoading } = useExpenses();

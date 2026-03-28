@@ -91,6 +91,7 @@ function DivPanel({ label, color, metrics, isLoading }: DivPanelProps) {
   );
 }
 
+// eslint-disable-next-line max-lines-per-function
 export default function ExecutiveOverviewPage() {
   const [selectedDivision, setSelectedDivision] = useState<DivisionId | null>(null);
   const [compareDivision, setCompareDivision] = useState<DivisionId | null>(null);

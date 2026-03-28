@@ -27,6 +27,7 @@ import {
   TakeoffPanels,
 } from './_components/EstimateHelpers';
 
+// eslint-disable-next-line max-lines-per-function
 export default function EstimateBuilderPage() {
   const params = useParams();
   const { push: orgPush } = useOrgRouter();

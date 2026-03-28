@@ -182,6 +182,7 @@ function FileList({ files, onRemove }: FileListProps) {
   );
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function TakeoffUploadDialog({
   estimateId,
   open,

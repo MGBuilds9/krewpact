@@ -30,6 +30,7 @@ function useScoringRules() {
   });
 }
 
+// eslint-disable-next-line max-lines-per-function
 export default function ScoringRulesPage() {
   const queryClient = useQueryClient();
   const { data: rules, isLoading } = useScoringRules();

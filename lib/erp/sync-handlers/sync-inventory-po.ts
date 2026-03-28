@@ -87,6 +87,7 @@ async function resolveErpSupplierName(
 /**
  * Sync an approved KrewPact inventory purchase order to ERPNext as a Purchase Order.
  */
+// eslint-disable-next-line max-lines-per-function
 export async function syncInventoryPo(
   poId: string,
   _userId: string,

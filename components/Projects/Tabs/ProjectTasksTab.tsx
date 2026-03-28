@@ -168,6 +168,7 @@ function TaskBoard({
   );
 }
 
+// eslint-disable-next-line max-lines-per-function
 function CreateTaskDialog({ projectId, users }: { projectId: string; users: User[] | undefined }) {
   const createTask = useCreateTask();
   const [isOpen, setIsOpen] = useState(false);

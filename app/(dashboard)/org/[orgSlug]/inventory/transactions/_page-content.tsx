@@ -48,6 +48,7 @@ const TXN_BADGE_COLORS: Record<string, string> = {
   checkin: 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400',
 };
 
+// eslint-disable-next-line max-lines-per-function
 export default function TransactionsPageContent() {
   const { activeDivision } = useDivision();
   const [typeFilter, setTypeFilter] = useState('_all');

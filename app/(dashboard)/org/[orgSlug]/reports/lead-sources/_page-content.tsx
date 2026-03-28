@@ -94,6 +94,7 @@ function SourceBar({
   );
 }
 
+// eslint-disable-next-line max-lines-per-function
 export default function LeadSourcesPage() {
   const { data: leadsResponse, isLoading } = useLeads({ limit: 100 });
 

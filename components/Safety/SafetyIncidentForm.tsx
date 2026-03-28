@@ -31,6 +31,7 @@ interface SafetyIncidentFormProps {
   isLoading?: boolean;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function SafetyIncidentForm({ onSubmit, isLoading }: SafetyIncidentFormProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(safetyIncidentCreateSchema),

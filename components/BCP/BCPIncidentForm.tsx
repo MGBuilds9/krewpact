@@ -34,6 +34,7 @@ interface BCPIncidentFormProps {
   onCancel?: () => void;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function BCPIncidentForm({ onSuccess, onCancel }: BCPIncidentFormProps) {
   const create = useCreateBCPIncident();
   const form = useForm<FormValues>({

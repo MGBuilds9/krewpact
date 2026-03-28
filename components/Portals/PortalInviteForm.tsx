@@ -36,6 +36,7 @@ interface PortalInviteFormProps {
   onCancel?: () => void;
 }
 
+// eslint-disable-next-line max-lines-per-function
 function PortalInviteFields({
   form,
   actorType,

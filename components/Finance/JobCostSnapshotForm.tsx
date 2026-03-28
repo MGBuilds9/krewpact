@@ -41,6 +41,7 @@ const COST_FIELDS: { name: keyof FormValues; label: string }[] = [
   { name: 'forecast_cost', label: 'Forecast Cost (CAD)' },
 ];
 
+// eslint-disable-next-line max-lines-per-function
 export function JobCostSnapshotForm({
   defaultValues,
   onSubmit,

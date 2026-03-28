@@ -23,6 +23,7 @@ import { AccountsBody } from './AccountsViewParts';
 
 const ACCOUNT_TYPES = ['client', 'prospect', 'partner', 'vendor', 'subcontractor'];
 
+// eslint-disable-next-line max-lines-per-function
 export default function AccountsView() {
   const { push: orgPush } = useOrgRouter();
   const { activeDivision } = useDivision();

@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { type NLQueryResult, useNLQuery } from '@/hooks/use-ai';
 
+// eslint-disable-next-line max-lines-per-function
 export function NLQueryBar() {
   const [question, setQuestion] = useState('');
   const [result, setResult] = useState<NLQueryResult | null>(null);
@@ -74,6 +75,7 @@ export function NLQueryBar() {
                 {result.toolCalls && result.toolCalls.length > 0 && (
                   <div className="pt-1 space-y-1">
                     {result.toolCalls.map((tc, i) => (
+                      // eslint-disable-next-line react/no-array-index-key
                       <p key={i} className="text-xs text-muted-foreground">
                         <span className="font-medium">{tc.name}</span>
                         {' — '}

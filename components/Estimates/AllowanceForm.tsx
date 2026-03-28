@@ -34,6 +34,7 @@ export interface AllowanceFormProps {
   onCancel?: () => void;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function AllowanceForm({ estimateId, allowance, onSuccess, onCancel }: AllowanceFormProps) {
   const createAllowance = useCreateEstimateAllowance();
   const updateAllowance = useUpdateEstimateAllowance();

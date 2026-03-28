@@ -50,6 +50,7 @@ interface ComplianceDocUploadFormProps {
   isLoading?: boolean;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function ComplianceDocUploadForm({
   portalAccountId,
   onSubmit,

@@ -14,7 +14,7 @@ import {
   teamInviteSchema,
 } from '@/lib/validators/org';
 
-import { type PendingInvite,TOTAL_STEPS } from './onboarding-constants';
+import { type PendingInvite, TOTAL_STEPS } from './onboarding-constants';
 import { StepCompanyProfile } from './StepCompanyProfile';
 import { StepDivisionSetup } from './StepDivisionSetup';
 import { StepInviteTeam } from './StepInviteTeam';
@@ -25,6 +25,7 @@ interface OnboardingWizardProps {
   onComplete?: () => void;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([]);

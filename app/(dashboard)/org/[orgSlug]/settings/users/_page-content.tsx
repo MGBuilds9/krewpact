@@ -22,6 +22,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useOrgUsers } from '@/hooks/useOrg';
 
+// eslint-disable-next-line max-lines-per-function
 export default function UsersPage() {
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState(false);

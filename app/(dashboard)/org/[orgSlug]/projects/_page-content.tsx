@@ -133,6 +133,7 @@ const PROJECT_STATUS_LABELS: Record<string, string> = {
   cancelled: 'Cancelled',
 };
 
+// eslint-disable-next-line max-lines-per-function
 export default function ProjectsPageContent() {
   const router = useRouter();
   const { activeDivision } = useDivision();

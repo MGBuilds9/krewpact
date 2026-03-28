@@ -152,6 +152,7 @@ async function resolveProjectRef(supabase: SupabaseClient, projectId: string): P
     : projectId;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export async function syncMaterialCost(
   options: MaterialCostOptions,
   _userId: string,

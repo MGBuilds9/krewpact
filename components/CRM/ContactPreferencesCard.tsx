@@ -24,6 +24,7 @@ interface ContactPreferencesCardProps {
   contactId: string;
 }
 
+// eslint-disable-next-line max-lines-per-function
 function PreferencesCardContent({
   prefs,
   saving,

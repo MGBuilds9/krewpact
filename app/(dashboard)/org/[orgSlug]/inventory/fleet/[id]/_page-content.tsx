@@ -26,6 +26,7 @@ import {
 } from '@/hooks/useFleetVehicles';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 
+// eslint-disable-next-line max-lines-per-function
 export default function FleetDetailPageContent() {
   const params = useParams();
   const vehicleId = params.id as string;

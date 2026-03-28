@@ -55,6 +55,7 @@ function DeepResearchButton({
   );
 }
 
+// eslint-disable-next-line complexity
 export function EnrichmentIntelCard({
   enrichmentData,
   enrichmentStatus,

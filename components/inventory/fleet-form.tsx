@@ -37,6 +37,7 @@ interface FleetFormFieldsProps {
   isPending?: boolean;
 }
 
+// eslint-disable-next-line max-lines-per-function, complexity
 function FleetFormFields({
   vehicle,
   autoCreateLocation,

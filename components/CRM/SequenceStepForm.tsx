@@ -80,6 +80,7 @@ function buildActionConfig(values: StepFormValues): Record<string, unknown> {
   return {};
 }
 
+// eslint-disable-next-line max-lines-per-function
 function SequenceStepFormFields({
   form,
   actionType,

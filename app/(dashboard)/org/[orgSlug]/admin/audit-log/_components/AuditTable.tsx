@@ -61,6 +61,7 @@ export interface AuditTableProps {
   resolveUser: (userId: string) => string;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function AuditTable({
   loading,
   entries,

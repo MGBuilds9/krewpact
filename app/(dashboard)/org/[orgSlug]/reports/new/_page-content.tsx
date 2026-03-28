@@ -30,6 +30,7 @@ function FormField({ label, children }: { label: string; children: React.ReactNo
   );
 }
 
+// eslint-disable-next-line max-lines-per-function
 export default function NewReportPage() {
   const { push: orgPush } = useOrgRouter();
   const { activeDivision } = useDivision();

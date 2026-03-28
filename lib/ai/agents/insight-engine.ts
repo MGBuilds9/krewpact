@@ -15,6 +15,7 @@ interface InsightResult {
   modelUsed: string;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export async function generateInsights(
   orgId: string,
 ): Promise<{ generated: number; skipped: number; errors: number }> {

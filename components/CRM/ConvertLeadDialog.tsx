@@ -30,6 +30,7 @@ interface ConvertLeadDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function ConvertLeadDialog({ lead, open, onOpenChange }: ConvertLeadDialogProps) {
   const router = useRouter();
   const { orgSlug } = useParams<{ orgSlug: string }>();

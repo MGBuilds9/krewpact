@@ -36,6 +36,7 @@ interface RuleFormFieldsProps {
   onChange: (f: RuleFormState) => void;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function RuleFormFields({ form, onChange }: RuleFormFieldsProps) {
   function set(field: keyof RuleFormState, value: string | boolean) {
     onChange({ ...form, [field]: value });

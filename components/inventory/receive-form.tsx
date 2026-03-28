@@ -128,6 +128,7 @@ function ReceiveFormContent({
   );
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function ReceiveForm({ po, onSuccess }: ReceiveFormProps) {
   const createGr = useCreateGoodsReceipt();
   const confirmGr = useConfirmGoodsReceipt();

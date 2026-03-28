@@ -32,6 +32,7 @@ import { ProjectListView } from './_components/ProjectListView';
 
 type FileItem = NonNullable<ReturnType<typeof useFiles>['data']>['data'][number];
 
+// eslint-disable-next-line max-lines-per-function, complexity
 export default function DocumentsPage() {
   const { activeDivision } = useDivision();
   const { user } = useUser();

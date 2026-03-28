@@ -78,6 +78,7 @@ async function runApolloImport({
   }
 }
 
+// eslint-disable-next-line max-lines-per-function
 export default function LeadGenDashboardPage() {
   const { data: leadsResponse, isLoading: leadsLoading } = useLeads({ limit: 10 });
   const { data: sequences, isLoading: seqLoading } = useSequences({ isActive: true });

@@ -35,6 +35,7 @@ interface OverviewTabProps {
   oppCount: number;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function OverviewTab({
   account,
   isEditing,

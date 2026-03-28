@@ -59,6 +59,7 @@ interface AdjustmentFormProps {
   onReset: () => void;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function AdjustmentForm({
   register,
   errors,

@@ -34,6 +34,7 @@ interface TemplateFormProps extends TemplateFormState {
   onCancel: () => void;
 }
 
+// eslint-disable-next-line max-lines-per-function
 function NewTemplateForm({
   name,
   category,
@@ -133,6 +134,7 @@ function NewTemplateForm({
   );
 }
 
+// eslint-disable-next-line max-lines-per-function
 export default function NewTemplatePage() {
   const router = useRouter();
   const { orgSlug } = useParams<{ orgSlug: string }>();

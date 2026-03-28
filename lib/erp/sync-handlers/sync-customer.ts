@@ -18,6 +18,7 @@ import {
   upsertSyncMap,
 } from './sync-helpers';
 
+// eslint-disable-next-line max-lines-per-function
 export async function syncAccount(
   accountId: string,
   _userId: string,

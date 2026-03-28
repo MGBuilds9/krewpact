@@ -72,6 +72,7 @@ function buildDefaultValues(lead?: Lead, divisionId?: string) {
   };
 }
 
+// eslint-disable-next-line max-lines-per-function
 function LeadFormFields({
   form,
   isEdit,

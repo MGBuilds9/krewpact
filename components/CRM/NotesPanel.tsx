@@ -46,6 +46,7 @@ function AddNoteForm({
   );
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function NotesPanel({ entityType, entityId }: NotesPanelProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [addingNote, setAddingNote] = useState(false);

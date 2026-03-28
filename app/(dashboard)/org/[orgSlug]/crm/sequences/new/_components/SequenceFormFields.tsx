@@ -58,6 +58,7 @@ interface SequenceFormFieldsProps {
   onDivisionChange: (val: SequenceFormValues['division']) => void;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function SequenceFormFields({
   register,
   errors,

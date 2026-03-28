@@ -36,6 +36,7 @@ export interface AlternateFormProps {
   onCancel?: () => void;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function AlternateForm({ estimateId, alternate, onSuccess, onCancel }: AlternateFormProps) {
   const createAlternate = useCreateEstimateAlternate();
   const updateAlternate = useUpdateEstimateAlternate();

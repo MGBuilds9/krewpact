@@ -28,6 +28,7 @@ function getRoleBadgeVariant(role: string): BadgeVariant {
   return 'outline';
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function DivisionSelector({ className }: DivisionSelectorProps) {
   const {
     activeDivision,

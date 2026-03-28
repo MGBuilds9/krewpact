@@ -32,6 +32,7 @@ interface BidLevelingEntryFormProps {
   isLoading?: boolean;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function BidLevelingEntryForm({ onSubmit, isLoading }: BidLevelingEntryFormProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),

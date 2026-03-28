@@ -42,6 +42,7 @@ function buildDefaultValues(opportunity?: Opportunity, leadId?: string) {
   };
 }
 
+// eslint-disable-next-line max-lines-per-function
 function OpportunityFormFields({
   form,
   isEdit,

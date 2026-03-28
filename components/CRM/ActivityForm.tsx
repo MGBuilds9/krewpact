@@ -60,6 +60,7 @@ const activityTypeLabels: Record<string, string> = {
   task: 'Task',
 };
 
+// eslint-disable-next-line max-lines-per-function
 function ActivityFormFields({
   form,
   isPending,

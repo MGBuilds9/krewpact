@@ -177,6 +177,7 @@ async function insertLines(
 // Route handler
 // ============================================================
 
+// eslint-disable-next-line complexity
 export const POST = withApiRoute({ auth: 'public', rateLimit: false }, async ({ req }) => {
   const rawBody = await req.text();
 

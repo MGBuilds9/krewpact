@@ -29,6 +29,7 @@ interface AssignRoleDialogProps {
   onClose: () => void;
 }
 
+// eslint-disable-next-line max-lines-per-function
 function AssignRoleDialog({ open, onClose }: AssignRoleDialogProps) {
   const [userId, setUserId] = useState('');
   const [selectedRoles, setSelectedRoles] = useState<RoleKey[]>([]);

@@ -98,6 +98,7 @@ interface FileBrowserViewProps {
   handleDownloadFile: (file: FileItem) => void;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function FileBrowserView({
   selectedProject,
   currentFolders,

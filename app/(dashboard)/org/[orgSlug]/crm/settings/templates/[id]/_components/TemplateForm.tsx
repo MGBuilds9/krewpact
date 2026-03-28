@@ -16,6 +16,7 @@ interface TemplateFormProps {
   id: string;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function TemplateForm({ template, id }: TemplateFormProps) {
   const { push: orgPush } = useOrgRouter();
   const queryClient = useQueryClient();

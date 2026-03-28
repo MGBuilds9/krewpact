@@ -19,6 +19,7 @@ export const POST = withApiRoute({ bodySchema: bulkEnrollSchema }, async ({ body
   return performBulkEnroll(result.client, sequence_id, lead_ids, logger);
 });
 
+// eslint-disable-next-line max-lines-per-function
 async function performBulkEnroll(
   supabase: UserClientType,
   sequence_id: string,

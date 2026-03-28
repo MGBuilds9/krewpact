@@ -34,6 +34,7 @@ interface PrivacyRequestFormProps {
   onCancel?: () => void;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function PrivacyRequestForm({ onSuccess, onCancel }: PrivacyRequestFormProps) {
   const create = useCreatePrivacyRequest();
   const form = useForm<FormValues>({

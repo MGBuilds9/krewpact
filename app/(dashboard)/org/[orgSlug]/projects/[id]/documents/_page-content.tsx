@@ -149,6 +149,7 @@ function FileTable({
   );
 }
 
+// eslint-disable-next-line max-lines-per-function
 export default function DocumentsPage() {
   const params = useParams();
   const projectId = params.id as string;

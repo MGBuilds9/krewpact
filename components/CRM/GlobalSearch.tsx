@@ -132,6 +132,7 @@ function SearchOverlay({
   );
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function GlobalSearch() {
   const router = useRouter();
   const { orgSlug } = useParams<{ orgSlug: string }>();

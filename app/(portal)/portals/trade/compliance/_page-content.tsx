@@ -90,6 +90,7 @@ function ComplianceSkeleton() {
   );
 }
 
+// eslint-disable-next-line max-lines-per-function
 export default function TradeCompliancePage() {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);

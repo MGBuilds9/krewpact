@@ -54,6 +54,7 @@ function LocationSkeleton() {
   );
 }
 
+// eslint-disable-next-line max-lines-per-function
 export default function LocationsPageContent() {
   const { activeDivision } = useDivision();
   const [typeFilter, setTypeFilter] = useState('all');

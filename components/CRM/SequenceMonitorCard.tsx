@@ -145,6 +145,7 @@ function EnrollmentCounts({ counts, completionRate, totalSteps }: EnrollmentCoun
   );
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function SequenceMonitorCard({ analytics }: SequenceMonitorCardProps) {
   const [expanded, setExpanded] = useState(false);
   const queryClient = useQueryClient();

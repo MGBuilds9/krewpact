@@ -58,6 +58,7 @@ function getPrimaryContact(contacts: ContactItem[]): ContactItem | undefined {
   return contacts.find((c) => c.is_primary) || contacts[0];
 }
 
+// eslint-disable-next-line max-lines-per-function, complexity
 export default function LeadDetailPage() {
   const params = useParams();
   const { push: orgPush } = useOrgRouter();

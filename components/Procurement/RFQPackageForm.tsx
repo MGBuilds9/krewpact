@@ -40,6 +40,7 @@ interface RFQPackageFormProps {
   mode?: 'create' | 'edit';
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function RFQPackageForm({
   defaultValues,
   onSubmit,

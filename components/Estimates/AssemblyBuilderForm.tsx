@@ -49,6 +49,7 @@ function buildDefaultValues(assembly?: Assembly, divisionId?: string) {
   };
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function AssemblyBuilderForm({
   assembly,
   divisionId,

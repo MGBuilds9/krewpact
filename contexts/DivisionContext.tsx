@@ -59,6 +59,7 @@ export function DivisionProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// eslint-disable-next-line max-lines-per-function
 function DivisionProviderInner({
   children,
   currentUserId,

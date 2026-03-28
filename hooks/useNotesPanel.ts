@@ -24,6 +24,7 @@ function sortNotes(notes: Note[]) {
   });
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function useNotesPanel(entityType: string, entityId: string) {
   const queryClient = useQueryClient();
   const queryKey = useMemo(

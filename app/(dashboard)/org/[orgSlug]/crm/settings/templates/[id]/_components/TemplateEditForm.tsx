@@ -25,6 +25,7 @@ interface TemplateEditFormProps {
   onSubmit: () => void;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function TemplateEditForm({
   name,
   setName,

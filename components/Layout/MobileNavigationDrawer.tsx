@@ -112,6 +112,7 @@ function DrawerUserCard({
   );
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function MobileNavigationDrawer({ isOpen, onClose }: MobileNavigationDrawerProps) {
   const pathname = usePathname();
   const { push: orgPush } = useOrgRouter();

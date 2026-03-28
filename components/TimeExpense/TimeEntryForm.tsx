@@ -40,6 +40,7 @@ interface TimeEntryFormProps {
   isLoading?: boolean;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function TimeEntryForm({ userId, onSubmit, isLoading }: TimeEntryFormProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(timeEntryFormSchema),

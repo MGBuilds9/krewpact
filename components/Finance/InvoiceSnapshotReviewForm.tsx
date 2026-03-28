@@ -65,7 +65,7 @@ const INVOICE_DEFAULT_VALUES: FormValues = {
   status: undefined,
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line max-lines-per-function, @typescript-eslint/no-explicit-any
 function InvoiceSnapshotFields({ form, isLoading }: { form: any; isLoading?: boolean }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

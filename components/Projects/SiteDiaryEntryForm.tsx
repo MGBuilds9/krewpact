@@ -61,6 +61,7 @@ export interface SiteDiaryEntryFormProps {
   onCancel?: () => void;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function SiteDiaryEntryForm({
   projectId,
   initialData,

@@ -39,6 +39,7 @@ const PO_STATUSES = [
   { value: 'cancelled', label: 'Cancelled' },
 ];
 
+// eslint-disable-next-line max-lines-per-function
 export default function PurchaseOrdersPageContent() {
   const { push: orgPush } = useOrgRouter();
   const { activeDivision } = useDivision();

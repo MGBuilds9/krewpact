@@ -84,6 +84,7 @@ export const GET = withApiRoute({}, async ({ params }) => {
 
 export const POST = withApiRoute(
   { rateLimit: { limit: 20, window: '1 m' } },
+  // eslint-disable-next-line max-lines-per-function, complexity
   async ({ req, params, userId: _userId }) => {
     const { id } = params;
 

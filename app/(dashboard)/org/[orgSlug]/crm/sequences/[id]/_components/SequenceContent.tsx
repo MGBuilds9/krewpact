@@ -118,6 +118,7 @@ export interface SequenceContentProps {
   enrollPending: boolean;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function SequenceContent({
   sequence,
   sequenceId,

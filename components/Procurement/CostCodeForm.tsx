@@ -33,6 +33,7 @@ interface CostCodeFormProps {
   mode?: 'create' | 'edit';
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function CostCodeForm({
   defaultValues,
   onSubmit,

@@ -62,7 +62,6 @@ export function EmptyState({
             <p className="text-sm font-medium text-muted-foreground mb-3">Get started:</p>
             <div className="space-y-2 text-left">
               {steps.map((step, index) => (
-                // eslint-disable-next-line react/no-array-index-key
                 <div key={index} className="flex items-start gap-3">
                   <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold flex-shrink-0">
                     {index + 1}

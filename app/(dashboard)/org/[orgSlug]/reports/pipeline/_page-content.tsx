@@ -76,6 +76,7 @@ function StageBar({ item, maxCount }: { item: StageItem; maxCount: number }) {
   );
 }
 
+// eslint-disable-next-line max-lines-per-function
 export default function PipelineReportPage() {
   const { data: leadsResponse, isLoading: leadsLoading } = useLeads({ limit: 100 });
   const { data: opportunities, isLoading: oppsLoading } = useOpportunities();

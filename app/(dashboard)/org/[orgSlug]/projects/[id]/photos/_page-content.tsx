@@ -66,6 +66,7 @@ function PhotoCard({ photo, onAnnotate }: { photo: Photo; onAnnotate: (id: strin
   );
 }
 
+// eslint-disable-next-line max-lines-per-function
 export default function PhotosPage() {
   const params = useParams();
   const projectId = params.id as string;

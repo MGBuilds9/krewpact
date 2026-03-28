@@ -76,6 +76,7 @@ function buildFormDefaults(d?: Partial<BiddingOpportunity>) {
 
 type FormMethods = ReturnType<typeof useForm<FormData>>;
 
+// eslint-disable-next-line max-lines-per-function
 function BiddingFormFields({
   register,
   watch,

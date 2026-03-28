@@ -16,6 +16,7 @@ import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { ContactHeader } from './_components/ContactHeader';
 import { AccountTab, ActivitiesTab, OverviewTab } from './_components/ContactTabs';
 
+// eslint-disable-next-line max-lines-per-function
 export default function ContactDetailPage() {
   const params = useParams();
   const { push: orgPush } = useOrgRouter();

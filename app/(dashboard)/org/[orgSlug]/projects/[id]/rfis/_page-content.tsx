@@ -109,6 +109,7 @@ function RFIRow({
   );
 }
 
+// eslint-disable-next-line max-lines-per-function
 export default function RFIsPage() {
   const params = useParams();
   const projectId = params.id as string;

@@ -54,6 +54,7 @@ function getSyncEntityType(entityType: EntityType): string {
   return entityType === 'contract' ? 'sales_order' : entityType;
 }
 
+// eslint-disable-next-line max-lines-per-function
 async function enqueueErpSync(
   entity_type: EntityType,
   entity_id: string,

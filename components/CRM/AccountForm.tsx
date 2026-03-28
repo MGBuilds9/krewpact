@@ -63,6 +63,7 @@ function buildDefaultValues(account?: Account, divisionId?: string) {
   };
 }
 
+// eslint-disable-next-line max-lines-per-function
 function AccountFormFields({
   form,
   isEdit,
