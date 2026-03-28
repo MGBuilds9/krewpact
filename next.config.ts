@@ -57,11 +57,11 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.clerk.com https://*.clerk.accounts.dev https://*.mdmgroupinc.ca https://*.krewpact.ca https://vercel.live https://*.vercel-scripts.com https://browser.sentry-cdn.com",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.clerk.com https://*.clerk.accounts.dev https://*.krewpact.ca https://vercel.live https://*.vercel-scripts.com https://browser.sentry-cdn.com",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https://*.clerk.com https://img.clerk.com https://vercel.com",
               "font-src 'self' data:",
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.clerk.com https://*.clerk.accounts.dev https://*.mdmgroupinc.ca https://*.krewpact.ca https://*.sentry.io https://vercel.live wss://ws-us3.pusher.com https://sockjs-us3.pusher.com https://vitals.vercel-insights.com https://api.openai.com https://generativelanguage.googleapis.com",
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.clerk.com https://*.clerk.accounts.dev https://*.krewpact.ca https://*.sentry.io https://vercel.live wss://ws-us3.pusher.com https://sockjs-us3.pusher.com https://vitals.vercel-insights.com https://api.openai.com https://generativelanguage.googleapis.com",
               "worker-src 'self' blob:",
               "frame-src 'self' https://vercel.live",
               "frame-ancestors 'none'",

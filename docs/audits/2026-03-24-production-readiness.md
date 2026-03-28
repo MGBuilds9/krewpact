@@ -8,13 +8,13 @@
 | Domain            | krewpact.ca | DNS resolves, HTTPS active                                                              |
 | Health endpoint   | OK          | `{"status":"ok","checks":{"supabase":"ok"}}`                                            |
 | Security headers  | ALL PRESENT | CSP, HSTS, X-Frame-Options, Referrer-Policy, Permissions-Policy, X-Content-Type-Options |
-| Clerk auth        | PRODUCTION  | M365 SSO configured for @mdmgroupinc.ca                                                 |
+| Clerk auth        | PRODUCTION  | M365 SSO configured for @yourdomain.com                                                 |
 | Sentry            | CLEAN       | 0 issues in last 7 days, project `javascript-nextjs` under `mkg-builds`                 |
 | Supabase          | OK          | Health check confirms connectivity                                                      |
 
 ## User Experience: ISSUES FOUND
 
-Tested by project owner signing in with @mdmgroupinc.ca M365 account:
+Tested by project owner signing in with @yourdomain.com M365 account:
 
 ### Bug 1: Division codes shown instead of names
 

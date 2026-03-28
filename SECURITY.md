@@ -11,7 +11,7 @@
 
 If you discover a security vulnerability in KrewPact, please report it responsibly.
 
-**Email:** security@mdmgroupinc.ca
+**Email:** security@krewpact.com
 
 Please include:
 - Description of the vulnerability

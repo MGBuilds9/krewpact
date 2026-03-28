@@ -25,7 +25,7 @@ describe('trigramSimilarity', () => {
   });
 
   it('returns high similarity for very similar strings', () => {
-    const sim = trigramSimilarity('MDM Contracting', 'MDM Contracting Inc');
+    const sim = trigramSimilarity('Acme Contracting', 'Acme Contracting Inc');
     expect(sim).toBeGreaterThan(0.5);
   });
 
@@ -96,7 +96,7 @@ describe('normalizeEmail', () => {
 
 describe('extractDomain', () => {
   it('extracts domain from URL with protocol', () => {
-    expect(extractDomain('https://www.mdmcontracting.ca')).toBe('www.mdmcontracting.ca');
+    expect(extractDomain('https://www.acmecontracting.com')).toBe('www.acmecontracting.com');
   });
 
   it('strips path from URL', () => {
@@ -121,8 +121,8 @@ describe('findLeadDuplicates', () => {
   const existingLeads = [
     {
       id: 'lead-1',
-      company_name: 'MDM Contracting',
-      domain: 'mdmcontracting.ca',
+      company_name: 'Acme Contracting',
+      domain: 'acmecontracting.com',
       city: 'Mississauga',
     },
     {
@@ -131,7 +131,7 @@ describe('findLeadDuplicates', () => {
       domain: 'shoppersdrugmart.ca',
       city: 'Toronto',
     },
-    { id: 'lead-3', company_name: 'MDM Homes', domain: null, city: 'Mississauga' },
+    { id: 'lead-3', company_name: 'Acme Homes', domain: null, city: 'Mississauga' },
     {
       id: 'lead-4',
       company_name: 'Totally Different Corp',
@@ -142,7 +142,7 @@ describe('findLeadDuplicates', () => {
 
   it('detects exact domain match', () => {
     const result = findLeadDuplicates(
-      { company_name: 'New MDM', domain: 'mdmcontracting.ca' },
+      { company_name: 'New Acme', domain: 'acmecontracting.com' },
       existingLeads,
     );
     expect(result.hasDuplicates).toBe(true);
@@ -151,7 +151,7 @@ describe('findLeadDuplicates', () => {
   });
 
   it('detects fuzzy company name match', () => {
-    const result = findLeadDuplicates({ company_name: 'MDM Contracting Inc' }, existingLeads);
+    const result = findLeadDuplicates({ company_name: 'Acme Contracting Inc' }, existingLeads);
     expect(result.hasDuplicates).toBe(true);
     expect(result.matches.some((m) => m.id === 'lead-1')).toBe(true);
   });
@@ -167,7 +167,7 @@ describe('findLeadDuplicates', () => {
 
   it('respects similarity threshold', () => {
     const result = findLeadDuplicates(
-      { company_name: 'MDM Contracting Inc' },
+      { company_name: 'Acme Contracting Inc' },
       existingLeads,
       0.9, // very strict threshold
     );
@@ -198,9 +198,9 @@ describe('findLeadDuplicates', () => {
     // the function checks whatever existingLeads array is passed in.
     // When caller filters existingLeads to division A, a lead in division B won't appear.
     const divisionALeads = [
-      { id: 'lead-a1', company_name: 'MDM Contracting', domain: null, division_id: 'div-a' },
+      { id: 'lead-a1', company_name: 'Acme Contracting', domain: null, division_id: 'div-a' },
     ];
-    const divisionBCandidate = { company_name: 'MDM Contracting' };
+    const divisionBCandidate = { company_name: 'Acme Contracting' };
 
     // Same company name, but division B leads array is empty (caller filtered)
     const result = findLeadDuplicates(divisionBCandidate, []);

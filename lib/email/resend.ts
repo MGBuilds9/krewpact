@@ -17,7 +17,7 @@ interface SendEmailResult {
   error?: string;
 }
 
-const DEFAULT_FROM = 'MDM Group Inc. <noreply@updates.mdmgroupinc.ca>';
+const DEFAULT_FROM = process.env.RESEND_FROM_EMAIL || 'KrewPact <noreply@updates.krewpact.com>';
 
 export async function sendEmail(params: SendEmailParams): Promise<SendEmailResult> {
   const apiKey = process.env.RESEND_API_KEY;

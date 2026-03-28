@@ -57,10 +57,10 @@ We are currently taking on new clients and would greatly appreciate a referral i
 
 Submit a referral: {{referral_url}}
 
-Thank you for your continued trust in MDM Group Inc.
+Thank you for your continued trust.
 
 ---
-MDM Group Inc. | Mississauga, Ontario | mdmcontracting.ca
+KrewPact | krewpact.com
 Unsubscribe: {{unsubscribe_url}}`;
 
 export const REFERRAL_TEMPLATES: BrandedTemplate[] = [

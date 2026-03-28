@@ -1,5 +1,5 @@
 /**
- * MDM Group Inc. — Prospecting outreach templates.
+ * KrewPact — Prospecting outreach templates.
  * Templates: seasonal-outreach, trade-partner-invite
  */
 
@@ -22,7 +22,7 @@ const seasonalOutreachBody = wrapEmail(`
       <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F5F5F5;border-left:4px solid #D4A843;border-radius:0 4px 4px 0;margin-bottom:20px;">
         <tr>
           <td style="padding:20px 24px;font-family:'Helvetica Neue',Arial,sans-serif;">
-            <p style="margin:0 0 12px 0;font-size:14px;font-weight:700;color:#1E3A5F;">Why plan ahead with MDM Group?</p>
+            <p style="margin:0 0 12px 0;font-size:14px;font-weight:700;color:#1E3A5F;">Why plan ahead with KrewPact?</p>
             <p style="margin:0 0 8px 0;font-size:14px;color:#444444;line-height:1.5;">Lock in preferred pricing before seasonal rate increases.</p>
             <p style="margin:0 0 8px 0;font-size:14px;color:#444444;line-height:1.5;">Guaranteed project start date with written scope.</p>
             <p style="margin:0;font-size:14px;color:#444444;line-height:1.5;">Access to our full crew capacity — not leftover availability.</p>
@@ -60,7 +60,7 @@ const tradePartnerInviteBody = wrapEmail(`
     <td style="padding:32px 40px 20px 40px;font-family:'Helvetica Neue',Arial,sans-serif;">
       <p style="margin:0 0 20px 0;font-size:15px;color:#444444;line-height:1.6;">Hi {{first_name}},</p>
       <p style="margin:0 0 20px 0;font-size:15px;color:#444444;line-height:1.6;">
-        MDM Group Inc. is expanding its trusted subcontractor network across the GTA, and we are looking for qualified {{trade_type}} partners to join us on upcoming commercial and residential projects.
+        KrewPact is expanding its trusted subcontractor network across the GTA, and we are looking for qualified {{trade_type}} partners to join us on upcoming commercial and residential projects.
       </p>
       <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
         <tr>
@@ -123,7 +123,7 @@ const seasonalOutreachText = `Hi {{first_name}},
 
 {{season}} is the optimal time for {{project_type}} projects in the GTA. We have availability opening for {{company_name}} right now.
 
-Why plan ahead with MDM Group?
+Why plan ahead with KrewPact?
 - Lock in preferred pricing before seasonal rate increases
 - Guaranteed project start date with written scope
 - Access to our full crew capacity
@@ -131,12 +131,12 @@ Why plan ahead with MDM Group?
 Book a planning call: {{cta_url}}
 
 ---
-MDM Group Inc. | Mississauga, Ontario | mdmcontracting.ca
+KrewPact | krewpact.com
 Unsubscribe: {{unsubscribe_url}}`;
 
 const tradePartnerInviteText = `Hi {{first_name}},
 
-MDM Group Inc. is expanding its trusted subcontractor network across the GTA. We are looking for qualified {{trade_type}} partners for upcoming projects.
+KrewPact is expanding its trusted subcontractor network across the GTA. We are looking for qualified {{trade_type}} partners for upcoming projects.
 
 What we offer:
 - Consistent project pipeline across 6 divisions
@@ -146,7 +146,7 @@ What we offer:
 {{company_name}} looks like a strong fit. Apply to join our network: {{cta_url}}
 
 ---
-MDM Group Inc. | Mississauga, Ontario | mdmcontracting.ca
+KrewPact | krewpact.com
 Unsubscribe: {{unsubscribe_url}}`;
 
 // ---------------------------------------------------------------------------
@@ -160,7 +160,7 @@ export const OUTREACH_PROSPECTING_TEMPLATES: BrandedTemplate[] = [
     category: 'outreach',
     description:
       'Weather-aware seasonal outreach emphasizing urgency and early booking advantages. Set season to Spring, Summer, Fall, or Winter.',
-    subject: 'Plan Your {{season}} {{project_type}} Project — MDM Group',
+    subject: 'Plan Your {{season}} {{project_type}} Project — KrewPact',
     body_html: seasonalOutreachBody,
     body_text: seasonalOutreachText,
     merge_fields: [
@@ -178,8 +178,8 @@ export const OUTREACH_PROSPECTING_TEMPLATES: BrandedTemplate[] = [
     name: "Join MDM's Trusted Partner Network",
     category: 'outreach',
     description:
-      'Invitation for subcontractors and trade partners to join the MDM Group network. Highlights pipeline access, payment terms, and long-term relationship potential.',
-    subject: "An Invitation for {{company_name}} — MDM Group's Partner Network",
+      'Invitation for subcontractors and trade partners to join the KrewPact network. Highlights pipeline access, payment terms, and long-term relationship potential.',
+    subject: "An Invitation for {{company_name}} — KrewPact's Partner Network",
     body_html: tradePartnerInviteBody,
     body_text: tradePartnerInviteText,
     merge_fields: [

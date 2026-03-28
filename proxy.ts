@@ -13,7 +13,7 @@ const isPublicRoute = createRouteMatcher([
 ]);
 
 const ALLOWED_DOMAINS = (
-  process.env.ALLOWED_DOMAINS || 'mdmgroupinc.ca,mdmcontracting.ca,krewpact.ca'
+  process.env.ALLOWED_DOMAINS || ''
 ).split(',');
 
 // Org slug regex: /org/{slug}/...

@@ -2,7 +2,7 @@
 
 This folder contains the complete architecture documentation for KrewPact, MDM Group's unified construction operations platform.
 
-**Audience:** MDM leadership (Ehab, David, Nervine), technical leads, and developers.
+**Audience:** Leadership (CEO, COO, CFO), technical leads, and developers.
 **Last updated:** February 19, 2026
 
 ---
@@ -36,14 +36,14 @@ This folder contains the complete architecture documentation for KrewPact, MDM G
 
 ## Suggested Reading Order
 
-### For Executives (Ehab, Nervine)
+### For Executives (CEO, CFO)
 
 1. Architecture Overview — what, why, and how (14 KB, ~10 min)
 2. Decisions Register — every locked decision (16 KB, ~15 min)
 3. Cost & Vendor Analysis — TCO, ROI, JobTread benchmark (53 KB, skim tables)
 4. Product Vision & Strategy — market positioning (93 KB, skim §1-3)
 
-### For COO / Project Management (David)
+### For COO / Project Management
 
 1. Architecture Overview — start here
 2. Master Plan — execution plan and locked assumptions

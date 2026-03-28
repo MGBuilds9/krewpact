@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-09
 **Status:** Approved
-**Author:** Michael Guirguis + Claude (ProjectAxis)
+**Author:** KrewPact Team
 
 ## Overview
 

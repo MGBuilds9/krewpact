@@ -30,7 +30,7 @@ import frappe
 # Create the API user
 user = frappe.get_doc({
     "doctype": "User",
-    "email": "krewpact-api@mdmgroupinc.ca",
+    "email": "krewpact-api@yourdomain.com",
     "first_name": "KrewPact",
     "last_name": "API",
     "enabled": 1,
@@ -66,7 +66,7 @@ print("Roles assigned")
 Still in the bench console:
 
 ```python
-user = frappe.get_doc("User", "krewpact-api@mdmgroupinc.ca")
+user = frappe.get_doc("User", "krewpact-api@yourdomain.com")
 api_key = frappe.generate_hash(length=15)
 api_secret = frappe.generate_hash(length=15)
 

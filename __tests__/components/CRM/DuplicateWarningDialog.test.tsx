@@ -10,8 +10,8 @@ const mockMatches: DuplicateMatch[] = [
     matchType: 'exact_domain',
     similarity: 1.0,
     matchedField: 'domain',
-    matchedValue: 'mdmcontracting.ca',
-    entity: { id: 'lead-1', company_name: 'MDM Contracting' },
+    matchedValue: 'example.com',
+    entity: { id: 'lead-1', company_name: 'Acme Contracting' },
   },
   {
     id: 'lead-2',
@@ -49,7 +49,7 @@ describe('DuplicateWarningDialog', () => {
       />,
     );
 
-    expect(screen.getByText('mdmcontracting.ca')).toBeInTheDocument();
+    expect(screen.getByText('example.com')).toBeInTheDocument();
     expect(screen.getByText('MDM Homes')).toBeInTheDocument();
     expect(screen.getByText('100% match')).toBeInTheDocument();
     expect(screen.getByText('75% match')).toBeInTheDocument();
@@ -115,7 +115,7 @@ describe('DuplicateWarningDialog', () => {
     );
 
     // Select first match
-    fireEvent.click(screen.getByText('mdmcontracting.ca'));
+    fireEvent.click(screen.getByText('example.com'));
 
     // Click merge
     fireEvent.click(screen.getByText('Merge'));

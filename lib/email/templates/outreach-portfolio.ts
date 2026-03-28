@@ -1,5 +1,5 @@
 /**
- * MDM Group Inc. — Portfolio outreach templates.
+ * KrewPact — Portfolio outreach templates.
  * Templates: project-showcase, video-intro, capability-deck
  */
 
@@ -54,7 +54,7 @@ const projectShowcaseBody = wrapEmail(`
   <tr>
     <td style="padding:20px 40px 32px 40px;font-family:'Helvetica Neue',Arial,sans-serif;">
       <p style="margin:0 0 16px 0;font-size:15px;color:#444444;line-height:1.6;">
-        If you have a similar project in mind — or are exploring options for upcoming construction work — I would be glad to walk you through what MDM Group can deliver.
+        If you have a similar project in mind — or are exploring options for upcoming construction work — I would be glad to walk you through what KrewPact can deliver.
       </p>
       ${ctaButton('View Full Project Details', '{{cta_url}}')}
     </td>
@@ -71,7 +71,7 @@ const videoIntroBody = wrapEmail(`
     <td style="padding:32px 40px 20px 40px;font-family:'Helvetica Neue',Arial,sans-serif;">
       <p style="margin:0 0 20px 0;font-size:15px;color:#444444;line-height:1.6;">Hi {{first_name}},</p>
       <p style="margin:0 0 20px 0;font-size:15px;color:#444444;line-height:1.6;">
-        My name is {{sender_name}}, {{sender_title}} at MDM Group Inc. I put together a short video specifically for {{company_name}} — it covers who we are, what we build, and how we work.
+        My name is {{sender_name}}, {{sender_title}} at KrewPact I put together a short video specifically for {{company_name}} — it covers who we are, what we build, and how we work.
       </p>
     </td>
   </tr>
@@ -111,7 +111,7 @@ const capabilityDeckBody = wrapEmail(`
       <h1 style="margin:0 0 16px 0;font-size:24px;font-weight:700;color:#1E3A5F;line-height:1.3;">Building Excellence in the GTA</h1>
       <p style="margin:0 0 20px 0;font-size:15px;color:#444444;line-height:1.6;">Hi {{first_name}},</p>
       <p style="margin:0 0 24px 0;font-size:15px;color:#444444;line-height:1.6;">
-        MDM Group has been delivering construction excellence across the Greater Toronto Area for over a decade. Here is a sample of our recent work for {{company_name}} to consider.
+        KrewPact has been delivering construction excellence across the Greater Toronto Area for over a decade. Here is a sample of our recent work for {{company_name}} to consider.
       </p>
     </td>
   </tr>
@@ -190,29 +190,29 @@ Project Highlights:
 - Timeline: {{timeline}}
 - Budget Range: {{budget_range}}
 
-If you have a similar project in mind, I would be glad to walk you through what MDM Group can deliver.
+If you have a similar project in mind, I would be glad to walk you through what KrewPact can deliver.
 
 View full project details: {{cta_url}}
 
 ---
-MDM Group Inc. | Mississauga, Ontario | mdmcontracting.ca
+KrewPact | krewpact.com
 Unsubscribe: {{unsubscribe_url}}`;
 
 const videoIntroText = `Hi {{first_name}},
 
-My name is {{sender_name}}, {{sender_title}} at MDM Group Inc. I put together a short video specifically for {{company_name}} — it covers who we are, what we build, and how we work.
+My name is {{sender_name}}, {{sender_title}} at KrewPact I put together a short video specifically for {{company_name}} — it covers who we are, what we build, and how we work.
 
 Watch the video (under 2 minutes): {{video_url}}
 
 I would love to hear your thoughts and explore whether there is a fit for {{company_name}}.
 
 ---
-MDM Group Inc. | Mississauga, Ontario | mdmcontracting.ca
+KrewPact | krewpact.com
 Unsubscribe: {{unsubscribe_url}}`;
 
 const capabilityDeckText = `Hi {{first_name}},
 
-MDM Group has been delivering construction excellence across the Greater Toronto Area for over a decade.
+KrewPact has been delivering construction excellence across the Greater Toronto Area for over a decade.
 
 Our Divisions:
 - General Contracting
@@ -225,7 +225,7 @@ Our Divisions:
 View our full portfolio: {{cta_url}}
 
 ---
-MDM Group Inc. | Mississauga, Ontario | mdmcontracting.ca
+KrewPact | krewpact.com
 Unsubscribe: {{unsubscribe_url}}`;
 
 // ---------------------------------------------------------------------------
@@ -238,7 +238,7 @@ export const OUTREACH_PORTFOLIO_TEMPLATES: BrandedTemplate[] = [
     name: 'See Our Latest Work',
     category: 'outreach',
     description:
-      'Showcases a completed MDM Group project with stats (sqft, timeline, budget) and a featured image. Best used for prospects in a similar vertical or geography.',
+      'Showcases a completed KrewPact project with stats (sqft, timeline, budget) and a featured image. Best used for prospects in a similar vertical or geography.',
     subject: 'See What We Built for a Client Like {{company_name}}',
     body_html: projectShowcaseBody,
     body_text: projectShowcaseText,
@@ -258,7 +258,7 @@ export const OUTREACH_PORTFOLIO_TEMPLATES: BrandedTemplate[] = [
   },
   {
     id: 'video-intro',
-    name: 'A Quick Introduction from MDM Group',
+    name: 'A Quick Introduction from KrewPact',
     category: 'outreach',
     description:
       'Personalized video introduction with a clickable thumbnail and play button overlay. Ideal for warm outreach where a human connection matters.',
@@ -282,7 +282,7 @@ export const OUTREACH_PORTFOLIO_TEMPLATES: BrandedTemplate[] = [
     category: 'outreach',
     description:
       'Mini portfolio with three project thumbnails and a division capabilities list. Good for top-of-funnel cold outreach where context is needed.',
-    subject: 'Building Excellence in the GTA — MDM Group Overview',
+    subject: 'Building Excellence in the GTA — KrewPact Overview',
     body_html: capabilityDeckBody,
     body_text: capabilityDeckText,
     merge_fields: [

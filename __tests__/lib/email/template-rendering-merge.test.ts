@@ -76,16 +76,16 @@ describe('renderEmailTemplate with branded template', () => {
         body_text: template!.body_text,
       },
       {
-        first_name: 'Nervine',
-        company_name: 'MDM Group',
+        first_name: 'Alex',
+        company_name: 'Acme Construction',
         referral_url: 'https://example.com/refer',
         logo_url: 'https://example.com/logo.png',
         unsubscribe_url: 'https://example.com/unsub',
       },
     );
 
-    expect(result.subject).toContain('Nervine');
-    expect(result.html).toContain('MDM Group');
+    expect(result.subject).toContain('Alex');
+    expect(result.html).toContain('Acme Construction');
     expect(result.text).toContain('MDM Group');
     expect(result.text).not.toContain('{{company_name}}');
   });

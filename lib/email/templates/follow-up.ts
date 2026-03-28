@@ -65,7 +65,7 @@ If there is any current or upcoming project at {{company_name}} where we could b
 Request a free estimate: {{cta_url}}
 
 ---
-MDM Group Inc. | Mississauga, Ontario | mdmcontracting.ca
+KrewPact | krewpact.com
 Unsubscribe: {{unsubscribe_url}}`;
 
 export const FOLLOW_UP_TEMPLATES: BrandedTemplate[] = [

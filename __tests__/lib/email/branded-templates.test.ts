@@ -35,9 +35,9 @@ describe('BRANDED_TEMPLATES', () => {
     }
   });
 
-  it('all body_html contains MDM Group branding', () => {
+  it('all body_html contains KrewPact branding', () => {
     for (const t of BRANDED_TEMPLATES) {
-      expect(t.body_html).toContain('mdmcontracting.ca');
+      expect(t.body_html).toContain('krewpact.com');
     }
   });
 

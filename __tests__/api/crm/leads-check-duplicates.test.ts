@@ -22,8 +22,8 @@ import { createUserClientSafe } from '@/lib/supabase/server';
 const existingLeads = [
   {
     id: 'lead-1',
-    company_name: 'MDM Contracting',
-    domain: 'mdmcontracting.ca',
+    company_name: 'Acme Contracting',
+    domain: 'example.com',
     city: 'Mississauga',
     lead_score: 80,
     status: 'qualified',
@@ -69,7 +69,7 @@ describe('POST /api/crm/leads/check-duplicates', () => {
   it('detects domain match', async () => {
     const req = makeJsonRequest('/api/crm/leads/check-duplicates', {
       company_name: 'Any Name',
-      domain: 'mdmcontracting.ca',
+      domain: 'example.com',
     });
     const res = await POST(req);
     const data = await res.json();
@@ -81,7 +81,7 @@ describe('POST /api/crm/leads/check-duplicates', () => {
 
   it('detects fuzzy company name match', async () => {
     const req = makeJsonRequest('/api/crm/leads/check-duplicates', {
-      company_name: 'MDM Contracting Inc',
+      company_name: 'Acme Contracting Inc',
     });
     const res = await POST(req);
     const data = await res.json();

@@ -34,7 +34,6 @@ describe('Security headers', () => {
     const csp = headers[0].headers.find(
       (h: { key: string }) => h.key === 'Content-Security-Policy',
     )?.value;
-    expect(csp).toContain('https://*.mdmgroupinc.ca');
     expect(csp).toContain('https://vercel.live');
     expect(csp).toContain('wss://*.supabase.co');
     expect(csp).toContain("worker-src 'self' blob:");

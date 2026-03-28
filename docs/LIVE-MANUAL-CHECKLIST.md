@@ -1,9 +1,9 @@
 # KrewPact Live Manual Checklist
 
 **Date:** 2026-03-26
-**Tester:** Michael Guirguis (platform_admin)
+**Tester:** (platform_admin user)
 **URL:** https://krewpact.ca (production) or http://localhost:3000 (dev)
-**Email safety:** All dev-mode emails route to michael.guirguis@mdmgroupinc.ca
+**Email safety:** All dev-mode emails route to the admin email configured in ALERT_EMAIL env var
 
 ---
 
@@ -180,4 +180,4 @@
 
 | Role          | Name             | Date | Notes |
 | ------------- | ---------------- | ---- | ----- |
-| Product Owner | Michael Guirguis |      |       |
+| Product Owner |                  |      |       |

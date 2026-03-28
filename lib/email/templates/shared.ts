@@ -28,10 +28,10 @@ export const EMAIL_FOOTER = `
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#1E3A5F;margin-top:0;">
   <tr>
     <td align="center" style="padding:24px 20px;font-family:'Helvetica Neue',Arial,sans-serif;font-size:12px;color:#A8BDD4;line-height:1.6;">
-      <p style="margin:0 0 4px 0;font-weight:600;color:#D4A843;letter-spacing:0.5px;">MDM GROUP INC.</p>
-      <p style="margin:0 0 4px 0;">Mississauga, Ontario &nbsp;|&nbsp; <a href="https://mdmcontracting.ca" style="color:#D4A843;text-decoration:none;">mdmcontracting.ca</a></p>
+      <p style="margin:0 0 4px 0;font-weight:600;color:#D4A843;letter-spacing:0.5px;">KREWPACT</p>
+      <p style="margin:0 0 4px 0;"><a href="https://krewpact.com" style="color:#D4A843;text-decoration:none;">krewpact.com</a></p>
       <p style="margin:12px 0 0 0;font-size:11px;">
-        You are receiving this email because you expressed interest in MDM Group Inc. services.<br />
+        You are receiving this email because you expressed interest in our services.<br />
         <a href="{{unsubscribe_url}}" style="color:#A8BDD4;text-decoration:underline;">Unsubscribe</a>
       </p>
     </td>

@@ -48,7 +48,7 @@ Deep response additionally includes: `supabase_data`, `redis`, `clerk`, `erpnext
 
 ### Status Page
 
-Configure a public BetterStack status page at `status.mdmgroupinc.ca` (optional). Include monitors for Production and ERPNext Tunnel.
+Configure a public BetterStack status page (optional). Include monitors for Production and ERPNext Tunnel.
 
 ---
 

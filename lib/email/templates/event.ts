@@ -46,7 +46,7 @@ const eventInvitationBody = wrapEmail(`
       </p>
       ${ctaButton('RSVP Now', '{{rsvp_url}}')}
       <p style="margin:24px 0 0 0;font-size:13px;color:#777777;line-height:1.5;text-align:center;">
-        Questions? Reply to this email or contact us at <a href="https://mdmcontracting.ca" style="color:#1E3A5F;text-decoration:underline;">mdmcontracting.ca</a>
+        Questions? Reply to this email or contact us at <a href="https://krewpact.com" style="color:#1E3A5F;text-decoration:underline;">krewpact.com</a>
       </p>
     </td>
   </tr>
@@ -65,7 +65,7 @@ We would like to invite you and the team at {{company_name}} to join us. Space i
 RSVP here: {{rsvp_url}}
 
 ---
-MDM Group Inc. | Mississauga, Ontario | mdmcontracting.ca
+KrewPact | krewpact.com
 Unsubscribe: {{unsubscribe_url}}`;
 
 export const EVENT_TEMPLATES: BrandedTemplate[] = [

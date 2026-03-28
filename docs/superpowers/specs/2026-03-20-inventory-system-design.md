@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-20
 **Status:** Approved (pending implementation plan)
-**Author:** Michael Guirguis + Claude
+**Author:** KrewPact Team
 **Replaces:** Almyta Control System (Access-based, per-division databases)
 
 ---
