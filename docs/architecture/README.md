@@ -34,6 +34,24 @@ This folder contains the complete architecture documentation for KrewPact, MDM G
 
 ---
 
+## Features Beyond Original Blueprint
+
+The following modules were built during development and are not yet covered by dedicated architecture documents. They exist in production code:
+
+| Feature                   | API Location                         | Description                                        |
+| ------------------------- | ------------------------------------ | -------------------------------------------------- |
+| BCP/Incidents             | `app/api/bcp/incidents/`             | Business continuity incident tracking and recovery |
+| Privacy Requests (PIPEDA) | `app/api/privacy/requests/`          | Privacy request intake, processing, compliance     |
+| Governance/Reference Data | `app/api/governance/reference-data/` | Cost codes, reference data lifecycle management    |
+| Email Tracking            | `app/api/email/track/{click,open}/`  | Open/click tracking for outbound emails            |
+| PDF Generation            | `app/api/pdf/generate/`              | Server-side PDF document generation                |
+| Calendar/Events           | `app/api/calendar/events/`           | Calendar event management                          |
+| Proposals                 | `app/api/proposals/`                 | Proposal CRUD and lifecycle                        |
+| System Webhooks           | `app/api/system/webhooks/`           | Webhook registration and management                |
+| DB-Driven Feature Flags   | `org_settings.feature_flags`         | Per-org JSONB flags via `OrgContext`               |
+
+---
+
 ## Suggested Reading Order
 
 ### For Executives (CEO, CFO)

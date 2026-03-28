@@ -19,20 +19,22 @@ npm run dev
 
 App runs at `http://localhost:3000`.
 
+> **After pulling changes:** If you see TypeScript errors referencing missing routes, clear the build cache: `rm -rf .next`
+
 ## Environment Variables
 
 Copy `.env.example` to `.env.local` and fill in the values. The example file documents where to get each key.
 
 ### Required Services (5 for full operation)
 
-| Service      | Dashboard                                                                    | What to grab                                                                                                                                               |
-| ------------ | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Supabase** | [Dashboard](https://supabase.com/dashboard) → Your project                   | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`                                                                   |
-| **Clerk**    | [Dashboard](https://dashboard.clerk.com) → KrewPact app                      | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`                                                                                                    |
-| **ERPNext**  | Via Cloudflare Tunnel                                                        | `ERPNEXT_BASE_URL`, `ERPNEXT_API_KEY`, `ERPNEXT_API_SECRET`                                                                                                |
-| **Upstash**  | [Console](https://console.upstash.com) → QStash + Redis                      | QStash: `QSTASH_URL`, `QSTASH_TOKEN`, `QSTASH_CURRENT_SIGNING_KEY`, `QSTASH_NEXT_SIGNING_KEY`. Redis: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` |
-| **Resend**   | [Dashboard](https://resend.com/api-keys)                                     | `RESEND_API_KEY`                                                                                                                                           |
-| **Mobile**   | Expo/EAS project settings                                                    | `EXPO_PUBLIC_API_BASE_URL`, `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`                                                                                            |
+| Service      | Dashboard                                                  | What to grab                                                                                                                                               |
+| ------------ | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Supabase** | [Dashboard](https://supabase.com/dashboard) → Your project | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`                                                                   |
+| **Clerk**    | [Dashboard](https://dashboard.clerk.com) → KrewPact app    | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`                                                                                                    |
+| **ERPNext**  | Via Cloudflare Tunnel                                      | `ERPNEXT_BASE_URL`, `ERPNEXT_API_KEY`, `ERPNEXT_API_SECRET`                                                                                                |
+| **Upstash**  | [Console](https://console.upstash.com) → QStash + Redis    | QStash: `QSTASH_URL`, `QSTASH_TOKEN`, `QSTASH_CURRENT_SIGNING_KEY`, `QSTASH_NEXT_SIGNING_KEY`. Redis: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` |
+| **Resend**   | [Dashboard](https://resend.com/api-keys)                   | `RESEND_API_KEY`                                                                                                                                           |
+| **Mobile**   | Expo/EAS project settings                                  | `EXPO_PUBLIC_API_BASE_URL`, `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`                                                                                            |
 
 ### Clerk Third-Party Auth Metadata
 
@@ -105,12 +107,13 @@ CI runs: Lint → Type Check → Unit Test → Build → Integration Test.
 
 ## Common Issues
 
-| Issue                           | Cause                                          | Fix                                                                                                       |
-| ------------------------------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Empty data from Supabase        | RLS blocking — Clerk metadata missing or wrong | Verify Clerk user metadata has `krewpact_user_id`, `division_ids`, `role_keys`, and `krewpact_org_id`     |
-| CRLF warnings in git            | Windows-origin files                           | `git config core.autocrlf input`                                                                          |
-| Type errors after schema change | Stale generated types                          | Run `npx supabase gen types typescript --project-id wmeaabrchkysogmeroye > types/supabase.ts 2>/dev/null` |
-| Rate limit errors in tests      | Rate limit mock missing                        | Add `vi.mock('@/lib/api/rate-limit', ...)` — see test helpers                                             |
+| Issue                                   | Cause                                          | Fix                                                                                                       |
+| --------------------------------------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Empty data from Supabase                | RLS blocking — Clerk metadata missing or wrong | Verify Clerk user metadata has `krewpact_user_id`, `division_ids`, `role_keys`, and `krewpact_org_id`     |
+| CRLF warnings in git                    | Windows-origin files                           | `git config core.autocrlf input`                                                                          |
+| Type errors after schema change         | Stale generated types                          | Run `npx supabase gen types typescript --project-id wmeaabrchkysogmeroye > types/supabase.ts 2>/dev/null` |
+| Rate limit errors in tests              | Rate limit mock missing                        | Add `vi.mock('@/lib/api/rate-limit', ...)` — see test helpers                                             |
+| Stale `.next` types after route changes | Deleted routes still in build cache            | `rm -rf .next` then `npm run build`                                                                       |
 
 ## Project Structure
 

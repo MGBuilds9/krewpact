@@ -115,7 +115,6 @@ lib/
   supabase/client.ts               # Browser client
   queue/                           # QStash job definitions
   validators/                      # Shared Zod schemas (one per domain)
-  feature-flags.ts                 # Feature flag registry
   logger.ts                        # Structured logger (never console.log)
   env.ts                           # Environment variable validation
 types/
@@ -123,7 +122,7 @@ types/
 mobile/                            # Expo SDK 54 app
 ```
 
-For current route and feature counts, see `docs/audits/`. As of Mar 26, 2026: ~160+ pages, ~370+ API routes, 4,715 tests (428 files), 17/17 feature flags enabled, 5/5 P1 epics complete.
+For current route and feature counts, see `docs/audits/`. As of Mar 28, 2026: 127 pages, 365 API routes, 4,799 tests (435 files), 17/17 feature flags enabled, 5/5 P1 epics complete.
 
 ## Key Conventions
 
@@ -136,7 +135,7 @@ For current route and feature counts, see `docs/audits/`. As of Mar 26, 2026: ~1
 - No barrel files — import directly: `import { Button } from '@/components/ui/button'`
 - No `any` — use `unknown` with type guards or Zod
 - No `console.log` — use `lib/logger.ts`
-- Feature flags in `lib/feature-flags.ts` — `false` by default; never add nav items without a flag
+- Feature flags in `org_settings.feature_flags` (JSONB, per-org) — served via `OrgContext`; never add nav items without a flag
 
 ## Build Commands
 

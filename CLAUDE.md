@@ -91,7 +91,6 @@ lib/
   supabase/client.ts               # Browser client
   queue/                           # QStash job definitions
   validators/                      # Shared Zod schemas (one per domain)
-  feature-flags.ts                 # Feature flag registry
   logger.ts                        # Structured logger (never console.log)
   env.ts                           # Environment variable validation
 types/
@@ -180,9 +179,7 @@ Key rules enforced: `no-console` (error, allow warn/error), `@typescript-eslint/
 
 ## Feature Flags
 
-All flags in `lib/feature-flags.ts`. `false` by default — only `true` after code complete + tested + UX reviewed. Check in three places: nav items, page-level `<FeatureGate>`, API routes.
-
-**All 17 flags enabled:** `ai_suggestions`, `ai_insights`, `ai_daily_digest`, `ai_takeoff`, `sequences`, `inventory_management`, `portals`, `executive`, `bidding`, `enrichment_ui`, `migration_tool`, `schedule`, `documents_upload`, `finance`, `safety`, `closeout`, `warranty`
+Feature flags are stored in the `org_settings.feature_flags` JSONB column (Supabase) and served via `GET /api/org/[slug]` → `OrgContext`. Client reads: `useOrg().currentOrg?.feature_flags`. Management UI: `components/System/FeatureFlagForm.tsx`. Flags default to `{}` (empty = all disabled) until explicitly set per org.
 
 ## Production Hardening
 
@@ -212,7 +209,7 @@ Node 20. Runs on push to main, PRs to main, and manual dispatch. Vercel auto-dep
 
 1. Read this `CLAUDE.md`
 2. Check `.env.local` for required environment variables — ask if missing
-3. Review `lib/feature-flags.ts` — understand what is enabled/disabled
+3. Review feature flags — query `org_settings.feature_flags` or check `OrgContext` for current state
 4. Log issues to `docs/issues-log.md` with date, file, description
 
 ### Before Touching UI
@@ -220,8 +217,8 @@ Node 20. Runs on push to main, PRs to main, and manual dispatch. Vercel auto-dep
 - Read the existing page first
 - Verify: Does the nav make sense? Is the data real? Is the UX coherent?
 - No mock data in production code
-- No placeholder text unless behind `<FeatureGate>`
-- NEVER add a feature to nav without adding it to `lib/feature-flags.ts`
+- No placeholder text unless gated by a feature flag check
+- NEVER add a feature to nav without adding a corresponding feature flag in `org_settings.feature_flags`
 
 ### Research Protocol
 
