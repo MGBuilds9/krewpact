@@ -209,33 +209,6 @@ export type Database = {
           },
         ]
       }
-      adoption_kpis: {
-        Row: {
-          created_at: string
-          dimension: Json
-          id: string
-          metric_date: string
-          metric_name: string
-          metric_value: number
-        }
-        Insert: {
-          created_at?: string
-          dimension?: Json
-          id?: string
-          metric_date: string
-          metric_name: string
-          metric_value?: number
-        }
-        Update: {
-          created_at?: string
-          dimension?: Json
-          id?: string
-          metric_date?: string
-          metric_name?: string
-          metric_value?: number
-        }
-        Relationships: []
-      }
       ai_actions: {
         Row: {
           action_type: string
@@ -1266,6 +1239,48 @@ export type Database = {
           },
         ]
       }
+      contact_account_links: {
+        Row: {
+          account_id: string
+          contact_id: string
+          created_at: string
+          id: string
+          is_primary: boolean
+          relationship_type: string | null
+        }
+        Insert: {
+          account_id: string
+          contact_id: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          relationship_type?: string | null
+        }
+        Update: {
+          account_id?: string
+          contact_id?: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          relationship_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_account_links_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_account_links_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contacts: {
         Row: {
           created_at: string
@@ -1406,6 +1421,79 @@ export type Database = {
             columns: ["supersedes_contract_id"]
             isOneToOne: false
             referencedRelation: "contract_terms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contracts: {
+        Row: {
+          contract_type: string | null
+          created_at: string
+          created_by: string | null
+          end_date: string | null
+          id: string
+          notes: string | null
+          opportunity_id: string | null
+          project_id: string | null
+          signed_at: string | null
+          start_date: string | null
+          status: string
+          title: string
+          updated_at: string
+          value: number | null
+        }
+        Insert: {
+          contract_type?: string | null
+          created_at?: string
+          created_by?: string | null
+          end_date?: string | null
+          id?: string
+          notes?: string | null
+          opportunity_id?: string | null
+          project_id?: string | null
+          signed_at?: string | null
+          start_date?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          value?: number | null
+        }
+        Update: {
+          contract_type?: string | null
+          created_at?: string
+          created_by?: string | null
+          end_date?: string | null
+          id?: string
+          notes?: string | null
+          opportunity_id?: string | null
+          project_id?: string | null
+          signed_at?: string | null
+          start_date?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
@@ -1600,6 +1688,30 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_settings: {
+        Row: {
+          created_at: string
+          id: string
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key: string
+          updated_at?: string
+          value?: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       deficiency_items: {
         Row: {
           assigned_to: string | null
@@ -1711,6 +1823,60 @@ export type Database = {
           },
         ]
       }
+      document_attachments: {
+        Row: {
+          created_at: string
+          entity_id: string
+          entity_type: string
+          file_id: string | null
+          file_name: string
+          file_size: number | null
+          file_url: string | null
+          id: string
+          mime_type: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          file_id?: string | null
+          file_name: string
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          mime_type?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          file_id?: string | null
+          file_name?: string
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          mime_type?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_attachments_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "file_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_attachments_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_templates: {
         Row: {
           body_html: string
@@ -1757,6 +1923,47 @@ export type Database = {
             columns: ["division_id"]
             isOneToOne: false
             referencedRelation: "divisions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      enrichment_jobs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          lead_id: string | null
+          result: Json | null
+          source: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          lead_id?: string | null
+          result?: Json | null
+          source?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          lead_id?: string | null
+          result?: Json | null
+          source?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enrichment_jobs_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
             referencedColumns: ["id"]
           },
         ]
@@ -2726,61 +2933,6 @@ export type Database = {
             columns: ["expense_id"]
             isOneToOne: false
             referencedRelation: "expense_claims"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      feature_usage_events: {
-        Row: {
-          division_id: string | null
-          event_name: string
-          id: string
-          occurred_at: string
-          payload: Json
-          portal_account_id: string | null
-          project_id: string | null
-          user_id: string | null
-        }
-        Insert: {
-          division_id?: string | null
-          event_name: string
-          id?: string
-          occurred_at?: string
-          payload?: Json
-          portal_account_id?: string | null
-          project_id?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          division_id?: string | null
-          event_name?: string
-          id?: string
-          occurred_at?: string
-          payload?: Json
-          portal_account_id?: string | null
-          project_id?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "feature_usage_events_division_id_fkey"
-            columns: ["division_id"]
-            isOneToOne: false
-            referencedRelation: "divisions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "feature_usage_events_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "feature_usage_events_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -5122,40 +5274,53 @@ export type Database = {
           },
         ]
       }
-      migration_attachments: {
+      meeting_notes: {
         Row: {
+          attendees: string[] | null
+          content: string | null
           created_at: string
+          created_by: string | null
           id: string
-          record_id: string
-          source_file_path: string
-          status: string
-          target_file_id: string | null
+          meeting_date: string | null
+          project_id: string
+          title: string
           updated_at: string
         }
         Insert: {
+          attendees?: string[] | null
+          content?: string | null
           created_at?: string
+          created_by?: string | null
           id?: string
-          record_id: string
-          source_file_path: string
-          status?: string
-          target_file_id?: string | null
+          meeting_date?: string | null
+          project_id: string
+          title: string
           updated_at?: string
         }
         Update: {
+          attendees?: string[] | null
+          content?: string | null
           created_at?: string
+          created_by?: string | null
           id?: string
-          record_id?: string
-          source_file_path?: string
-          status?: string
-          target_file_id?: string | null
+          meeting_date?: string | null
+          project_id?: string
+          title?: string
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "migration_attachments_record_id_fkey"
-            columns: ["record_id"]
+            foreignKeyName: "meeting_notes_created_by_fkey"
+            columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "migration_records"
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_notes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
@@ -5203,110 +5368,6 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      migration_conflicts: {
-        Row: {
-          conflict_payload: Json
-          conflict_type: string
-          created_at: string
-          id: string
-          record_id: string
-          resolution_notes: string | null
-          resolution_status: string
-          resolved_at: string | null
-          resolved_by: string | null
-        }
-        Insert: {
-          conflict_payload: Json
-          conflict_type: string
-          created_at?: string
-          id?: string
-          record_id: string
-          resolution_notes?: string | null
-          resolution_status?: string
-          resolved_at?: string | null
-          resolved_by?: string | null
-        }
-        Update: {
-          conflict_payload?: Json
-          conflict_type?: string
-          created_at?: string
-          id?: string
-          record_id?: string
-          resolution_notes?: string | null
-          resolution_status?: string
-          resolved_at?: string | null
-          resolved_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "migration_conflicts_record_id_fkey"
-            columns: ["record_id"]
-            isOneToOne: false
-            referencedRelation: "migration_records"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "migration_conflicts_resolved_by_fkey"
-            columns: ["resolved_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      migration_records: {
-        Row: {
-          batch_id: string
-          created_at: string
-          error_message: string | null
-          id: string
-          source_key: string
-          source_payload: Json | null
-          source_type: string
-          status: string
-          target_entity_id: string | null
-          target_entity_type: string
-          transform_payload: Json | null
-          updated_at: string
-        }
-        Insert: {
-          batch_id: string
-          created_at?: string
-          error_message?: string | null
-          id?: string
-          source_key: string
-          source_payload?: Json | null
-          source_type: string
-          status?: string
-          target_entity_id?: string | null
-          target_entity_type: string
-          transform_payload?: Json | null
-          updated_at?: string
-        }
-        Update: {
-          batch_id?: string
-          created_at?: string
-          error_message?: string | null
-          id?: string
-          source_key?: string
-          source_payload?: Json | null
-          source_type?: string
-          status?: string
-          target_entity_id?: string | null
-          target_entity_type?: string
-          transform_payload?: Json | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "migration_records_batch_id_fkey"
-            columns: ["batch_id"]
-            isOneToOne: false
-            referencedRelation: "migration_batches"
             referencedColumns: ["id"]
           },
         ]
@@ -6250,6 +6311,51 @@ export type Database = {
           },
         ]
       }
+      portal_satisfaction_surveys: {
+        Row: {
+          created_at: string
+          feedback: string | null
+          id: string
+          portal_account_id: string | null
+          project_id: string
+          rating: number | null
+          submitted_at: string
+        }
+        Insert: {
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          portal_account_id?: string | null
+          project_id: string
+          rating?: number | null
+          submitted_at?: string
+        }
+        Update: {
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          portal_account_id?: string | null
+          project_id?: string
+          rating?: number | null
+          submitted_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_satisfaction_surveys_portal_account_id_fkey"
+            columns: ["portal_account_id"]
+            isOneToOne: false
+            referencedRelation: "portal_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_satisfaction_surveys_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portal_view_logs: {
         Row: {
           id: string
@@ -6475,45 +6581,6 @@ export type Database = {
             columns: ["submitted_by"]
             isOneToOne: false
             referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      project_files: {
-        Row: {
-          created_at: string
-          file_id: string
-          id: string
-          linked_from: string | null
-          project_id: string
-        }
-        Insert: {
-          created_at?: string
-          file_id: string
-          id?: string
-          linked_from?: string | null
-          project_id: string
-        }
-        Update: {
-          created_at?: string
-          file_id?: string
-          id?: string
-          linked_from?: string | null
-          project_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "project_files_file_id_fkey"
-            columns: ["file_id"]
-            isOneToOne: false
-            referencedRelation: "file_metadata"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "project_files_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
@@ -7878,6 +7945,44 @@ export type Database = {
         }
         Relationships: []
       }
+      submittal_distributions: {
+        Row: {
+          created_at: string
+          id: string
+          recipient_id: string | null
+          recipient_type: string
+          sent_at: string | null
+          status: string
+          submittal_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          recipient_id?: string | null
+          recipient_type: string
+          sent_at?: string | null
+          status?: string
+          submittal_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          recipient_id?: string | null
+          recipient_type?: string
+          sent_at?: string | null
+          status?: string
+          submittal_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "submittal_distributions_submittal_id_fkey"
+            columns: ["submittal_id"]
+            isOneToOne: false
+            referencedRelation: "submittals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       submittal_reviews: {
         Row: {
           id: string
@@ -9090,6 +9195,36 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      get_estimating_velocity: {
+        Args: { p_division_id?: string }
+        Returns: {
+          count: number
+          status: string
+        }[]
+      }
+      get_pipeline_summary: {
+        Args: { p_division_id?: string }
+        Returns: {
+          count: number
+          stage: string
+          value: number
+        }[]
+      }
+      get_project_portfolio: {
+        Args: { p_division_id?: string }
+        Returns: {
+          count: number
+          status: string
+        }[]
+      }
+      get_subscription_summary: {
+        Args: never
+        Returns: {
+          active_count: number
+          expiring_soon_count: number
+          total_monthly: number
+        }[]
       }
       get_user_permissions: {
         Args: { p_user_id: string }
