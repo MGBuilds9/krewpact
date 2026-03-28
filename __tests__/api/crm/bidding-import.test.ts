@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
-vi.mock('@/lib/api/org', () => ({ getOrgIdFromAuth: vi.fn() }));
+vi.mock('@/lib/api/org', () => ({}));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
@@ -18,12 +18,10 @@ import {
   mockClerkUnauth,
 } from '@/__tests__/helpers';
 import { POST } from '@/app/api/crm/bidding/import/route';
-import { getOrgIdFromAuth } from '@/lib/api/org';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
-const mockGetOrgId = vi.mocked(getOrgIdFromAuth);
 
 function mockSupabase(resp: { data: unknown; error: unknown }) {
   const chain: Record<string, unknown> = {};
@@ -44,7 +42,6 @@ describe('POST /api/crm/bidding/import', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockClerkAuth(mockAuth);
-    mockGetOrgId.mockResolvedValue('org_test');
   });
 
   it('returns 401 when unauthenticated', async () => {

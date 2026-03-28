@@ -4,7 +4,7 @@ vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
-vi.mock('@/lib/api/org', () => ({ getOrgIdFromAuth: vi.fn() }));
+vi.mock('@/lib/api/org', () => ({}));
 vi.mock('@/lib/request-context', () => ({
   requestContext: { run: vi.fn((_ctx, fn) => fn()) },
   generateRequestId: vi.fn().mockReturnValue('req_test'),
@@ -25,18 +25,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { makeJsonRequest, makeRequest, mockClerkAuth, mockClerkUnauth } from '@/__tests__/helpers';
 import { mockSupabaseClient } from '@/__tests__/helpers/mock-supabase';
 import { GET, PATCH } from '@/app/api/crm/settings/sequences/route';
-import { getOrgIdFromAuth } from '@/lib/api/org';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateClient = vi.mocked(createUserClientSafe);
-const mockGetOrgId = vi.mocked(getOrgIdFromAuth);
 
 describe('GET /api/crm/settings/sequences', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockClerkAuth(mockAuth);
-    mockGetOrgId.mockResolvedValue('org_test_default');
   });
 
   it('returns 401 when unauthenticated', async () => {
@@ -90,7 +87,6 @@ describe('PATCH /api/crm/settings/sequences', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockClerkAuth(mockAuth);
-    mockGetOrgId.mockResolvedValue('org_test_default');
   });
 
   it('returns 401 when unauthenticated', async () => {

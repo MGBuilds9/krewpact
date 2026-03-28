@@ -1,6 +1,6 @@
 /**
  * Queue layer types — zero-dependency in-memory job queue.
- * Swaps to Upstash QStash when UPSTASH_REDIS_REST_URL is set (future).
+ * Swaps to Upstash QStash when QSTASH_TOKEN is set.
  */
 
 export enum JobType {

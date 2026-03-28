@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { dbError, forbidden, notFound } from '@/lib/api/errors';
+import { dbError, forbidden, notFound, serverError } from '@/lib/api/errors';
 import { withApiRoute } from '@/lib/api/with-api-route';
-import { requirePermission } from '@/lib/rbac/permissions';
 import { syncRolesToBothStores } from '@/lib/rbac/sync-roles';
 import { createServiceClient, createUserClientSafe } from '@/lib/supabase/server';
 
@@ -12,13 +11,10 @@ const putBodySchema = z.object({
   division_ids: z.array(z.string()).optional(),
 });
 
-export const GET = withApiRoute({}, async ({ params }) => {
-  const denied = await requirePermission('users.manage');
-  if (denied) return denied;
-
+export const GET = withApiRoute({ permission: 'users.manage' }, async ({ params }) => {
   const targetUserId = params['userId'];
   const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return NextResponse.json({ error: 'Auth failed' }, { status: 401 });
+  if (authError) throw dbError('Auth failed');
 
   const [rolesResult, divisionsResult] = await Promise.all([
     supabase
@@ -45,33 +41,33 @@ export const GET = withApiRoute({}, async ({ params }) => {
   return NextResponse.json({ roles, divisions });
 });
 
-export const PUT = withApiRoute({ bodySchema: putBodySchema }, async ({ params, body, userId }) => {
-  const denied = await requirePermission('users.manage');
-  if (denied) return denied;
+export const PUT = withApiRoute(
+  { permission: 'users.manage', bodySchema: putBodySchema },
+  async ({ params, body, userId }) => {
+    const targetUserId = params['userId'];
+    const db = createServiceClient();
 
-  const targetUserId = params['userId'];
-  const db = createServiceClient();
+    const { data: targetUser, error: userError } = await db
+      .from('users')
+      .select('id, clerk_user_id')
+      .eq('id', targetUserId)
+      .single();
 
-  const { data: targetUser, error: userError } = await db
-    .from('users')
-    .select('id, clerk_user_id')
-    .eq('id', targetUserId)
-    .single();
+    if (userError || !targetUser) throw notFound('User');
+    if (!targetUser.clerk_user_id) throw forbidden('User has no linked Clerk account');
 
-  if (userError || !targetUser) throw notFound('User');
-  if (!targetUser.clerk_user_id) throw forbidden('User has no linked Clerk account');
+    const result = await syncRolesToBothStores({
+      supabaseUserId: targetUserId,
+      clerkUserId: targetUser.clerk_user_id,
+      roleKeys: body.role_keys,
+      divisionIds: body.division_ids,
+      assignedBy: userId,
+    });
 
-  const result = await syncRolesToBothStores({
-    supabaseUserId: targetUserId,
-    clerkUserId: targetUser.clerk_user_id,
-    roleKeys: body.role_keys,
-    divisionIds: body.division_ids,
-    assignedBy: userId,
-  });
+    if (!result.success) {
+      throw serverError('Role sync failed');
+    }
 
-  if (!result.success) {
-    return NextResponse.json({ error: 'Role sync failed', details: result.errors }, { status: 500 });
-  }
-
-  return NextResponse.json({ success: true, errors: result.errors });
-});
+    return NextResponse.json({ success: true, errors: result.errors });
+  },
+);

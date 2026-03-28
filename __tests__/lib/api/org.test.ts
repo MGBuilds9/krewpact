@@ -5,50 +5,10 @@ vi.mock('@clerk/nextjs/server', () => ({
 }));
 
 import { auth } from '@clerk/nextjs/server';
-import { NextRequest } from 'next/server';
 
-import {
-  getKrewpactDivisions,
-  getKrewpactRoles,
-  getKrewpactUserId,
-  getOrgFromHeaders,
-  getOrgIdFromAuth,
-} from '@/lib/api/org';
+import { getKrewpactDivisions, getKrewpactRoles, getKrewpactUserId } from '@/lib/api/org';
 
 const mockAuth = vi.mocked(auth);
-
-describe('getOrgIdFromAuth', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('returns org_id from JWT claims when present', async () => {
-    mockAuth.mockResolvedValue({
-      userId: 'user_123',
-      sessionClaims: {
-        metadata: {
-          krewpact_org_id: 'org-uuid-123',
-        },
-      },
-    } as never);
-
-    const result = await getOrgIdFromAuth();
-    expect(result).toBe('org-uuid-123');
-  });
-
-  it('falls back to default org UUID when no claim present', async () => {
-    mockAuth.mockResolvedValue({
-      userId: 'user_123',
-      sessionClaims: { metadata: {} },
-    } as never);
-
-    const result = await getOrgIdFromAuth();
-    // Falls back to DEFAULT_ORG_ID env or hardcoded org UUID (single-org mode)
-    expect(result).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
-    );
-  });
-});
 
 describe('metadata claim helpers', () => {
   beforeEach(() => {
@@ -86,34 +46,6 @@ describe('metadata claim helpers', () => {
     await expect(getKrewpactUserId()).resolves.toBeNull();
     await expect(getKrewpactRoles()).resolves.toEqual([]);
     await expect(getKrewpactDivisions()).resolves.toEqual([]);
-    await expect(getOrgIdFromAuth()).resolves.toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
-    );
   });
 });
 
-describe('getOrgFromHeaders', () => {
-  it('extracts org context from request headers', () => {
-    const req = new NextRequest('http://localhost:3000/test', {
-      headers: {
-        'x-krewpact-org-id': 'org-123',
-        'x-krewpact-org-slug': 'mdm-group',
-      },
-    });
-
-    const result = getOrgFromHeaders(req);
-    expect(result).toEqual({ orgId: 'org-123', orgSlug: 'mdm-group' });
-  });
-
-  it('throws when headers are missing', () => {
-    const req = new NextRequest('http://localhost:3000/test');
-    expect(() => getOrgFromHeaders(req)).toThrow('Organization context required');
-  });
-
-  it('throws when only org_id is present', () => {
-    const req = new NextRequest('http://localhost:3000/test', {
-      headers: { 'x-krewpact-org-id': 'org-123' },
-    });
-    expect(() => getOrgFromHeaders(req)).toThrow('Organization context required');
-  });
-});

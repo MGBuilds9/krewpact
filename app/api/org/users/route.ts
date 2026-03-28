@@ -3,7 +3,6 @@ import { z } from 'zod';
 
 import { dbError } from '@/lib/api/errors';
 import { withApiRoute } from '@/lib/api/with-api-route';
-import { requirePermission } from '@/lib/rbac/permissions';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { userProvisioningSchema } from '@/lib/validators/org';
 
@@ -14,10 +13,7 @@ const querySchema = z.object({
   offset: z.coerce.number().int().min(0).optional(),
 });
 
-export const GET = withApiRoute({ querySchema }, async ({ query }) => {
-  const denied = await requirePermission('users.manage');
-  if (denied) return denied;
-
+export const GET = withApiRoute({ permission: 'users.manage', querySchema }, async ({ query }) => {
   const {
     search,
     limit = 50,
@@ -29,7 +25,7 @@ export const GET = withApiRoute({ querySchema }, async ({ query }) => {
     offset?: number;
   };
   const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return NextResponse.json({ error: 'Auth failed' }, { status: 401 });
+  if (authError) throw dbError('Auth failed');
 
   let dbQuery = supabase
     .from('users')
@@ -53,13 +49,10 @@ export const GET = withApiRoute({ querySchema }, async ({ query }) => {
 });
 
 export const POST = withApiRoute(
-  { bodySchema: userProvisioningSchema },
+  { permission: 'users.manage', bodySchema: userProvisioningSchema },
   async ({ body, userId }) => {
-    const denied = await requirePermission('users.manage');
-    if (denied) return denied;
-
     const { client: supabase, error: authError } = await createUserClientSafe();
-    if (authError) return NextResponse.json({ error: 'Auth failed' }, { status: 401 });
+    if (authError) throw dbError('Auth failed');
 
     const { email, first_name, last_name, role_keys, division_ids } = body;
 

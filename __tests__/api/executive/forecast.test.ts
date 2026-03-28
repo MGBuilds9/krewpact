@@ -5,7 +5,7 @@ vi.mock('@clerk/nextjs/server', () => ({
   auth: vi.fn(),
 }));
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
-vi.mock('@/lib/api/org', () => ({ getOrgIdFromAuth: vi.fn(), getKrewpactRoles: vi.fn() }));
+vi.mock('@/lib/api/org', () => ({ getKrewpactRoles: vi.fn() }));
 vi.mock('@/lib/logger', () => ({
   logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn(), child: vi.fn().mockReturnThis() },
 }));
@@ -21,12 +21,11 @@ vi.mock('@/lib/request-context', () => ({
 import { auth } from '@clerk/nextjs/server';
 
 import { GET } from '@/app/api/executive/forecast/route';
-import { getKrewpactRoles, getOrgIdFromAuth } from '@/lib/api/org';
+import { getKrewpactRoles } from '@/lib/api/org';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 const mockAuth = vi.mocked(auth);
 const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
-const mockGetOrgIdFromAuth = vi.mocked(getOrgIdFromAuth);
 const mockGetKrewpactRoles = vi.mocked(getKrewpactRoles);
 
 function makeRequest() {
@@ -67,7 +66,6 @@ function makeSupabaseMock(opportunities: OpportunityRow[] = []) {
 describe('GET /api/executive/forecast', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetOrgIdFromAuth.mockResolvedValue('mdm-group');
     mockGetKrewpactRoles.mockResolvedValue(['executive']);
   });
 

@@ -35,6 +35,7 @@ export const proxy = clerkMiddleware(
       if (email) {
         const domain = email.split('@')[1];
         if (ALLOWED_DOMAINS.length > 0 && !ALLOWED_DOMAINS.includes(domain)) {
+          // eslint-disable-next-line no-console
           console.warn(
             JSON.stringify({
               level: 'warn',

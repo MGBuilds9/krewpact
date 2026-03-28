@@ -51,7 +51,7 @@ export type Permission =
   | 'users.manage'
   | 'roles.manage';
 
-export const ALL_PERMISSIONS: Permission[] = [
+const ALL_PERMISSIONS: Permission[] = [
   'crm.view',
   'crm.edit',
   'crm.delete',
@@ -199,10 +199,6 @@ export function isExternalRole(role: string): role is ExternalRole {
 
 export function isAdmin(roles: KrewpactRole[]): boolean {
   return roles.includes('platform_admin');
-}
-
-export function roleHasPermission(role: KrewpactRole, permission: Permission): boolean {
-  return ROLE_PERMISSIONS[role]?.includes(permission) ?? false;
 }
 
 export function hasPermission(roles: KrewpactRole[], permission: Permission): boolean {

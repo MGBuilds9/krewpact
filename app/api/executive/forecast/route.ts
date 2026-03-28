@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { forbidden } from '@/lib/api/errors';
-import { getKrewpactRoles, getOrgIdFromAuth } from '@/lib/api/org';
+import { getKrewpactRoles } from '@/lib/api/org';
 import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
@@ -71,14 +71,15 @@ export const GET = withApiRoute({}, async ({ logger }) => {
     throw forbidden('Forbidden');
   }
 
+  const DEFAULT_ORG_ID = process.env.DEFAULT_ORG_ID || 'e076c9b9-72ce-4fdc-a031-e5808e73d92c';
+
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
-  const orgId = await getOrgIdFromAuth();
 
   const { data: opportunities, error } = await supabase
     .from('opportunities')
     .select('id, stage, estimated_revenue, expected_close_date')
-    .eq('org_id', orgId)
+    .eq('org_id', DEFAULT_ORG_ID)
     .not('stage', 'eq', 'closed_lost')
     .not('expected_close_date', 'is', null)
     .not('estimated_revenue', 'is', null);

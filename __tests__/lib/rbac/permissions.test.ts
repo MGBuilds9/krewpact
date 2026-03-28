@@ -2,15 +2,16 @@ import { describe, expect, it } from 'vitest';
 
 import type { KrewpactRole, Permission } from '@/lib/rbac/permissions.shared';
 import {
-  ALL_PERMISSIONS,
   getPermissions,
   hasPermission,
   isAdmin,
   isExternalRole,
   isInternalRole,
   ROLE_PERMISSIONS,
-  roleHasPermission,
 } from '@/lib/rbac/permissions.shared';
+
+// ALL_PERMISSIONS is internal — derive from platform_admin's permissions for tests
+const ALL_PERMISSIONS = ROLE_PERMISSIONS['platform_admin'] as import('@/lib/rbac/permissions.shared').Permission[];
 
 describe('isInternalRole', () => {
   it('returns true for all internal roles', () => {
@@ -77,22 +78,22 @@ describe('isAdmin', () => {
   });
 });
 
-describe('roleHasPermission', () => {
+describe('ROLE_PERMISSIONS direct lookups', () => {
   it('returns true for a permission the role has', () => {
-    expect(roleHasPermission('estimator', 'estimates.edit')).toBe(true);
-    expect(roleHasPermission('accounting', 'finance.admin')).toBe(true);
-    expect(roleHasPermission('field_supervisor', 'safety.edit')).toBe(true);
+    expect(ROLE_PERMISSIONS['estimator']).toContain('estimates.edit');
+    expect(ROLE_PERMISSIONS['accounting']).toContain('finance.admin');
+    expect(ROLE_PERMISSIONS['field_supervisor']).toContain('safety.edit');
   });
 
   it('returns false for a permission the role lacks', () => {
-    expect(roleHasPermission('payroll_admin', 'crm.view')).toBe(false);
-    expect(roleHasPermission('field_supervisor', 'finance.edit')).toBe(false);
-    expect(roleHasPermission('client_delegate', 'crm.view')).toBe(false);
+    expect(ROLE_PERMISSIONS['payroll_admin']).not.toContain('crm.view');
+    expect(ROLE_PERMISSIONS['field_supervisor']).not.toContain('finance.edit');
+    expect(ROLE_PERMISSIONS['client_delegate']).not.toContain('crm.view');
   });
 
   it('platform_admin has every permission', () => {
     for (const permission of ALL_PERMISSIONS) {
-      expect(roleHasPermission('platform_admin', permission)).toBe(true);
+      expect(ROLE_PERMISSIONS['platform_admin']).toContain(permission);
     }
   });
 });

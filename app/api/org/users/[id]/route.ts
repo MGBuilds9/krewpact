@@ -3,7 +3,6 @@ import { z } from 'zod';
 
 import { dbError } from '@/lib/api/errors';
 import { withApiRoute } from '@/lib/api/with-api-route';
-import { requirePermission } from '@/lib/rbac/permissions';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 const userPatchSchema = z.object({
@@ -16,13 +15,10 @@ const userPatchSchema = z.object({
   status: z.enum(['active', 'inactive', 'archived']).optional(),
 });
 
-export const GET = withApiRoute({}, async ({ params }) => {
-  const denied = await requirePermission('users.manage');
-  if (denied) return denied;
-
+export const GET = withApiRoute({ permission: 'users.manage' }, async ({ params }) => {
   const { id } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return NextResponse.json({ error: 'Auth failed' }, { status: 401 });
+  if (authError) throw dbError('Auth failed');
 
   const { data, error } = await supabase
     .from('users')
@@ -35,21 +31,21 @@ export const GET = withApiRoute({}, async ({ params }) => {
   return NextResponse.json(data);
 });
 
-export const PATCH = withApiRoute({ bodySchema: userPatchSchema }, async ({ params, body }) => {
-  const denied = await requirePermission('users.manage');
-  if (denied) return denied;
+export const PATCH = withApiRoute(
+  { permission: 'users.manage', bodySchema: userPatchSchema },
+  async ({ params, body }) => {
+    const { id } = params;
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) throw dbError('Auth failed');
 
-  const { id } = params;
-  const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return NextResponse.json({ error: 'Auth failed' }, { status: 401 });
+    const { data, error } = await supabase
+      .from('users')
+      .update({ ...body, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
 
-  const { data, error } = await supabase
-    .from('users')
-    .update({ ...body, updated_at: new Date().toISOString() })
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (error) throw dbError(error.message);
-  return NextResponse.json(data);
-});
+    if (error) throw dbError(error.message);
+    return NextResponse.json(data);
+  },
+);
