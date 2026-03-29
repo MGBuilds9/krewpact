@@ -16,15 +16,21 @@
 import { logger } from '@/lib/logger';
 import { createScopedServiceClient } from '@/lib/supabase/server';
 
+import { syncAttendance } from './sync-handlers/sync-attendance';
 import { syncAward } from './sync-handlers/sync-award';
 import { syncBid } from './sync-handlers/sync-bid';
 import { syncChangeOrder } from './sync-handlers/sync-change-order';
+import { syncCompany } from './sync-handlers/sync-company';
 import { syncComplianceDoc } from './sync-handlers/sync-compliance-doc';
 import { syncContact } from './sync-handlers/sync-contact';
 import { syncAccount } from './sync-handlers/sync-customer';
+import { syncDepartment } from './sync-handlers/sync-department';
+import { syncEmployee } from './sync-handlers/sync-employee';
 import { syncExpenseClaim } from './sync-handlers/sync-expense';
 import { syncGoodsReceipt } from './sync-handlers/sync-goods-receipt';
 import type { SyncJobContext } from './sync-handlers/sync-helpers';
+import { syncHolidayList } from './sync-handlers/sync-holiday-list';
+import { syncHrSettings } from './sync-handlers/sync-hr-settings';
 import { syncInventoryPo } from './sync-handlers/sync-inventory-po';
 import {
   readPaymentEntry,
@@ -32,6 +38,7 @@ import {
   readSalesInvoice,
 } from './sync-handlers/sync-invoices';
 import { syncItem } from './sync-handlers/sync-item';
+import { syncLeaveApplication } from './sync-handlers/sync-leave-application';
 import { syncMaterialCost } from './sync-handlers/sync-material-cost';
 import { syncMaterialRequest } from './sync-handlers/sync-material-request';
 import { syncOpportunity, syncWonDeal } from './sync-handlers/sync-opportunity';
@@ -170,6 +177,34 @@ export class SyncService {
 
   async syncItem(itemId: string, userId: string, jobContext?: SyncJobContext) {
     return syncItem(itemId, userId, jobContext);
+  }
+
+  async syncEmployee(userId: string, triggerUserId: string, jobContext?: SyncJobContext) {
+    return syncEmployee(userId, triggerUserId, jobContext);
+  }
+
+  async syncAttendance(attendanceId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncAttendance(attendanceId, userId, jobContext);
+  }
+
+  async syncLeaveApplication(leaveId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncLeaveApplication(leaveId, userId, jobContext);
+  }
+
+  async syncHolidayList(holidayListId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncHolidayList(holidayListId, userId, jobContext);
+  }
+
+  async syncDepartment(divisionId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncDepartment(divisionId, userId, jobContext);
+  }
+
+  async syncHrSettings(entityId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncHrSettings(entityId, userId, jobContext);
+  }
+
+  async syncCompany(orgId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncCompany(orgId, userId, jobContext);
   }
 
   async syncMaterialCost(

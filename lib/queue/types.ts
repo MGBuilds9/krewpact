@@ -22,6 +22,13 @@ export enum JobType {
   ERPSyncStockEntry = 'erp-sync-stock-entry',
   ERPSyncWarehouse = 'erp-sync-warehouse',
   ERPSyncItem = 'erp-sync-item',
+  ERPSyncEmployee = 'erp-sync-employee',
+  ERPSyncAttendance = 'erp-sync-attendance',
+  ERPSyncLeaveApplication = 'erp-sync-leave-application',
+  ERPSyncHolidayList = 'erp-sync-holiday-list',
+  ERPSyncDepartment = 'erp-sync-department',
+  ERPSyncHrSettings = 'erp-sync-hr-settings',
+  ERPSyncCompany = 'erp-sync-company',
   TakeoffFeedback = 'takeoff-feedback',
   PayrollCSVExport = 'payroll-csv-export',
 }
