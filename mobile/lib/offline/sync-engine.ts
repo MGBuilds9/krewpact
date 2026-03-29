@@ -35,6 +35,16 @@ const BATCH_SIZE = 10;
 let isSyncing = false;
 let lastSyncAt: string | null = null;
 
+/** Token getter injected by the app shell */
+let _getToken: (() => Promise<string | null>) | null = null;
+
+/** Initialize auth for sync — call from app _layout.tsx */
+export function initSyncAuth(
+  getToken: () => Promise<string | null>,
+): void {
+  _getToken = getToken;
+}
+
 type SyncEventCallback = (results: SyncResult[]) => void;
 const syncListeners = new Set<SyncEventCallback>();
 
@@ -134,8 +144,9 @@ async function processItem(item: OfflineQueueItem): Promise<SyncResult> {
 }
 
 async function callApi(item: OfflineQueueItem): Promise<Response> {
-  const baseUrl = ENTITY_API_ENDPOINTS[item.entity_type];
-  let url = `${API_BASE_URL}${baseUrl}`;
+  const projectId = String(item.payload.project_id ?? '');
+  const basePath = ENTITY_API_ENDPOINTS[item.entity_type](projectId);
+  let url = `${API_BASE_URL}${basePath}`;
   let method: string;
 
   switch (item.action) {
@@ -152,9 +163,15 @@ async function callApi(item: OfflineQueueItem): Promise<Response> {
       break;
   }
 
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  const token = await _getToken?.();
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
   return fetch(url, {
     method,
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: method !== 'DELETE' ? JSON.stringify(item.payload) : undefined,
   });
 }
@@ -165,9 +182,14 @@ async function handleConflict(item: OfflineQueueItem): Promise<SyncResult> {
   }
 
   try {
-    const baseUrl = ENTITY_API_ENDPOINTS[item.entity_type];
+    const projectId = String(item.payload.project_id ?? '');
+    const basePath = ENTITY_API_ENDPOINTS[item.entity_type](projectId);
+    const headers: Record<string, string> = {};
+    const token = await _getToken?.();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
     const serverResponse = await fetch(
-      `${API_BASE_URL}${baseUrl}/${item.entity_id}`,
+      `${API_BASE_URL}${basePath}/${item.entity_id}`,
+      { headers },
     );
 
     if (!serverResponse.ok) {

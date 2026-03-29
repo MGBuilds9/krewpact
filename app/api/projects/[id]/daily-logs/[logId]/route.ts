@@ -11,9 +11,27 @@ export const PATCH = withApiRoute(
     const { id, logId } = params;
     const { client: supabase, error: authError } = await createUserClientSafe();
     if (authError) return authError;
+
+    // Offline sync: version conflict detection
+    const { version: clientVersion, ...updateFields } = body;
+    if (clientVersion !== undefined) {
+      const { data: current } = await supabase
+        .from('project_daily_logs')
+        .select('version')
+        .eq('id', logId)
+        .eq('project_id', id)
+        .single();
+      if (current && current.version !== clientVersion) {
+        return NextResponse.json(
+          { error: 'Version conflict', server_version: current.version },
+          { status: 409 },
+        );
+      }
+    }
+
     const { data, error } = await supabase
       .from('project_daily_logs')
-      .update(body)
+      .update(updateFields)
       .eq('id', logId)
       .eq('project_id', id)
       .select()

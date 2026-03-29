@@ -8,7 +8,7 @@ import { AuthProvider } from '@/lib/auth';
 import { queryClient } from '@/lib/query-client';
 import { COLORS } from '@/constants/config';
 import { startMonitoring, stopMonitoring } from '@/lib/offline/online-detector';
-import { startAutoSync } from '@/lib/offline/sync-engine';
+import { initSyncAuth, startAutoSync } from '@/lib/offline/sync-engine';
 import { registerBackgroundSync } from '@/lib/offline/background-sync';
 import {
   registerForPushNotifications,
@@ -34,8 +34,13 @@ function useProtectedRoute() {
 }
 
 function InnerLayout() {
-  const { isLoaded } = useAuth();
+  const { isLoaded, getToken } = useAuth();
   useProtectedRoute();
+
+  // Wire Clerk token into offline sync engine
+  useEffect(() => {
+    initSyncAuth(getToken);
+  }, [getToken]);
 
   // Initialize offline sync, background fetch, and notifications
   useEffect(() => {

@@ -156,8 +156,9 @@ async function processItem(
  * Make the actual API call for a queue item.
  */
 async function callApi(item: OfflineQueueItem): Promise<Response> {
-  const baseUrl = ENTITY_API_ENDPOINTS[item.entity_type];
-  let url = baseUrl;
+  const projectId = String(item.payload.project_id ?? '');
+  const basePath = ENTITY_API_ENDPOINTS[item.entity_type](projectId);
+  let url = basePath;
   let method: string;
 
   switch (item.action) {
@@ -166,16 +167,17 @@ async function callApi(item: OfflineQueueItem): Promise<Response> {
       break;
     case 'update':
       method = 'PATCH';
-      url = `${baseUrl}/${item.entity_id}`;
+      url = `${basePath}/${item.entity_id}`;
       break;
     case 'delete':
       method = 'DELETE';
-      url = `${baseUrl}/${item.entity_id}`;
+      url = `${basePath}/${item.entity_id}`;
       break;
   }
 
   return fetch(url, {
     method,
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body:
       method !== 'DELETE'
@@ -200,9 +202,11 @@ async function handleConflict(
   }
 
   try {
-    const baseUrl = ENTITY_API_ENDPOINTS[item.entity_type];
+    const projectId = String(item.payload.project_id ?? '');
+    const basePath = ENTITY_API_ENDPOINTS[item.entity_type](projectId);
     const serverResponse = await fetch(
-      `${baseUrl}/${item.entity_id}`,
+      `${basePath}/${item.entity_id}`,
+      { credentials: 'include' },
     );
 
     if (!serverResponse.ok) {

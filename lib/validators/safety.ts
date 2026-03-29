@@ -16,6 +16,8 @@ export const safetyFormUpdateSchema = z.object({
   state: z.enum(workflowStates).optional(),
   payload: z.record(z.string(), z.unknown()).optional(),
   submitted_at: z.string().optional().nullable(),
+  /** Offline sync: optimistic version for conflict detection */
+  version: z.number().int().optional(),
 });
 
 // ============================================================

@@ -75,6 +75,8 @@ export const dailyLogUpdateSchema = z.object({
   work_summary: z.string().optional().nullable(),
   delays: z.string().optional().nullable(),
   safety_notes: z.string().optional().nullable(),
+  /** Offline sync: optimistic version for conflict detection */
+  version: z.number().int().optional(),
 });
 
 // ============================================================

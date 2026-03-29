@@ -36,10 +36,20 @@ describe('offline/types', () => {
     expect(CONFLICT_STRATEGIES.safety_forms).toBe('last_write_wins');
   });
 
-  it('defines API endpoints for all entity types', () => {
-    expect(ENTITY_API_ENDPOINTS.daily_logs).toBe('/api/projects/daily-logs');
-    expect(ENTITY_API_ENDPOINTS.time_entries).toBe('/api/projects/time-entries');
-    expect(ENTITY_API_ENDPOINTS.safety_forms).toBe('/api/safety/forms');
-    expect(ENTITY_API_ENDPOINTS.photos).toBe('/api/projects/photos');
+  it('defines API endpoint factories for all entity types', () => {
+    const pid = 'proj-456';
+    expect(typeof ENTITY_API_ENDPOINTS.daily_logs).toBe('function');
+    expect(ENTITY_API_ENDPOINTS.daily_logs(pid)).toBe(
+      `/api/projects/${pid}/daily-logs`,
+    );
+    expect(ENTITY_API_ENDPOINTS.time_entries(pid)).toBe(
+      `/api/projects/${pid}/time-entries`,
+    );
+    expect(ENTITY_API_ENDPOINTS.safety_forms(pid)).toBe(
+      `/api/projects/${pid}/safety/forms`,
+    );
+    expect(ENTITY_API_ENDPOINTS.photos(pid)).toBe(
+      `/api/projects/${pid}/photos`,
+    );
   });
 });

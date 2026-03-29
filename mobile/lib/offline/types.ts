@@ -105,10 +105,13 @@ export const CONFLICT_STRATEGIES: Record<OfflineEntityType, ConflictStrategy> = 
   photos: 'always_keep_both',
 };
 
-/** API endpoint map for each entity type */
-export const ENTITY_API_ENDPOINTS: Record<OfflineEntityType, string> = {
-  daily_logs: '/api/projects/daily-logs',
-  time_entries: '/api/projects/time-entries',
-  safety_forms: '/api/safety/forms',
-  photos: '/api/projects/photos',
+/** API endpoint factory — real routes are project-scoped */
+export const ENTITY_API_ENDPOINTS: Record<
+  OfflineEntityType,
+  (projectId: string) => string
+> = {
+  daily_logs: (pid) => `/api/projects/${pid}/daily-logs`,
+  time_entries: (pid) => `/api/projects/${pid}/time-entries`,
+  safety_forms: (pid) => `/api/projects/${pid}/safety/forms`,
+  photos: (pid) => `/api/projects/${pid}/photos`,
 };

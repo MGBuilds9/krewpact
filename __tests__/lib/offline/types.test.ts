@@ -34,23 +34,30 @@ describe('Offline Types', () => {
   });
 
   describe('ENTITY_API_ENDPOINTS', () => {
-    it('has an endpoint for every entity type', () => {
+    it('has a factory function for every entity type', () => {
       const entityTypes = Object.keys(CONFLICT_STRATEGIES);
       for (const type of entityTypes) {
-        expect(
-          ENTITY_API_ENDPOINTS[type as keyof typeof ENTITY_API_ENDPOINTS],
-        ).toBeDefined();
-        expect(
-          ENTITY_API_ENDPOINTS[type as keyof typeof ENTITY_API_ENDPOINTS],
-        ).toMatch(/^\/api\//);
+        const factory =
+          ENTITY_API_ENDPOINTS[type as keyof typeof ENTITY_API_ENDPOINTS];
+        expect(typeof factory).toBe('function');
+        expect(factory('proj-123')).toMatch(/^\/api\/projects\/proj-123\//);
       }
     });
 
-    it('has correct endpoint paths', () => {
-      expect(ENTITY_API_ENDPOINTS.daily_logs).toBe('/api/projects/daily-logs');
-      expect(ENTITY_API_ENDPOINTS.time_entries).toBe('/api/projects/time-entries');
-      expect(ENTITY_API_ENDPOINTS.safety_forms).toBe('/api/safety/forms');
-      expect(ENTITY_API_ENDPOINTS.photos).toBe('/api/projects/photos');
+    it('produces correct project-scoped paths', () => {
+      const pid = 'abc-123';
+      expect(ENTITY_API_ENDPOINTS.daily_logs(pid)).toBe(
+        `/api/projects/${pid}/daily-logs`,
+      );
+      expect(ENTITY_API_ENDPOINTS.time_entries(pid)).toBe(
+        `/api/projects/${pid}/time-entries`,
+      );
+      expect(ENTITY_API_ENDPOINTS.safety_forms(pid)).toBe(
+        `/api/projects/${pid}/safety/forms`,
+      );
+      expect(ENTITY_API_ENDPOINTS.photos(pid)).toBe(
+        `/api/projects/${pid}/photos`,
+      );
     });
   });
 });

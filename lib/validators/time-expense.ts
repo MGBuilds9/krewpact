@@ -20,6 +20,8 @@ export const timeEntryUpdateSchema = z.object({
   hours_overtime: z.number().min(0).max(24).optional(),
   cost_code: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
+  /** Offline sync: optimistic version for conflict detection */
+  version: z.number().int().optional(),
 });
 
 // ============================================================

@@ -41,7 +41,7 @@ function makePendingItem(
     entity_type: 'daily_logs',
     entity_id: 'e-1',
     action: 'create',
-    payload: { notes: 'test' },
+    payload: { notes: 'test', project_id: 'proj-1' },
     status: 'pending',
     retry_count: 0,
     version: 1,
