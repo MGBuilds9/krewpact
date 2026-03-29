@@ -72,6 +72,15 @@ const syncHandlers: Partial<Record<JobType, SyncHandler>> = {
   [JobType.ERPSyncTimesheet]: (id, uid, ctx) => syncService.syncTimesheet(id, uid, ctx),
   [JobType.ERPReadInvoice]: (id, _uid, ctx) => syncService.readSalesInvoice(id, ctx),
   [JobType.ERPReadPO]: (id, _uid, ctx) => syncService.readPurchaseInvoice(id, ctx),
+  [JobType.ERPSyncSupplierQuotation]: (id, uid, ctx) =>
+    syncService.syncSupplierQuotation(id, uid, ctx),
+  [JobType.ERPSyncRequestForQuotation]: (id, uid, ctx) =>
+    syncService.syncRequestForQuotation(id, uid, ctx),
+  [JobType.ERPSyncMaterialRequest]: (id, uid, ctx) =>
+    syncService.syncMaterialRequest(id, uid, ctx),
+  [JobType.ERPSyncStockEntry]: (id, uid, ctx) => syncService.syncStockEntry(id, uid, ctx),
+  [JobType.ERPSyncWarehouse]: (id, uid, ctx) => syncService.syncWarehouse(id, uid, ctx),
+  [JobType.ERPSyncItem]: (id, uid, ctx) => syncService.syncItem(id, uid, ctx),
 };
 
 export async function processJob(job: Job): Promise<void> {

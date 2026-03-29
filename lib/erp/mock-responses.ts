@@ -16,6 +16,14 @@ export {
   mockPurchaseOrderResponse,
   mockPurchaseReceiptResponse,
 } from './mock-inventory-responses';
+export {
+  mockItemResponse,
+  mockMaterialRequestResponse,
+  mockRequestForQuotationResponse,
+  mockStockEntryResponse,
+  mockSupplierQuotationResponse,
+  mockWarehouseResponse,
+} from './mock-procurement-responses';
 export { resetMockCounter } from './mock-types';
 
 import type { AccountData, EstimateData, EstimateLineData } from './mock-types';

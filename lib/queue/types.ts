@@ -16,6 +16,12 @@ export enum JobType {
   ERPSyncTimesheet = 'erp-sync-timesheet',
   ERPReadInvoice = 'erp-read-invoice',
   ERPReadPO = 'erp-read-po',
+  ERPSyncSupplierQuotation = 'erp-sync-supplier-quotation',
+  ERPSyncRequestForQuotation = 'erp-sync-request-for-quotation',
+  ERPSyncMaterialRequest = 'erp-sync-material-request',
+  ERPSyncStockEntry = 'erp-sync-stock-entry',
+  ERPSyncWarehouse = 'erp-sync-warehouse',
+  ERPSyncItem = 'erp-sync-item',
   TakeoffFeedback = 'takeoff-feedback',
   PayrollCSVExport = 'payroll-csv-export',
 }
