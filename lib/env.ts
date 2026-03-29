@@ -86,6 +86,16 @@ const envSchema = z
     CRON_SECRET: z.string().min(1).optional(),
     // Fallback for CRON_SECRET — used for webhook signature verification
     WEBHOOK_SIGNING_SECRET: z.string().min(1).optional(),
+
+    // ── Org defaults (optional — required for routes that need org scoping) ──
+    DEFAULT_ORG_ID: z.string().uuid().optional(),
+
+    // ── Company branding (optional — used in proposals and notifications) ──
+    COMPANY_NAME: z.string().min(1).optional(),
+    COMPANY_ADDRESS: z.string().min(1).optional(),
+    COMPANY_PHONE: z.string().min(1).optional(),
+    COMPANY_EMAIL: z.string().email().optional(),
+    ALERT_EMAIL: z.string().email().optional(),
   })
   // Production-required: these are optional for local dev but MUST exist in production
   .superRefine((data, ctx) => {
@@ -174,6 +184,10 @@ const ENV_WARNING_CHECKS: EnvWarningCheck[] = [
   {
     condition: (e) => !e.GOOGLE_MAPS_API_KEY,
     message: 'GOOGLE_MAPS_API_KEY not set — Google Maps enrichment will be skipped',
+  },
+  {
+    condition: (e) => !e.DEFAULT_ORG_ID,
+    message: 'DEFAULT_ORG_ID not set — org-scoped routes will use auth-derived org only',
   },
 ];
 

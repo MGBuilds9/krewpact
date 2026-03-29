@@ -4,14 +4,12 @@ import { NextResponse } from 'next/server';
 import { dbError, forbidden } from '@/lib/api/errors';
 import { getKrewpactRoles } from '@/lib/api/org';
 import { withApiRoute } from '@/lib/api/with-api-route';
+import { env } from '@/lib/env';
 import { createServiceClient } from '@/lib/supabase/server';
 import { stagingCreateSchema } from '@/lib/validators/executive';
 
 const READ_ROLES = ['executive', 'platform_admin'];
 const WRITE_ROLES = ['platform_admin'];
-
-// Single-org app — org_id scoping is redundant; RLS handles data isolation.
-const DEFAULT_ORG_ID = process.env.DEFAULT_ORG_ID || 'e076c9b9-72ce-4fdc-a031-e5808e73d92c';
 
 export const GET = withApiRoute({}, async ({ req }) => {
   const roles = await getKrewpactRoles();
@@ -62,9 +60,11 @@ export const POST = withApiRoute({ bodySchema: stagingCreateSchema }, async ({ b
   const content_checksum = createHash('sha256').update(body.raw_content).digest('hex');
 
   const supabase = await createServiceClient();
+  if (!env.DEFAULT_ORG_ID) return NextResponse.json({ error: 'DEFAULT_ORG_ID not configured' }, { status: 500 });
+
   const { data, error } = await supabase
     .from('knowledge_staging')
-    .insert({ ...body, org_id: DEFAULT_ORG_ID, content_checksum, status: 'pending_review' })
+    .insert({ ...body, org_id: env.DEFAULT_ORG_ID, content_checksum, status: 'pending_review' })
     .select()
     .single();
 

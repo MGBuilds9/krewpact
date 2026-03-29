@@ -4,11 +4,9 @@ import { NextResponse } from 'next/server';
 import path from 'path';
 
 import { withApiRoute } from '@/lib/api/with-api-route';
+import { env } from '@/lib/env';
 import { createServiceClient } from '@/lib/supabase/server';
 import { stagingBulkImportSchema } from '@/lib/validators/executive';
-
-// Single-org app — org_id scoping is redundant; RLS handles data isolation.
-const DEFAULT_ORG_ID = process.env.DEFAULT_ORG_ID || 'e076c9b9-72ce-4fdc-a031-e5808e73d92c';
 
 const ADMIN_ROLES = ['platform_admin'];
 
@@ -73,13 +71,15 @@ async function processOneFile(
 
   const strippedContent = rawContent.replace(/^---[\s\S]*?---\n*/m, '');
 
+  if (!env.DEFAULT_ORG_ID) return { status: 'error', reason: 'DEFAULT_ORG_ID not configured' };
+
   const { error: insertError } = await supabase.from('knowledge_staging').insert({
     title,
     raw_content: strippedContent,
     source_type: 'vault_import',
     source_path: filePath,
     content_checksum: contentChecksum,
-    org_id: DEFAULT_ORG_ID,
+    org_id: env.DEFAULT_ORG_ID,
     status: 'pending_review',
     ...(file.category && { category: file.category }),
     ...(file.division_id && { division_id: file.division_id }),

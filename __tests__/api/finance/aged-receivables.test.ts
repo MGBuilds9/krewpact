@@ -4,6 +4,9 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+vi.mock('@/lib/env', () => ({
+  env: { DEFAULT_ORG_ID: 'test-org-00000000-0000-0000-0000-000000000000' },
+}));
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/services/financial-ops', () => ({
   getAgedReceivables: vi.fn(),

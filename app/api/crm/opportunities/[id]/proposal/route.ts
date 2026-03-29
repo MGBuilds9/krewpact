@@ -3,15 +3,16 @@ import { NextResponse } from 'next/server';
 import { dbError, notFound } from '@/lib/api/errors';
 import { withApiRoute } from '@/lib/api/with-api-route';
 import { composeProposalData } from '@/lib/crm/proposal-generator';
+import { env } from '@/lib/env';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 type SupabaseClient = NonNullable<Awaited<ReturnType<typeof createUserClientSafe>>['client']>;
 
 const COMPANY_INFO = {
-  name: process.env.COMPANY_NAME ?? 'Your Company',
-  address: process.env.COMPANY_ADDRESS ?? 'Configure COMPANY_ADDRESS in env',
-  phone: process.env.COMPANY_PHONE ?? 'Configure COMPANY_PHONE in env',
-  email: process.env.COMPANY_EMAIL ?? 'Configure COMPANY_EMAIL in env',
+  name: env.COMPANY_NAME ?? 'Your Company',
+  address: env.COMPANY_ADDRESS ?? 'Configure COMPANY_ADDRESS in env',
+  phone: env.COMPANY_PHONE ?? 'Configure COMPANY_PHONE in env',
+  email: env.COMPANY_EMAIL ?? 'Configure COMPANY_EMAIL in env',
 };
 
 async function fetchProposalData(supabase: SupabaseClient, id: string) {

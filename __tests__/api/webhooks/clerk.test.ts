@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+vi.mock('@/lib/env', () => ({
+  env: { DEFAULT_ORG_ID: 'test-org-00000000-0000-0000-0000-000000000000' },
+}));
+
 // Mock Clerk auth (required by withApiRoute import even though auth: 'public' skips calling it)
 vi.mock('@clerk/nextjs/server', () => ({
   auth: vi.fn(),

@@ -4,6 +4,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mockStat = vi.hoisted(() => vi.fn());
 const mockReadFile = vi.hoisted(() => vi.fn());
 
+vi.mock('@/lib/env', () => ({
+  env: { DEFAULT_ORG_ID: 'test-org-00000000-0000-0000-0000-000000000000' },
+}));
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createServiceClient: vi.fn() }));
 vi.mock('@/lib/api/org', () => ({

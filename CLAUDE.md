@@ -276,11 +276,11 @@ KrewPact is the **nucleus**. ERPNext = Financial Brain (replacing Sage). LeadFor
 - **Supabase authoritative for:** workflows, field ops, portals, audit trails, user/RBAC, lead scoring, outreach, knowledge embeddings, inventory (Mar 2026 — replaces Almyta)
 - **Cross-system link:** `krewpact_id` field on ERPNext doctypes
 - **Sync:** Eventual consistency. Outbox/inbox, idempotent upsert, retry with backoff, dead-letter. No 2PC.
-- **Event bus:** `unified_events` table for cross-system communication
+- **Event bus:** Planned `unified_events` table for cross-system communication (not yet created — using QStash for async jobs)
 
 ## ERPNext Integration
 
-12 MVP mappings: Customer, Contact, Opportunity, Quotation, Sales Order, Project, Task, Sales Invoice (read), Purchase Invoice (read), Supplier, Expense Claim, Timesheet. Full 43 mappings deferred to P1/P2.
+20 mappings: Customer, Contact, Opportunity, Quotation, Sales Order, Project, Task, Sales Invoice (read), Purchase Invoice (read), Supplier, Expense Claim, Timesheet (MVP 12) + Purchase Order, Purchase Receipt, Supplier Quotation, Request for Quotation, Material Request, Stock Entry, Warehouse, Item (P2 Batch 2A). Remaining 23 mappings in Batches 2B-2D.
 
 - All calls through `lib/erp/client.ts` — sole ERPNext access point
 - Auth: `Authorization: token {key}:{secret}` header
@@ -331,6 +331,13 @@ Architecture docs in `docs/architecture/`: `Master-Plan.md` (scope), `Technology
 
 ## Session Log
 
+### Mar 29, 2026 — Blueprint Audit v2 + Gap Remediation + P2 Tooling Setup
+
+- **Changes:** (1) Blueprint audit v2 (95/100 alignment). (2) Restored 3 migration sub-tables dropped in error — fixed broken `/api/migration/batches/:id/conflicts`. Applied migration + subscription RPC fix + old overload drop to live Supabase via MCP. (3) Added 6 env vars to `lib/env.ts`, removed hardcoded org UUID from 8 routes. (4) Added `computeEstimatingVelocityForDivision`. Regenerated `types/supabase.ts` from production DB. (5) P2 tooling: installed Repomix (v1.13.1), Codebase Memory MCP (v0.5.7), generated 4 domain context packs. Created P2 master plan with 5-phase agent team architecture. Evaluated Repomix (use), Codebase Memory MCP (use), Aider (skip), gstack (skip).
+- **Decisions:** Repomix for domain-scoped agent context (full repo ~1M tokens, too big). Codebase Memory MCP for structural graph queries. Aider and gstack skipped (Claude Code already covers their features). gstack's `/cso` security audit is the only uncovered skill — revisit later. P2 phases: 1-3 parallel, Phase 4 blocked on Phase 3.
+- **Tests:** 4,793/4,793 passing (434 files). 0 TS errors. 3 lint warnings.
+- **Next:** Start P2 phases (ADP CSV, ERPNext mappings, Offline/PWA in parallel). Index codebase with Codebase Memory MCP after restart.
+
 ### Mar 28, 2026 — Full Codebase Cleanup + Database Production Hardening
 
 - **Changes:** (1) **Codebase cleanup (3 waves, 193 files, -10,113 net lines):** Wave 1: Declarative RBAC in `withApiRoute` (26 routes migrated), feature flag removal (all 17 flags, 30 files deleted), role registry consolidation (6 duplicate arrays → 1), org simplification (removed `getOrgIdFromAuth` from 13 routes), quality fixes (AI model registry, rate limits, QStash alerting, dashboard rename, query keys). Wave 2: Error handling consistency (36 routes fixed from raw to structured), dead code removal (deleted dead exports, routes, stale scripts). Wave 3: Finance `requireRole` migration (9 routes), `bodySchema` wiring (17 routes), `querySchema` wiring (8 routes). (2) **Database hardening (applied to live Supabase):** CRITICAL: dropped `contacts_anon_select` (PII leak to anonymous). Replaced knowledge tables public ALL with auth read + service write. Fixed `lead_workstation_notes` public ALL. Tightened `entity_tags` delete to admin, `notes` insert to author. Added policies to 4 tables with zero policies. Fixed 16 functions mutable `search_path`. Added 10 missing indexes (activities FKs, sequence_enrollments, opportunities). Dropped 6 dead tables. Created 8 missing tables. Created 4 executive metrics RPCs. (3) **App code perf:** Fixed N+1 in sequence processor (batch-fetch steps). Replaced 16 bare `select('*')` with explicit columns. Removed `exec_sql` RPC fallback. Fixed 5 table name mismatches.
@@ -352,10 +359,8 @@ Architecture docs in `docs/architecture/`: `Master-Plan.md` (scope), `Technology
 - **Tests:** 4,851/4,851 passing (438 files). 0 type errors. 0 lint errors.
 - **Next:** Apply RLS migration to production Supabase. Verify admin pages work in production after deploy. Consider adding `DEFAULT_ORG_ID` to Vercel env vars.
 
-- Mar 27: A-Z Audit, Agent Teams, Production Auth Fix, AI Connected. 4,850 tests.
-- Mar 27: P2 Buildout — AI streaming, trade portal, ERPNext mappers, MERX, 19-issue fix. 4,792 tests.
-- Mar 27: Gap Audit — 342 routes migrated, DNS to krewpact.ca, 36 files split. 4,714 tests.
-- Mar 26: BetterStack monitors, dependency audit, go-live audit, observability.
+- Mar 27: A-Z audit, agent teams, RBAC overhaul, P2 buildout, gap audit. 4,851 tests.
+- Mar 26: BetterStack monitors, dependency audit, go-live audit.
 - Mar 25-26: Production Hardening — RBAC, UAT, security sanitization. 4,715 tests.
 - Mar 25: Full Platform Completion — shared components, 5/5 P1 epics, all 17 flags enabled. 4,568 tests.
 - Mar 23-24: Playbook v2 + KrewPact docs rewrite + production UX fixes. 4,316 tests.

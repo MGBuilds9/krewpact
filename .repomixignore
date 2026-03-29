@@ -1,0 +1,13 @@
+__tests__/
+e2e/
+mobile/
+node_modules/
+.next/
+components/ui/
+types/supabase.ts
+supabase/migrations/
+docs/audits/
+scripts/ralph/
+*.test.ts
+*.test.tsx
+*.spec.ts

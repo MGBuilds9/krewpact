@@ -1,5 +1,6 @@
 import { clerkClient } from '@clerk/nextjs/server';
 
+import { env } from '@/lib/env';
 import { logger } from '@/lib/logger';
 import { createServiceClient } from '@/lib/supabase/server';
 
@@ -92,7 +93,7 @@ export async function syncRolesToBothStores(params: {
   // 4. Update Clerk publicMetadata
   try {
     const client = await clerkClient();
-    const orgId = process.env.DEFAULT_ORG_ID || 'e076c9b9-72ce-4fdc-a031-e5808e73d92c';
+    const orgId = env.DEFAULT_ORG_ID;
     await client.users.updateUserMetadata(clerkUserId, {
       publicMetadata: {
         role_keys: roleKeys,

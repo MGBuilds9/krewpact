@@ -119,3 +119,11 @@ export async function computeSubscriptionSummaryForDivision(
   const { data } = await supabase.rpc('get_subscription_summary', { p_division_id: division });
   return buildSubscriptionSummary((data as SubscriptionRpcRow[]) ?? []);
 }
+
+export async function computeEstimatingVelocityForDivision(
+  supabase: SupabaseClient,
+  division: string,
+): Promise<EstimatingVelocity> {
+  const { data } = await supabase.rpc('get_estimating_velocity', { p_division_id: division });
+  return buildEstimatingVelocity((data as EstimatingRpcRow[]) ?? []);
+}

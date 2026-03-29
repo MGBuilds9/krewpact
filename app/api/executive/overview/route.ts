@@ -4,7 +4,7 @@ import { forbidden } from '@/lib/api/errors';
 import { getKrewpactRoles } from '@/lib/api/org';
 import { withApiRoute } from '@/lib/api/with-api-route';
 import {
-  computeEstimatingVelocity,
+  computeEstimatingVelocityForDivision,
   computePipelineSummaryForDivision,
   computeProjectPortfolioForDivision,
   computeSubscriptionSummaryForDivision,
@@ -45,8 +45,7 @@ export const GET = withApiRoute({}, async ({ req, logger }) => {
       computePipelineSummaryForDivision(supabase, division),
       computeProjectPortfolioForDivision(supabase, division),
       computeSubscriptionSummaryForDivision(supabase, division),
-      // Estimates table may not have division_id — use org-wide data
-      computeEstimatingVelocity(supabase),
+      computeEstimatingVelocityForDivision(supabase, division),
     ]);
 
     const now = new Date().toISOString();

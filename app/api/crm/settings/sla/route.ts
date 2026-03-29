@@ -3,9 +3,9 @@ import { z } from 'zod';
 
 import { dbError } from '@/lib/api/errors';
 import { withApiRoute } from '@/lib/api/with-api-route';
+import { env } from '@/lib/env';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
-const DEFAULT_ORG_ID = process.env.DEFAULT_ORG_ID || 'e076c9b9-72ce-4fdc-a031-e5808e73d92c';
 
 const stageSchema = z.object({
   stage: z.string().min(1),
@@ -35,13 +35,14 @@ const DEFAULT_SLA_SETTINGS = {
 };
 
 export const GET = withApiRoute({}, async (): Promise<NextResponse> => {
+  if (!env.DEFAULT_ORG_ID) return NextResponse.json({ error: 'DEFAULT_ORG_ID not configured' }, { status: 500 });
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
   const { data, error } = await supabase
     .from('org_settings')
     .select('workflow')
-    .eq('org_id', DEFAULT_ORG_ID)
+    .eq('org_id', env.DEFAULT_ORG_ID)
     .single();
 
   if (error && error.code !== 'PGRST116') throw dbError(error.message);
@@ -53,6 +54,7 @@ export const GET = withApiRoute({}, async (): Promise<NextResponse> => {
 export const PATCH = withApiRoute(
   { rateLimit: { limit: 30, window: '1 m' }, bodySchema: slaSettingsSchema },
   async ({ body }): Promise<NextResponse> => {
+    if (!env.DEFAULT_ORG_ID) return NextResponse.json({ error: 'DEFAULT_ORG_ID not configured' }, { status: 500 });
     const parsed = body as z.infer<typeof slaSettingsSchema>;
     const { client: supabase, error: authError } = await createUserClientSafe();
     if (authError) return authError;
@@ -60,7 +62,7 @@ export const PATCH = withApiRoute(
     const { data: existing } = await supabase
       .from('org_settings')
       .select('workflow')
-      .eq('org_id', DEFAULT_ORG_ID)
+      .eq('org_id', env.DEFAULT_ORG_ID)
       .single();
 
     const currentWorkflow = existing?.workflow ?? {};
@@ -68,7 +70,7 @@ export const PATCH = withApiRoute(
 
     const { data, error } = await supabase
       .from('org_settings')
-      .upsert({ org_id: DEFAULT_ORG_ID, workflow: updatedWorkflow }, { onConflict: 'org_id' })
+      .upsert({ org_id: env.DEFAULT_ORG_ID, workflow: updatedWorkflow }, { onConflict: 'org_id' })
       .select('workflow')
       .single();
 

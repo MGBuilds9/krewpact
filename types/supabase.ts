@@ -209,6 +209,36 @@ export type Database = {
           },
         ]
       }
+      adp_field_mappings: {
+        Row: {
+          adp_field: string
+          created_at: string
+          id: string
+          internal_field: string
+          is_active: boolean
+          transform_rule: string | null
+          updated_at: string
+        }
+        Insert: {
+          adp_field: string
+          created_at?: string
+          id?: string
+          internal_field: string
+          is_active?: boolean
+          transform_rule?: string | null
+          updated_at?: string
+        }
+        Update: {
+          adp_field?: string
+          created_at?: string
+          id?: string
+          internal_field?: string
+          is_active?: boolean
+          transform_rule?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ai_actions: {
         Row: {
           action_type: string
@@ -5325,6 +5355,44 @@ export type Database = {
           },
         ]
       }
+      migration_attachments: {
+        Row: {
+          created_at: string
+          id: string
+          record_id: string
+          source_file_path: string
+          status: string
+          target_file_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          record_id: string
+          source_file_path: string
+          status?: string
+          target_file_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          record_id?: string
+          source_file_path?: string
+          status?: string
+          target_file_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "migration_attachments_record_id_fkey"
+            columns: ["record_id"]
+            isOneToOne: false
+            referencedRelation: "migration_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       migration_batches: {
         Row: {
           batch_name: string
@@ -5368,6 +5436,123 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      migration_conflicts: {
+        Row: {
+          batch_id: string | null
+          conflict_payload: Json
+          conflict_type: string
+          created_at: string
+          entity_type: string | null
+          id: string
+          record_id: string
+          resolution_notes: string | null
+          resolution_status: string
+          resolved_at: string | null
+          resolved_by: string | null
+        }
+        Insert: {
+          batch_id?: string | null
+          conflict_payload: Json
+          conflict_type: string
+          created_at?: string
+          entity_type?: string | null
+          id?: string
+          record_id: string
+          resolution_notes?: string | null
+          resolution_status?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+        }
+        Update: {
+          batch_id?: string | null
+          conflict_payload?: Json
+          conflict_type?: string
+          created_at?: string
+          entity_type?: string | null
+          id?: string
+          record_id?: string
+          resolution_notes?: string | null
+          resolution_status?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "migration_conflicts_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "migration_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "migration_conflicts_record_id_fkey"
+            columns: ["record_id"]
+            isOneToOne: false
+            referencedRelation: "migration_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "migration_conflicts_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      migration_records: {
+        Row: {
+          batch_id: string
+          created_at: string
+          error_message: string | null
+          id: string
+          source_key: string
+          source_payload: Json | null
+          source_type: string
+          status: string
+          target_entity_id: string | null
+          target_entity_type: string
+          transform_payload: Json | null
+          updated_at: string
+        }
+        Insert: {
+          batch_id: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          source_key: string
+          source_payload?: Json | null
+          source_type: string
+          status?: string
+          target_entity_id?: string | null
+          target_entity_type: string
+          transform_payload?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          batch_id?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          source_key?: string
+          source_payload?: Json | null
+          source_type?: string
+          status?: string
+          target_entity_id?: string | null
+          target_entity_type?: string
+          transform_payload?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "migration_records_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "migration_batches"
             referencedColumns: ["id"]
           },
         ]
@@ -5896,6 +6081,139 @@ export type Database = {
             columns: ["sequence_id"]
             isOneToOne: false
             referencedRelation: "sequences"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll_export_rows: {
+        Row: {
+          cost_code: string | null
+          created_at: string
+          department: string | null
+          employee_id: string
+          employee_name: string | null
+          error_message: string | null
+          export_id: string
+          hours_overtime: number
+          hours_regular: number
+          id: string
+          pay_rate: number | null
+          project_id: string | null
+          status: string
+        }
+        Insert: {
+          cost_code?: string | null
+          created_at?: string
+          department?: string | null
+          employee_id: string
+          employee_name?: string | null
+          error_message?: string | null
+          export_id: string
+          hours_overtime?: number
+          hours_regular?: number
+          id?: string
+          pay_rate?: number | null
+          project_id?: string | null
+          status?: string
+        }
+        Update: {
+          cost_code?: string | null
+          created_at?: string
+          department?: string | null
+          employee_id?: string
+          employee_name?: string | null
+          error_message?: string | null
+          export_id?: string
+          hours_overtime?: number
+          hours_regular?: number
+          id?: string
+          pay_rate?: number | null
+          project_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_export_rows_export_id_fkey"
+            columns: ["export_id"]
+            isOneToOne: false
+            referencedRelation: "payroll_exports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_export_rows_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll_exports: {
+        Row: {
+          batch_id: string | null
+          created_at: string
+          created_by: string
+          division_id: string | null
+          error_log: Json | null
+          file_url: string | null
+          format: string
+          id: string
+          period_end: string
+          period_start: string
+          row_count: number
+          status: Database["public"]["Enums"]["payroll_export_status"]
+          updated_at: string
+        }
+        Insert: {
+          batch_id?: string | null
+          created_at?: string
+          created_by: string
+          division_id?: string | null
+          error_log?: Json | null
+          file_url?: string | null
+          format?: string
+          id?: string
+          period_end: string
+          period_start: string
+          row_count?: number
+          status?: Database["public"]["Enums"]["payroll_export_status"]
+          updated_at?: string
+        }
+        Update: {
+          batch_id?: string | null
+          created_at?: string
+          created_by?: string
+          division_id?: string | null
+          error_log?: Json | null
+          file_url?: string | null
+          format?: string
+          id?: string
+          period_end?: string
+          period_start?: string
+          row_count?: number
+          status?: Database["public"]["Enums"]["payroll_export_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_exports_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "timesheet_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_exports_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_exports_division_id_fkey"
+            columns: ["division_id"]
+            isOneToOne: false
+            referencedRelation: "divisions"
             referencedColumns: ["id"]
           },
         ]
@@ -9219,7 +9537,7 @@ export type Database = {
         }[]
       }
       get_subscription_summary: {
-        Args: never
+        Args: { p_division_id?: string }
         Returns: {
           active_count: number
           expiring_soon_count: number
@@ -9239,6 +9557,7 @@ export type Database = {
           role_name: string
         }[]
       }
+      has_any_role: { Args: { required_roles: string[] }; Returns: boolean }
       is_platform_admin: { Args: never; Returns: boolean }
       krewpact_divisions: { Args: never; Returns: Json }
       krewpact_org_id: { Args: never; Returns: string }
@@ -9388,6 +9707,12 @@ export type Database = {
         | "meeting"
         | "text"
         | "site_visit"
+      payroll_export_status:
+        | "pending"
+        | "processing"
+        | "completed"
+        | "failed"
+        | "reconciled"
       po_snapshot_status:
         | "draft"
         | "submitted"
@@ -9714,6 +10039,13 @@ export const Constants = {
         "meeting",
         "text",
         "site_visit",
+      ],
+      payroll_export_status: [
+        "pending",
+        "processing",
+        "completed",
+        "failed",
+        "reconciled",
       ],
       po_snapshot_status: [
         "draft",
