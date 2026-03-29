@@ -17,12 +17,16 @@ import { logger } from '@/lib/logger';
 import { createScopedServiceClient } from '@/lib/supabase/server';
 
 import { syncAward } from './sync-handlers/sync-award';
+import { syncBankAccount } from './sync-handlers/sync-bank-account';
 import { syncBid } from './sync-handlers/sync-bid';
+import { syncBudget } from './sync-handlers/sync-budget';
 import { syncChangeOrder } from './sync-handlers/sync-change-order';
 import { syncComplianceDoc } from './sync-handlers/sync-compliance-doc';
 import { syncContact } from './sync-handlers/sync-contact';
+import { syncCostCenter } from './sync-handlers/sync-cost-center';
 import { syncAccount } from './sync-handlers/sync-customer';
 import { syncExpenseClaim } from './sync-handlers/sync-expense';
+import { readGlEntry } from './sync-handlers/sync-gl-entry';
 import { syncGoodsReceipt } from './sync-handlers/sync-goods-receipt';
 import type { SyncJobContext } from './sync-handlers/sync-helpers';
 import { syncInventoryPo } from './sync-handlers/sync-inventory-po';
@@ -32,9 +36,12 @@ import {
   readSalesInvoice,
 } from './sync-handlers/sync-invoices';
 import { syncItem } from './sync-handlers/sync-item';
+import { syncJournalEntry } from './sync-handlers/sync-journal-entry';
 import { syncMaterialCost } from './sync-handlers/sync-material-cost';
 import { syncMaterialRequest } from './sync-handlers/sync-material-request';
+import { readModeOfPayment } from './sync-handlers/sync-mode-of-payment';
 import { syncOpportunity, syncWonDeal } from './sync-handlers/sync-opportunity';
+import { syncPaymentEntry } from './sync-handlers/sync-payment-entry';
 import { syncProject } from './sync-handlers/sync-project';
 import { syncEstimate } from './sync-handlers/sync-quotation';
 import { syncRequestForQuotation } from './sync-handlers/sync-request-for-quotation';
@@ -190,6 +197,34 @@ export class SyncService {
 
   async readPaymentEntry(erpDocname: string, jobContext?: SyncJobContext) {
     return readPaymentEntry(erpDocname, jobContext);
+  }
+
+  async syncPaymentEntry(paymentId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncPaymentEntry(paymentId, userId, jobContext);
+  }
+
+  async syncJournalEntry(entryId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncJournalEntry(entryId, userId, jobContext);
+  }
+
+  async readGlEntry(erpDocname: string, jobContext?: SyncJobContext) {
+    return readGlEntry(erpDocname, jobContext);
+  }
+
+  async syncBankAccount(bankAccountId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncBankAccount(bankAccountId, userId, jobContext);
+  }
+
+  async readModeOfPayment(erpDocname: string, jobContext?: SyncJobContext) {
+    return readModeOfPayment(erpDocname, jobContext);
+  }
+
+  async syncCostCenter(costCenterId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncCostCenter(costCenterId, userId, jobContext);
+  }
+
+  async syncBudget(budgetId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncBudget(budgetId, userId, jobContext);
   }
 
   async getSyncStatus(

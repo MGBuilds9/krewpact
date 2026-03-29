@@ -81,6 +81,13 @@ const syncHandlers: Partial<Record<JobType, SyncHandler>> = {
   [JobType.ERPSyncStockEntry]: (id, uid, ctx) => syncService.syncStockEntry(id, uid, ctx),
   [JobType.ERPSyncWarehouse]: (id, uid, ctx) => syncService.syncWarehouse(id, uid, ctx),
   [JobType.ERPSyncItem]: (id, uid, ctx) => syncService.syncItem(id, uid, ctx),
+  [JobType.ERPSyncPaymentEntry]: (id, uid, ctx) => syncService.syncPaymentEntry(id, uid, ctx),
+  [JobType.ERPSyncJournalEntry]: (id, uid, ctx) => syncService.syncJournalEntry(id, uid, ctx),
+  [JobType.ERPSyncBankAccount]: (id, uid, ctx) => syncService.syncBankAccount(id, uid, ctx),
+  [JobType.ERPSyncCostCenter]: (id, uid, ctx) => syncService.syncCostCenter(id, uid, ctx),
+  [JobType.ERPSyncBudget]: (id, uid, ctx) => syncService.syncBudget(id, uid, ctx),
+  [JobType.ERPReadGlEntry]: (id, _uid, ctx) => syncService.readGlEntry(id, ctx),
+  [JobType.ERPReadModeOfPayment]: (id, _uid, ctx) => syncService.readModeOfPayment(id, ctx),
 };
 
 export async function processJob(job: Job): Promise<void> {
