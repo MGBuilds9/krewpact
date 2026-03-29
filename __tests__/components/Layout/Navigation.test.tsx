@@ -42,6 +42,7 @@ vi.mock('@/hooks/useRBAC', () => ({
 
 // Mock lucide-react icons to avoid SVG issues
 vi.mock('lucide-react', () => ({
+  Banknote: () => <span>Banknote</span>,
   BarChart3: () => <span>BarChart3</span>,
   Building2: () => <span>Building2</span>,
   Calculator: () => <span>Calculator</span>,
