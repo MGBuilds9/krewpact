@@ -280,7 +280,7 @@ KrewPact is the **nucleus**. ERPNext = Financial Brain (replacing Sage). LeadFor
 
 ## ERPNext Integration
 
-20 mappings: Customer, Contact, Opportunity, Quotation, Sales Order, Project, Task, Sales Invoice (read), Purchase Invoice (read), Supplier, Expense Claim, Timesheet (MVP 12) + Purchase Order, Purchase Receipt, Supplier Quotation, Request for Quotation, Material Request, Stock Entry, Warehouse, Item (P2 Batch 2A). Remaining 23 mappings in Batches 2B-2D.
+43 mappings complete: MVP 12 (Customer, Contact, Opportunity, Quotation, Sales Order, Project, Task, Sales Invoice read, Purchase Invoice read, Supplier, Expense Claim, Timesheet) + P2 Batch 2A (Purchase Order, Purchase Receipt, Supplier Quotation, RFQ, Material Request, Stock Entry, Warehouse, Item) + 2B (Payment Entry, Journal Entry, GL Entry read, Bank Account, Mode of Payment, Cost Center, Budget) + 2C (BOM, Work Order, Quality Inspection, Serial No, Batch, UOM, Item Price, Price List) + 2D (Employee, Attendance, Leave Application, Holiday List, Designation, Department, HR Settings, Company).
 
 - All calls through `lib/erp/client.ts` — sole ERPNext access point
 - Auth: `Authorization: token {key}:{secret}` header
@@ -331,12 +331,16 @@ Architecture docs in `docs/architecture/`: `Master-Plan.md` (scope), `Technology
 
 ## Session Log
 
+### Mar 29, 2026 — Complete P2 Buildout + Gap-Hunter Remediation
+
+- **Changes:** (1) **P2 Phase 1 (ADP CSV):** Payroll export service, 3 API routes, Zod validators, migration (3 tables + RLS). (2) **P2 Phase 2 (ERPNext):** All 31 remaining doctype mappings in 4 batches (2A procurement, 2B finance, 2C manufacturing, 2D HR/org) — 43/43 total. Each batch: mappers, sync handlers, mock responses, processor entries, tests. (3) **P2 Phase 3 (Offline/PWA):** IndexedDB store via `idb`, sync engine with per-entity conflict resolution, online detector, 4 React hooks, enhanced service worker. (4) **P2 Phase 4 (Mobile Expo):** 6-tab navigation, daily logs/time/safety/photos screens, SQLite offline store (ported from Phase 3), camera + compression, background sync, push notifications. (5) **DB hardening:** `has_any_role()` function, payroll tables + storage bucket, 5 duplicate indexes dropped, `smoke_test_results` truncated, VACUUM ANALYZE. (6) **Gap-hunter remediation (27 findings, 7 critical/high fixed):** Version columns + auto-increment triggers on 4 offline tables, parameterized endpoint map (was flat → 404), auth on sync fetch (web `credentials: 'include'`, mobile Bearer token injection), version-conflict 409 responses on 3 PATCH routes, 9 orphaned sync handlers wired to queue, payroll UI page + nav entry. (7) Removed stale TODO casts from payroll routes, verified executive metrics already wired to RPCs.
+- **Decisions:** ERPNext GL Entry and Mode of Payment are read-only (never push back). Photos use `always_keep_both` conflict strategy (never discard field photos). `syncMaterialCost` gets special queue handler (options object, not standard entity pattern). Offline sync engine interface designed as portable (IndexedDB on web, SQLite on mobile — same API). `has_any_role()` wraps `krewpact_roles()` JSONB with `jsonb_array_elements_text`. gstack not installed — gap-hunter agent covers the security audit need.
+- **Tests:** 5,198/5,198 passing (486 files). 0 TS errors. 0 lint errors.
+- **Next:** ERPNext live integration smoke test against real instance. Mobile EAS build (iOS + Android dev client). ADP field test with real acknowledgment CSV. White-label / multi-tenant architecture (P3).
+
 ### Mar 29, 2026 — Blueprint Audit v2 + Gap Remediation + P2 Tooling Setup
 
-- **Changes:** (1) Blueprint audit v2 (95/100 alignment). (2) Restored 3 migration sub-tables dropped in error — fixed broken `/api/migration/batches/:id/conflicts`. Applied migration + subscription RPC fix + old overload drop to live Supabase via MCP. (3) Added 6 env vars to `lib/env.ts`, removed hardcoded org UUID from 8 routes. (4) Added `computeEstimatingVelocityForDivision`. Regenerated `types/supabase.ts` from production DB. (5) P2 tooling: installed Repomix (v1.13.1), Codebase Memory MCP (v0.5.7), generated 4 domain context packs. Created P2 master plan with 5-phase agent team architecture. Evaluated Repomix (use), Codebase Memory MCP (use), Aider (skip), gstack (skip).
-- **Decisions:** Repomix for domain-scoped agent context (full repo ~1M tokens, too big). Codebase Memory MCP for structural graph queries. Aider and gstack skipped (Claude Code already covers their features). gstack's `/cso` security audit is the only uncovered skill — revisit later. P2 phases: 1-3 parallel, Phase 4 blocked on Phase 3.
-- **Tests:** 4,793/4,793 passing (434 files). 0 TS errors. 3 lint warnings.
-- **Next:** Start P2 phases (ADP CSV, ERPNext mappings, Offline/PWA in parallel). Index codebase with Codebase Memory MCP after restart.
+- Mar 29 (early): Blueprint audit v2 (95/100), restored migration sub-tables, P2 tooling (Repomix + Codebase Memory MCP), master plan created.
 
 ### Mar 28, 2026 — Full Codebase Cleanup + Database Production Hardening
 
@@ -345,24 +349,12 @@ Architecture docs in `docs/architecture/`: `Master-Plan.md` (scope), `Technology
 - **Tests:** 4,799/4,799 passing (435 files). 0 type errors. 0 lint errors.
 - **Next:** Wire `lib/executive/metrics.ts` to use the new RPCs (created in DB but app code still uses full-table JS aggregation). Update Supabase generated types (`supabase gen types typescript`). Remaining P2: offline/PWA, mobile Expo, ADP, white-label.
 
-### Mar 28, 2026 — Repo Sanitization & Contributor Readiness
-
-- **Changes:** (1) Applied portal RLS migration to production Supabase (JSONB `?|` operators, 10 policies). (2) Full repo sanitization for contributor onboarding: removed all MDM PII (names, emails, phone, address, revenue), internal infrastructure details (Supabase project IDs, ERPNext URLs, Clerk domains), and business-sensitive data (budgets, vendor pricing). (3) 43 files changed across source, tests, docs, config, email templates, migrations. (4) 14 internal planning docs moved to OneDrive, cost analysis deleted, session log truncated. (5) Email templates rebranded MDM→KrewPact. Seed scripts genericized (Acme Construction). Domain allowlists moved to env-var-only (no hardcoded fallbacks). CSP cleaned. (6) Added MIT LICENSE and CODE_OF_CONDUCT.md. Updated CONTRIBUTING.md with PR guidelines and SECURITY.md reference.
-- **Decisions:** Division names kept in CLAUDE.md/AGENTS.md (architecture context, not PII). Git history not rewritten (prior scrub commit + low-risk narrative). Contributors set up own Supabase project (no production DB access). Empty string fallback for ALLOWED_DOMAINS forces explicit env var config.
-- **Tests:** 4,799/4,799 passing (435 files). 0 type errors. 0 lint errors. Build clean.
-- **Next:** Update production Supabase email templates to match sanitized migration. Push to remote. Invite first contributor.
-
-### Mar 27, 2026 — RBAC System Overhaul: Dual-Write Roles, Onboarding Fix, Management UI
-
-- **Changes:** (1) Root cause: Clerk publicMetadata.role_keys empty after key rotation → zero permissions → admin lockout. (2) Created `syncRolesToBothStores()` — dual-writes roles to Clerk publicMetadata + Supabase user_roles. (3) Fixed role assign API, webhook (default `project_coordinator` for internal users), provisioning form (added role checkboxes). (4) Removed phantom `CurrentUser.role` field (didn't exist in DB). Fixed impersonation check (`system.admin` → `admin.system`). (5) Fixed `getOrgIdFromAuth()` fallback — was returning slug `'mdm-group'` instead of org UUID, breaking all executive queries. (6) Built role management UI: API route, `UserRoleEditor` sheet, "Manage Roles" button on settings/users. (7) Fixed portal RLS policies: regex-on-text → JSONB `?|` operators (10 policies). (8) Reconciliation script (`fix-rbac-sync.ts`) — ran `--apply`, fixed 2 divergent users, set `krewpact_org_id` in Clerk.
-- **Decisions:** Single `syncRolesToBothStores()` is the only way to write roles. Webhook assigns default `project_coordinator` for `ALLOWED_DOMAINS` emails. `getOrgFromHeaders()` is effectively dead code (proxy never sets those headers) — left for now.
-- **Tests:** 4,851/4,851 passing (438 files). 0 type errors. 0 lint errors.
-- **Next:** Apply RLS migration to production Supabase. Verify admin pages work in production after deploy. Consider adding `DEFAULT_ORG_ID` to Vercel env vars.
-
-- Mar 27: A-Z audit, agent teams, RBAC overhaul, P2 buildout, gap audit. 4,851 tests.
-- Mar 26: BetterStack monitors, dependency audit, go-live audit.
-- Mar 25-26: Production Hardening — RBAC, UAT, security sanitization. 4,715 tests.
-- Mar 25: Full Platform Completion — shared components, 5/5 P1 epics, all 17 flags enabled. 4,568 tests.
+- Mar 28: Repo sanitization (PII removal, contributor readiness, portal RLS). 4,799 tests.
+- Mar 28: Full codebase cleanup (193 files, -10K lines) + DB production hardening. 4,799 tests.
+- Mar 27: RBAC overhaul (dual-write roles, admin lockout fix, role management UI). 4,851 tests.
+- Mar 27: A-Z audit, agent teams, P2 buildout planning, gap audit.
+- Mar 25-26: Production hardening, BetterStack monitors, go-live audit. 4,715 tests.
+- Mar 25: Full platform completion — 5/5 P1 epics, all 17 flags enabled. 4,568 tests.
 - Mar 23-24: Playbook v2 + KrewPact docs rewrite + production UX fixes. 4,316 tests.
 
 @AGENTS.md
