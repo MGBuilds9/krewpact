@@ -13,6 +13,12 @@ lib/
 │   └── sync-service.ts # QStash sync job handlers
 ├── estimating/       # Estimating business logic
 ├── integrations/     # Third-party integrations
+├── offline/          # Offline/PWA engine (IndexedDB queue, sync, conflict resolution)
+│   ├── types.ts      # OfflineQueueItem, entity types, conflict strategies
+│   ├── store.ts      # IndexedDB store via idb library
+│   ├── sync-engine.ts # Queue processor, retry, auto-sync on reconnect
+│   ├── conflict-resolver.ts # Per-entity conflict strategies (deterministic)
+│   └── online-detector.ts   # navigator.onLine + heartbeat hybrid
 ├── queue/            # QStash queue setup and configuration
 ├── supabase/         # Supabase clients
 │   ├── client.ts     # Browser client (NEXT_PUBLIC_ keys)
@@ -28,4 +34,5 @@ lib/
 - **Supabase server client** always uses pooler port 6543 (transaction mode) from Vercel serverless
 - **Zod schemas** in `validators/` are shared between client forms and API route validation
 - **ERPNext client** (`erp/client.ts`) is the only place that talks to ERPNext — never call ERPNext directly from API routes
-- **Mostly server/isomorphic code** — exception: `query-client.tsx` (React Query provider)
+- **Mostly server/isomorphic code** — exceptions: `query-client.tsx` (React Query provider), `offline/` (client-only, IndexedDB)
+- **Offline module** (`offline/`) is client-only (IndexedDB, navigator APIs). The interface is designed to be portable — Phase 4 (Mobile Expo) swaps IndexedDB for SQLite with the same API surface
