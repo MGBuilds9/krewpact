@@ -41,6 +41,19 @@ async function handleErpSyncSalesOrder(
   return syncService.syncWonDeal(entityId, userId, wonDate, ctx);
 }
 
+async function handleErpSyncMaterialCost(
+  entityId: string,
+  userId: string,
+  meta: Job['payload']['meta'],
+  ctx: JobContext,
+): Promise<SyncResult> {
+  const startDate =
+    typeof meta?.startDate === 'string' ? meta.startDate : new Date().toISOString().slice(0, 10);
+  const endDate =
+    typeof meta?.endDate === 'string' ? meta.endDate : new Date().toISOString().slice(0, 10);
+  return syncService.syncMaterialCost({ projectId: entityId, startDate, endDate }, userId, ctx);
+}
+
 async function handleTakeoffFeedback(
   entityId: string,
   meta: Job['payload']['meta'],
@@ -105,6 +118,15 @@ const syncHandlers: Partial<Record<JobType, SyncHandler>> = {
   [JobType.ERPSyncDepartment]: (id, uid, ctx) => syncService.syncDepartment(id, uid, ctx),
   [JobType.ERPSyncHrSettings]: (id, uid, ctx) => syncService.syncHrSettings(id, uid, ctx),
   [JobType.ERPSyncCompany]: (id, uid, ctx) => syncService.syncCompany(id, uid, ctx),
+  [JobType.ERPSyncInventoryPo]: (id, uid, ctx) => syncService.syncInventoryPo(id, uid, ctx),
+  [JobType.ERPSyncGoodsReceipt]: (id, uid, ctx) => syncService.syncGoodsReceipt(id, uid, ctx),
+  [JobType.ERPSyncChangeOrder]: (id, uid, ctx) => syncService.syncChangeOrder(id, uid, ctx),
+  [JobType.ERPSyncRfqPackage]: (id, uid, ctx) => syncService.syncRfqPackage(id, uid, ctx),
+  [JobType.ERPSyncBidEntry]: (id, uid, ctx) => syncService.syncBid(id, uid, ctx),
+  [JobType.ERPSyncAward]: (id, uid, ctx) => syncService.syncAward(id, uid, ctx),
+  [JobType.ERPSyncComplianceDoc]: (id, uid, ctx) => syncService.syncComplianceDoc(id, uid, ctx),
+  [JobType.ERPSyncSelectionSheet]: (id, uid, ctx) =>
+    syncService.syncSelectionSheet(id, uid, ctx),
 };
 
 export async function processJob(job: Job): Promise<void> {
@@ -113,6 +135,14 @@ export async function processJob(job: Job): Promise<void> {
 
   if (job.type === JobType.ERPSyncSalesOrder) {
     const result = await handleErpSyncSalesOrder(entityId, userId, meta, ctx);
+    if (result?.status === 'failed') {
+      throw new Error(result.error ?? `Background job ${job.type} failed`);
+    }
+    return;
+  }
+
+  if (job.type === JobType.ERPSyncMaterialCost) {
+    const result = await handleErpSyncMaterialCost(entityId, userId, meta, ctx);
     if (result?.status === 'failed') {
       throw new Error(result.error ?? `Background job ${job.type} failed`);
     }
