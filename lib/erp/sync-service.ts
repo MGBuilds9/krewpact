@@ -17,9 +17,15 @@ import { logger } from '@/lib/logger';
 import { createScopedServiceClient } from '@/lib/supabase/server';
 
 import { syncAward } from './sync-handlers/sync-award';
+<<<<<<< HEAD
 import { syncBankAccount } from './sync-handlers/sync-bank-account';
 import { syncBid } from './sync-handlers/sync-bid';
 import { syncBudget } from './sync-handlers/sync-budget';
+=======
+import { syncBatch } from './sync-handlers/sync-batch';
+import { syncBid } from './sync-handlers/sync-bid';
+import { syncBom } from './sync-handlers/sync-bom';
+>>>>>>> worktree-agent-add009c5
 import { syncChangeOrder } from './sync-handlers/sync-change-order';
 import { syncComplianceDoc } from './sync-handlers/sync-compliance-doc';
 import { syncContact } from './sync-handlers/sync-contact';
@@ -36,23 +42,35 @@ import {
   readSalesInvoice,
 } from './sync-handlers/sync-invoices';
 import { syncItem } from './sync-handlers/sync-item';
+<<<<<<< HEAD
 import { syncJournalEntry } from './sync-handlers/sync-journal-entry';
+=======
+import { syncItemPrice } from './sync-handlers/sync-item-price';
+>>>>>>> worktree-agent-add009c5
 import { syncMaterialCost } from './sync-handlers/sync-material-cost';
 import { syncMaterialRequest } from './sync-handlers/sync-material-request';
 import { readModeOfPayment } from './sync-handlers/sync-mode-of-payment';
 import { syncOpportunity, syncWonDeal } from './sync-handlers/sync-opportunity';
+<<<<<<< HEAD
 import { syncPaymentEntry } from './sync-handlers/sync-payment-entry';
+=======
+import { syncPriceList } from './sync-handlers/sync-price-list';
+>>>>>>> worktree-agent-add009c5
 import { syncProject } from './sync-handlers/sync-project';
+import { syncQualityInspection } from './sync-handlers/sync-quality-inspection';
 import { syncEstimate } from './sync-handlers/sync-quotation';
 import { syncRequestForQuotation } from './sync-handlers/sync-request-for-quotation';
 import { syncRfqPackage } from './sync-handlers/sync-rfq';
 import { syncSelectionSheet } from './sync-handlers/sync-selection-sheet';
+import { syncSerialNo } from './sync-handlers/sync-serial-no';
 import { syncStockEntry } from './sync-handlers/sync-stock-entry';
 import { syncSupplier } from './sync-handlers/sync-supplier';
 import { syncSupplierQuotation } from './sync-handlers/sync-supplier-quotation';
 import { syncTask } from './sync-handlers/sync-task';
 import { syncTimesheet } from './sync-handlers/sync-timesheet';
+import { syncUom } from './sync-handlers/sync-uom';
 import { syncWarehouse } from './sync-handlers/sync-warehouse';
+import { syncWorkOrder } from './sync-handlers/sync-work-order';
 
 // Re-export shared type so existing consumers don't break
 export type { SyncResult } from './sync-handlers/sync-helpers';
@@ -177,6 +195,42 @@ export class SyncService {
 
   async syncItem(itemId: string, userId: string, jobContext?: SyncJobContext) {
     return syncItem(itemId, userId, jobContext);
+  }
+
+  async syncBom(bomId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncBom(bomId, userId, jobContext);
+  }
+
+  async syncWorkOrder(workOrderId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncWorkOrder(workOrderId, userId, jobContext);
+  }
+
+  async syncQualityInspection(
+    inspectionId: string,
+    userId: string,
+    jobContext?: SyncJobContext,
+  ) {
+    return syncQualityInspection(inspectionId, userId, jobContext);
+  }
+
+  async syncSerialNo(serialNoId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncSerialNo(serialNoId, userId, jobContext);
+  }
+
+  async syncBatch(batchId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncBatch(batchId, userId, jobContext);
+  }
+
+  async syncUom(uomId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncUom(uomId, userId, jobContext);
+  }
+
+  async syncItemPrice(itemPriceId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncItemPrice(itemPriceId, userId, jobContext);
+  }
+
+  async syncPriceList(priceListId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncPriceList(priceListId, userId, jobContext);
   }
 
   async syncMaterialCost(
