@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  Banknote,
   BarChart3,
   Building2,
   Calculator,
@@ -90,6 +91,13 @@ const navigationItems: NavItem[] = [
     label: 'Finance',
     path: '/finance',
     description: 'Financial overview',
+  },
+  {
+    icon: Banknote,
+    label: 'Payroll',
+    path: '/payroll',
+    description: 'ADP payroll export & timesheets',
+    requiredRoles: ['payroll_admin', 'executive', 'accounting'],
   },
   {
     icon: ClipboardList,
