@@ -1,4 +1,3 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
 import { dbError, notFound } from '@/lib/api/errors';
@@ -7,14 +6,10 @@ import { createServiceClient } from '@/lib/supabase/server';
 
 const PAYROLL_ROLES = ['platform_admin', 'payroll_admin'];
 
-// TODO: Remove cast after running `supabase gen types typescript`
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const getClient = () => createServiceClient() as unknown as SupabaseClient<any>;
-
 export const GET = withApiRoute(
   { roles: PAYROLL_ROLES },
   async ({ params }) => {
-    const supabase = getClient();
+    const supabase = createServiceClient();
     const { id } = params;
 
     const { data: exportRecord, error } = await supabase

@@ -1,4 +1,3 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
 import { dbError, notFound } from '@/lib/api/errors';
@@ -9,14 +8,10 @@ import { payrollReconcileSchema } from '@/lib/validators/payroll';
 
 const PAYROLL_ROLES = ['platform_admin', 'payroll_admin'];
 
-// TODO: Remove cast after running `supabase gen types typescript`
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const getClient = () => createServiceClient() as unknown as SupabaseClient<any>;
-
 export const POST = withApiRoute(
   { roles: PAYROLL_ROLES, bodySchema: payrollReconcileSchema },
   async ({ params, body, logger }) => {
-    const supabase = getClient();
+    const supabase = createServiceClient();
     const { id } = params;
     const typedBody = body as { csv_content: string };
 

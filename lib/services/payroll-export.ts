@@ -8,13 +8,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { logger } from '@/lib/logger';
+import type { Database, Json } from '@/types/supabase';
 
-/**
- * Untyped client — payroll tables not yet in generated types.
- * TODO: Switch to SupabaseClient<Database> after `supabase gen types typescript`
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type PayrollClient = SupabaseClient<any>;
+type PayrollClient = SupabaseClient<Database>;
 
 // ─── Types ────────────────────────────────────────────────
 
@@ -324,9 +320,9 @@ export function reconcileExport(
 interface UpdateStatusParams {
   supabase: PayrollClient;
   exportId: string;
-  status: string;
+  status: Database['public']['Enums']['payroll_export_status'];
   rowCount: number;
-  errorLog?: Record<string, unknown>;
+  errorLog?: Record<string, Json>;
 }
 
 async function updateExportStatus(params: UpdateStatusParams): Promise<void> {

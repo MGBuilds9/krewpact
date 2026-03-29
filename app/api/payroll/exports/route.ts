@@ -1,4 +1,3 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
 import { dbError } from '@/lib/api/errors';
@@ -13,14 +12,10 @@ import {
 
 const PAYROLL_ROLES = ['platform_admin', 'payroll_admin'];
 
-// TODO: Remove cast after running `supabase gen types typescript`
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const getClient = () => createServiceClient() as unknown as SupabaseClient<any>;
-
 export const GET = withApiRoute(
   { roles: PAYROLL_ROLES, querySchema: payrollExportQuerySchema },
   async ({ query }) => {
-    const supabase = getClient();
+    const supabase = createServiceClient();
     const typedQuery = query as {
       status?: string;
       division_id?: string;
@@ -52,7 +47,7 @@ export const GET = withApiRoute(
 export const POST = withApiRoute(
   { roles: PAYROLL_ROLES, bodySchema: payrollExportCreateSchema },
   async ({ body, userId, logger }) => {
-    const supabase = getClient();
+    const supabase = createServiceClient();
     const typedBody = body as {
       period_start: string;
       period_end: string;
