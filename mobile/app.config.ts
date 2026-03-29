@@ -59,6 +59,15 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       },
     ],
     'expo-secure-store',
+    'expo-sqlite',
+    [
+      'expo-background-fetch',
+      {
+        stopOnTerminate: false,
+        startOnBoot: true,
+      },
+    ],
+    'expo-updates',
   ],
   experiments: {
     typedRoutes: true,

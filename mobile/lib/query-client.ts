@@ -16,6 +16,8 @@ export const queryKeys = {
   projectTasks: (id: string) => ['project', id, 'tasks'] as const,
   projectDailyLogs: (id: string) => ['project', id, 'daily-logs'] as const,
   projectTimeEntries: (id: string) => ['project', id, 'time-entries'] as const,
+  projectSafetyForms: (id: string) => ['project', id, 'safety-forms'] as const,
   leads: ['leads'] as const,
   notifications: ['notifications'] as const,
+  syncStatus: ['sync-status'] as const,
 };

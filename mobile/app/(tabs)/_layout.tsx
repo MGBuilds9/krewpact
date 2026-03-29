@@ -26,20 +26,11 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="projects"
+        name="logs"
         options={{
-          title: 'Projects',
+          title: 'Logs',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="folder-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="crm"
-        options={{
-          title: 'CRM',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="people-outline" size={size} color={color} />
+            <Ionicons name="document-text-outline" size={size} color={color} />
           ),
         }}
       />
@@ -49,6 +40,24 @@ export default function TabsLayout() {
           title: 'Time',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="time-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="safety"
+        options={{
+          title: 'Safety',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="shield-checkmark-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="photos"
+        options={{
+          title: 'Photos',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="camera-outline" size={size} color={color} />
           ),
         }}
       />

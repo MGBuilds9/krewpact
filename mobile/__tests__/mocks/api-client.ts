@@ -15,9 +15,14 @@ export const api = {
     list: jest.fn(),
     get: jest.fn(),
     tasks: { list: jest.fn() },
+    dailyLogs: { list: jest.fn(), create: jest.fn() },
     timeEntries: { list: jest.fn(), create: jest.fn() },
   },
+  safety: {
+    forms: { list: jest.fn(), create: jest.fn() },
+  },
   crm: { leads: { list: jest.fn() } },
+  notifications: { list: jest.fn() },
 };
 
 export type DashboardData = {
@@ -57,6 +62,31 @@ export type Task = {
   due_at: string | null;
 };
 
+export type DailyLog = {
+  id: string;
+  project_id: string;
+  log_date: string;
+  work_summary: string | null;
+  crew_count: number | null;
+  delays: string | null;
+  safety_notes: string | null;
+  weather: Record<string, unknown> | null;
+  is_offline_origin: boolean;
+  submitted_at: string | null;
+  submitted_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DailyLogCreate = {
+  log_date: string;
+  work_summary?: string;
+  crew_count?: number;
+  weather?: Record<string, unknown>;
+  delays?: string;
+  safety_notes?: string;
+};
+
 export type TimeEntry = {
   id: string;
   work_date: string;
@@ -72,4 +102,24 @@ export type TimeEntryCreate = {
   hours_overtime: number;
   notes?: string;
   source: string;
+};
+
+export type SafetyForm = {
+  id: string;
+  project_id: string;
+  form_type: string;
+  created_at: string;
+};
+
+export type SafetyFormCreate = {
+  project_id: string;
+  form_type: string;
+};
+
+export type AppNotification = {
+  id: string;
+  title: string;
+  body: string | null;
+  state: string;
+  created_at: string;
 };

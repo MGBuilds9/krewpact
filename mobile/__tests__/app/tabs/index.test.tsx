@@ -46,7 +46,7 @@ describe('DashboardScreen', () => {
     expect(screen.getByText('Dashboard')).toBeTruthy();
   });
 
-  it('renders KPI cards when data is available', () => {
+  it('renders KPI cards and quick actions when data is available', () => {
     mockUseQuery.mockReturnValue({
       data: {
         atAGlance: {
@@ -67,6 +67,11 @@ describe('DashboardScreen', () => {
     expect(screen.getByText('Open Leads')).toBeTruthy();
     expect(screen.getByText('Pending Expenses')).toBeTruthy();
     expect(screen.getByText('Notifications')).toBeTruthy();
+    // Quick actions
+    expect(screen.getByText('New Log')).toBeTruthy();
+    expect(screen.getByText('Log Time')).toBeTruthy();
+    expect(screen.getByText('Safety')).toBeTruthy();
+    expect(screen.getByText('Photo')).toBeTruthy();
   });
 
   it('renders recent projects list', () => {

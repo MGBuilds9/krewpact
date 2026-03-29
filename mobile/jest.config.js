@@ -19,6 +19,8 @@ module.exports = {
         '^@/lib/query-client$': '<rootDir>/__tests__/mocks/query-client.ts',
         '^@/components/DailyLogForm$': '<rootDir>/__tests__/mocks/DailyLogForm.tsx',
         '^@/components/KPICard$': '<rootDir>/__tests__/mocks/KPICard.tsx',
+        '^@/components/SyncStatusBar$': '<rootDir>/__tests__/mocks/SyncStatusBar.tsx',
+        '^@/components/SyncConflictSheet$': '<rootDir>/__tests__/mocks/SyncConflictSheet.tsx',
         '^@/(.*)$': '<rootDir>/$1',
       },
     },
@@ -38,6 +40,7 @@ module.exports = {
   collectCoverageFrom: [
     'app/**/*.{ts,tsx}',
     'lib/**/*.{ts,tsx}',
+    'components/**/*.{ts,tsx}',
     '!**/*.d.ts',
   ],
 };
