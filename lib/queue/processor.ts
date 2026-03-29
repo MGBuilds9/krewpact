@@ -97,6 +97,14 @@ const syncHandlers: Partial<Record<JobType, SyncHandler>> = {
   [JobType.ERPSyncUom]: (id, uid, ctx) => syncService.syncUom(id, uid, ctx),
   [JobType.ERPSyncItemPrice]: (id, uid, ctx) => syncService.syncItemPrice(id, uid, ctx),
   [JobType.ERPSyncPriceList]: (id, uid, ctx) => syncService.syncPriceList(id, uid, ctx),
+  [JobType.ERPSyncEmployee]: (id, uid, ctx) => syncService.syncEmployee(id, uid, ctx),
+  [JobType.ERPSyncAttendance]: (id, uid, ctx) => syncService.syncAttendance(id, uid, ctx),
+  [JobType.ERPSyncLeaveApplication]: (id, uid, ctx) =>
+    syncService.syncLeaveApplication(id, uid, ctx),
+  [JobType.ERPSyncHolidayList]: (id, uid, ctx) => syncService.syncHolidayList(id, uid, ctx),
+  [JobType.ERPSyncDepartment]: (id, uid, ctx) => syncService.syncDepartment(id, uid, ctx),
+  [JobType.ERPSyncHrSettings]: (id, uid, ctx) => syncService.syncHrSettings(id, uid, ctx),
+  [JobType.ERPSyncCompany]: (id, uid, ctx) => syncService.syncCompany(id, uid, ctx),
 };
 
 export async function processJob(job: Job): Promise<void> {

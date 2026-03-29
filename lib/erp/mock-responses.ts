@@ -4,6 +4,7 @@
  *
  * Finance mocks: mock-finance-responses.ts
  * Inventory mocks: mock-inventory-responses.ts
+ * HR mocks: mock-hr-responses.ts
  */
 
 export {
@@ -18,6 +19,16 @@ export {
   mockPurchaseInvoiceResponse,
   mockSalesInvoiceResponse,
 } from './mock-finance-responses';
+export {
+  mockAttendanceResponse,
+  mockCompanyResponse,
+  mockDepartmentResponse,
+  mockDesignationResponse,
+  mockEmployeeResponse,
+  mockHolidayListResponse,
+  mockHrSettingsResponse,
+  mockLeaveApplicationResponse,
+} from './mock-hr-responses';
 export {
   mockJournalEntryResponse,
   mockPurchaseOrderResponse,

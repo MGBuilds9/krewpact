@@ -16,25 +16,27 @@
 import { logger } from '@/lib/logger';
 import { createScopedServiceClient } from '@/lib/supabase/server';
 
+import { syncAttendance } from './sync-handlers/sync-attendance';
 import { syncAward } from './sync-handlers/sync-award';
-<<<<<<< HEAD
 import { syncBankAccount } from './sync-handlers/sync-bank-account';
-import { syncBid } from './sync-handlers/sync-bid';
-import { syncBudget } from './sync-handlers/sync-budget';
-=======
 import { syncBatch } from './sync-handlers/sync-batch';
 import { syncBid } from './sync-handlers/sync-bid';
 import { syncBom } from './sync-handlers/sync-bom';
->>>>>>> worktree-agent-add009c5
+import { syncBudget } from './sync-handlers/sync-budget';
 import { syncChangeOrder } from './sync-handlers/sync-change-order';
+import { syncCompany } from './sync-handlers/sync-company';
 import { syncComplianceDoc } from './sync-handlers/sync-compliance-doc';
 import { syncContact } from './sync-handlers/sync-contact';
 import { syncCostCenter } from './sync-handlers/sync-cost-center';
 import { syncAccount } from './sync-handlers/sync-customer';
+import { syncDepartment } from './sync-handlers/sync-department';
+import { syncEmployee } from './sync-handlers/sync-employee';
 import { syncExpenseClaim } from './sync-handlers/sync-expense';
 import { readGlEntry } from './sync-handlers/sync-gl-entry';
 import { syncGoodsReceipt } from './sync-handlers/sync-goods-receipt';
 import type { SyncJobContext } from './sync-handlers/sync-helpers';
+import { syncHolidayList } from './sync-handlers/sync-holiday-list';
+import { syncHrSettings } from './sync-handlers/sync-hr-settings';
 import { syncInventoryPo } from './sync-handlers/sync-inventory-po';
 import {
   readPaymentEntry,
@@ -42,20 +44,15 @@ import {
   readSalesInvoice,
 } from './sync-handlers/sync-invoices';
 import { syncItem } from './sync-handlers/sync-item';
-<<<<<<< HEAD
-import { syncJournalEntry } from './sync-handlers/sync-journal-entry';
-=======
 import { syncItemPrice } from './sync-handlers/sync-item-price';
->>>>>>> worktree-agent-add009c5
+import { syncJournalEntry } from './sync-handlers/sync-journal-entry';
+import { syncLeaveApplication } from './sync-handlers/sync-leave-application';
 import { syncMaterialCost } from './sync-handlers/sync-material-cost';
 import { syncMaterialRequest } from './sync-handlers/sync-material-request';
 import { readModeOfPayment } from './sync-handlers/sync-mode-of-payment';
 import { syncOpportunity, syncWonDeal } from './sync-handlers/sync-opportunity';
-<<<<<<< HEAD
 import { syncPaymentEntry } from './sync-handlers/sync-payment-entry';
-=======
 import { syncPriceList } from './sync-handlers/sync-price-list';
->>>>>>> worktree-agent-add009c5
 import { syncProject } from './sync-handlers/sync-project';
 import { syncQualityInspection } from './sync-handlers/sync-quality-inspection';
 import { syncEstimate } from './sync-handlers/sync-quotation';
@@ -231,6 +228,34 @@ export class SyncService {
 
   async syncPriceList(priceListId: string, userId: string, jobContext?: SyncJobContext) {
     return syncPriceList(priceListId, userId, jobContext);
+  }
+
+  async syncEmployee(userId: string, triggerUserId: string, jobContext?: SyncJobContext) {
+    return syncEmployee(userId, triggerUserId, jobContext);
+  }
+
+  async syncAttendance(attendanceId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncAttendance(attendanceId, userId, jobContext);
+  }
+
+  async syncLeaveApplication(leaveId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncLeaveApplication(leaveId, userId, jobContext);
+  }
+
+  async syncHolidayList(holidayListId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncHolidayList(holidayListId, userId, jobContext);
+  }
+
+  async syncDepartment(divisionId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncDepartment(divisionId, userId, jobContext);
+  }
+
+  async syncHrSettings(entityId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncHrSettings(entityId, userId, jobContext);
+  }
+
+  async syncCompany(orgId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncCompany(orgId, userId, jobContext);
   }
 
   async syncMaterialCost(
