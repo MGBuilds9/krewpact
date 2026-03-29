@@ -4,6 +4,8 @@
  */
 
 import { SyncService } from '@/lib/erp/sync-service';
+import { createPayrollExport } from '@/lib/services/payroll-export';
+import { createServiceClient } from '@/lib/supabase/server';
 import { submitFeedbackToEngine } from '@/lib/takeoff/feedback';
 
 import { Job, JobType } from './types';
@@ -46,6 +48,16 @@ async function handleTakeoffFeedback(
   await submitFeedbackToEngine(entityId, (meta?.supabaseJobId as string) ?? entityId);
 }
 
+async function handlePayrollExport(meta: Job['payload']['meta']): Promise<void> {
+  const supabase = createServiceClient();
+  const periodStart = typeof meta?.periodStart === 'string' ? meta.periodStart : '';
+  const periodEnd = typeof meta?.periodEnd === 'string' ? meta.periodEnd : '';
+  const divisionIds = Array.isArray(meta?.divisionIds) ? (meta.divisionIds as string[]) : [];
+  const createdBy = typeof meta?.createdBy === 'string' ? meta.createdBy : '';
+
+  await createPayrollExport(supabase, { periodStart, periodEnd, divisionIds, createdBy });
+}
+
 type SyncHandler = (entityId: string, userId: string, ctx: JobContext) => Promise<SyncResult>;
 
 const syncHandlers: Partial<Record<JobType, SyncHandler>> = {
@@ -76,6 +88,11 @@ export async function processJob(job: Job): Promise<void> {
 
   if (job.type === JobType.TakeoffFeedback) {
     await handleTakeoffFeedback(entityId, meta);
+    return;
+  }
+
+  if (job.type === JobType.PayrollCSVExport) {
+    await handlePayrollExport(meta);
     return;
   }
 

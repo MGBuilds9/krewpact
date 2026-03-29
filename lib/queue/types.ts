@@ -17,6 +17,7 @@ export enum JobType {
   ERPReadInvoice = 'erp-read-invoice',
   ERPReadPO = 'erp-read-po',
   TakeoffFeedback = 'takeoff-feedback',
+  PayrollCSVExport = 'payroll-csv-export',
 }
 
 export type JobStatus = 'pending' | 'running' | 'succeeded' | 'failed' | 'dead_letter';
