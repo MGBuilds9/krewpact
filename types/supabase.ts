@@ -6294,6 +6294,7 @@ export type Database = {
           location_point: Json | null
           project_id: string
           taken_at: string | null
+          version: number
         }
         Insert: {
           category?: string | null
@@ -6304,6 +6305,7 @@ export type Database = {
           location_point?: Json | null
           project_id: string
           taken_at?: string | null
+          version?: number
         }
         Update: {
           category?: string | null
@@ -6314,6 +6316,7 @@ export type Database = {
           location_point?: Json | null
           project_id?: string
           taken_at?: string | null
+          version?: number
         }
         Relationships: [
           {
@@ -6842,6 +6845,7 @@ export type Database = {
           submitted_by: string | null
           sync_client_id: string | null
           updated_at: string
+          version: number
           weather: Json | null
           work_summary: string | null
         }
@@ -6859,6 +6863,7 @@ export type Database = {
           submitted_by?: string | null
           sync_client_id?: string | null
           updated_at?: string
+          version?: number
           weather?: Json | null
           work_summary?: string | null
         }
@@ -6876,6 +6881,7 @@ export type Database = {
           submitted_by?: string | null
           sync_client_id?: string | null
           updated_at?: string
+          version?: number
           weather?: Json | null
           work_summary?: string | null
         }
@@ -7574,6 +7580,7 @@ export type Database = {
           submitted_at: string | null
           submitted_by: string | null
           updated_at: string
+          version: number
         }
         Insert: {
           created_at?: string
@@ -7586,6 +7593,7 @@ export type Database = {
           submitted_at?: string | null
           submitted_by?: string | null
           updated_at?: string
+          version?: number
         }
         Update: {
           created_at?: string
@@ -7598,6 +7606,7 @@ export type Database = {
           submitted_at?: string | null
           submitted_by?: string | null
           updated_at?: string
+          version?: number
         }
         Relationships: [
           {
@@ -8925,6 +8934,7 @@ export type Database = {
           task_id: string | null
           updated_at: string
           user_id: string
+          version: number
           work_date: string
         }
         Insert: {
@@ -8939,6 +8949,7 @@ export type Database = {
           task_id?: string | null
           updated_at?: string
           user_id: string
+          version?: number
           work_date: string
         }
         Update: {
@@ -8953,6 +8964,7 @@ export type Database = {
           task_id?: string | null
           updated_at?: string
           user_id?: string
+          version?: number
           work_date?: string
         }
         Relationships: [
