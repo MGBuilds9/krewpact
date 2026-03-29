@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING } from '@/constants/config';
+import { SyncConflictSheet } from '@/components/SyncConflictSheet';
 
 interface MenuItemProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -29,6 +31,7 @@ export default function MoreScreen() {
   const { signOut } = useAuth();
   const { user } = useUser();
   const router = useRouter();
+  const [showConflicts, setShowConflicts] = useState(false);
 
   const userName = user ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() : '';
   const userEmail = user?.primaryEmailAddress?.emailAddress ?? '';
@@ -48,80 +51,87 @@ export default function MoreScreen() {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Profile card */}
-      <View style={styles.profileCard}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>
-            {userName
-              .split(' ')
-              .map((n) => n[0])
-              .filter(Boolean)
-              .join('')
-              .toUpperCase()}
-          </Text>
+    <>
+      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        {/* Profile card */}
+        <View style={styles.profileCard}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>
+              {userName
+                .split(' ')
+                .map((n) => n[0])
+                .filter(Boolean)
+                .join('')
+                .toUpperCase()}
+            </Text>
+          </View>
+          <View style={styles.profileInfo}>
+            <Text style={styles.profileName}>{userName || 'KrewPact User'}</Text>
+            <Text style={styles.profileEmail}>{userEmail}</Text>
+          </View>
         </View>
-        <View style={styles.profileInfo}>
-          <Text style={styles.profileName}>{userName || 'KrewPact User'}</Text>
-          <Text style={styles.profileEmail}>{userEmail}</Text>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Field Operations</Text>
+          <MenuItem
+            icon="folder-outline"
+            label="Projects"
+            subtitle="View all projects"
+            onPress={() => router.push('/project-list')}
+          />
+          <MenuItem
+            icon="people-outline"
+            label="CRM"
+            subtitle="Leads and opportunities"
+            onPress={() => router.push('/crm')}
+          />
         </View>
-      </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Field Operations</Text>
-        <MenuItem
-          icon="document-text-outline"
-          label="Daily Logs"
-          subtitle="View and submit daily site logs"
-          onPress={() =>
-            Alert.alert(
-              'Daily Logs',
-              'Select a project first from the Projects tab to view daily logs.',
-            )
-          }
-        />
-        <MenuItem
-          icon="shield-checkmark-outline"
-          label="Safety Reports"
-          subtitle="Available on web app"
-          onPress={() =>
-            Alert.alert(
-              'Safety Reports',
-              'Safety reports are available on the full web app at krewpact.ca',
-            )
-          }
-        />
-        <MenuItem
-          icon="receipt-outline"
-          label="Expenses"
-          subtitle="Available on web app"
-          onPress={() =>
-            Alert.alert(
-              'Expenses',
-              'Expense management is available on the full web app at krewpact.ca',
-            )
-          }
-        />
-      </View>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Sync & Data</Text>
+          <MenuItem
+            icon="alert-circle-outline"
+            label="Sync Conflicts"
+            subtitle="Review items that failed to sync"
+            onPress={() => setShowConflicts(true)}
+          />
+          <MenuItem
+            icon="cloud-outline"
+            label="Offline Queue"
+            subtitle="View pending offline changes"
+            onPress={() =>
+              Alert.alert(
+                'Offline Queue',
+                'View your sync status on the Dashboard tab.',
+              )
+            }
+          />
+        </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Account</Text>
-        <MenuItem icon="person-outline" label="Profile" subtitle={userEmail} onPress={() => {}} />
-        <MenuItem icon="notifications-outline" label="Notifications" onPress={() => {}} />
-        <MenuItem icon="settings-outline" label="Settings" onPress={() => {}} />
-      </View>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Account</Text>
+          <MenuItem icon="person-outline" label="Profile" subtitle={userEmail} onPress={() => {}} />
+          <MenuItem icon="notifications-outline" label="Notifications" onPress={() => {}} />
+          <MenuItem icon="settings-outline" label="Settings" onPress={() => {}} />
+        </View>
 
-      <View style={styles.section}>
-        <MenuItem
-          icon="log-out-outline"
-          label="Sign Out"
-          onPress={handleSignOut}
-          color={COLORS.danger}
-        />
-      </View>
+        <View style={styles.section}>
+          <MenuItem
+            icon="log-out-outline"
+            label="Sign Out"
+            onPress={handleSignOut}
+            color={COLORS.danger}
+          />
+        </View>
 
-      <Text style={styles.version}>KrewPact Mobile v0.1.0</Text>
-    </ScrollView>
+        <Text style={styles.version}>KrewPact Mobile v0.1.0</Text>
+      </ScrollView>
+
+      <SyncConflictSheet
+        visible={showConflicts}
+        onClose={() => setShowConflicts(false)}
+      />
+    </>
   );
 }
 

@@ -204,6 +204,39 @@ export interface TimeEntryCreate {
   source?: string;
 }
 
+/** Safety form types */
+export interface SafetyForm {
+  id: string;
+  project_id: string;
+  form_type: string;
+  topic: string | null;
+  description: string | null;
+  attendee_count: number | null;
+  hazard_categories: string[] | null;
+  action_required: boolean;
+  severity: string | null;
+  notes: string | null;
+  submitted_at: string | null;
+  submitted_by: string | null;
+  source: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SafetyFormCreate {
+  project_id: string;
+  form_type: string;
+  topic?: string;
+  description?: string;
+  attendee_count?: number;
+  hazard_categories?: string[];
+  action_required?: boolean;
+  severity?: string;
+  notes?: string;
+  submitted_at?: string;
+  source?: string;
+}
+
 /** GET /api/notifications → PaginatedResponse<Notification> */
 export interface AppNotification {
   id: string;
@@ -252,6 +285,20 @@ export const api = {
         apiFetch<TimeEntry>(`/api/projects/${projectId}/time-entries`, {
           method: 'POST',
           body: JSON.stringify(data),
+        }),
+    },
+  },
+
+  safety: {
+    forms: {
+      list: (projectId: string) =>
+        apiFetch<PaginatedResponse<SafetyForm>>(`/api/safety/forms?project_id=${projectId}`).then(
+          (r) => r.data,
+        ),
+      create: (projectId: string, data: SafetyFormCreate) =>
+        apiFetch<SafetyForm>(`/api/safety/forms`, {
+          method: 'POST',
+          body: JSON.stringify({ ...data, project_id: projectId }),
         }),
     },
   },

@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { api, Project } from '@/lib/api-client';
 import { queryKeys } from '@/lib/query-client';
 import { COLORS, SPACING } from '@/constants/config';
@@ -49,67 +50,64 @@ const ProjectCard = memo(function ProjectCard({
       {project.start_date && (
         <Text style={styles.date}>Started {new Date(project.start_date).toLocaleDateString()}</Text>
       )}
-      {project.target_completion_date && (
-        <Text style={styles.date}>
-          Due {new Date(project.target_completion_date).toLocaleDateString()}
-        </Text>
-      )}
     </TouchableOpacity>
   );
 });
 
-export default function ProjectsScreen() {
+export default function ProjectListScreen() {
   const router = useRouter();
   const { data, isLoading, isError, refetch, isFetching } = useQuery<Project[]>({
     queryKey: queryKeys.projects,
     queryFn: api.projects.list,
   });
 
-  if (isLoading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+  return (
+    <View style={styles.container}>
+      <View style={styles.headerRow}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Ionicons name="arrow-back" size={24} color={COLORS.text} />
+        </TouchableOpacity>
+        <Text style={styles.header}>All Projects</Text>
       </View>
-    );
-  }
 
-  if (isError) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.header}>Projects</Text>
+      {isLoading ? (
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+        </View>
+      ) : isError ? (
         <View style={styles.errorBox}>
           <Text style={styles.errorText}>Failed to load projects. Pull to refresh.</Text>
         </View>
-      </View>
-    );
-  }
-
-  return (
-    <FlatList
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      data={data ?? []}
-      keyExtractor={(item) => item.id}
-      refreshControl={<RefreshControl refreshing={isFetching && !isLoading} onRefresh={refetch} />}
-      ListHeaderComponent={<Text style={styles.header}>Projects</Text>}
-      ListEmptyComponent={<Text style={styles.empty}>No projects found.</Text>}
-      initialNumToRender={8}
-      maxToRenderPerBatch={8}
-      updateCellsBatchingPeriod={16}
-      windowSize={5}
-      removeClippedSubviews
-      renderItem={({ item }) => (
-        <ProjectCard project={item} onPress={() => router.push(`/project/${item.id}`)} />
+      ) : (
+        <FlatList
+          data={data ?? []}
+          keyExtractor={(item) => item.id}
+          refreshControl={
+            <RefreshControl refreshing={isFetching && !isLoading} onRefresh={refetch} />
+          }
+          contentContainerStyle={styles.listContent}
+          ListEmptyComponent={<Text style={styles.empty}>No projects found.</Text>}
+          renderItem={({ item }) => (
+            <ProjectCard project={item} onPress={() => router.push(`/project/${item.id}`)} />
+          )}
+          ItemSeparatorComponent={() => <View style={styles.separator} />}
+        />
       )}
-      ItemSeparatorComponent={() => <View style={styles.separator} />}
-    />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.surface },
-  content: { padding: SPACING.md, paddingBottom: SPACING.xl },
-  header: { fontSize: 24, fontWeight: '700', color: COLORS.text, marginBottom: SPACING.md },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    padding: SPACING.md,
+  },
+  backBtn: { padding: SPACING.xs },
+  header: { fontSize: 24, fontWeight: '700', color: COLORS.text },
+  listContent: { padding: SPACING.md, paddingTop: 0, paddingBottom: SPACING.xl },
   card: {
     backgroundColor: COLORS.background,
     borderRadius: 12,
@@ -130,7 +128,7 @@ const styles = StyleSheet.create({
   date: { fontSize: 13, color: COLORS.muted, marginTop: SPACING.xs },
   separator: { height: SPACING.sm },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  errorBox: { backgroundColor: '#FEE2E2', borderRadius: 8, padding: SPACING.md },
+  errorBox: { backgroundColor: '#FEE2E2', borderRadius: 8, padding: SPACING.md, margin: SPACING.md },
   errorText: { color: COLORS.danger },
   empty: { color: COLORS.muted, textAlign: 'center', paddingVertical: SPACING.lg },
 });

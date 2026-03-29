@@ -1,6 +1,8 @@
 import React, { memo } from 'react';
-import { View, Text, FlatList, RefreshControl, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, RefreshControl, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { api, Lead } from '@/lib/api-client';
 import { queryKeys } from '@/lib/query-client';
 import { COLORS, SPACING } from '@/constants/config';
@@ -53,66 +55,57 @@ const LeadCard = memo(function LeadCard({ lead }: { lead: Lead }) {
 });
 
 export default function CRMScreen() {
+  const router = useRouter();
   const { data, isLoading, isError, refetch, isFetching } = useQuery<Lead[]>({
     queryKey: queryKeys.leads,
     queryFn: api.crm.leads.list,
   });
 
-  if (isLoading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-      </View>
-    );
-  }
-
-  if (isError) {
-    return (
-      <View style={styles.container}>
+  return (
+    <View style={styles.container}>
+      <View style={styles.headerRow}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Ionicons name="arrow-back" size={24} color={COLORS.text} />
+        </TouchableOpacity>
         <Text style={styles.header}>CRM</Text>
+        <Text style={styles.count}>{data?.length ?? 0} leads</Text>
+      </View>
+
+      {isLoading ? (
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+        </View>
+      ) : isError ? (
         <View style={styles.errorBox}>
           <Text style={styles.errorText}>Failed to load leads. Pull to refresh.</Text>
         </View>
-      </View>
-    );
-  }
-
-  return (
-    <FlatList
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      data={data ?? []}
-      keyExtractor={(item) => item.id}
-      refreshControl={<RefreshControl refreshing={isFetching && !isLoading} onRefresh={refetch} />}
-      ListHeaderComponent={
-        <View style={styles.headerRow}>
-          <Text style={styles.header}>CRM</Text>
-          <Text style={styles.count}>{data?.length ?? 0} leads</Text>
-        </View>
-      }
-      ListEmptyComponent={<Text style={styles.empty}>No leads found.</Text>}
-      initialNumToRender={8}
-      maxToRenderPerBatch={8}
-      updateCellsBatchingPeriod={16}
-      windowSize={5}
-      removeClippedSubviews
-      renderItem={({ item }) => <LeadCard lead={item} />}
-      ItemSeparatorComponent={() => <View style={styles.separator} />}
-    />
+      ) : (
+        <FlatList
+          data={data ?? []}
+          keyExtractor={(item) => item.id}
+          refreshControl={<RefreshControl refreshing={isFetching && !isLoading} onRefresh={refetch} />}
+          contentContainerStyle={styles.listContent}
+          ListEmptyComponent={<Text style={styles.empty}>No leads found.</Text>}
+          renderItem={({ item }) => <LeadCard lead={item} />}
+          ItemSeparatorComponent={() => <View style={styles.separator} />}
+        />
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.surface },
-  content: { padding: SPACING.md, paddingBottom: SPACING.xl },
   headerRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
-    marginBottom: SPACING.md,
+    alignItems: 'center',
+    gap: SPACING.sm,
+    padding: SPACING.md,
   },
-  header: { fontSize: 24, fontWeight: '700', color: COLORS.text },
+  backBtn: { padding: SPACING.xs },
+  header: { fontSize: 24, fontWeight: '700', color: COLORS.text, flex: 1 },
   count: { fontSize: 14, color: COLORS.muted },
+  listContent: { padding: SPACING.md, paddingTop: 0, paddingBottom: SPACING.xl },
   card: {
     backgroundColor: COLORS.background,
     borderRadius: 12,
@@ -158,7 +151,7 @@ const styles = StyleSheet.create({
   scoreText: { fontSize: 12, color: COLORS.primary, fontWeight: '600' },
   separator: { height: SPACING.sm },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  errorBox: { backgroundColor: '#FEE2E2', borderRadius: 8, padding: SPACING.md },
+  errorBox: { backgroundColor: '#FEE2E2', borderRadius: 8, padding: SPACING.md, margin: SPACING.md },
   errorText: { color: COLORS.danger },
   empty: { color: COLORS.muted, textAlign: 'center', paddingVertical: SPACING.lg },
 });
