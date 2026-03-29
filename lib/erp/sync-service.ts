@@ -31,15 +31,21 @@ import {
   readPurchaseInvoice,
   readSalesInvoice,
 } from './sync-handlers/sync-invoices';
+import { syncItem } from './sync-handlers/sync-item';
 import { syncMaterialCost } from './sync-handlers/sync-material-cost';
+import { syncMaterialRequest } from './sync-handlers/sync-material-request';
 import { syncOpportunity, syncWonDeal } from './sync-handlers/sync-opportunity';
 import { syncProject } from './sync-handlers/sync-project';
 import { syncEstimate } from './sync-handlers/sync-quotation';
+import { syncRequestForQuotation } from './sync-handlers/sync-request-for-quotation';
 import { syncRfqPackage } from './sync-handlers/sync-rfq';
 import { syncSelectionSheet } from './sync-handlers/sync-selection-sheet';
+import { syncStockEntry } from './sync-handlers/sync-stock-entry';
 import { syncSupplier } from './sync-handlers/sync-supplier';
+import { syncSupplierQuotation } from './sync-handlers/sync-supplier-quotation';
 import { syncTask } from './sync-handlers/sync-task';
 import { syncTimesheet } from './sync-handlers/sync-timesheet';
+import { syncWarehouse } from './sync-handlers/sync-warehouse';
 
 // Re-export shared type so existing consumers don't break
 export type { SyncResult } from './sync-handlers/sync-helpers';
@@ -140,6 +146,30 @@ export class SyncService {
     jobContext?: SyncJobContext,
   ) {
     return syncSelectionSheet(selectionSheetId, userId, jobContext);
+  }
+
+  async syncSupplierQuotation(sqId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncSupplierQuotation(sqId, userId, jobContext);
+  }
+
+  async syncRequestForQuotation(rfqId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncRequestForQuotation(rfqId, userId, jobContext);
+  }
+
+  async syncMaterialRequest(mrId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncMaterialRequest(mrId, userId, jobContext);
+  }
+
+  async syncStockEntry(entryId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncStockEntry(entryId, userId, jobContext);
+  }
+
+  async syncWarehouse(warehouseId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncWarehouse(warehouseId, userId, jobContext);
+  }
+
+  async syncItem(itemId: string, userId: string, jobContext?: SyncJobContext) {
+    return syncItem(itemId, userId, jobContext);
   }
 
   async syncMaterialCost(
