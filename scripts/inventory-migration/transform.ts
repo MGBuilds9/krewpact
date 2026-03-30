@@ -188,24 +188,18 @@ interface VendorMapping {
 }
 
 // ---------------------------------------------------------------------------
-// Division mapping — UPDATE THESE with real UUIDs from Supabase `divisions`
+// Division mapping — set via DIVISION_MAP env var (JSON object)
+// Example: DIVISION_MAP='{"MDM_Telecom_Inc.":"<uuid>","MDM_Wood_Industries":"<uuid>"}'
 // ---------------------------------------------------------------------------
-const DIVISION_MAP: Record<string, string> = {
-  'MDM_Telecom_Inc.': 'f620691b-c153-4427-b8c4-9d36ece8eac9',
-  MDM_Wood_Industries: '90fd5f6b-9ff5-4adf-981e-11c762c9cb69',
-  'MDM_Contracting_Inc.': 'be7931f8-bd30-4307-955d-1a10c59f5860',
-};
+const DIVISION_MAP: Record<string, string> = JSON.parse(process.env.DIVISION_MAP || '{}');
 
 // Default location IDs per division (for initial_stock ledger entries)
 // These must be created in inventory_locations before running load.ts
-const DEFAULT_LOCATION_MAP: Record<string, string> = {
-  'MDM_Telecom_Inc.': '9d0ed4fd-9405-46dc-89fe-58c410b133d9',
-  MDM_Wood_Industries: '25cb1ae9-f063-410c-83ff-514bbc677a6e',
-  'MDM_Contracting_Inc.': '7aa6bcd4-a6d4-4533-ade3-b710b57cce47',
-};
+// Set via DEFAULT_LOCATION_MAP env var (JSON object)
+const DEFAULT_LOCATION_MAP: Record<string, string> = JSON.parse(process.env.DEFAULT_LOCATION_MAP || '{}');
 
-// System user for migration entries
-const MIGRATION_USER_ID = '20fc688d-4b82-463b-ace9-ad97c1cd0359';
+// System user for migration entries — set via MIGRATION_USER_ID env var
+const MIGRATION_USER_ID = process.env.MIGRATION_USER_ID || '';
 
 // ---------------------------------------------------------------------------
 // UOM mapping: Almyta UOMID → KrewPact inventory_uom enum
@@ -613,6 +607,8 @@ const OUTPUT_DIR = join(SCRIPT_DIR, 'transformed');
 const COMPANIES = ['MDM_Telecom_Inc.', 'MDM_Wood_Industries', 'MDM_Contracting_Inc.'];
 
 async function run(): Promise<void> {
+  if (!MIGRATION_USER_ID) throw new Error('MIGRATION_USER_ID env var required');
+
   mkdirSync(OUTPUT_DIR, { recursive: true });
 
   if (!existsSync(EXPORTS_DIR)) {

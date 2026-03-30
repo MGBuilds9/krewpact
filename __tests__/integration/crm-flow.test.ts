@@ -71,7 +71,7 @@ describe('CRM Integration: Full happy path', () => {
 
   it('creates account → adds contact → creates lead → transitions stages → creates opportunity → logs activity → verifies pipeline', async () => {
     // Step 1: Create an account
-    const account = makeAccount({ account_name: 'MDM Contracting Ltd.' });
+    const account = makeAccount({ account_name: 'Acme Contracting Ltd.' });
     mockClerkAuth(mockAuth);
     mockCreateUserClientSafe.mockResolvedValue({
       client: mockSupabaseClient({ tables: { accounts: { data: account, error: null } } }),
@@ -80,14 +80,14 @@ describe('CRM Integration: Full happy path', () => {
 
     const accountRes = await accountsPOST(
       makeJsonRequest('/api/crm/accounts', {
-        account_name: 'MDM Contracting Ltd.',
+        account_name: 'Acme Contracting Ltd.',
         account_type: 'client',
         division_id: VALID_DIVISION_ID,
       }),
     );
     expect(accountRes.status).toBe(201);
     const accountData = await accountRes.json();
-    expect(accountData.account_name).toBe('MDM Contracting Ltd.');
+    expect(accountData.account_name).toBe('Acme Contracting Ltd.');
 
     // Step 2: Add a primary contact to the account
     const contact = makeContact({
@@ -475,7 +475,7 @@ describe('CRM Integration: Search', () => {
   });
 
   it('search accounts returns matching results', async () => {
-    const matchingAccounts = [makeAccount({ account_name: 'MDM Contracting' })];
+    const matchingAccounts = [makeAccount({ account_name: 'Acme Contracting' })];
     mockClerkAuth(mockAuth);
     mockCreateUserClientSafe.mockResolvedValue({
       client: mockSupabaseClient({ tables: { accounts: { data: matchingAccounts, error: null } } }),
@@ -486,7 +486,7 @@ describe('CRM Integration: Search', () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.data).toHaveLength(1);
-    expect(body.data[0].account_name).toBe('MDM Contracting');
+    expect(body.data[0].account_name).toBe('Acme Contracting');
   });
 
   it('search with no matches returns empty array', async () => {

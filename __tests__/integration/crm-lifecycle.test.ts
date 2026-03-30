@@ -38,7 +38,7 @@ describe('CRM Lifecycle: Lead → Contact → Opportunity', () => {
     mockClerkAuth(mockAuth);
     const leadData = {
       id: UUID1,
-      company_name: 'MDM Contracting',
+      company_name: 'Acme Contracting',
       stage: 'new',
       source_channel: 'referral',
       estimated_value: 250000,
@@ -51,7 +51,7 @@ describe('CRM Lifecycle: Lead → Contact → Opportunity', () => {
     mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest('/api/crm/leads', {
-      company_name: 'MDM Contracting',
+      company_name: 'Acme Contracting',
       stage: 'new',
       source_channel: 'referral',
       estimated_value: 250000,
@@ -90,7 +90,7 @@ describe('CRM Lifecycle: Lead → Contact → Opportunity', () => {
     mockClerkAuth(mockAuth);
     const oppData = {
       id: '550e8400-e29b-41d4-a716-446655440003',
-      opportunity_name: 'MDM Contracting - Renovation',
+      opportunity_name: 'Acme Contracting - Renovation',
       lead_id: UUID1,
       stage: 'intake',
       estimated_revenue: 250000,
@@ -101,7 +101,7 @@ describe('CRM Lifecycle: Lead → Contact → Opportunity', () => {
     mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
     const req = makeJsonRequest('/api/crm/opportunities', {
-      opportunity_name: 'MDM Contracting - Renovation',
+      opportunity_name: 'Acme Contracting - Renovation',
       lead_id: UUID1,
       stage: 'intake',
       estimated_revenue: 250000,
@@ -182,7 +182,7 @@ describe('CRM Lifecycle: Search', () => {
 
   it('searches across all entity types', async () => {
     mockClerkAuth(mockAuth);
-    const leads = [{ id: UUID1, company_name: 'MDM Contracting', stage: 'qualified' }];
+    const leads = [{ id: UUID1, company_name: 'Acme Contracting', stage: 'qualified' }];
     const contacts = [
       { id: UUID2, first_name: 'Michael', last_name: 'MDM', email: 'jane@example.com' },
     ];

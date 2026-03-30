@@ -1,7 +1,7 @@
 {
   "organization": {
-    "name": "MDM Group",
-    "slug": "mdm-group",
+    "name": "Acme Construction Group",
+    "slug": "acme-construction",
     "timezone": "America/Toronto",
     "locale": "en-CA",
     "metadata": {
@@ -10,7 +10,7 @@
   },
   "org_settings": {
     "branding": {
-      "company_name": "MDM Group",
+      "company_name": "Acme Construction Group",
       "primary_color": "#0f172a",
       "logo_url": ""
     },
@@ -20,16 +20,16 @@
   "divisions": [
     {
       "code": "contracting",
-      "name": "MDM Contracting",
+      "name": "Acme Contracting",
       "description": "General contracting division"
     },
-    { "code": "homes", "name": "MDM Homes", "description": "Residential construction division" },
-    { "code": "wood", "name": "MDM Wood", "description": "Wood/lumber division" },
-    { "code": "telecom", "name": "MDM Telecom", "description": "Telecommunications division" },
-    { "code": "group-inc", "name": "MDM Group Inc.", "description": "Parent company / corporate" },
+    { "code": "homes", "name": "Acme Homes", "description": "Residential construction division" },
+    { "code": "wood", "name": "Acme Wood", "description": "Wood/lumber division" },
+    { "code": "telecom", "name": "Acme Telecom", "description": "Telecommunications division" },
+    { "code": "group-inc", "name": "Acme Construction Inc.", "description": "Parent company / corporate" },
     {
       "code": "management",
-      "name": "MDM Management",
+      "name": "Acme Management",
       "description": "Property management division"
     }
   ],

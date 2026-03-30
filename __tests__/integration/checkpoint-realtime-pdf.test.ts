@@ -154,7 +154,7 @@ describe('US-005 Checkpoint: Realtime + PDF Integration', () => {
         makeRequest({
           type: 'estimate',
           data: {
-            companyName: 'MDM Group Inc.',
+            companyName: 'Acme Construction Inc.',
             estimateNumber: 'EST-001',
             date: '2026-03-01',
             client: { name: 'Acme', address: '123 Main', email: 'a@b.com' },
@@ -187,7 +187,7 @@ describe('US-005 Checkpoint: Realtime + PDF Integration', () => {
         makeRequest({
           type: 'project-status',
           data: {
-            companyName: 'MDM Group Inc.',
+            companyName: 'Acme Construction Inc.',
             project: { name: 'Reno', code: 'P-001', status: 'active' },
             milestones: [{ name: 'M1', progress: 50, dueDate: '2026-04-01' }],
             taskSummary: { total: 10, completed: 5, inProgress: 3, overdue: 2 },
