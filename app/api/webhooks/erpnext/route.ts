@@ -1,4 +1,5 @@
 import { timingSafeEqual } from 'crypto';
+import { Redis } from '@upstash/redis';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { withApiRoute } from '@/lib/api/with-api-route';
@@ -73,7 +74,26 @@ export const POST = withApiRoute({ auth: 'public', rateLimit: false }, async ({ 
   const doctype = (payload.doctype as string) || '';
   const docname = (payload.name as string) || '';
   const event = (payload.event as string) || 'unknown';
+  const modified = (payload.modified as string) || '';
   logger.info('ERPNext webhook received', { doctype, docname, event });
+
+  // Replay protection: dedup using Redis SET NX with 5-min TTL.
+  // Fails open if Redis is unavailable (same pattern as rate limiting).
+  const dedupKey = `erpnext-webhook:${doctype}:${docname}:${modified}`;
+  try {
+    const url = process.env.UPSTASH_REDIS_REST_URL;
+    const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+    if (url && token) {
+      const redis = new Redis({ url, token });
+      const isNew = await redis.set(dedupKey, '1', { nx: true, ex: 300 });
+      if (!isNew) {
+        logger.info('Duplicate ERPNext webhook — skipping', { dedupKey });
+        return NextResponse.json({ received: true, deduplicated: true });
+      }
+    }
+  } catch {
+    logger.warn('Redis dedup check failed — processing anyway', { dedupKey });
+  }
 
   const service = new SyncService();
 

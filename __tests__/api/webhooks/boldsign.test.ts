@@ -163,7 +163,7 @@ describe('POST /api/webhooks/boldsign', () => {
     expect(json.message).toContain('active');
   });
 
-  it('skips signature check when no signature header present', async () => {
+  it('returns 401 when no signature header present', async () => {
     const body = JSON.stringify({ event: 'Completed', documentId: 'doc-1' });
     const req = new NextRequest(new URL('http://localhost/api/webhooks/boldsign'), {
       method: 'POST',
@@ -172,8 +172,7 @@ describe('POST /api/webhooks/boldsign', () => {
     });
 
     const res = await POST(req);
-    // With secret set but no signature header, processes the event (signature check skipped for empty string)
-    expect([200, 500]).toContain(res.status);
+    expect(res.status).toBe(401);
   });
 
   it('returns 401 when signature is wrong', async () => {

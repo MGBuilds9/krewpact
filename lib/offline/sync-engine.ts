@@ -24,6 +24,16 @@ import {
 import type { OfflineQueueItem, SyncResult } from './types';
 import { ENTITY_API_ENDPOINTS } from './types';
 
+/** Token getter injected by the app shell */
+let _getToken: (() => Promise<string | null>) | null = null;
+
+/** Initialize auth for sync — call from a layout or provider component */
+export function initSyncAuth(
+  getToken: () => Promise<string | null>,
+): void {
+  _getToken = getToken;
+}
+
 /** Maximum retry attempts before dead-lettering */
 const MAX_RETRIES = 3;
 
@@ -157,6 +167,9 @@ async function processItem(
  */
 async function callApi(item: OfflineQueueItem): Promise<Response> {
   const projectId = String(item.payload.project_id ?? '');
+  if (!projectId || projectId === 'undefined') {
+    throw new Error(`Missing project_id for ${item.entity_type} sync item`);
+  }
   const basePath = ENTITY_API_ENDPOINTS[item.entity_type](projectId);
   let url = basePath;
   let method: string;
@@ -175,14 +188,19 @@ async function callApi(item: OfflineQueueItem): Promise<Response> {
       break;
   }
 
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  const token = await _getToken?.();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   return fetch(url, {
     method,
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body:
-      method !== 'DELETE'
-        ? JSON.stringify(item.payload)
-        : undefined,
+    headers,
+    credentials: token ? undefined : 'include',
+    body: method !== 'DELETE' ? JSON.stringify(item.payload) : undefined,
   });
 }
 
@@ -204,9 +222,18 @@ async function handleConflict(
   try {
     const projectId = String(item.payload.project_id ?? '');
     const basePath = ENTITY_API_ENDPOINTS[item.entity_type](projectId);
+    const conflictHeaders: Record<string, string> = {};
+    const conflictToken = await _getToken?.();
+    if (conflictToken) {
+      conflictHeaders['Authorization'] = `Bearer ${conflictToken}`;
+    }
+
     const serverResponse = await fetch(
       `${basePath}/${item.entity_id}`,
-      { credentials: 'include' },
+      {
+        headers: conflictHeaders,
+        credentials: conflictToken ? undefined : 'include',
+      },
     );
 
     if (!serverResponse.ok) {

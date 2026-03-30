@@ -16,7 +16,7 @@ interface VerifyResult {
  * Verify that a request came from QStash and return the raw body.
  *
  * Uses @upstash/qstash Receiver to verify signatures.
- * In development (no signing keys), passes through without verification.
+ * Rejects all requests when signing keys are not configured.
  */
 export async function verifyQStashSignature(
   signature: string | null,
@@ -24,17 +24,12 @@ export async function verifyQStashSignature(
 ): Promise<VerifyResult> {
   const currentSigningKey = process.env.QSTASH_CURRENT_SIGNING_KEY;
   const nextSigningKey = process.env.QSTASH_NEXT_SIGNING_KEY;
-  const isStrictEnv = process.env.NODE_ENV === 'production';
 
   if (!currentSigningKey || !nextSigningKey) {
-    if (isStrictEnv) {
-      return {
-        valid: false,
-        error: 'QStash signing keys are not configured in this environment',
-      };
-    }
-
-    return { valid: true, body };
+    return {
+      valid: false,
+      error: 'QStash signing keys are not configured in this environment',
+    };
   }
 
   if (!signature) {

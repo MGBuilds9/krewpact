@@ -104,13 +104,13 @@ describe('Queue process endpoint schema', () => {
 });
 
 describe('verifyQStashSignature', () => {
-  it('allows requests when no signing keys are configured', async () => {
+  it('rejects requests when no signing keys are configured', async () => {
     const { verifyQStashSignature } = await import('@/lib/queue/verify');
 
-    // No env vars set in test = passthrough
+    // No env vars set = always reject (no bypass regardless of NODE_ENV)
     const result = await verifyQStashSignature(null, '{"test": true}');
-    expect(result.valid).toBe(true);
-    expect(result.body).toBe('{"test": true}');
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('not configured');
   });
 
   it('fails closed in production when signing keys are missing', async () => {

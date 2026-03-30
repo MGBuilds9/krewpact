@@ -49,7 +49,7 @@ export const POST = withApiRoute({ auth: 'public', rateLimit: false }, async ({ 
     return NextResponse.json({ message: 'Webhook endpoint active' });
   }
 
-  if (signature && !verifyBoldSignSignature(rawBody, signature, webhookSecret)) {
+  if (!signature || !verifyBoldSignSignature(rawBody, signature, webhookSecret)) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
   }
 

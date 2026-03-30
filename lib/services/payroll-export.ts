@@ -7,6 +7,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+import { csvEscape } from '@/lib/csv/parse-csv';
 import { logger } from '@/lib/logger';
 import type { Database, Json } from '@/types/supabase';
 
@@ -37,15 +38,13 @@ export interface ReconciliationResult {
   mismatched: number;
   missing_in_adp: number;
   missing_in_export: number;
-  details: ReconciliationDetail[];
-}
-
-interface ReconciliationDetail {
-  employee_id: string;
-  status: 'matched' | 'mismatched' | 'missing_in_adp' | 'missing_in_export';
-  expected_hours?: number;
-  actual_hours?: number;
-  notes?: string;
+  details: {
+    employee_id: string;
+    status: 'matched' | 'mismatched' | 'missing_in_adp' | 'missing_in_export';
+    expected_hours?: number;
+    actual_hours?: number;
+    notes?: string;
+  }[];
 }
 
 // ─── ADP CSV Column Mapping (MVP hardcoded) ───────────────
@@ -59,6 +58,95 @@ const ADP_COLUMNS = [
   'Department',
 ] as const;
 
+// ─── Lookup Helpers ──────────────────────────────────────
+
+interface DivisionProjectContext {
+  divisionNameMap: Map<string, string>;
+  projectDivisionMap: Map<string, string>;
+  projectIds: string[];
+}
+
+async function fetchDivisionProjectContext(
+  supabase: PayrollClient,
+  divisionIds: string[],
+): Promise<DivisionProjectContext> {
+  const [divResult, projResult] = await Promise.all([
+    supabase.from('divisions').select('id, name').in('id', divisionIds),
+    supabase.from('projects').select('id, division_id').in('division_id', divisionIds),
+  ]);
+
+  if (divResult.error) throw new Error(`Failed to fetch divisions: ${divResult.error.message}`);
+  if (projResult.error) throw new Error(`Failed to fetch projects: ${projResult.error.message}`);
+
+  return {
+    divisionNameMap: new Map((divResult.data ?? []).map((d) => [d.id, d.name])),
+    projectDivisionMap: new Map((projResult.data ?? []).map((p) => [p.id, p.division_id])),
+    projectIds: (projResult.data ?? []).map((p) => p.id),
+  };
+}
+
+async function enrichEmployeeNames(
+  supabase: PayrollClient,
+  aggregated: Map<string, ExportRowData>,
+): Promise<void> {
+  const userIds = [...aggregated.keys()];
+  const { data: users, error } = await supabase
+    .from('users')
+    .select('id, first_name, last_name, adp_employee_code')
+    .in('id', userIds);
+
+  if (error || !users) return;
+
+  const userMap = new Map(users.map((u) => [u.id, u]));
+  for (const [userId, row] of aggregated) {
+    const user = userMap.get(userId);
+    if (user) {
+      row.employee_name = `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim();
+      if (user.adp_employee_code) {
+        row.employee_id = user.adp_employee_code;
+      }
+    }
+  }
+}
+
+interface TimeEntry {
+  user_id: string;
+  hours_regular: number | string | null;
+  hours_overtime: number | string | null;
+  cost_code: string | null;
+  project_id: string | null;
+}
+
+function aggregateEntries(
+  entries: TimeEntry[],
+  projectDivisionMap: Map<string, string>,
+  divisionNameMap: Map<string, string>,
+): Map<string, ExportRowData> {
+  const aggregated = new Map<string, ExportRowData>();
+
+  for (const entry of entries) {
+    const existing = aggregated.get(entry.user_id);
+    if (existing) {
+      existing.hours_regular += Number(entry.hours_regular) || 0;
+      existing.hours_overtime += Number(entry.hours_overtime) || 0;
+    } else {
+      const divId = entry.project_id ? (projectDivisionMap.get(entry.project_id) ?? '') : '';
+      aggregated.set(entry.user_id, {
+        employee_id: entry.user_id,
+        employee_name: '',
+        hours_regular: Number(entry.hours_regular) || 0,
+        hours_overtime: Number(entry.hours_overtime) || 0,
+        cost_code: entry.cost_code ?? '',
+        pay_rate: 0,
+        department: divId ? (divisionNameMap.get(divId) ?? '') : '',
+        project_id: entry.project_id ?? null,
+      });
+    }
+  }
+
+  return aggregated;
+}
+
 // ─── Service Functions ────────────────────────────────────
 
 /**
@@ -70,47 +158,23 @@ export async function buildExportBatch(
   params: ExportBatchParams,
 ): Promise<ExportRowData[]> {
   const { periodStart, periodEnd, divisionIds } = params;
+  const { divisionNameMap, projectDivisionMap, projectIds } =
+    await fetchDivisionProjectContext(supabase, divisionIds);
 
-  // Fetch time entries with user and project info
+  if (projectIds.length === 0) return [];
+
   const { data: entries, error } = await supabase
     .from('time_entries')
     .select('user_id, hours_regular, hours_overtime, cost_code, project_id')
     .gte('work_date', periodStart)
-    .lte('work_date', periodEnd);
+    .lte('work_date', periodEnd)
+    .in('project_id', projectIds);
 
-  if (error) {
-    logger.error('Failed to fetch time entries for export', { error: error.message });
-    throw new Error(`Failed to fetch time entries: ${error.message}`);
-  }
+  if (error) throw new Error(`Failed to fetch time entries: ${error.message}`);
+  if (!entries || entries.length === 0) return [];
 
-  if (!entries || entries.length === 0) {
-    return [];
-  }
-
-  // Aggregate by employee (user_id)
-  const aggregated = new Map<string, ExportRowData>();
-
-  for (const entry of entries) {
-    const key = entry.user_id;
-    const existing = aggregated.get(key);
-
-    if (existing) {
-      existing.hours_regular += Number(entry.hours_regular) || 0;
-      existing.hours_overtime += Number(entry.hours_overtime) || 0;
-    } else {
-      aggregated.set(key, {
-        employee_id: entry.user_id,
-        employee_name: '',
-        hours_regular: Number(entry.hours_regular) || 0,
-        hours_overtime: Number(entry.hours_overtime) || 0,
-        cost_code: entry.cost_code ?? '',
-        pay_rate: 0,
-        department: divisionIds[0] ?? '',
-        project_id: entry.project_id ?? null,
-      });
-    }
-  }
-
+  const aggregated = aggregateEntries(entries, projectDivisionMap, divisionNameMap);
+  await enrichEmployeeNames(supabase, aggregated);
   return Array.from(aggregated.values());
 }
 
@@ -252,68 +316,8 @@ export async function createPayrollExport(
   }
 }
 
-/**
- * Reconciles an ADP acknowledgment CSV against export rows.
- */
-export function reconcileExport(
-  exportRows: ExportRowData[],
-  adpCsvContent: string,
-): ReconciliationResult {
-  const adpRows = parseAdpCsv(adpCsvContent);
-
-  const exportMap = new Map(exportRows.map((r) => [r.employee_id, r]));
-  const adpMap = new Map(adpRows.map((r) => [r.employee_id, r]));
-
-  const details: ReconciliationDetail[] = [];
-  let matched = 0;
-  let mismatched = 0;
-  let missingInAdp = 0;
-
-  for (const [empId, exportRow] of exportMap) {
-    const adpRow = adpMap.get(empId);
-    if (!adpRow) {
-      missingInAdp++;
-      details.push({
-        employee_id: empId,
-        status: 'missing_in_adp',
-        expected_hours: exportRow.hours_regular + exportRow.hours_overtime,
-      });
-      continue;
-    }
-
-    const exportTotal = exportRow.hours_regular + exportRow.hours_overtime;
-    const adpTotal = adpRow.hours_regular + adpRow.hours_overtime;
-
-    if (Math.abs(exportTotal - adpTotal) < 0.01) {
-      matched++;
-      details.push({ employee_id: empId, status: 'matched' });
-    } else {
-      mismatched++;
-      details.push({
-        employee_id: empId,
-        status: 'mismatched',
-        expected_hours: exportTotal,
-        actual_hours: adpTotal,
-        notes: `Discrepancy: expected ${exportTotal.toFixed(2)}, got ${adpTotal.toFixed(2)}`,
-      });
-    }
-  }
-
-  // Check for entries in ADP not in export
-  let missingInExport = 0;
-  for (const empId of adpMap.keys()) {
-    if (!exportMap.has(empId)) {
-      missingInExport++;
-      details.push({
-        employee_id: empId,
-        status: 'missing_in_export',
-        actual_hours: (adpMap.get(empId)?.hours_regular ?? 0) + (adpMap.get(empId)?.hours_overtime ?? 0),
-      });
-    }
-  }
-
-  return { matched, mismatched, missing_in_adp: missingInAdp, missing_in_export: missingInExport, details };
-}
+// Re-export from split module for backward compatibility
+export { reconcileExport } from './payroll-reconcile';
 
 // ─── Helpers ──────────────────────────────────────────────
 
@@ -337,36 +341,3 @@ async function updateExportStatus(params: UpdateStatusParams): Promise<void> {
     .eq('id', exportId);
 }
 
-function csvEscape(value: string): string {
-  if (value.includes(',') || value.includes('"') || value.includes('\n')) {
-    return `"${value.replace(/"/g, '""')}"`;
-  }
-  return value;
-}
-
-interface ParsedAdpRow {
-  employee_id: string;
-  hours_regular: number;
-  hours_overtime: number;
-}
-
-function parseAdpCsv(csvContent: string): ParsedAdpRow[] {
-  const lines = csvContent.trim().split('\n');
-  if (lines.length < 2) return [];
-
-  const header = lines[0].split(',').map((h) => h.trim());
-  const empIdx = header.indexOf('Employee ID');
-  const regIdx = header.indexOf('Hours - Regular');
-  const otIdx = header.indexOf('Hours - Overtime');
-
-  if (empIdx === -1) return [];
-
-  return lines.slice(1).map((line) => {
-    const cols = line.split(',').map((c) => c.trim().replace(/^"|"$/g, ''));
-    return {
-      employee_id: cols[empIdx] ?? '',
-      hours_regular: regIdx >= 0 ? parseFloat(cols[regIdx] ?? '0') || 0 : 0,
-      hours_overtime: otIdx >= 0 ? parseFloat(cols[otIdx] ?? '0') || 0 : 0,
-    };
-  });
-}

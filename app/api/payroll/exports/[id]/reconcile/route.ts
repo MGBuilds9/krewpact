@@ -5,6 +5,7 @@ import { withApiRoute } from '@/lib/api/with-api-route';
 import { reconcileExport } from '@/lib/services/payroll-export';
 import { createServiceClient } from '@/lib/supabase/server';
 import { payrollReconcileSchema } from '@/lib/validators/payroll';
+import type { Json } from '@/types/supabase';
 
 const PAYROLL_ROLES = ['platform_admin', 'payroll_admin'];
 
@@ -52,10 +53,13 @@ export const POST = withApiRoute(
 
     const result = reconcileExport(exportRows, typedBody.csv_content);
 
-    // Update export status to reconciled
+    const isClean = result.mismatched === 0 && result.missing_in_adp === 0 && result.missing_in_export === 0;
     await supabase
       .from('payroll_exports')
-      .update({ status: 'reconciled' })
+      .update({
+        status: isClean ? 'reconciled' : 'completed',
+        ...(isClean ? {} : { error_log: result as unknown as Record<string, Json> }),
+      })
       .eq('id', id);
 
     logger.info('Payroll export reconciled', { exportId: id, result });

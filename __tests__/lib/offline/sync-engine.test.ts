@@ -15,7 +15,7 @@ vi.mock('@/lib/offline/store', () => ({
 
 vi.mock('@/lib/offline/conflict-resolver', () => ({
   resolveConflict: vi.fn(() => ({
-    resolved_payload: { notes: 'resolved' },
+    resolved_payload: { notes: 'resolved', project_id: 'proj-1' },
     auto_resolved: true,
     resolution_note: 'test resolution',
     create_new: false,
