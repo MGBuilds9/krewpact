@@ -2,6 +2,7 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
 import { generateRequestId } from '@/lib/request-context';
+import { resolveTenant } from '@/lib/tenant/resolve';
 
 const isPublicRoute = createRouteMatcher([
   '/auth(.*)',
@@ -65,6 +66,24 @@ export const proxy = clerkMiddleware(
     // Org-scoped path — pass through (no DB validation needed, single-org app)
     if (ORG_PATH_RE.test(pathname)) {
       return NextResponse.next({ request: { headers } });
+    }
+
+    // Tenant resolution from hostname (white-label / custom domain support)
+    const tenant = await resolveTenant(req.headers.get('host') ?? '');
+    if (tenant) {
+      const requestHeaders = new Headers(req.headers);
+      requestHeaders.set('x-request-id', requestId);
+      requestHeaders.set('x-tenant-org-id', tenant.orgId);
+      requestHeaders.set('x-tenant-org-slug', tenant.orgSlug);
+      requestHeaders.set('x-tenant-branding', JSON.stringify(tenant.branding));
+
+      const url = req.nextUrl.clone();
+      if (url.pathname === '/' || url.pathname === '/dashboard') {
+        url.pathname = `/org/${tenant.orgSlug}`;
+        return NextResponse.redirect(url);
+      }
+
+      return NextResponse.next({ request: { headers: requestHeaders } });
     }
 
     // Authenticated user on a bare path (e.g., /dashboard, /crm/leads)

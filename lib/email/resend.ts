@@ -2,6 +2,9 @@
  * Resend email client for transactional outreach.
  */
 
+import type { BrandingConfig } from '@/lib/validators/branding';
+import { wrapInBrandedTemplate } from './branded-template';
+
 interface SendEmailParams {
   to: string;
   subject: string;
@@ -9,6 +12,7 @@ interface SendEmailParams {
   text?: string;
   replyTo?: string;
   from?: string;
+  branding?: BrandingConfig;
 }
 
 interface SendEmailResult {
@@ -25,7 +29,11 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
     return { id: '', success: false, error: 'RESEND_API_KEY not configured' };
   }
 
-  const from = params.from ?? process.env.RESEND_FROM_EMAIL ?? DEFAULT_FROM;
+  const senderName = params.branding?.company_name;
+  const defaultFrom = senderName
+    ? `${senderName} <noreply@updates.krewpact.com>`
+    : DEFAULT_FROM;
+  const from = params.from ?? process.env.RESEND_FROM_EMAIL ?? defaultFrom;
 
   const testOverride = process.env.NODE_ENV !== 'production' ? process.env.ALERT_EMAIL : undefined;
   const recipient = testOverride ?? params.to;
@@ -42,7 +50,7 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
         from,
         to: [recipient],
         subject: params.subject,
-        html: params.html,
+        html: params.branding ? wrapInBrandedTemplate(params.html, params.branding) : params.html,
         text: params.text,
         reply_to: params.replyTo,
       }),
