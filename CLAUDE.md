@@ -331,25 +331,23 @@ Architecture docs in `docs/architecture/`: `Master-Plan.md` (scope), `Technology
 
 ## Session Log
 
+### Mar 30, 2026 — CRM Pipeline Reorder + Gap-Hunter Full Remediation (21 findings)
+
+- **Changes:** (1) **Pipeline reorder:** New→Qualified→Contacted→Proposal→Negotiation→Won (qualify before contacting). History-aware progress bar using `lead_stage_history` (skipped stages shown dashed). Auto-promote to Contacted on first outreach (sequences, bulk, manual). Removed broken `STATUS_TO_STAGE` mapping. (2) **Gap-hunter CRM audit (21 findings, all fixed):** P0: timing-unsafe cron auth (===→timingSafeEqual), bulk stage bypass (now validates transitions), outreach POST auto-contacted, dead `lead_stage` enum values purged. P1: metrics `qualifiedStages` fixed, shared `LEAD_PIPELINE_STAGES` constant, FlowBuilder/BulkActionBar use shared constants+dropdown, export column allowlist. P2: error/loading boundaries for 5 CRM routes, `changed_by` in stage history, dashboard KPI skeletons, score+rescore consolidated. (3) **50 files changed**, 975 insertions, 430 deletions.
+- **Decisions:** Pipeline order matches MDM construction workflow (qualify=desk research before outreach). Stage history drives progress bar (not linear index assumption). `maybePromoteToContacted` only promotes from `qualified` (optimistic lock). Dead `lead_stage` DB enum NOT dropped yet — still referenced by `leads.stage` column, needs separate migration.
+- **Tests:** 5,223/5,223 passing (489 files, -1 from rescore test deletion). 0 TS errors. 0 lint errors.
+- **Next:** Vercel wildcard domain setup. VERCEL_TOKEN env vars. Drop dead `lead_stage` DB enum (needs migration to remove `leads.stage` column). Apple Developer account for EAS builds. ERPNext live smoke test.
+
 ### Mar 30, 2026 — Gap-Hunter V2 + P3 White-Label + Validation
 
-- **Changes:** (1) **Gap-hunter v2 audit (17 findings):** Fixed 14, downgraded 2 (false positives), deferred 1. P0: migration ordering (has_any_role before payroll, duplicate prefix). P1: payroll division filter, employee name enrichment, department label, RLS on export rows, conditional reconciliation, RFC 4180 CSV parser. P2: sync engine project_id guard, payroll error boundary, adp_field_mappings RLS, ADP employee code column, web sync Bearer auth, DELETE policy. (2) **CSO security audit (6 findings):** BoldSign webhook bypass, QStash dev bypass, CI action pinning, RAG prompt injection defense, ERPNext replay protection. (3) **Merged to main + pushed.** (4) **Validation scripts:** ERPNext smoke test (12 doctypes), ADP field test readiness. (5) **White-label (full P3 build):** Branding Zod schema + migration (subdomain/custom_domain columns), tenant resolver with 60s cache in proxy.ts, CSS variable injection in root layout (generateMetadata conversion), branding admin API + settings page, custom domain management via Vercel API, branded email templates with Resend. (6) **Mobile:** Fixed missing expo-sqlite dependency, verified Expo Go launches (needs Apple Developer account for EAS builds).
-- **Decisions:** White-label is a config/theme layer on existing multi-org foundation (no new repo). Subdomain routing as default, custom domains as premium (platform_admin only). Tenant resolution cached in-memory (60s TTL) to avoid Supabase query on every request. M365 email/calendar already complete (Clerk OAuth delegation). Mock ERP files are intentional architecture (isMockMode gate), not dead code. usePayroll raw fetch is correct (apiFetch can't handle text/FormData responses).
-- **Tests:** 5,224/5,224 passing (490 files, +26 from session start). 0 TS errors. 0 lint errors.
-- **Next:** Set up Vercel wildcard domain (*.krewpact.com). Set VERCEL_TOKEN/PROJECT_ID env vars for custom domains. Apple Developer account for EAS builds. ERPNext live smoke test (script ready, need real credentials). ADP field test with real CSV.
+- **Changes:** Gap-hunter v2 (14/17 fixed), CSO security audit (6 fixes), white-label P3 (tenant resolver, branding CSS, custom domains via Vercel API), validation scripts, mobile expo-sqlite fix.
+- **Tests:** 5,224/5,224 passing. 0 TS errors.
 
-### Mar 30, 2026 — CSO Security Audit + Full Remediation (gstack /cso)
-
-- **Changes:** gstack CSO audit (14 phases). 6 findings fixed: BoldSign webhook bypass, QStash dev bypass, CI pinning, RAG prompt injection, ERPNext replay protection.
-- **Tests:** 5,199/5,199 passing. 0 TS errors.
-
-- Mar 29: Complete P2 buildout (ADP CSV, 43 ERPNext mappings, Offline/PWA, Mobile Expo) + gap-hunter remediation (27 findings, 7 fixed). 5,198 tests.
-- Mar 29 (early): Blueprint audit v2 (95/100), P2 tooling setup.
-- Mar 28: Full codebase cleanup (193 files, -10K lines) + DB production hardening. 4,799 tests.
-- Mar 28: Repo sanitization (PII removal, contributor readiness, portal RLS). 4,799 tests.
-- Mar 27: RBAC overhaul (dual-write roles, admin lockout fix, role management UI). 4,851 tests.
-- Mar 27: A-Z audit, agent teams, P2 buildout planning, gap audit.
-- Mar 25-26: Production hardening, BetterStack monitors, go-live audit. 4,715 tests.
-- Mar 25: Full platform completion — 5/5 P1 epics, all 17 flags enabled. 4,568 tests.
+- Mar 30: CSO security audit (14 phases, 6 findings fixed). 5,199 tests.
+- Mar 29: P2 buildout (ADP CSV, 43 ERPNext mappings, Offline/PWA, Mobile Expo). 5,198 tests.
+- Mar 28: Codebase cleanup (-10K lines) + DB hardening + repo sanitization. 4,799 tests.
+- Mar 27: RBAC overhaul + A-Z audit + P2 planning. 4,851 tests.
+- Mar 25-26: Production hardening, go-live. 4,715 tests.
+- Mar 25: Full platform completion — 5/5 P1 epics, 17 flags. 4,568 tests.
 
 @AGENTS.md
