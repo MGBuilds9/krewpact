@@ -331,23 +331,22 @@ Architecture docs in `docs/architecture/`: `Master-Plan.md` (scope), `Technology
 
 ## Session Log
 
+### Mar 30, 2026 — Repo Cleanup + Branch Merge + Multi-Tenant Strategy + Codex Review
+
+- **Changes:** (1) **Branch cleanup:** Deleted 13 stale branches (1 merged, 1 empty, 11 superseded worktree branches). Merged 3 with real work: P3 white-label (tenant resolver, branding CSS, custom domains, branded emails), table name fixes, N+1 perf fix. (2) **Data sanitization:** Replaced real MDM company/division names with "Acme" in test fixtures and seed data. Moved hardcoded production UUIDs in inventory migration to env vars. Removed hardcoded test password fallback. (3) **Multi-tenant strategy:** /office-hours (startup mode, design doc approved 8/10), /plan-ceo-review (HOLD SCOPE, 5 amendments), /codex review (4 findings: 1 P1 cross-org security, 3 P2 bugs). (4) **Codex fixes:** Added org ownership verification to branding/domain APIs, Vercel domain rollback on DB failure, fixed bulk stage history column mismatch, fixed branding schema empty string validation.
+- **Decisions:** Approach B (Tenant-Ready MVP) chosen over Developer-First or Full Multi-Tenant. JWT-only auth (no env fallback, outside voice accepted). Feature flag gating at nav + route level. AI RLS fix must deploy first. ERPNext sync handlers get config swap (not guard), keeping flexibility for per-org ERP config later. Delete order reversed for domain handler (DB first, Vercel second). Wedge: estimates-to-projects for second customer, full platform gated by feature flags.
+- **Tests:** 5,223/5,223 passing (489 files). 0 TS errors. 0 lint errors.
+- **Next:** Execute multi-tenancy plan (Phase 1: AI RLS fix, then org resolution, hardcoded MDM removal, feature flag gating). Then developer onboarding docs. Then user observation setup. /plan-eng-review before implementation.
+
 ### Mar 30, 2026 — CRM Pipeline Reorder + Gap-Hunter Full Remediation (21 findings)
 
-- **Changes:** (1) **Pipeline reorder:** New→Qualified→Contacted→Proposal→Negotiation→Won (qualify before contacting). History-aware progress bar using `lead_stage_history` (skipped stages shown dashed). Auto-promote to Contacted on first outreach (sequences, bulk, manual). Removed broken `STATUS_TO_STAGE` mapping. (2) **Gap-hunter CRM audit (21 findings, all fixed):** P0: timing-unsafe cron auth (===→timingSafeEqual), bulk stage bypass (now validates transitions), outreach POST auto-contacted, dead `lead_stage` enum values purged. P1: metrics `qualifiedStages` fixed, shared `LEAD_PIPELINE_STAGES` constant, FlowBuilder/BulkActionBar use shared constants+dropdown, export column allowlist. P2: error/loading boundaries for 5 CRM routes, `changed_by` in stage history, dashboard KPI skeletons, score+rescore consolidated. (3) **50 files changed**, 975 insertions, 430 deletions.
-- **Decisions:** Pipeline order matches MDM construction workflow (qualify=desk research before outreach). Stage history drives progress bar (not linear index assumption). `maybePromoteToContacted` only promotes from `qualified` (optimistic lock). Dead `lead_stage` DB enum NOT dropped yet — still referenced by `leads.stage` column, needs separate migration.
-- **Tests:** 5,223/5,223 passing (489 files, -1 from rescore test deletion). 0 TS errors. 0 lint errors.
-- **Next:** Vercel wildcard domain setup. VERCEL_TOKEN env vars. Drop dead `lead_stage` DB enum (needs migration to remove `leads.stage` column). Apple Developer account for EAS builds. ERPNext live smoke test.
+- **Changes:** Pipeline reorder (New→Qualified→Contacted→Proposal→Negotiation→Won). Gap-hunter CRM audit (21 findings, all fixed). 50 files changed.
+- **Tests:** 5,223/5,223 passing. 0 TS errors.
 
-### Mar 30, 2026 — Gap-Hunter V2 + P3 White-Label + Validation
-
-- **Changes:** Gap-hunter v2 (14/17 fixed), CSO security audit (6 fixes), white-label P3 (tenant resolver, branding CSS, custom domains via Vercel API), validation scripts, mobile expo-sqlite fix.
-- **Tests:** 5,224/5,224 passing. 0 TS errors.
-
-- Mar 30: CSO security audit (14 phases, 6 findings fixed). 5,199 tests.
+- Mar 30: Gap-hunter v2 + P3 white-label + CSO security audit. 5,224 tests.
 - Mar 29: P2 buildout (ADP CSV, 43 ERPNext mappings, Offline/PWA, Mobile Expo). 5,198 tests.
-- Mar 28: Codebase cleanup (-10K lines) + DB hardening + repo sanitization. 4,799 tests.
+- Mar 28: Codebase cleanup (-10K lines) + DB hardening. 4,799 tests.
 - Mar 27: RBAC overhaul + A-Z audit + P2 planning. 4,851 tests.
 - Mar 25-26: Production hardening, go-live. 4,715 tests.
-- Mar 25: Full platform completion — 5/5 P1 epics, 17 flags. 4,568 tests.
 
 @AGENTS.md
