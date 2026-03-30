@@ -331,24 +331,20 @@ Architecture docs in `docs/architecture/`: `Master-Plan.md` (scope), `Technology
 
 ## Session Log
 
+### Mar 30, 2026 — Gap-Hunter V2 + P3 White-Label + Validation
+
+- **Changes:** (1) **Gap-hunter v2 audit (17 findings):** Fixed 14, downgraded 2 (false positives), deferred 1. P0: migration ordering (has_any_role before payroll, duplicate prefix). P1: payroll division filter, employee name enrichment, department label, RLS on export rows, conditional reconciliation, RFC 4180 CSV parser. P2: sync engine project_id guard, payroll error boundary, adp_field_mappings RLS, ADP employee code column, web sync Bearer auth, DELETE policy. (2) **CSO security audit (6 findings):** BoldSign webhook bypass, QStash dev bypass, CI action pinning, RAG prompt injection defense, ERPNext replay protection. (3) **Merged to main + pushed.** (4) **Validation scripts:** ERPNext smoke test (12 doctypes), ADP field test readiness. (5) **White-label (full P3 build):** Branding Zod schema + migration (subdomain/custom_domain columns), tenant resolver with 60s cache in proxy.ts, CSS variable injection in root layout (generateMetadata conversion), branding admin API + settings page, custom domain management via Vercel API, branded email templates with Resend. (6) **Mobile:** Fixed missing expo-sqlite dependency, verified Expo Go launches (needs Apple Developer account for EAS builds).
+- **Decisions:** White-label is a config/theme layer on existing multi-org foundation (no new repo). Subdomain routing as default, custom domains as premium (platform_admin only). Tenant resolution cached in-memory (60s TTL) to avoid Supabase query on every request. M365 email/calendar already complete (Clerk OAuth delegation). Mock ERP files are intentional architecture (isMockMode gate), not dead code. usePayroll raw fetch is correct (apiFetch can't handle text/FormData responses).
+- **Tests:** 5,224/5,224 passing (490 files, +26 from session start). 0 TS errors. 0 lint errors.
+- **Next:** Set up Vercel wildcard domain (*.krewpact.com). Set VERCEL_TOKEN/PROJECT_ID env vars for custom domains. Apple Developer account for EAS builds. ERPNext live smoke test (script ready, need real credentials). ADP field test with real CSV.
+
 ### Mar 30, 2026 — CSO Security Audit + Full Remediation (gstack /cso)
 
-- **Changes:** Installed gstack (Garry Tan's dev framework, 29 skills). Ran full `/cso` audit (14 phases: stack detection, attack surface census, secrets archaeology, dependency supply chain, CI/CD pipeline, infrastructure, webhooks, LLM/AI, skill supply chain, OWASP Top 10, STRIDE, data classification, FP filtering, report). Found 6 findings (3 HIGH, 3 MEDIUM), fixed all 6: (1) BoldSign webhook signature bypass — `signature &&` → `!signature ||` mandatory check. (2) QStash verify dev bypass removed — always reject when signing keys missing. (3) trufflehog@main pinned to SHA v3.94.1. (4) RAG knowledge chat prompt injection defense — `<context>` XML delimiters + anti-injection instruction. (5) ERPNext webhook replay protection — Redis dedup with 5-min TTL (fails open). (6) setup-deno + fetch-metadata pinned to SHAs. Also: payroll reconciliation improvements, offline sync engine fixes, migration renumbering, `.gstack/` added to .gitignore.
-- **Decisions:** gstack installed globally at `~/.claude/skills/gstack/` (not project-local). CSO daily mode (8/10 confidence gate) filters noise effectively — 42 candidates → 6 reported. Redis dedup for ERPNext webhooks chosen over new DB table (lighter, already have Upstash). RAG prompt injection is MEDIUM not HIGH due to 2-role gate (executive/platform_admin only). ERPNext shared-secret replay is acceptable risk given Cloudflare Tunnel isolation — dedup is defense-in-depth.
-- **Tests:** 5,199/5,199 passing (486 files, +1 from session start). 0 TS errors. 0 lint errors.
-- **Next:** Merge fix/gap-hunter-v2-remediation to main. ERPNext live smoke test. Mobile EAS build. Consider `/cso --comprehensive` monthly deep scan.
+- **Changes:** gstack CSO audit (14 phases). 6 findings fixed: BoldSign webhook bypass, QStash dev bypass, CI pinning, RAG prompt injection, ERPNext replay protection.
+- **Tests:** 5,199/5,199 passing. 0 TS errors.
 
-### Mar 29, 2026 — Complete P2 Buildout + Gap-Hunter Remediation
-
-- **Changes:** (1) **P2 Phase 1 (ADP CSV):** Payroll export service, 3 API routes, Zod validators, migration (3 tables + RLS). (2) **P2 Phase 2 (ERPNext):** All 31 remaining doctype mappings in 4 batches (2A procurement, 2B finance, 2C manufacturing, 2D HR/org) — 43/43 total. Each batch: mappers, sync handlers, mock responses, processor entries, tests. (3) **P2 Phase 3 (Offline/PWA):** IndexedDB store via `idb`, sync engine with per-entity conflict resolution, online detector, 4 React hooks, enhanced service worker. (4) **P2 Phase 4 (Mobile Expo):** 6-tab navigation, daily logs/time/safety/photos screens, SQLite offline store (ported from Phase 3), camera + compression, background sync, push notifications. (5) **DB hardening:** `has_any_role()` function, payroll tables + storage bucket, 5 duplicate indexes dropped, `smoke_test_results` truncated, VACUUM ANALYZE. (6) **Gap-hunter remediation (27 findings, 7 critical/high fixed):** Version columns + auto-increment triggers on 4 offline tables, parameterized endpoint map (was flat → 404), auth on sync fetch (web `credentials: 'include'`, mobile Bearer token injection), version-conflict 409 responses on 3 PATCH routes, 9 orphaned sync handlers wired to queue, payroll UI page + nav entry. (7) Removed stale TODO casts from payroll routes, verified executive metrics already wired to RPCs.
-- **Decisions:** ERPNext GL Entry and Mode of Payment are read-only (never push back). Photos use `always_keep_both` conflict strategy (never discard field photos). `syncMaterialCost` gets special queue handler (options object, not standard entity pattern). Offline sync engine interface designed as portable (IndexedDB on web, SQLite on mobile — same API). `has_any_role()` wraps `krewpact_roles()` JSONB with `jsonb_array_elements_text`. gstack not installed — gap-hunter agent covers the security audit need.
-- **Tests:** 5,198/5,198 passing (486 files). 0 TS errors. 0 lint errors.
-- **Next:** ERPNext live integration smoke test against real instance. Mobile EAS build (iOS + Android dev client). ADP field test with real acknowledgment CSV. White-label / multi-tenant architecture (P3).
-
-### Mar 29, 2026 — Blueprint Audit v2 + Gap Remediation + P2 Tooling Setup
-
-- Mar 29 (early): Blueprint audit v2 (95/100), restored migration sub-tables, P2 tooling (Repomix + Codebase Memory MCP), master plan created.
-
+- Mar 29: Complete P2 buildout (ADP CSV, 43 ERPNext mappings, Offline/PWA, Mobile Expo) + gap-hunter remediation (27 findings, 7 fixed). 5,198 tests.
+- Mar 29 (early): Blueprint audit v2 (95/100), P2 tooling setup.
 - Mar 28: Full codebase cleanup (193 files, -10K lines) + DB production hardening. 4,799 tests.
 - Mar 28: Repo sanitization (PII removal, contributor readiness, portal RLS). 4,799 tests.
 - Mar 27: RBAC overhaul (dual-write roles, admin lockout fix, role management UI). 4,851 tests.
