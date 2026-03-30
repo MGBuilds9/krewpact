@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { brandingSchema, DEFAULT_BRANDING } from '@/lib/validators/branding';
 
 describe('brandingSchema', () => {

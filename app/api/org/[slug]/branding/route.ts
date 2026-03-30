@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
-import { dbError, notFound } from '@/lib/api/errors';
+import { dbError, forbidden, notFound } from '@/lib/api/errors';
+import { getKrewpactOrgId } from '@/lib/api/org';
 import { withApiRoute } from '@/lib/api/with-api-route';
 import { createServiceClient } from '@/lib/supabase/server';
 import { brandingSchema } from '@/lib/validators/branding';
@@ -19,6 +20,9 @@ export const GET = withApiRoute({ roles: ALLOWED_ROLES }, async ({ params }) => 
     .single();
 
   if (orgError || !org) throw notFound('Organization');
+
+  const callerOrgId = await getKrewpactOrgId();
+  if (callerOrgId && callerOrgId !== org.id) throw forbidden('You do not belong to this organization');
 
   const { data: settings, error } = await serviceClient
     .from('org_settings')
@@ -45,6 +49,9 @@ export const PATCH = withApiRoute(
       .single();
 
     if (orgError || !org) throw notFound('Organization');
+
+    const callerOrgId = await getKrewpactOrgId();
+    if (callerOrgId && callerOrgId !== org.id) throw forbidden('You do not belong to this organization');
 
     const { data: existing } = await serviceClient
       .from('org_settings')

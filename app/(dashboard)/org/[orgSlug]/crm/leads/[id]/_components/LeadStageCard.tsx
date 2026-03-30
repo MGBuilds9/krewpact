@@ -2,7 +2,7 @@
 
 import { ArrowRight, XCircle, Zap } from 'lucide-react';
 
-import { StageProgressBar, type StageHistoryEntry } from '@/components/CRM/StageProgressBar';
+import { type StageHistoryEntry,StageProgressBar } from '@/components/CRM/StageProgressBar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import type { LeadStage } from '@/lib/crm/lead-stages';

@@ -67,7 +67,6 @@ async function handleBulkStage(
   if (validIds.length === 0)
     return NextResponse.json({ data: { updated: 0, skipped: ids.length } });
 
-  const now = new Date().toISOString();
   const [updateResult, historyResult] = await Promise.all([
     supabase.from('leads').update({ status: newStage }).in('id', validIds),
     supabase.from('lead_stage_history').insert(
@@ -75,7 +74,6 @@ async function handleBulkStage(
         lead_id: id,
         from_stage: (current ?? []).find((l) => l.id === id)?.status ?? null,
         to_stage: newStage,
-        changed_at: now,
         changed_by: userId,
       })),
     ),

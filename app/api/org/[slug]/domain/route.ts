@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { dbError, notFound } from '@/lib/api/errors';
+import { dbError, forbidden, notFound } from '@/lib/api/errors';
+import { getKrewpactOrgId } from '@/lib/api/org';
 import { withApiRoute } from '@/lib/api/with-api-route';
 import { createServiceClient } from '@/lib/supabase/server';
 import { addCustomDomain, removeCustomDomain } from '@/lib/tenant/domains';
@@ -32,6 +33,9 @@ export const POST = withApiRoute(
 
     if (orgError || !org) throw notFound('Organization');
 
+    const callerOrgId = await getKrewpactOrgId();
+    if (callerOrgId && callerOrgId !== org.id) throw forbidden('You do not belong to this organization');
+
     const result = await addCustomDomain(domain);
     if (!result.success) {
       logger.error('Failed to add custom domain via Vercel', { domain, error: result.error });
@@ -43,7 +47,11 @@ export const POST = withApiRoute(
       .update({ custom_domain: domain })
       .eq('id', org.id);
 
-    if (updateError) throw dbError(updateError.message);
+    if (updateError) {
+      logger.error('DB update failed after Vercel domain add, rolling back', { domain });
+      await removeCustomDomain(domain).catch(() => {});
+      throw dbError(updateError.message);
+    }
 
     return NextResponse.json({ custom_domain: domain });
   },
@@ -65,11 +73,8 @@ export const DELETE = withApiRoute(
 
     if (orgError || !org) throw notFound('Organization');
 
-    const result = await removeCustomDomain(domain);
-    if (!result.success) {
-      logger.error('Failed to remove custom domain via Vercel', { domain, error: result.error });
-      return NextResponse.json({ error: result.error ?? 'Failed to remove domain' }, { status: 502 });
-    }
+    const callerOrgId = await getKrewpactOrgId();
+    if (callerOrgId && callerOrgId !== org.id) throw forbidden('You do not belong to this organization');
 
     const { error: updateError } = await serviceClient
       .from('organizations')
@@ -77,6 +82,11 @@ export const DELETE = withApiRoute(
       .eq('id', org.id);
 
     if (updateError) throw dbError(updateError.message);
+
+    const result = await removeCustomDomain(domain);
+    if (!result.success) {
+      logger.warn('Vercel domain removal failed after DB clear, manual cleanup needed', { domain, error: result.error });
+    }
 
     return NextResponse.json({ custom_domain: null });
   },

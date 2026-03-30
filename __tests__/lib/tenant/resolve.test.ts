@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach,describe, expect, it, vi } from 'vitest';
 
 // ---------------------------------------------------------------------------
 // Unit tests for hostname parsing logic in lib/tenant/resolve.ts
