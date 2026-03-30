@@ -331,6 +331,13 @@ Architecture docs in `docs/architecture/`: `Master-Plan.md` (scope), `Technology
 
 ## Session Log
 
+### Mar 30, 2026 — CSO Security Audit + Full Remediation (gstack /cso)
+
+- **Changes:** Installed gstack (Garry Tan's dev framework, 29 skills). Ran full `/cso` audit (14 phases: stack detection, attack surface census, secrets archaeology, dependency supply chain, CI/CD pipeline, infrastructure, webhooks, LLM/AI, skill supply chain, OWASP Top 10, STRIDE, data classification, FP filtering, report). Found 6 findings (3 HIGH, 3 MEDIUM), fixed all 6: (1) BoldSign webhook signature bypass — `signature &&` → `!signature ||` mandatory check. (2) QStash verify dev bypass removed — always reject when signing keys missing. (3) trufflehog@main pinned to SHA v3.94.1. (4) RAG knowledge chat prompt injection defense — `<context>` XML delimiters + anti-injection instruction. (5) ERPNext webhook replay protection — Redis dedup with 5-min TTL (fails open). (6) setup-deno + fetch-metadata pinned to SHAs. Also: payroll reconciliation improvements, offline sync engine fixes, migration renumbering, `.gstack/` added to .gitignore.
+- **Decisions:** gstack installed globally at `~/.claude/skills/gstack/` (not project-local). CSO daily mode (8/10 confidence gate) filters noise effectively — 42 candidates → 6 reported. Redis dedup for ERPNext webhooks chosen over new DB table (lighter, already have Upstash). RAG prompt injection is MEDIUM not HIGH due to 2-role gate (executive/platform_admin only). ERPNext shared-secret replay is acceptable risk given Cloudflare Tunnel isolation — dedup is defense-in-depth.
+- **Tests:** 5,199/5,199 passing (486 files, +1 from session start). 0 TS errors. 0 lint errors.
+- **Next:** Merge fix/gap-hunter-v2-remediation to main. ERPNext live smoke test. Mobile EAS build. Consider `/cso --comprehensive` monthly deep scan.
+
 ### Mar 29, 2026 — Complete P2 Buildout + Gap-Hunter Remediation
 
 - **Changes:** (1) **P2 Phase 1 (ADP CSV):** Payroll export service, 3 API routes, Zod validators, migration (3 tables + RLS). (2) **P2 Phase 2 (ERPNext):** All 31 remaining doctype mappings in 4 batches (2A procurement, 2B finance, 2C manufacturing, 2D HR/org) — 43/43 total. Each batch: mappers, sync handlers, mock responses, processor entries, tests. (3) **P2 Phase 3 (Offline/PWA):** IndexedDB store via `idb`, sync engine with per-entity conflict resolution, online detector, 4 React hooks, enhanced service worker. (4) **P2 Phase 4 (Mobile Expo):** 6-tab navigation, daily logs/time/safety/photos screens, SQLite offline store (ported from Phase 3), camera + compression, background sync, push notifications. (5) **DB hardening:** `has_any_role()` function, payroll tables + storage bucket, 5 duplicate indexes dropped, `smoke_test_results` truncated, VACUUM ANALYZE. (6) **Gap-hunter remediation (27 findings, 7 critical/high fixed):** Version columns + auto-increment triggers on 4 offline tables, parameterized endpoint map (was flat → 404), auth on sync fetch (web `credentials: 'include'`, mobile Bearer token injection), version-conflict 409 responses on 3 PATCH routes, 9 orphaned sync handlers wired to queue, payroll UI page + nav entry. (7) Removed stale TODO casts from payroll routes, verified executive metrics already wired to RPCs.
@@ -342,19 +349,11 @@ Architecture docs in `docs/architecture/`: `Master-Plan.md` (scope), `Technology
 
 - Mar 29 (early): Blueprint audit v2 (95/100), restored migration sub-tables, P2 tooling (Repomix + Codebase Memory MCP), master plan created.
 
-### Mar 28, 2026 — Full Codebase Cleanup + Database Production Hardening
-
-- **Changes:** (1) **Codebase cleanup (3 waves, 193 files, -10,113 net lines):** Wave 1: Declarative RBAC in `withApiRoute` (26 routes migrated), feature flag removal (all 17 flags, 30 files deleted), role registry consolidation (6 duplicate arrays → 1), org simplification (removed `getOrgIdFromAuth` from 13 routes), quality fixes (AI model registry, rate limits, QStash alerting, dashboard rename, query keys). Wave 2: Error handling consistency (36 routes fixed from raw to structured), dead code removal (deleted dead exports, routes, stale scripts). Wave 3: Finance `requireRole` migration (9 routes), `bodySchema` wiring (17 routes), `querySchema` wiring (8 routes). (2) **Database hardening (applied to live Supabase):** CRITICAL: dropped `contacts_anon_select` (PII leak to anonymous). Replaced knowledge tables public ALL with auth read + service write. Fixed `lead_workstation_notes` public ALL. Tightened `entity_tags` delete to admin, `notes` insert to author. Added policies to 4 tables with zero policies. Fixed 16 functions mutable `search_path`. Added 10 missing indexes (activities FKs, sequence_enrollments, opportunities). Dropped 6 dead tables. Created 8 missing tables. Created 4 executive metrics RPCs. (3) **App code perf:** Fixed N+1 in sequence processor (batch-fetch steps). Replaced 16 bare `select('*')` with explicit columns. Removed `exec_sql` RPC fallback. Fixed 5 table name mismatches.
-- **Decisions:** Division-scoped data model (org_id removed from queries, RLS handles scoping). Feature flags removed entirely (all shipped — add PostHog flags when needed). `withApiRoute` is now the single entry point for auth, RBAC, validation, and rate limiting. 2 routes kept manual `safeParse` (state-machine pre-read, param injection). Extensions in public schema left as-is (Supabase default, low risk). `activities_insert` and `audit_logs_insert` WITH CHECK(true) are intentional (any authenticated user should log activities).
-- **Tests:** 4,799/4,799 passing (435 files). 0 type errors. 0 lint errors.
-- **Next:** Wire `lib/executive/metrics.ts` to use the new RPCs (created in DB but app code still uses full-table JS aggregation). Update Supabase generated types (`supabase gen types typescript`). Remaining P2: offline/PWA, mobile Expo, ADP, white-label.
-
-- Mar 28: Repo sanitization (PII removal, contributor readiness, portal RLS). 4,799 tests.
 - Mar 28: Full codebase cleanup (193 files, -10K lines) + DB production hardening. 4,799 tests.
+- Mar 28: Repo sanitization (PII removal, contributor readiness, portal RLS). 4,799 tests.
 - Mar 27: RBAC overhaul (dual-write roles, admin lockout fix, role management UI). 4,851 tests.
 - Mar 27: A-Z audit, agent teams, P2 buildout planning, gap audit.
 - Mar 25-26: Production hardening, BetterStack monitors, go-live audit. 4,715 tests.
 - Mar 25: Full platform completion — 5/5 P1 epics, all 17 flags enabled. 4,568 tests.
-- Mar 23-24: Playbook v2 + KrewPact docs rewrite + production UX fixes. 4,316 tests.
 
 @AGENTS.md
