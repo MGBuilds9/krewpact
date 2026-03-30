@@ -3,6 +3,7 @@
  */
 
 import type { BrandingConfig } from '@/lib/validators/branding';
+
 import { wrapInBrandedTemplate } from './branded-template';
 
 interface SendEmailParams {

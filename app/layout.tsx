@@ -9,8 +9,8 @@ import { headers } from 'next/headers';
 import { Toaster } from 'sonner';
 
 import { ThemeProvider } from '@/components/theme-provider';
-import { brandingToCSS } from '@/lib/tenant/branding-css';
 import { QueryProvider } from '@/lib/query-client';
+import { brandingToCSS } from '@/lib/tenant/branding-css';
 import type { BrandingConfig } from '@/lib/validators/branding';
 
 // Clerk requires valid keys at render time — force dynamic rendering
@@ -111,7 +111,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <link rel="apple-touch-icon" href="/icon-192.png" />
           {/* tenantCSS is generated from validated hex colors only — safe to inject */}
           {tenantCSS ? (
-            // eslint-disable-next-line react/no-danger
             <style dangerouslySetInnerHTML={{ __html: tenantCSS }} />
           ) : null}
         </head>
