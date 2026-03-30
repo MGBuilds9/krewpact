@@ -5954,34 +5954,40 @@ export type Database = {
       organizations: {
         Row: {
           created_at: string
+          custom_domain: string | null
           id: string
           locale: string
           metadata: Json
           name: string
           slug: string
           status: string
+          subdomain: string | null
           timezone: string
           updated_at: string
         }
         Insert: {
           created_at?: string
+          custom_domain?: string | null
           id?: string
           locale?: string
           metadata?: Json
           name: string
           slug: string
           status?: string
+          subdomain?: string | null
           timezone?: string
           updated_at?: string
         }
         Update: {
           created_at?: string
+          custom_domain?: string | null
           id?: string
           locale?: string
           metadata?: Json
           name?: string
           slug?: string
           status?: string
+          subdomain?: string | null
           timezone?: string
           updated_at?: string
         }
