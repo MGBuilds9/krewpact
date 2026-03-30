@@ -84,7 +84,7 @@ describe('POST /api/crm/sequences/process', () => {
     const res = await POST(
       makeRequest('/api/crm/sequences/process', {
         method: 'POST',
-        headers: { 'x-cron-secret': 'test-cron-secret' },
+        headers: { authorization: 'Bearer test-cron-secret' },
       }),
     );
     expect(res.status).toBe(200);
@@ -100,7 +100,7 @@ describe('POST /api/crm/sequences/process', () => {
     const res = await POST(
       makeRequest('/api/crm/sequences/process', {
         method: 'POST',
-        headers: { 'x-cron-secret': 'wrong-secret' },
+        headers: { authorization: 'Bearer wrong-secret' },
       }),
     );
     expect(res.status).toBe(401);

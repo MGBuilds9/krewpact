@@ -7,6 +7,21 @@ import { SequenceEnrollDialog } from '@/components/CRM/SequenceEnrollDialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ConfirmReasonDialog } from '@/components/ui/confirm-reason-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { LEAD_PIPELINE_STAGES } from '@/lib/crm/lead-stages';
 
 interface BulkActionBarProps {
   selectedIds: string[];
@@ -32,6 +47,55 @@ interface BulkActionDialogsProps {
   executeBulk: (action: string, params?: Record<string, unknown>) => void;
   onActionComplete: () => void;
   onClearSelection: () => void;
+}
+
+function StageSelectDialog({
+  open,
+  onOpenChange,
+  onConfirm,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  onConfirm: (stage: string) => void;
+}) {
+  const [selected, setSelected] = useState('');
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Change Stage</DialogTitle>
+        </DialogHeader>
+        <Select value={selected} onValueChange={setSelected}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select a stage..." />
+          </SelectTrigger>
+          <SelectContent>
+            {[...LEAD_PIPELINE_STAGES, { key: 'lost', label: 'Lost' }].map((s) => (
+              <SelectItem key={s.key} value={s.key}>
+                {s.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            disabled={!selected}
+            onClick={() => {
+              if (selected) {
+                onConfirm(selected);
+                onOpenChange(false);
+              }
+            }}
+          >
+            Change Stage
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 function BulkActionDialogs({
@@ -73,15 +137,10 @@ function BulkActionDialogs({
         reasonRequired
         onConfirm={(reason) => executeBulk('tag', { tag_id: reason })}
       />
-      <ConfirmReasonDialog
+      <StageSelectDialog
         open={stageDialogOpen}
         onOpenChange={setStageDialogOpen}
-        title="Change Stage"
-        description="Enter new stage: new, contacted, qualified, proposal, negotiation, won, lost"
-        confirmLabel="Change Stage"
-        reasonLabel="Stage"
-        reasonRequired
-        onConfirm={(reason) => executeBulk('stage', { stage: reason })}
+        onConfirm={(stage) => executeBulk('stage', { stage })}
       />
       <ConfirmReasonDialog
         open={assignDialogOpen}

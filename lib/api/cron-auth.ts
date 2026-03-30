@@ -1,3 +1,5 @@
+import { timingSafeEqual } from 'node:crypto';
+
 import { NextRequest } from 'next/server';
 
 import { logger } from '@/lib/logger';
@@ -25,8 +27,14 @@ export async function verifyCronAuth(
 
   const authHeader = req.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET || process.env.WEBHOOK_SIGNING_SECRET;
-  if (cronSecret && authHeader === `Bearer ${cronSecret}`) {
-    return { authorized: true };
+  if (cronSecret && authHeader) {
+    const expected = `Bearer ${cronSecret}`;
+    if (
+      authHeader.length === expected.length &&
+      timingSafeEqual(Buffer.from(authHeader), Buffer.from(expected))
+    ) {
+      return { authorized: true };
+    }
   }
 
   logger.warn('Cron auth: No valid credentials');

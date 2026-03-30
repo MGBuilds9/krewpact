@@ -22,8 +22,8 @@ const DEFAULT_SLA_SETTINGS = {
     { stage: 'new', maxHours: 48 },
     { stage: 'contacted', maxHours: 72 },
     { stage: 'qualified', maxHours: 120 },
-    { stage: 'estimating', maxHours: 168 },
-    { stage: 'proposal_sent', maxHours: 336 },
+    { stage: 'proposal', maxHours: 168 },
+    { stage: 'negotiation', maxHours: 336 },
   ],
   opportunity_stages: [
     { stage: 'intake', maxHours: 24 },

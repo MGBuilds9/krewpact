@@ -4,6 +4,7 @@ import { dbError, notFound } from '@/lib/api/errors';
 import { withApiRoute } from '@/lib/api/with-api-route';
 import type { ScoringRule } from '@/lib/crm/scoring-engine';
 import { scoreLead } from '@/lib/crm/scoring-engine';
+import { logger } from '@/lib/logger';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 const LEAD_SELECT =
@@ -55,8 +56,9 @@ export const GET = withApiRoute({}, async ({ params }) => {
   });
 });
 
-export const POST = withApiRoute({}, async ({ params }) => {
+export const POST = withApiRoute({}, async ({ params, req }) => {
   const { id } = params;
+  const isRescore = req.nextUrl.searchParams.get('rescore') === 'true';
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -91,7 +93,10 @@ export const POST = withApiRoute({}, async ({ params }) => {
     })
     .eq('id', id);
 
-  if (updateError) throw dbError(updateError.message);
+  if (updateError) {
+    logger.error('Score update failed', { leadId: id, error: updateError.message });
+    throw dbError(updateError.message);
+  }
 
   await supabase.from('lead_score_history').insert({
     lead_id: id,
@@ -99,7 +104,7 @@ export const POST = withApiRoute({}, async ({ params }) => {
     fit_score: result.fit_score,
     intent_score: result.intent_score,
     engagement_score: result.engagement_score,
-    triggered_by: 'manual',
+    triggered_by: isRescore ? 'manual_rescore' : 'manual',
   });
 
   return NextResponse.json({

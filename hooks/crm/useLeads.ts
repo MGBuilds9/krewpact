@@ -115,6 +115,22 @@ export function useDeleteLead() {
   });
 }
 
+export interface LeadStageHistoryEntry {
+  id: string;
+  from_stage: string | null;
+  to_stage: string;
+  created_at: string;
+}
+
+export function useLeadStageHistory(leadId: string) {
+  return useQuery({
+    queryKey: queryKeys.leads.stageHistory(leadId),
+    queryFn: () => apiFetch<LeadStageHistoryEntry[]>(`/api/crm/leads/${leadId}/stage-history`),
+    enabled: !!leadId,
+    staleTime: 60_000,
+  });
+}
+
 export function useLeadStageTransition() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -123,6 +139,7 @@ export function useLeadStageTransition() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.leads.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.leads.detail(variables.id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.leads.stageHistory(variables.id) });
     },
   });
 }

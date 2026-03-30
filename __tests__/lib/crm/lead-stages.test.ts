@@ -18,12 +18,12 @@ describe('ALLOWED_TRANSITIONS', () => {
     expect(Object.keys(ALLOWED_TRANSITIONS)).toHaveLength(8);
   });
 
-  it('new transitions include contacted', () => {
-    expect(ALLOWED_TRANSITIONS.new).toContain('contacted');
+  it('new transitions include qualified', () => {
+    expect(ALLOWED_TRANSITIONS.new).toContain('qualified');
   });
 
-  it('contacted transitions to qualified and lost', () => {
-    expect(ALLOWED_TRANSITIONS.contacted).toEqual(['qualified', 'lost']);
+  it('contacted transitions to proposal, nurture, and lost', () => {
+    expect(ALLOWED_TRANSITIONS.contacted).toEqual(['proposal', 'nurture', 'lost']);
   });
 
   it('won and lost are terminal (no transitions out)', () => {
@@ -38,8 +38,13 @@ describe('validateTransition', () => {
     expect(result).toEqual({ valid: true });
   });
 
-  it('allows qualified → proposal', () => {
-    const result = validateTransition('qualified', 'proposal');
+  it('allows qualified → contacted', () => {
+    const result = validateTransition('qualified', 'contacted');
+    expect(result).toEqual({ valid: true });
+  });
+
+  it('allows contacted → proposal', () => {
+    const result = validateTransition('contacted', 'proposal');
     expect(result).toEqual({ valid: true });
   });
 

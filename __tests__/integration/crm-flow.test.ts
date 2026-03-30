@@ -71,7 +71,7 @@ describe('CRM Integration: Full happy path', () => {
 
   it('creates account → adds contact → creates lead → transitions stages → creates opportunity → logs activity → verifies pipeline', async () => {
     // Step 1: Create an account
-    const account = makeAccount({ account_name: 'Acme Contracting Ltd.' });
+    const account = makeAccount({ account_name: 'MDM Contracting Ltd.' });
     mockClerkAuth(mockAuth);
     mockCreateUserClientSafe.mockResolvedValue({
       client: mockSupabaseClient({ tables: { accounts: { data: account, error: null } } }),
@@ -80,14 +80,14 @@ describe('CRM Integration: Full happy path', () => {
 
     const accountRes = await accountsPOST(
       makeJsonRequest('/api/crm/accounts', {
-        account_name: 'Acme Contracting Ltd.',
+        account_name: 'MDM Contracting Ltd.',
         account_type: 'client',
         division_id: VALID_DIVISION_ID,
       }),
     );
     expect(accountRes.status).toBe(201);
     const accountData = await accountRes.json();
-    expect(accountData.account_name).toBe('Acme Contracting Ltd.');
+    expect(accountData.account_name).toBe('MDM Contracting Ltd.');
 
     // Step 2: Add a primary contact to the account
     const contact = makeContact({
@@ -132,7 +132,7 @@ describe('CRM Integration: Full happy path', () => {
     );
     expect(leadRes.status).toBe(201);
 
-    // Step 4: Transition lead new → contacted
+    // Step 4: Transition lead new → qualified
     // Mock returns lead at current stage 'new' (route fetches current then updates)
     const newLead = makeLead({ status: 'new' });
     mockCreateUserClientSafe.mockResolvedValue({
@@ -141,21 +141,21 @@ describe('CRM Integration: Full happy path', () => {
     });
 
     const transitionRes1 = await leadStagePOST(
-      makeJsonRequest('/api/crm/leads/stage', { status: 'contacted' }),
+      makeJsonRequest('/api/crm/leads/stage', { status: 'qualified' }),
       makeContext(lead.id),
     );
     expect(transitionRes1.status).toBe(200);
 
-    // Step 5: Transition lead contacted → qualified
-    // Mock returns lead at current stage 'contacted'
-    const contactedLead = makeLead({ status: 'contacted' });
+    // Step 5: Transition lead qualified → contacted
+    // Mock returns lead at current stage 'qualified'
+    const qualifiedLead = makeLead({ status: 'qualified' });
     mockCreateUserClientSafe.mockResolvedValue({
-      client: mockSupabaseClient({ tables: { leads: { data: contactedLead, error: null } } }),
+      client: mockSupabaseClient({ tables: { leads: { data: qualifiedLead, error: null } } }),
       error: null,
     });
 
     const transitionRes2 = await leadStagePOST(
-      makeJsonRequest('/api/crm/leads/stage', { status: 'qualified' }),
+      makeJsonRequest('/api/crm/leads/stage', { status: 'contacted' }),
       makeContext(lead.id),
     );
     expect(transitionRes2.status).toBe(200);
@@ -475,7 +475,7 @@ describe('CRM Integration: Search', () => {
   });
 
   it('search accounts returns matching results', async () => {
-    const matchingAccounts = [makeAccount({ account_name: 'Acme Contracting' })];
+    const matchingAccounts = [makeAccount({ account_name: 'MDM Contracting' })];
     mockClerkAuth(mockAuth);
     mockCreateUserClientSafe.mockResolvedValue({
       client: mockSupabaseClient({ tables: { accounts: { data: matchingAccounts, error: null } } }),
@@ -486,7 +486,7 @@ describe('CRM Integration: Search', () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.data).toHaveLength(1);
-    expect(body.data[0].account_name).toBe('Acme Contracting');
+    expect(body.data[0].account_name).toBe('MDM Contracting');
   });
 
   it('search with no matches returns empty array', async () => {
@@ -577,8 +577,8 @@ describe('CRM Integration: Lead stage progression', () => {
     resetFixtureCounter();
   });
 
-  it('lead progresses through full lifecycle: new→contacted→qualified→proposal→negotiation→won', async () => {
-    const stages = ['new', 'contacted', 'qualified', 'proposal', 'negotiation', 'won'] as const;
+  it('lead progresses through full lifecycle: new→qualified→contacted→proposal→negotiation→won', async () => {
+    const stages = ['new', 'qualified', 'contacted', 'proposal', 'negotiation', 'won'] as const;
 
     for (let i = 0; i < stages.length - 1; i++) {
       const currentStage = stages[i];
@@ -601,7 +601,7 @@ describe('CRM Integration: Lead stage progression', () => {
   });
 
   it('lead can go to lost from any active stage with reason', async () => {
-    const activeStages = ['new', 'contacted', 'qualified', 'proposal', 'negotiation'] as const;
+    const activeStages = ['new', 'qualified', 'contacted', 'proposal', 'negotiation'] as const;
 
     for (const stage of activeStages) {
       const currentLead = makeLead({ status: stage });

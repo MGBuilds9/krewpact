@@ -12,7 +12,7 @@ const LEAD_SELECT =
 
 export const POST = withApiRoute(
   { bodySchema: leadStageTransitionSchema },
-  async ({ params, body }) => {
+  async ({ params, body, userId }) => {
     const { id } = params;
     const parsed = body as { status: LeadStage; lost_reason?: string };
     const { client: supabase, error: authError } = await createUserClientSafe();
@@ -53,6 +53,7 @@ export const POST = withApiRoute(
         from_stage: currentStage,
         to_stage: newStage,
         notes: parsed.lost_reason ?? null,
+        changed_by: userId,
       });
     } catch {
       logger.error('Failed to record lead stage history', { leadId: id });

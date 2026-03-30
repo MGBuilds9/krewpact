@@ -142,8 +142,8 @@ describe('POST /api/crm/leads/[id]/stage', () => {
     expect(body.error).toMatch(/already in stage/i);
   });
 
-  it('succeeds for valid transition (new → contacted)', async () => {
-    const updatedLead = { id: LEAD_ID, status: 'contacted' };
+  it('succeeds for valid transition (new → qualified)', async () => {
+    const updatedLead = { id: LEAD_ID, status: 'qualified' };
     const supabase = mockSupabaseClient();
     let callCount = 0;
     vi.mocked(supabase.from).mockImplementation(() => {
@@ -171,11 +171,11 @@ describe('POST /api/crm/leads/[id]/stage', () => {
       } as unknown as ReturnType<typeof supabase.from>;
     });
     mockCreateUserClientSafe.mockResolvedValue({ client: supabase, error: null });
-    const req = makeJsonRequest(`/api/crm/leads/${LEAD_ID}/stage`, { status: 'contacted' });
+    const req = makeJsonRequest(`/api/crm/leads/${LEAD_ID}/stage`, { status: 'qualified' });
     const res = await POST(req, makeCtx());
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.status).toBe('contacted');
+    expect(body.status).toBe('qualified');
   });
 
   it('succeeds for valid transition with lost_reason (new → lost)', async () => {

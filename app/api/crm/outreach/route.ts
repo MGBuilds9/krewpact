@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { dbError } from '@/lib/api/errors';
 import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
 import { withApiRoute } from '@/lib/api/with-api-route';
+import { maybePromoteToContacted } from '@/lib/crm/auto-contacted';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { outreachCreateSchema } from '@/lib/validators/crm';
 
@@ -39,6 +40,10 @@ export const POST = withApiRoute({ bodySchema: outreachCreateSchema }, async ({ 
   const { data, error } = await supabase.from('outreach').insert(body).select().single();
 
   if (error) throw dbError(error.message);
+
+  if (body.direction === 'outbound') {
+    await maybePromoteToContacted(body.lead_id, supabase);
+  }
 
   return NextResponse.json(data, { status: 201 });
 });

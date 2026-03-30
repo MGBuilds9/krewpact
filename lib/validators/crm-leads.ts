@@ -5,8 +5,8 @@ import { nullableSafeString, optionalSafeString, safeString } from '@/lib/saniti
 // --- Lead statuses (from DB enum lead_status) ---
 export const leadStages = [
   'new',
-  'contacted',
   'qualified',
+  'contacted',
   'proposal',
   'negotiation',
   'nurture',

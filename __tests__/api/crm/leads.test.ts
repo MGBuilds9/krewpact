@@ -294,25 +294,8 @@ describe('POST /api/crm/leads/[id]/stage', () => {
     resetFixtureCounter();
   });
 
-  it('transitions new → contacted', async () => {
+  it('transitions new → qualified', async () => {
     const currentLead = makeLead({ status: 'new' });
-    mockClerkAuth(mockAuth);
-    mockCreateUserClientSafe.mockResolvedValue({
-      client: mockSupabaseClient({
-        tables: { leads: { data: currentLead, error: null } },
-      }),
-      error: null,
-    });
-
-    const res = await STAGE_POST(
-      makeJsonRequest('/api/crm/leads/123/stage', { status: 'contacted' }),
-      makeContext(currentLead.id),
-    );
-    expect(res.status).toBe(200);
-  });
-
-  it('transitions contacted → qualified', async () => {
-    const currentLead = makeLead({ status: 'contacted' });
     mockClerkAuth(mockAuth);
     mockCreateUserClientSafe.mockResolvedValue({
       client: mockSupabaseClient({
@@ -328,8 +311,25 @@ describe('POST /api/crm/leads/[id]/stage', () => {
     expect(res.status).toBe(200);
   });
 
-  it('transitions qualified → proposal', async () => {
+  it('transitions qualified → contacted', async () => {
     const currentLead = makeLead({ status: 'qualified' });
+    mockClerkAuth(mockAuth);
+    mockCreateUserClientSafe.mockResolvedValue({
+      client: mockSupabaseClient({
+        tables: { leads: { data: currentLead, error: null } },
+      }),
+      error: null,
+    });
+
+    const res = await STAGE_POST(
+      makeJsonRequest('/api/crm/leads/123/stage', { status: 'contacted' }),
+      makeContext(currentLead.id),
+    );
+    expect(res.status).toBe(200);
+  });
+
+  it('transitions contacted → proposal', async () => {
+    const currentLead = makeLead({ status: 'contacted' });
     mockClerkAuth(mockAuth);
     mockCreateUserClientSafe.mockResolvedValue({
       client: mockSupabaseClient({

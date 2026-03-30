@@ -4,6 +4,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { wrapEmail } from '@/lib/email/templates/shared';
 import { logger } from '@/lib/logger';
 
+import { maybePromoteToContacted } from './auto-contacted';
 import type { ProcessorOptions } from './sequence-processor';
 
 export interface EmailStepParams {
@@ -178,5 +179,10 @@ export async function executeEmailStep(params: EmailStepParams): Promise<void> {
     logger.error('Failed to update outreach outcome', { outreachId, error: updateError.message });
     Sentry.captureException(err, { extra: { outreachId } });
     throw err;
+  }
+
+  // Auto-promote lead to "contacted" on first successful outreach
+  if (outcome === 'sent') {
+    await maybePromoteToContacted(enrollment.lead_id as string, supabase);
   }
 }

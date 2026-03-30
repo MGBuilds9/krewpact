@@ -74,7 +74,7 @@ test.describe('CRM Pipeline', () => {
 
     // Pipeline should show stage columns or cards
     // Look for stage names that match the CRM pipeline
-    const stageNames = ['New', 'Contacted', 'Qualified', 'Proposal', 'Negotiation'];
+    const stageNames = ['New', 'Qualified', 'Contacted', 'Proposal', 'Negotiation'];
     let foundStage = false;
 
     for (const stage of stageNames) {

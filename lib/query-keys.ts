@@ -19,6 +19,7 @@ export const queryKeys = {
     list: (filters: object) => [...queryKeys.leads.lists(), filters] as const,
     details: () => [...queryKeys.leads.all, 'detail'] as const,
     detail: (id: string) => [...queryKeys.leads.details(), id] as const,
+    stageHistory: (id: string) => [...queryKeys.leads.detail(id), 'stage-history'] as const,
   },
   accounts: {
     all: ['accounts'] as const,

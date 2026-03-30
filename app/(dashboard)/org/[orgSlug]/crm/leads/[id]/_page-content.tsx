@@ -17,6 +17,7 @@ import {
   useLead,
   useLeadAccountMatches,
   useLeadScoreBreakdown,
+  useLeadStageHistory,
   useLeadStageTransition,
   useRecalculateLeadScore,
 } from '@/hooks/useCRM';
@@ -34,17 +35,6 @@ import { LeadSidePanel } from './_components/LeadSidePanel';
 import { LeadStageCard } from './_components/LeadStageCard';
 
 type ContactItem = NonNullable<ReturnType<typeof useContacts>['data']>['data'][number];
-
-const STATUS_TO_STAGE: Record<string, LeadStage> = {
-  new: 'new',
-  contacted: 'new',
-  qualified: 'qualified',
-  proposal: 'qualified',
-  negotiation: 'qualified',
-  nurture: 'qualified',
-  won: 'won',
-  lost: 'lost',
-};
 
 function getLeadLocation(
   city: string | null | undefined,
@@ -68,6 +58,7 @@ export default function LeadDetailPage() {
   const { data: contactsResponse } = useContacts({ leadId });
   const activities = activitiesResponse ? activitiesResponse.data || [] : [];
   const leadContacts = contactsResponse ? contactsResponse.data || [] : [];
+  const { data: stageHistory } = useLeadStageHistory(leadId);
   const stageTransition = useLeadStageTransition();
   const recalculateScore = useRecalculateLeadScore();
   const deleteLead = useDeleteLead();
@@ -102,7 +93,7 @@ export default function LeadDetailPage() {
       </div>
     );
 
-  const currentStage = STATUS_TO_STAGE[lead.status] || ('new' as LeadStage);
+  const currentStage = (lead.status as LeadStage) || 'new';
   const nextStages = ALLOWED_TRANSITIONS[currentStage] || [];
   const nextRegularStage = nextStages.find((s) => s !== 'lost');
   const canMarkLost = nextStages.includes('lost');
@@ -152,6 +143,7 @@ export default function LeadDetailPage() {
         nextRegularStage={nextRegularStage}
         canMarkLost={canMarkLost}
         isPending={stageTransition.isPending}
+        stageHistory={stageHistory}
         onNext={handleNextStage}
         onLost={() => setMarkLostDialogOpen(true)}
         onConvert={() => setConvertDialogOpen(true)}

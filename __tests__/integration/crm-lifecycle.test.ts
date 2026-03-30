@@ -134,8 +134,9 @@ describe('CRM Lifecycle: Bulk Operations', () => {
 
   it('bulk stage change moves leads forward', async () => {
     mockClerkAuth(mockAuth);
+    // Mock returns leads at 'new' stage so transition to 'qualified' is valid
     const client = mockSupabaseClient({
-      tables: { leads: { data: null, error: null } },
+      tables: { leads: { data: [{ id: UUID1, status: 'new' }], error: null } },
     });
     mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 

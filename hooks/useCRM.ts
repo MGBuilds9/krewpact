@@ -75,6 +75,7 @@ export {
   useDeleteLead,
   useLead,
   useLeads,
+  useLeadStageHistory,
   useLeadStageTransition,
   useUpdateLead,
 } from './crm/useLeads';

@@ -14,8 +14,8 @@ export const LEAD_SLA_CONFIG: SLAConfig[] = [
   { stage: 'new', maxHours: 48, label: '48 hours' },
   { stage: 'contacted', maxHours: 72, label: '3 days' },
   { stage: 'qualified', maxHours: 120, label: '5 days' },
-  { stage: 'estimating', maxHours: 168, label: '7 days' },
-  { stage: 'proposal_sent', maxHours: 336, label: '14 days' },
+  { stage: 'proposal', maxHours: 168, label: '7 days' },
+  { stage: 'negotiation', maxHours: 336, label: '14 days' },
 ];
 
 /** SLA deadlines for opportunity stages (hours) */

@@ -2,7 +2,7 @@
 
 import { ArrowRight, XCircle, Zap } from 'lucide-react';
 
-import { StageProgressBar } from '@/components/CRM/StageProgressBar';
+import { StageProgressBar, type StageHistoryEntry } from '@/components/CRM/StageProgressBar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import type { LeadStage } from '@/lib/crm/lead-stages';
@@ -12,6 +12,7 @@ interface LeadStageCardProps {
   nextRegularStage: string | undefined;
   canMarkLost: boolean;
   isPending: boolean;
+  stageHistory?: StageHistoryEntry[];
   onNext: () => void;
   onLost: () => void;
   onConvert: () => void;
@@ -22,6 +23,7 @@ export function LeadStageCard({
   nextRegularStage,
   canMarkLost,
   isPending,
+  stageHistory,
   onNext,
   onLost,
   onConvert,
@@ -35,7 +37,7 @@ export function LeadStageCard({
   return (
     <Card>
       <CardContent className="pt-6">
-        <StageProgressBar currentStage={currentStage} />
+        <StageProgressBar currentStage={currentStage} stageHistory={stageHistory} />
         <div className="flex gap-2 mt-4 justify-end">
           {nextRegularStage && (
             <Button size="sm" onClick={onNext} disabled={isPending}>

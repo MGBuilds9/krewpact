@@ -19,21 +19,31 @@ export type LeadStage =
  * "won" is a terminal state (no transitions out).
  */
 export const ALLOWED_TRANSITIONS: Record<LeadStage, LeadStage[]> = {
-  new: ['contacted', 'qualified', 'lost'],
-  contacted: ['qualified', 'lost'],
-  qualified: ['proposal', 'nurture', 'lost'],
+  new: ['qualified', 'lost'],
+  qualified: ['contacted', 'lost'],
+  contacted: ['proposal', 'nurture', 'lost'],
   proposal: ['negotiation', 'nurture', 'lost'],
   negotiation: ['won', 'nurture', 'lost'],
-  nurture: ['contacted', 'qualified', 'lost'],
+  nurture: ['qualified', 'contacted', 'lost'],
   won: [],
   lost: [],
 };
 
 export type TransitionResult = { valid: true } | { valid: false; reason: string };
 
-/**
- * Validate whether a stage transition is allowed.
- */
+/** Ordered pipeline stages for display (excludes nurture/lost) */
+export const LEAD_PIPELINE_STAGES: { key: LeadStage; label: string }[] = [
+  { key: 'new', label: 'New' },
+  { key: 'qualified', label: 'Qualified' },
+  { key: 'contacted', label: 'Contacted' },
+  { key: 'proposal', label: 'Proposal' },
+  { key: 'negotiation', label: 'Negotiation' },
+  { key: 'won', label: 'Won' },
+];
+
+/** Ordered stage keys for pipeline display */
+export const LEAD_PIPELINE_ORDER: LeadStage[] = LEAD_PIPELINE_STAGES.map((s) => s.key);
+
 export function validateTransition(currentStage: LeadStage, newStage: LeadStage): TransitionResult {
   if (currentStage === newStage) {
     return { valid: false, reason: `Already in stage '${currentStage}'` };

@@ -15,6 +15,7 @@ import { SeasonalAnalysisCard } from '@/components/CRM/SeasonalAnalysisCard';
 import { WinLossAnalysis } from '@/components/CRM/WinLossAnalysis';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   useDashboardMetrics,
   useDivisionComparison,
@@ -44,14 +45,18 @@ function fmt(value: number): string {
 
 interface KPICardProps {
   label: string;
-  value: string | number;
+  value: string | number | undefined;
 }
 function KPICard({ label, value }: KPICardProps) {
   return (
     <Card>
       <CardContent className="pt-6">
         <p className="text-sm text-muted-foreground">{label}</p>
-        <p className="text-2xl font-bold">{value}</p>
+        {value === undefined ? (
+          <Skeleton className="h-8 w-24 mt-1" />
+        ) : (
+          <p className="text-2xl font-bold">{value}</p>
+        )}
       </CardContent>
     </Card>
   );
@@ -81,13 +86,12 @@ interface KPIRowProps {
 function KPIRow({ data, isLoading }: KPIRowProps) {
   const p = data ? data.pipeline : null;
   const v = data ? data.velocity : null;
-  const loading = isLoading ? '...' : null;
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <KPICard label="Total Pipeline" value={loading || fmt(p ? p.totalPipelineValue : 0)} />
-      <KPICard label="Weighted Pipeline" value={loading || fmt(p ? p.weightedPipelineValue : 0)} />
-      <KPICard label="Avg Deal Size" value={loading || fmt(p ? p.averageDealSize : 0)} />
-      <KPICard label="Deals Won" value={loading || (v ? v.dealsClosed : 0)} />
+      <KPICard label="Total Pipeline" value={isLoading ? undefined : fmt(p ? p.totalPipelineValue : 0)} />
+      <KPICard label="Weighted Pipeline" value={isLoading ? undefined : fmt(p ? p.weightedPipelineValue : 0)} />
+      <KPICard label="Avg Deal Size" value={isLoading ? undefined : fmt(p ? p.averageDealSize : 0)} />
+      <KPICard label="Deals Won" value={isLoading ? undefined : (v ? v.dealsClosed : 0)} />
     </div>
   );
 }

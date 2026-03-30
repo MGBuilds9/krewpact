@@ -113,7 +113,7 @@ export function calculatePipelineMetrics(opportunities: OpportunityData[]): Pipe
 export function calculateConversionMetrics(leads: LeadData[]): ConversionMetrics {
   const total = leads.length;
 
-  const qualifiedStages = ['qualified', 'won', 'proposal', 'negotiation'];
+  const qualifiedStages = ['qualified', 'contacted', 'proposal', 'negotiation'];
   const wonStages = ['won'];
   const lostStages = ['lost'];
 

@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { dbError } from '@/lib/api/errors';
 import { withApiRoute } from '@/lib/api/with-api-route';
+import { maybePromoteToContacted } from '@/lib/crm/auto-contacted';
 import { sendEmail } from '@/lib/email/resend';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
@@ -102,6 +103,17 @@ export const POST = withApiRoute(
     );
     const sent = results.filter((r) => r.success).length;
     const failed = results.filter((r) => !r.success).length;
+
+    // Auto-promote leads that received their first outreach
+    const sentLeadIds = new Set(
+      results.filter((r) => r.success).map((r) => {
+        const contact = uniqueContacts.find((c) => c.id === r.contact_id);
+        return contact?.lead_id;
+      }).filter(Boolean) as string[],
+    );
+    await Promise.all(
+      [...sentLeadIds].map((id) => maybePromoteToContacted(id, supabase)),
+    );
 
     return NextResponse.json({ sent, failed, total: results.length, results });
   },

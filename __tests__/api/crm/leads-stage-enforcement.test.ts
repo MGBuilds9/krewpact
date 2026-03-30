@@ -61,8 +61,15 @@ describe('Lead Stage Enforcement', () => {
     expect(res.status).toBe(200);
   });
 
-  it('allows qualified → proposal', async () => {
+  it('allows qualified → contacted', async () => {
     setupLead('qualified');
+    const req = makeJsonRequest(`/api/crm/leads/${leadId}/stage`, { status: 'contacted' });
+    const res = await POST(req, makeContext(leadId));
+    expect(res.status).toBe(200);
+  });
+
+  it('allows contacted → proposal', async () => {
+    setupLead('contacted');
     const req = makeJsonRequest(`/api/crm/leads/${leadId}/stage`, { status: 'proposal' });
     const res = await POST(req, makeContext(leadId));
     expect(res.status).toBe(200);
@@ -83,6 +90,13 @@ describe('Lead Stage Enforcement', () => {
   });
 
   // Invalid transitions
+  it('rejects new → contacted (must qualify first)', async () => {
+    setupLead('new');
+    const req = makeJsonRequest(`/api/crm/leads/${leadId}/stage`, { status: 'contacted' });
+    const res = await POST(req, makeContext(leadId));
+    expect(res.status).toBe(400);
+  });
+
   it('rejects new → proposal (skip)', async () => {
     setupLead('new');
     const req = makeJsonRequest(`/api/crm/leads/${leadId}/stage`, { status: 'proposal' });

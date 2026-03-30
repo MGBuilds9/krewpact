@@ -70,10 +70,10 @@ describe('calculateSLAStatus', () => {
     expect(status!.percentUsed).toBeCloseTo(83.3, 0);
   });
 
-  it('handles estimating stage (7 day / 168h SLA)', () => {
+  it('handles proposal stage (7 day / 168h SLA)', () => {
     // 170 hours in (overdue)
     const enteredAt = new Date(now.getTime() - 170 * 60 * 60 * 1000);
-    const status = calculateSLAStatus('estimating', enteredAt.toISOString(), LEAD_SLA_CONFIG, now);
+    const status = calculateSLAStatus('proposal', enteredAt.toISOString(), LEAD_SLA_CONFIG, now);
     expect(status).not.toBeNull();
     expect(status!.isOverdue).toBe(true);
   });
@@ -106,8 +106,8 @@ describe('SLA config completeness', () => {
     const stages = LEAD_SLA_CONFIG.map((c) => c.stage);
     expect(stages).toContain('new');
     expect(stages).toContain('qualified');
-    expect(stages).toContain('estimating');
-    expect(stages).toContain('proposal_sent');
+    expect(stages).toContain('proposal');
+    expect(stages).toContain('negotiation');
     // Terminal stages should NOT have SLA
     expect(stages).not.toContain('won');
     expect(stages).not.toContain('lost');

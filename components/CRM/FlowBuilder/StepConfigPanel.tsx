@@ -13,6 +13,8 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 
+import { LEAD_PIPELINE_ORDER } from '@/lib/crm/lead-stages';
+
 import { FlowStep } from './types';
 
 interface StepConfigPanelProps {
@@ -226,13 +228,11 @@ function ConditionConfig({
               <SelectValue placeholder="Select stage..." />
             </SelectTrigger>
             <SelectContent>
-              {['new', 'contacted', 'qualified', 'proposal', 'negotiation', 'won', 'lost'].map(
-                (s) => (
-                  <SelectItem key={s} value={s} className="capitalize">
-                    {s.charAt(0).toUpperCase() + s.slice(1)}
-                  </SelectItem>
-                ),
-              )}
+              {[...LEAD_PIPELINE_ORDER, 'lost'].map((s) => (
+                <SelectItem key={s} value={s} className="capitalize">
+                  {s.charAt(0).toUpperCase() + s.slice(1)}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </ConfigField>

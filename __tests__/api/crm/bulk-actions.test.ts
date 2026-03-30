@@ -153,8 +153,19 @@ describe('POST /api/crm/leads/bulk', () => {
   // --- stage ---
   it('stage: updates status for all IDs', async () => {
     mockClerkAuth(mockAuth);
+    // SELECT returns leads at 'new' so transition to 'qualified' is valid; UPDATE returns null
     const client = mockSupabaseClient({
-      tables: { leads: { data: null, error: null } },
+      tables: {
+        leads: {
+          data: [
+            { id: UUID1, status: 'new' },
+            { id: UUID2, status: 'new' },
+            { id: UUID3, status: 'new' },
+          ],
+          error: null,
+        },
+        lead_stage_history: { data: null, error: null },
+      },
     });
     mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
 
@@ -184,6 +195,7 @@ describe('POST /api/crm/leads/bulk', () => {
 
   it('stage: returns 500 on db error', async () => {
     mockClerkAuth(mockAuth);
+    // DB error on the SELECT fetch step
     const client = mockSupabaseClient({
       tables: { leads: { data: null, error: { message: 'constraint violation' } } },
     });
@@ -192,7 +204,7 @@ describe('POST /api/crm/leads/bulk', () => {
     const req = makeJsonRequest('/api/crm/leads/bulk', {
       action: 'stage',
       ids: [UUID1],
-      value: 'bad_status',
+      value: 'qualified',
     });
     const res = await leadsBulk(req);
     expect(res.status).toBe(500);
