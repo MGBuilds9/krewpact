@@ -48,18 +48,18 @@ export async function generateMetadata(): Promise<Metadata> {
       default: defaultTitle,
       template: `%s — ${siteName}`,
     },
-    description: 'Construction operations platform for MDM Group Inc.',
+    description: 'Construction operations platform',
     ...(branding?.favicon_url ? { icons: { icon: branding.favicon_url } } : {}),
     openGraph: {
       title: defaultTitle,
-      description: 'Construction operations platform for MDM Group Inc.',
+      description: 'Construction operations platform',
       siteName,
       type: 'website',
     },
     twitter: {
       card: 'summary',
       title: defaultTitle,
-      description: 'Construction operations platform for MDM Group Inc.',
+      description: 'Construction operations platform',
     },
     robots: { index: false, follow: false },
   };

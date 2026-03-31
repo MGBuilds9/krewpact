@@ -4,23 +4,8 @@ import { notFound } from '@/lib/api/errors';
 import { withApiRoute } from '@/lib/api/with-api-route';
 import { createServiceClient } from '@/lib/supabase/server';
 
-// Hardcoded org data — used when the organizations table doesn't exist yet
-const SEED_ORGS: Record<string, object> = {
-  'mdm-group': {
-    id: 'org_mdm_group',
-    name: 'MDM Group Inc.',
-    slug: 'mdm-group',
-    status: 'active',
-    timezone: 'America/Toronto',
-    locale: 'en-CA',
-    metadata: {},
-    branding: {
-      company_name: 'MDM Group Inc.',
-      primary_color: '#1e3a5f',
-    },
-    feature_flags: {},
-  },
-};
+// Hardcoded seed data — used only when the organizations table doesn't exist yet
+const SEED_ORGS: Record<string, object> = {};
 
 export const GET = withApiRoute({}, async ({ params }) => {
   const { slug } = params;

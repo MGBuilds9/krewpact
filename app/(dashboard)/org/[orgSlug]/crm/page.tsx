@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'CRM',
-  description: 'Customer relationship management for MDM Group.',
+  description: 'Customer relationship management',
 };
 
 import { redirect } from 'next/navigation';

@@ -80,6 +80,7 @@ async function processLead(
         const summary = await summarizeEnrichment(
           (lead.company_name as string) ?? '',
           enrichmentData as Record<string, unknown>,
+          (lead.org_id as string) ?? '',
         );
         Object.assign(
           enrichmentData as Record<string, unknown>,
@@ -130,7 +131,7 @@ export const GET = withApiRoute({ auth: 'cron' }, async () => {
 
   const { data: leads, error } = await supabase
     .from('leads')
-    .select('id, domain, enrichment_data, enrichment_status, company_name, city, province')
+    .select('id, domain, enrichment_data, enrichment_status, company_name, city, province, org_id')
     .or('enrichment_status.is.null,enrichment_status.eq.pending')
     .order('created_at', { ascending: true })
     .limit(BATCH_SIZE);

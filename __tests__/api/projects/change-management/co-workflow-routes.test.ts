@@ -16,6 +16,7 @@ vi.mock('@/lib/api/rate-limit', () => ({
 const mockGetRoles = vi.fn();
 vi.mock('@/lib/api/org', () => ({
   getKrewpactRoles: () => mockGetRoles(),
+  getKrewpactOrgId: vi.fn().mockResolvedValue('test-org-00000000-0000-0000-0000-000000000000'),
 }));
 
 import { auth } from '@clerk/nextjs/server';

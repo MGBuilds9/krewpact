@@ -21,6 +21,7 @@ export async function syncLeaveApplication(
   leaveId: string,
   _userId: string,
   jobContext?: SyncJobContext,
+  erpCompany = 'KrewPact',
 ): Promise<SyncResult> {
   const supabase = createScopedServiceClient('erp-sync:leave-application');
   const job = await createSyncJob(supabase, 'leave_application', leaveId, jobContext);
@@ -66,7 +67,7 @@ export async function syncLeaveApplication(
         total_leave_days: (record.total_leave_days as number) || 1,
         reason: record.reason as string | null,
         status: (record.status as 'Open' | 'Approved' | 'Rejected' | 'Cancelled') || 'Open',
-        company: (record.company as string) || 'MDM Group Inc.',
+        company: (record.company as string) || erpCompany,
       });
       const result = await client.create<{ name: string }>('Leave Application', mapped);
       erpDocname = result.name;

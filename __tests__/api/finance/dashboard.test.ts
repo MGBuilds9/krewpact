@@ -14,6 +14,7 @@ const mockRequireRole = vi.fn();
 vi.mock('@/lib/api/org', () => ({
   requireRole: (...args: unknown[]) => mockRequireRole(...args),
   getKrewpactRoles: vi.fn().mockResolvedValue(['platform_admin']),
+  getKrewpactOrgId: vi.fn().mockResolvedValue('test-org-00000000-0000-0000-0000-000000000000'),
   getKrewpactUserId: vi.fn().mockResolvedValue('test-user-id'),
   getOrgIdFromAuth: vi.fn().mockResolvedValue('mdm-group'),
 }));

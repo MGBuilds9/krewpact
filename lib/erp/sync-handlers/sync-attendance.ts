@@ -21,6 +21,7 @@ export async function syncAttendance(
   attendanceId: string,
   _userId: string,
   jobContext?: SyncJobContext,
+  erpCompany = 'KrewPact',
 ): Promise<SyncResult> {
   const supabase = createScopedServiceClient('erp-sync:attendance');
   const job = await createSyncJob(supabase, 'attendance', attendanceId, jobContext);
@@ -62,7 +63,7 @@ export async function syncAttendance(
         attendance_date: record.attendance_date as string,
         status: (record.status as 'Present' | 'Absent' | 'Half Day' | 'On Leave' | 'Work From Home') || 'Present',
         leave_type: record.leave_type as string | null,
-        company: (record.company as string) || 'MDM Group Inc.',
+        company: (record.company as string) || erpCompany,
         shift: record.shift as string | null,
       });
       const result = await client.create<{ name: string }>('Attendance', mapped);

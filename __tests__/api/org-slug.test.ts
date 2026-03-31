@@ -46,20 +46,11 @@ describe('GET /api/org/[slug]', () => {
     expect(res.status).toBe(401);
   });
 
-  it('returns seed org data for mdm-group when DB has no table', async () => {
+  it('returns 404 for mdm-group when DB has no table (seed data removed)', async () => {
     mockClerkAuth(mockAuth);
 
     const res = await GET(makeRequest('/api/org/mdm-group'), makeParams('mdm-group'));
-    expect(res.status).toBe(200);
-
-    const data = await res.json();
-    expect(data.id).toBe('org_mdm_group');
-    expect(data.name).toBe('MDM Group Inc.');
-    expect(data.slug).toBe('mdm-group');
-    expect(data.status).toBe('active');
-    expect(data.timezone).toBe('America/Toronto');
-    expect(data.branding.company_name).toBe('MDM Group Inc.');
-    expect(data.feature_flags).toEqual({});
+    expect(res.status).toBe(404);
   });
 
   it('returns 404 for unknown org slug', async () => {
@@ -69,7 +60,7 @@ describe('GET /api/org/[slug]', () => {
     expect(res.status).toBe(404);
   });
 
-  it('falls back to seed data when DB query returns error', async () => {
+  it('returns 404 when DB query throws and seed data is empty', async () => {
     mockClerkAuth(mockAuth);
 
     // createServiceClient throws — simulating missing table
@@ -78,10 +69,6 @@ describe('GET /api/org/[slug]', () => {
     });
 
     const res = await GET(makeRequest('/api/org/mdm-group'), makeParams('mdm-group'));
-    expect(res.status).toBe(200);
-
-    const data = await res.json();
-    expect(data.id).toBe('org_mdm_group');
-    expect(data.name).toBe('MDM Group Inc.');
+    expect(res.status).toBe(404);
   });
 });

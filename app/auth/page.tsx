@@ -4,7 +4,7 @@ import AuthPageContent from './_page-content';
 
 export const metadata: Metadata = {
   title: 'Sign In',
-  description: 'Sign in to KrewPact, the construction operations platform for MDM Group Inc.',
+  description: 'Sign in to KrewPact',
 };
 
 export default function Page() {

@@ -11,6 +11,7 @@ vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createServiceClient: vi.fn() }));
 vi.mock('@/lib/api/org', () => ({
   getKrewpactRoles: vi.fn(),
+  getKrewpactOrgId: vi.fn().mockResolvedValue('test-org-00000000-0000-0000-0000-000000000000'),
 }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),

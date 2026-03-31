@@ -6,7 +6,7 @@ vi.mock('@/lib/env', () => ({
 }));
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));
-vi.mock('@/lib/api/org', () => ({ getKrewpactRoles: vi.fn() }));
+vi.mock('@/lib/api/org', () => ({ getKrewpactRoles: vi.fn(), getKrewpactOrgId: vi.fn().mockResolvedValue('test-org-00000000-0000-0000-0000-000000000000') }));
 vi.mock('@/lib/logger', () => ({
   logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn(), child: vi.fn().mockReturnThis() },
 }));

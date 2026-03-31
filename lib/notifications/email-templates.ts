@@ -43,7 +43,7 @@ export function notificationHtml(
           ${ctaHtml}
         </td></tr>
         <tr><td style="padding:16px 32px;background-color:#F5F5F5;font-size:12px;color:#888;text-align:center;">
-          KrewPact by MDM Group Inc. | Mississauga, Ontario
+          {{company_name}} | Mississauga, Ontario
         </td></tr>
       </table>
     </td></tr>

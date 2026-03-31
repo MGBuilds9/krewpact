@@ -21,7 +21,11 @@ import {
   upsertSyncMap,
 } from './sync-helpers';
 
-function buildEmployeeInput(userId: string, record: Record<string, unknown>): EmployeeMapInput {
+function buildEmployeeInput(
+  userId: string,
+  record: Record<string, unknown>,
+  erpCompany = 'KrewPact',
+): EmployeeMapInput {
   const firstName = (record.first_name as string) || '';
   const lastName = (record.last_name as string) || '';
   return {
@@ -33,7 +37,7 @@ function buildEmployeeInput(userId: string, record: Record<string, unknown>): Em
     date_of_joining: (record.date_of_joining as string) || new Date().toISOString().slice(0, 10),
     date_of_birth: record.date_of_birth as string | null,
     gender: record.gender as string | null,
-    company: (record.company as string) || 'MDM Group Inc.',
+    company: (record.company as string) || erpCompany,
     department: record.department as string | null,
     designation: record.designation as string | null,
     status: (record.status as EmployeeMapInput['status']) || 'Active',
@@ -44,6 +48,7 @@ export async function syncEmployee(
   userId: string,
   _triggerUserId: string,
   jobContext?: SyncJobContext,
+  erpCompany = 'KrewPact',
 ): Promise<SyncResult> {
   const supabase = createScopedServiceClient('erp-sync:employee');
   const job = await createSyncJob(supabase, 'employee', userId, jobContext);
@@ -66,7 +71,7 @@ export async function syncEmployee(
     }
 
     const record = user as Record<string, unknown>;
-    const input = buildEmployeeInput(userId, record);
+    const input = buildEmployeeInput(userId, record, erpCompany);
     let erpDocname: string;
 
     if (isMockMode()) {

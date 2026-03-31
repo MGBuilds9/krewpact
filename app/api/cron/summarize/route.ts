@@ -16,7 +16,7 @@ export const GET = withApiRoute({ auth: 'cron' }, async () => {
   // Fetch enriched leads missing AI summary
   const { data: leads, error: leadsError } = await supabase
     .from('leads')
-    .select('id, company_name, enrichment_data')
+    .select('id, company_name, enrichment_data, org_id')
     .eq('enrichment_status', 'complete')
     .not('enrichment_data', 'is', null)
     .is('deleted_at', null)
@@ -52,7 +52,7 @@ export const GET = withApiRoute({ auth: 'cron' }, async () => {
   for (const lead of batch) {
     try {
       const enrichmentData = lead.enrichment_data as Record<string, unknown>;
-      const summary = await summarizeEnrichment(lead.company_name ?? '', enrichmentData);
+      const summary = await summarizeEnrichment(lead.company_name ?? '', enrichmentData, lead.org_id ?? '');
 
       if (!summary) {
         continue; // No data to summarize

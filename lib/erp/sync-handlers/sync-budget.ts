@@ -21,6 +21,7 @@ export async function syncBudget(
   budgetId: string,
   _userId: string,
   jobContext?: SyncJobContext,
+  erpCompany = 'KrewPact',
 ): Promise<SyncResult> {
   const supabase = createScopedServiceClient('erp-sync:budget');
   const job = await createSyncJob(supabase, 'budget', budgetId, jobContext);
@@ -49,7 +50,7 @@ export async function syncBudget(
       const mockResp = mockBudgetCreateResponse({
         id: budgetId,
         fiscal_year: record.fiscal_year as string,
-        company: (record.company as string) || 'MDM Group Inc.',
+        company: (record.company as string) || erpCompany,
       });
       erpDocname = mockResp.name;
     } else {
@@ -58,7 +59,7 @@ export async function syncBudget(
       const mapped = mapBudgetToErp({
         id: budgetId,
         budget_against: (record.budget_against as string) || 'Cost Center',
-        company: (record.company as string) || 'MDM Group Inc.',
+        company: (record.company as string) || erpCompany,
         fiscal_year: record.fiscal_year as string,
         cost_center: record.cost_center as string | null,
         project: record.project as string | null,

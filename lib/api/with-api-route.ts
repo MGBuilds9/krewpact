@@ -37,6 +37,7 @@ interface RouteContext<TBody = unknown, TQuery = unknown> {
   req: NextRequest;
   params: Record<string, string>;
   userId: string;
+  orgId: string | null;
   body: TBody;
   query: TQuery;
   logger: Logger;
@@ -167,6 +168,16 @@ export function withApiRoute<TBody = unknown, TQuery = unknown>(
         const rlResponse = await applyRateLimit(req, config as RouteConfig, userId, authMode);
         if (rlResponse) return rlResponse;
 
+        // Resolve org context: JWT claim → env fallback
+        let orgId: string | null = null;
+        if (authMode === 'required') {
+          const { getKrewpactOrgId } = await import('@/lib/api/org');
+          orgId = await getKrewpactOrgId();
+          if (!orgId && process.env.DEFAULT_ORG_ID) {
+            orgId = process.env.DEFAULT_ORG_ID;
+          }
+        }
+
         if (config.permission || config.roles) {
           const { getKrewpactRoles } = await import('@/lib/api/org');
           const userRoles = await getKrewpactRoles();
@@ -203,11 +214,12 @@ export function withApiRoute<TBody = unknown, TQuery = unknown>(
         if (bodyResult instanceof NextResponse) return bodyResult;
 
         const params = segmentCtx?.params ? await segmentCtx.params : {};
-        const reqLogger = rootLogger.child({ requestId, route, method, userId });
+        const reqLogger = rootLogger.child({ requestId, route, method, userId, orgId });
         const response = await handler({
           req,
           params,
           userId,
+          orgId,
           body: bodyResult.body,
           query: queryResult.query,
           logger: reqLogger,

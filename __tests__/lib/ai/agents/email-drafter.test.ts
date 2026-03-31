@@ -9,6 +9,20 @@ vi.mock('@/lib/ai/providers/gemini', () => ({
 vi.mock('@/lib/logger', () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
+vi.mock('@/lib/tenant/branding', () => ({
+  getOrgBranding: vi.fn().mockResolvedValue({
+    company_name: 'MDM Group',
+    company_description: 'a construction company in the Greater Toronto Area',
+    erp_company: 'MDM Group',
+    footer_text: 'MDM Group',
+    logo_url: null,
+    favicon_url: null,
+    primary_color: '#1E3A5F',
+    accent_color: '#D4A843',
+    support_email: null,
+    support_url: null,
+  }),
+}));
 
 import { draftEmail } from '@/lib/ai/agents/email-drafter';
 import { generateWithGemini } from '@/lib/ai/providers/gemini';

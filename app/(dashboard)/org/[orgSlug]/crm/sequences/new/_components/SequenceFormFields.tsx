@@ -44,7 +44,7 @@ export const divisionLabels: Record<string, string> = {
   homes: 'MDM Homes',
   wood: 'MDM Wood',
   telecom: 'MDM Telecom',
-  'group-inc': 'MDM Group Inc.',
+  'group-inc': 'Group Inc.',
   management: 'MDM Management',
   all: 'All Divisions',
 };

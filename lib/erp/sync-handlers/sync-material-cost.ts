@@ -46,6 +46,7 @@ interface CreateJournalEntryParams {
   startDate: string;
   endDate: string;
   entryCount: number;
+  erpCompany: string;
 }
 
 async function createJournalEntryInErp(params: CreateJournalEntryParams): Promise<string> {
@@ -58,6 +59,7 @@ async function createJournalEntryInErp(params: CreateJournalEntryParams): Promis
     startDate,
     endDate,
     entryCount,
+    erpCompany,
   } = params;
   if (isMockMode()) {
     const mockResp = mockJournalEntryResponse({
@@ -76,7 +78,7 @@ async function createJournalEntryInErp(params: CreateJournalEntryParams): Promis
     naming_series: 'JV-.YYYY.-',
     voucher_type: 'Journal Entry',
     posting_date: endDate,
-    company: 'MDM Group Inc.',
+    company: erpCompany,
     user_remark: `Material cost for ${projectRef} (${startDate} to ${endDate}) — ${entryCount} ledger entries`,
     krewpact_id: entityKey,
     accounts: [
@@ -157,6 +159,7 @@ export async function syncMaterialCost(
   options: MaterialCostOptions,
   _userId: string,
   jobContext?: SyncJobContext,
+  erpCompany = 'KrewPact',
 ): Promise<SyncResult> {
   const { projectId, startDate, endDate } = options;
   const entityKey = `${projectId}:${startDate}:${endDate}`;
@@ -220,6 +223,7 @@ export async function syncMaterialCost(
       startDate,
       endDate,
       entryCount: ledgerEntries.length,
+      erpCompany,
     });
 
     await upsertSyncMap(supabase, 'material_cost_journal', entityKey, 'Journal Entry', erpDocname);

@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'KrewPact — Construction Operations Platform',
     short_name: 'KrewPact',
     description:
-      'Field operations, project management, CRM, and time tracking for MDM Group construction teams.',
+      'Field operations, project management, CRM, and time tracking for construction teams.',
     start_url: '/',
     display: 'standalone',
     background_color: '#1a1510',

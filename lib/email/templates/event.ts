@@ -1,5 +1,5 @@
 /**
- * MDM Group Inc. — Event email templates.
+ * Event email templates.
  * Templates: event-invitation
  */
 
@@ -39,7 +39,7 @@ const eventInvitationBody = wrapEmail(`
     <td style="padding:32px 40px 20px 40px;font-family:'Helvetica Neue',Arial,sans-serif;">
       <p style="margin:0 0 20px 0;font-size:15px;color:#444444;line-height:1.6;">Hi {{first_name}},</p>
       <p style="margin:0 0 20px 0;font-size:15px;color:#444444;line-height:1.6;">
-        We would like to invite you and the team at {{company_name}} to join us at <strong style="color:#1E3A5F;">{{event_name}}</strong>. This is an opportunity to connect with the MDM Group leadership team, see our latest project portfolio, and discuss how we can support your upcoming construction needs.
+        We would like to invite you and the team at {{company_name}} to join us at <strong style="color:#1E3A5F;">{{event_name}}</strong>. This is an opportunity to connect with the {{company_name}} leadership team, see our latest project portfolio, and discuss how we can support your upcoming construction needs.
       </p>
       <p style="margin:0 0 24px 0;font-size:15px;color:#444444;line-height:1.6;">
         Space is limited. Please RSVP at your earliest convenience to secure your spot.
@@ -75,7 +75,7 @@ export const EVENT_TEMPLATES: BrandedTemplate[] = [
     category: 'event',
     description:
       'Formal event invitation with date and location prominently displayed in the navy header. Suitable for open houses, project showcases, and networking events.',
-    subject: "You're Invited — {{event_name}} | MDM Group",
+    subject: "You're Invited — {{event_name}} | {{company_name}}",
     body_html: eventInvitationBody,
     body_text: eventInvitationText,
     merge_fields: [

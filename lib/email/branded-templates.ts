@@ -1,5 +1,5 @@
 /**
- * MDM Group Inc. — Branded email templates.
+ * KrewPact — Branded email templates.
  * Aggregates all template categories and exports utility functions.
  */
 

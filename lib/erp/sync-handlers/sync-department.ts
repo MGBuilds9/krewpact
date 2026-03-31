@@ -23,6 +23,7 @@ export async function syncDepartment(
   divisionId: string,
   _userId: string,
   jobContext?: SyncJobContext,
+  erpCompany = 'KrewPact',
 ): Promise<SyncResult> {
   const supabase = createScopedServiceClient('erp-sync:department');
   const job = await createSyncJob(supabase, 'department', divisionId, jobContext);
@@ -51,7 +52,7 @@ export async function syncDepartment(
       const mockResp = mockDepartmentResponse({
         id: divisionId,
         department_name: record.name as string,
-        company: (record.company as string) || 'MDM Group Inc.',
+        company: (record.company as string) || erpCompany,
       });
       erpDocname = mockResp.name;
     } else {
@@ -60,7 +61,7 @@ export async function syncDepartment(
       const mapped = mapDepartmentToErp({
         id: divisionId,
         department_name: record.name as string,
-        company: (record.company as string) || 'MDM Group Inc.',
+        company: (record.company as string) || erpCompany,
         parent_department: record.parent_department as string | null,
         is_group: (record.is_group as boolean) ?? false,
       });

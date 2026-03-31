@@ -1,5 +1,5 @@
 /**
- * MDM Group Inc. — Shared email layout helpers.
+ * Shared email layout helpers.
  * Brand: Navy #1E3A5F | Gold #D4A843 | Light #F5F5F5 | White #FFFFFF
  * All templates use inline styles for email client compatibility.
  */
@@ -19,7 +19,7 @@ export const EMAIL_HEADER = `
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#1E3A5F;">
   <tr>
     <td align="center" style="padding:24px 20px;">
-      <img src="{{logo_url}}" alt="MDM Group Inc." width="160" style="display:block;border:0;max-width:160px;" />
+      <img src="{{logo_url}}" alt="{{company_name}}" width="160" style="display:block;border:0;max-width:160px;" />
     </td>
   </tr>
 </table>`.trim();
@@ -45,7 +45,7 @@ export function wrapEmail(innerHtml: string): string {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>MDM Group Inc.</title>
+  <title>{{company_name}}</title>
 </head>
 <body style="margin:0;padding:0;background-color:#F5F5F5;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
   <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F5F5F5;">

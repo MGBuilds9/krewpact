@@ -113,8 +113,8 @@ describe('executeEmailStep', () => {
     expect(sentHtml).toHaveLength(1);
     // The sent HTML should contain the branded wrapper navy color
     expect(sentHtml[0]).toContain('#1E3A5F');
-    // Should contain the EMAIL_HEADER structure
-    expect(sentHtml[0]).toContain('MDM Group Inc.');
+    // Should contain the branded header placeholder (company_name resolved at send time)
+    expect(sentHtml[0]).toContain('company_name');
     // Should contain the inner content
     expect(sentHtml[0]).toContain('Hi John, thanks for your interest.');
     // Should be wrapped in full HTML document

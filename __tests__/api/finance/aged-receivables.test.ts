@@ -25,6 +25,7 @@ const mockGetKrewpactRoles = vi.fn();
 vi.mock('@/lib/api/org', () => ({
   getKrewpactRoles: (...args: unknown[]) => mockGetKrewpactRoles(...args),
   getOrgIdFromAuth: vi.fn().mockResolvedValue('org-uuid-test'),
+  getKrewpactOrgId: vi.fn().mockResolvedValue('test-org-00000000-0000-0000-0000-000000000000'),
 }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true, remaining: 29 }),
@@ -114,22 +115,14 @@ describe('GET /api/finance/aged-receivables', () => {
     expect(body.asOf).toBeTruthy();
   });
 
-  it('accepts explicit org_id param', async () => {
+  it('uses auth-derived orgId (no query param override)', async () => {
     mockClerkAuth(mockAuth);
     mockGetAgedReceivables.mockResolvedValue(SAMPLE_REPORT);
 
-    const orgId = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
     const { GET } = await import('@/app/api/finance/aged-receivables/route');
-    const res = await GET(makeRequest(`/api/finance/aged-receivables?org_id=${orgId}`));
+    const res = await GET(makeRequest('/api/finance/aged-receivables'));
     expect(res.status).toBe(200);
-    expect(mockGetAgedReceivables).toHaveBeenCalledWith(orgId);
-  });
-
-  it('returns 400 when org_id is not a UUID', async () => {
-    mockClerkAuth(mockAuth);
-    const { GET } = await import('@/app/api/finance/aged-receivables/route');
-    const res = await GET(makeRequest('/api/finance/aged-receivables?org_id=not-a-uuid'));
-    expect(res.status).toBe(400);
+    expect(mockGetAgedReceivables).toHaveBeenCalledWith('test-org-00000000-0000-0000-0000-000000000000');
   });
 
   it('returns 500 when service throws', async () => {

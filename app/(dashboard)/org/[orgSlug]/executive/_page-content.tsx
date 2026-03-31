@@ -143,7 +143,7 @@ export default function ExecutiveOverviewPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Command Center</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">Executive overview — MDM Group</p>
+            <p className="text-sm text-muted-foreground mt-0.5">Executive overview</p>
           </div>
           {primary.computedAt && (
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">

@@ -4,7 +4,6 @@ import { NextResponse } from 'next/server';
 import { dbError, forbidden } from '@/lib/api/errors';
 import { getKrewpactRoles } from '@/lib/api/org';
 import { withApiRoute } from '@/lib/api/with-api-route';
-import { env } from '@/lib/env';
 import { createServiceClient } from '@/lib/supabase/server';
 import { stagingCreateSchema } from '@/lib/validators/executive';
 
@@ -50,7 +49,7 @@ export const GET = withApiRoute({}, async ({ req }) => {
   return NextResponse.json({ data, total: count, page, limit });
 });
 
-export const POST = withApiRoute({ bodySchema: stagingCreateSchema }, async ({ body }) => {
+export const POST = withApiRoute({ bodySchema: stagingCreateSchema }, async ({ body, orgId }) => {
   const roles = await getKrewpactRoles();
   const hasAccess = roles.some((r) => WRITE_ROLES.includes(r));
   if (!hasAccess) {
@@ -60,11 +59,11 @@ export const POST = withApiRoute({ bodySchema: stagingCreateSchema }, async ({ b
   const content_checksum = createHash('sha256').update(body.raw_content).digest('hex');
 
   const supabase = await createServiceClient();
-  if (!env.DEFAULT_ORG_ID) return NextResponse.json({ error: 'DEFAULT_ORG_ID not configured' }, { status: 500 });
+  if (!orgId) return NextResponse.json({ error: 'Organization context required' }, { status: 500 });
 
   const { data, error } = await supabase
     .from('knowledge_staging')
-    .insert({ ...body, org_id: env.DEFAULT_ORG_ID, content_checksum, status: 'pending_review' })
+    .insert({ ...body, org_id: orgId, content_checksum, status: 'pending_review' })
     .select()
     .single();
 

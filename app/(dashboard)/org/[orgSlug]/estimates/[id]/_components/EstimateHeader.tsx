@@ -5,6 +5,7 @@ import { ArrowLeft, CheckCircle, FileText, Save, Send, Sparkles, XCircle } from 
 import { ExportPdfButton } from '@/components/Estimates/ExportPdfButton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useOrg } from '@/contexts/OrgContext';
 import { useEstimate, useEstimateLines } from '@/hooks/useEstimates';
 import type { EstimateStatus } from '@/lib/estimating/estimate-status';
 import type { EstimatePdfData } from '@/lib/pdf/types';
@@ -63,6 +64,8 @@ function ActionButtons({
   onProposal,
   onTakeoff,
 }: ActionButtonsProps) {
+  const { currentOrg } = useOrg();
+  const companyName = currentOrg?.branding?.company_name ?? 'KrewPact';
   return (
     <div className="flex gap-2 flex-shrink-0">
       {allowedTransitions.map((status) => {
@@ -88,7 +91,7 @@ function ActionButtons({
         estimateNumber={estimate.estimate_number}
         estimateData={
           {
-            companyName: 'MDM Group Inc.',
+            companyName,
             estimateNumber: estimate.estimate_number,
             date: new Date().toISOString().split('T')[0],
             lineItems: lines.map((l) => ({

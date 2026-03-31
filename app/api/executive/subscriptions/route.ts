@@ -3,7 +3,6 @@ import { NextResponse } from 'next/server';
 import { dbError, forbidden } from '@/lib/api/errors';
 import { getKrewpactRoles } from '@/lib/api/org';
 import { withApiRoute } from '@/lib/api/with-api-route';
-import { env } from '@/lib/env';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { subscriptionCreateSchema } from '@/lib/validators/executive';
 
@@ -44,7 +43,7 @@ export const GET = withApiRoute({}, async ({ req, logger }) => {
   return NextResponse.json({ data });
 });
 
-export const POST = withApiRoute({ bodySchema: subscriptionCreateSchema }, async ({ body, logger }) => {
+export const POST = withApiRoute({ bodySchema: subscriptionCreateSchema }, async ({ body, logger, orgId }) => {
   const roles = await getKrewpactRoles();
   const hasAccess = roles.some((r) => WRITE_ROLES.includes(r));
   if (!hasAccess) {
@@ -54,11 +53,11 @@ export const POST = withApiRoute({ bodySchema: subscriptionCreateSchema }, async
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
-  if (!env.DEFAULT_ORG_ID) return NextResponse.json({ error: 'DEFAULT_ORG_ID not configured' }, { status: 500 });
+  if (!orgId) return NextResponse.json({ error: 'Organization context required' }, { status: 500 });
 
   const { data, error } = await supabase
     .from('executive_subscriptions')
-    .insert({ ...body, org_id: env.DEFAULT_ORG_ID })
+    .insert({ ...body, org_id: orgId })
     .select()
     .single();
 

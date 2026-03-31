@@ -30,6 +30,11 @@ export async function getKrewpactOrgId(): Promise<string | null> {
   return (meta?.krewpact_org_id as string | null) ?? null;
 }
 
+export async function getKrewpactOrgSlug(): Promise<string | null> {
+  const meta = await _getClerkMetadata();
+  return (meta?.krewpact_org_slug as string | null) ?? null;
+}
+
 /**
  * Require the authenticated user to have at least one of the given roles.
  * Returns userId + roles on success, or a 403 NextResponse on failure.

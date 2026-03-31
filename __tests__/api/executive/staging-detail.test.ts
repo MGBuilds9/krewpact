@@ -8,6 +8,7 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 vi.mock('@/lib/api/org', () => ({
   getKrewpactRoles: vi.fn(),
+  getKrewpactOrgId: vi.fn().mockResolvedValue('test-org-00000000-0000-0000-0000-000000000000'),
   getKrewpactUserId: vi.fn().mockResolvedValue('kp-user-1'),
 }));
 vi.mock('@/lib/api/rate-limit', () => ({

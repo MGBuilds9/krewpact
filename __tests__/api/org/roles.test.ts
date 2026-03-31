@@ -14,6 +14,7 @@ vi.mock('@/lib/api/rate-limit', () => ({
 const mockGetKrewpactRoles = vi.fn();
 vi.mock('@/lib/api/org', () => ({
   getKrewpactRoles: (...args: unknown[]) => mockGetKrewpactRoles(...args),
+  getKrewpactOrgId: vi.fn().mockResolvedValue('test-org-00000000-0000-0000-0000-000000000000'),
 }));
 
 vi.mock('@/lib/supabase/server', () => ({

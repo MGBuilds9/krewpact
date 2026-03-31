@@ -21,6 +21,7 @@ export async function syncJournalEntry(
   entryId: string,
   _userId: string,
   jobContext?: SyncJobContext,
+  erpCompany = 'KrewPact',
 ): Promise<SyncResult> {
   const supabase = createScopedServiceClient('erp-sync:journal-entry');
   const job = await createSyncJob(supabase, 'journal_entry', entryId, jobContext);
@@ -61,7 +62,7 @@ export async function syncJournalEntry(
         id: entryId,
         voucher_type: (record.voucher_type as string) || 'Journal Entry',
         posting_date: record.posting_date as string,
-        company: (record.company as string) || 'MDM Group Inc.',
+        company: (record.company as string) || erpCompany,
         user_remark: record.user_remark as string | null,
         accounts: ((record.accounts as Record<string, unknown>[]) || []).map((acct) => ({
           account: acct.account as string,

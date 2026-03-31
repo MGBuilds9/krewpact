@@ -10,6 +10,7 @@ const mockGetKrewpactRoles = vi.fn();
 vi.mock('@/lib/api/org', () => ({
   requireRole: vi.fn(),
   getKrewpactRoles: () => mockGetKrewpactRoles(),
+  getKrewpactOrgId: vi.fn().mockResolvedValue('test-org-00000000-0000-0000-0000-000000000000'),
 }));
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createUserClientSafe: vi.fn() }));

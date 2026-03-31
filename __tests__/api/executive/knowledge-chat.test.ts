@@ -7,7 +7,7 @@ vi.mock('@/lib/knowledge/embeddings', () => ({ embedChunks: vi.fn() }));
 vi.mock('@/lib/logger', () => ({
   logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn(), child: vi.fn().mockReturnThis() },
 }));
-vi.mock('@/lib/api/org', () => ({ getKrewpactRoles: vi.fn(), getKrewpactUserId: vi.fn() }));
+vi.mock('@/lib/api/org', () => ({ getKrewpactRoles: vi.fn(), getKrewpactUserId: vi.fn(), getKrewpactOrgId: vi.fn().mockResolvedValue('test-org-00000000-0000-0000-0000-000000000000') }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
@@ -21,6 +21,20 @@ vi.mock('ai', () => ({
 }));
 vi.mock('@ai-sdk/openai', () => ({
   openai: vi.fn().mockReturnValue('mock-model'),
+}));
+vi.mock('@/lib/tenant/branding', () => ({
+  getOrgBranding: vi.fn().mockResolvedValue({
+    company_name: 'Test Company',
+    company_description: '',
+    erp_company: 'Test Company',
+    footer_text: 'Test Company',
+    logo_url: null,
+    favicon_url: null,
+    primary_color: '#2563eb',
+    accent_color: '#f59e0b',
+    support_email: null,
+    support_url: null,
+  }),
 }));
 
 import { auth } from '@clerk/nextjs/server';

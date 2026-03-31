@@ -3,6 +3,7 @@ import { generateText } from 'ai';
 
 import { AI_MODELS } from '@/lib/ai/models';
 import { logger } from '@/lib/logger';
+import { getOrgBranding } from '@/lib/tenant/branding';
 
 interface DeepResearchResult {
   research_report: string;
@@ -76,6 +77,7 @@ export async function deepResearchLead(
   companyName: string,
   website: string | null,
   enrichmentData: Record<string, unknown>,
+  orgId: string,
 ): Promise<DeepResearchResult> {
   const sources: string[] = [];
   const contextParts: string[] = [];
@@ -97,9 +99,14 @@ export async function deepResearchLead(
   }
 
   // 3. Gemini synthesis
+  const branding = await getOrgBranding(orgId);
+  const companyDesc =
+    branding.company_description ||
+    `a construction conglomerate in the Greater Toronto Area (GTA), Ontario, Canada`;
+
   const { text } = await generateText({
     model: google(AI_MODELS.flash),
-    prompt: `You are a construction industry analyst for MDM Group Inc., a construction conglomerate in the Greater Toronto Area (GTA), Ontario, Canada. MDM offers general contracting, residential construction, wood/lumber, telecom, and property management services.
+    prompt: `You are a construction industry analyst for ${branding.company_name}, ${companyDesc}.
 
 Write a structured research report (~200 words) about "${companyName}" based on the following data:
 
@@ -110,7 +117,7 @@ Structure your report with these sections (use plain text, no markdown headers):
 BUSINESS OVERVIEW: What they do, core services, industry focus.
 REPUTATION & SIZE: Google rating, reviews, web presence, years in business if available.
 SERVICES & CAPABILITIES: Specific services offered based on website/description.
-MDM RELEVANCE: Are they a potential client (need construction), partner (complementary services), or competitor? What MDM division would be most relevant?
+RELEVANCE: Are they a potential client (need construction), partner (complementary services), or competitor? What division of ${branding.company_name} would be most relevant?
 
 Write factually. If data is insufficient for a section, note that briefly and move on.`,
     maxOutputTokens: 500,

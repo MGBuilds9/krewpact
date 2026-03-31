@@ -9,6 +9,21 @@ vi.mock('@ai-sdk/google', () => ({
   google: vi.fn(() => 'mock-model'),
 }));
 
+vi.mock('@/lib/tenant/branding', () => ({
+  getOrgBranding: vi.fn().mockResolvedValue({
+    company_name: 'MDM Group Inc.',
+    company_description: 'a construction conglomerate in the Greater Toronto Area (GTA), Ontario, Canada',
+    erp_company: 'MDM Group Inc.',
+    logo_url: null,
+    favicon_url: null,
+    footer_text: '',
+    primary_color: '#000000',
+    accent_color: '#000000',
+    support_email: null,
+    support_url: null,
+  }),
+}));
+
 import { generateText } from 'ai';
 
 import { summarizeEnrichment } from '@/lib/integrations/enrichment-summarizer';
@@ -21,7 +36,7 @@ describe('summarizeEnrichment', () => {
   });
 
   it('returns empty string when no enrichment data available', async () => {
-    const result = await summarizeEnrichment('Acme Corp', {});
+    const result = await summarizeEnrichment('Acme Corp', {}, 'test-org-id');
     expect(result).toBe('');
     expect(mockGenerateText).not.toHaveBeenCalled();
   });
@@ -38,7 +53,7 @@ describe('summarizeEnrichment', () => {
         google_reviews_count: 120,
         business_status: 'OPERATIONAL',
       },
-    });
+    }, 'test-org-id');
 
     expect(result).toBe('Acme Corp is a construction company in Mississauga.');
     expect(mockGenerateText).toHaveBeenCalledOnce();
@@ -58,7 +73,7 @@ describe('summarizeEnrichment', () => {
         website: 'https://testco.ca',
         description: 'Leading construction firm in Ontario',
       },
-    });
+    }, 'test-org-id');
 
     const prompt = mockGenerateText.mock.calls[0][0].prompt as string;
     expect(prompt).toContain('testco.ca');
@@ -75,7 +90,7 @@ describe('summarizeEnrichment', () => {
         email: 'john@test.com',
         title: 'CEO',
       },
-    });
+    }, 'test-org-id');
 
     const prompt = mockGenerateText.mock.calls[0][0].prompt as string;
     expect(prompt).toContain('CEO');
@@ -91,7 +106,7 @@ describe('summarizeEnrichment', () => {
       tavily: {
         answer: 'Test Co specializes in commercial renovations',
       },
-    });
+    }, 'test-org-id');
 
     const prompt = mockGenerateText.mock.calls[0][0].prompt as string;
     expect(prompt).toContain('commercial renovations');
@@ -107,7 +122,7 @@ describe('summarizeEnrichment', () => {
       brave: { website: 'fullco.ca', description: 'Full service builder' },
       apollo_match: { title: 'VP Operations' },
       tavily: { answer: 'Award-winning firm' },
-    });
+    }, 'test-org-id');
 
     const prompt = mockGenerateText.mock.calls[0][0].prompt as string;
     expect(prompt).toContain('Full Co');
@@ -124,7 +139,7 @@ describe('summarizeEnrichment', () => {
 
     const result = await summarizeEnrichment('Test', {
       google_maps: { google_rating: 4.0 },
-    });
+    }, 'test-org-id');
 
     expect(result).toBe('Trimmed summary.');
   });

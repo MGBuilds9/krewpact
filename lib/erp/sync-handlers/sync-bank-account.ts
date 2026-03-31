@@ -21,6 +21,7 @@ export async function syncBankAccount(
   bankAccountId: string,
   _userId: string,
   jobContext?: SyncJobContext,
+  erpCompany = 'KrewPact',
 ): Promise<SyncResult> {
   const supabase = createScopedServiceClient('erp-sync:bank-account');
   const job = await createSyncJob(supabase, 'bank_account', bankAccountId, jobContext);
@@ -61,7 +62,7 @@ export async function syncBankAccount(
         bank: record.bank as string,
         account_type: record.account_type as string | null,
         account_subtype: record.account_subtype as string | null,
-        company: (record.company as string) || 'MDM Group Inc.',
+        company: (record.company as string) || erpCompany,
         iban: record.iban as string | null,
         branch_code: record.branch_code as string | null,
         is_default: record.is_default as boolean,

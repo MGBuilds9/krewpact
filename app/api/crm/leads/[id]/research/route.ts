@@ -5,7 +5,7 @@ import { withApiRoute } from '@/lib/api/with-api-route';
 import { deepResearchLead } from '@/lib/integrations/deep-research';
 import { createServiceClient } from '@/lib/supabase/server';
 
-export const POST = withApiRoute({ rateLimit: { limit: 5, window: '1 m' } }, async ({ params }) => {
+export const POST = withApiRoute({ rateLimit: { limit: 5, window: '1 m' } }, async ({ params, orgId }) => {
   const { id } = params;
   const supabase = createServiceClient();
 
@@ -29,7 +29,7 @@ export const POST = withApiRoute({ rateLimit: { limit: 5, window: '1 m' } }, asy
   const brave = enrichmentData.brave as Record<string, unknown> | undefined;
   const website = (brave?.website as string) ?? (lead.domain as string | null);
 
-  const result = await deepResearchLead(lead.company_name ?? '', website, enrichmentData);
+  const result = await deepResearchLead(lead.company_name ?? '', website, enrichmentData, orgId ?? '');
 
   const updatedEnrichment = { ...enrichmentData, deep_research: result };
 

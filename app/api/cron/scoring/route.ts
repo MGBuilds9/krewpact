@@ -27,7 +27,7 @@ async function fetchLeadsForScoring(supabase: ServiceClient, force: boolean) {
   let query = supabase
     .from('leads')
     .select(
-      'id, company_name, domain, enrichment_status, enrichment_data, lead_score, fit_score, intent_score, engagement_score, source_channel, industry, city, province, postal_code, status, division_id, current_sequence_id, created_at, updated_at',
+      'id, company_name, domain, enrichment_status, enrichment_data, lead_score, fit_score, intent_score, engagement_score, source_channel, industry, city, province, postal_code, status, division_id, current_sequence_id, created_at, updated_at, org_id',
     )
     .eq('enrichment_status', 'complete')
     .is('deleted_at', null)
@@ -101,6 +101,7 @@ async function maybeDeepResearch(
       (lead.company_name as string) ?? '',
       website,
       enrichmentData,
+      (lead.org_id as string) ?? '',
     );
     await supabase
       .from('leads')

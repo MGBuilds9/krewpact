@@ -58,6 +58,16 @@ vi.mock('@/hooks/useContracting', () => ({
   useCreateProposal: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
+vi.mock('@/contexts/OrgContext', () => ({
+  useOrg: vi.fn().mockReturnValue({
+    currentOrg: { branding: { company_name: 'Test Company' } },
+    orgSlug: 'test-org',
+    isLoading: false,
+    isError: false,
+    error: null,
+  }),
+}));
+
 import EstimateBuilderPage from '@/app/(dashboard)/org/[orgSlug]/estimates/[id]/page';
 
 const mockEstimate = {

@@ -21,6 +21,7 @@ export async function syncCostCenter(
   costCenterId: string,
   _userId: string,
   jobContext?: SyncJobContext,
+  erpCompany = 'KrewPact',
 ): Promise<SyncResult> {
   const supabase = createScopedServiceClient('erp-sync:cost-center');
   const job = await createSyncJob(supabase, 'cost_center', costCenterId, jobContext);
@@ -49,7 +50,7 @@ export async function syncCostCenter(
       const mockResp = mockCostCenterCreateResponse({
         id: costCenterId,
         cost_center_name: record.cost_center_name as string,
-        company: (record.company as string) || 'MDM Group Inc.',
+        company: (record.company as string) || erpCompany,
       });
       erpDocname = mockResp.name;
     } else {
@@ -59,7 +60,7 @@ export async function syncCostCenter(
         id: costCenterId,
         cost_center_name: record.cost_center_name as string,
         parent_cost_center: record.parent_cost_center as string | null,
-        company: (record.company as string) || 'MDM Group Inc.',
+        company: (record.company as string) || erpCompany,
         is_group: record.is_group as boolean,
       });
       const result = await client.create<{ name: string }>('Cost Center', mapped);

@@ -1,6 +1,5 @@
 import { clerkClient } from '@clerk/nextjs/server';
 
-import { env } from '@/lib/env';
 import { logger } from '@/lib/logger';
 import { createServiceClient } from '@/lib/supabase/server';
 
@@ -90,20 +89,46 @@ export async function syncRolesToBothStores(params: {
     }
   }
 
-  // 4. Update Clerk publicMetadata
+  // 4. Resolve user's org from Supabase (not env var — multi-tenant safe)
+  let orgId: string | undefined;
+  let orgSlug: string | undefined;
+  try {
+    const { data: userData, error: userError } = await db
+      .from('users')
+      .select('org_id, organizations(slug)')
+      .eq('id', supabaseUserId)
+      .single();
+
+    if (userError || !userData?.org_id) {
+      throw new Error(
+        userError?.message ?? `User ${supabaseUserId} has no org_id`,
+      );
+    }
+    orgId = userData.org_id;
+    const org = Array.isArray(userData.organizations)
+      ? userData.organizations[0]
+      : userData.organizations;
+    orgSlug = (org as { slug?: string } | null)?.slug;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    errors.push(`User org lookup failed: ${msg}`);
+    logger.error('syncRolesToBothStores: org lookup failed', { supabaseUserId, error: msg });
+  }
+
+  // 5. Update Clerk publicMetadata
   try {
     const client = await clerkClient();
-    const orgId = env.DEFAULT_ORG_ID;
     await client.users.updateUserMetadata(clerkUserId, {
       publicMetadata: {
         role_keys: roleKeys,
         division_ids: divisionIds ?? [],
         krewpact_user_id: supabaseUserId,
         krewpact_org_id: orgId,
+        krewpact_org_slug: orgSlug,
       },
     });
 
-    logger.info('syncRolesToBothStores: Clerk metadata updated', { clerkUserId, roleKeys });
+    logger.info('syncRolesToBothStores: Clerk metadata updated', { clerkUserId, roleKeys, orgId });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     errors.push(`Clerk metadata update failed: ${msg}`);

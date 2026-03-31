@@ -2,6 +2,7 @@ import { google } from '@ai-sdk/google';
 import { generateText } from 'ai';
 
 import { AI_MODELS } from '@/lib/ai/models';
+import { getOrgBranding } from '@/lib/tenant/branding';
 
 /**
  * Summarize enrichment data into a 2-3 sentence company brief
@@ -10,6 +11,7 @@ import { AI_MODELS } from '@/lib/ai/models';
 export async function summarizeEnrichment(
   companyName: string,
   enrichmentData: Record<string, unknown>,
+  orgId: string,
 ): Promise<string> {
   const googleMaps = enrichmentData.google_maps as Record<string, unknown> | undefined;
   const brave = enrichmentData.brave as Record<string, unknown> | undefined;
@@ -47,9 +49,11 @@ export async function summarizeEnrichment(
     return '';
   }
 
+  const branding = await getOrgBranding(orgId);
+
   const { text } = await generateText({
     model: google(AI_MODELS.flash),
-    prompt: `You are a construction industry analyst for MDM Group Inc., a construction conglomerate in the Greater Toronto Area (GTA), Ontario, Canada.
+    prompt: `You are a construction industry analyst for ${branding.company_name}, a construction conglomerate in the Greater Toronto Area (GTA), Ontario, Canada.
 
 Given the following enrichment data about "${companyName}", write a concise 2-3 sentence company brief. Focus on:
 - What they do (industry/services)

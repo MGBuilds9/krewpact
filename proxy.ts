@@ -87,10 +87,14 @@ export const proxy = clerkMiddleware(
     }
 
     // Authenticated user on a bare path (e.g., /dashboard, /crm/leads)
-    // Redirect to org-scoped path
+    // Redirect to org-scoped path using JWT claim, then env fallback
     if (userId) {
+      const meta = (sessionClaims as Record<string, unknown>)?.metadata as
+        | Record<string, unknown>
+        | undefined;
+      const slug = (meta?.krewpact_org_slug as string) || DEFAULT_ORG_SLUG;
       const url = req.nextUrl.clone();
-      url.pathname = `/org/${DEFAULT_ORG_SLUG}${pathname}`;
+      url.pathname = `/org/${slug}${pathname}`;
       const response = NextResponse.redirect(url);
       response.headers.set('x-request-id', requestId);
       return response;

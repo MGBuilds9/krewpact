@@ -1,5 +1,5 @@
 /**
- * MDM Group Inc. — Follow-up email templates.
+ * Follow-up email templates.
  * Templates: follow-up-nudge
  */
 
@@ -15,7 +15,7 @@ const followUpNudgeBody = wrapEmail(`
     <td style="padding:40px 40px 20px 40px;font-family:'Helvetica Neue',Arial,sans-serif;">
       <p style="margin:0 0 20px 0;font-size:15px;color:#444444;line-height:1.6;">Hi {{first_name}},</p>
       <p style="margin:0 0 20px 0;font-size:15px;color:#444444;line-height:1.6;">
-        I wanted to follow up on my previous note about MDM Group's construction services. I know your schedule is busy, so I will keep this short.
+        I wanted to follow up on my previous note about {{company_name}}'s construction services. I know your schedule is busy, so I will keep this short.
       </p>
       ${divider()}
     </td>
@@ -25,7 +25,7 @@ const followUpNudgeBody = wrapEmail(`
       <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F5F5F5;border-radius:4px;border-left:4px solid #D4A843;">
         <tr>
           <td style="padding:20px 24px;font-family:'Helvetica Neue',Arial,sans-serif;">
-            <p style="margin:0 0 12px 0;font-size:14px;color:#1E3A5F;font-weight:700;">MDM Group at a Glance</p>
+            <p style="margin:0 0 12px 0;font-size:14px;color:#1E3A5F;font-weight:700;">{{company_name}} at a Glance</p>
             <p style="margin:0 0 8px 0;font-size:14px;color:#444444;line-height:1.5;">
               <strong style="color:#1E3A5F;">{{client_count}}+</strong> clients served across the GTA
             </p>
@@ -53,9 +53,9 @@ const followUpNudgeBody = wrapEmail(`
 
 const followUpNudgeText = `Hi {{first_name}},
 
-I wanted to follow up on my previous note about MDM Group's construction services.
+I wanted to follow up on my previous note about {{company_name}}'s construction services.
 
-MDM Group at a Glance:
+{{company_name}} at a Glance:
 - {{client_count}}+ clients served across the GTA
 - {{years_in_business}}+ years building in Ontario
 - 6 divisions: Contracting, Homes, Wood, Telecom, Management, Group Inc.
@@ -75,13 +75,14 @@ export const FOLLOW_UP_TEMPLATES: BrandedTemplate[] = [
     category: 'follow_up',
     description:
       'Short, respectful follow-up with social proof (client count, years in business). Clean layout with a single CTA. Best used 5-7 days after initial outreach.',
-    subject: 'Following up — MDM Group for {{company_name}}',
+    subject: 'Following up — {{sender_company}} for {{company_name}}',
     body_html: followUpNudgeBody,
     body_text: followUpNudgeText,
     merge_fields: [
       'logo_url',
       'first_name',
       'company_name',
+      'sender_company',
       'client_count',
       'years_in_business',
       'cta_url',

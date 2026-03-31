@@ -21,6 +21,7 @@ export async function syncHolidayList(
   holidayListId: string,
   _userId: string,
   jobContext?: SyncJobContext,
+  erpCompany = 'KrewPact',
 ): Promise<SyncResult> {
   const supabase = createScopedServiceClient('erp-sync:holiday-list');
   const job = await createSyncJob(supabase, 'holiday_list', holidayListId, jobContext);
@@ -61,7 +62,7 @@ export async function syncHolidayList(
         holiday_list_name: record.holiday_list_name as string,
         from_date: record.from_date as string,
         to_date: record.to_date as string,
-        company: (record.company as string) || 'MDM Group Inc.',
+        company: (record.company as string) || erpCompany,
         holidays: ((record.holidays as Record<string, unknown>[]) || []).map((h) => ({
           holiday_date: h.holiday_date as string,
           description: h.description as string,

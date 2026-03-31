@@ -7,7 +7,7 @@ vi.mock('@/lib/knowledge/embeddings', () => ({ embedChunks: vi.fn() }));
 vi.mock('@/lib/logger', () => ({
   logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn(), child: vi.fn().mockReturnThis() },
 }));
-vi.mock('@/lib/api/org', () => ({ getKrewpactRoles: vi.fn() }));
+vi.mock('@/lib/api/org', () => ({ getKrewpactRoles: vi.fn(), getKrewpactOrgId: vi.fn().mockResolvedValue('test-org-00000000-0000-0000-0000-000000000000') }));
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),

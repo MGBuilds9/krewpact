@@ -155,7 +155,7 @@ export function mockGlEntryResponse(docname: string): {
       voucher_type: 'Sales Invoice',
       voucher_no: 'SINV-001',
       against: '4100 - Revenue - MDM',
-      company: 'MDM Group Inc.',
+      company: 'Demo Company',
       is_cancelled: 0,
       creation: new Date().toISOString(),
       modified: new Date().toISOString(),
@@ -180,7 +180,7 @@ export function mockGlEntryListResponse(count: number): {
       credit: i % 2 === 0 ? 0 : 1000 * (i + 1),
       voucher_type: 'Sales Invoice',
       voucher_no: `SINV-MOCK-${String(i + 1).padStart(3, '0')}`,
-      company: 'MDM Group Inc.',
+      company: 'Demo Company',
       is_cancelled: 0,
     });
   }
@@ -236,7 +236,7 @@ export function mockModeOfPaymentResponse(docname: string): {
       enabled: 1,
       accounts: [
         {
-          company: 'MDM Group Inc.',
+          company: 'Demo Company',
           default_account: '1200 - Bank - MDM',
         },
       ],

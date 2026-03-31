@@ -1,5 +1,5 @@
 /**
- * MDM Group Inc. — Outreach email templates barrel.
+ * Outreach email templates barrel.
  * Aggregates: outreach-portfolio (project-showcase, video-intro, capability-deck)
  *             outreach-prospecting (seasonal-outreach, trade-partner-invite)
  */

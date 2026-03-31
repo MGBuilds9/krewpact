@@ -4,7 +4,6 @@ import { NextResponse } from 'next/server';
 import path from 'path';
 
 import { withApiRoute } from '@/lib/api/with-api-route';
-import { env } from '@/lib/env';
 import { createServiceClient } from '@/lib/supabase/server';
 import { stagingBulkImportSchema } from '@/lib/validators/executive';
 
@@ -33,6 +32,7 @@ interface ProcessResult {
 async function processOneFile(
   supabase: SupabaseClient,
   file: FileInput,
+  orgId: string,
 ): Promise<ProcessResult> {
   const filePath = file.path;
 
@@ -71,15 +71,13 @@ async function processOneFile(
 
   const strippedContent = rawContent.replace(/^---[\s\S]*?---\n*/m, '');
 
-  if (!env.DEFAULT_ORG_ID) return { status: 'error', reason: 'DEFAULT_ORG_ID not configured' };
-
   const { error: insertError } = await supabase.from('knowledge_staging').insert({
     title,
     raw_content: strippedContent,
     source_type: 'vault_import',
     source_path: filePath,
     content_checksum: contentChecksum,
-    org_id: env.DEFAULT_ORG_ID,
+    org_id: orgId,
     status: 'pending_review',
     ...(file.category && { category: file.category }),
     ...(file.division_id && { division_id: file.division_id }),
@@ -91,7 +89,9 @@ async function processOneFile(
   return { status: 'imported' };
 }
 
-export const POST = withApiRoute({ roles: ADMIN_ROLES, bodySchema: stagingBulkImportSchema }, async ({ body }) => {
+export const POST = withApiRoute({ roles: ADMIN_ROLES, bodySchema: stagingBulkImportSchema }, async ({ body, orgId }) => {
+  if (!orgId) return NextResponse.json({ error: 'Organization context required' }, { status: 500 });
+
   const supabase = await createServiceClient();
 
   let imported = 0;
@@ -100,7 +100,7 @@ export const POST = withApiRoute({ roles: ADMIN_ROLES, bodySchema: stagingBulkIm
   const details: FileDetail[] = [];
 
   for (const file of body.files) {
-    const result = await processOneFile(supabase, file);
+    const result = await processOneFile(supabase, file, orgId);
     details.push({ path: file.path, status: result.status, reason: result.reason });
     if (result.status === 'imported') imported++;
     else if (result.status === 'skipped') skipped++;

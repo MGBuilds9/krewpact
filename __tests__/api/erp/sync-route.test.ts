@@ -15,6 +15,7 @@ vi.mock('@clerk/nextjs/server', () => ({
 
 vi.mock('@/lib/api/org', () => ({
   getKrewpactRoles: mockGetRoles,
+  getKrewpactOrgId: vi.fn().mockResolvedValue('test-org-00000000-0000-0000-0000-000000000000'),
 }));
 
 vi.mock('@/lib/supabase/server', () => ({

@@ -3,7 +3,6 @@ import { NextResponse } from 'next/server';
 import { forbidden } from '@/lib/api/errors';
 import { getKrewpactRoles } from '@/lib/api/org';
 import { withApiRoute } from '@/lib/api/with-api-route';
-import { env } from '@/lib/env';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 const EXECUTIVE_ROLES = ['platform_admin', 'executive'];
@@ -66,13 +65,13 @@ function accumulateOpportunities(
   }
 }
 
-export const GET = withApiRoute({}, async ({ logger }) => {
+export const GET = withApiRoute({}, async ({ logger, orgId }) => {
   const roles = await getKrewpactRoles();
   if (!roles.some((r) => EXECUTIVE_ROLES.includes(r))) {
     throw forbidden('Forbidden');
   }
 
-  if (!env.DEFAULT_ORG_ID) return NextResponse.json({ error: 'DEFAULT_ORG_ID not configured' }, { status: 500 });
+  if (!orgId) return NextResponse.json({ error: 'Organization context required' }, { status: 500 });
 
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
@@ -80,7 +79,7 @@ export const GET = withApiRoute({}, async ({ logger }) => {
   const { data: opportunities, error } = await supabase
     .from('opportunities')
     .select('id, stage, estimated_revenue, expected_close_date')
-    .eq('org_id', env.DEFAULT_ORG_ID)
+    .eq('org_id', orgId)
     .not('stage', 'eq', 'closed_lost')
     .not('expected_close_date', 'is', null)
     .not('estimated_revenue', 'is', null);

@@ -1,5 +1,6 @@
 import { logger } from '@/lib/logger';
 import { createServiceClient } from '@/lib/supabase/server';
+import { getOrgBranding } from '@/lib/tenant/branding';
 
 import { generateWithGemini } from '../providers/gemini';
 import type { EntityType } from '../types';
@@ -91,22 +92,28 @@ async function fetchEntityContext(entityType: EntityType, entityId: string) {
   return { entity: null, activities: [], email: null };
 }
 
-const DRAFT_PROMPTS: Record<DraftType, string> = {
-  follow_up:
-    'Write a professional follow-up email. Reference the most recent interaction if available. Keep it brief (3-5 sentences) and include a clear call to action.',
-  introduction:
-    "Write a professional introduction email from MDM Group Inc., a construction company in the Greater Toronto Area. Mention what MDM can offer based on the recipient's industry. Keep it warm but professional, 3-5 sentences.",
-  proposal:
-    'Write a professional email presenting a proposal or estimate. Reference the project scope and value if available. Include a request to schedule a review meeting. 4-6 sentences.',
-  custom: '', // Will be replaced with customInstructions
-};
-
 export async function draftEmail(input: DraftEmailInput): Promise<DraftEmailOutput> {
-  const context = await fetchEntityContext(input.entityType, input.entityId);
+  const [context, branding] = await Promise.all([
+    fetchEntityContext(input.entityType, input.entityId),
+    getOrgBranding(input.orgId),
+  ]);
 
   if (!context.entity) {
     throw new Error(`Entity ${input.entityType}/${input.entityId} not found`);
   }
+
+  const companyDesc =
+    branding.company_description ||
+    `a construction company in the Greater Toronto Area`;
+
+  const draftPrompts: Record<DraftType, string> = {
+    follow_up:
+      'Write a professional follow-up email. Reference the most recent interaction if available. Keep it brief (3-5 sentences) and include a clear call to action.',
+    introduction: `Write a professional introduction email from ${branding.company_name}, ${companyDesc}. Mention what ${branding.company_name} can offer based on the recipient's industry. Keep it warm but professional, 3-5 sentences.`,
+    proposal:
+      'Write a professional email presenting a proposal or estimate. Reference the project scope and value if available. Include a request to schedule a review meeting. 4-6 sentences.',
+    custom: '', // Will be replaced with customInstructions
+  };
 
   const entitySummary = JSON.stringify(context.entity, null, 2);
   const activitySummary =
@@ -117,9 +124,9 @@ export async function draftEmail(input: DraftEmailInput): Promise<DraftEmailOutp
   const instructions =
     input.draftType === 'custom' && input.customInstructions
       ? input.customInstructions
-      : DRAFT_PROMPTS[input.draftType];
+      : draftPrompts[input.draftType];
 
-  const prompt = `You are writing an email on behalf of an employee at MDM Group Inc., a construction conglomerate in the Greater Toronto Area (GTA), Ontario, Canada.
+  const prompt = `You are writing an email on behalf of an employee at ${branding.company_name}, ${companyDesc}.
 
 Context about the recipient:
 ${entitySummary}
@@ -149,7 +156,7 @@ BODY:
   const subjectMatch = raw.match(/SUBJECT:\s*(.+)/);
   const bodyMatch = raw.match(/BODY:\s*([\s\S]+)/);
 
-  const subject = subjectMatch?.[1]?.trim() ?? 'Follow Up — MDM Group';
+  const subject = subjectMatch?.[1]?.trim() ?? `Follow Up — ${branding.company_name}`;
   const body = bodyMatch?.[1]?.trim() ?? raw;
 
   logger.info('Email draft generated', {
