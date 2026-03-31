@@ -28,6 +28,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useOrg } from '@/contexts/OrgContext';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { useUserRBAC } from '@/hooks/useRBAC';
 import { cn } from '@/lib/utils';
@@ -45,6 +46,7 @@ interface NavItem {
   description: string;
   adminOnly?: boolean;
   requiredRoles?: string[];
+  requiredFlag?: string;
 }
 
 const navigationItems: NavItem[] = [
@@ -54,36 +56,41 @@ const navigationItems: NavItem[] = [
     path: '/dashboard',
     description: 'Service gateway & quick access',
   },
-  { icon: Building2, label: 'CRM', path: '/crm', description: 'Leads, accounts & pipeline' },
+  { icon: Building2, label: 'CRM', path: '/crm', description: 'Leads, accounts & pipeline', requiredFlag: 'crm' },
   {
     icon: Calculator,
     label: 'Estimates',
     path: '/estimates',
     description: 'Cost estimation builder',
+    requiredFlag: 'estimates',
   },
   {
     icon: FolderOpen,
     label: 'Projects',
     path: '/projects',
     description: 'View construction projects',
+    requiredFlag: 'projects',
   },
   {
     icon: FileText,
     label: 'Documents',
     path: '/documents',
     description: 'SharePoint files & documents',
+    requiredFlag: 'documents',
   },
   {
     icon: Package,
     label: 'Inventory',
     path: '/inventory',
     description: 'Items, stock & purchasing',
+    requiredFlag: 'inventory',
   },
   {
     icon: Calendar,
     label: 'Schedule',
     path: '/schedule',
     description: 'Calendar & events',
+    requiredFlag: 'schedule',
   },
   { icon: Users, label: 'Team', path: '/team', description: 'Employee directory' },
   {
@@ -91,6 +98,7 @@ const navigationItems: NavItem[] = [
     label: 'Finance',
     path: '/finance',
     description: 'Financial overview',
+    requiredFlag: 'finance',
   },
   {
     icon: Banknote,
@@ -98,12 +106,14 @@ const navigationItems: NavItem[] = [
     path: '/payroll',
     description: 'ADP payroll export & timesheets',
     requiredRoles: ['payroll_admin', 'executive', 'accounting'],
+    requiredFlag: 'payroll',
   },
   {
     icon: ClipboardList,
     label: 'Reports',
     path: '/reports',
     description: 'Field & safety reports',
+    requiredFlag: 'reports',
   },
   {
     icon: BarChart3,
@@ -111,6 +121,7 @@ const navigationItems: NavItem[] = [
     path: '/executive',
     description: 'Executive dashboard',
     requiredRoles: ['executive', 'platform_admin'],
+    requiredFlag: 'executive',
   },
   {
     icon: Shield,
@@ -251,6 +262,8 @@ export function Navigation({ isMobile = false }: NavigationProps) {
   const pathname = usePathname();
   const { orgPath } = useOrgRouter();
   const { isAdmin, hasRole } = useUserRBAC();
+  const { currentOrg } = useOrg();
+  const flags = currentOrg?.feature_flags ?? {};
 
   const filteredItems = useMemo(
     () =>
@@ -258,9 +271,10 @@ export function Navigation({ isMobile = false }: NavigationProps) {
         if (item.adminOnly && !isAdmin) return false;
         if (item.requiredRoles && !item.requiredRoles.some((r) => hasRole(r)) && !isAdmin)
           return false;
+        if (item.requiredFlag && !flags[item.requiredFlag] && !isAdmin) return false;
         return true;
       }),
-    [isAdmin, hasRole],
+    [isAdmin, hasRole, flags],
   );
 
   const strippedPath = pathname.replace(/^\/org\/[^/]+/, '');

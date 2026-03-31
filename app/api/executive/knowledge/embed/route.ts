@@ -25,7 +25,6 @@ async function verifyEmbedAuth(req: Request): Promise<void> {
 async function upsertKnowledgeDoc(
   supabase: ServiceClient,
   stagingDoc: Record<string, unknown>,
-  stagingId: string,
   filePath: string,
 ) {
   return supabase
@@ -36,9 +35,10 @@ async function upsertKnowledgeDoc(
         title: stagingDoc.title ?? filePath,
         category: stagingDoc.category ?? null,
         division_id: stagingDoc.division_id ?? null,
+        org_id: stagingDoc.org_id as string,
         last_synced_at: new Date().toISOString(),
       },
-      { onConflict: 'file_path' },
+      { onConflict: 'org_id,file_path' },
     )
     .select()
     .single();
@@ -80,7 +80,6 @@ export const POST = withApiRoute({ auth: 'public' }, async ({ req }) => {
   const { data: knowledgeDoc, error: upsertError } = await upsertKnowledgeDoc(
     supabase,
     stagingDoc as Record<string, unknown>,
-    stagingId,
     filePath,
   );
   if (upsertError || !knowledgeDoc) {

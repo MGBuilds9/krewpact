@@ -65,7 +65,8 @@ async function processOneFile(
   const { data: existing } = await supabase
     .from('knowledge_staging')
     .select('id')
-    .eq('content_checksum', contentChecksum);
+    .eq('content_checksum', contentChecksum)
+    .eq('org_id', orgId);
 
   if (existing && existing.length > 0) return { status: 'skipped', reason: 'duplicate checksum' };
 

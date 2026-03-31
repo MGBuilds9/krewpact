@@ -1,0 +1,49 @@
+{
+  "$schema": "./tenant-schema.json",
+  "organization": {
+    "name": "Tenant Construction Co.",
+    "slug": "tenant-construction",
+    "subdomain": "tenant",
+    "timezone": "America/Toronto",
+    "locale": "en-CA",
+    "metadata": {
+      "industry": "construction",
+      "address": "456 Builder Ave, Toronto, ON M5V 1A1",
+      "phone": "(416) 555-0200",
+      "email": "info@tenant-construction.com",
+      "website": "https://tenant-construction.com"
+    }
+  },
+  "branding": {
+    "company_name": "Tenant Construction Co.",
+    "company_description": "Full-service construction and project management",
+    "primary_color": "#1e3a5f",
+    "accent_color": "#f59e0b",
+    "support_email": "support@tenant-construction.com",
+    "erp_company": "Tenant Construction Co."
+  },
+  "feature_flags": {
+    "crm": true,
+    "estimates": true,
+    "projects": true,
+    "finance": false,
+    "inventory": false,
+    "executive": false,
+    "portal": false,
+    "ai_features": false,
+    "knowledge_base": false
+  },
+  "divisions": [
+    {
+      "code": "general",
+      "name": "General Contracting",
+      "description": "General contracting division"
+    }
+  ],
+  "admin": {
+    "email": "admin@tenant-construction.com",
+    "first_name": "Admin",
+    "last_name": "User",
+    "clerk_user_id": null
+  }
+}

@@ -40,6 +40,39 @@ vi.mock('@/hooks/useRBAC', () => ({
   useUserRBAC: () => mockUseUserRBAC(),
 }));
 
+const ALL_FLAGS_ENABLED: Record<string, boolean> = {
+  crm: true,
+  estimates: true,
+  projects: true,
+  documents: true,
+  inventory: true,
+  schedule: true,
+  finance: true,
+  payroll: true,
+  reports: true,
+  executive: true,
+};
+
+const mockUseOrg = vi.fn(() => ({
+  currentOrg: {
+    id: 'org-1',
+    name: 'Test Org',
+    slug: 'test-org',
+    status: 'active',
+    timezone: 'America/Toronto',
+    locale: 'en-CA',
+    metadata: {},
+    branding: { company_name: 'Test Org', primary_color: '#2563eb' },
+    feature_flags: ALL_FLAGS_ENABLED,
+  },
+  orgSlug: 'test-org',
+  isLoading: false,
+}));
+
+vi.mock('@/contexts/OrgContext', () => ({
+  useOrg: () => mockUseOrg(),
+}));
+
 // Mock lucide-react icons to avoid SVG issues
 vi.mock('lucide-react', () => ({
   Banknote: () => <span>Banknote</span>,
@@ -122,6 +155,24 @@ function setAdmin(isAdmin: boolean) {
 
 function setHasRole(roleFn: (role: string) => boolean) {
   mockHasRole.mockImplementation(roleFn);
+}
+
+function setFeatureFlags(flags: Record<string, boolean>) {
+  mockUseOrg.mockReturnValue({
+    currentOrg: {
+      id: 'org-1',
+      name: 'Test Org',
+      slug: 'test-org',
+      status: 'active',
+      timezone: 'America/Toronto',
+      locale: 'en-CA',
+      metadata: {},
+      branding: { company_name: 'Test Org', primary_color: '#2563eb' },
+      feature_flags: flags,
+    },
+    orgSlug: 'test-org',
+    isLoading: false,
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -248,6 +299,49 @@ describe('Navigation', () => {
   it('shows Admin in mobile mode when isAdmin is true', () => {
     setAdmin(true);
     render(<Navigation isMobile />);
+    expect(screen.getByText('Admin')).toBeInTheDocument();
+  });
+
+  // -------------------------------------------------------------------------
+  // Feature flag gating
+  // -------------------------------------------------------------------------
+  it('hides CRM when crm flag is disabled', () => {
+    setFeatureFlags({ ...ALL_FLAGS_ENABLED, crm: false });
+    render(<Navigation />);
+    expect(screen.queryByText('CRM')).not.toBeInTheDocument();
+    expect(screen.getByText('Dashboard')).toBeInTheDocument();
+  });
+
+  it('hides all flagged modules when all flags are disabled', () => {
+    setFeatureFlags({});
+    render(<Navigation />);
+    expect(screen.getByText('Dashboard')).toBeInTheDocument();
+    expect(screen.getByText('Team')).toBeInTheDocument();
+    expect(screen.queryByText('CRM')).not.toBeInTheDocument();
+    expect(screen.queryByText('Estimates')).not.toBeInTheDocument();
+    expect(screen.queryByText('Projects')).not.toBeInTheDocument();
+    expect(screen.queryByText('Finance')).not.toBeInTheDocument();
+    expect(screen.queryByText('Inventory')).not.toBeInTheDocument();
+  });
+
+  it('shows only enabled modules', () => {
+    setFeatureFlags({ crm: true, projects: true });
+    render(<Navigation />);
+    expect(screen.getByText('Dashboard')).toBeInTheDocument();
+    expect(screen.getByText('CRM')).toBeInTheDocument();
+    expect(screen.getByText('Projects')).toBeInTheDocument();
+    expect(screen.getByText('Team')).toBeInTheDocument();
+    expect(screen.queryByText('Estimates')).not.toBeInTheDocument();
+    expect(screen.queryByText('Finance')).not.toBeInTheDocument();
+  });
+
+  it('admin bypasses feature flag restrictions', () => {
+    setAdmin(true);
+    setFeatureFlags({});
+    render(<Navigation />);
+    expect(screen.getByText('CRM')).toBeInTheDocument();
+    expect(screen.getByText('Estimates')).toBeInTheDocument();
+    expect(screen.getByText('Projects')).toBeInTheDocument();
     expect(screen.getByText('Admin')).toBeInTheDocument();
   });
 });

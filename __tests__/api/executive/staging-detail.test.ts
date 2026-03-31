@@ -64,8 +64,9 @@ describe('GET /api/executive/staging/[id]', () => {
     mockGetKrewpactRoles.mockResolvedValue(['executive']);
 
     const singleFn = vi.fn().mockReturnValue({ data: null, error: { code: 'PGRST116' } });
-    const eqFn = vi.fn().mockReturnValue({ single: singleFn });
-    const selectFn = vi.fn().mockReturnValue({ eq: eqFn });
+    const eqOrgFn = vi.fn().mockReturnValue({ single: singleFn });
+    const eqIdFn = vi.fn().mockReturnValue({ eq: eqOrgFn });
+    const selectFn = vi.fn().mockReturnValue({ eq: eqIdFn });
 
     mockCreateServiceClient.mockResolvedValue({
       from: vi.fn().mockReturnValue({ select: selectFn }),
@@ -88,8 +89,9 @@ describe('GET /api/executive/staging/[id]', () => {
 
     const doc = { id: 'doc-1', title: 'Test SOP', status: 'pending_review' };
     const singleFn = vi.fn().mockReturnValue({ data: doc, error: null });
-    const eqFn = vi.fn().mockReturnValue({ single: singleFn });
-    const selectFn = vi.fn().mockReturnValue({ eq: eqFn });
+    const eqOrgFn = vi.fn().mockReturnValue({ single: singleFn });
+    const eqIdFn = vi.fn().mockReturnValue({ eq: eqOrgFn });
+    const selectFn = vi.fn().mockReturnValue({ eq: eqIdFn });
 
     mockCreateServiceClient.mockResolvedValue({
       from: vi.fn().mockReturnValue({ select: selectFn }),
@@ -145,8 +147,9 @@ describe('PATCH /api/executive/staging/[id]', () => {
 
     const singleFn = vi.fn().mockReturnValue({ data: updatedDoc, error: null });
     const selectFn = vi.fn().mockReturnValue({ single: singleFn });
-    const eqFn = vi.fn().mockReturnValue({ select: selectFn });
-    const updateFn = vi.fn().mockReturnValue({ eq: eqFn });
+    const eqOrgFn = vi.fn().mockReturnValue({ select: selectFn });
+    const eqIdFn = vi.fn().mockReturnValue({ eq: eqOrgFn });
+    const updateFn = vi.fn().mockReturnValue({ eq: eqIdFn });
 
     mockCreateServiceClient.mockResolvedValue({
       from: vi.fn().mockReturnValue({ update: updateFn }),
@@ -208,8 +211,9 @@ describe('DELETE /api/executive/staging/[id]', () => {
     } as unknown as Awaited<ReturnType<typeof auth>>);
     mockGetKrewpactRoles.mockResolvedValue(['platform_admin']);
 
-    const eqFn = vi.fn().mockReturnValue({ error: null });
-    const deleteFn = vi.fn().mockReturnValue({ eq: eqFn });
+    const eqOrgFn = vi.fn().mockReturnValue({ error: null });
+    const eqIdFn = vi.fn().mockReturnValue({ eq: eqOrgFn });
+    const deleteFn = vi.fn().mockReturnValue({ eq: eqIdFn });
 
     mockCreateServiceClient.mockResolvedValue({
       from: vi.fn().mockReturnValue({ delete: deleteFn }),

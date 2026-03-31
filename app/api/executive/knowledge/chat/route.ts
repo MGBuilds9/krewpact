@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 
 import { AI_MODELS } from '@/lib/ai/models';
 import { forbidden } from '@/lib/api/errors';
-import { getKrewpactOrgId, getKrewpactRoles, getKrewpactUserId } from '@/lib/api/org';
+import { getKrewpactRoles, getKrewpactUserId } from '@/lib/api/org';
 import { withApiRoute } from '@/lib/api/with-api-route';
 import { getOrgBranding } from '@/lib/tenant/branding';
 import { embedChunks } from '@/lib/knowledge/embeddings';
@@ -43,12 +43,14 @@ async function resolveSessionId(
   sessionId: unknown,
   krewpactUserId: string,
   firstMessage: string,
+  orgId: string,
 ): Promise<string> {
   if (sessionId && typeof sessionId === 'string') return sessionId;
   const { data: newSession, error } = await supabase
     .from('ai_chat_sessions')
     .insert({
       user_id: krewpactUserId,
+      org_id: orgId,
       title: firstMessage.slice(0, 100),
       context_type: 'knowledge',
     })
@@ -63,12 +65,14 @@ async function resolveSessionId(
 async function buildKnowledgeContext(
   supabase: ServiceClient,
   message: string,
+  orgId: string | null,
 ): Promise<{ sources: ChatSource[]; contextText: string }> {
   const [queryEmbedding] = await embedChunks([message]);
   const { data: matches, error: rpcError } = await supabase.rpc('match_knowledge', {
     query_embedding: JSON.stringify(queryEmbedding),
     match_threshold: 0.5,
     match_count: 5,
+    p_org_id: orgId,
   });
   if (rpcError) {
     throw new Error('Knowledge search failed');
@@ -98,7 +102,7 @@ async function buildKnowledgeContext(
 
 export const POST = withApiRoute(
   { rateLimit: { limit: 10, window: '1 m' } },
-  async ({ req, logger }) => {
+  async ({ req, logger, orgId }) => {
     if (process.env.AI_ENABLED !== 'true') {
       return NextResponse.json({ error: 'AI features are disabled' }, { status: 503 });
     }
@@ -133,6 +137,7 @@ export const POST = withApiRoute(
       sessionId,
       krewpactUserId,
       trimmedMessage,
+      orgId ?? '',
     );
 
     const { data: historyRows } = await supabase
@@ -148,10 +153,7 @@ export const POST = withApiRoute(
       }),
     );
 
-    const [{ sources, contextText }, orgId] = await Promise.all([
-      buildKnowledgeContext(supabase, trimmedMessage),
-      getKrewpactOrgId(),
-    ]);
+    const { sources, contextText } = await buildKnowledgeContext(supabase, trimmedMessage, orgId);
 
     const companyName = orgId
       ? (await getOrgBranding(orgId)).company_name

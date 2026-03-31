@@ -127,7 +127,8 @@ describe('GET /api/executive/staging', () => {
     const rangeFn = vi.fn().mockReturnValue({ data: docs, count: 2, error: null });
     const orderFn = vi.fn().mockReturnValue({ range: rangeFn });
     const eqStatusFn = vi.fn().mockReturnValue({ order: orderFn });
-    const selectFn = vi.fn().mockReturnValue({ eq: eqStatusFn });
+    const eqOrgFn = vi.fn().mockReturnValue({ eq: eqStatusFn });
+    const selectFn = vi.fn().mockReturnValue({ eq: eqOrgFn });
 
     mockCreateServiceClient.mockReturnValue({
       from: vi.fn().mockReturnValue({ select: selectFn }),

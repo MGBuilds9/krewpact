@@ -39,7 +39,7 @@ function mergeMatchesWithDocs(matches: KnowledgeMatch[], docMap: Map<string, Kno
   });
 }
 
-export const POST = withApiRoute({}, async ({ req, logger }) => {
+export const POST = withApiRoute({}, async ({ req, logger, orgId }) => {
   const roles = await getKrewpactRoles();
   if (!roles.some((r) => EXECUTIVE_ROLES.includes(r))) {
     throw forbidden('Forbidden');
@@ -68,6 +68,7 @@ export const POST = withApiRoute({}, async ({ req, logger }) => {
     query_embedding: JSON.stringify(queryEmbedding),
     match_threshold: matchThreshold,
     match_count: matchCount,
+    p_org_id: orgId,
   });
 
   if (rpcError) {

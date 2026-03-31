@@ -200,6 +200,7 @@ describe('POST /api/executive/knowledge/chat', () => {
       query_embedding: JSON.stringify(fakeEmbedding),
       match_threshold: 0.5,
       match_count: 5,
+      p_org_id: 'test-org-00000000-0000-0000-0000-000000000000',
     });
   });
 

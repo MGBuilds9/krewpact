@@ -9,7 +9,7 @@ import { stagingUpdateSchema } from '@/lib/validators/executive';
 const READ_ROLES = ['executive', 'platform_admin'];
 const WRITE_ROLES = ['platform_admin'];
 
-export const GET = withApiRoute({}, async ({ params }) => {
+export const GET = withApiRoute({}, async ({ params, orgId }) => {
   const { id } = params;
 
   const roles = await getKrewpactRoles();
@@ -18,11 +18,14 @@ export const GET = withApiRoute({}, async ({ params }) => {
     throw forbidden('Forbidden: executive or platform_admin role required');
   }
 
+  if (!orgId) return NextResponse.json({ error: 'Organization context required' }, { status: 500 });
+
   const supabase = await createServiceClient();
   const { data, error } = await supabase
     .from('knowledge_staging')
     .select('*')
     .eq('id', id)
+    .eq('org_id', orgId)
     .single();
 
   if (error || !data) {
@@ -32,7 +35,7 @@ export const GET = withApiRoute({}, async ({ params }) => {
   return NextResponse.json(data);
 });
 
-export const PATCH = withApiRoute({ bodySchema: stagingUpdateSchema }, async ({ body, params }) => {
+export const PATCH = withApiRoute({ bodySchema: stagingUpdateSchema }, async ({ body, params, orgId }) => {
   const { id } = params;
 
   const roles = await getKrewpactRoles();
@@ -40,6 +43,8 @@ export const PATCH = withApiRoute({ bodySchema: stagingUpdateSchema }, async ({ 
   if (!hasAccess) {
     throw forbidden('Forbidden: platform_admin role required');
   }
+
+  if (!orgId) return NextResponse.json({ error: 'Organization context required' }, { status: 500 });
 
   const updatePayload: Record<string, unknown> = { ...body };
 
@@ -54,6 +59,7 @@ export const PATCH = withApiRoute({ bodySchema: stagingUpdateSchema }, async ({ 
     .from('knowledge_staging')
     .update(updatePayload)
     .eq('id', id)
+    .eq('org_id', orgId)
     .select()
     .single();
 
@@ -64,7 +70,7 @@ export const PATCH = withApiRoute({ bodySchema: stagingUpdateSchema }, async ({ 
   return NextResponse.json(data);
 });
 
-export const DELETE = withApiRoute({}, async ({ params }) => {
+export const DELETE = withApiRoute({}, async ({ params, orgId }) => {
   const { id } = params;
 
   const roles = await getKrewpactRoles();
@@ -73,8 +79,10 @@ export const DELETE = withApiRoute({}, async ({ params }) => {
     throw forbidden('Forbidden: platform_admin role required');
   }
 
+  if (!orgId) return NextResponse.json({ error: 'Organization context required' }, { status: 500 });
+
   const supabase = await createServiceClient();
-  const { error } = await supabase.from('knowledge_staging').delete().eq('id', id);
+  const { error } = await supabase.from('knowledge_staging').delete().eq('id', id).eq('org_id', orgId);
 
   if (error) {
     throw dbError('Failed to delete document');

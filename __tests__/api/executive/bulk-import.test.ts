@@ -108,7 +108,8 @@ describe('POST /api/executive/staging/bulk-import', () => {
     mockReadFile.mockResolvedValue('---\ntitle: Test\n---\n# Test Doc\n\nContent here');
 
     // Mock supabase: no existing checksum (dedup check returns empty), insert succeeds
-    const eqChecksumFn = vi.fn().mockReturnValue({ data: [], error: null });
+    const eqOrgFn = vi.fn().mockReturnValue({ data: [], error: null });
+    const eqChecksumFn = vi.fn().mockReturnValue({ eq: eqOrgFn });
     const selectFn = vi.fn().mockReturnValue({ eq: eqChecksumFn });
     const insertFn = vi.fn().mockReturnValue({ error: null });
 
@@ -133,10 +134,11 @@ describe('POST /api/executive/staging/bulk-import', () => {
     mockReadFile.mockResolvedValue('# Duplicate Doc\n\nSame content as before');
 
     // Mock supabase: existing doc found with same checksum
-    const eqChecksumFn = vi.fn().mockReturnValue({
+    const eqOrgFn = vi.fn().mockReturnValue({
       data: [{ id: 'existing-doc' }],
       error: null,
     });
+    const eqChecksumFn = vi.fn().mockReturnValue({ eq: eqOrgFn });
     const selectFn = vi.fn().mockReturnValue({ eq: eqChecksumFn });
 
     mockCreateServiceClient.mockReturnValue({

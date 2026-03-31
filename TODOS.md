@@ -12,12 +12,20 @@ Deferred work captured during eng review (2026-03-30).
 **Context:** The `proxy.ts` middleware handles portal paths but was not audited for org assumptions. Check portal API routes, portal-specific components, and any portal-specific data fetching for MDM hardcoding.
 **Depends on:** Phase 1 multi-tenancy core (withApiRoute orgId, branding utility).
 
-### Service Client Org-Scoping Audit
-**What:** Audit all `createServiceClient()` usages in API routes for org_id scoping.
-**Why:** Service client bypasses RLS. Routes using it without explicit org_id filters are cross-org data leaks. Codex found `knowledge_staging` and `executive_subscriptions` — there may be more.
-**Pros:** Closes the remaining cross-org access surface.
-**Cons:** Requires reviewing each usage to determine if it's legitimately service-wide (webhooks, cron) or should be org-scoped.
-**Context:** Fixed in this plan: `knowledge_staging`, `executive_subscriptions`. Run: `grep -r 'createServiceClient' app/api/ --include='*.ts'` and verify each has org filter or is legitimately service-wide (webhooks, cron handlers, health checks).
+### ~~Service Client Org-Scoping Audit~~ ✅ Done (Phase 1.5, Mar 31)
+**Fixed:** `knowledge_staging` routes (staging list/detail/bulk-import) now filter by `org_id`. `executive_subscriptions` already used `createUserClientSafe()` (RLS-scoped). Chat route uses `orgId` from `withApiRoute` context.
+
+### ~~Knowledge Layer Org-Scoping Migration~~ ✅ Done (Mar 31)
+**Fixed:** Added `org_id` to `knowledge_docs` + `ai_chat_sessions`. Updated `match_knowledge` RPC with `p_org_id` param. Updated RLS on all 4 knowledge tables (knowledge_docs, knowledge_embeddings, ai_chat_sessions, ai_chat_messages). Updated 5 API routes. Migration: `20260401_001_knowledge_org_id.sql`.
+
+### Broader Service Client Audit — Remaining Items
+**What:** Additional `createServiceClient()` routes found during Phase 1.5 audit that may need org scoping.
+**Why:** Service client bypasses RLS. Routes without explicit org_id filters could leak data cross-org.
+**Items:**
+- `crm/leads/[id]/research/route.ts` — fetches leads by ID only (low risk: ID-scoped + role-gated)
+- `crm/opportunities/[id]/won/route.ts` — reads accounts/leads without org filter (low risk: ID-scoped)
+- `web/leads/route.ts` — public inbound lead insert has no org_id (needs org resolution for public form)
+- `payroll/exports/route.ts` — lists payroll_exports globally (needs org filter if table has org_id)
 **Depends on:** Phase 1 multi-tenancy core.
 
 ### BoldSign Sender Email

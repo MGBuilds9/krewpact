@@ -13,6 +13,7 @@
     "test:coverage": "vitest run --coverage",
     "seed:org": "npx tsx scripts/seed-org.ts",
     "seed:admin": "npx tsx scripts/seed-test-users.ts --admin-only",
+    "provision:tenant": "npx tsx scripts/provision-tenant.ts",
     "seed:test-users": "npx tsx scripts/seed-test-users.ts",
     "seed:scoring": "npx tsx scripts/seed-scoring-rules.ts",
     "seed:reference": "npx tsx scripts/seed-reference-data.ts",

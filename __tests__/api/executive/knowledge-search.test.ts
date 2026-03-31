@@ -139,6 +139,7 @@ describe('POST /api/executive/knowledge/search', () => {
       query_embedding: JSON.stringify(fakeEmbedding),
       match_threshold: 0.7,
       match_count: 10,
+      p_org_id: 'test-org-00000000-0000-0000-0000-000000000000',
     });
   });
 
@@ -164,6 +165,7 @@ describe('POST /api/executive/knowledge/search', () => {
       query_embedding: expect.any(String),
       match_threshold: 0.9,
       match_count: 25,
+      p_org_id: 'test-org-00000000-0000-0000-0000-000000000000',
     });
   });
 

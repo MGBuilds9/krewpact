@@ -10,12 +10,14 @@ import { stagingCreateSchema } from '@/lib/validators/executive';
 const READ_ROLES = ['executive', 'platform_admin'];
 const WRITE_ROLES = ['platform_admin'];
 
-export const GET = withApiRoute({}, async ({ req }) => {
+export const GET = withApiRoute({}, async ({ req, orgId }) => {
   const roles = await getKrewpactRoles();
   const hasAccess = roles.some((r) => READ_ROLES.includes(r));
   if (!hasAccess) {
     throw forbidden('Forbidden: executive or platform_admin role required');
   }
+
+  if (!orgId) return NextResponse.json({ error: 'Organization context required' }, { status: 500 });
 
   const { searchParams } = new URL(req.url);
   const status = searchParams.get('status') ?? 'pending_review';
@@ -28,7 +30,8 @@ export const GET = withApiRoute({}, async ({ req }) => {
 
   let query = supabase
     .from('knowledge_staging')
-    .select('*', { count: 'exact' });
+    .select('*', { count: 'exact' })
+    .eq('org_id', orgId);
 
   if (status !== 'all') {
     query = query.eq('status', status);

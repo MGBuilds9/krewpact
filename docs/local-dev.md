@@ -72,6 +72,23 @@ npx tsx scripts/seed-org.ts --file supabase/seed/seed-org-mdm.json
 npx tsx scripts/seed-test-users.ts
 ```
 
+### Tenant Provisioning
+
+To provision a new tenant (org + settings + divisions + admin user):
+
+```bash
+# Dry run — validate config and print plan without making changes
+npm run provision:tenant -- --file supabase/seed/tenant-template.json --dry-run
+
+# Full provision (requires CLERK_SECRET_KEY + TENANT_ADMIN_PASSWORD in .env.local)
+npm run provision:tenant -- --file my-tenant.json
+
+# Supabase-only (skip Clerk user creation/metadata)
+npm run provision:tenant -- --file my-tenant.json --skip-clerk
+```
+
+Copy `supabase/seed/tenant-template.json` as a starting point for new tenant configs. The script is idempotent — safe to re-run. It validates config, upserts all records, and runs post-provision checks.
+
 ## Running Tests
 
 ```bash

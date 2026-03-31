@@ -92,6 +92,7 @@ describe('POST /api/executive/knowledge/embed', () => {
       title: 'Test Document',
       category: 'sop',
       division_id: null,
+      org_id: 'org-1',
     };
 
     const knowledgeDoc = {
@@ -171,6 +172,7 @@ describe('POST /api/executive/knowledge/embed', () => {
       title: 'Edited Document',
       category: 'strategy',
       division_id: null,
+      org_id: 'org-1',
     };
 
     const knowledgeDoc = { id: 'kdoc-2', file_path: 'docs/edited-doc.md' };

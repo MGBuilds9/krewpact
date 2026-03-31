@@ -7,7 +7,7 @@ import { createServiceClient } from '@/lib/supabase/server';
 
 const EXECUTIVE_ROLES = ['platform_admin', 'executive'];
 
-export const GET = withApiRoute({}, async ({ userId, params }) => {
+export const GET = withApiRoute({}, async ({ userId, params, orgId }) => {
   const roles = await getKrewpactRoles();
   if (!roles.some((r) => EXECUTIVE_ROLES.includes(r))) {
     throw forbidden('Forbidden');
@@ -18,13 +18,16 @@ export const GET = withApiRoute({}, async ({ userId, params }) => {
     return NextResponse.json({ error: 'sessionId is required' }, { status: 400 });
   }
 
+  if (!orgId) return NextResponse.json({ error: 'Organization context required' }, { status: 500 });
+
   const supabase = await createServiceClient();
 
-  // Verify the session belongs to the authenticated user
+  // Verify the session belongs to the authenticated user and org
   const { data: session, error: sessionError } = await supabase
     .from('ai_chat_sessions')
     .select('id, user_id')
     .eq('id', sessionId)
+    .eq('org_id', orgId)
     .single();
 
   if (sessionError || !session) {

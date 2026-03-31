@@ -12,7 +12,7 @@ const deleteBodySchema = z.object({
   sessionId: z.string().uuid(),
 });
 
-export const GET = withApiRoute({}, async () => {
+export const GET = withApiRoute({}, async ({ orgId }) => {
   const roles = await getKrewpactRoles();
   if (!roles.some((r) => EXECUTIVE_ROLES.includes(r))) {
     throw forbidden('Forbidden');
@@ -30,6 +30,7 @@ export const GET = withApiRoute({}, async () => {
     .select('id, title, created_at, context_type')
     .eq('user_id', krewpactUserId)
     .eq('context_type', 'knowledge')
+    .eq('org_id', orgId ?? '')
     .order('updated_at', { ascending: false })
     .limit(20);
 
@@ -40,7 +41,7 @@ export const GET = withApiRoute({}, async () => {
   return NextResponse.json({ sessions: sessions ?? [] });
 });
 
-export const DELETE = withApiRoute({ bodySchema: deleteBodySchema }, async ({ body, userId }) => {
+export const DELETE = withApiRoute({ bodySchema: deleteBodySchema }, async ({ body, userId, orgId }) => {
   const roles = await getKrewpactRoles();
   if (!roles.some((r) => EXECUTIVE_ROLES.includes(r))) {
     throw forbidden('Forbidden');
@@ -48,11 +49,12 @@ export const DELETE = withApiRoute({ bodySchema: deleteBodySchema }, async ({ bo
 
   const supabase = await createServiceClient();
 
-  // Verify ownership before deleting
+  // Verify ownership + org scope before deleting
   const { data: session, error: sessionError } = await supabase
     .from('ai_chat_sessions')
     .select('id, user_id')
     .eq('id', body.sessionId)
+    .eq('org_id', orgId ?? '')
     .single();
 
   if (sessionError || !session) {

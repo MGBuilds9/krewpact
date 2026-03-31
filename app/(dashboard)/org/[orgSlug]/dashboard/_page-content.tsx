@@ -5,6 +5,7 @@ import { Bell, Briefcase, ClipboardList, DollarSign } from 'lucide-react';
 
 import { DailyDigestWidget } from '@/components/AI/DailyDigestWidget';
 import { NLQueryBar } from '@/components/AI/NLQueryBar';
+import { SetupChecklist } from '@/components/Dashboard/SetupChecklist';
 import CalendarWidget from '@/components/Dashboard/CalendarWidget';
 import InboxPreview from '@/components/Dashboard/InboxPreview';
 import { useDashboard } from '@/hooks/useDashboard';
@@ -38,6 +39,7 @@ export default function DashboardView() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       <WelcomeCard userName={userName} greeting={greeting} roles={roles} />
+      <SetupChecklist />
       <NLQueryBar />
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
