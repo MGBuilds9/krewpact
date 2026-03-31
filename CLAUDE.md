@@ -331,22 +331,20 @@ Architecture docs in `docs/architecture/`: `Master-Plan.md` (scope), `Technology
 
 ## Session Log
 
-### Mar 30, 2026 — Repo Cleanup + Branch Merge + Multi-Tenant Strategy + Codex Review
+### Mar 31, 2026 — Multi-Tenancy Implementation: Phase 0-1.4
 
-- **Changes:** (1) **Branch cleanup:** Deleted 13 stale branches (1 merged, 1 empty, 11 superseded worktree branches). Merged 3 with real work: P3 white-label (tenant resolver, branding CSS, custom domains, branded emails), table name fixes, N+1 perf fix. (2) **Data sanitization:** Replaced real MDM company/division names with "Acme" in test fixtures and seed data. Moved hardcoded production UUIDs in inventory migration to env vars. Removed hardcoded test password fallback. (3) **Multi-tenant strategy:** /office-hours (startup mode, design doc approved 8/10), /plan-ceo-review (HOLD SCOPE, 5 amendments), /codex review (4 findings: 1 P1 cross-org security, 3 P2 bugs). (4) **Codex fixes:** Added org ownership verification to branding/domain APIs, Vercel domain rollback on DB failure, fixed bulk stage history column mismatch, fixed branding schema empty string validation.
-- **Decisions:** Approach B (Tenant-Ready MVP) chosen over Developer-First or Full Multi-Tenant. JWT-only auth (no env fallback, outside voice accepted). Feature flag gating at nav + route level. AI RLS fix must deploy first. ERPNext sync handlers get config swap (not guard), keeping flexibility for per-org ERP config later. Delete order reversed for domain handler (DB first, Vercel second). Wedge: estimates-to-projects for second customer, full platform gated by feature flags.
-- **Tests:** 5,223/5,223 passing (489 files). 0 TS errors. 0 lint errors.
-- **Next:** Execute multi-tenancy plan (Phase 1: AI RLS fix, then org resolution, hardcoded MDM removal, feature flag gating). Then developer onboarding docs. Then user observation setup. /plan-eng-review before implementation.
+- **Changes:** (1) **P0 RLS fix:** ai_insights/ai_actions/user_digests had broken cross-org RLS (correlated subquery always resolved true). Fixed with krewpact_org_id()::uuid pattern. (2) **users.org_id:** Added org_id column to users table, backfilled, sync-roles.ts now reads org from user record + stamps krewpact_org_slug into Clerk JWT. (3) **withApiRoute orgId:** Added orgId to RouteContext (JWT > env fallback). Replaced env.DEFAULT_ORG_ID in 9 API routes. Updated 42 test files with getKrewpactOrgId mock. (4) **Root redirect:** app/page.tsx resolves org from JWT claims. proxy.ts reads krewpact_org_slug for bare-path redirects. OrgContext removes mdm-group fallback. (5) **Branding schema:** Added company_description, erp_company, footer_text. New getOrgBranding() utility with 60s TTL cache. (6) **MDM string removal:** Zero "MDM Group" strings remaining in production code. AI prompts (3 files), email templates (7 files), ERPNext sync handlers (12 files), page metadata (11 files) all dynamic. 109 files changed.
+- **Decisions:** 2-layer org fallback (JWT > env, dropped header layer per Codex outside voice). P0 RLS fix deployed standalone. users.org_id added (was missing). ERPNext sync handlers get erpCompany param with default. Aged-receivables cross-org query param removed (tenant-scoped only). getOrgBranding() matches resolve.ts caching pattern.
+- **Reviews:** /plan-eng-review (13 issues, all resolved, Codex outside voice: 6 findings all addressed). /plan-design-review (3/10 → 8/10, 7 design decisions). CEO review from prior session (HOLD_SCOPE, clean).
+- **Tests:** 5,230/5,230 passing (491 files). 7 new tests. 0 TS errors. 0 lint errors.
+- **Next:** Phase 1.5 (executive service-client org scoping). Phase 2 (full tenant provisioning script). Phase 3 (developer onboarding docs). Phase 4 (PostHog session replay). Nav feature flag gating. Welcome checklist for new tenants. Branding settings UI (3 new fields + live preview).
 
-### Mar 30, 2026 — CRM Pipeline Reorder + Gap-Hunter Full Remediation (21 findings)
-
-- **Changes:** Pipeline reorder (New→Qualified→Contacted→Proposal→Negotiation→Won). Gap-hunter CRM audit (21 findings, all fixed). 50 files changed.
-- **Tests:** 5,223/5,223 passing. 0 TS errors.
-
-- Mar 30: Gap-hunter v2 + P3 white-label + CSO security audit. 5,224 tests.
-- Mar 29: P2 buildout (ADP CSV, 43 ERPNext mappings, Offline/PWA, Mobile Expo). 5,198 tests.
-- Mar 28: Codebase cleanup (-10K lines) + DB hardening. 4,799 tests.
-- Mar 27: RBAC overhaul + A-Z audit + P2 planning. 4,851 tests.
+- Mar 30: Repo cleanup + multi-tenant strategy + codex review. 5,223 tests.
+- Mar 30: CRM pipeline reorder + gap-hunter (21 findings). 5,223 tests.
+- Mar 30: Gap-hunter v2 + P3 white-label + CSO. 5,224 tests.
+- Mar 29: P2 buildout (ADP, ERPNext, Offline/PWA, Mobile). 5,198 tests.
+- Mar 28: Cleanup (-10K lines) + DB hardening. 4,799 tests.
+- Mar 27: RBAC overhaul + A-Z audit. 4,851 tests.
 - Mar 25-26: Production hardening, go-live. 4,715 tests.
 
 @AGENTS.md
