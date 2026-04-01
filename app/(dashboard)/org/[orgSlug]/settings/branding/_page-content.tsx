@@ -99,8 +99,19 @@ export default function BrandingPageContent() {
             </div>
 
             <div className="space-y-1">
+              <Label htmlFor="company_description">Company Description</Label>
+              <Input id="company_description" {...register('company_description')} placeholder="A brief description of your company" />
+              <p className="text-xs text-muted-foreground">Used in AI-generated content and email templates.</p>
+            </div>
+
+            <div className="space-y-1">
               <Label htmlFor="support_email">Support Email</Label>
               <Input id="support_email" type="email" {...register('support_email')} placeholder="support@example.com" />
+            </div>
+
+            <div className="space-y-1">
+              <Label htmlFor="support_url">Support URL</Label>
+              <Input id="support_url" type="url" {...register('support_url')} placeholder="https://support.example.com" />
             </div>
 
             <div className="space-y-1">
@@ -114,6 +125,17 @@ export default function BrandingPageContent() {
             <div className="space-y-1">
               <Label htmlFor="favicon_url">Favicon URL</Label>
               <Input id="favicon_url" {...register('favicon_url')} placeholder="https://..." />
+            </div>
+
+            <div className="space-y-1">
+              <Label htmlFor="erp_company">ERP Company Name</Label>
+              <Input id="erp_company" {...register('erp_company')} placeholder="Acme Corp" />
+              <p className="text-xs text-muted-foreground">Must match the ERPNext Company doctype name exactly.</p>
+            </div>
+
+            <div className="space-y-1">
+              <Label htmlFor="footer_text">Footer Text</Label>
+              <Input id="footer_text" {...register('footer_text')} placeholder="© 2026 Acme Corp. All rights reserved." />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -135,6 +157,43 @@ export default function BrandingPageContent() {
               {save.isPending ? 'Saving…' : 'Save Branding'}
             </Button>
           </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Live Preview</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-lg border overflow-hidden">
+            <div className="p-6 bg-background">
+              <div className="flex items-center gap-3 mb-2">
+                {logoUrl && (
+                  <Image src={logoUrl} alt="Logo" width={48} height={48} className="rounded object-contain" unoptimized />
+                )}
+                <span
+                  className="text-xl font-semibold"
+                  style={{ color: watch('primary_color') ?? undefined }}
+                >
+                  {watch('company_name') || 'Company Name'}
+                </span>
+              </div>
+              {watch('company_description') && (
+                <p className="text-sm text-muted-foreground mb-4">{watch('company_description')}</p>
+              )}
+            </div>
+            <div
+              className="h-1"
+              style={{
+                background: `linear-gradient(to right, ${watch('primary_color') ?? '#000'}, ${watch('accent_color') ?? '#000'})`,
+              }}
+            />
+            <div className="px-6 py-3 bg-muted text-center">
+              <p className="text-xs text-muted-foreground">
+                {watch('footer_text') || '© 2026 Your Company'}
+              </p>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
