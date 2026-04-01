@@ -331,27 +331,19 @@ Architecture docs in `docs/architecture/`: `Master-Plan.md` (scope), `Technology
 
 ## Session Log
 
-### Mar 31, 2026 — Multi-Tenancy Phase 1.5 + Phase 2
+### Apr 1, 2026 — Multi-Tenancy Polish + Tech Debt
 
-- **Phase 1.5 — Executive Org Scoping:** (1) Added `.eq('org_id', orgId)` filters to staging list GET, detail GET/PATCH/DELETE, bulk-import duplicate checksum check. (2) Chat route uses `orgId` from `withApiRoute` context (removed redundant call). Removed unused param from `upsertKnowledgeDoc`. (3) Audited all `createServiceClient()` across 370 API routes — 4 lower-priority items documented in TODOS.md. (4) Schema gaps: `knowledge_docs`, `knowledge_embeddings`, `ai_chat_sessions` need `org_id` columns + `match_knowledge` RPC needs org filter (deferred to migration).
-- **Phase 2 — Tenant Provisioning:** (1) `scripts/provision-tenant.ts` — full provisioning script: reads JSON config, validates (slug format, reserved words, hex colors, emails, division codes), creates Supabase org + org_settings + divisions + ensures 13 roles + creates admin user + syncs Clerk metadata. Flags: `--dry-run`, `--skip-clerk`, `--file`. Post-provision validation checks: org exists + active, settings present, divisions created, admin has clerk_id + platform_admin role, slug unique. (2) `supabase/seed/tenant-template.json` — config template with branding, feature flag presets, divisions, admin section. (3) 21 validation unit tests. `npm run provision:tenant` alias added.
-- **Phase 3 — Docs Cleanup:** Synced `.env.example` (+5 vars: DEFAULT_ORG_ID, BETTERSTACK_API_TOKEN, Clerk redirect URLs, TENANT_ADMIN_PASSWORD). Added tenant provisioning section to `docs/local-dev.md`. Consolidated duplicate `docs/contributing.md` → pointer to root `CONTRIBUTING.md`.
-- **Knowledge Layer org_id Migration:** (1) Migration `20260401_001_knowledge_org_id.sql`: adds `org_id NOT NULL` to `knowledge_docs` + `ai_chat_sessions`, backfills from single org, replaces `UNIQUE(file_path)` → `UNIQUE(org_id, file_path)`, updates RLS on all 4 knowledge tables (knowledge_docs, knowledge_embeddings, ai_chat_sessions, ai_chat_messages), updates `match_knowledge` RPC with backward-compatible `p_org_id` param (NULL = all orgs). (2) Updated 5 API routes: embed (org_id in upsert + onConflict), chat (p_org_id to RPC + org_id in session insert), chat/[sessionId] (org_id filter on session lookup), sessions (org_id on GET + DELETE), search (p_org_id to RPC). (3) Updated 3 test files (chat, search, embed assertions).
-- **Nav Feature Flag Gating:** Added `requiredFlag` to `NavItem` interface. 10 modules gated by flag key (crm, estimates, projects, documents, inventory, schedule, finance, payroll, reports, executive). Dashboard/Team/Admin always visible. Admin bypasses all flag restrictions. `useOrg()` added to Navigation component. 4 new flag-gating tests.
-- **Welcome Checklist Banner:** `SetupChecklist` component on dashboard (between WelcomeCard + NLQueryBar). 4-step checklist: customize branding, enable modules, invite team, complete profile. Progress bar. Dismissible via `/api/org/[slug]/dismiss-checklist` → stores `setup_checklist_dismissed` in `organizations.metadata` (no migration). `useSetupProgress` hook (pure derivation from OrgContext). 11 hook unit tests.
-- **Tests:** 5,266/5,266 passing (493 files, +15 new). 0 TS errors. 23 modified + 10 new files.
-- **Next:** Branding settings UI. Portal multi-tenancy audit. BoldSign per-tenant sender.
+- **Changes:** (1) **Branding UI:** Added 4 missing fields (company_description, erp_company, footer_text, support_url) + live preview card to settings/branding page. (2) **Portal RLS:** Added RESTRICTIVE INSERT/UPDATE policies to portal_accounts, portal_permissions, portal_messages, portal_view_logs — closes write-path cross-org gap. Applied to Supabase. (3) **BoldSign tenant:** Added `boldsign_brand_id` to branding schema + OrgBrandingInfo for per-tenant e-sign sender identity. (4) **Drop lead_stage:** Dropped orphaned `lead_stage` enum type (leads.stage column already gone, leads.status is active). Regenerated types/supabase.ts. Fixed enum count test. (5) **DESIGN.md:** Documented actual running design system (colors, fonts, components, patterns) — replaces stale MASTER.md.
+- **Decisions:** Portal reads already org-scoped via RLS RESTRICTIVE SELECT (from Phase 0). Only write-path needed migration. leads.stage column was already absent from remote DB — only the orphaned enum type remained. `boldsign_brand_id` stored in branding JSONB (no migration needed).
+- **Migrations applied:** `drop_lead_stage_enum`, `portal_rls_write_org_scope`. Both confirmed on Supabase.
+- **Tests:** 5,274+ passing. 15 new tests. 5 pre-existing TS errors in payroll-export.ts (adp_employee_code not yet migrated).
+- **Next:** Apply adp_employee_code migration. Branding settings UI for boldsign_brand_id (admin-only). Portal multi-tenant E2E verification.
 
-### Mar 31, 2026 — Multi-Tenancy Implementation: Phase 0-1.4
+### Mar 31, 2026 — Multi-Tenancy Phase 0-1.5 + Phase 2-3
 
-- **Changes:** (1) **P0 RLS fix:** ai_insights/ai_actions/user_digests had broken cross-org RLS (correlated subquery always resolved true). Fixed with krewpact_org_id()::uuid pattern. (2) **users.org_id:** Added org_id column to users table, backfilled, sync-roles.ts now reads org from user record + stamps krewpact_org_slug into Clerk JWT. (3) **withApiRoute orgId:** Added orgId to RouteContext (JWT > env fallback). Replaced env.DEFAULT_ORG_ID in 9 API routes. Updated 42 test files with getKrewpactOrgId mock. (4) **Root redirect:** app/page.tsx resolves org from JWT claims. proxy.ts reads krewpact_org_slug for bare-path redirects. OrgContext removes mdm-group fallback. (5) **Branding schema:** Added company_description, erp_company, footer_text. New getOrgBranding() utility with 60s TTL cache. (6) **MDM string removal:** Zero "MDM Group" strings remaining in production code. AI prompts (3 files), email templates (7 files), ERPNext sync handlers (12 files), page metadata (11 files) all dynamic. 109 files changed.
-- **Decisions:** 2-layer org fallback (JWT > env, dropped header layer per Codex outside voice). P0 RLS fix deployed standalone. users.org_id added (was missing). ERPNext sync handlers get erpCompany param with default. Aged-receivables cross-org query param removed (tenant-scoped only). getOrgBranding() matches resolve.ts caching pattern.
-- **Reviews:** /plan-eng-review (13 issues, all resolved, Codex outside voice: 6 findings all addressed). /plan-design-review (3/10 → 8/10, 7 design decisions). CEO review from prior session (HOLD_SCOPE, clean).
-- **Tests:** 5,230/5,230 passing (491 files). 7 new tests. 0 TS errors. 0 lint errors.
-
-- Mar 30: Repo cleanup + multi-tenant strategy + codex review. 5,223 tests.
-- Mar 30: CRM pipeline reorder + gap-hunter (21 findings). 5,223 tests.
-- Mar 30: Gap-hunter v2 + P3 white-label + CSO. 5,224 tests.
+- Mar 31 (session 2): Phase 1.5 executive org scoping + Phase 2 tenant provisioning + Phase 3 docs + knowledge org_id migration + nav flag gating + welcome checklist. 5,266 tests.
+- Mar 31 (session 1): P0 RLS fix + users.org_id + withApiRoute orgId + root redirect + branding schema + MDM string removal. 5,230 tests.
+- Mar 30: Repo cleanup + multi-tenant strategy + codex review. CRM pipeline reorder + gap-hunter. CSO audit. 5,223 tests.
 - Mar 29: P2 buildout (ADP, ERPNext, Offline/PWA, Mobile). 5,198 tests.
 - Mar 28: Cleanup (-10K lines) + DB hardening. 4,799 tests.
 - Mar 27: RBAC overhaul + A-Z audit. 4,851 tests.
