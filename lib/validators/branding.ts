@@ -19,6 +19,7 @@ export const brandingSchema = z.object({
   custom_domain: z.string().max(253).optional(),
   subdomain: z.string().max(63).regex(/^[a-z0-9-]+$/).optional(),
   erp_company: z.union([emptyToUndefined, z.string().max(100)]).optional(),
+  boldsign_brand_id: z.union([emptyToUndefined, z.string().max(100)]).optional(),
 });
 
 export type BrandingConfig = z.infer<typeof brandingSchema>;

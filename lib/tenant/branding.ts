@@ -12,6 +12,7 @@ export interface OrgBrandingInfo {
   accent_color: string;
   support_email: string | null;
   support_url: string | null;
+  boldsign_brand_id: string | null;
 }
 
 const CACHE_TTL_MS = 60_000;
@@ -56,6 +57,7 @@ export async function getOrgBranding(orgId: string): Promise<OrgBrandingInfo> {
     accent_color: branding.accent_color ?? DEFAULT_BRANDING.accent_color ?? '#f59e0b',
     support_email: branding.support_email ?? null,
     support_url: branding.support_url ?? null,
+    boldsign_brand_id: branding.boldsign_brand_id ?? null,
   };
 
   cache.set(orgId, { value: result, expiresAt: Date.now() + CACHE_TTL_MS });
