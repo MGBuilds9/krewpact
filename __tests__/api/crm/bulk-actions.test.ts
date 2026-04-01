@@ -420,7 +420,7 @@ describe('POST /api/crm/contacts/bulk', () => {
     const req = makeJsonRequest('/api/crm/contacts/bulk', {
       action: 'assign',
       ids: [UUID1, UUID2],
-      value: ASSIGNEE_UUID,
+      params: { assignee_id: ASSIGNEE_UUID },
     });
     const res = await contactsBulk(req);
     expect(res.status).toBe(200);
@@ -428,7 +428,7 @@ describe('POST /api/crm/contacts/bulk', () => {
     expect(body.data.updated).toBe(2);
   });
 
-  it('assign: returns 400 if value is missing', async () => {
+  it('assign: returns 400 if params.assignee_id is missing', async () => {
     mockClerkAuth(mockAuth);
     const client = mockSupabaseClient();
     mockCreateUserClientSafe.mockResolvedValue({ client: client, error: null });
@@ -440,7 +440,7 @@ describe('POST /api/crm/contacts/bulk', () => {
     const res = await contactsBulk(req);
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toContain('value is required');
+    expect(body.error).toContain('assignee_id');
   });
 
   it('assign: returns 500 on db error', async () => {
@@ -453,7 +453,7 @@ describe('POST /api/crm/contacts/bulk', () => {
     const req = makeJsonRequest('/api/crm/contacts/bulk', {
       action: 'assign',
       ids: [UUID1],
-      value: ASSIGNEE_UUID,
+      params: { assignee_id: ASSIGNEE_UUID },
     });
     const res = await contactsBulk(req);
     expect(res.status).toBe(500);
