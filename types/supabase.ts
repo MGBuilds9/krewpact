@@ -5954,40 +5954,34 @@ export type Database = {
       organizations: {
         Row: {
           created_at: string
-          custom_domain: string | null
           id: string
           locale: string
           metadata: Json
           name: string
           slug: string
           status: string
-          subdomain: string | null
           timezone: string
           updated_at: string
         }
         Insert: {
           created_at?: string
-          custom_domain?: string | null
           id?: string
           locale?: string
           metadata?: Json
           name: string
           slug: string
           status?: string
-          subdomain?: string | null
           timezone?: string
           updated_at?: string
         }
         Update: {
           created_at?: string
-          custom_domain?: string | null
           id?: string
           locale?: string
           metadata?: Json
           name?: string
           slug?: string
           status?: string
-          subdomain?: string | null
           timezone?: string
           updated_at?: string
         }
@@ -9328,7 +9322,6 @@ export type Database = {
       }
       users: {
         Row: {
-          adp_employee_code: string | null
           ai_preferences: Json | null
           avatar_url: string | null
           clerk_user_id: string | null
@@ -9338,13 +9331,13 @@ export type Database = {
           id: string
           last_name: string
           locale: string
+          org_id: string
           phone: string | null
           status: Database["public"]["Enums"]["user_status"]
           timezone: string
           updated_at: string
         }
         Insert: {
-          adp_employee_code?: string | null
           ai_preferences?: Json | null
           avatar_url?: string | null
           clerk_user_id?: string | null
@@ -9354,13 +9347,13 @@ export type Database = {
           id?: string
           last_name: string
           locale?: string
+          org_id: string
           phone?: string | null
           status?: Database["public"]["Enums"]["user_status"]
           timezone?: string
           updated_at?: string
         }
         Update: {
-          adp_employee_code?: string | null
           ai_preferences?: Json | null
           avatar_url?: string | null
           clerk_user_id?: string | null
@@ -9370,12 +9363,21 @@ export type Database = {
           id?: string
           last_name?: string
           locale?: string
+          org_id?: string
           phone?: string | null
           status?: Database["public"]["Enums"]["user_status"]
           timezone?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "users_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       warranty_items: {
         Row: {
@@ -9523,6 +9525,7 @@ export type Database = {
           id: string
           last_name: string
           locale: string
+          org_id: string
           phone: string | null
           status: Database["public"]["Enums"]["user_status"]
           timezone: string
@@ -9687,14 +9690,6 @@ export type Database = {
         | "paid"
         | "overdue"
         | "cancelled"
-      lead_stage:
-        | "new"
-        | "contacted"
-        | "qualified"
-        | "estimating"
-        | "proposal_sent"
-        | "won"
-        | "lost"
       lead_status:
         | "new"
         | "contacted"
@@ -10014,15 +10009,6 @@ export const Constants = {
         "paid",
         "overdue",
         "cancelled",
-      ],
-      lead_stage: [
-        "new",
-        "contacted",
-        "qualified",
-        "estimating",
-        "proposal_sent",
-        "won",
-        "lost",
       ],
       lead_status: [
         "new",

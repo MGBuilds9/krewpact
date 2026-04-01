@@ -104,7 +104,6 @@ describe('Supabase Database Types', () => {
 
   it('exports all expected enums', () => {
     const enumKeys: (keyof Enums)[] = [
-      'lead_stage',
       'opportunity_stage',
       'estimate_status',
       'project_status',
@@ -118,7 +117,7 @@ describe('Supabase Database Types', () => {
       'user_status',
       'workflow_state',
     ];
-    expect(enumKeys).toHaveLength(13);
+    expect(enumKeys).toHaveLength(12);
   });
 
   it('projects table has canonical columns', () => {
