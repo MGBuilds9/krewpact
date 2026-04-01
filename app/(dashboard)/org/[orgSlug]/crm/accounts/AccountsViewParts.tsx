@@ -1,13 +1,15 @@
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';
-import { Building2 } from 'lucide-react';
+import { Building2, Plus } from 'lucide-react';
 
 import { DataTable, type SortState } from '@/components/CRM/DataTable';
 import { RowActionMenu } from '@/components/CRM/RowActionMenu';
+import { EmptyState } from '@/components/shared/EmptyState';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import type { Account } from '@/hooks/useCRM';
 
 export function formatDate(dateStr: string | null): string {
@@ -66,10 +68,14 @@ export function AccountCardItem({
   account,
   onNavigate,
   onDelete,
+  selected,
+  onToggleSelect,
 }: {
   account: Account;
   onNavigate: (id: string) => void;
   onDelete?: (id: string) => void;
+  selected?: boolean;
+  onToggleSelect?: (id: string) => void;
 }) {
   return (
     <Card
@@ -78,6 +84,15 @@ export function AccountCardItem({
     >
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-2">
+          {onToggleSelect && (
+            <div onClick={(e) => e.stopPropagation()} className="flex items-center pt-0.5">
+              <Checkbox
+                checked={selected}
+                onCheckedChange={() => onToggleSelect(account.id)}
+                aria-label={`Select ${account.account_name}`}
+              />
+            </div>
+          )}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="font-semibold truncate">{account.account_name}</h3>
@@ -123,6 +138,9 @@ interface AccountCardViewProps {
   onNavigate: (id: string) => void;
   onPageChange: (p: number) => void;
   onDelete?: (id: string) => void;
+  selectedIds?: string[];
+  onToggleSelect?: (id: string) => void;
+  onToggleSelectAll?: () => void;
 }
 
 export function AccountCardView({
@@ -133,10 +151,24 @@ export function AccountCardView({
   onNavigate,
   onPageChange,
   onDelete,
+  selectedIds,
+  onToggleSelect,
+  onToggleSelectAll,
 }: AccountCardViewProps) {
   const pageCount = Math.ceil(total / pageSize);
+  const allSelected = accounts.length > 0 && selectedIds?.length === accounts.length;
   return (
     <>
+      {onToggleSelectAll && (
+        <div className="flex items-center gap-2 px-1 pb-1">
+          <Checkbox
+            checked={allSelected}
+            onCheckedChange={onToggleSelectAll}
+            aria-label="Select all accounts"
+          />
+          <span className="text-xs text-muted-foreground">Select all</span>
+        </div>
+      )}
       <div className="grid gap-3">
         {accounts.map((account) => (
           <AccountCardItem
@@ -144,6 +176,8 @@ export function AccountCardView({
             account={account}
             onNavigate={onNavigate}
             onDelete={onDelete}
+            selected={selectedIds?.includes(account.id)}
+            onToggleSelect={onToggleSelect}
           />
         ))}
       </div>
@@ -189,6 +223,9 @@ interface AccountsBodyProps {
   setSort: (s: SortState | null) => void;
   orgPush: (path: string) => void;
   onDelete: (id: string) => void;
+  selectedIds?: string[];
+  onToggleSelect?: (id: string) => void;
+  onToggleSelectAll?: () => void;
 }
 
 export function AccountsBody({
@@ -204,6 +241,9 @@ export function AccountsBody({
   setSort,
   orgPush,
   onDelete,
+  selectedIds,
+  onToggleSelect,
+  onToggleSelectAll,
 }: AccountsBodyProps) {
   const columns: ColumnDef<Account, unknown>[] = [
     ...accountColumns,
@@ -219,17 +259,19 @@ export function AccountsBody({
     },
   ];
 
-  if (accounts.length === 0) {
+  if (accounts.length === 0 && !isLoading) {
     return (
-      <Card>
-        <CardContent className="py-12 text-center">
-          <Building2 className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-          <h3 className="text-lg font-medium mb-2">No accounts yet</h3>
-          <p className="text-muted-foreground mb-4">
-            Create your first account to organize your contacts and opportunities
-          </p>
-        </CardContent>
-      </Card>
+      <EmptyState
+        icon={<Building2 className="h-12 w-12" />}
+        title="No accounts yet"
+        description="Create your first account to track clients, vendors, and partners."
+        action={
+          <Button onClick={() => orgPush('/crm/accounts/new')}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create First Account
+          </Button>
+        }
+      />
     );
   }
   if (viewMode === 'table') {
@@ -258,6 +300,9 @@ export function AccountsBody({
       onNavigate={(id) => orgPush(`/crm/accounts/${id}`)}
       onPageChange={setPage}
       onDelete={onDelete}
+      selectedIds={selectedIds}
+      onToggleSelect={onToggleSelect}
+      onToggleSelectAll={onToggleSelectAll}
     />
   );
 }

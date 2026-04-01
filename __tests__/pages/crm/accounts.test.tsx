@@ -1,5 +1,6 @@
 'use client';
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -43,6 +44,11 @@ vi.mock('@/hooks/use-mobile', () => ({
 }));
 
 import AccountsPage from '@/app/(dashboard)/org/[orgSlug]/crm/accounts/AccountsView';
+
+function renderWithProviders(ui: React.ReactElement) {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+}
 
 describe('Accounts List Page', () => {
   beforeAll(() => {
@@ -89,22 +95,22 @@ describe('Accounts List Page', () => {
       isError: false,
     });
 
-    render(<AccountsPage />);
+    renderWithProviders(<AccountsPage />);
     expect(screen.getByText('Acme Corp')).toBeDefined();
   });
 
   it('shows empty state when no accounts', () => {
-    render(<AccountsPage />);
+    renderWithProviders(<AccountsPage />);
     expect(screen.getByText(/no accounts/i)).toBeDefined();
   });
 
   it('has search input', () => {
-    render(<AccountsPage />);
+    renderWithProviders(<AccountsPage />);
     expect(screen.getByPlaceholderText(/search/i)).toBeDefined();
   });
 
   it('has New Account button', () => {
-    render(<AccountsPage />);
+    renderWithProviders(<AccountsPage />);
     expect(screen.getByText(/new account/i)).toBeDefined();
   });
 
@@ -115,7 +121,7 @@ describe('Accounts List Page', () => {
       isError: false,
     });
 
-    render(<AccountsPage />);
+    renderWithProviders(<AccountsPage />);
     // When loading, the DataTable renders with loading prop
     // No account data should be visible yet
     expect(screen.queryByText('Test Account')).not.toBeInTheDocument();

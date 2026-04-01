@@ -1,5 +1,6 @@
 'use client';
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -35,6 +36,11 @@ vi.mock('@/hooks/use-mobile', () => ({
 }));
 
 import ContactsPage from '@/app/(dashboard)/org/[orgSlug]/crm/contacts/page';
+
+function renderWithProviders(ui: React.ReactElement) {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+}
 
 describe('Contacts List Page', () => {
   beforeAll(() => {
@@ -82,17 +88,17 @@ describe('Contacts List Page', () => {
       isError: false,
     });
 
-    render(<ContactsPage />);
+    renderWithProviders(<ContactsPage />);
     expect(screen.getByText('John Doe')).toBeDefined();
   });
 
   it('shows empty state when no contacts', () => {
-    render(<ContactsPage />);
+    renderWithProviders(<ContactsPage />);
     expect(screen.getByText(/no contacts/i)).toBeDefined();
   });
 
   it('has search input', () => {
-    render(<ContactsPage />);
+    renderWithProviders(<ContactsPage />);
     expect(screen.getByPlaceholderText(/search/i)).toBeDefined();
   });
 
@@ -120,7 +126,7 @@ describe('Contacts List Page', () => {
       isError: false,
     });
 
-    render(<ContactsPage />);
+    renderWithProviders(<ContactsPage />);
     expect(screen.getByText('jane@example.com')).toBeDefined();
   });
 
@@ -131,7 +137,7 @@ describe('Contacts List Page', () => {
       isError: false,
     });
 
-    const { container } = render(<ContactsPage />);
+    const { container } = renderWithProviders(<ContactsPage />);
     const skeletons = container.querySelectorAll('[class*="animate-pulse"]');
     expect(skeletons.length).toBeGreaterThan(0);
   });

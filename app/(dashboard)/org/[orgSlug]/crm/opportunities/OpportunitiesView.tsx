@@ -1,7 +1,8 @@
 'use client';
 
-import { Plus, TrendingUp } from 'lucide-react';
-import { useMemo } from 'react';
+import { Kanban, Plus, Table2, TrendingUp } from 'lucide-react';
+import dynamic from 'next/dynamic';
+import { useMemo, useState } from 'react';
 
 import { PipelineKanban } from '@/components/CRM/PipelineKanban';
 import { WeightedPipelineHeader } from '@/components/CRM/WeightedPipelineHeader';
@@ -10,9 +11,17 @@ import { useDivision } from '@/contexts/DivisionContext';
 import { usePipeline } from '@/hooks/useCRM';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 
+const OpportunitiesTable = dynamic(
+  () => import('./_components/OpportunitiesTable').then((m) => m.OpportunitiesTable),
+  { ssr: false },
+);
+
+type ViewMode = 'kanban' | 'table';
+
 export default function OpportunitiesView() {
   const { activeDivision } = useDivision();
   const { push: orgPush } = useOrgRouter();
+  const [viewMode, setViewMode] = useState<ViewMode>('kanban');
 
   const { data: pipelineData } = usePipeline({
     divisionId: activeDivision?.id,
@@ -45,17 +54,45 @@ export default function OpportunitiesView() {
             </p>
           </div>
         </div>
-        <Button onClick={() => orgPush('/crm/opportunities/new')}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Opportunity
-        </Button>
+        <div className="flex items-center gap-2">
+          <div className="flex rounded-md border">
+            <Button
+              variant={viewMode === 'kanban' ? 'default' : 'ghost'}
+              size="sm"
+              className="rounded-r-none border-0"
+              onClick={() => setViewMode('kanban')}
+              aria-label="Kanban view"
+            >
+              <Kanban className="h-4 w-4 mr-1" />
+              Kanban
+            </Button>
+            <Button
+              variant={viewMode === 'table' ? 'default' : 'ghost'}
+              size="sm"
+              className="rounded-l-none border-0 border-l"
+              onClick={() => setViewMode('table')}
+              aria-label="Table view"
+            >
+              <Table2 className="h-4 w-4 mr-1" />
+              Table
+            </Button>
+          </div>
+          <Button onClick={() => orgPush('/crm/opportunities/new')}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Opportunity
+          </Button>
+        </div>
       </div>
       <WeightedPipelineHeader
         totalValue={totalValue}
         weightedValue={weightedValue}
         opportunityCount={totalOpps}
       />
-      <PipelineKanban data={pipelineData ?? { stages: {} }} />
+      {viewMode === 'kanban' ? (
+        <PipelineKanban data={pipelineData ?? { stages: {} }} />
+      ) : (
+        <OpportunitiesTable />
+      )}
     </div>
   );
 }

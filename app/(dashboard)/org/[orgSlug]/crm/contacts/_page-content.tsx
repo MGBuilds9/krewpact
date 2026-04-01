@@ -1,180 +1,28 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Mail, Phone, Plus, Search, Users } from 'lucide-react';
-import { useState } from 'react';
+import { Plus, Search, Users } from 'lucide-react';
+import { useCallback, useMemo, useState } from 'react';
 
+import { BulkActionBar } from '@/components/CRM/BulkActionBar';
 import { DataTable, type SortState } from '@/components/CRM/DataTable';
 import { RowActionMenu } from '@/components/CRM/RowActionMenu';
 import { useViewMode, ViewToggle } from '@/components/CRM/ViewToggle';
-import { Badge } from '@/components/ui/badge';
+import { EmptyState } from '@/components/shared/EmptyState';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { type Contact, useContacts, useDeleteContact } from '@/hooks/useCRM';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 
-const contactColumns: ColumnDef<Contact, unknown>[] = [
-  {
-    id: 'name',
-    accessorFn: (row) => `${row.first_name} ${row.last_name}`,
-    header: 'Name',
-    cell: ({ row }) => (
-      <div className="flex items-center gap-2">
-        <span className="font-medium">
-          {row.original.first_name} {row.original.last_name}
-        </span>
-        {row.original.is_primary && (
-          <Badge variant="outline" className="text-xs border-primary text-primary">
-            Primary
-          </Badge>
-        )}
-      </div>
-    ),
-  },
-  {
-    accessorKey: 'email',
-    header: 'Email',
-    cell: ({ row }) => row.original.email || '-',
-  },
-  {
-    accessorKey: 'phone',
-    header: 'Phone',
-    cell: ({ row }) => row.original.phone || '-',
-  },
-  {
-    accessorKey: 'role_title',
-    header: 'Role',
-    cell: ({ row }) => row.original.role_title || '-',
-  },
-  {
-    accessorKey: 'created_at',
-    header: 'Created',
-    cell: ({ row }) =>
-      new Date(row.original.created_at).toLocaleDateString('en-CA', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      }),
-  },
-];
-
-interface ContactCardProps {
-  contact: Contact;
-  onNavigate: (id: string) => void;
-  onDelete: (id: string) => void;
-}
-function ContactCard({ contact, onNavigate, onDelete }: ContactCardProps) {
-  return (
-    <Card
-      className="cursor-pointer hover:shadow-md transition-shadow"
-      onClick={() => onNavigate(contact.id)}
-    >
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-semibold truncate">
-                {contact.first_name} {contact.last_name}
-              </h3>
-              {contact.is_primary && (
-                <span className="text-xs text-primary font-medium">Primary</span>
-              )}
-            </div>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-              {contact.role_title && <span>{contact.role_title}</span>}
-              {contact.email && (
-                <span className="flex items-center gap-1">
-                  <Mail className="h-3 w-3" />
-                  {contact.email}
-                </span>
-              )}
-              {contact.phone && (
-                <span className="flex items-center gap-1">
-                  <Phone className="h-3 w-3" />
-                  {contact.phone}
-                </span>
-              )}
-            </div>
-          </div>
-          <div onClick={(e) => e.stopPropagation()}>
-            <RowActionMenu
-              entityName={`${contact.first_name} ${contact.last_name}`}
-              onEdit={() => onNavigate(contact.id)}
-              onDelete={() => onDelete(contact.id)}
-            />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-interface CardViewProps {
-  contacts: Contact[];
-  total: number;
-  page: number;
-  pageSize: number;
-  onNavigate: (id: string) => void;
-  onPageChange: (p: number) => void;
-  onDelete: (id: string) => void;
-}
-function ContactCardView({
-  contacts,
-  total,
-  page,
-  pageSize,
-  onNavigate,
-  onPageChange,
-  onDelete,
-}: CardViewProps) {
-  const pageCount = Math.ceil(total / pageSize);
-  return (
-    <>
-      <div className="grid gap-3">
-        {contacts.map((contact) => (
-          <ContactCard
-            key={contact.id}
-            contact={contact}
-            onNavigate={onNavigate}
-            onDelete={onDelete}
-          />
-        ))}
-      </div>
-      <div className="flex items-center justify-between px-2">
-        <span className="text-sm text-muted-foreground">
-          {total > 0
-            ? `Showing ${page * pageSize + 1}-${Math.min((page + 1) * pageSize, total)} of ${total}`
-            : 'No results'}
-        </span>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onPageChange(page - 1)}
-            disabled={page === 0}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onPageChange(page + 1)}
-            disabled={page >= pageCount - 1}
-          >
-            Next
-          </Button>
-        </div>
-      </div>
-    </>
-  );
-}
+import { ContactCardView,contactColumns } from './_components/ContactsContent';
 
 // eslint-disable-next-line max-lines-per-function
 export default function ContactsPage() {
   const { push: orgPush } = useOrgRouter();
+  const queryClient = useQueryClient();
   const deleteContact = useDeleteContact();
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebouncedValue(search);
@@ -182,6 +30,8 @@ export default function ContactsPage() {
   const [pageSize, setPageSize] = useState(25);
   const [sort, setSort] = useState<SortState | null>(null);
   const [viewMode, setViewMode] = useViewMode();
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
   const { data: response, isLoading } = useContacts({
     search: debouncedSearch || undefined,
     limit: pageSize,
@@ -189,8 +39,15 @@ export default function ContactsPage() {
     sortBy: sort?.field,
     sortDir: sort?.direction,
   });
-  const contacts = response?.data ?? [];
+  const contacts = useMemo(() => response?.data ?? [], [response]);
   const total = response?.total ?? 0;
+
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  }, []);
+  const toggleSelectAll = useCallback(() => {
+    setSelectedIds(selectedIds.length === contacts.length ? [] : contacts.map((c) => c.id));
+  }, [selectedIds.length, contacts]);
 
   const columns: ColumnDef<Contact, unknown>[] = [
     ...contactColumns,
@@ -206,17 +63,16 @@ export default function ContactsPage() {
     },
   ];
 
-  if (isLoading && !response)
+  if (isLoading && !response) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-10 w-48 animate-pulse" />
         <div className="grid gap-4">
-          {['s1', 's2', 's3'].map((k) => (
-            <Skeleton key={k} className="h-20 rounded-xl animate-pulse" />
-          ))}
+          {['s1', 's2', 's3'].map((k) => <Skeleton key={k} className="h-20 rounded-xl animate-pulse" />)}
         </div>
       </div>
     );
+  }
 
   return (
     <>
@@ -227,9 +83,7 @@ export default function ContactsPage() {
             <Users className="h-8 w-8 text-primary" />
             <div>
               <h1 className="text-3xl font-bold tracking-tight">Contacts</h1>
-              <p className="text-muted-foreground text-sm">
-                {total} contact{total !== 1 ? 's' : ''}
-              </p>
+              <p className="text-muted-foreground text-sm">{total} contact{total !== 1 ? 's' : ''}</p>
             </div>
           </div>
           <ViewToggle mode={viewMode} onChange={setViewMode} />
@@ -237,15 +91,7 @@ export default function ContactsPage() {
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search contacts..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(0);
-              }}
-              className="pl-10"
-            />
+            <Input placeholder="Search contacts..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} className="pl-10" />
           </div>
           <Button onClick={() => orgPush('/crm/contacts/new')}>
             <Plus className="h-4 w-4 mr-2" />
@@ -253,40 +99,13 @@ export default function ContactsPage() {
           </Button>
         </div>
         {contacts.length === 0 && !isLoading ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <Users className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-              <h3 className="text-lg font-medium mb-2">No contacts yet</h3>
-              <p className="text-muted-foreground mb-4">
-                Contacts are added through accounts or created directly
-              </p>
-            </CardContent>
-          </Card>
+          <EmptyState icon={<Users className="h-12 w-12" />} title="No contacts yet" description="Add your first contact to manage relationships and communication." action={<Button onClick={() => orgPush('/crm/contacts/new')}><Plus className="h-4 w-4 mr-2" />Create First Contact</Button>} />
         ) : viewMode === 'table' ? (
-          <DataTable<Contact>
-            columns={columns}
-            data={contacts}
-            total={total}
-            page={page}
-            pageSize={pageSize}
-            onPageChange={setPage}
-            onPageSizeChange={setPageSize}
-            onSortChange={setSort}
-            currentSort={sort}
-            onRowClick={(contact) => orgPush(`/crm/contacts/${contact.id}`)}
-            isLoading={isLoading}
-          />
+          <DataTable<Contact> columns={columns} data={contacts} total={total} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} onSortChange={setSort} currentSort={sort} onRowClick={(c) => orgPush(`/crm/contacts/${c.id}`)} isLoading={isLoading} />
         ) : (
-          <ContactCardView
-            contacts={contacts}
-            total={total}
-            page={page}
-            pageSize={pageSize}
-            onNavigate={(id) => orgPush(`/crm/contacts/${id}`)}
-            onPageChange={setPage}
-            onDelete={(id) => deleteContact.mutate(id)}
-          />
+          <ContactCardView contacts={contacts} total={total} page={page} pageSize={pageSize} onNavigate={(id) => orgPush(`/crm/contacts/${id}`)} onPageChange={setPage} onDelete={(id) => deleteContact.mutate(id)} selectedIds={selectedIds} onToggleSelect={toggleSelect} onToggleSelectAll={toggleSelectAll} />
         )}
+        <BulkActionBar selectedIds={selectedIds} entityType="contact" onClearSelection={() => setSelectedIds([])} onActionComplete={() => queryClient.invalidateQueries({ queryKey: ['contacts'] })} />
       </div>
     </>
   );

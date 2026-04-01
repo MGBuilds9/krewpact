@@ -1,13 +1,13 @@
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';
-import { UserPlus } from 'lucide-react';
+import { Plus, UserPlus } from 'lucide-react';
 
 import { DataTable, type SortState } from '@/components/CRM/DataTable';
 import { RowActionMenu } from '@/components/CRM/RowActionMenu';
+import { EmptyState } from '@/components/shared/EmptyState';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { type Lead } from '@/hooks/useCRM';
 import { formatStatus } from '@/lib/format-status';
@@ -43,6 +43,7 @@ export interface LeadsContentProps {
   onToggleSelectAll: () => void;
   onNavigate: (id: string) => void;
   onDelete: (id: string) => void;
+  onCreateNew: () => void;
 }
 
 // eslint-disable-next-line max-lines-per-function
@@ -63,6 +64,7 @@ export function LeadsContent({
   onToggleSelectAll,
   onNavigate,
   onDelete,
+  onCreateNew,
 }: LeadsContentProps) {
   const leadColumns: ColumnDef<Lead, unknown>[] = [
     {
@@ -139,15 +141,17 @@ export function LeadsContent({
 
   if (leads.length === 0 && !isLoading) {
     return (
-      <Card>
-        <CardContent className="py-12 text-center">
-          <UserPlus className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-          <h3 className="text-lg font-medium mb-2">No leads yet</h3>
-          <p className="text-muted-foreground mb-4">
-            Create your first lead to start building your pipeline
-          </p>
-        </CardContent>
-      </Card>
+      <EmptyState
+        icon={<UserPlus className="h-12 w-12" />}
+        title="No leads yet"
+        description="Create your first lead to start building your pipeline."
+        action={
+          <Button onClick={onCreateNew}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create First Lead
+          </Button>
+        }
+      />
     );
   }
   if (viewMode === 'table') {

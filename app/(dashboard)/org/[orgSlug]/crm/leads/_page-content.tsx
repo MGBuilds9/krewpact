@@ -139,6 +139,7 @@ export default function LeadsPageContent() {
         onToggleSelectAll={toggleSelectAll}
         onNavigate={(id) => orgPush(`/crm/leads/${id}`)}
         onDelete={(id) => deleteLead.mutate(id)}
+        onCreateNew={() => orgPush('/crm/leads/new')}
       />
       <BulkActionBar
         selectedIds={selectedIds}

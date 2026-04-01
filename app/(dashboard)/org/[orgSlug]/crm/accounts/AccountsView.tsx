@@ -1,8 +1,10 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { Building2, Plus, Search } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
+import { BulkActionBar } from '@/components/CRM/BulkActionBar';
 import type { SortState } from '@/components/CRM/DataTable';
 import { useViewMode, ViewToggle } from '@/components/CRM/ViewToggle';
 import { Button } from '@/components/ui/button';
@@ -27,6 +29,7 @@ const ACCOUNT_TYPES = ['client', 'prospect', 'partner', 'vendor', 'subcontractor
 export default function AccountsView() {
   const { push: orgPush } = useOrgRouter();
   const { activeDivision } = useDivision();
+  const queryClient = useQueryClient();
   const deleteAccount = useDeleteAccount();
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebouncedValue(search);
@@ -35,6 +38,7 @@ export default function AccountsView() {
   const [pageSize, setPageSize] = useState(25);
   const [sort, setSort] = useState<SortState | null>(null);
   const [viewMode, setViewMode] = useViewMode();
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const divisionId = activeDivision ? activeDivision.id : undefined;
   const { data: response, isLoading } = useAccounts({
@@ -47,8 +51,15 @@ export default function AccountsView() {
     sortDir: sort?.direction,
   });
 
-  const accounts = response?.data || [];
+  const accounts = useMemo(() => response?.data ?? [], [response]);
   const total = response?.total || 0;
+
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  }, []);
+  const toggleSelectAll = useCallback(() => {
+    setSelectedIds(selectedIds.length === accounts.length ? [] : accounts.map((a) => a.id));
+  }, [selectedIds.length, accounts]);
 
   return (
     <div className="space-y-4">
@@ -114,6 +125,15 @@ export default function AccountsView() {
         setSort={setSort}
         orgPush={orgPush}
         onDelete={(id) => deleteAccount.mutate(id)}
+        selectedIds={selectedIds}
+        onToggleSelect={toggleSelect}
+        onToggleSelectAll={toggleSelectAll}
+      />
+      <BulkActionBar
+        selectedIds={selectedIds}
+        entityType="account"
+        onClearSelection={() => setSelectedIds([])}
+        onActionComplete={() => queryClient.invalidateQueries({ queryKey: ['accounts'] })}
       />
     </div>
   );
