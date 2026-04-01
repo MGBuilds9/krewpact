@@ -86,9 +86,10 @@ describe('OrgContext', () => {
     expect(result.current.orgSlug).toBeUndefined();
   });
 
-  it('throws when used outside provider', () => {
-    expect(() => {
-      renderHook(() => useOrg());
-    }).toThrow('useOrg must be used within an OrgProvider');
+  it('returns fallback context when used outside provider', () => {
+    const { result } = renderHook(() => useOrg());
+    expect(result.current.currentOrg).toBeNull();
+    expect(result.current.orgSlug).toBe('');
+    expect(result.current.isLoading).toBe(true);
   });
 });

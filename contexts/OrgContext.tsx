@@ -64,10 +64,15 @@ export function OrgProvider({ children }: { children: ReactNode }) {
   return <OrgContext.Provider value={contextValue}>{children}</OrgContext.Provider>;
 }
 
+const fallbackContext: OrgContextType = {
+  currentOrg: null,
+  orgSlug: '',
+  isLoading: true,
+  isError: false,
+  error: null,
+};
+
 export function useOrg() {
   const context = useContext(OrgContext);
-  if (context === undefined) {
-    throw new Error('useOrg must be used within an OrgProvider');
-  }
-  return context;
+  return context ?? fallbackContext;
 }
