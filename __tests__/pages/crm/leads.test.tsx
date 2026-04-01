@@ -30,6 +30,7 @@ vi.mock('@/hooks/useCRM', () => ({
   useActivities: (...args: unknown[]) => mockUseActivities(...args),
   useLeadStageTransition: () => mockUseLeadStageTransition(),
   useCreateOpportunity: () => mockUseCreateOpportunity(),
+  useDeleteLead: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
 vi.mock('@/contexts/DivisionContext', () => ({

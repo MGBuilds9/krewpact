@@ -1,7 +1,7 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, CheckCircle2, Clock, ListTodo } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Clock, ListTodo, Plus } from 'lucide-react';
 import { useCallback, useState } from 'react';
 
 import TaskDispositionButtons from '@/components/CRM/TaskDispositionButtons';
@@ -19,6 +19,8 @@ import {
 import type { Activity } from '@/hooks/useCRM';
 import { useCompleteTask, useMyTasks } from '@/hooks/useCRM';
 import { cn } from '@/lib/utils';
+
+import { CreateTaskDialog } from './_components/CreateTaskDialog';
 
 type Filter = 'all' | 'overdue' | 'today' | 'upcoming' | 'completed';
 
@@ -209,6 +211,7 @@ function TaskListContent({
 export default function CRMTasksPage() {
   const [filter, setFilter] = useState<Filter>('all');
   const [entityType, setEntityType] = useState<string>('all');
+  const [createOpen, setCreateOpen] = useState(false);
   const completeTask = useCompleteTask();
   const queryClient = useQueryClient();
 
@@ -254,6 +257,10 @@ export default function CRMTasksPage() {
                 <SelectItem value="contact">Contacts</SelectItem>
               </SelectContent>
             </Select>
+            <Button onClick={() => setCreateOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              New Task
+            </Button>
           </div>
         </div>
         <TaskFilterBar filter={filter} onFilterChange={setFilter} />
@@ -272,6 +279,7 @@ export default function CRMTasksPage() {
           </CardContent>
         </Card>
       </div>
+      <CreateTaskDialog open={createOpen} onOpenChange={setCreateOpen} />
     </>
   );
 }

@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useDivision } from '@/contexts/DivisionContext';
-import { useLeads } from '@/hooks/useCRM';
+import { useDeleteLead, useLeads } from '@/hooks/useCRM';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 
@@ -41,6 +41,7 @@ export default function LeadsPageContent() {
   const { push: orgPush } = useOrgRouter();
   const { activeDivision } = useDivision();
   const queryClient = useQueryClient();
+  const deleteLead = useDeleteLead();
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebouncedValue(search);
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -137,6 +138,7 @@ export default function LeadsPageContent() {
         onToggleSelect={toggleSelect}
         onToggleSelectAll={toggleSelectAll}
         onNavigate={(id) => orgPush(`/crm/leads/${id}`)}
+        onDelete={(id) => deleteLead.mutate(id)}
       />
       <BulkActionBar
         selectedIds={selectedIds}

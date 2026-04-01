@@ -5,13 +5,14 @@ import { Mail, Phone, Plus, Search, Users } from 'lucide-react';
 import { useState } from 'react';
 
 import { DataTable, type SortState } from '@/components/CRM/DataTable';
+import { RowActionMenu } from '@/components/CRM/RowActionMenu';
 import { useViewMode, ViewToggle } from '@/components/CRM/ViewToggle';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { type Contact, useContacts } from '@/hooks/useCRM';
+import { type Contact, useContacts, useDeleteContact } from '@/hooks/useCRM';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 
@@ -63,8 +64,9 @@ const contactColumns: ColumnDef<Contact, unknown>[] = [
 interface ContactCardProps {
   contact: Contact;
   onNavigate: (id: string) => void;
+  onDelete: (id: string) => void;
 }
-function ContactCard({ contact, onNavigate }: ContactCardProps) {
+function ContactCard({ contact, onNavigate, onDelete }: ContactCardProps) {
   return (
     <Card
       className="cursor-pointer hover:shadow-md transition-shadow"
@@ -97,6 +99,13 @@ function ContactCard({ contact, onNavigate }: ContactCardProps) {
               )}
             </div>
           </div>
+          <div onClick={(e) => e.stopPropagation()}>
+            <RowActionMenu
+              entityName={`${contact.first_name} ${contact.last_name}`}
+              onEdit={() => onNavigate(contact.id)}
+              onDelete={() => onDelete(contact.id)}
+            />
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -110,6 +119,7 @@ interface CardViewProps {
   pageSize: number;
   onNavigate: (id: string) => void;
   onPageChange: (p: number) => void;
+  onDelete: (id: string) => void;
 }
 function ContactCardView({
   contacts,
@@ -118,13 +128,19 @@ function ContactCardView({
   pageSize,
   onNavigate,
   onPageChange,
+  onDelete,
 }: CardViewProps) {
   const pageCount = Math.ceil(total / pageSize);
   return (
     <>
       <div className="grid gap-3">
         {contacts.map((contact) => (
-          <ContactCard key={contact.id} contact={contact} onNavigate={onNavigate} />
+          <ContactCard
+            key={contact.id}
+            contact={contact}
+            onNavigate={onNavigate}
+            onDelete={onDelete}
+          />
         ))}
       </div>
       <div className="flex items-center justify-between px-2">
@@ -159,6 +175,7 @@ function ContactCardView({
 // eslint-disable-next-line max-lines-per-function
 export default function ContactsPage() {
   const { push: orgPush } = useOrgRouter();
+  const deleteContact = useDeleteContact();
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebouncedValue(search);
   const [page, setPage] = useState(0);
@@ -174,6 +191,20 @@ export default function ContactsPage() {
   });
   const contacts = response?.data ?? [];
   const total = response?.total ?? 0;
+
+  const columns: ColumnDef<Contact, unknown>[] = [
+    ...contactColumns,
+    {
+      id: 'actions',
+      cell: ({ row }) => (
+        <RowActionMenu
+          entityName={`${row.original.first_name} ${row.original.last_name}`}
+          onEdit={() => orgPush(`/crm/contacts/${row.original.id}`)}
+          onDelete={() => deleteContact.mutate(row.original.id)}
+        />
+      ),
+    },
+  ];
 
   if (isLoading && !response)
     return (
@@ -233,7 +264,7 @@ export default function ContactsPage() {
           </Card>
         ) : viewMode === 'table' ? (
           <DataTable<Contact>
-            columns={contactColumns}
+            columns={columns}
             data={contacts}
             total={total}
             page={page}
@@ -253,6 +284,7 @@ export default function ContactsPage() {
             pageSize={pageSize}
             onNavigate={(id) => orgPush(`/crm/contacts/${id}`)}
             onPageChange={setPage}
+            onDelete={(id) => deleteContact.mutate(id)}
           />
         )}
       </div>

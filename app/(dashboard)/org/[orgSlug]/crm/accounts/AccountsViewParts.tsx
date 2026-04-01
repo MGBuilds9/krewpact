@@ -4,6 +4,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { Building2 } from 'lucide-react';
 
 import { DataTable, type SortState } from '@/components/CRM/DataTable';
+import { RowActionMenu } from '@/components/CRM/RowActionMenu';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -64,9 +65,11 @@ export const accountColumns: ColumnDef<Account, unknown>[] = [
 export function AccountCardItem({
   account,
   onNavigate,
+  onDelete,
 }: {
   account: Account;
   onNavigate: (id: string) => void;
+  onDelete?: (id: string) => void;
 }) {
   return (
     <Card
@@ -74,27 +77,38 @@ export function AccountCardItem({
       onClick={() => onNavigate(account.id)}
     >
       <CardContent className="p-4">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="font-semibold truncate">{account.account_name}</h3>
-            {account.is_repeat_client && (
-              <Badge className="bg-green-100 text-green-800 border-green-200 text-xs flex-shrink-0">
-                Repeat
-              </Badge>
-            )}
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="font-semibold truncate">{account.account_name}</h3>
+              {account.is_repeat_client && (
+                <Badge className="bg-green-100 text-green-800 border-green-200 text-xs flex-shrink-0">
+                  Repeat
+                </Badge>
+              )}
+            </div>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground mt-1">
+              {account.account_type && <span className="capitalize">{account.account_type}</span>}
+              {account.industry && <span>{account.industry}</span>}
+              {account.total_projects > 0 && (
+                <span>
+                  {account.total_projects} project{account.total_projects !== 1 ? 's' : ''}
+                </span>
+              )}
+              {account.last_project_date && (
+                <span>Last: {formatDate(account.last_project_date)}</span>
+              )}
+            </div>
           </div>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground mt-1">
-            {account.account_type && <span className="capitalize">{account.account_type}</span>}
-            {account.industry && <span>{account.industry}</span>}
-            {account.total_projects > 0 && (
-              <span>
-                {account.total_projects} project{account.total_projects !== 1 ? 's' : ''}
-              </span>
-            )}
-            {account.last_project_date && (
-              <span>Last: {formatDate(account.last_project_date)}</span>
-            )}
-          </div>
+          {onDelete && (
+            <div onClick={(e) => e.stopPropagation()}>
+              <RowActionMenu
+                entityName={account.account_name}
+                onEdit={() => onNavigate(account.id)}
+                onDelete={() => onDelete(account.id)}
+              />
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -108,6 +122,7 @@ interface AccountCardViewProps {
   pageSize: number;
   onNavigate: (id: string) => void;
   onPageChange: (p: number) => void;
+  onDelete?: (id: string) => void;
 }
 
 export function AccountCardView({
@@ -117,13 +132,19 @@ export function AccountCardView({
   pageSize,
   onNavigate,
   onPageChange,
+  onDelete,
 }: AccountCardViewProps) {
   const pageCount = Math.ceil(total / pageSize);
   return (
     <>
       <div className="grid gap-3">
         {accounts.map((account) => (
-          <AccountCardItem key={account.id} account={account} onNavigate={onNavigate} />
+          <AccountCardItem
+            key={account.id}
+            account={account}
+            onNavigate={onNavigate}
+            onDelete={onDelete}
+          />
         ))}
       </div>
       <div className="flex items-center justify-between px-2">
@@ -167,6 +188,7 @@ interface AccountsBodyProps {
   setPageSize: (s: number) => void;
   setSort: (s: SortState | null) => void;
   orgPush: (path: string) => void;
+  onDelete: (id: string) => void;
 }
 
 export function AccountsBody({
@@ -181,7 +203,22 @@ export function AccountsBody({
   setPageSize,
   setSort,
   orgPush,
+  onDelete,
 }: AccountsBodyProps) {
+  const columns: ColumnDef<Account, unknown>[] = [
+    ...accountColumns,
+    {
+      id: 'actions',
+      cell: ({ row }) => (
+        <RowActionMenu
+          entityName={row.original.account_name}
+          onEdit={() => orgPush(`/crm/accounts/${row.original.id}`)}
+          onDelete={() => onDelete(row.original.id)}
+        />
+      ),
+    },
+  ];
+
   if (accounts.length === 0) {
     return (
       <Card>
@@ -198,7 +235,7 @@ export function AccountsBody({
   if (viewMode === 'table') {
     return (
       <DataTable<Account>
-        columns={accountColumns}
+        columns={columns}
         data={accounts}
         total={total}
         page={page}
@@ -220,6 +257,7 @@ export function AccountsBody({
       pageSize={pageSize}
       onNavigate={(id) => orgPush(`/crm/accounts/${id}`)}
       onPageChange={setPage}
+      onDelete={onDelete}
     />
   );
 }

@@ -4,6 +4,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { UserPlus } from 'lucide-react';
 
 import { DataTable, type SortState } from '@/components/CRM/DataTable';
+import { RowActionMenu } from '@/components/CRM/RowActionMenu';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -25,65 +26,6 @@ const STATUS_BADGE_COLORS: Record<string, string> = {
   lost: 'bg-red-100 text-red-700 border-red-200',
 };
 
-const leadColumns: ColumnDef<Lead, unknown>[] = [
-  {
-    accessorKey: 'company_name',
-    header: 'Company Name',
-    cell: ({ row }) => (
-      <span className="font-medium">{row.original.company_name || 'Unnamed Lead'}</span>
-    ),
-  },
-  {
-    accessorKey: 'status',
-    header: 'Status',
-    cell: ({ row }) => (
-      <Badge
-        variant="outline"
-        className={cn('text-xs border', STATUS_BADGE_COLORS[row.original.status] || '')}
-      >
-        {formatStage(row.original.status)}
-      </Badge>
-    ),
-  },
-  {
-    accessorKey: 'lead_score',
-    header: 'Score',
-    cell: ({ row }) => {
-      const score = row.original.lead_score;
-      if (score == null || score === 0) return <span className="text-muted-foreground">-</span>;
-      const colorClass =
-        score >= 80 ? 'text-green-600' : score >= 50 ? 'text-yellow-600' : 'text-red-600';
-      return <span className={cn('font-medium', colorClass)}>{score}</span>;
-    },
-  },
-  { accessorKey: 'industry', header: 'Industry', cell: ({ row }) => row.original.industry || '-' },
-  {
-    accessorKey: 'city',
-    header: 'City',
-    cell: ({ row }) => {
-      const { city, province } = row.original;
-      if (!city) return '-';
-      return province ? `${city}, ${province}` : city;
-    },
-  },
-  {
-    accessorKey: 'source_channel',
-    header: 'Source',
-    cell: ({ row }) =>
-      row.original.source_channel ? formatStatus(row.original.source_channel) : '-',
-  },
-  {
-    accessorKey: 'created_at',
-    header: 'Created',
-    cell: ({ row }) =>
-      new Date(row.original.created_at).toLocaleDateString('en-CA', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      }),
-  },
-];
-
 export interface LeadsContentProps {
   leads: Lead[];
   total: number;
@@ -100,6 +42,7 @@ export interface LeadsContentProps {
   onToggleSelect: (id: string) => void;
   onToggleSelectAll: () => void;
   onNavigate: (id: string) => void;
+  onDelete: (id: string) => void;
 }
 
 // eslint-disable-next-line max-lines-per-function
@@ -119,7 +62,81 @@ export function LeadsContent({
   onToggleSelect,
   onToggleSelectAll,
   onNavigate,
+  onDelete,
 }: LeadsContentProps) {
+  const leadColumns: ColumnDef<Lead, unknown>[] = [
+    {
+      accessorKey: 'company_name',
+      header: 'Company Name',
+      cell: ({ row }) => (
+        <span className="font-medium">{row.original.company_name || 'Unnamed Lead'}</span>
+      ),
+    },
+    {
+      accessorKey: 'status',
+      header: 'Status',
+      cell: ({ row }) => (
+        <Badge
+          variant="outline"
+          className={cn('text-xs border', STATUS_BADGE_COLORS[row.original.status] || '')}
+        >
+          {formatStage(row.original.status)}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: 'lead_score',
+      header: 'Score',
+      cell: ({ row }) => {
+        const score = row.original.lead_score;
+        if (score == null || score === 0) return <span className="text-muted-foreground">-</span>;
+        const colorClass =
+          score >= 80 ? 'text-green-600' : score >= 50 ? 'text-yellow-600' : 'text-red-600';
+        return <span className={cn('font-medium', colorClass)}>{score}</span>;
+      },
+    },
+    {
+      accessorKey: 'industry',
+      header: 'Industry',
+      cell: ({ row }) => row.original.industry || '-',
+    },
+    {
+      accessorKey: 'city',
+      header: 'City',
+      cell: ({ row }) => {
+        const { city, province } = row.original;
+        if (!city) return '-';
+        return province ? `${city}, ${province}` : city;
+      },
+    },
+    {
+      accessorKey: 'source_channel',
+      header: 'Source',
+      cell: ({ row }) =>
+        row.original.source_channel ? formatStatus(row.original.source_channel) : '-',
+    },
+    {
+      accessorKey: 'created_at',
+      header: 'Created',
+      cell: ({ row }) =>
+        new Date(row.original.created_at).toLocaleDateString('en-CA', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        }),
+    },
+    {
+      id: 'actions',
+      cell: ({ row }) => (
+        <RowActionMenu
+          entityName={row.original.company_name || 'this lead'}
+          onEdit={() => onNavigate(row.original.id)}
+          onDelete={() => onDelete(row.original.id)}
+        />
+      ),
+    },
+  ];
+
   if (leads.length === 0 && !isLoading) {
     return (
       <Card>
@@ -171,6 +188,7 @@ export function LeadsContent({
             selected={selectedIds.includes(lead.id)}
             onSelect={onToggleSelect}
             onNavigate={onNavigate}
+            onDelete={onDelete}
           />
         ))}
       </div>

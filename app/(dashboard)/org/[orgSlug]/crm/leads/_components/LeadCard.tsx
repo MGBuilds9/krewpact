@@ -1,5 +1,6 @@
 'use client';
 
+import { RowActionMenu } from '@/components/CRM/RowActionMenu';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -29,9 +30,10 @@ interface LeadCardProps {
   selected: boolean;
   onSelect: (id: string) => void;
   onNavigate: (id: string) => void;
+  onDelete?: (id: string) => void;
 }
 
-export function LeadCard({ lead, selected, onSelect, onNavigate }: LeadCardProps) {
+export function LeadCard({ lead, selected, onSelect, onNavigate, onDelete }: LeadCardProps) {
   const score = lead.lead_score || 0;
   const scoreColorClass =
     score >= 80 ? 'text-green-600' : score >= 50 ? 'text-yellow-600' : 'text-red-600';
@@ -65,12 +67,20 @@ export function LeadCard({ lead, selected, onSelect, onNavigate }: LeadCardProps
               )}
             </div>
           </div>
-          <Checkbox
-            checked={selected}
-            onCheckedChange={() => onSelect(lead.id)}
-            onClick={(e) => e.stopPropagation()}
-            className="flex-shrink-0 mt-1"
-          />
+          <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+            {onDelete && (
+              <RowActionMenu
+                entityName={lead.company_name || 'this lead'}
+                onEdit={() => onNavigate(lead.id)}
+                onDelete={() => onDelete(lead.id)}
+              />
+            )}
+            <Checkbox
+              checked={selected}
+              onCheckedChange={() => onSelect(lead.id)}
+              className="mt-1"
+            />
+          </div>
         </div>
         <div className="mt-auto pt-4 border-t border-border/40" onClick={() => onNavigate(lead.id)}>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-muted-foreground">

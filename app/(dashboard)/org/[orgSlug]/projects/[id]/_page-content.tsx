@@ -17,12 +17,13 @@ import { useState } from 'react';
 
 import { AiInsightBanner } from '@/components/AI/AiInsightBanner';
 import { ProjectOverviewTab } from '@/components/Projects/Tabs/ProjectOverviewTab';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { useProject } from '@/hooks/useProjects';
+
+import { ProjectDetailHeader } from './_components/ProjectDetailHeader';
 
 const TabSkeleton = () => <Skeleton className="h-64 w-full rounded-xl" />;
 const ProjectTasksTab = dynamic(
@@ -80,7 +81,7 @@ function TabContent({
   if (value === 'tasks') return <ProjectTasksTab projectId={projectId} />;
   if (value === 'team') return <ProjectTeamTab projectId={projectId} />;
   if (value === 'budget') return <ProjectBudgetTab project={project} />;
-  if (value === 'timeline') return <ProjectTimelineTab project={project} />;
+  if (value === 'timeline') return <ProjectTimelineTab project={project} projectId={projectId} />;
   if (value === 'files') return <ProjectFilesTab projectId={projectId} />;
   if (value === 'expenses') return <ProjectExpensesTab projectId={projectId} />;
   return <ProjectReportsTab projectId={projectId} />;
@@ -124,28 +125,7 @@ export default function ProjectDetailPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => orgPush('/projects')}
-          className="mt-1"
-          aria-label="Back to projects"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-3xl font-bold tracking-tight truncate">{project.project_name}</h1>
-            {project.project_number && (
-              <Badge variant="outline" className="text-sm">
-                {project.project_number}
-              </Badge>
-            )}
-            <Badge className="capitalize">{(project.status || 'planning').replace('_', ' ')}</Badge>
-          </div>
-        </div>
-      </div>
+      <ProjectDetailHeader project={project} projectId={projectId} />
       <AiInsightBanner entityType="project" entityId={projectId} />
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="w-full justify-start overflow-x-auto flex-nowrap">

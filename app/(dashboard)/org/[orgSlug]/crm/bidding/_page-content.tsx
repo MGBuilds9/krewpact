@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { BiddingCard } from '@/components/CRM/BiddingCard';
 import { BidImportDialog } from '@/components/CRM/BidImportDialog';
 import { BidToOpportunityButton } from '@/components/CRM/BidToOpportunityButton';
+import { RowActionMenu } from '@/components/CRM/RowActionMenu';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -15,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useBiddingOpportunities } from '@/hooks/useCRM';
+import { useBiddingOpportunities,useDeleteBidding } from '@/hooks/useCRM';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { BIDDING_SOURCES, BIDDING_STATUSES, getSourceLabel } from '@/lib/crm/bidding';
 
@@ -34,6 +35,7 @@ function buildParams(
 // eslint-disable-next-line max-lines-per-function
 export default function BiddingListPage() {
   const { push: orgPush } = useOrgRouter();
+  const deleteBidding = useDeleteBidding();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [sourceFilter, setSourceFilter] = useState<string>('');
@@ -124,6 +126,16 @@ export default function BiddingListPage() {
           {bids.map((bid) => (
             <div key={bid.id} className="relative">
               <BiddingCard bid={bid} onClick={() => orgPush(`/crm/bidding/${bid.id}`)} />
+              <div
+                className="absolute top-2 right-2 z-10"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <RowActionMenu
+                  entityName={bid.title || 'this bid'}
+                  onEdit={() => orgPush(`/crm/bidding/${bid.id}`)}
+                  onDelete={() => deleteBidding.mutate(bid.id)}
+                />
+              </div>
               <div className="absolute bottom-3 right-3" onClick={(e) => e.stopPropagation()}>
                 <BidToOpportunityButton
                   bid={bid}

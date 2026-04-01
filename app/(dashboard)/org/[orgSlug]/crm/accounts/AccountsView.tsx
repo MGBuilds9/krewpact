@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useDivision } from '@/contexts/DivisionContext';
-import { useAccounts } from '@/hooks/useCRM';
+import { useAccounts, useDeleteAccount } from '@/hooks/useCRM';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 
@@ -27,6 +27,7 @@ const ACCOUNT_TYPES = ['client', 'prospect', 'partner', 'vendor', 'subcontractor
 export default function AccountsView() {
   const { push: orgPush } = useOrgRouter();
   const { activeDivision } = useDivision();
+  const deleteAccount = useDeleteAccount();
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebouncedValue(search);
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -112,6 +113,7 @@ export default function AccountsView() {
         setPageSize={setPageSize}
         setSort={setSort}
         orgPush={orgPush}
+        onDelete={(id) => deleteAccount.mutate(id)}
       />
     </div>
   );

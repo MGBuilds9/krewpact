@@ -3,10 +3,24 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { apiFetch, apiFetchList } from '@/lib/api-client';
+import { queryKeys } from '@/lib/query-keys';
 
 import type { PaginatedResponse } from './useEstimating';
 
 // --- Types ---
+
+export interface Milestone {
+  id: string;
+  project_id: string;
+  milestone_name: string;
+  milestone_order: number;
+  planned_date: string | null;
+  actual_date: string | null;
+  owner_user_id: string | null;
+  status: 'completed' | 'in_progress' | 'pending';
+  created_at: string;
+  updated_at: string;
+}
 
 export interface TaskDependency {
   id: string;
@@ -271,5 +285,16 @@ export function useCreateMeeting(projectId: string) {
       queryClient.invalidateQueries({ queryKey: ['meetings', projectId] });
       queryClient.invalidateQueries({ queryKey: ['site-diary', projectId] });
     },
+  });
+}
+
+// --- Milestones ---
+
+export function useProjectMilestones(projectId: string) {
+  return useQuery({
+    queryKey: queryKeys.projects.milestones(projectId),
+    queryFn: () => apiFetchList<Milestone>(`/api/projects/${projectId}/milestones`),
+    enabled: !!projectId,
+    staleTime: 60_000,
   });
 }

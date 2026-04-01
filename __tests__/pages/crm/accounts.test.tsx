@@ -27,6 +27,7 @@ vi.mock('@/hooks/useCRM', () => ({
   useContacts: (...args: unknown[]) => mockUseContacts(...args),
   useOpportunities: (...args: unknown[]) => mockUseOpportunities(...args),
   useActivities: (...args: unknown[]) => mockUseActivities(...args),
+  useDeleteAccount: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
 vi.mock('@/contexts/DivisionContext', () => ({

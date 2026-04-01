@@ -1,11 +1,12 @@
 'use client';
 
-import { Building, Calendar, Clock, DollarSign, MapPin, TrendingUp } from 'lucide-react';
+import { Building, Calendar, Clock, DollarSign, ExternalLink, MapPin, TrendingUp } from 'lucide-react';
 import * as React from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { useAccount, useContact } from '@/hooks/useCRM';
 import { Project } from '@/hooks/useProjects';
 
 interface ProjectOverviewTabProps {
@@ -109,33 +110,51 @@ function StatsGrid({
   );
 }
 
-export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
-  const budgetProgress = project.baseline_budget
-    ? (project.current_budget / project.baseline_budget) * 100
-    : 0;
-  const [now] = React.useState(() => Date.now());
-  const daysElapsed = React.useMemo(
-    () =>
-      project.start_date
-        ? Math.floor((now - new Date(project.start_date).getTime()) / (1000 * 60 * 60 * 24))
-        : 0,
-    [project.start_date, now],
+function AccountContactCard({ project }: { project: Project }) {
+  const { data: account } = useAccount(project.account_id ?? '');
+  const { data: contact } = useContact(project.contact_id ?? '');
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Account & Contact</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center gap-2 text-sm">
+          <Building className="h-4 w-4 text-muted-foreground" />
+          <span className="text-muted-foreground">Account:</span>
+          {project.account_id ? (
+            <span className="font-medium">{account?.account_name ?? 'Loading...'}</span>
+          ) : (
+            <span className="text-muted-foreground">No account linked</span>
+          )}
+        </div>
+        <div className="flex items-center gap-2 text-sm">
+          <ExternalLink className="h-4 w-4 text-muted-foreground" />
+          <span className="text-muted-foreground">Contact:</span>
+          {project.contact_id ? (
+            <span className="font-medium">
+              {contact ? `${contact.first_name} ${contact.last_name}` : 'Loading...'}
+            </span>
+          ) : (
+            <span className="text-muted-foreground">No contact linked</span>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
-  const totalDays =
-    project.start_date && project.target_completion_date
-      ? Math.floor(
-          (new Date(project.target_completion_date).getTime() -
-            new Date(project.start_date).getTime()) /
-            (1000 * 60 * 60 * 24),
-        )
-      : 0;
+}
+
+export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
+  const budgetProgress = project.baseline_budget ? (project.current_budget / project.baseline_budget) * 100 : 0;
+  const [now] = React.useState(() => Date.now());
+  const ms = 86_400_000;
+  const start = project.start_date ? new Date(project.start_date).getTime() : 0;
+  const end = project.target_completion_date ? new Date(project.target_completion_date).getTime() : 0;
+  const daysElapsed = start ? Math.floor((now - start) / ms) : 0;
+  const totalDays = start && end ? Math.floor((end - start) / ms) : 0;
   const timeProgress = totalDays > 0 ? (daysElapsed / totalDays) * 100 : 0;
-  const startStr = project.start_date
-    ? new Date(project.start_date).toLocaleDateString()
-    : 'Not set';
-  const endStr = project.target_completion_date
-    ? new Date(project.target_completion_date).toLocaleDateString()
-    : 'Not set';
+  const startStr = project.start_date ? new Date(project.start_date).toLocaleDateString() : 'Not set';
+  const endStr = project.target_completion_date ? new Date(project.target_completion_date).toLocaleDateString() : 'Not set';
 
   return (
     <div className="space-y-6">
@@ -161,19 +180,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
             <InfoRow icon={Calendar} label="Timeline" value={`${startStr} to ${endStr}`} />
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Account & Contact</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              {project.account_id ? `Account: ${project.account_id}` : 'No account linked'}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {project.contact_id ? `Contact: ${project.contact_id}` : 'No contact linked'}
-            </p>
-          </CardContent>
-        </Card>
+        <AccountContactCard project={project} />
       </div>
     </div>
   );

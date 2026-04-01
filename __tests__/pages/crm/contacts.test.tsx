@@ -19,6 +19,7 @@ const mockUseContacts = vi.fn();
 
 vi.mock('@/hooks/useCRM', () => ({
   useContacts: (...args: unknown[]) => mockUseContacts(...args),
+  useDeleteContact: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
 vi.mock('@/contexts/DivisionContext', () => ({
