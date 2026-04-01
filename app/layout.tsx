@@ -59,7 +59,7 @@ export async function generateMetadata(): Promise<Metadata> {
       type: 'website',
     },
     twitter: {
-      card: 'summary',
+      card: 'summary_large_image',
       title: defaultTitle,
       description: 'Construction operations platform',
     },
@@ -106,6 +106,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     >
       <html lang="en" suppressHydrationWarning>
         <head>
+          <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} />
+          <link rel="preconnect" href="https://clerk.krewpact.ca" />
           <meta name="apple-mobile-web-app-capable" content="yes" />
           <meta name="mobile-web-app-capable" content="yes" />
           <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />

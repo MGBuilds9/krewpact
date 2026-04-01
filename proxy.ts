@@ -51,7 +51,9 @@ export const proxy = clerkMiddleware(
     }
 
     if (!isPublicRoute(req)) {
-      await auth.protect();
+      await auth.protect({
+        unauthenticatedUrl: new URL('/auth', req.url).toString(),
+      });
     }
 
     const { pathname } = req.nextUrl;
