@@ -23,6 +23,8 @@ const atkinson = Atkinson_Hyperlegible({
 });
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.krewpact.com';
+const signInUrl = process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL || '/auth';
+const signUpUrl = process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL || '/auth';
 
 export async function generateMetadata(): Promise<Metadata> {
   const headersList = await headers();
@@ -80,9 +82,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   }
   return (
     <ClerkProvider
-      signInUrl="https://accounts.krewpact.ca/sign-in"
-      signUpUrl="https://accounts.krewpact.ca/sign-up"
-      afterSignOutUrl="https://accounts.krewpact.ca/sign-in"
+      signInUrl={signInUrl}
+      signUpUrl={signUpUrl}
+      afterSignOutUrl={signInUrl}
       allowedRedirectOrigins={[
         'https://krewpact.ca',
         'https://accounts.krewpact.ca',
@@ -110,9 +112,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <meta name="apple-mobile-web-app-title" content="KrewPact" />
           <link rel="apple-touch-icon" href="/icon-192.png" />
           {/* tenantCSS is generated from validated hex colors only — safe to inject */}
-          {tenantCSS ? (
-            <style dangerouslySetInnerHTML={{ __html: tenantCSS }} />
-          ) : null}
+          {tenantCSS ? <style dangerouslySetInnerHTML={{ __html: tenantCSS }} /> : null}
         </head>
         <body className={`${atkinson.variable} font-sans antialiased`}>
           <ThemeProvider
