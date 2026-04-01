@@ -9322,6 +9322,7 @@ export type Database = {
       }
       users: {
         Row: {
+          adp_employee_code: string | null
           ai_preferences: Json | null
           avatar_url: string | null
           clerk_user_id: string | null
@@ -9338,6 +9339,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          adp_employee_code?: string | null
           ai_preferences?: Json | null
           avatar_url?: string | null
           clerk_user_id?: string | null
@@ -9354,6 +9356,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          adp_employee_code?: string | null
           ai_preferences?: Json | null
           avatar_url?: string | null
           clerk_user_id?: string | null
@@ -9516,6 +9519,7 @@ export type Database = {
           p_last_name: string
         }
         Returns: {
+          adp_employee_code: string | null
           ai_preferences: Json | null
           avatar_url: string | null
           clerk_user_id: string | null
