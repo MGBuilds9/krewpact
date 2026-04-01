@@ -20,6 +20,7 @@ Construction operations platform for MDM Group Inc. (Mississauga, Ontario). Hybr
 
 ```bash
 npm run dev            # Next.js dev server (Turbopack)
+npm run validate       # Canonical local validation pass
 npm run build          # Production build
 npm run lint           # ESLint (flat config)
 npm run typecheck      # tsc --noEmit (strict mode)
@@ -31,7 +32,7 @@ npm run health         # Health check script
 npm run health:deep    # Deep health check (all services)
 ```
 
-Seed scripts: `npm run seed:org`, `seed:admin`, `seed:test-users`, `seed:scoring`, `seed:reference`, `seed:demo`
+Seed scripts: `npm run seed:org`, `npm run seed:admin`, `npm run seed:test-users`, `npm run seed:scoring`, `npm run seed:reference`
 
 After Supabase schema changes:
 
@@ -331,18 +332,18 @@ Architecture docs in `docs/architecture/`: `Master-Plan.md` (scope), `Technology
 
 ## Session Log
 
+### Apr 1, 2026 — App Completeness Audit + CRUD Wiring (Phase 1 & 2)
+
+- **Changes:** (1) **Audit:** Deployed 2 parallel agents to scan CRM + Projects modules. Root cause: backend hooks existed but UI never called them. 23 specific gaps documented. (2) **Phase 1 CRUD wiring:** Project edit/delete dropdown (ProjectDetailHeader). Real milestones API replacing 7 hardcoded fakes (useProjectMilestones). Account/contact name resolution (no more raw UUIDs). Row-level edit/delete on Leads, Accounts, Contacts, Bidding via reusable RowActionMenu. "New Task" button + CreateTaskDialog. (3) **Build blocker fix:** Applied adp_employee_code migration to Supabase, regenerated types — 0 TS errors. (4) **Phase 2 polish:** Actionable empty states with CTA on Leads/Accounts/Contacts (shared EmptyState component). Opportunities kanban/table toggle (OpportunitiesTable). Accounts bulk API route + BulkActionBar on Accounts/Contacts. Tasks page extracted from 285→88 lines with clickable entity badges. Fixed accounts isLoading guard bug. Aligned contacts bulk route params schema.
+- **Decisions:** Separate OpportunitiesTable component (lazy-loaded) preserves kanban as default. BulkActionBar reused for accounts/contacts (already supported those entity types). Tasks page extraction was necessary (285 lines, 150 limit) — combined with nav links feature.
+- **Tests:** 5,274/5,276 passing (2 pre-existing financial-ops failures). 0 new TS errors. 0 lint errors. Build passes.
+- **Next:** Branding settings UI for boldsign_brand_id. Portal multi-tenant E2E. Financial-ops test fixes.
+
 ### Apr 1, 2026 — Multi-Tenancy Polish + Tech Debt
 
-- **Changes:** (1) **Branding UI:** Added 4 missing fields (company_description, erp_company, footer_text, support_url) + live preview card to settings/branding page. (2) **Portal RLS:** Added RESTRICTIVE INSERT/UPDATE policies to portal_accounts, portal_permissions, portal_messages, portal_view_logs — closes write-path cross-org gap. Applied to Supabase. (3) **BoldSign tenant:** Added `boldsign_brand_id` to branding schema + OrgBrandingInfo for per-tenant e-sign sender identity. (4) **Drop lead_stage:** Dropped orphaned `lead_stage` enum type (leads.stage column already gone, leads.status is active). Regenerated types/supabase.ts. Fixed enum count test. (5) **DESIGN.md:** Documented actual running design system (colors, fonts, components, patterns) — replaces stale MASTER.md.
-- **Decisions:** Portal reads already org-scoped via RLS RESTRICTIVE SELECT (from Phase 0). Only write-path needed migration. leads.stage column was already absent from remote DB — only the orphaned enum type remained. `boldsign_brand_id` stored in branding JSONB (no migration needed).
-- **Migrations applied:** `drop_lead_stage_enum`, `portal_rls_write_org_scope`. Both confirmed on Supabase.
-- **Tests:** 5,274+ passing. 15 new tests. 5 pre-existing TS errors in payroll-export.ts (adp_employee_code not yet migrated).
-- **Next:** Apply adp_employee_code migration. Branding settings UI for boldsign_brand_id (admin-only). Portal multi-tenant E2E verification.
+- Branding UI (4 fields + live preview). Portal RESTRICTIVE write-path RLS (4 tables). BoldSign per-tenant brand_id. Dropped orphaned lead_stage enum. DESIGN.md. 5,274 tests.
 
-### Mar 31, 2026 — Multi-Tenancy Phase 0-1.5 + Phase 2-3
-
-- Mar 31 (session 2): Phase 1.5 executive org scoping + Phase 2 tenant provisioning + Phase 3 docs + knowledge org_id migration + nav flag gating + welcome checklist. 5,266 tests.
-- Mar 31 (session 1): P0 RLS fix + users.org_id + withApiRoute orgId + root redirect + branding schema + MDM string removal. 5,230 tests.
+- Mar 31: Multi-tenancy Phase 0-3 (2 sessions). RLS fix, org scoping, provisioning, knowledge migration, nav gating. 5,266 tests.
 - Mar 30: Repo cleanup + multi-tenant strategy + codex review. CRM pipeline reorder + gap-hunter. CSO audit. 5,223 tests.
 - Mar 29: P2 buildout (ADP, ERPNext, Offline/PWA, Mobile). 5,198 tests.
 - Mar 28: Cleanup (-10K lines) + DB hardening. 4,799 tests.
