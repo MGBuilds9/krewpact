@@ -332,22 +332,25 @@ Architecture docs in `docs/architecture/`: `Master-Plan.md` (scope), `Technology
 
 ## Session Log
 
+### Apr 1, 2026 — SEO/Perf Audit + Prod Auth Fix
+
+- **Changes:** (1) **Prod outage fix:** Clerk Account Portal (`accounts.krewpact.ca`) returning 403 due to Cloudflare challenge — all protected routes showed 404. Fixed by routing auth through embedded `<SignIn />` at `/auth`, passing `unauthenticatedUrl` to `auth.protect()` in proxy.ts, and making ClerkProvider URLs env-driven. (2) **OrgContext crash fix:** `useOrg()` threw when called outside OrgProvider (Header, Breadcrumbs, BottomNav render above it in layout hierarchy). Changed to return safe fallback. (3) **SEO/Perf audit:** Dynamic OG image (`opengraph-image.tsx`), PWA PNG icons (192+512px, fixed broken apple-touch-icon), preconnect hints for Supabase+Clerk, twitter card `summary_large_image`, DNS prefetch enabled. (4) **Audit plan:** Full static analysis across performance, SEO, accessibility, code quality — prioritized action plan at `docs/plans/`.
+- **Decisions:** Embedded `<SignIn />` over Account Portal — same Clerk UI, no domain hop, more reliable. OrgContext fallback over moving provider up — avoids layout refactor, components handle null org gracefully. `force-dynamic` on root layout left as-is — `generateMetadata()` calling `headers()` already forces dynamic, explicit export is defensive.
+- **Tests:** 5,273/5,276 passing (2 pre-existing financial-ops + 1 branding-ui timeout). 0 new TS errors. 0 lint errors.
+- **Next:** Fix Clerk Account Portal in dashboard (DNS/Cloudflare config). P3 audit items: axe-core E2E wiring, useCommandPalette split, SW cache fix.
+
 ### Apr 1, 2026 — App Completeness Audit + CRUD Wiring (Phase 1 & 2)
 
-- **Changes:** (1) **Audit:** Deployed 2 parallel agents to scan CRM + Projects modules. Root cause: backend hooks existed but UI never called them. 23 specific gaps documented. (2) **Phase 1 CRUD wiring:** Project edit/delete dropdown (ProjectDetailHeader). Real milestones API replacing 7 hardcoded fakes (useProjectMilestones). Account/contact name resolution (no more raw UUIDs). Row-level edit/delete on Leads, Accounts, Contacts, Bidding via reusable RowActionMenu. "New Task" button + CreateTaskDialog. (3) **Build blocker fix:** Applied adp_employee_code migration to Supabase, regenerated types — 0 TS errors. (4) **Phase 2 polish:** Actionable empty states with CTA on Leads/Accounts/Contacts (shared EmptyState component). Opportunities kanban/table toggle (OpportunitiesTable). Accounts bulk API route + BulkActionBar on Accounts/Contacts. Tasks page extracted from 285→88 lines with clickable entity badges. Fixed accounts isLoading guard bug. Aligned contacts bulk route params schema.
-- **Decisions:** Separate OpportunitiesTable component (lazy-loaded) preserves kanban as default. BulkActionBar reused for accounts/contacts (already supported those entity types). Tasks page extraction was necessary (285 lines, 150 limit) — combined with nav links feature.
-- **Tests:** 5,274/5,276 passing (2 pre-existing financial-ops failures). 0 new TS errors. 0 lint errors. Build passes.
-- **Next:** Branding settings UI for boldsign_brand_id. Portal multi-tenant E2E. Financial-ops test fixes.
+- Audit + CRUD wiring: 23 gaps fixed, project edit/delete, real milestones API, row actions on all CRM pages, empty states, opportunities table, bulk actions, task nav links. 5,274 tests.
 
 ### Apr 1, 2026 — Multi-Tenancy Polish + Tech Debt
 
-- Branding UI (4 fields + live preview). Portal RESTRICTIVE write-path RLS (4 tables). BoldSign per-tenant brand_id. Dropped orphaned lead_stage enum. DESIGN.md. 5,274 tests.
+- Branding UI, portal RLS write-path, BoldSign per-tenant, dropped lead_stage enum, DESIGN.md. 5,274 tests.
 
-- Mar 31: Multi-tenancy Phase 0-3 (2 sessions). RLS fix, org scoping, provisioning, knowledge migration, nav gating. 5,266 tests.
-- Mar 30: Repo cleanup + multi-tenant strategy + codex review. CRM pipeline reorder + gap-hunter. CSO audit. 5,223 tests.
+- Mar 31: Multi-tenancy Phase 0-3. 5,266 tests.
+- Mar 30: Repo cleanup + multi-tenant strategy + codex review. CSO audit. 5,223 tests.
 - Mar 29: P2 buildout (ADP, ERPNext, Offline/PWA, Mobile). 5,198 tests.
 - Mar 28: Cleanup (-10K lines) + DB hardening. 4,799 tests.
-- Mar 27: RBAC overhaul + A-Z audit. 4,851 tests.
-- Mar 25-26: Production hardening, go-live. 4,715 tests.
+- Mar 25-27: RBAC overhaul, production hardening, go-live. 4,715-4,851 tests.
 
 @AGENTS.md
