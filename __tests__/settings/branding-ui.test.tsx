@@ -1,25 +1,38 @@
 import { render, screen } from '@testing-library/react';
+import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 // Mock dependencies
 vi.mock('next/navigation', () => ({
   useParams: () => ({ orgSlug: 'test-org' }),
 }));
+vi.mock('next/image', () => ({
+  default: (props: Record<string, unknown>) =>
+    React.createElement('img', { src: props.src as string, alt: props.alt as string }),
+}));
+vi.mock('@/components/shared/PageHeader', () => ({
+  PageHeader: ({ title, description }: { title: string; description?: string }) =>
+    React.createElement(
+      'div',
+      { 'data-testid': 'page-header' },
+      React.createElement('h1', null, title),
+      description && React.createElement('p', null, description),
+    ),
+}));
+// Stable reference — avoids infinite useEffect re-render loop
+const mockBrandingData = {
+  branding: {
+    company_name: 'Test Co',
+    company_description: 'A test company',
+    erp_company: 'Test Co ERP',
+    footer_text: '© Test Co 2026',
+    support_url: 'https://support.test.co',
+    primary_color: '#2563eb',
+    accent_color: '#f59e0b',
+  },
+};
 vi.mock('@tanstack/react-query', () => ({
-  useQuery: () => ({
-    data: {
-      branding: {
-        company_name: 'Test Co',
-        company_description: 'A test company',
-        erp_company: 'Test Co ERP',
-        footer_text: '© Test Co 2026',
-        support_url: 'https://support.test.co',
-        primary_color: '#2563eb',
-        accent_color: '#f59e0b',
-      },
-    },
-    isLoading: false,
-  }),
+  useQuery: () => ({ data: mockBrandingData, isLoading: false }),
   useQueryClient: () => ({ invalidateQueries: vi.fn() }),
   useMutation: () => ({ mutate: vi.fn(), isPending: false }),
 }));

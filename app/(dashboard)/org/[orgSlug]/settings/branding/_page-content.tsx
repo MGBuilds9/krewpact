@@ -81,7 +81,11 @@ export default function BrandingPageContent() {
   const logoUrl = watch('logo_url');
 
   if (isLoading) {
-    return <div className="space-y-6 p-6 animate-pulse"><div className="h-8 w-48 bg-muted rounded" /></div>;
+    return (
+      <div className="space-y-6 p-6 animate-pulse">
+        <div className="h-8 w-48 bg-muted rounded" />
+      </div>
+    );
   }
 
   return (
@@ -100,25 +104,48 @@ export default function BrandingPageContent() {
 
             <div className="space-y-1">
               <Label htmlFor="company_description">Company Description</Label>
-              <Input id="company_description" {...register('company_description')} placeholder="A brief description of your company" />
-              <p className="text-xs text-muted-foreground">Used in AI-generated content and email templates.</p>
+              <Input
+                id="company_description"
+                {...register('company_description')}
+                placeholder="A brief description of your company"
+              />
+              <p className="text-xs text-muted-foreground">
+                Used in AI-generated content and email templates.
+              </p>
             </div>
 
             <div className="space-y-1">
               <Label htmlFor="support_email">Support Email</Label>
-              <Input id="support_email" type="email" {...register('support_email')} placeholder="support@example.com" />
+              <Input
+                id="support_email"
+                type="email"
+                {...register('support_email')}
+                placeholder="support@example.com"
+              />
             </div>
 
             <div className="space-y-1">
               <Label htmlFor="support_url">Support URL</Label>
-              <Input id="support_url" type="url" {...register('support_url')} placeholder="https://support.example.com" />
+              <Input
+                id="support_url"
+                type="url"
+                {...register('support_url')}
+                placeholder="https://support.example.com"
+              />
             </div>
 
             <div className="space-y-1">
               <Label htmlFor="logo_url">Logo URL</Label>
               <Input id="logo_url" {...register('logo_url')} placeholder="https://..." />
               {logoUrl && (
-                <Image src={logoUrl} alt="Logo preview" width={160} height={48} className="mt-2 rounded border object-contain" unoptimized />
+                <Image
+                  src={logoUrl}
+                  alt="Logo preview"
+                  width={160}
+                  height={48}
+                  className="mt-2 rounded border object-contain"
+                  unoptimized
+                />
               )}
             </div>
 
@@ -130,12 +157,30 @@ export default function BrandingPageContent() {
             <div className="space-y-1">
               <Label htmlFor="erp_company">ERP Company Name</Label>
               <Input id="erp_company" {...register('erp_company')} placeholder="Acme Corp" />
-              <p className="text-xs text-muted-foreground">Must match the ERPNext Company doctype name exactly.</p>
+              <p className="text-xs text-muted-foreground">
+                Must match the ERPNext Company doctype name exactly.
+              </p>
+            </div>
+
+            <div className="space-y-1">
+              <Label htmlFor="boldsign_brand_id">BoldSign Brand ID</Label>
+              <Input
+                id="boldsign_brand_id"
+                {...register('boldsign_brand_id')}
+                placeholder="e.g. abc123-def456"
+              />
+              <p className="text-xs text-muted-foreground">
+                Brand ID from BoldSign for e-signature templates.
+              </p>
             </div>
 
             <div className="space-y-1">
               <Label htmlFor="footer_text">Footer Text</Label>
-              <Input id="footer_text" {...register('footer_text')} placeholder="© 2026 Acme Corp. All rights reserved." />
+              <Input
+                id="footer_text"
+                {...register('footer_text')}
+                placeholder="© 2026 Acme Corp. All rights reserved."
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -169,7 +214,14 @@ export default function BrandingPageContent() {
             <div className="p-6 bg-background">
               <div className="flex items-center gap-3 mb-2">
                 {logoUrl && (
-                  <Image src={logoUrl} alt="Logo" width={48} height={48} className="rounded object-contain" unoptimized />
+                  <Image
+                    src={logoUrl}
+                    alt="Logo"
+                    width={48}
+                    height={48}
+                    className="rounded object-contain"
+                    unoptimized
+                  />
                 )}
                 <span
                   className="text-xl font-semibold"
