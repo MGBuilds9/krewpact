@@ -332,25 +332,20 @@ Architecture docs in `docs/architecture/`: `Master-Plan.md` (scope), `Technology
 
 ## Session Log
 
-### Apr 1, 2026 — SEO/Perf Audit + Prod Auth Fix
+### Apr 2, 2026 — Test Fixes + BoldSign Field + PDF Guardrail
 
-- **Changes:** (1) **Prod outage fix:** Clerk Account Portal (`accounts.krewpact.ca`) returning 403 due to Cloudflare challenge — all protected routes showed 404. Fixed by routing auth through embedded `<SignIn />` at `/auth`, passing `unauthenticatedUrl` to `auth.protect()` in proxy.ts, and making ClerkProvider URLs env-driven. (2) **OrgContext crash fix:** `useOrg()` threw when called outside OrgProvider (Header, Breadcrumbs, BottomNav render above it in layout hierarchy). Changed to return safe fallback. (3) **SEO/Perf audit:** Dynamic OG image (`opengraph-image.tsx`), PWA PNG icons (192+512px, fixed broken apple-touch-icon), preconnect hints for Supabase+Clerk, twitter card `summary_large_image`, DNS prefetch enabled. (4) **Audit plan:** Full static analysis across performance, SEO, accessibility, code quality — prioritized action plan at `docs/plans/`.
-- **Decisions:** Embedded `<SignIn />` over Account Portal — same Clerk UI, no domain hop, more reliable. OrgContext fallback over moving provider up — avoids layout refactor, components handle null org gracefully. `force-dynamic` on root layout left as-is — `generateMetadata()` calling `headers()` already forces dynamic, explicit export is defensive.
-- **Tests:** 5,273/5,276 passing (2 pre-existing financial-ops + 1 branding-ui timeout). 0 new TS errors. 0 lint errors.
-- **Next:** Fix Clerk Account Portal in dashboard (DNS/Cloudflare config). P3 audit items: axe-core E2E wiring, useCommandPalette split, SW cache fix.
+- **Changes:** (1) Fixed financial-ops.test.ts: 2 tests used hardcoded `2026-02-01` as substantial_performance_date — release date (Feb 1 + 60 days = Apr 2) was about to expire. Replaced with dynamic `futureDate`. (2) Fixed branding-ui.test.tsx timeout: root cause was useQuery mock creating new object reference every render → infinite useEffect loop. Fixed with stable `mockBrandingData` reference + added `next/image` and `PageHeader` mocks. (3) Added BoldSign Brand ID input to branding settings form — schema/API/client/tenant-resolver already wired, only the UI field was missing. (4) Added `import 'server-only'` to `lib/pdf/generator.ts` as guardrail + `vi.mock('server-only')` in its test.
+- **Decisions:** Stable mock reference over `vi.useFakeTimers()` for financial-ops (simpler, no side effects). Embedded `<SignIn />` kept as-is over Account Portal (Clerk DNS fix is infra-only, not code).
+- **Tests:** 5,304/5,304 passing. 0 new TS errors. 0 lint errors.
+- **Next:** Clerk Account Portal DNS (infra). Commit remaining unstaged P3 audit changes from prior session.
 
-### Apr 1, 2026 — App Completeness Audit + CRUD Wiring (Phase 1 & 2)
-
-- Audit + CRUD wiring: 23 gaps fixed, project edit/delete, real milestones API, row actions on all CRM pages, empty states, opportunities table, bulk actions, task nav links. 5,274 tests.
-
-### Apr 1, 2026 — Multi-Tenancy Polish + Tech Debt
-
-- Branding UI, portal RLS write-path, BoldSign per-tenant, dropped lead_stage enum, DESIGN.md. 5,274 tests.
-
+- Apr 1: P3 audit backlog (SW cache, axe-core E2E, file splits, font cleanup, dynamic metadata). 5,297 tests.
+- Apr 1: SEO/perf audit + prod auth fix (Clerk 403, OG image, PWA icons). 5,273 tests.
+- Apr 1: App completeness audit + CRUD wiring (23 gaps). 5,274 tests.
+- Apr 1: Multi-tenancy polish + tech debt. 5,274 tests.
 - Mar 31: Multi-tenancy Phase 0-3. 5,266 tests.
-- Mar 30: Repo cleanup + multi-tenant strategy + codex review. CSO audit. 5,223 tests.
+- Mar 30: Repo cleanup + multi-tenant strategy + CSO audit. 5,223 tests.
 - Mar 29: P2 buildout (ADP, ERPNext, Offline/PWA, Mobile). 5,198 tests.
 - Mar 28: Cleanup (-10K lines) + DB hardening. 4,799 tests.
-- Mar 25-27: RBAC overhaul, production hardening, go-live. 4,715-4,851 tests.
 
 @AGENTS.md
