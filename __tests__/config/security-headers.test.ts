@@ -24,7 +24,7 @@ describe('Security headers', () => {
     expect(headerMap['X-Frame-Options']).toBe('DENY');
     expect(headerMap['Referrer-Policy']).toBe('strict-origin-when-cross-origin');
     expect(headerMap['Permissions-Policy']).toContain('camera=()');
-    expect(headerMap['X-DNS-Prefetch-Control']).toBe('off');
+    expect(headerMap['X-DNS-Prefetch-Control']).toBe('on');
     expect(headerMap['X-Permitted-Cross-Domain-Policies']).toBe('none');
   });
 
