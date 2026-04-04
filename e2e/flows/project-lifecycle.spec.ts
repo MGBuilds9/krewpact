@@ -1,14 +1,12 @@
 import { expect, test } from '@playwright/test';
 
 import { checkAccessibility } from '../helpers/a11y';
-import { assertAuthenticated, signIn } from '../helpers/auth';
+import { signIn } from '../helpers/auth';
 import { fixtures, orgUrl } from '../helpers/fixtures';
 
+// storageState handles auth for chromium/full projects.
+
 test.describe('Project Lifecycle', () => {
-  test.beforeEach(async ({ page }) => {
-    await signIn(page);
-    await assertAuthenticated(page);
-  });
 
   test('view projects list', async ({ page }) => {
     await page.goto(orgUrl('/projects'));

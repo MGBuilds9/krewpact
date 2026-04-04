@@ -1,3 +1,5 @@
+import type { Page } from '@playwright/test';
+
 /**
  * Reusable test data for E2E flow tests.
  * All names include a timestamp suffix to avoid collisions.
@@ -64,4 +66,24 @@ export const TEST_ORG_SLUG = process.env.E2E_ORG_SLUG ?? 'acme-construction';
  */
 export function orgUrl(path: string): string {
   return `/org/${TEST_ORG_SLUG}${path.startsWith('/') ? path : `/${path}`}`;
+}
+
+/**
+ * Seed a lead via the API and return its id and company_name.
+ * Requires an authenticated page context (storageState or prior signIn).
+ */
+export async function seedLead(page: Page): Promise<{ id?: string; company_name: string }> {
+  const companyName = `E2E Seed ${Date.now().toString(36)}`;
+  const response = await page.request.post('/api/web/leads', {
+    data: {
+      company_name: companyName,
+      contact_name: 'E2E Tester',
+      email: `e2e-${Date.now()}@test.krewpact.com`,
+      phone: '416-555-0100',
+      source: 'website',
+      message: 'Seeded by E2E test — safe to delete',
+    },
+  });
+  const body = (await response.json()) as { id?: string };
+  return { id: body.id, company_name: companyName };
 }

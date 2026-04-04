@@ -1,15 +1,14 @@
 import { expect, test } from '@playwright/test';
 
 import { checkAccessibility } from '../helpers/a11y';
-import { assertAuthenticated, signIn } from '../helpers/auth';
-import { orgUrl } from '../helpers/fixtures';
+import { signIn } from '../helpers/auth';
+import { orgUrl, seedLead } from '../helpers/fixtures';
+
+// storageState handles auth for chromium/full projects.
+// signIn is only called explicitly in the accessibility test which runs
+// without a guaranteed prior navigation context.
 
 test.describe('CRM Pipeline', () => {
-  test.beforeEach(async ({ page }) => {
-    await signIn(page);
-    await assertAuthenticated(page);
-  });
-
   test('CRM dashboard loads with data', async ({ page }) => {
     await page.goto(orgUrl('/crm/dashboard'));
 
@@ -23,49 +22,37 @@ test.describe('CRM Pipeline', () => {
   });
 
   test('leads list loads and shows data', async ({ page }) => {
-    await page.goto(orgUrl('/crm/leads'));
+    // Seed a lead so the list is guaranteed to have data
+    const { company_name } = await seedLead(page);
 
-    // Wait for the page to render
+    await page.goto(orgUrl('/crm/leads'));
     await expect(page.locator('main')).toBeVisible({ timeout: 10_000 });
 
-    // Should see either a data table or empty state — not an error
-    const hasTable = await page
-      .locator('table')
-      .isVisible({ timeout: 5000 })
-      .catch(() => false);
-    const hasCards = await page
-      .locator('[data-testid="lead-card"]')
-      .first()
-      .isVisible({ timeout: 2000 })
-      .catch(() => false);
-    const hasEmpty = await page
-      .getByText(/no leads|get started/i)
-      .isVisible({ timeout: 2000 })
-      .catch(() => false);
-
-    expect(hasTable || hasCards || hasEmpty).toBe(true);
+    // The seeded lead should appear in the list
+    await expect(page.getByText(company_name)).toBeVisible({ timeout: 10_000 });
   });
 
   test('open lead detail page', async ({ page }) => {
+    // Seed a lead so there is always at least one to click
+    await seedLead(page);
+
     await page.goto(orgUrl('/crm/leads'));
     await expect(page.locator('main')).toBeVisible({ timeout: 10_000 });
 
-    // Click first lead in the list
     const firstLead = page
       .locator('table tbody tr')
       .first()
       .or(page.locator('[data-testid="lead-card"]').first());
 
-    if (await firstLead.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await firstLead.click();
+    await expect(firstLead).toBeVisible({ timeout: 10_000 });
+    await firstLead.click();
 
-      // Should navigate to lead detail
-      await expect(page.locator('main')).toBeVisible({ timeout: 10_000 });
-      // Should show lead info (company name, status, etc.)
-      await expect(page.locator('h1, h2, [data-testid="lead-name"]')).toBeVisible({
-        timeout: 5000,
-      });
-    }
+    // Should navigate to lead detail
+    await expect(page.locator('main')).toBeVisible({ timeout: 10_000 });
+    // Should show lead info (company name, status, etc.)
+    await expect(page.locator('h1, h2, [data-testid="lead-name"]')).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test('pipeline view renders stages', async ({ page }) => {
@@ -93,29 +80,31 @@ test.describe('CRM Pipeline', () => {
   });
 
   test('add note to lead', async ({ page }) => {
+    // Seed a lead so there is always at least one to interact with
+    await seedLead(page);
+
     await page.goto(orgUrl('/crm/leads'));
     await expect(page.locator('main')).toBeVisible({ timeout: 10_000 });
 
     const firstLead = page.locator('table tbody tr').first();
-    if (await firstLead.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await firstLead.click();
-      await expect(page.locator('main')).toBeVisible({ timeout: 10_000 });
+    await expect(firstLead).toBeVisible({ timeout: 10_000 });
+    await firstLead.click();
+    await expect(page.locator('main')).toBeVisible({ timeout: 10_000 });
 
-      // Look for notes/activity section
-      const notesSection = page.getByText(/notes|activity|timeline/i);
-      if (await notesSection.isVisible({ timeout: 5000 }).catch(() => false)) {
-        // Look for a text input to add a note
-        const noteInput = page.locator(
-          'textarea[name="note"], textarea[placeholder*="note"], textarea[placeholder*="comment"]',
-        );
-        if (await noteInput.isVisible({ timeout: 3000 }).catch(() => false)) {
-          await noteInput.fill(`E2E test note — ${new Date().toISOString()}`);
-          const addBtn = page.getByRole('button', { name: /add|save|submit|post/i });
-          if (await addBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-            await addBtn.click();
-            // Note should appear in the activity feed
-            await expect(page.getByText('E2E test note')).toBeVisible({ timeout: 5000 });
-          }
+    // Look for notes/activity section
+    const notesSection = page.getByText(/notes|activity|timeline/i);
+    if (await notesSection.isVisible({ timeout: 5000 }).catch(() => false)) {
+      // Look for a text input to add a note
+      const noteInput = page.locator(
+        'textarea[name="note"], textarea[placeholder*="note"], textarea[placeholder*="comment"]',
+      );
+      if (await noteInput.isVisible({ timeout: 3000 }).catch(() => false)) {
+        await noteInput.fill(`E2E test note — ${new Date().toISOString()}`);
+        const addBtn = page.getByRole('button', { name: /add|save|submit|post/i });
+        if (await addBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+          await addBtn.click();
+          // Note should appear in the activity feed
+          await expect(page.getByText('E2E test note')).toBeVisible({ timeout: 5000 });
         }
       }
     }

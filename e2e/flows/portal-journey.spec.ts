@@ -4,6 +4,12 @@ import { checkAccessibility } from '../helpers/a11y';
 import { assertAuthenticated, signIn } from '../helpers/auth';
 import { orgUrl } from '../helpers/fixtures';
 
+// NOTE: portal-journey keeps explicit signIn calls in beforeEach because it tests
+// both internal dashboard routes (orgUrl — need Clerk auth) and unauthenticated
+// portal routes (/portals/... — HTTP status checks). The storageState from the
+// setup project covers the browser session, but signIn guards against edge cases
+// where the portal auth context differs from the dashboard context.
+
 test.describe('Portal Journey', () => {
   test.beforeEach(async ({ page }) => {
     await signIn(page);

@@ -1,14 +1,14 @@
 import { expect, test } from '@playwright/test';
 
 import { checkAccessibility } from '../helpers/a11y';
-import { assertAuthenticated, signIn } from '../helpers/auth';
+import { signIn } from '../helpers/auth';
 import { orgUrl } from '../helpers/fixtures';
 
+// storageState handles auth for chromium/full projects.
+// test.skip() on batch-submit is intentional: batch UI requires existing timesheet rows,
+// which can't be seeded cheaply — timesheets require an employee + project context.
+
 test.describe('Timesheet Batch', () => {
-  test.beforeEach(async ({ page }) => {
-    await signIn(page);
-    await assertAuthenticated(page);
-  });
 
   test('timesheets page renders without errors', async ({ page }) => {
     await page.goto(orgUrl('/timesheets'));
