@@ -21,17 +21,17 @@ Full setup guide: [docs/local-dev.md](docs/local-dev.md)
 
 ## Tech Stack
 
-| Layer        | Technology                                    | Purpose                              |
-| ------------ | --------------------------------------------- | ------------------------------------ |
-| Frontend     | Next.js 16 (App Router, TypeScript, React 19) | SSR, API routes, edge middleware     |
-| UI           | Tailwind CSS + shadcn/ui (Radix)              | WCAG AA accessible components        |
-| Database     | Supabase PostgreSQL                           | RLS, Realtime, Storage, pgvector     |
-| Auth         | Clerk Third-Party Auth -> Supabase session JWT | SSO, RBAC, division-scoped access   |
-| ERP          | ERPNext (via Cloudflare Tunnel)               | Accounting, inventory, invoicing     |
-| Queue        | Upstash QStash + Upstash Redis                | Async ERP sync, retries, rate limits |
-| Integrations | Microsoft Graph + Resend                      | Mail/calendar + transactional email  |
-| Hosting      | Vercel (frontend) + self-hosted (ERPNext)     | Auto-deploy from main branch         |
-| Monitoring   | Sentry + Vercel Analytics + BetterStack       | Errors, performance, uptime          |
+| Layer        | Technology                                     | Purpose                              |
+| ------------ | ---------------------------------------------- | ------------------------------------ |
+| Frontend     | Next.js 16 (App Router, TypeScript, React 19)  | SSR, API routes, edge middleware     |
+| UI           | Tailwind CSS + shadcn/ui (Radix)               | WCAG AA accessible components        |
+| Database     | Supabase PostgreSQL                            | RLS, Realtime, Storage, pgvector     |
+| Auth         | Clerk Third-Party Auth -> Supabase session JWT | SSO, RBAC, division-scoped access    |
+| ERP          | ERPNext (via Cloudflare Tunnel)                | Accounting, inventory, invoicing     |
+| Queue        | Upstash QStash + Upstash Redis                 | Async ERP sync, retries, rate limits |
+| Integrations | Microsoft Graph + Resend                       | Mail/calendar + transactional email  |
+| Hosting      | Vercel (frontend) + self-hosted (ERPNext)      | Auto-deploy from main branch         |
+| Monitoring   | Sentry + Vercel Analytics + BetterStack        | Errors, performance, uptime          |
 
 ---
 
@@ -60,14 +60,18 @@ docs/                               # Architecture, runbook, local dev
 
 ```bash
 npm run dev          # Local dev server
+npm run validate     # Canonical local validation pass
 npm run build        # Production build
 npm run lint         # ESLint
 npm run typecheck    # tsc --noEmit
 npm run test         # Vitest unit tests
 npm run test:e2e     # Playwright E2E tests
 npm run format       # Prettier
-npm run seed:demo    # Seed demo data
-npm run seed:real    # Seed real MDM data
+npm run seed:org     # Seed a tenant org
+npm run seed:admin   # Seed the admin user only
+npm run seed:test-users # Seed test users
+npm run seed:scoring # Seed scoring rules
+npm run seed:reference # Seed reference data
 ```
 
 ## Deployment Surface
@@ -80,16 +84,16 @@ npm run seed:real    # Seed real MDM data
 
 ## Feature Domains
 
-| Domain      | Path          | Status                                                       |
-| ----------- | ------------- | ------------------------------------------------------------ |
-| CRM         | `/crm/`       | Complete — leads, pipeline, scoring, sequences, analytics    |
-| Estimating  | `/estimates/` | Complete — builder, templates, assemblies, cost codes        |
-| Contracting | `/contracts/` | Complete — creation, detail, e-sign                          |
-| Projects    | `/projects/`  | Complete — lifecycle, milestones, tasks, daily logs          |
-| Finance     | `/finance/`   | Partial — expenses, dashboard, ERPNext invoice snapshots     |
-| Portals     | `(portal)/`   | Complete — client + trade partner                            |
-| Admin       | `/admin/`     | Complete — audit, sync, governance, privacy, BCP             |
-| Search      | Cmd+K         | Complete — global search across 7 entities                   |
+| Domain      | Path          | Status                                                    |
+| ----------- | ------------- | --------------------------------------------------------- |
+| CRM         | `/crm/`       | Complete — leads, pipeline, scoring, sequences, analytics |
+| Estimating  | `/estimates/` | Complete — builder, templates, assemblies, cost codes     |
+| Contracting | `/contracts/` | Complete — creation, detail, e-sign                       |
+| Projects    | `/projects/`  | Complete — lifecycle, milestones, tasks, daily logs       |
+| Finance     | `/finance/`   | Partial — expenses, dashboard, ERPNext invoice snapshots  |
+| Portals     | `(portal)/`   | Complete — client + trade partner                         |
+| Admin       | `/admin/`     | Complete — audit, sync, governance, privacy, BCP          |
+| Search      | Cmd+K         | Complete — global search across 7 entities                |
 
 See [docs/domains.md](docs/domains.md) for branch naming and domain ownership.
 

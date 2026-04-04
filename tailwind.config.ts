@@ -21,8 +21,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-        heading: ['Outfit', 'sans-serif'],
+        sans: ['var(--font-atkinson)', 'system-ui', 'sans-serif'],
       },
       colors: {
         border: 'hsl(var(--border))',

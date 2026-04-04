@@ -67,6 +67,10 @@ scripts/inventory-migration/transformed/
 playwright-report/
 test-results/
 
+# Expo local state and web export artifacts
+mobile/.expo/
+mobile/dist/
+
 # Claude Code local config
 .claude/
 

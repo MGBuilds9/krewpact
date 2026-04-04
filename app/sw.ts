@@ -56,23 +56,18 @@ const serwist = new Serwist({
       handler: new NetworkFirst({
         cacheName: 'api-cache',
         networkTimeoutSeconds: 5,
-        matchOptions: { ignoreSearch: true },
       }),
     },
     // Static assets: cache-first (fonts, images, etc.)
     {
-      matcher: ({ request }) =>
-        request.destination === 'font' ||
-        request.destination === 'image',
+      matcher: ({ request }) => request.destination === 'font' || request.destination === 'image',
       handler: new CacheFirst({
         cacheName: 'static-assets',
       }),
     },
     // JS/CSS: stale-while-revalidate
     {
-      matcher: ({ request }) =>
-        request.destination === 'script' ||
-        request.destination === 'style',
+      matcher: ({ request }) => request.destination === 'script' || request.destination === 'style',
       handler: new StaleWhileRevalidate({
         cacheName: 'app-shell',
       }),
