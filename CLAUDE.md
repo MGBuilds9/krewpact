@@ -281,7 +281,7 @@ KrewPact is the **nucleus**. ERPNext = Financial Brain (replacing Sage). LeadFor
 
 ## ERPNext Integration
 
-43 mappings complete: MVP 12 (Customer, Contact, Opportunity, Quotation, Sales Order, Project, Task, Sales Invoice read, Purchase Invoice read, Supplier, Expense Claim, Timesheet) + P2 Batch 2A (Purchase Order, Purchase Receipt, Supplier Quotation, RFQ, Material Request, Stock Entry, Warehouse, Item) + 2B (Payment Entry, Journal Entry, GL Entry read, Bank Account, Mode of Payment, Cost Center, Budget) + 2C (BOM, Work Order, Quality Inspection, Serial No, Batch, UOM, Item Price, Price List) + 2D (Employee, Attendance, Leave Application, Holiday List, Designation, Department, HR Settings, Company).
+47 mappings complete: MVP 12 (Customer, Contact, Opportunity, Quotation, Sales Order, Project, Task, Sales Invoice read, Purchase Invoice read, Supplier, Expense Claim, Timesheet) + P2 Batch 2A (Purchase Order, Purchase Receipt, Supplier Quotation, RFQ, Material Request, Stock Entry, Warehouse, Item) + 2B (Payment Entry, Journal Entry, GL Entry read, Bank Account, Mode of Payment, Cost Center, Budget) + 2C (BOM, Work Order, Quality Inspection, Serial No, Batch, UOM, Item Price, Price List) + 2D (Employee, Attendance, Leave Application, Holiday List, Designation, Department, HR Settings, Company) + Extensions (Award, Bid, Compliance Doc, Goods Receipt, Selection Sheet).
 
 - All calls through `lib/erp/client.ts` — sole ERPNext access point
 - Auth: `Authorization: token {key}:{secret}` header
@@ -331,6 +331,12 @@ Deferred: Azure/M365, ADP, BoldSign (Week 7+). Full template: `docs/local-dev.md
 Architecture docs in `docs/architecture/`: `Master-Plan.md` (scope), `Technology-Stack-ADRs.md` (25 ADRs), `Feature-Function-PRD-Checklist.md` (16 epics), `Integration-Contracts.md` (ERPNext mappings). Internal planning docs (decisions register, cost analysis, strategy brief) archived to OneDrive.
 
 ## Session Log
+
+### Apr 3, 2026 — Blueprint Audit (93/100)
+
+- **Changes:** Blueprint audit #12. Score 93/100 (up from 90). Updated ERPNext mapping count 43→47 (5 new: Award, Bid, Compliance Doc, Goods Receipt, Selection Sheet). Saved audit to `docs/audits/2026-04-03-blueprint-audit.md`.
+- **Metrics:** 5,304 tests, 0 TS errors, 23 lint warnings (down from 206), 129 pages, 373 API routes, 499 test files. Both critical issues from Mar 28 audit resolved.
+- **Next:** Commit 61 unstaged files (P3 audit work). Auto-fix 10 lint warnings. Document multi-tenancy in architecture docs.
 
 ### Apr 2, 2026 — Test Fixes + BoldSign Field + PDF Guardrail
 
