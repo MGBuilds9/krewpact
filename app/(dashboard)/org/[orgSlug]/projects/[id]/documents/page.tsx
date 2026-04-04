@@ -1,11 +1,17 @@
 import type { Metadata } from 'next';
 
+import { generateEntityMetadata } from '@/lib/metadata/generate-entity-metadata';
+
 import DocumentsPageContent from './_page-content';
 
-export const metadata: Metadata = {
-  title: 'Project Documents',
-  description: 'Project files, folders, and document management.',
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string; orgSlug: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  return generateEntityMetadata('project', id, 'Documents');
+}
 
 export default function Page() {
   return <DocumentsPageContent />;

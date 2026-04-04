@@ -1,12 +1,18 @@
 import type { Metadata } from 'next';
 
-import TemplatesPageContent from './_page-content';
+import { generateEntityMetadata } from '@/lib/metadata/generate-entity-metadata';
 
-export const metadata: Metadata = {
-  title: 'Edit Email Template',
-  description: 'Edit email template content, merge fields, and settings.',
-};
+import TemplateDetailPage from './_page-content';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string; orgSlug: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  return generateEntityMetadata('template', id);
+}
 
 export default function Page() {
-  return <TemplatesPageContent />;
+  return <TemplateDetailPage />;
 }

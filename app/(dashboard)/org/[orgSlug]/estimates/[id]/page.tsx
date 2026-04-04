@@ -1,12 +1,18 @@
 import type { Metadata } from 'next';
 
-import EstimatesPageContent from './_page-content';
+import { generateEntityMetadata } from '@/lib/metadata/generate-entity-metadata';
 
-export const metadata: Metadata = {
-  title: 'Estimate Builder',
-  description: 'Build and edit detailed project cost estimates with line items.',
-};
+import EstimateBuilderPage from './_page-content';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string; orgSlug: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  return generateEntityMetadata('estimate', id);
+}
 
 export default function Page() {
-  return <EstimatesPageContent />;
+  return <EstimateBuilderPage />;
 }

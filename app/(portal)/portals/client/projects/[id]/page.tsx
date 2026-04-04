@@ -1,11 +1,16 @@
+import { auth } from '@clerk/nextjs/server';
 import type { Metadata } from 'next';
 
-export const metadata: Metadata = {
-  title: 'Project Details',
-  description: 'View project progress, documents, invoices, and change orders.',
-};
+import { generateEntityMetadata } from '@/lib/metadata/generate-entity-metadata';
 
-import { auth } from '@clerk/nextjs/server';
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  return generateEntityMetadata('project', id, 'Overview');
+}
 import { notFound, redirect } from 'next/navigation';
 
 interface ProjectDetail {

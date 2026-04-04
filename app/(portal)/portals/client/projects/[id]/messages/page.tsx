@@ -1,12 +1,18 @@
 import type { Metadata } from 'next';
 
-import MessagesPageContent from './_page-content';
+import { generateEntityMetadata } from '@/lib/metadata/generate-entity-metadata';
 
-export const metadata: Metadata = {
-  title: 'Project Messages',
-  description: 'Communicate with your project team.',
-};
+import PortalMessagesPage from './_page-content';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  return generateEntityMetadata('project', id, 'Messages');
+}
 
 export default function Page() {
-  return <MessagesPageContent />;
+  return <PortalMessagesPage />;
 }

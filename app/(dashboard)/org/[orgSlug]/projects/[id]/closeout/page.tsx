@@ -1,12 +1,18 @@
 import type { Metadata } from 'next';
 
-import CloseoutPageContent from './_page-content';
+import { generateEntityMetadata } from '@/lib/metadata/generate-entity-metadata';
 
-export const metadata: Metadata = {
-  title: 'Project Closeout',
-  description: 'Manage closeout packages, deficiencies, service calls, and warranties.',
-};
+import CloseoutPage from './_page-content';
 
-export default function Page({ params }: { params: Promise<{ id: string }> }) {
-  return <CloseoutPageContent params={params} />;
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string; orgSlug: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  return generateEntityMetadata('project', id, 'Closeout');
+}
+
+export default function Page({ params }: { params: Promise<{ id: string; orgSlug: string }> }) {
+  return <CloseoutPage params={params} />;
 }

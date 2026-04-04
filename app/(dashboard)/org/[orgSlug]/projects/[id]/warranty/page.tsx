@@ -1,12 +1,18 @@
 import type { Metadata } from 'next';
 
-import WarrantyPageContent from './_page-content';
+import { generateEntityMetadata } from '@/lib/metadata/generate-entity-metadata';
 
-export const metadata: Metadata = {
-  title: 'Warranty',
-  description: 'Manage warranty items and post-construction obligations.',
-};
+import WarrantyPage from './_page-content';
 
-export default function Page({ params }: { params: Promise<{ id: string }> }) {
-  return <WarrantyPageContent params={params} />;
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string; orgSlug: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  return generateEntityMetadata('project', id, 'Warranty');
+}
+
+export default function Page({ params }: { params: Promise<{ id: string; orgSlug: string }> }) {
+  return <WarrantyPage params={params} />;
 }

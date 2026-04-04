@@ -1,12 +1,18 @@
 import type { Metadata } from 'next';
 
-import ContractsPageContent from './_page-content';
+import { generateEntityMetadata } from '@/lib/metadata/generate-entity-metadata';
 
-export const metadata: Metadata = {
-  title: 'Contract Details',
-  description: 'View and manage contract terms, amendments, and signatures.',
-};
+import ContractDetailPage from './_page-content';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string; orgSlug: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  return generateEntityMetadata('contract', id);
+}
 
 export default function Page() {
-  return <ContractsPageContent />;
+  return <ContractDetailPage />;
 }

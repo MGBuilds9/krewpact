@@ -1,12 +1,18 @@
 import type { Metadata } from 'next';
 
-import SelectionsPageContent from './_page-content';
+import { generateEntityMetadata } from '@/lib/metadata/generate-entity-metadata';
 
-export const metadata: Metadata = {
-  title: 'Selections',
-  description: 'Manage client finish selections and choices.',
-};
+import SelectionsPage from './_page-content';
 
-export default function Page({ params }: { params: Promise<{ id: string }> }) {
-  return <SelectionsPageContent params={params} />;
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string; orgSlug: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  return generateEntityMetadata('project', id, 'Selections');
+}
+
+export default function Page({ params }: { params: Promise<{ id: string; orgSlug: string }> }) {
+  return <SelectionsPage params={params} />;
 }

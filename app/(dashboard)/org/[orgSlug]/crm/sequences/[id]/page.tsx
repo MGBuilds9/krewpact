@@ -1,12 +1,18 @@
 import type { Metadata } from 'next';
 
-import SequencesPageContent from './_page-content';
+import { generateEntityMetadata } from '@/lib/metadata/generate-entity-metadata';
 
-export const metadata: Metadata = {
-  title: 'Sequence Details',
-  description: 'Configure sequence steps, enrollment rules, and performance analytics.',
-};
+import SequenceDetailPage from './_page-content';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string; orgSlug: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  return generateEntityMetadata('sequence', id);
+}
 
 export default function Page() {
-  return <SequencesPageContent />;
+  return <SequenceDetailPage />;
 }

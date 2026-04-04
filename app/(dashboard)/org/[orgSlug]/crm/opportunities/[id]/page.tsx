@@ -1,12 +1,18 @@
 import type { Metadata } from 'next';
 
-import OpportunitiesPageContent from './_page-content';
+import { generateEntityMetadata } from '@/lib/metadata/generate-entity-metadata';
 
-export const metadata: Metadata = {
-  title: 'Opportunity Details',
-  description: 'View opportunity details, estimates, proposals, and deal stage.',
-};
+import OpportunityDetailPage from './_page-content';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string; orgSlug: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  return generateEntityMetadata('opportunity', id);
+}
 
 export default function Page() {
-  return <OpportunitiesPageContent />;
+  return <OpportunityDetailPage />;
 }

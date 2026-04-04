@@ -1,11 +1,17 @@
 import type { Metadata } from 'next';
 
+import { generateEntityMetadata } from '@/lib/metadata/generate-entity-metadata';
+
 import TimePageContent from './_page-content';
 
-export const metadata: Metadata = {
-  title: 'Time Entries',
-  description: 'Log and review project time entries.',
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string; orgSlug: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  return generateEntityMetadata('project', id, 'Time');
+}
 
 export default function Page() {
   return <TimePageContent />;

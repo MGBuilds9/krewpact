@@ -1,12 +1,18 @@
 import type { Metadata } from 'next';
 
-import ProcurementPageContent from './_page-content';
+import { generateEntityMetadata } from '@/lib/metadata/generate-entity-metadata';
 
-export const metadata: Metadata = {
-  title: 'Procurement',
-  description: 'Manage RFQs, bids, and procurement activities for this project.',
-};
+import ProjectProcurementPage from './_page-content';
 
-export default function Page({ params }: { params: Promise<{ id: string }> }) {
-  return <ProcurementPageContent params={params} />;
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string; orgSlug: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  return generateEntityMetadata('project', id, 'Procurement');
+}
+
+export default function Page({ params }: { params: Promise<{ id: string; orgSlug: string }> }) {
+  return <ProjectProcurementPage params={params} />;
 }

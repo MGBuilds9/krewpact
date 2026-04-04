@@ -1,11 +1,17 @@
 import type { Metadata } from 'next';
 
+import { generateEntityMetadata } from '@/lib/metadata/generate-entity-metadata';
+
 import SafetyPageContent from './_page-content';
 
-export const metadata: Metadata = {
-  title: 'Safety',
-  description: 'Safety inspections, incidents, forms, and toolbox talks.',
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string; orgSlug: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  return generateEntityMetadata('project', id, 'Safety');
+}
 
 export default function Page() {
   return <SafetyPageContent />;

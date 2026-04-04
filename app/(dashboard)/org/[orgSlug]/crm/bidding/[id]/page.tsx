@@ -1,12 +1,18 @@
 import type { Metadata } from 'next';
 
-import BiddingPageContent from './_page-content';
+import { generateEntityMetadata } from '@/lib/metadata/generate-entity-metadata';
 
-export const metadata: Metadata = {
-  title: 'Bid Details',
-  description: 'View bidding opportunity details, documents, and submission status.',
-};
+import BiddingDetailPage from './_page-content';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string; orgSlug: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  return generateEntityMetadata('bidding', id);
+}
 
 export default function Page({ params }: { params: Promise<{ id: string; orgSlug: string }> }) {
-  return <BiddingPageContent params={params} />;
+  return <BiddingDetailPage params={params} />;
 }

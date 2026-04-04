@@ -1,12 +1,18 @@
 import type { Metadata } from 'next';
 
-import ContactsPageContent from './_page-content';
+import { generateEntityMetadata } from '@/lib/metadata/generate-entity-metadata';
 
-export const metadata: Metadata = {
-  title: 'Contact Details',
-  description: 'View contact details, activity history, and communication preferences.',
-};
+import ContactDetailPage from './_page-content';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string; orgSlug: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  return generateEntityMetadata('contact', id);
+}
 
 export default function Page() {
-  return <ContactsPageContent />;
+  return <ContactDetailPage />;
 }
