@@ -24,8 +24,3 @@ pull_request_rules:
       merge:
         method: squash
 
-  - name: Delete branch after merge
-    conditions:
-      - merged
-    actions:
-      delete_head_branch: {}
