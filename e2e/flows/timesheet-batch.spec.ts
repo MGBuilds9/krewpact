@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 
+import { checkAccessibility } from '../helpers/a11y';
 import { assertAuthenticated, signIn } from '../helpers/auth';
 import { orgUrl } from '../helpers/fixtures';
 
@@ -20,7 +21,11 @@ test.describe('Timesheet Batch', () => {
     await expect(page.locator('main')).toBeVisible({ timeout: 10_000 });
 
     const hasContent =
-      (await page.locator('table').first().isVisible({ timeout: 5000 }).catch(() => false)) ||
+      (await page
+        .locator('table')
+        .first()
+        .isVisible({ timeout: 5000 })
+        .catch(() => false)) ||
       (await page
         .getByText(/no timesheets|empty|no results|timesheet/i)
         .first()
@@ -39,7 +44,11 @@ test.describe('Timesheet Batch', () => {
     await expect(page.locator('main')).toBeVisible({ timeout: 10_000 });
 
     const hasHeading =
-      (await page.getByRole('heading').first().isVisible({ timeout: 5000 }).catch(() => false)) ||
+      (await page
+        .getByRole('heading')
+        .first()
+        .isVisible({ timeout: 5000 })
+        .catch(() => false)) ||
       (await page
         .getByText(/timesheet/i)
         .first()
@@ -90,5 +99,13 @@ test.describe('Timesheet Batch', () => {
     // formatStatus() should convert snake_case enums
     expect(bodyText).not.toMatch(/\bpending_approval\b/);
     expect(bodyText).not.toMatch(/\bin_progress\b/);
+  });
+
+  test('accessibility check', async ({ page }) => {
+    await signIn(page);
+    await page.goto(orgUrl('/timesheets'));
+    await page.waitForLoadState('domcontentloaded');
+    const { violations } = await checkAccessibility(page);
+    expect(violations).toEqual([]);
   });
 });

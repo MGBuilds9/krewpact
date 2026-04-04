@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 
+import { checkAccessibility } from '../helpers/a11y';
 import { assertAuthenticated, signIn } from '../helpers/auth';
 import { orgUrl } from '../helpers/fixtures';
 
@@ -22,7 +23,11 @@ test.describe('Finance Workflow', () => {
 
     // Should show a table or empty state — not a blank screen
     const hasContent =
-      (await page.locator('table').first().isVisible({ timeout: 5000 }).catch(() => false)) ||
+      (await page
+        .locator('table')
+        .first()
+        .isVisible({ timeout: 5000 })
+        .catch(() => false)) ||
       (await page
         .getByText(/no invoices|empty|no results/i)
         .isVisible({ timeout: 3000 })
@@ -69,5 +74,13 @@ test.describe('Finance Workflow', () => {
     // Raw UUIDs should not appear as standalone visible text (production hardening rule)
     const rawUuidPattern = /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/i;
     expect(rawUuidPattern.test(bodyText)).toBe(false);
+  });
+
+  test('accessibility check', async ({ page }) => {
+    await signIn(page);
+    await page.goto(orgUrl('/finance'));
+    await page.waitForLoadState('domcontentloaded');
+    const { violations } = await checkAccessibility(page);
+    expect(violations).toEqual([]);
   });
 });

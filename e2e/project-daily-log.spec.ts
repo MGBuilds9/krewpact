@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+import { checkAccessibility } from './helpers/a11y';
+
 test.describe('Project Daily Log', () => {
   test('navigate to projects list', async ({ page }) => {
     await page.goto('/projects');
@@ -17,5 +19,12 @@ test.describe('Project Daily Log', () => {
     // Should have a form for creating a project
     const body = page.locator('body');
     await expect(body).toContainText(/project|create|new/i);
+  });
+
+  test('accessibility check', async ({ page }) => {
+    await page.goto('/projects');
+    await page.waitForLoadState('domcontentloaded');
+    const { violations } = await checkAccessibility(page);
+    expect(violations).toEqual([]);
   });
 });

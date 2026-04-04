@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 
+import { checkAccessibility } from './helpers/a11y';
 import { assertAuthenticated, signIn } from './helpers/auth';
 
 test.describe('Authentication', () => {
@@ -18,5 +19,13 @@ test.describe('Authentication', () => {
   test('unauthenticated root redirects to sign-in', async ({ page }) => {
     await page.goto('/');
     await page.waitForURL(/\/(sign-in|dashboard|org)/, { timeout: 10_000 });
+  });
+
+  test('accessibility check', async ({ page }) => {
+    await signIn(page);
+    await page.goto('/dashboard');
+    await page.waitForLoadState('domcontentloaded');
+    const { violations } = await checkAccessibility(page);
+    expect(violations).toEqual([]);
   });
 });

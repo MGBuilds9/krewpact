@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+import { checkAccessibility } from './helpers/a11y';
+
 test.describe('CRM smoke tests', () => {
   test('leads page loads without errors', async ({ page }) => {
     const response = await page.goto('/dashboard');
@@ -22,5 +24,12 @@ test.describe('CRM smoke tests', () => {
     await page.goto('/dashboard');
     await page.keyboard.press('Meta+k');
     await page.waitForTimeout(500);
+  });
+
+  test('accessibility check', async ({ page }) => {
+    await page.goto('/dashboard');
+    await page.waitForLoadState('domcontentloaded');
+    const { violations } = await checkAccessibility(page);
+    expect(violations).toEqual([]);
   });
 });

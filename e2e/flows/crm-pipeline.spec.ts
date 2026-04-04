@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 
+import { checkAccessibility } from '../helpers/a11y';
 import { assertAuthenticated, signIn } from '../helpers/auth';
 import { orgUrl } from '../helpers/fixtures';
 
@@ -118,5 +119,13 @@ test.describe('CRM Pipeline', () => {
         }
       }
     }
+  });
+
+  test('accessibility check', async ({ page }) => {
+    await signIn(page);
+    await page.goto(orgUrl('/crm/dashboard'));
+    await page.waitForLoadState('domcontentloaded');
+    const { violations } = await checkAccessibility(page);
+    expect(violations).toEqual([]);
   });
 });

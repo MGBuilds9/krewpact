@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+import { checkAccessibility } from './helpers/a11y';
+
 test.describe('Admin Reference Data', () => {
   test('navigate to admin governance page', async ({ page }) => {
     await page.goto('/admin/governance');
@@ -19,5 +21,12 @@ test.describe('Admin Reference Data', () => {
   test('admin system page loads', async ({ page }) => {
     const response = await page.goto('/admin/system');
     expect(response?.status()).toBeLessThan(500);
+  });
+
+  test('accessibility check', async ({ page }) => {
+    await page.goto('/admin/governance');
+    await page.waitForLoadState('domcontentloaded');
+    const { violations } = await checkAccessibility(page);
+    expect(violations).toEqual([]);
   });
 });

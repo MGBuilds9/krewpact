@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 
+import { checkAccessibility } from '../helpers/a11y';
 import { assertAuthenticated, signIn } from '../helpers/auth';
 import { orgUrl } from '../helpers/fixtures';
 
@@ -76,5 +77,13 @@ test.describe('Executive Dashboard (role-gated)', () => {
     expect(response.status()).toBeLessThan(500);
 
     await expect(page.locator('main')).toBeVisible({ timeout: 10_000 });
+  });
+
+  test('accessibility check', async ({ page }) => {
+    await signIn(page);
+    await page.goto(orgUrl('/executive'));
+    await page.waitForLoadState('domcontentloaded');
+    const { violations } = await checkAccessibility(page);
+    expect(violations).toEqual([]);
   });
 });

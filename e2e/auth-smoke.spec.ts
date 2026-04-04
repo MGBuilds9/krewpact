@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 
+import { checkAccessibility } from './helpers/a11y';
 import { signIn } from './helpers/auth';
 
 test.describe('Auth smoke tests', () => {
@@ -22,5 +23,13 @@ test.describe('Auth smoke tests', () => {
       const response = await page.goto(route);
       expect(response?.status()).toBeLessThan(500);
     }
+  });
+
+  test('accessibility check', async ({ page }) => {
+    await signIn(page);
+    await page.goto('/dashboard');
+    await page.waitForLoadState('domcontentloaded');
+    const { violations } = await checkAccessibility(page);
+    expect(violations).toEqual([]);
   });
 });

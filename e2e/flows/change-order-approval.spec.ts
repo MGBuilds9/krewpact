@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 
+import { checkAccessibility } from '../helpers/a11y';
 import { assertAuthenticated, signIn } from '../helpers/auth';
 import { orgUrl } from '../helpers/fixtures';
 
@@ -58,7 +59,11 @@ test.describe('Change Order Approval Workflow', () => {
     await expect(page.locator('main')).toBeVisible({ timeout: 10_000 });
 
     const hasContent =
-      (await page.locator('table').first().isVisible({ timeout: 5000 }).catch(() => false)) ||
+      (await page
+        .locator('table')
+        .first()
+        .isVisible({ timeout: 5000 })
+        .catch(() => false)) ||
       (await page
         .getByText(/no change orders|empty|no results|change order/i)
         .first()
@@ -92,7 +97,11 @@ test.describe('Change Order Approval Workflow', () => {
     await expect(page.locator('main')).toBeVisible({ timeout: 10_000 });
 
     // If there are change orders, check for approval UI elements
-    const hasCOs = await page.locator('table tbody tr').first().isVisible({ timeout: 5000 }).catch(() => false);
+    const hasCOs = await page
+      .locator('table tbody tr')
+      .first()
+      .isVisible({ timeout: 5000 })
+      .catch(() => false);
     if (!hasCOs) {
       // No change orders to test approval on — verify the create button exists instead
       const createBtn = page.getByRole('button', { name: /new|create|add/i });
@@ -141,5 +150,13 @@ test.describe('Change Order Approval Workflow', () => {
     // Raw snake_case enum values should not appear (formatStatus() should handle them)
     expect(bodyText).not.toMatch(/\bpending_approval\b/);
     expect(bodyText).not.toMatch(/\bin_review\b/);
+  });
+
+  test('accessibility check', async ({ page }) => {
+    await signIn(page);
+    await page.goto(orgUrl('/projects'));
+    await page.waitForLoadState('domcontentloaded');
+    const { violations } = await checkAccessibility(page);
+    expect(violations).toEqual([]);
   });
 });

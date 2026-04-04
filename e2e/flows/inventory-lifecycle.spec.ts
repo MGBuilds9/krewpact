@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 
+import { checkAccessibility } from '../helpers/a11y';
 import { assertAuthenticated, signIn } from '../helpers/auth';
 import { orgUrl } from '../helpers/fixtures';
 
@@ -21,7 +22,11 @@ test.describe('Inventory Lifecycle', () => {
     await expect(page.locator('[role="alert"]')).not.toBeVisible();
 
     const hasContent =
-      (await page.locator('table').first().isVisible({ timeout: 5000 }).catch(() => false)) ||
+      (await page
+        .locator('table')
+        .first()
+        .isVisible({ timeout: 5000 })
+        .catch(() => false)) ||
       (await page
         .getByText(/no items|empty|no results/i)
         .isVisible({ timeout: 3000 })
@@ -35,7 +40,11 @@ test.describe('Inventory Lifecycle', () => {
     await expect(page.locator('[role="alert"]')).not.toBeVisible();
 
     // Should render a form with at least one input
-    const hasForm = await page.locator('form, input, [role="form"]').first().isVisible({ timeout: 5000 }).catch(() => false);
+    const hasForm = await page
+      .locator('form, input, [role="form"]')
+      .first()
+      .isVisible({ timeout: 5000 })
+      .catch(() => false);
     expect(hasForm).toBe(true);
   });
 
@@ -63,12 +72,24 @@ test.describe('Inventory Lifecycle', () => {
     await expect(page.locator('[role="alert"]')).not.toBeVisible();
 
     const hasContent =
-      (await page.locator('table').first().isVisible({ timeout: 5000 }).catch(() => false)) ||
+      (await page
+        .locator('table')
+        .first()
+        .isVisible({ timeout: 5000 })
+        .catch(() => false)) ||
       (await page
         .getByText(/vehicle|fleet|no results|empty/i)
         .first()
         .isVisible({ timeout: 3000 })
         .catch(() => false));
     expect(hasContent).toBe(true);
+  });
+
+  test('accessibility check', async ({ page }) => {
+    await signIn(page);
+    await page.goto(orgUrl('/inventory'));
+    await page.waitForLoadState('domcontentloaded');
+    const { violations } = await checkAccessibility(page);
+    expect(violations).toEqual([]);
   });
 });

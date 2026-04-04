@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+import { checkAccessibility } from './helpers/a11y';
+
 test.describe('Estimate Creation', () => {
   test('navigate to estimates list', async ({ page }) => {
     await page.goto('/estimates');
@@ -19,5 +21,12 @@ test.describe('Estimate Creation', () => {
     // Estimates require division and currency
     const body = page.locator('body');
     await expect(body).toContainText(/division|currency|estimate/i);
+  });
+
+  test('accessibility check', async ({ page }) => {
+    await page.goto('/estimates');
+    await page.waitForLoadState('domcontentloaded');
+    const { violations } = await checkAccessibility(page);
+    expect(violations).toEqual([]);
   });
 });

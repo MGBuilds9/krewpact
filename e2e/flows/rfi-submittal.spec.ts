@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 
+import { checkAccessibility } from '../helpers/a11y';
 import { assertAuthenticated, signIn } from '../helpers/auth';
 import { orgUrl } from '../helpers/fixtures';
 
@@ -41,7 +42,12 @@ test.describe('RFI and Submittals', () => {
       .getByRole('link', { name: /rfi/i })
       .or(page.getByRole('tab', { name: /rfi/i }));
 
-    if (await rfiLink.first().isVisible({ timeout: 5000 }).catch(() => false)) {
+    if (
+      await rfiLink
+        .first()
+        .isVisible({ timeout: 5000 })
+        .catch(() => false)
+    ) {
       await rfiLink.first().click();
     } else {
       // Direct URL — extract project ID from current URL
@@ -79,13 +85,20 @@ test.describe('RFI and Submittals', () => {
     await expect(page.locator('main')).toBeVisible({ timeout: 10_000 });
 
     const hasContent =
-      (await page.locator('table').first().isVisible({ timeout: 5000 }).catch(() => false)) ||
+      (await page
+        .locator('table')
+        .first()
+        .isVisible({ timeout: 5000 })
+        .catch(() => false)) ||
       (await page
         .getByText(/no rfis|empty|no results|request for information/i)
         .first()
         .isVisible({ timeout: 3000 })
         .catch(() => false)) ||
-      (await page.getByRole('button', { name: /new rfi|create rfi|add rfi/i }).isVisible({ timeout: 3000 }).catch(() => false));
+      (await page
+        .getByRole('button', { name: /new rfi|create rfi|add rfi/i })
+        .isVisible({ timeout: 3000 })
+        .catch(() => false));
 
     expect(hasContent).toBe(true);
   });
@@ -143,7 +156,10 @@ test.describe('RFI and Submittals', () => {
 
     // Attachment upload element should exist somewhere in the form/dialog
     const hasAttachment =
-      (await page.locator('input[type="file"]').isVisible({ timeout: 5000 }).catch(() => false)) ||
+      (await page
+        .locator('input[type="file"]')
+        .isVisible({ timeout: 5000 })
+        .catch(() => false)) ||
       (await page
         .getByText(/attach|upload|file/i)
         .first()
@@ -151,5 +167,13 @@ test.describe('RFI and Submittals', () => {
         .catch(() => false));
 
     expect(hasAttachment).toBe(true);
+  });
+
+  test('accessibility check', async ({ page }) => {
+    await signIn(page);
+    await page.goto(orgUrl('/projects'));
+    await page.waitForLoadState('domcontentloaded');
+    const { violations } = await checkAccessibility(page);
+    expect(violations).toEqual([]);
   });
 });

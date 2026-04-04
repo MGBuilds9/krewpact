@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+import { checkAccessibility } from './helpers/a11y';
+
 // Verify Finance module components render their new responsive table layouts
 
 test.describe('Finance UI - Desktop View', () => {
@@ -51,5 +53,14 @@ test.describe('Finance UI - Mobile View', () => {
 
     const response = await page.request.get('/org/demo/finance/job-costs');
     expect(response.status()).toBeLessThan(500);
+  });
+});
+
+test.describe('Finance UI - Accessibility', () => {
+  test('accessibility check', async ({ page }) => {
+    await page.goto('/org/demo/finance');
+    await page.waitForLoadState('domcontentloaded');
+    const { violations } = await checkAccessibility(page);
+    expect(violations).toEqual([]);
   });
 });
