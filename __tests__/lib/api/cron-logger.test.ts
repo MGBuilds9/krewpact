@@ -3,6 +3,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mockInsert = vi.fn().mockResolvedValue({ error: null });
 const mockFrom = vi.fn(() => ({ insert: mockInsert }));
 
+const mockCaptureCheckIn = vi.fn().mockReturnValue('mock-check-in-id');
+
+vi.mock('@sentry/nextjs', () => ({
+  captureCheckIn: mockCaptureCheckIn,
+}));
+
 vi.mock('@/lib/supabase/server', () => ({
   createServiceClient: vi.fn(() => ({ from: mockFrom })),
 }));
@@ -14,6 +20,8 @@ vi.mock('@/lib/logger', () => ({
 describe('createCronLogger', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default return value for each fresh test
+    mockCaptureCheckIn.mockReturnValue('mock-check-in-id');
   });
 
   it('logs success to cron_runs table', async () => {
@@ -63,5 +71,83 @@ describe('createCronLogger', () => {
     const cronLog = createCronLogger('robust-cron');
     // Should not throw
     await expect(cronLog.success()).resolves.toBeUndefined();
+  });
+
+  describe('Sentry cron check-ins', () => {
+    it('calls captureCheckIn with in_progress on creation', async () => {
+      const { createCronLogger } = await import('@/lib/api/cron-logger');
+      createCronLogger('sentry-cron');
+
+      expect(mockCaptureCheckIn).toHaveBeenCalledWith(
+        expect.objectContaining({ monitorSlug: 'sentry-cron', status: 'in_progress' }),
+        undefined,
+      );
+    });
+
+    it('calls captureCheckIn with ok status on success', async () => {
+      const { createCronLogger } = await import('@/lib/api/cron-logger');
+      const cronLog = createCronLogger('sentry-ok-cron');
+      await cronLog.success();
+
+      const calls = mockCaptureCheckIn.mock.calls;
+      // Second call is the completion
+      expect(calls[1][0]).toMatchObject({
+        monitorSlug: 'sentry-ok-cron',
+        status: 'ok',
+        checkInId: 'mock-check-in-id',
+      });
+    });
+
+    it('calls captureCheckIn with error status on failure', async () => {
+      const { createCronLogger } = await import('@/lib/api/cron-logger');
+      const cronLog = createCronLogger('sentry-fail-cron');
+      await cronLog.failure(new Error('boom'));
+
+      const calls = mockCaptureCheckIn.mock.calls;
+      expect(calls[1][0]).toMatchObject({
+        monitorSlug: 'sentry-fail-cron',
+        status: 'error',
+        checkInId: 'mock-check-in-id',
+      });
+    });
+
+    it('passes crontab schedule to Sentry when provided', async () => {
+      const { createCronLogger } = await import('@/lib/api/cron-logger');
+      createCronLogger('scheduled-cron', { type: 'crontab', value: '0 * * * *' });
+
+      expect(mockCaptureCheckIn).toHaveBeenCalledWith(
+        expect.objectContaining({ monitorSlug: 'scheduled-cron', status: 'in_progress' }),
+        { schedule: { type: 'crontab', value: '0 * * * *' } },
+      );
+    });
+
+    it('passes interval schedule to Sentry when provided', async () => {
+      const { createCronLogger } = await import('@/lib/api/cron-logger');
+      createCronLogger('interval-cron', { type: 'interval', value: 30, unit: 'minute' });
+
+      expect(mockCaptureCheckIn).toHaveBeenCalledWith(
+        expect.objectContaining({ monitorSlug: 'interval-cron', status: 'in_progress' }),
+        { schedule: { type: 'interval', value: 30, unit: 'minute' } },
+      );
+    });
+
+    it('does not throw if Sentry captureCheckIn throws', async () => {
+      mockCaptureCheckIn.mockImplementationOnce(() => {
+        throw new Error('Sentry DSN not configured');
+      });
+      const { createCronLogger } = await import('@/lib/api/cron-logger');
+      // Should not throw even with Sentry broken
+      expect(() => createCronLogger('resilient-cron')).not.toThrow();
+    });
+
+    it('does not throw if Sentry throws on completion', async () => {
+      // First call (in_progress) succeeds, second (ok/error) throws
+      mockCaptureCheckIn.mockReturnValueOnce('mock-check-in-id').mockImplementationOnce(() => {
+        throw new Error('Sentry network error');
+      });
+      const { createCronLogger } = await import('@/lib/api/cron-logger');
+      const cronLog = createCronLogger('resilient-completion-cron');
+      await expect(cronLog.success()).resolves.toBeUndefined();
+    });
   });
 });
