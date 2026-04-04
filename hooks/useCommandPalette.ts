@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   ENTITY_TYPE_ORDER,
@@ -12,9 +12,11 @@ import {
   navigationSections,
   NavItem,
 } from '@/components/Layout/CommandPaletteTypes';
+import { useCommandKeyboard } from '@/hooks/useCommandKeyboard';
+import { useCommandSearch } from '@/hooks/useCommandSearch';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { useUserRBAC } from '@/hooks/useRBAC';
-import { apiFetch } from '@/lib/api-client';
+import { useRecentPages } from '@/hooks/useRecentPages';
 
 export interface UseCommandPaletteReturn {
   searchQuery: string;
@@ -39,12 +41,6 @@ export interface UseCommandPaletteReturn {
   pathname: string;
 }
 
-function isNaturalLanguageQuery(q: string): boolean {
-  const nlPatterns =
-    /^(show me|what|how many|find|list all|get me|who|where|which|count|total|average)/i;
-  return q.includes('?') || nlPatterns.test(q.trim());
-}
-
 // eslint-disable-next-line max-lines-per-function
 export function useCommandPalette(isOpen: boolean, onClose: () => void): UseCommandPaletteReturn {
   const { push: orgPush } = useOrgRouter();
@@ -52,27 +48,7 @@ export function useCommandPalette(isOpen: boolean, onClose: () => void): UseComm
   const { isAdmin } = useUserRBAC();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<GlobalSearchResults | null>(null);
-  const [isSearching, setIsSearching] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [nlAnswer, setNlAnswer] = useState<string | null>(null);
-  const [isNlQuery, setIsNlQuery] = useState(false);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const searchRequestRef = useRef<{ id: number; controller: AbortController } | null>(null);
-  const searchRequestSeqRef = useRef(0);
-  const selectedIndexRef = useRef(selectedIndex);
-  const flatResultsRef = useRef<FlatSearchResult[]>([]);
-  const filteredNavItemsRef = useRef<NavItem[]>([]);
-  const handleNavigationRef = useRef<(path: string) => void>(() => {});
-  const handleEntityNavigationRef = useRef<(entityType: EntityType, id: string) => void>(() => {});
-  const onCloseRef = useRef<() => void>(() => {});
-
-  const [recentPages, setRecentPages] = useState<string[]>(() => {
-    if (typeof window === 'undefined') return [];
-    const stored = localStorage.getItem('recentPages');
-    return stored ? JSON.parse(stored) : [];
-  });
-
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     CRM: true,
     Projects: true,
@@ -81,124 +57,31 @@ export function useCommandPalette(isOpen: boolean, onClose: () => void): UseComm
     System: true,
   });
 
-  const lastPathRef = React.useRef(pathname);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const selectedIndexRef = useRef(selectedIndex);
+  const flatResultsRef = useRef<FlatSearchResult[]>([]);
+  const filteredNavItemsRef = useRef<NavItem[]>([]);
+  const handleNavigationRef = useRef<(path: string) => void>(() => {});
+  const handleEntityNavigationRef = useRef<(entityType: EntityType, id: string) => void>(() => {});
+  const onCloseRef = useRef<() => void>(() => {});
 
-  useEffect(() => {
-    if (pathname !== '/dashboard' && pathname !== '/' && pathname !== lastPathRef.current) {
-      lastPathRef.current = pathname;
-      const stored = localStorage.getItem('recentPages');
-      const current = stored ? JSON.parse(stored) : [];
-      const updatedRecent = [pathname, ...current.filter((p: string) => p !== pathname)].slice(
-        0,
-        5,
-      );
-      localStorage.setItem('recentPages', JSON.stringify(updatedRecent));
-      queueMicrotask(() => {
-        setRecentPages(updatedRecent);
-      });
-    }
-  }, [pathname]);
+  const { searchResults, isSearching, nlAnswer, isNlQuery } = useCommandSearch(searchQuery);
+  const { recentItems } = useRecentPages(pathname);
 
-  React.useEffect(() => {
-    selectedIndexRef.current = selectedIndex;
-  }, [selectedIndex]);
-
-  // Search with debounce
-  useEffect(() => {
-    if (searchRequestRef.current) {
-      searchRequestRef.current.controller.abort();
-      searchRequestRef.current = null;
-    }
-
-    if (searchQuery.length < 2) {
-      setSearchResults(null);
-      setIsNlQuery(false);
-      setNlAnswer(null);
-      setIsSearching(false);
-      return;
-    }
-
-    if (isNaturalLanguageQuery(searchQuery) && searchQuery.length >= 5) {
-      const controller = new AbortController();
-      const requestId = ++searchRequestSeqRef.current;
-      const nlTimeout = setTimeout(async () => {
-        searchRequestRef.current = { id: requestId, controller };
-        setIsNlQuery(true);
-        setIsSearching(true);
-        try {
-          const res = await apiFetch<{ answer: string; data?: unknown }>('/api/ai/query', {
-            method: 'POST',
-            body: { query: searchQuery },
-            signal: controller.signal,
-          });
-          if (controller.signal.aborted || searchRequestRef.current?.id !== requestId) {
-            return;
-          }
-          setNlAnswer(res.answer);
-        } catch {
-          if (controller.signal.aborted) {
-            return;
-          }
-          setNlAnswer(null);
-        } finally {
-          if (searchRequestRef.current?.id === requestId) {
-            setIsSearching(false);
-            searchRequestRef.current = null;
-          }
-        }
-      }, 600);
-      return () => {
-        clearTimeout(nlTimeout);
-        controller.abort();
-      };
-    }
-
-    setIsNlQuery(false);
-    setNlAnswer(null);
-
-    const controller = new AbortController();
-    const requestId = ++searchRequestSeqRef.current;
-    const timeout = setTimeout(async () => {
-      searchRequestRef.current = { id: requestId, controller };
-      setIsSearching(true);
-      try {
-        const res = await apiFetch<{ results: GlobalSearchResults }>('/api/search/global', {
-          params: { q: searchQuery },
-          signal: controller.signal,
-        });
-        if (controller.signal.aborted || searchRequestRef.current?.id !== requestId) {
-          return;
-        }
-        setSearchResults(res.results);
-      } catch {
-        if (controller.signal.aborted) {
-          return;
-        }
-        setSearchResults(null);
-      } finally {
-        if (searchRequestRef.current?.id === requestId) {
-          setIsSearching(false);
-          searchRequestRef.current = null;
-        }
-      }
-    }, 300);
-
-    return () => {
-      clearTimeout(timeout);
-      controller.abort();
-    };
-  }, [searchQuery]);
-
-  // Reset on close
-  useEffect(() => {
+  // Reset on close — adjust state based on prop change (no effect needed)
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  if (prevIsOpen !== isOpen) {
+    setPrevIsOpen(isOpen);
     if (!isOpen) {
       setSearchQuery('');
-      setSearchResults(null);
       setSelectedIndex(0);
-      setNlAnswer(null);
-      setIsNlQuery(false);
     }
-  }, [isOpen]);
+  }
+
+  // Sync stable refs
+  useEffect(() => {
+    selectedIndexRef.current = selectedIndex;
+  }, [selectedIndex]);
 
   const handleNavigation = useCallback(
     (path: string) => {
@@ -217,15 +100,15 @@ export function useCommandPalette(isOpen: boolean, onClose: () => void): UseComm
     [orgPush, onClose],
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     handleNavigationRef.current = handleNavigation;
   }, [handleNavigation]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     handleEntityNavigationRef.current = handleEntityNavigation;
   }, [handleEntityNavigation]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     onCloseRef.current = onClose;
   }, [onClose]);
 
@@ -233,7 +116,7 @@ export function useCommandPalette(isOpen: boolean, onClose: () => void): UseComm
     setOpenSections((prev) => ({ ...prev, [title]: !prev[title] }));
   }, []);
 
-  const filteredSections = React.useMemo(
+  const filteredSections = useMemo(
     () =>
       navigationSections.map((section) => ({
         ...section,
@@ -246,17 +129,13 @@ export function useCommandPalette(isOpen: boolean, onClose: () => void): UseComm
     [isAdmin, searchQuery],
   );
 
-  const filteredNavItems = React.useMemo(
+  const filteredNavItems = useMemo(
     () => filteredSections.flatMap((section) => section.items),
     [filteredSections],
   );
 
-  // Flat results for keyboard nav
-  const flatResults = React.useMemo<FlatSearchResult[]>(() => {
-    if (!searchResults) {
-      return [];
-    }
-
+  const flatResults = useMemo<FlatSearchResult[]>(() => {
+    if (!searchResults) return [];
     const results: FlatSearchResult[] = [];
     for (const entityType of ENTITY_TYPE_ORDER) {
       for (const result of searchResults[entityType]) {
@@ -268,87 +147,28 @@ export function useCommandPalette(isOpen: boolean, onClose: () => void): UseComm
 
   const hasSearchResults = flatResults.length > 0;
 
-  const groupedEntityTypes = React.useMemo(
+  const groupedEntityTypes = useMemo(
     () => (searchResults ? ENTITY_TYPE_ORDER.filter((type) => searchResults[type].length > 0) : []),
     [searchResults],
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     flatResultsRef.current = flatResults;
   }, [flatResults]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     filteredNavItemsRef.current = filteredNavItems;
   }, [filteredNavItems]);
 
-  // Keyboard navigation
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        onCloseRef.current();
-        return;
-      }
-      if (e.key === 'Escape') {
-        onCloseRef.current();
-        return;
-      }
-
-      const flat = flatResultsRef.current;
-      const navItems = filteredNavItemsRef.current;
-      const totalItems = flat.length + navItems.length;
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        setSelectedIndex((prev) => {
-          const next = Math.min(prev + 1, totalItems - 1);
-          queueMicrotask(() => {
-            const el = scrollAreaRef.current?.querySelector(`[data-index="${next}"]`);
-            el?.scrollIntoView({ block: 'nearest' });
-          });
-          return next;
-        });
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        setSelectedIndex((prev) => {
-          const next = Math.max(prev - 1, 0);
-          queueMicrotask(() => {
-            const el = scrollAreaRef.current?.querySelector(`[data-index="${next}"]`);
-            el?.scrollIntoView({ block: 'nearest' });
-          });
-          return next;
-        });
-      } else if (e.key === 'Enter') {
-        e.preventDefault();
-        const currentIndex = selectedIndexRef.current;
-        if (currentIndex < flat.length) {
-          const item = flat[currentIndex];
-          handleEntityNavigationRef.current(item.entityType, item.result.id);
-        } else {
-          const navIndex = currentIndex - flat.length;
-          if (navItems[navIndex]) {
-            handleNavigationRef.current(navItems[navIndex].href);
-          }
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen]);
-
-  const getRecentPageLabel = (path: string) => {
-    for (const section of navigationSections) {
-      const item = section.items.find((i) => i.href === path);
-      if (item) return item;
-    }
-    return null;
-  };
-
-  const recentItems = recentPages
-    .map((path) => getRecentPageLabel(path))
-    .filter(Boolean) as NavItem[];
+  useCommandKeyboard(isOpen, setSelectedIndex, {
+    scrollAreaRef,
+    flatResultsRef,
+    filteredNavItemsRef,
+    selectedIndexRef,
+    handleNavigationRef,
+    handleEntityNavigationRef,
+    onCloseRef,
+  });
 
   return {
     searchQuery,
