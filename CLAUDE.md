@@ -334,9 +334,9 @@ Architecture docs in `docs/architecture/`: `Master-Plan.md` (scope), `Technology
 
 ### Apr 3, 2026 — Blueprint Audit (93/100)
 
-- **Changes:** Blueprint audit #12. Score 93/100 (up from 90). Updated ERPNext mapping count 43→47 (5 new: Award, Bid, Compliance Doc, Goods Receipt, Selection Sheet). Saved audit to `docs/audits/2026-04-03-blueprint-audit.md`.
-- **Metrics:** 5,304 tests, 0 TS errors, 23 lint warnings (down from 206), 129 pages, 373 API routes, 499 test files. Both critical issues from Mar 28 audit resolved.
-- **Next:** Commit 61 unstaged files (P3 audit work). Auto-fix 10 lint warnings. Document multi-tenancy in architecture docs.
+- **Changes:** Blueprint audit #12. Score 93/100 (up from 90). Committed 61 unstaged P3 files across 5 logical commits (dynamic metadata for 32 pages, module splits for command palette/sync engine/payroll export, E2E a11y tests, infra configs). Updated ERPNext mapping count 43→47 (5 new: Award, Bid, Compliance Doc, Goods Receipt, Selection Sheet). Saved audit to `docs/audits/2026-04-03-blueprint-audit.md`.
+- **Metrics:** 5,304 tests, 0 TS errors, 22 lint warnings (down from 206), 129 pages, 373 API routes, 499 test files. Both critical issues from Mar 28 audit resolved.
+- **Next:** Auto-fix 9 lint warnings. Document multi-tenancy in architecture docs. ADP live API (P2).
 
 ### Apr 2, 2026 — Test Fixes + BoldSign Field + PDF Guardrail
 
@@ -352,6 +352,5 @@ Architecture docs in `docs/architecture/`: `Master-Plan.md` (scope), `Technology
 - Mar 31: Multi-tenancy Phase 0-3. 5,266 tests.
 - Mar 30: Repo cleanup + multi-tenant strategy + CSO audit. 5,223 tests.
 - Mar 29: P2 buildout (ADP, ERPNext, Offline/PWA, Mobile). 5,198 tests.
-- Mar 28: Cleanup (-10K lines) + DB hardening. 4,799 tests.
 
 @AGENTS.md
