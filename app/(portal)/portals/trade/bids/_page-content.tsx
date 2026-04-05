@@ -18,8 +18,25 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
+
+interface PortalProject {
+  id: string;
+  project_name: string;
+  project_number: string | null;
+}
+
+interface PortalProjectsResponse {
+  projects: PortalProject[];
+}
 
 interface Bid {
   id: string;
@@ -103,10 +120,23 @@ function BidsSkeleton() {
 function NewBidDialog({ onSuccess }: { onSuccess: () => void }) {
   const [open, setOpen] = useState(false);
 
+  const { data: projectsData, isLoading: projectsLoading } = useQuery<PortalProjectsResponse>({
+    queryKey: ['portal-projects'],
+    queryFn: async () => {
+      const res = await fetch('/api/portal/projects');
+      if (!res.ok) throw new Error('Failed to load projects');
+      return res.json() as Promise<PortalProjectsResponse>;
+    },
+    enabled: open,
+  });
+
+  const projects = projectsData?.projects ?? [];
+
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<BidForm>({ resolver: zodResolver(bidSchema) });
 
@@ -129,6 +159,8 @@ function NewBidDialog({ onSuccess }: { onSuccess: () => void }) {
     },
   });
 
+  const submitDisabled = mutation.isPending || projectsLoading || projects.length === 0;
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -147,12 +179,27 @@ function NewBidDialog({ onSuccess }: { onSuccess: () => void }) {
           noValidate
         >
           <div className="space-y-1">
-            <Label htmlFor="project_id">Project ID (UUID)</Label>
-            <Input
-              id="project_id"
-              placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-              {...register('project_id')}
-            />
+            <Label htmlFor="project_id">Project</Label>
+            {projectsLoading ? (
+              <Skeleton className="h-9 w-full rounded-md" />
+            ) : (
+              <Select
+                onValueChange={(value) => setValue('project_id', value, { shouldValidate: true })}
+              >
+                <SelectTrigger id="project_id">
+                  <SelectValue placeholder="Select a project" />
+                </SelectTrigger>
+                <SelectContent>
+                  {projects.map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.project_number
+                        ? `#${project.project_number} — ${project.project_name}`
+                        : project.project_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             {errors.project_id && (
               <p className="text-xs text-red-600">{errors.project_id.message}</p>
             )}
@@ -201,7 +248,7 @@ function NewBidDialog({ onSuccess }: { onSuccess: () => void }) {
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={mutation.isPending}>
+            <Button type="submit" disabled={submitDisabled}>
               {mutation.isPending ? 'Submitting…' : 'Submit Bid'}
             </Button>
           </div>

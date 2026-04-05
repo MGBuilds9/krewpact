@@ -1,8 +1,9 @@
 'use client';
 
 import { Briefcase, Calendar, DollarSign, MapPin, Search } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+
+import { useOrgRouter } from '@/hooks/useOrgRouter';
 
 import { ProjectCreationDialog } from '@/components/Projects/ProjectCreationDialog';
 import { Badge } from '@/components/ui/badge';
@@ -135,7 +136,7 @@ const PROJECT_STATUS_LABELS: Record<string, string> = {
 
 // eslint-disable-next-line max-lines-per-function
 export default function ProjectsPageContent() {
-  const router = useRouter();
+  const { push } = useOrgRouter();
   const { activeDivision } = useDivision();
   const { data: projects } = useProjects({ divisionId: activeDivision?.id });
   const [search, setSearch] = useState('');
@@ -215,7 +216,7 @@ export default function ProjectsPageContent() {
             <ProjectCard
               key={project.id}
               project={project}
-              onClick={() => router.push(`/projects/${project.id}`)}
+              onClick={() => push(`/projects/${project.id}`)}
             />
           ))}
         </div>

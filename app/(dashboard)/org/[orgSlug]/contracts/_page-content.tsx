@@ -1,8 +1,9 @@
 'use client';
 
 import { FileText, Plus, Search } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+
+import { useOrgRouter } from '@/hooks/useOrgRouter';
 
 import { ContractTermsForm } from '@/components/Contracting/ContractTermsForm';
 import { Badge } from '@/components/ui/badge';
@@ -78,7 +79,7 @@ function ContractCard({ contract, onClick }: ContractCardProps) {
 
 // eslint-disable-next-line max-lines-per-function
 export default function ContractsPage() {
-  const router = useRouter();
+  const { push } = useOrgRouter();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -142,6 +143,10 @@ export default function ContractsPage() {
               <p className="text-muted-foreground mb-4">
                 Create a contract from an accepted proposal
               </p>
+              <Button onClick={() => setDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                New Contract
+              </Button>
             </CardContent>
           </Card>
         ) : (
@@ -150,7 +155,7 @@ export default function ContractsPage() {
               <ContractCard
                 key={contract.id}
                 contract={contract}
-                onClick={() => router.push(`/contracts/${contract.id}`)}
+                onClick={() => push(`/contracts/${contract.id}`)}
               />
             ))}
           </div>
