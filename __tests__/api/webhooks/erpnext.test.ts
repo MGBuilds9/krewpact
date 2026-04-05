@@ -7,6 +7,9 @@ vi.mock('@clerk/nextjs/server', () => ({
 
 const mockReadSalesInvoice = vi.fn();
 const mockReadPurchaseInvoice = vi.fn();
+const mockSyncPaymentEntry = vi.fn();
+const mockSyncStockEntry = vi.fn();
+const mockSyncEmployee = vi.fn();
 
 // Mock Supabase server client (required by SyncService)
 vi.mock('@/lib/supabase/server', () => ({
@@ -18,6 +21,9 @@ vi.mock('@/lib/erp/sync-service', () => ({
   SyncService: class MockSyncService {
     readSalesInvoice = mockReadSalesInvoice;
     readPurchaseInvoice = mockReadPurchaseInvoice;
+    syncPaymentEntry = mockSyncPaymentEntry;
+    syncStockEntry = mockSyncStockEntry;
+    syncEmployee = mockSyncEmployee;
   },
 }));
 
@@ -200,5 +206,50 @@ describe('POST /api/webhooks/erpnext', () => {
     expect(body.received).toBe(true);
     expect(body.errors).toHaveLength(1);
     expect(body.errors[0]).toContain('ERPNext connection failed');
+  });
+
+  it('processes Payment Entry webhook via syncPaymentEntry', async () => {
+    mockSyncPaymentEntry.mockResolvedValue({ status: 'succeeded' });
+
+    const res = await POST(
+      makeWebhookRequest(
+        { doctype: 'Payment Entry', name: 'PAY-001', event: 'on_submit' },
+        WEBHOOK_SECRET,
+      ),
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.received).toBe(true);
+    expect(mockSyncPaymentEntry).toHaveBeenCalledWith('PAY-001', 'webhook');
+  });
+
+  it('processes Stock Entry webhook via syncStockEntry', async () => {
+    mockSyncStockEntry.mockResolvedValue({ status: 'succeeded' });
+
+    const res = await POST(
+      makeWebhookRequest(
+        { doctype: 'Stock Entry', name: 'STE-001', event: 'on_submit' },
+        WEBHOOK_SECRET,
+      ),
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.received).toBe(true);
+    expect(mockSyncStockEntry).toHaveBeenCalledWith('STE-001', 'webhook');
+  });
+
+  it('processes Employee webhook via syncEmployee', async () => {
+    mockSyncEmployee.mockResolvedValue({ status: 'succeeded' });
+
+    const res = await POST(
+      makeWebhookRequest(
+        { doctype: 'Employee', name: 'EMP-001', event: 'on_update' },
+        WEBHOOK_SECRET,
+      ),
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.received).toBe(true);
+    expect(mockSyncEmployee).toHaveBeenCalledWith('EMP-001', 'webhook');
   });
 });

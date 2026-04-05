@@ -39,20 +39,37 @@ async function dispatchDoctype(
 ): Promise<NextResponse | null> {
   if (!docname) return NextResponse.json({ error: 'Missing document name' }, { status: 400 });
 
-  if (doctype === 'Sales Invoice') {
-    const result = await service.readSalesInvoice(docname);
-    logger.info('Sales Invoice sync complete', { status: result.status, docname, event });
+  // Read-only inbound sync (ERPNext → KrewPact)
+  const readHandlers: Record<string, (name: string) => Promise<unknown>> = {
+    'Sales Invoice': (name) => service.readSalesInvoice(name),
+    'Purchase Invoice': (name) => service.readPurchaseInvoice(name),
+  };
+
+  // Bidirectional sync (ERPNext change triggers KrewPact update)
+  const syncHandlers: Record<string, (name: string) => Promise<unknown>> = {
+    'Payment Entry': (name) => service.syncPaymentEntry(name, 'webhook'),
+    'Stock Entry': (name) => service.syncStockEntry(name, 'webhook'),
+    Employee: (name) => service.syncEmployee(name, 'webhook'),
+  };
+
+  const readHandler = readHandlers[doctype];
+  if (readHandler) {
+    const result = await readHandler(docname);
+    logger.info(`${doctype} inbound sync complete`, { docname, event, result });
     return null;
   }
 
-  if (doctype === 'Purchase Invoice') {
-    const result = await service.readPurchaseInvoice(docname);
-    logger.info('Purchase Invoice sync complete', { status: result.status, docname, event });
+  const syncHandler = syncHandlers[doctype];
+  if (syncHandler) {
+    const result = await syncHandler(docname);
+    logger.info(`${doctype} bidirectional sync complete`, { docname, event, result });
     return null;
   }
 
-  if (doctype === 'Customer' || doctype === 'Project') {
-    logger.info(`${doctype} event received, no action`, { docname, event });
+  // Known outbound-only doctypes — we receive events but don't need to process inbound
+  const outboundOnly = ['Customer', 'Project', 'Supplier', 'Item', 'Quotation'];
+  if (outboundOnly.includes(doctype)) {
+    logger.info(`${doctype} event received — outbound-only, no inbound action`, { docname, event });
     return null;
   }
 
