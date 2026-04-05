@@ -332,25 +332,18 @@ Architecture docs in `docs/architecture/`: `Master-Plan.md` (scope), `Technology
 
 ## Session Log
 
-### Apr 3, 2026 — Blueprint Audit (93/100)
+### Apr 4-5, 2026 — Production Hardening + User Gap Fixes (85 → production-ready)
 
-- **Changes:** Blueprint audit #12. Score 93/100 (up from 90). Committed 61 unstaged P3 files across 5 logical commits (dynamic metadata for 32 pages, module splits for command palette/sync engine/payroll export, E2E a11y tests, infra configs). Updated ERPNext mapping count 43→47 (5 new: Award, Bid, Compliance Doc, Goods Receipt, Selection Sheet). Saved audit to `docs/audits/2026-04-03-blueprint-audit.md`.
-- **Metrics:** 5,304 tests, 0 TS errors, 22 lint warnings (down from 206), 129 pages, 373 API routes, 499 test files. Both critical issues from Mar 28 audit resolved.
-- **Next:** Auto-fix 9 lint warnings. Document multi-tenancy in architecture docs. ADP live API (P2).
+- **Changes:** Two major bodies of work in one session. (1) **Production hardening:** Renamed 3 colliding 20260227 portal migrations for deterministic ordering. Rewrote RLS integration tests with correct JWT claim structure (metadata.division_ids, not top-level). Added Sentry cron monitoring with per-cron schedules to cron-logger.ts. Hardened sentry.server.config.ts (tracePropagation, beforeSend filtering). Pinned CI actions from @v6 (nonexistent) to @v4, added TruffleHog secret scanning. Added Playwright storageState auth + seed-then-assert E2E pattern. Tightened k6 thresholds. (2) **User gap fixes (11 of 15):** Fixed contract + projects broken router.push (pattern audit via Codex found projects/ too). Created tasks page. Replaced trade bid UUID input with shadcn Select project picker. Made estimate line editor mobile-responsive with 2.5s "Saved" text indicator. Replaced bulk assign User ID input with team member picker (useTeamMembers + shadcn Select). Made nav responsive (10 desktop / 7 mobile). Added finance empty state actions. Fixed BoldSign webhook to return 503 when secret missing. Sanitized ErrorCard (friendly guidance above collapsed details). Wired mobile menu items with "next update" alerts.
+- **Decisions:** Reframed production readiness from "score-based" to "risk-based" per /autoplan dual-voice review (both Codex + Claude agreed). Deferred 4 tasks: ERP mock mode (needs health check gate), ERPNext webhook expansion (verify signatures), offline sync (no main-thread listener — needs proper fix), project file upload (feature, not bug fix). Created interactive architecture HTML diagram at docs/architecture/krewpact-architecture.html.
+- **Tests:** 5,336/5,336 passing (+26 from session start). 0 TS errors. 26 lint warnings (pre-existing).
+- **Next:** Execute deferred plan (docs/superpowers/plans/2026-04-05-deferred-gap-fixes.md): ERP mock mode + health check, ERPNext webhook expansion, offline sync listener, project file upload. Then run k6 soak at 300 VUs.
 
-### Apr 2, 2026 — Test Fixes + BoldSign Field + PDF Guardrail
-
-- **Changes:** (1) Fixed financial-ops.test.ts: 2 tests used hardcoded `2026-02-01` as substantial_performance_date — release date (Feb 1 + 60 days = Apr 2) was about to expire. Replaced with dynamic `futureDate`. (2) Fixed branding-ui.test.tsx timeout: root cause was useQuery mock creating new object reference every render → infinite useEffect loop. Fixed with stable `mockBrandingData` reference + added `next/image` and `PageHeader` mocks. (3) Added BoldSign Brand ID input to branding settings form — schema/API/client/tenant-resolver already wired, only the UI field was missing. (4) Added `import 'server-only'` to `lib/pdf/generator.ts` as guardrail + `vi.mock('server-only')` in its test.
-- **Decisions:** Stable mock reference over `vi.useFakeTimers()` for financial-ops (simpler, no side effects). Embedded `<SignIn />` kept as-is over Account Portal (Clerk DNS fix is infra-only, not code).
-- **Tests:** 5,304/5,304 passing. 0 new TS errors. 0 lint errors.
-- **Next:** Clerk Account Portal DNS (infra). Commit remaining unstaged P3 audit changes from prior session.
-
-- Apr 1: P3 audit backlog (SW cache, axe-core E2E, file splits, font cleanup, dynamic metadata). 5,297 tests.
-- Apr 1: SEO/perf audit + prod auth fix (Clerk 403, OG image, PWA icons). 5,273 tests.
-- Apr 1: App completeness audit + CRUD wiring (23 gaps). 5,274 tests.
-- Apr 1: Multi-tenancy polish + tech debt. 5,274 tests.
+- Apr 4: Production readiness audit + hardening (85/100). 5,310 tests.
+- Apr 3: Blueprint audit (93/100). Committed 61 files. 5,304 tests.
+- Apr 2: Test fixes + BoldSign Brand ID + PDF guardrail. 5,304 tests.
+- Apr 1: P3 audit + SEO/perf + completeness + multi-tenancy. 5,297 tests.
 - Mar 31: Multi-tenancy Phase 0-3. 5,266 tests.
 - Mar 30: Repo cleanup + multi-tenant strategy + CSO audit. 5,223 tests.
-- Mar 29: P2 buildout (ADP, ERPNext, Offline/PWA, Mobile). 5,198 tests.
 
 @AGENTS.md
