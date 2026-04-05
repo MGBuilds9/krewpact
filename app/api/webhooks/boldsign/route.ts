@@ -45,8 +45,12 @@ export const POST = withApiRoute({ auth: 'public', rateLimit: false }, async ({ 
   const webhookSecret = process.env.BOLDSIGN_WEBHOOK_SECRET;
 
   if (!webhookSecret) {
-    logger.warn('BOLDSIGN_WEBHOOK_SECRET not set — accepting as verification ping');
-    return NextResponse.json({ message: 'Webhook endpoint active' });
+    if (process.env.NODE_ENV === 'production') {
+      logger.error('BOLDSIGN_WEBHOOK_SECRET not configured in production — rejecting webhook');
+      return NextResponse.json({ error: 'Webhook not configured' }, { status: 503 });
+    }
+    logger.warn('BOLDSIGN_WEBHOOK_SECRET not set — accepting as verification ping (dev only)');
+    return NextResponse.json({ message: 'Webhook endpoint active (dev mode)' });
   }
 
   if (!signature || !verifyBoldSignSignature(rawBody, signature, webhookSecret)) {

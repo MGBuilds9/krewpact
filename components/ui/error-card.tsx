@@ -34,7 +34,21 @@ export function ErrorCard({
         </CardHeader>
         <CardContent className="text-center space-y-2">
           <p className="text-sm text-muted-foreground">{description}</p>
-          {errorMessage && <p className="text-sm text-muted-foreground">{errorMessage}</p>}
+          {errorMessage && (
+            <>
+              <p className="text-sm text-muted-foreground">
+                If this keeps happening, try refreshing the page or contact support.
+              </p>
+              <details className="text-left mt-2">
+                <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">
+                  Technical details
+                </summary>
+                <p className="text-xs text-muted-foreground mt-2 font-mono bg-muted p-2 rounded break-all">
+                  {errorMessage}
+                </p>
+              </details>
+            </>
+          )}
           {errorDigest && <p className="text-xs text-muted-foreground">Error ID: {errorDigest}</p>}
         </CardContent>
         <CardFooter className="justify-center gap-3">

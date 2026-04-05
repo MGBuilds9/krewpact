@@ -110,9 +110,22 @@ export default function MoreScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account</Text>
-          <MenuItem icon="person-outline" label="Profile" subtitle={userEmail} onPress={() => {}} />
-          <MenuItem icon="notifications-outline" label="Notifications" onPress={() => {}} />
-          <MenuItem icon="settings-outline" label="Settings" onPress={() => {}} />
+          <MenuItem
+            icon="person-outline"
+            label="Profile"
+            subtitle={userEmail}
+            onPress={() => Alert.alert('Profile', 'Profile editing will be available in the next update.')}
+          />
+          <MenuItem
+            icon="notifications-outline"
+            label="Notifications"
+            onPress={() => Alert.alert('Notifications', 'Push notifications will be available in the next update.')}
+          />
+          <MenuItem
+            icon="settings-outline"
+            label="Settings"
+            onPress={() => Alert.alert('Settings', 'App settings will be available in the next update.')}
+          />
         </View>
 
         <View style={styles.section}>
