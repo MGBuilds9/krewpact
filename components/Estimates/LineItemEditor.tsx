@@ -1,6 +1,7 @@
 'use client';
 
 import { Plus, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 
 import { AiSuggestion } from '@/components/AI/AiSuggestion';
 import { Badge } from '@/components/ui/badge';
@@ -29,6 +30,14 @@ interface LineRowProps {
 
 // eslint-disable-next-line max-lines-per-function
 function LineRow({ line, isReadOnly, onUpdateLine, onDeleteLine }: LineRowProps) {
+  const [savedField, setSavedField] = useState<string | null>(null);
+
+  function handleBlur(field: string, value: string | number | boolean) {
+    onUpdateLine(line.id, field, value);
+    setSavedField(field);
+    setTimeout(() => setSavedField(null), 2500);
+  }
+
   return (
     <tr className="border-b last:border-0">
       <td className="py-2 pr-2">
@@ -36,12 +45,17 @@ function LineRow({ line, isReadOnly, onUpdateLine, onDeleteLine }: LineRowProps)
           {isReadOnly ? (
             <span>{line.description}</span>
           ) : (
-            <Input
-              defaultValue={line.description}
-              onBlur={(e) => onUpdateLine(line.id, 'description', e.target.value)}
-              className="h-8 text-sm"
-              aria-label="Description"
-            />
+            <>
+              <Input
+                defaultValue={line.description}
+                onBlur={(e) => handleBlur('description', e.target.value)}
+                className="h-8 text-sm"
+                aria-label="Description"
+              />
+              {savedField === 'description' && (
+                <span className="text-xs text-green-600 ml-1 shrink-0">Saved</span>
+              )}
+            </>
           )}
           {line.is_optional && (
             <Badge variant="outline" className="text-xs flex-shrink-0">
@@ -54,13 +68,18 @@ function LineRow({ line, isReadOnly, onUpdateLine, onDeleteLine }: LineRowProps)
         {isReadOnly ? (
           <span className="block text-right">{line.quantity}</span>
         ) : (
-          <Input
-            type="number"
-            defaultValue={line.quantity}
-            onBlur={(e) => onUpdateLine(line.id, 'quantity', Number(e.target.value))}
-            className="h-8 text-sm text-right"
-            aria-label="Quantity"
-          />
+          <div className="relative">
+            <Input
+              type="number"
+              defaultValue={line.quantity}
+              onBlur={(e) => handleBlur('quantity', Number(e.target.value))}
+              className="h-8 text-sm text-right"
+              aria-label="Quantity"
+            />
+            {savedField === 'quantity' && (
+              <span className="absolute -bottom-4 right-0 text-xs text-green-600">Saved</span>
+            )}
+          </div>
         )}
       </td>
       <td className="py-2 px-1">
@@ -68,13 +87,18 @@ function LineRow({ line, isReadOnly, onUpdateLine, onDeleteLine }: LineRowProps)
           <span className="block text-right">{formatCurrency(line.unit_cost)}</span>
         ) : (
           <>
-            <Input
-              type="number"
-              defaultValue={line.unit_cost}
-              onBlur={(e) => onUpdateLine(line.id, 'unit_cost', Number(e.target.value))}
-              className="h-8 text-sm text-right"
-              aria-label="Unit cost"
-            />
+            <div className="relative">
+              <Input
+                type="number"
+                defaultValue={line.unit_cost}
+                onBlur={(e) => handleBlur('unit_cost', Number(e.target.value))}
+                className="h-8 text-sm text-right"
+                aria-label="Unit cost"
+              />
+              {savedField === 'unit_cost' && (
+                <span className="absolute -bottom-4 right-0 text-xs text-green-600">Saved</span>
+              )}
+            </div>
             {line.description && (
               <AiSuggestion
                 field="unit_cost"
@@ -90,13 +114,18 @@ function LineRow({ line, isReadOnly, onUpdateLine, onDeleteLine }: LineRowProps)
           <span className="block text-right">{line.markup_pct}%</span>
         ) : (
           <>
-            <Input
-              type="number"
-              defaultValue={line.markup_pct}
-              onBlur={(e) => onUpdateLine(line.id, 'markup_pct', Number(e.target.value))}
-              className="h-8 text-sm text-right"
-              aria-label="Markup percentage"
-            />
+            <div className="relative">
+              <Input
+                type="number"
+                defaultValue={line.markup_pct}
+                onBlur={(e) => handleBlur('markup_pct', Number(e.target.value))}
+                className="h-8 text-sm text-right"
+                aria-label="Markup percentage"
+              />
+              {savedField === 'markup_pct' && (
+                <span className="absolute -bottom-4 right-0 text-xs text-green-600">Saved</span>
+              )}
+            </div>
             <AiSuggestion
               field="markup_pct"
               context={{ item_type: line.line_type ?? 'material' }}
@@ -134,37 +163,39 @@ export function LineItemEditor({
 
   return (
     <div className="w-full">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b text-left text-muted-foreground">
-            <th className="pb-2 font-medium">Description</th>
-            <th className="pb-2 font-medium w-20 text-right">Qty</th>
-            <th className="pb-2 font-medium w-24 text-right">Unit Cost</th>
-            <th className="pb-2 font-medium w-20 text-right">Markup %</th>
-            <th className="pb-2 font-medium w-28 text-right">Total</th>
-            {!isReadOnly && <th className="pb-2 w-10" />}
-          </tr>
-        </thead>
-        <tbody>
-          {sorted.length === 0 ? (
-            <tr>
-              <td colSpan={isReadOnly ? 5 : 6} className="py-8 text-center text-muted-foreground">
-                No line items yet. Add your first line to get started.
-              </td>
+      <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+        <table className="w-full min-w-[600px] text-sm">
+          <thead>
+            <tr className="border-b text-left text-muted-foreground">
+              <th className="pb-2 font-medium">Description</th>
+              <th className="pb-2 font-medium w-20 text-right">Qty</th>
+              <th className="pb-2 font-medium w-24 text-right">Unit Cost</th>
+              <th className="pb-2 font-medium w-20 text-right">Markup %</th>
+              <th className="pb-2 font-medium w-28 text-right">Total</th>
+              {!isReadOnly && <th className="pb-2 w-10" />}
             </tr>
-          ) : (
-            sorted.map((line) => (
-              <LineRow
-                key={line.id}
-                line={line}
-                isReadOnly={isReadOnly}
-                onUpdateLine={onUpdateLine}
-                onDeleteLine={onDeleteLine}
-              />
-            ))
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {sorted.length === 0 ? (
+              <tr>
+                <td colSpan={isReadOnly ? 5 : 6} className="py-8 text-center text-muted-foreground">
+                  No line items yet. Add your first line to get started.
+                </td>
+              </tr>
+            ) : (
+              sorted.map((line) => (
+                <LineRow
+                  key={line.id}
+                  line={line}
+                  isReadOnly={isReadOnly}
+                  onUpdateLine={onUpdateLine}
+                  onDeleteLine={onDeleteLine}
+                />
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
       {!isReadOnly && (
         <div className="mt-3">
           <Button variant="outline" size="sm" onClick={onAddLine}>

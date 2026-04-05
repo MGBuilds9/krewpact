@@ -33,7 +33,8 @@ import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { useUserRBAC } from '@/hooks/useRBAC';
 import { cn } from '@/lib/utils';
 
-const MAX_VISIBLE = 7;
+const MAX_VISIBLE_DESKTOP = 10;
+const MAX_VISIBLE_MOBILE = 7;
 
 interface NavigationProps {
   isMobile?: boolean;
@@ -178,8 +179,8 @@ function DesktopNav({
   strippedPath: string;
   orgPath: (p: string) => string;
 }) {
-  const visibleItems = items.slice(0, MAX_VISIBLE);
-  const overflowItems = items.slice(MAX_VISIBLE);
+  const visibleItems = items.slice(0, MAX_VISIBLE_DESKTOP);
+  const overflowItems = items.slice(MAX_VISIBLE_DESKTOP);
   const hasOverflowActive = overflowItems.some(
     (item) => strippedPath === item.path || strippedPath.startsWith(item.path + '/'),
   );
@@ -279,6 +280,12 @@ export function Navigation({ isMobile = false }: NavigationProps) {
 
   const strippedPath = pathname.replace(/^\/org\/[^/]+/, '');
   if (isMobile)
-    return <MobileNav items={filteredItems} strippedPath={strippedPath} orgPath={orgPath} />;
+    return (
+      <MobileNav
+        items={filteredItems.slice(0, MAX_VISIBLE_MOBILE)}
+        strippedPath={strippedPath}
+        orgPath={orgPath}
+      />
+    );
   return <DesktopNav items={filteredItems} strippedPath={strippedPath} orgPath={orgPath} />;
 }

@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePaymentHistory } from '@/hooks/useFinancialOps';
+import { useOrgRouter } from '@/hooks/useOrgRouter';
 import type { PaymentEntry } from '@/lib/services/financial-ops';
 import { cn } from '@/lib/utils';
 
@@ -61,6 +62,7 @@ interface PaymentTimelineProps {
 
 export function PaymentTimeline({ projectId }: PaymentTimelineProps) {
   const { data, isLoading } = usePaymentHistory(projectId);
+  const { push } = useOrgRouter();
 
   if (isLoading) {
     return (
@@ -100,6 +102,7 @@ export function PaymentTimeline({ projectId }: PaymentTimelineProps) {
             icon={CreditCard}
             title="No payments recorded"
             description="Payments will appear here as invoices are collected."
+            primaryAction={{ label: 'Go to Finance', onClick: () => push('/finance') }}
           />
         ) : (
           data.payments.map((entry) => <PaymentRow key={entry.id} entry={entry} />)

@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useHoldbackSchedule } from '@/hooks/useFinancialOps';
+import { useOrgRouter } from '@/hooks/useOrgRouter';
 import type { HoldbackItem } from '@/lib/services/financial-ops';
 import { cn } from '@/lib/utils';
 
@@ -71,6 +72,7 @@ function HoldbackRow({ item }: { item: HoldbackItem }) {
 
 export function HoldbackTracker({ projectId }: HoldbackTrackerProps) {
   const { data, isLoading } = useHoldbackSchedule(projectId);
+  const { push } = useOrgRouter();
 
   if (isLoading) {
     return (
@@ -115,6 +117,7 @@ export function HoldbackTracker({ projectId }: HoldbackTrackerProps) {
             icon={Calendar}
             title="No holdbacks yet"
             description="Holdbacks appear once progress payment invoices are submitted."
+            primaryAction={{ label: 'Go to Finance', onClick: () => push('/finance') }}
           />
         ) : (
           data.items.map((item) => <HoldbackRow key={item.invoiceId} item={item} />)

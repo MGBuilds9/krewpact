@@ -14,6 +14,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useAgedReceivables } from '@/hooks/useFinancialOps';
+import { useOrgRouter } from '@/hooks/useOrgRouter';
 import type { AgedReceivablesRow } from '@/lib/services/financial-ops';
 import { cn } from '@/lib/utils';
 
@@ -83,6 +84,7 @@ function SummaryCards({ rows }: { rows: AgedReceivablesRow[] }) {
 
 export function AgedReceivablesReport({ orgId }: AgedReceivablesReportProps) {
   const { data, isLoading } = useAgedReceivables(orgId);
+  const { push } = useOrgRouter();
 
   return (
     <Card>
@@ -119,6 +121,7 @@ export function AgedReceivablesReport({ orgId }: AgedReceivablesReportProps) {
                     icon={BarChart3}
                     title="No outstanding receivables"
                     description="All invoices are current or paid."
+                    primaryAction={{ label: 'Go to Finance', onClick: () => push('/finance') }}
                   />
                 </TableCell>
               </TableRow>

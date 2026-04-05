@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useTeamMembers } from '@/hooks/useTeam';
 import { LEAD_PIPELINE_STAGES } from '@/lib/crm/lead-stages';
 
 interface BulkActionBarProps {
@@ -98,6 +99,60 @@ function StageSelectDialog({
   );
 }
 
+function AssignDialog({
+  open,
+  onOpenChange,
+  onConfirm,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  onConfirm: (assigneeId: string) => void;
+}) {
+  const [selected, setSelected] = useState('');
+  const { data: members, isLoading } = useTeamMembers();
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Assign To</DialogTitle>
+        </DialogHeader>
+        <Select value={selected} onValueChange={setSelected} disabled={isLoading}>
+          <SelectTrigger>
+            <SelectValue placeholder={isLoading ? 'Loading team…' : 'Select a team member…'} />
+          </SelectTrigger>
+          <SelectContent>
+            {(members ?? []).map((m) => {
+              const fullName = [m.first_name, m.last_name].filter(Boolean).join(' ') || m.email;
+              return (
+                <SelectItem key={m.id} value={m.id}>
+                  {fullName} ({m.email})
+                </SelectItem>
+              );
+            })}
+          </SelectContent>
+        </Select>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            disabled={!selected}
+            onClick={() => {
+              if (selected) {
+                onConfirm(selected);
+                onOpenChange(false);
+              }
+            }}
+          >
+            Assign
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function BulkActionDialogs({
   selectedIds,
   entityType,
@@ -142,15 +197,10 @@ function BulkActionDialogs({
         onOpenChange={setStageDialogOpen}
         onConfirm={(stage) => executeBulk('stage', { stage })}
       />
-      <ConfirmReasonDialog
+      <AssignDialog
         open={assignDialogOpen}
         onOpenChange={setAssignDialogOpen}
-        title="Assign To"
-        description="Enter the user ID to assign selected items to."
-        confirmLabel="Assign"
-        reasonLabel="User ID"
-        reasonRequired
-        onConfirm={(reason) => executeBulk('assign', { assignee_id: reason })}
+        onConfirm={(assigneeId) => executeBulk('assign', { assignee_id: assigneeId })}
       />
       {entityType === 'lead' && (
         <SequenceEnrollDialog
