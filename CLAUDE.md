@@ -332,18 +332,20 @@ Architecture docs in `docs/architecture/`: `Master-Plan.md` (scope), `Technology
 
 ## Session Log
 
+### Apr 5, 2026 — Deferred Gap Fixes (4 tasks, all complete)
+
+- **Changes:** Executed all 4 deferred tasks from gap audit plan. (1) ERP mock mode: `isMockMode()` now alerts once at fatal level + Sentry, not warn on every call; health check reports `misconfigured`/`mock`/`missing_credentials`. (2) ERPNext webhook expansion: 3 new inbound handlers (Payment Entry, Stock Entry, Employee) with categorized dispatch (read-only vs bidirectional vs outbound-only). (3) Offline sync: Created `OfflineSyncListener` component wiring SW `OFFLINE_SYNC_TRIGGER` messages to auth-aware `processQueue()`; added `online` event handler; SW now re-registers sync tag when no windows open. (4) Project file upload: Replaced "coming soon" stub with real file list/upload/delete using existing `useFiles`/`useUploadFile`/`useDeleteFile` hooks.
+- **Tests:** 5,343/5,343 passing (+7 new). 0 TS errors. 27 lint warnings (pre-existing).
+- **Next:** Run k6 soak test at 300 VUs. Squash/rename `20260227` migration files for `supabase start`.
+
 ### Apr 4-5, 2026 — Production Hardening + User Gap Fixes (85 → production-ready)
 
-- **Changes:** Two major bodies of work in one session. (1) **Production hardening:** Renamed 3 colliding 20260227 portal migrations for deterministic ordering. Rewrote RLS integration tests with correct JWT claim structure (metadata.division_ids, not top-level). Added Sentry cron monitoring with per-cron schedules to cron-logger.ts. Hardened sentry.server.config.ts (tracePropagation, beforeSend filtering). Pinned CI actions from @v6 (nonexistent) to @v4, added TruffleHog secret scanning. Added Playwright storageState auth + seed-then-assert E2E pattern. Tightened k6 thresholds. (2) **User gap fixes (11 of 15):** Fixed contract + projects broken router.push (pattern audit via Codex found projects/ too). Created tasks page. Replaced trade bid UUID input with shadcn Select project picker. Made estimate line editor mobile-responsive with 2.5s "Saved" text indicator. Replaced bulk assign User ID input with team member picker (useTeamMembers + shadcn Select). Made nav responsive (10 desktop / 7 mobile). Added finance empty state actions. Fixed BoldSign webhook to return 503 when secret missing. Sanitized ErrorCard (friendly guidance above collapsed details). Wired mobile menu items with "next update" alerts.
-- **Decisions:** Reframed production readiness from "score-based" to "risk-based" per /autoplan dual-voice review (both Codex + Claude agreed). Deferred 4 tasks: ERP mock mode (needs health check gate), ERPNext webhook expansion (verify signatures), offline sync (no main-thread listener — needs proper fix), project file upload (feature, not bug fix). Created interactive architecture HTML diagram at docs/architecture/krewpact-architecture.html.
-- **Tests:** 5,336/5,336 passing (+26 from session start). 0 TS errors. 26 lint warnings (pre-existing).
-- **Next:** Execute deferred plan (docs/superpowers/plans/2026-04-05-deferred-gap-fixes.md): ERP mock mode + health check, ERPNext webhook expansion, offline sync listener, project file upload. Then run k6 soak at 300 VUs.
+- **Changes:** Production hardening + 11 user gap fixes. See vault session log for full details.
+- **Tests:** 5,336/5,336 passing. 0 TS errors.
 
 - Apr 4: Production readiness audit + hardening (85/100). 5,310 tests.
-- Apr 3: Blueprint audit (93/100). Committed 61 files. 5,304 tests.
-- Apr 2: Test fixes + BoldSign Brand ID + PDF guardrail. 5,304 tests.
-- Apr 1: P3 audit + SEO/perf + completeness + multi-tenancy. 5,297 tests.
-- Mar 31: Multi-tenancy Phase 0-3. 5,266 tests.
-- Mar 30: Repo cleanup + multi-tenant strategy + CSO audit. 5,223 tests.
+- Apr 3: Blueprint audit (93/100). 5,304 tests.
+- Apr 2: Test fixes + BoldSign Brand ID. 5,304 tests.
+- Apr 1: P3 audit + SEO/perf + multi-tenancy. 5,297 tests.
 
 @AGENTS.md
