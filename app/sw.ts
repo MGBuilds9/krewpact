@@ -101,14 +101,26 @@ self.addEventListener('sync', (event: Event) => {
 /**
  * Process the offline queue from the service worker context.
  * Posts a message to all clients to trigger sync via the main thread.
+ * If no windows are open, re-registers the sync tag so it fires when
+ * a window opens next.
  */
 async function processOfflineQueue(): Promise<void> {
   const clients = await self.clients.matchAll({ type: 'window' });
-  for (const client of clients) {
-    client.postMessage({
-      type: 'OFFLINE_SYNC_TRIGGER',
-      tag: OFFLINE_SYNC_TAG,
-    });
+
+  if (clients.length > 0) {
+    // Preferred: delegate to main thread (has auth context)
+    for (const client of clients) {
+      client.postMessage({ type: 'OFFLINE_SYNC_TRIGGER', tag: OFFLINE_SYNC_TAG });
+    }
+  } else {
+    // No windows open — re-register sync tag so it fires when a window opens.
+    try {
+      if (self.registration.sync) {
+        await self.registration.sync.register(OFFLINE_SYNC_TAG);
+      }
+    } catch {
+      // sync.register can fail if already registered — that's fine
+    }
   }
 }
 

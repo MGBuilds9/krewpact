@@ -5,6 +5,7 @@ import { Breadcrumbs } from '@/components/Layout/Breadcrumbs';
 import { Header } from '@/components/Layout/Header';
 import { QuickAddFAB } from '@/components/Layout/QuickAddFAB';
 import { InstallPrompt } from '@/components/PWA/InstallPrompt';
+import { OfflineSyncListener } from '@/components/shared/OfflineSyncListener';
 import { DivisionProvider } from '@/contexts/DivisionContext';
 import { ImpersonationProvider } from '@/contexts/ImpersonationContext';
 
@@ -40,6 +41,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           {/* PWA install prompt (mobile only) */}
           <InstallPrompt />
+
+          {/* Offline sync — wires SW background sync messages to the auth-aware sync engine */}
+          <OfflineSyncListener />
         </div>
       </DivisionProvider>
     </ImpersonationProvider>
