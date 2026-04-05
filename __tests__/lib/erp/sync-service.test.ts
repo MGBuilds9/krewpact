@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock Supabase server client
 vi.mock('@/lib/supabase/server', () => ({
@@ -350,5 +350,49 @@ describe('SyncService', () => {
       expect(result.status).toBe('succeeded');
       expect(client.from).toHaveBeenCalledWith('erp_sync_map');
     });
+  });
+});
+
+describe('isMockMode (unit)', () => {
+  const originalEnv = { ...process.env };
+
+  afterEach(() => {
+    process.env.ERPNEXT_BASE_URL = originalEnv.ERPNEXT_BASE_URL ?? '';
+    if (!originalEnv.ERPNEXT_BASE_URL) delete process.env.ERPNEXT_BASE_URL;
+    vi.unstubAllEnvs();
+    vi.clearAllMocks();
+    vi.resetModules();
+  });
+
+  it('returns true when ERPNEXT_BASE_URL is missing', async () => {
+    delete process.env.ERPNEXT_BASE_URL;
+    const { isMockMode } = await import('@/lib/erp/sync-service');
+    expect(isMockMode()).toBe(true);
+  });
+
+  it('returns false when ERPNEXT_BASE_URL is set to a real URL', async () => {
+    process.env.ERPNEXT_BASE_URL = 'https://erp.example.com';
+    const { isMockMode } = await import('@/lib/erp/sync-service');
+    expect(isMockMode()).toBe(false);
+  });
+
+  it('returns true when ERPNEXT_BASE_URL is "mock"', async () => {
+    process.env.ERPNEXT_BASE_URL = 'mock';
+    const { isMockMode } = await import('@/lib/erp/sync-service');
+    expect(isMockMode()).toBe(true);
+  });
+
+  it('logs error only once in production when URL is missing', async () => {
+    delete process.env.ERPNEXT_BASE_URL;
+    vi.stubEnv('NODE_ENV', 'production');
+    const loggerModule = await import('@/lib/logger');
+    const errorSpy = vi.spyOn(loggerModule.logger, 'error').mockImplementation(() => {});
+    const { isMockMode } = await import('@/lib/erp/sync-service');
+    isMockMode();
+    isMockMode();
+    isMockMode();
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+    errorSpy.mockRestore();
+    vi.unstubAllEnvs();
   });
 });

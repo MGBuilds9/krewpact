@@ -72,19 +72,25 @@ import { syncWorkOrder } from './sync-handlers/sync-work-order';
 // Re-export shared type so existing consumers don't break
 export type { SyncResult } from './sync-handlers/sync-helpers';
 
+let _mockModeAlerted = false;
+
 /** Check if we're running in mock mode (no real ERPNext) */
 export function isMockMode(): boolean {
-  const mock = !process.env.ERPNEXT_BASE_URL || process.env.ERPNEXT_BASE_URL === 'mock';
-  if (mock) {
-    logger.warn('ERPNext mock mode active — no data will be synced to ERPNext');
-    if (process.env.NODE_ENV === 'production') {
-      import('@sentry/nextjs').then((Sentry) => {
-        Sentry.captureMessage('CRITICAL: ERPNext mock mode active in production', {
-          level: 'error',
-        });
-      });
-    }
+  const baseUrl = process.env.ERPNEXT_BASE_URL;
+  const mock = !baseUrl || baseUrl === 'mock';
+
+  if (mock && process.env.NODE_ENV === 'production' && !_mockModeAlerted) {
+    _mockModeAlerted = true;
+    logger.error(
+      'CRITICAL: ERPNEXT_BASE_URL not configured — all ERP syncs disabled in production',
+    );
+    import('@sentry/nextjs').then((Sentry) => {
+      Sentry.captureMessage('ERPNEXT_BASE_URL not configured in production', { level: 'fatal' });
+    });
+  } else if (mock && process.env.NODE_ENV !== 'production') {
+    logger.info('ERPNext mock mode active (development)');
   }
+
   return mock;
 }
 

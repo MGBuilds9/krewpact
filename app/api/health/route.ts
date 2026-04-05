@@ -82,7 +82,14 @@ async function checkErpNextHealth(checks: Record<string, string>): Promise<void>
   const erpUrl = process.env.ERPNEXT_BASE_URL;
   const erpKey = process.env.ERPNEXT_API_KEY?.trim();
   const erpSecret = process.env.ERPNEXT_API_SECRET?.trim();
-  if (!erpUrl || !erpKey || !erpSecret) return;
+  if (!erpUrl || erpUrl === 'mock') {
+    checks.erpnext = process.env.NODE_ENV === 'production' ? 'misconfigured' : 'mock';
+    return;
+  }
+  if (!erpKey || !erpSecret) {
+    checks.erpnext = 'missing_credentials';
+    return;
+  }
   try {
     const res = await withTimeout(
       fetch(`${erpUrl}/api/method/frappe.auth.get_logged_user`, {
