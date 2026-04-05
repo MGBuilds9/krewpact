@@ -274,15 +274,18 @@ describe('Navigation', () => {
   // -------------------------------------------------------------------------
   // Case 11 — Mobile rendering
   // -------------------------------------------------------------------------
-  it('renders default nav items in mobile mode (isMobile=true)', () => {
+  it('renders first 7 nav items in mobile mode (MAX_VISIBLE_MOBILE=7)', () => {
     render(<Navigation isMobile />);
+    // Mobile shows first 7 filtered items: Dashboard, CRM, Estimates, Projects, Documents, Inventory, Schedule
     expect(screen.getByText('Dashboard')).toBeInTheDocument();
     expect(screen.getByText('CRM')).toBeInTheDocument();
     expect(screen.getByText('Estimates')).toBeInTheDocument();
     expect(screen.getByText('Projects')).toBeInTheDocument();
     expect(screen.getByText('Documents')).toBeInTheDocument();
-    expect(screen.getByText('Team')).toBeInTheDocument();
-    expect(screen.getByText('Reports')).toBeInTheDocument();
+    expect(screen.getByText('Inventory')).toBeInTheDocument();
+    expect(screen.getByText('Schedule')).toBeInTheDocument();
+    // Team, Finance, Reports are beyond mobile cutoff
+    expect(screen.queryByText('Team')).not.toBeInTheDocument();
   });
 
   it('renders a <nav> element in mobile mode', () => {
@@ -296,10 +299,13 @@ describe('Navigation', () => {
     expect(dashboardLink?.className).toContain('bg-primary');
   });
 
-  it('shows Admin in mobile mode when isAdmin is true', () => {
+  it('shows first 7 items in mobile mode even when isAdmin (Admin is beyond cutoff)', () => {
     setAdmin(true);
     render(<Navigation isMobile />);
-    expect(screen.getByText('Admin')).toBeInTheDocument();
+    // Admin is item 13 — beyond MAX_VISIBLE_MOBILE=7 cutoff
+    // Mobile only shows the first 7 filtered items
+    expect(screen.getByText('Dashboard')).toBeInTheDocument();
+    expect(screen.queryByText('Admin')).not.toBeInTheDocument();
   });
 
   // -------------------------------------------------------------------------
