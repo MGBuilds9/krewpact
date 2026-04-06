@@ -1,3 +1,4 @@
+import { timingSafeEqual } from 'crypto';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -109,7 +110,13 @@ export const POST = withApiRoute(
   async ({ req, body }) => {
     const signature = req.headers.get('x-webhook-secret');
     const secret = process.env.WEBHOOK_SIGNING_SECRET;
-    if (!secret || signature !== secret) {
+
+    if (
+      !secret ||
+      !signature ||
+      signature.length !== secret.length ||
+      !timingSafeEqual(Buffer.from(signature), Buffer.from(secret))
+    ) {
       return NextResponse.json(
         { error: 'Unauthorized: Invalid or missing secret' },
         { status: 401 },
