@@ -1,6 +1,6 @@
 'use client';
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useCommandPalette } from '@/hooks/useCommandPalette';
 
@@ -41,6 +41,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
       <DialogContent className="max-w-2xl p-0 gap-0 overflow-hidden">
         <DialogHeader className="px-4 pt-4 pb-0">
           <DialogTitle className="text-lg font-semibold">Command Palette</DialogTitle>
+          <DialogDescription className="sr-only">Search commands and navigate</DialogDescription>
         </DialogHeader>
 
         <CommandPaletteSearch

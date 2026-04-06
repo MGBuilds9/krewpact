@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -32,6 +33,7 @@ export function ProjectCreationDialog({ onProjectCreated }: ProjectCreationDialo
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New Project</DialogTitle>
+          <DialogDescription className="sr-only">Create a new project</DialogDescription>
         </DialogHeader>
         <ProjectCreationForm
           onClose={() => setIsOpen(false)}

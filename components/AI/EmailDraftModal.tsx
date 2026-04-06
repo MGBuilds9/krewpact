@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -256,6 +257,7 @@ export function EmailDraftModal({
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>AI Email Draft</DialogTitle>
+          <DialogDescription className="sr-only">Compose and send email draft</DialogDescription>
         </DialogHeader>
         {loading && !subject ? (
           <div className="flex items-center justify-center py-12">

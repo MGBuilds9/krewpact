@@ -43,7 +43,10 @@ vi.mock('@/components/ui/dialog', () => {
   const DialogFooter = ({ children }: { children: React.ReactNode }) =>
     React.createElement('div', null, children);
 
-  return { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter };
+  const DialogDescription = ({ children, className }: { children?: React.ReactNode; className?: string }) =>
+    React.createElement('p', { className }, children);
+
+  return { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter };
 });
 
 // Lightweight Lucide stubs to avoid SVG import issues in jsdom.

@@ -44,6 +44,7 @@ export function useDigest() {
     queryKey: ['ai', 'digest'],
     queryFn: () => apiFetch<{ digest: Digest | null }>('/api/ai/digest').then((d) => d.digest),
     staleTime: 5 * 60 * 1000,
+    retry: false,
   });
 }
 

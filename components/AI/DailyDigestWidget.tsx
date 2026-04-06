@@ -1,35 +1,15 @@
 'use client';
 
 import { ChevronDown, ChevronUp, Newspaper } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useDigest } from '@/hooks/use-ai';
 import { cn } from '@/lib/utils';
 
-interface DigestSection {
-  title: string;
-  items: Array<{ label: string; value: string; url?: string }>;
-}
-
-interface Digest {
-  id: string;
-  summary: string;
-  sections: DigestSection[];
-  digest_date: string;
-}
-
 export function DailyDigestWidget() {
-  const [digest, setDigest] = useState<Digest | null>(null);
+  const { data: digest } = useDigest();
   const [expanded, setExpanded] = useState(false);
-
-  useEffect(() => {
-    fetch('/api/ai/digest')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: { digest: Digest | null } | null) => {
-        if (data?.digest) setDigest(data.digest);
-      })
-      .catch(() => {});
-  }, []);
 
   if (!digest) return null;
 

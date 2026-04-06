@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { withApiRoute } from '@/lib/api/with-api-route';
+import { logger } from '@/lib/logger';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 export const GET = withApiRoute({ rateLimit: { limit: 30, window: '1 m' } }, async ({ userId }) => {
@@ -17,7 +18,8 @@ export const GET = withApiRoute({ rateLimit: { limit: 30, window: '1 m' } }, asy
     .single();
 
   if (error && error.code !== 'PGRST116') {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    logger.error('digest fetch failed', { userId, error });
+    return NextResponse.json({ error: 'Failed to load digest' }, { status: 500 });
   }
 
   if (data && !data.read_at) {

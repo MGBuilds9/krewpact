@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { notFound } from '@/lib/api/errors';
 import { withApiRoute } from '@/lib/api/with-api-route';
+import { logger } from '@/lib/logger';
 import { createServiceClient } from '@/lib/supabase/server';
 
 // Hardcoded seed data — used only when the organizations table doesn't exist yet
@@ -33,9 +34,11 @@ export const GET = withApiRoute({}, async ({ params }) => {
         branding: settings?.branding ?? {},
         feature_flags: settings?.feature_flags ?? {},
       });
+    } else if (orgError) {
+      logger.error('org query error', { slug, code: orgError.code, message: orgError.message });
     }
-  } catch {
-    // DB table may not exist yet — fall through to seed data
+  } catch (err) {
+    logger.error('org lookup failed', { slug, error: err });
   }
 
   // Fall back to seed data

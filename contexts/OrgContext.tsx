@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import React, { createContext, ReactNode, useContext, useMemo } from 'react';
 
-import { apiFetch } from '@/lib/api-client';
+import { ApiError, apiFetch } from '@/lib/api-client';
 
 export interface OrgBranding {
   company_name?: string;
@@ -48,6 +48,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
     queryFn: () => apiFetch<Organization>(`/api/org/${orgSlug}`),
     enabled: !!orgSlug,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: (count, error) => count < 2 && (error as ApiError).status >= 500,
   });
 
   const contextValue = useMemo(
