@@ -332,17 +332,14 @@ Architecture docs in `docs/architecture/`: `Master-Plan.md` (scope), `Technology
 
 ## Session Log
 
-### Apr 5, 2026 — Deferred Gap Fixes (4 tasks, all complete)
+### Apr 6, 2026 — Console Error Stabilization + Org Data Fix
 
-- **Changes:** Executed all 4 deferred tasks from gap audit plan. (1) ERP mock mode: `isMockMode()` now alerts once at fatal level + Sentry, not warn on every call; health check reports `misconfigured`/`mock`/`missing_credentials`. (2) ERPNext webhook expansion: 3 new inbound handlers (Payment Entry, Stock Entry, Employee) with categorized dispatch (read-only vs bidirectional vs outbound-only). (3) Offline sync: Created `OfflineSyncListener` component wiring SW `OFFLINE_SYNC_TRIGGER` messages to auth-aware `processQueue()`; added `online` event handler; SW now re-registers sync tag when no windows open. (4) Project file upload: Replaced "coming soon" stub with real file list/upload/delete using existing `useFiles`/`useUploadFile`/`useDeleteFile` hooks.
-- **Tests:** 5,343/5,343 passing (+7 new). 0 TS errors. 27 lint warnings (pre-existing).
-- **Next:** Run k6 soak test at 300 VUs. Squash/rename `20260227` migration files for `supabase start`.
+- **Changes:** Fixed 6 categories of console errors via /autoplan review pipeline (CEO + Design + Eng with dual AI voices). (1) CSP: added Cloudflare Insights, Vercel Live fonts, cloudflareinsights beacon to allowlists. (2) Supabase singleton: `createBrowserClient()` now returns cached instance + `__resetBrowserClient()` for test isolation. (3) Org route: fixed silent error swallow in `/api/org/[slug]` — now logs orgError in else-branch + catch. OrgContext uses smart retry (retry 5xx, skip 404). (4) Digest: sanitized error response, DailyDigestWidget refactored to use existing `useDigest()` hook (dedup). (5) Charts: investigated, already properly guarded. (6) DialogDescription: wrapper-level fix via `aria-describedby={undefined}` on `DialogContent` + meaningful descriptions on 3 key dialogs. DB: renamed org slug `default` to `mdm-group`, created `org_settings` with 17 feature flags.
+- **Tests:** 5,341/5,341 passing. 0 TS errors. 27 lint warnings (pre-existing).
+- **Next:** Verify console is clean in production after Vercel deploy. Check Clerk publicMetadata `krewpact_org_id` matches the org UUID.
 
-### Apr 4-5, 2026 — Production Hardening + User Gap Fixes (85 → production-ready)
-
-- **Changes:** Production hardening + 11 user gap fixes. See vault session log for full details.
-- **Tests:** 5,336/5,336 passing. 0 TS errors.
-
+- Apr 5: Deferred Gap Fixes (4/4). 5,343 tests.
+- Apr 5: KrewPact Production Hardening + User Gap Fixes. 5,336 tests.
 - Apr 4: Production readiness audit + hardening (85/100). 5,310 tests.
 - Apr 3: Blueprint audit (93/100). 5,304 tests.
 - Apr 2: Test fixes + BoldSign Brand ID. 5,304 tests.
