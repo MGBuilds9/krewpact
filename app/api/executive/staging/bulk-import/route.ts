@@ -1,6 +1,7 @@
 import { createHash } from 'crypto';
 import { readFile, stat } from 'fs/promises';
 import { NextResponse } from 'next/server';
+import os from 'os';
 import path from 'path';
 
 import { withApiRoute } from '@/lib/api/with-api-route';
@@ -34,7 +35,23 @@ async function processOneFile(
   file: FileInput,
   orgId: string,
 ): Promise<ProcessResult> {
-  const filePath = file.path;
+  const resolvedPath = path.resolve(file.path);
+
+  const allowedDirs = [
+    os.tmpdir(),
+    path.join(process.cwd(), 'imports'),
+    process.env.IMPORT_BASE_DIR
+  ].filter(Boolean) as string[];
+
+  const isAllowed = allowedDirs.some((dir) => {
+    const resolvedDir = path.resolve(dir);
+    return resolvedPath.startsWith(resolvedDir + path.sep) || resolvedPath === resolvedDir;
+  });
+
+  if (!isAllowed) {
+    return { status: 'error', reason: 'Invalid file path: Traversal detected or unauthorized directory' };
+  }
+  const filePath = resolvedPath;
 
   let isFile = false;
   try {
