@@ -378,6 +378,13 @@ Architecture docs in `docs/architecture/`: `Master-Plan.md` (scope), `Technology
 
 ## Session Log
 
+### Apr 7, 2026 (late evening) — Repo Hygiene #46
+
+- **Changes:** Merged PR #123 (Sentinel HIGH — timingSafeEqual across webhooks: `health/route.ts` cron auth, `web/leads/route.ts` webhook signing, `webhooks/boldsign/route.ts`, `webhooks/erpnext/route.ts`, `webhooks/takeoff/route.ts`, `lib/api/cron-auth.ts`). All changes use proper pattern: early return on missing signature/secret, length check before `timingSafeEqual`, buffer comparison. Also pushed 9 previously-unpushed local commits from the evening session (F1 fix, rbac feature-gate, prettier drift, migrations idempotent, Checkly monitoring, session log, deferred-task docs).
+- **Tests:** 5404/5404 vitest passing. Typecheck clean.
+- **Branches deleted:** 1.
+- **Open PRs:** 0.
+
 ### Apr 7, 2026 (evening) — Working tree cleanup + F1 (inventory "Unknown") fix + F2 deferred
 
 - **Changes:** /qa pickup session. Started with 16 dirty files (FeatureGate stash, migration idempotency patches, Checkly setup, Apr 4-5 doc artifacts, load test result, tsconfig excludes) accumulated over multiple days but never committed. Sorted into 5 atomic commits in this order:
