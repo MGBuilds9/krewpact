@@ -68,7 +68,11 @@ export function PipelineAgingCard({ data, isLoading }: PipelineAgingCardProps) {
               >
                 <div>
                   <p className="text-sm font-medium">{stageLabels[entry.stage] ?? entry.stage}</p>
-                  <p className="text-xs text-muted-foreground">{entry.count} deals</p>
+                  <p className="text-xs text-muted-foreground">
+                    {entry.count} {entry.count === 1 ? 'deal' : 'deals'}
+                    {' · '}
+                    {entry.avg_days}-day average age
+                  </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className={cn('text-sm font-bold', entry.avg_days > 14 && 'text-red-600')}>

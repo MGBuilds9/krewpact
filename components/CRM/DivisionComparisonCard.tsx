@@ -57,7 +57,9 @@ export function DivisionComparisonCard({ divisions }: DivisionComparisonCardProp
                 </span>
               </div>
               <div className="flex items-center gap-3 text-sm">
-                <span className="text-muted-foreground">{div.total_opportunities} opps</span>
+                <span className="text-muted-foreground">
+                  {div.total_opportunities} opp{div.total_opportunities === 1 ? '' : 's'}
+                </span>
                 <Badge
                   variant="outline"
                   className={

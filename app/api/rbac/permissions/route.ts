@@ -13,6 +13,28 @@ interface RoleEntry {
   is_primary: boolean;
 }
 
+/**
+ * Dedupes role entries by role_name. The `get_user_role_names` RPC joins
+ * across division_id, so a user who holds the same role in multiple
+ * divisions receives the same role_name more than once — which then
+ * renders as duplicate role badges in the UI. Collapsing at the route
+ * level (not in the hook) keeps the source of truth honest: downstream
+ * code sees one row per unique role, and `is_primary` is the OR across
+ * every assignment (if it's primary anywhere, it's primary).
+ */
+function dedupeRoleEntries(entries: RoleEntry[]): RoleEntry[] {
+  const byName = new Map<string, RoleEntry>();
+  for (const entry of entries) {
+    const existing = byName.get(entry.role_name);
+    if (!existing) {
+      byName.set(entry.role_name, { role_name: entry.role_name, is_primary: entry.is_primary });
+    } else if (entry.is_primary) {
+      existing.is_primary = true;
+    }
+  }
+  return Array.from(byName.values());
+}
+
 async function fetchRbacData(supabase: SupabaseClient, userIdParam: string) {
   return Promise.all([
     supabase.rpc('get_user_role_names', { p_user_id: userIdParam }),
@@ -65,7 +87,7 @@ export const GET = withApiRoute({}, async ({ req }) => {
   const fetchError = rolesResult.error ?? permissionsResult.error ?? divisionsResult.error;
   if (fetchError) return NextResponse.json({ error: fetchError.message }, { status: 500 });
 
-  const dbRoles = (rolesResult.data ?? []) as RoleEntry[];
+  const dbRoles = dedupeRoleEntries((rolesResult.data ?? []) as RoleEntry[]);
   const dbPermissions = (permissionsResult.data ?? []).map(
     (r: { permission_name: string }) => r.permission_name,
   );

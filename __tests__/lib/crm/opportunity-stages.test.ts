@@ -7,7 +7,7 @@ import {
 } from '@/lib/crm/opportunity-stages';
 
 describe('ALLOWED_TRANSITIONS', () => {
-  it('defines transitions for all 7 stages', () => {
+  it('defines transitions for all 8 stages', () => {
     const stages: OpportunityStage[] = [
       'intake',
       'site_visit',
@@ -15,15 +15,24 @@ describe('ALLOWED_TRANSITIONS', () => {
       'proposal',
       'negotiation',
       'contracted',
+      'closed_won',
       'closed_lost',
     ];
     expect(Object.keys(ALLOWED_TRANSITIONS)).toEqual(expect.arrayContaining(stages));
-    expect(Object.keys(ALLOWED_TRANSITIONS)).toHaveLength(7);
+    expect(Object.keys(ALLOWED_TRANSITIONS)).toHaveLength(8);
   });
 
-  it('contracted and closed_lost are terminal (no transitions out)', () => {
-    expect(ALLOWED_TRANSITIONS.contracted).toEqual([]);
+  it('closed_won and closed_lost are terminal (no transitions out)', () => {
+    // ISSUE-012 (Path A2): `contracted` is no longer terminal — it's the
+    // semi-terminal transition state that advances to `closed_won` via
+    // the Mark-as-Won flow. Terminal = `closed_won` and `closed_lost`.
+    expect(ALLOWED_TRANSITIONS.closed_won).toEqual([]);
     expect(ALLOWED_TRANSITIONS.closed_lost).toEqual([]);
+  });
+
+  it('contracted can transition to closed_won or closed_lost', () => {
+    expect(ALLOWED_TRANSITIONS.contracted).toContain('closed_won');
+    expect(ALLOWED_TRANSITIONS.contracted).toContain('closed_lost');
   });
 
   it('every non-terminal stage can transition to closed_lost', () => {
@@ -82,20 +91,34 @@ describe('validateTransition', () => {
     }
   });
 
-  it('rejects transitions out of terminal states (contracted -> intake)', () => {
+  it('rejects backward transitions from contracted (contracted -> intake)', () => {
+    // After unification, `contracted` is no longer terminal — it can advance
+    // to closed_won or closed_lost. But it still can't go backwards.
     const result = validateTransition('contracted', 'intake');
+    expect(result.valid).toBe(false);
+    if (!result.valid) {
+      expect(result.reason).toContain('not allowed');
+    }
+  });
+
+  it('rejects transitions out of closed_won (terminal)', () => {
+    const result = validateTransition('closed_won', 'intake');
     expect(result.valid).toBe(false);
     if (!result.valid) {
       expect(result.reason).toContain('terminal');
     }
   });
 
-  it('rejects transitions out of closed_lost', () => {
+  it('rejects transitions out of closed_lost (terminal)', () => {
     const result = validateTransition('closed_lost', 'intake');
     expect(result.valid).toBe(false);
     if (!result.valid) {
       expect(result.reason).toContain('terminal');
     }
+  });
+
+  it('allows contracted -> closed_won (Mark as Won path)', () => {
+    expect(validateTransition('contracted', 'closed_won')).toEqual({ valid: true });
   });
 
   it('rejects same-stage transition', () => {

@@ -3,6 +3,12 @@ import { z } from 'zod';
 import { nullableSafeString, safeString } from '@/lib/sanitize';
 
 // --- Opportunity stages (from DB enum opportunity_stage) ---
+// `contracted` = contract signed, work may still be active.
+// `closed_won` = terminal won state — reporting/executive metrics pivot on this.
+// Historical note: pre-2026-04-07, CRM used `contracted` as the terminal won
+// stage and reporting used `closed_won`. The two were unified via migration
+// `20260407_001_add_closed_won_stage.sql` (enum add) +
+// `20260407_002_migrate_contracted_won_to_closed_won.sql` (backfill).
 export const opportunityStages = [
   'intake',
   'site_visit',
@@ -10,6 +16,7 @@ export const opportunityStages = [
   'proposal',
   'negotiation',
   'contracted',
+  'closed_won',
   'closed_lost',
 ] as const;
 

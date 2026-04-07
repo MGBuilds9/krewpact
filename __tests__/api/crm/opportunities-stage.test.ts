@@ -151,7 +151,10 @@ describe('POST /api/crm/opportunities/[id]/stage', () => {
     );
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error.message).toContain('terminal');
+    // After ISSUE-012 unification, `contracted` is no longer terminal —
+    // it advances to `closed_won`. Backward transitions are still rejected
+    // but with the generic "not allowed" message.
+    expect(body.error.message).toContain('not allowed');
   });
 
   it('rejects closed_lost without lost_reason', async () => {

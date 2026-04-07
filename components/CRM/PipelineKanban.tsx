@@ -29,6 +29,7 @@ const STAGE_ORDER = [
   'proposal',
   'negotiation',
   'contracted',
+  'closed_won',
   'closed_lost',
 ] as const;
 

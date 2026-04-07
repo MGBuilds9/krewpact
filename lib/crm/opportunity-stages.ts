@@ -10,12 +10,19 @@ export type OpportunityStage =
   | 'proposal'
   | 'negotiation'
   | 'contracted'
+  | 'closed_won'
   | 'closed_lost';
 
 /**
  * Allowed transitions: key = current stage, value = array of valid next stages.
- * "contracted" is a terminal state (won — no transitions out).
- * "closed_lost" is a terminal state (no transitions out).
+ *
+ * `contracted` is a semi-terminal transition state (contract signed, not yet
+ * booked as won). The Mark-as-Won flow advances it to `closed_won`.
+ * `closed_won` and `closed_lost` are terminal — no transitions out.
+ *
+ * Historical note: pre-2026-04-07, `contracted` was the terminal won state
+ * and `closed_won` did not exist in the CRM enum. The split-brain between
+ * CRM and reporting was unified via migrations 20260407_001 + 20260407_002.
  */
 export const ALLOWED_TRANSITIONS: Record<OpportunityStage, OpportunityStage[]> = {
   intake: ['site_visit', 'closed_lost'],
@@ -23,7 +30,8 @@ export const ALLOWED_TRANSITIONS: Record<OpportunityStage, OpportunityStage[]> =
   estimating: ['proposal', 'closed_lost'],
   proposal: ['negotiation', 'closed_lost'],
   negotiation: ['contracted', 'closed_lost'],
-  contracted: [],
+  contracted: ['closed_won', 'closed_lost'],
+  closed_won: [],
   closed_lost: [],
 };
 

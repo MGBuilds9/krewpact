@@ -182,7 +182,7 @@ async function recordWonActivities(p: RecordWonParams): Promise<void> {
   await p.supabase.from('opportunity_stage_history').insert({
     opportunity_id: p.opportunityId,
     from_stage: p.opp.stage as string,
-    to_stage: 'contracted',
+    to_stage: 'closed_won',
     changed_by: p.krewpactUserId,
   });
   await p.supabase.from('activities').insert({
@@ -220,12 +220,16 @@ export const POST = withApiRoute(
     }
 
     const opp = opportunity as Record<string, unknown>;
-    if (opp.stage !== 'contracted') {
+    // Allow the Mark-as-Won action from either `contracted` (the normal
+    // path — contract signed, now booking the win) or `closed_won` (idempotent
+    // re-submission). Reject anything earlier in the pipeline.
+    if (opp.stage !== 'contracted' && opp.stage !== 'closed_won') {
       return NextResponse.json(
         {
           error: {
             code: 'INVALID_STAGE',
-            message: 'Only opportunities in contracted stage can be marked as won',
+            message:
+              'Only opportunities in the contracted or closed_won stage can be marked as won',
           },
         },
         { status: 400 },
@@ -233,7 +237,7 @@ export const POST = withApiRoute(
     }
 
     const wonDate = parsed.won_date || new Date().toISOString().split('T')[0];
-    const updatePayload: Record<string, unknown> = { stage: 'contracted', won_at: wonDate };
+    const updatePayload: Record<string, unknown> = { stage: 'closed_won', won_at: wonDate };
     if (parsed.won_notes !== undefined) updatePayload.won_notes = parsed.won_notes;
 
     const { data: updated, error: updateError } = await supabase

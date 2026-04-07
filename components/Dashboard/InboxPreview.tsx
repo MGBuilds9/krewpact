@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useEmailMessages } from '@/hooks/useEmail';
+import { stripTrackingChars } from '@/lib/format/strip-tracking-chars';
 import { cn } from '@/lib/utils';
 
 function formatTimeAgo(dateString: string): string {
@@ -45,6 +46,11 @@ type GraphMessage = NonNullable<ReturnType<typeof useEmailMessages>['data']>['va
 function MessageItem({ message }: { message: GraphMessage }): React.ReactElement {
   const senderName =
     message.from?.emailAddress.name || message.from?.emailAddress.address || 'Unknown';
+  // Strip tracking-pixel unicode (ZWSP, soft hyphens, etc.) that marketing
+  // tools inject into subject/body for open-tracking — these characters
+  // render as garbled whitespace in the preview.
+  const cleanSubject = stripTrackingChars(message.subject || '');
+  const cleanBodyPreview = stripTrackingChars(message.bodyPreview || '');
   return (
     <div
       className={cn(
@@ -72,9 +78,9 @@ function MessageItem({ message }: { message: GraphMessage }): React.ReactElement
             !message.isRead ? 'font-medium text-foreground' : 'text-muted-foreground',
           )}
         >
-          {message.subject || '(no subject)'}
+          {cleanSubject || '(no subject)'}
         </p>
-        <p className="text-xs text-muted-foreground truncate mt-0.5">{message.bodyPreview}</p>
+        <p className="text-xs text-muted-foreground truncate mt-0.5">{cleanBodyPreview}</p>
       </div>
       <span className="text-[11px] text-muted-foreground flex-shrink-0 pt-0.5">
         {formatTimeAgo(message.receivedDateTime)}

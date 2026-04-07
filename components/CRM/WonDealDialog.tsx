@@ -32,7 +32,11 @@ export function WonDealDialog({ opportunity, open, onOpenChange }: WonDealDialog
 
   const markWon = useMarkOpportunityWon();
 
-  const canMarkWon = opportunity.stage === 'contracted';
+  // The canonical path is contracted → closed_won. `closed_won` is also
+  // accepted so the dialog remains usable for idempotent re-submission
+  // (e.g. the user wants to update won_date or notes on an already-won
+  // deal). Anything earlier in the pipeline is rejected.
+  const canMarkWon = opportunity.stage === 'contracted' || opportunity.stage === 'closed_won';
 
   const handleSubmit = async () => {
     try {
@@ -60,8 +64,9 @@ export function WonDealDialog({ opportunity, open, onOpenChange }: WonDealDialog
 
         {!canMarkWon && (
           <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-            Only opportunities in &quot;contracted&quot; stage can be marked as won. Current stage:
-            &quot;{opportunity.stage}&quot;
+            Only opportunities in the &quot;contracted&quot; stage can be marked as won. Current
+            stage: &quot;{opportunity.stage}&quot;. Move the opportunity into the Contracted column
+            first.
           </div>
         )}
 
