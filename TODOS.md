@@ -63,3 +63,34 @@ Deferred work captured during eng review (2026-03-30).
 **Cons:** Requires careful migration — verify no code references `leads.stage` before dropping.
 **Context:** Identified during CRM pipeline reorder (Mar 30). Stage history drives progress bar now, not the column.
 **Depends on:** Nothing (independent migration).
+
+### `inventory_stock_summary` Materialized View Has No RLS
+
+**What:** The `inventory_stock_summary` matview aggregates from `inventory_ledger` directly with no row-level security. Any user with SELECT grant on the view can read aggregate stock positions (item_id, location_id, qty_on_hand, total_value) for items they have no division access to.
+**Why:** Information leak across divisions. The matview returns data the user shouldn't see, and the application layer (`getStockSummary` in `lib/inventory/stock-summary.ts`) had to compensate with a post-fetch RLS-enforcement filter (commit `541a6559`, F1 fix). Application-layer RLS is fragile — any new caller that hits the matview directly bypasses it.
+**Pros:** Closes the underlying security gap. Removes need for application-layer RLS-enforcement workarounds.
+**Cons:** Requires migration. Need to either (a) wrap the matview in a `SECURITY INVOKER` view that JOINs `inventory_items` so RLS gates via the join, (b) replace with a `SECURITY INVOKER` RPC function that takes the caller's claims into account, or (c) recreate as a real view (not materialized) with `security_invoker = true`. Trade-offs: option (a) simplest, option (b) most flexible, option (c) loses matview perf benefits.
+**Context:** Identified by `/qa` 2026-04-07 (afternoon verification): 10 inventory items rendered as "Unknown" name on `/org/mdm-group/inventory` for the ci-test user (Project Coordinator role, zero division assignments). Root cause traced via Supabase MCP: the matview returned 10 rows from wood + telecom divisions, but the RLS-gated `inventory_items` SELECT returned 0 rows. Items DO exist with valid names; the issue is RLS bypass at the matview layer.
+**Depends on:** Nothing (independent migration). Should be coordinated with the matview refresh job so the new SECURITY INVOKER wrapper doesn't break refresh semantics.
+
+### F2 — `/inventory` Page Never Reaches Network Idle (Slow Page)
+
+**What:** Playwright `waitForLoadState('networkidle')` times out after 30s on `/org/mdm-group/inventory`. Other pages (dashboard, CRM dashboard, leads, etc.) reach networkidle in 1-3s. The current QA workaround in `e2e/qa/qa-verification.spec.ts:181` uses `waitForLoadState('domcontentloaded')` + a 1500ms wait.
+**Why:** Symptom of slow data fetches, prefetch fan-out, or a hidden continuous-request loop. Affects QA reliability and signals real production slowness.
+**Investigation done (2026-04-07, F1 fix session):**
+
+- Ruled out: React Query `refetchInterval` (none in any inventory hook), `setInterval` polling (not present), Supabase Realtime subscriptions (none on inventory routes), `api-client.ts` retry loops (none).
+- All inventory hooks use `staleTime: 30_000` or `60_000` — no continuous refetching.
+- `apiFetchList` discards the `total` count from paginated responses, so the inventory overview "Total Items" / "Stock Positions" stat cards display the slice length (always = `limit`), not the real count. **Separate UI bug, not the root cause of F2.**
+  **Remaining suspects (in order of likelihood):**
+
+1. **Next.js Link prefetch fan-out** — `InventoryLayout` renders 8 tab nav `<Link>` components, all in viewport on first paint. Each Link auto-prefetches the target route's RSC payload, including its initial Server Component data fetches. If `/inventory/items` (probably the slowest) takes 3-5s on a cold function, 8 parallel prefetches × 3-5s could exceed the 30s networkidle window. CRM dashboard has 5 tabs (faster total).
+2. **`getStockSummary` matview cold query** — first hit on `inventory_stock_summary` after a refresh might be slow.
+3. **Sentry Replay continuous beaconing** — but should affect all pages equally, not just /inventory. Lower likelihood.
+   **Diagnosis required:** Open Chrome DevTools Network tab on `/org/mdm-group/inventory` in production, record 30s, identify the request loop pattern.
+   **Mitigation strategies (post-diagnosis):**
+
+- A) Add `prefetch={false}` to `InventoryLayout` tab Links (defensive, low risk, may or may not fix F2 depending on actual cause)
+- B) Profile and optimize the slowest sub-route prefetched (likely `/inventory/items`)
+- C) Refresh the matview on a schedule so cold queries don't pay the aggregation cost
+  **Depends on:** Production browser profiling — cannot diagnose definitively from code alone.
