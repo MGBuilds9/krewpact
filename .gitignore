@@ -94,3 +94,6 @@ reference/
 .gstack/qa-reports/playwright-results.json
 test-results/
 playwright-report/
+
+# k6 load test results (regenerated each run)
+load-tests/results.json
