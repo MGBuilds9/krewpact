@@ -48,9 +48,9 @@ CREATE TABLE policy_overrides (
 CREATE INDEX idx_policy_overrides_user ON policy_overrides(user_id);
 
 -- =========================
--- NOTIFICATION PREFERENCES
+-- NOTIFICATION PREFERENCES (skip if already created in 00003)
 -- =========================
-CREATE TABLE notification_preferences (
+CREATE TABLE IF NOT EXISTS notification_preferences (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID UNIQUE REFERENCES users(id) ON DELETE CASCADE,
   in_app_enabled BOOLEAN NOT NULL DEFAULT TRUE,

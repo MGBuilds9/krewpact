@@ -9,7 +9,7 @@ BEGIN;
 -- =========================
 CREATE TYPE rfi_status AS ENUM ('open', 'responded', 'closed', 'void');
 CREATE TYPE submittal_status AS ENUM ('draft', 'submitted', 'revise_and_resubmit', 'approved', 'approved_as_noted', 'rejected');
-CREATE TYPE workflow_state AS ENUM ('draft', 'submitted', 'in_review', 'approved', 'rejected', 'void');
+DO $$ BEGIN CREATE TYPE workflow_state AS ENUM ('draft', 'submitted', 'in_review', 'approved', 'rejected', 'void'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 CREATE TYPE co_status AS ENUM ('draft', 'submitted', 'client_review', 'approved', 'rejected', 'void');
 
 -- =========================

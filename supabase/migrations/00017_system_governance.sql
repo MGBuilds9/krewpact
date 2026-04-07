@@ -163,7 +163,7 @@ CREATE TABLE migration_batches (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE migration_records (
+CREATE TABLE IF NOT EXISTS migration_records (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   batch_id UUID NOT NULL REFERENCES migration_batches(id) ON DELETE CASCADE,
   source_type TEXT NOT NULL,
@@ -181,7 +181,7 @@ CREATE TABLE migration_records (
 
 CREATE INDEX idx_migration_records_batch_status ON migration_records(batch_id, status);
 
-CREATE TABLE migration_conflicts (
+CREATE TABLE IF NOT EXISTS migration_conflicts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   record_id UUID NOT NULL REFERENCES migration_records(id) ON DELETE CASCADE,
   conflict_type TEXT NOT NULL,
@@ -193,7 +193,7 @@ CREATE TABLE migration_conflicts (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE migration_attachments (
+CREATE TABLE IF NOT EXISTS migration_attachments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   record_id UUID NOT NULL REFERENCES migration_records(id) ON DELETE CASCADE,
   source_file_path TEXT NOT NULL,
