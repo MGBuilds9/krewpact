@@ -20,10 +20,17 @@ function verifyWebhookSecret(request: NextRequest): NextResponse | null {
     return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 });
   }
   const provided = request.headers.get('x-webhook-secret');
+  if (!provided) {
+    logger.warn('[erpnext-webhook] Invalid or missing webhook secret');
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const providedBuf = Buffer.from(provided);
+  const secretBuf = Buffer.from(secret);
+
   if (
-    !provided ||
-    provided.length !== secret.length ||
-    !timingSafeEqual(Buffer.from(provided), Buffer.from(secret))
+    providedBuf.byteLength !== secretBuf.byteLength ||
+    !timingSafeEqual(providedBuf, secretBuf)
   ) {
     logger.warn('[erpnext-webhook] Invalid or missing webhook secret');
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

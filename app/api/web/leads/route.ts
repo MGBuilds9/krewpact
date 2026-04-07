@@ -111,11 +111,18 @@ export const POST = withApiRoute(
     const signature = req.headers.get('x-webhook-secret');
     const secret = process.env.WEBHOOK_SIGNING_SECRET;
 
+    if (!secret || !signature) {
+      return NextResponse.json(
+        { error: 'Unauthorized: Invalid or missing secret' },
+        { status: 401 },
+      );
+    }
+    const signatureBuf = Buffer.from(signature);
+    const secretBuf = Buffer.from(secret);
+
     if (
-      !secret ||
-      !signature ||
-      signature.length !== secret.length ||
-      !timingSafeEqual(Buffer.from(signature), Buffer.from(secret))
+      signatureBuf.byteLength !== secretBuf.byteLength ||
+      !timingSafeEqual(signatureBuf, secretBuf)
     ) {
       return NextResponse.json(
         { error: 'Unauthorized: Invalid or missing secret' },
