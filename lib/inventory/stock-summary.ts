@@ -84,24 +84,44 @@ export async function getStockSummary(
   );
   const locationMap = new Map((locationsResult.data ?? []).map((l) => [l.id, l.name]));
 
-  // Apply division filter post-join (the view doesn't have division_id)
-  let enriched: StockSummaryRow[] = summaryData
-    .filter((r) => r.item_id && r.location_id)
-    .map((r) => {
-      const item = itemMap.get(r.item_id!);
-      return {
-        item_id: r.item_id!,
-        item_name: item?.name ?? 'Unknown',
-        item_sku: item?.sku ?? '',
-        location_id: r.location_id!,
-        location_name: locationMap.get(r.location_id!) ?? 'Unknown',
-        spot_id: r.spot_id ?? null,
-        qty_on_hand: Number(r.qty_on_hand ?? 0),
-        total_value: Number(r.total_value ?? 0),
-        last_transaction_at: r.last_transaction_at ?? null,
-        _division_id: item?.division_id,
-      };
+  // RLS consistency: inventory_stock_summary is a materialized view aggregated
+  // from inventory_ledger with no row-level security, so it returns rows for
+  // every item/location regardless of the caller's division access. The
+  // inventory_items and inventory_locations SELECTs above ARE RLS-gated, so
+  // unresolved keys in the maps mean the caller does not have permission to
+  // see those rows. Drop them rather than displaying 'Unknown' fallbacks —
+  // showing aggregated stock numbers for items the user can't open is both a
+  // UX bug and a soft information leak. The underlying matview RLS gap is
+  // tracked separately and needs a SECURITY INVOKER wrapper.
+  const visibleRows = summaryData.filter(
+    (r) => r.item_id && r.location_id && itemMap.has(r.item_id) && locationMap.has(r.location_id),
+  );
+
+  if (visibleRows.length < summaryData.length) {
+    logger.warn('Stock summary filtered RLS-restricted rows', {
+      total: summaryData.length,
+      visible: visibleRows.length,
+      hidden: summaryData.length - visibleRows.length,
     });
+  }
+
+  // Build enriched rows. Non-null assertions are safe because the filter above
+  // guarantees both maps have the keys.
+  let enriched: StockSummaryRow[] = visibleRows.map((r) => {
+    const item = itemMap.get(r.item_id!)!;
+    return {
+      item_id: r.item_id!,
+      item_name: item.name,
+      item_sku: item.sku ?? '',
+      location_id: r.location_id!,
+      location_name: locationMap.get(r.location_id!)!,
+      spot_id: r.spot_id ?? null,
+      qty_on_hand: Number(r.qty_on_hand ?? 0),
+      total_value: Number(r.total_value ?? 0),
+      last_transaction_at: r.last_transaction_at ?? null,
+      _division_id: item.division_id,
+    };
+  });
 
   // Division filter
   if (filters.divisionId) {

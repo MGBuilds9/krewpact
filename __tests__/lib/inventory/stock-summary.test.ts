@@ -267,6 +267,125 @@ describe('getStockSummary', () => {
 
     await expect(getStockSummary(mock.client, {})).rejects.toThrow('Stock summary query failed');
   });
+
+  // Regression: F1 — inventory items rendered as "Unknown"
+  // Found by /qa on 2026-04-07
+  // Report: .gstack/qa-reports/qa-report-krewpact-ca-2026-04-07-pr-verification.md
+  //
+  // The matview inventory_stock_summary has no RLS, so it returns rows for
+  // items/locations the caller cannot SELECT. The previous implementation
+  // fell back to 'Unknown' for unresolved rows, which displayed phantom
+  // stock positions to users who couldn't actually open the items. The fix
+  // filters those rows out so the UI shows only stock the user is authorized
+  // to inspect.
+  it('filters out rows whose item is RLS-restricted (no Unknown fallback)', async () => {
+    resolveAt(mock.table('inventory_stock_summary'), 'range', {
+      data: [
+        {
+          item_id: UUID.item1,
+          location_id: UUID.loc1,
+          spot_id: null,
+          qty_on_hand: 10,
+          total_value: 100,
+          last_transaction_at: null,
+        },
+        {
+          // RLS-restricted: not present in itemMap
+          item_id: UUID.item2,
+          location_id: UUID.loc1,
+          spot_id: null,
+          qty_on_hand: 20,
+          total_value: 200,
+          last_transaction_at: null,
+        },
+      ],
+      error: null,
+    });
+
+    resolveAt(mock.table('inventory_items'), 'in', {
+      // Only item1 returned; item2 is RLS-blocked
+      data: [{ id: UUID.item1, name: 'Visible Item', sku: 'V-001', division_id: UUID.div1 }],
+      error: null,
+    });
+
+    resolveAt(mock.table('inventory_locations'), 'in', {
+      data: [{ id: UUID.loc1, name: 'Warehouse A' }],
+      error: null,
+    });
+
+    const result = await getStockSummary(mock.client, { limit: 10 });
+
+    // Hidden row is dropped, not displayed with 'Unknown' fallback
+    expect(result.data).toHaveLength(1);
+    expect(result.data[0].item_id).toBe(UUID.item1);
+    expect(result.data[0].item_name).toBe('Visible Item');
+    expect(result.data.some((r) => r.item_name === 'Unknown')).toBe(false);
+  });
+
+  it('filters out rows whose location is RLS-restricted (no Unknown fallback)', async () => {
+    resolveAt(mock.table('inventory_stock_summary'), 'range', {
+      data: [
+        {
+          item_id: UUID.item1,
+          location_id: UUID.loc1,
+          spot_id: null,
+          qty_on_hand: 10,
+          total_value: 100,
+          last_transaction_at: null,
+        },
+      ],
+      error: null,
+    });
+
+    resolveAt(mock.table('inventory_items'), 'in', {
+      data: [{ id: UUID.item1, name: 'Visible Item', sku: 'V-001', division_id: UUID.div1 }],
+      error: null,
+    });
+
+    resolveAt(mock.table('inventory_locations'), 'in', {
+      // Location is RLS-blocked
+      data: [],
+      error: null,
+    });
+
+    const result = await getStockSummary(mock.client, { limit: 10 });
+
+    expect(result.data).toHaveLength(0);
+    expect(result.data.some((r) => r.location_name === 'Unknown')).toBe(false);
+  });
+
+  it('returns empty result when caller cannot resolve any rows (full RLS gap)', async () => {
+    resolveAt(mock.table('inventory_stock_summary'), 'range', {
+      data: [
+        {
+          item_id: UUID.item1,
+          location_id: UUID.loc1,
+          spot_id: null,
+          qty_on_hand: 10,
+          total_value: 100,
+          last_transaction_at: null,
+        },
+        {
+          item_id: UUID.item2,
+          location_id: UUID.loc1,
+          spot_id: null,
+          qty_on_hand: 20,
+          total_value: 200,
+          last_transaction_at: null,
+        },
+      ],
+      error: null,
+    });
+
+    // Caller has zero division access — items list is empty
+    resolveAt(mock.table('inventory_items'), 'in', { data: [], error: null });
+    resolveAt(mock.table('inventory_locations'), 'in', { data: [], error: null });
+
+    const result = await getStockSummary(mock.client, { limit: 10 });
+
+    expect(result.data).toHaveLength(0);
+    expect(result.total).toBe(0);
+  });
 });
 
 // ============================================================
