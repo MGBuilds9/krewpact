@@ -70,12 +70,19 @@ export function reconcileExport(
       details.push({
         employee_id: empId,
         status: 'missing_in_export',
-        actual_hours: (adpMap.get(empId)?.hours_regular ?? 0) + (adpMap.get(empId)?.hours_overtime ?? 0),
+        actual_hours:
+          (adpMap.get(empId)?.hours_regular ?? 0) + (adpMap.get(empId)?.hours_overtime ?? 0),
       });
     }
   }
 
-  return { matched, mismatched, missing_in_adp: missingInAdp, missing_in_export: missingInExport, details };
+  return {
+    matched,
+    mismatched,
+    missing_in_adp: missingInAdp,
+    missing_in_export: missingInExport,
+    details,
+  };
 }
 
 function parseAdpCsv(csvContent: string): ParsedAdpRow[] {

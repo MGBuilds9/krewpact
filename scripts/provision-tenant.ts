@@ -187,18 +187,11 @@ async function checkSlugAvailability(
   supabase: SupabaseClient,
   slug: string,
 ): Promise<{ id: string } | null> {
-  const { data } = await supabase
-    .from('organizations')
-    .select('id')
-    .eq('slug', slug)
-    .single();
+  const { data } = await supabase.from('organizations').select('id').eq('slug', slug).single();
   return data as { id: string } | null;
 }
 
-async function provisionOrg(
-  supabase: SupabaseClient,
-  cfg: TenantConfig,
-): Promise<string> {
+async function provisionOrg(supabase: SupabaseClient, cfg: TenantConfig): Promise<string> {
   const { data, error } = await supabase
     .from('organizations')
     .upsert(
@@ -318,7 +311,9 @@ async function provisionAdmin(
     // Create Clerk user if needed
     if (!clerkId && !skipClerk) {
       if (!getClerkSecretKey()) {
-        throw new Error('CLERK_SECRET_KEY required to create admin user. Use --skip-clerk to skip.');
+        throw new Error(
+          'CLERK_SECRET_KEY required to create admin user. Use --skip-clerk to skip.',
+        );
       }
 
       // Check if Clerk user already exists by email
@@ -351,7 +346,9 @@ async function provisionAdmin(
     }
 
     if (!clerkId) {
-      warnings.push('No Clerk user ID — admin record created without Clerk link. Set clerk_id manually.');
+      warnings.push(
+        'No Clerk user ID — admin record created without Clerk link. Set clerk_id manually.',
+      );
     }
 
     // Insert Supabase user
@@ -473,7 +470,8 @@ async function validateTenant(
     issues.push('No users assigned to this organization');
   } else {
     const admin = admins[0];
-    if (!admin.clerk_id) issues.push(`Admin user (${admin.email}) has no clerk_id — login will fail`);
+    if (!admin.clerk_id)
+      issues.push(`Admin user (${admin.email}) has no clerk_id — login will fail`);
 
     // Check admin has platform_admin role
     const { data: roles } = await supabase
@@ -493,7 +491,8 @@ async function validateTenant(
     .from('organizations')
     .select('id', { count: 'exact', head: true })
     .eq('slug', slug);
-  if (slugCount && slugCount > 1) issues.push(`CRITICAL: Duplicate slug '${slug}' in organizations`);
+  if (slugCount && slugCount > 1)
+    issues.push(`CRITICAL: Duplicate slug '${slug}' in organizations`);
 
   return issues;
 }
@@ -508,7 +507,9 @@ async function main() {
   const fileIdx = process.argv.findIndex((a) => a === '--file');
 
   if (fileIdx < 0 || !process.argv[fileIdx + 1]) {
-    console.error('Usage: npx tsx scripts/provision-tenant.ts --file <config.json> [--dry-run] [--skip-clerk]');
+    console.error(
+      'Usage: npx tsx scripts/provision-tenant.ts --file <config.json> [--dry-run] [--skip-clerk]',
+    );
     process.exit(1);
   }
 
@@ -559,9 +560,13 @@ async function main() {
   console.log(`  Subdomain:    ${org.subdomain ?? org.slug}.krewpact.com`);
   if (org.custom_domain) console.log(`  Custom domain: ${org.custom_domain}`);
   console.log(`  Divisions:    ${divCodes.join(', ') || '(none)'}`);
-  console.log(`  Feature flags: ${flagCount} total, ${enabledFlags.length} enabled (${enabledFlags.join(', ') || 'none'})`);
+  console.log(
+    `  Feature flags: ${flagCount} total, ${enabledFlags.length} enabled (${enabledFlags.join(', ') || 'none'})`,
+  );
   if (tenantConfig.admin) {
-    console.log(`  Admin:        ${tenantConfig.admin.email} (${tenantConfig.admin.first_name} ${tenantConfig.admin.last_name})`);
+    console.log(
+      `  Admin:        ${tenantConfig.admin.email} (${tenantConfig.admin.first_name} ${tenantConfig.admin.last_name})`,
+    );
     if (tenantConfig.admin.clerk_user_id) {
       console.log(`  Clerk user:   ${tenantConfig.admin.clerk_user_id} (pre-existing)`);
     }
@@ -674,8 +679,7 @@ async function main() {
 
 // Only run when executed directly (not imported for testing)
 const isDirectExecution =
-  process.argv[1]?.endsWith('provision-tenant.ts') ||
-  process.argv[1]?.endsWith('provision-tenant');
+  process.argv[1]?.endsWith('provision-tenant.ts') || process.argv[1]?.endsWith('provision-tenant');
 
 if (isDirectExecution) {
   config({ path: '.env.local' });

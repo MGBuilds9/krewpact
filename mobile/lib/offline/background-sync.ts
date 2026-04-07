@@ -55,9 +55,7 @@ export async function registerBackgroundSync(): Promise<void> {
       return;
     }
 
-    const isRegistered = await TaskManager.isTaskRegisteredAsync(
-      BACKGROUND_SYNC_TASK,
-    );
+    const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_SYNC_TASK);
 
     if (!isRegistered) {
       await BackgroundFetch.registerTaskAsync(BACKGROUND_SYNC_TASK, {
@@ -76,9 +74,7 @@ export async function registerBackgroundSync(): Promise<void> {
  */
 export async function unregisterBackgroundSync(): Promise<void> {
   try {
-    const isRegistered = await TaskManager.isTaskRegisteredAsync(
-      BACKGROUND_SYNC_TASK,
-    );
+    const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_SYNC_TASK);
     if (isRegistered) {
       await BackgroundFetch.unregisterTaskAsync(BACKGROUND_SYNC_TASK);
     }
@@ -95,9 +91,7 @@ export async function isBackgroundSyncAvailable(): Promise<{
   status: BackgroundFetch.BackgroundFetchStatus | null;
 }> {
   const status = await BackgroundFetch.getStatusAsync();
-  const registered = await TaskManager.isTaskRegisteredAsync(
-    BACKGROUND_SYNC_TASK,
-  );
+  const registered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_SYNC_TASK);
 
   return { registered, status };
 }

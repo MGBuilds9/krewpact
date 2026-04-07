@@ -5,9 +5,7 @@ import {
   type QualityInspectionMapInput,
 } from '@/lib/erp/quality-inspection-mapper';
 
-function makeInput(
-  overrides: Partial<QualityInspectionMapInput> = {},
-): QualityInspectionMapInput {
+function makeInput(overrides: Partial<QualityInspectionMapInput> = {}): QualityInspectionMapInput {
   return {
     id: 'qi-001',
     inspection_type: 'Incoming',

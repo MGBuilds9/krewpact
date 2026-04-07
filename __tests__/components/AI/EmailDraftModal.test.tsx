@@ -43,8 +43,13 @@ vi.mock('@/components/ui/dialog', () => {
   const DialogFooter = ({ children }: { children: React.ReactNode }) =>
     React.createElement('div', null, children);
 
-  const DialogDescription = ({ children, className }: { children?: React.ReactNode; className?: string }) =>
-    React.createElement('p', { className }, children);
+  const DialogDescription = ({
+    children,
+    className,
+  }: {
+    children?: React.ReactNode;
+    className?: string;
+  }) => React.createElement('p', { className }, children);
 
   return { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter };
 });

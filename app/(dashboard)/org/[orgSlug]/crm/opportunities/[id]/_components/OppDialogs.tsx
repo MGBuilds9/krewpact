@@ -41,7 +41,11 @@ export function OppDialogs({
         entityType="opportunity"
         entityId={opportunityId}
       />
-      <WonDealDialog opportunity={opportunity} open={wonDialogOpen} onOpenChange={setWonDialogOpen} />
+      <WonDealDialog
+        opportunity={opportunity}
+        open={wonDialogOpen}
+        onOpenChange={setWonDialogOpen}
+      />
       <LostDealDialog
         opportunity={opportunity}
         open={lostDialogOpen}

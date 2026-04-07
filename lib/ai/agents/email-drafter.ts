@@ -103,8 +103,7 @@ export async function draftEmail(input: DraftEmailInput): Promise<DraftEmailOutp
   }
 
   const companyDesc =
-    branding.company_description ||
-    `a construction company in the Greater Toronto Area`;
+    branding.company_description || `a construction company in the Greater Toronto Area`;
 
   const draftPrompts: Record<DraftType, string> = {
     follow_up:

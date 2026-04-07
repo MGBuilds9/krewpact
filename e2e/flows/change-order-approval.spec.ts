@@ -11,7 +11,6 @@ import { orgUrl } from '../helpers/fixtures';
 // real data exists.
 
 test.describe('Change Order Approval Workflow', () => {
-
   test('projects list loads — prerequisite for change order navigation', async ({ page }) => {
     await page.goto(orgUrl('/projects'));
     await expect(page.locator('main')).toBeVisible({ timeout: 10_000 });

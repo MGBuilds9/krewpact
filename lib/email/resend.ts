@@ -31,9 +31,7 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
   }
 
   const senderName = params.branding?.company_name;
-  const defaultFrom = senderName
-    ? `${senderName} <noreply@updates.krewpact.com>`
-    : DEFAULT_FROM;
+  const defaultFrom = senderName ? `${senderName} <noreply@updates.krewpact.com>` : DEFAULT_FROM;
   const from = params.from ?? process.env.RESEND_FROM_EMAIL ?? defaultFrom;
 
   const testOverride = process.env.NODE_ENV !== 'production' ? process.env.ALERT_EMAIL : undefined;

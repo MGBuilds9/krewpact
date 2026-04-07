@@ -65,9 +65,7 @@ describe('StageProgressBar', () => {
       { from_stage: 'proposal', to_stage: 'negotiation' },
       { from_stage: 'negotiation', to_stage: 'won' },
     ];
-    const { container } = render(
-      <StageProgressBar currentStage="won" stageHistory={history} />,
-    );
+    const { container } = render(<StageProgressBar currentStage="won" stageHistory={history} />);
     const currentStep = container.querySelector('[aria-current="step"]');
     expect(currentStep?.textContent).toContain('Won');
     // All 5 stages before won should be completed

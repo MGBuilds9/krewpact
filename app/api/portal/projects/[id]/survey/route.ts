@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { dbError,forbidden } from '@/lib/api/errors';
+import { dbError, forbidden } from '@/lib/api/errors';
 import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClient, createUserClientSafe } from '@/lib/supabase/server';
 import { surveySubmissionSchema } from '@/lib/validators/portal-survey';

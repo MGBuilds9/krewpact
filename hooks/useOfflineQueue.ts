@@ -2,11 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import {
-  addToQueue,
-  countByStatus,
-  getItemsByStatus,
-} from '@/lib/offline/store';
+import { addToQueue, countByStatus, getItemsByStatus } from '@/lib/offline/store';
 import { processQueue, startAutoSync } from '@/lib/offline/sync-engine';
 import type {
   OfflineAction,
@@ -48,9 +44,7 @@ interface UseOfflineQueueReturn {
  */
 export function useOfflineQueue(): UseOfflineQueueReturn {
   const { isOnline } = useOnlineStatus();
-  const [counts, setCounts] = useState<
-    Record<OfflineQueueStatus, number>
-  >({
+  const [counts, setCounts] = useState<Record<OfflineQueueStatus, number>>({
     pending: 0,
     syncing: 0,
     synced: 0,
@@ -58,9 +52,7 @@ export function useOfflineQueue(): UseOfflineQueueReturn {
     dead_letter: 0,
   });
   const [isSyncing, setIsSyncing] = useState(false);
-  const [deadLetterItems, setDeadLetterItems] = useState<
-    OfflineQueueItem[]
-  >([]);
+  const [deadLetterItems, setDeadLetterItems] = useState<OfflineQueueItem[]>([]);
   const autoSyncCleanup = useRef<(() => void) | null>(null);
 
   const refresh = useCallback(async () => {

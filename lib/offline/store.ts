@@ -80,7 +80,7 @@ export async function addToQueue(params: AddToQueueParams): Promise<number> {
   if (quota.percent_used >= QUOTA_BLOCK_PERCENT) {
     throw new Error(
       `Storage quota exceeded (${quota.percent_used.toFixed(1)}%). ` +
-      'Clear synced items or free device storage.',
+        'Clear synced items or free device storage.',
     );
   }
 
@@ -107,17 +107,13 @@ export async function getAllItems(): Promise<OfflineQueueItem[]> {
 }
 
 /** Get items filtered by status */
-export async function getItemsByStatus(
-  status: OfflineQueueStatus,
-): Promise<OfflineQueueItem[]> {
+export async function getItemsByStatus(status: OfflineQueueStatus): Promise<OfflineQueueItem[]> {
   const db = await getDB();
   return db.getAllFromIndex(STORE_NAME, 'by-status', status);
 }
 
 /** Get a single item by ID */
-export async function getItem(
-  id: number,
-): Promise<OfflineQueueItem | undefined> {
+export async function getItem(id: number): Promise<OfflineQueueItem | undefined> {
   const db = await getDB();
   return db.get(STORE_NAME, id);
 }
@@ -128,17 +124,11 @@ export async function getItemsByEntity(
   entity_id: string,
 ): Promise<OfflineQueueItem[]> {
   const db = await getDB();
-  return db.getAllFromIndex(
-    STORE_NAME,
-    'by-entity',
-    [entity_type, entity_id],
-  );
+  return db.getAllFromIndex(STORE_NAME, 'by-entity', [entity_type, entity_id]);
 }
 
 /** Update an existing queue item */
-export async function updateItem(
-  item: OfflineQueueItem,
-): Promise<void> {
+export async function updateItem(item: OfflineQueueItem): Promise<void> {
   if (item.id === undefined) {
     throw new Error('Cannot update item without id');
   }
@@ -158,11 +148,7 @@ export async function deleteItem(id: number): Promise<void> {
  */
 export async function clearSyncedItems(): Promise<number> {
   const db = await getDB();
-  const synced = await db.getAllFromIndex(
-    STORE_NAME,
-    'by-status',
-    'synced',
-  );
+  const synced = await db.getAllFromIndex(STORE_NAME, 'by-status', 'synced');
   const tx = db.transaction(STORE_NAME, 'readwrite');
   for (const item of synced) {
     if (item.id !== undefined) {
@@ -174,9 +160,7 @@ export async function clearSyncedItems(): Promise<number> {
 }
 
 /** Count items by status (for sync status display) */
-export async function countByStatus(): Promise<
-  Record<OfflineQueueStatus, number>
-> {
+export async function countByStatus(): Promise<Record<OfflineQueueStatus, number>> {
   const items = await getAllItems();
   const counts: Record<OfflineQueueStatus, number> = {
     pending: 0,
@@ -206,8 +190,7 @@ export async function getStorageQuota(): Promise<StorageQuota> {
     const estimate = await navigator.storage.estimate();
     const used = estimate.usage ?? 0;
     const available = estimate.quota ?? 0;
-    const percent_used =
-      available > 0 ? (used / available) * 100 : 0;
+    const percent_used = available > 0 ? (used / available) * 100 : 0;
     return { used, available, percent_used };
   }
 
@@ -226,9 +209,7 @@ export async function getStorageQuota(): Promise<StorageQuota> {
  * Check if storage quota is in warning zone.
  * Returns 'ok' | 'warning' | 'blocked'.
  */
-export async function checkQuotaHealth(): Promise<
-  'ok' | 'warning' | 'blocked'
-> {
+export async function checkQuotaHealth(): Promise<'ok' | 'warning' | 'blocked'> {
   const quota = await getStorageQuota();
   if (quota.percent_used >= QUOTA_BLOCK_PERCENT) return 'blocked';
   if (quota.percent_used >= QUOTA_WARN_PERCENT) return 'warning';

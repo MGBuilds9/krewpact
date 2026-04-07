@@ -179,9 +179,28 @@ describe('processSequences', () => {
         const createChain = (): Record<string, unknown> => {
           const c: Record<string, unknown> = {};
           const methods = [
-            'select', 'insert', 'update', 'delete', 'eq', 'lte', 'order',
-            'limit', 'range', 'neq', 'gt', 'gte', 'lt', 'ilike', 'is',
-            'or', 'not', 'contains', 'containedBy', 'filter', 'match', 'in',
+            'select',
+            'insert',
+            'update',
+            'delete',
+            'eq',
+            'lte',
+            'order',
+            'limit',
+            'range',
+            'neq',
+            'gt',
+            'gte',
+            'lt',
+            'ilike',
+            'is',
+            'or',
+            'not',
+            'contains',
+            'containedBy',
+            'filter',
+            'match',
+            'in',
           ];
           for (const m of methods) {
             c[m] = vi.fn().mockImplementation(() => createChain());
@@ -247,9 +266,28 @@ describe('processSequences', () => {
         const createChain = (): Record<string, unknown> => {
           const c: Record<string, unknown> = {};
           const methods = [
-            'select', 'insert', 'update', 'delete', 'eq', 'lte', 'order',
-            'limit', 'range', 'neq', 'gt', 'gte', 'lt', 'ilike', 'is',
-            'or', 'not', 'contains', 'containedBy', 'filter', 'match', 'in',
+            'select',
+            'insert',
+            'update',
+            'delete',
+            'eq',
+            'lte',
+            'order',
+            'limit',
+            'range',
+            'neq',
+            'gt',
+            'gte',
+            'lt',
+            'ilike',
+            'is',
+            'or',
+            'not',
+            'contains',
+            'containedBy',
+            'filter',
+            'match',
+            'in',
           ];
           for (const m of methods) {
             c[m] = vi.fn().mockImplementation(() => createChain());
@@ -311,9 +349,28 @@ describe('processSequences', () => {
         const createChain = (): Record<string, unknown> => {
           const c: Record<string, unknown> = {};
           const methods = [
-            'select', 'insert', 'update', 'delete', 'eq', 'lte', 'order',
-            'limit', 'range', 'neq', 'gt', 'gte', 'lt', 'ilike', 'is',
-            'or', 'not', 'contains', 'containedBy', 'filter', 'match', 'in',
+            'select',
+            'insert',
+            'update',
+            'delete',
+            'eq',
+            'lte',
+            'order',
+            'limit',
+            'range',
+            'neq',
+            'gt',
+            'gte',
+            'lt',
+            'ilike',
+            'is',
+            'or',
+            'not',
+            'contains',
+            'containedBy',
+            'filter',
+            'match',
+            'in',
           ];
           for (const m of methods) {
             if (m === 'insert') {
@@ -411,9 +468,28 @@ describe('processSequences', () => {
         const createChain = (): Record<string, unknown> => {
           const c: Record<string, unknown> = {};
           const methods = [
-            'select', 'insert', 'update', 'delete', 'eq', 'lte', 'order',
-            'limit', 'range', 'neq', 'gt', 'gte', 'lt', 'ilike', 'is',
-            'or', 'not', 'contains', 'containedBy', 'filter', 'match', 'in',
+            'select',
+            'insert',
+            'update',
+            'delete',
+            'eq',
+            'lte',
+            'order',
+            'limit',
+            'range',
+            'neq',
+            'gt',
+            'gte',
+            'lt',
+            'ilike',
+            'is',
+            'or',
+            'not',
+            'contains',
+            'containedBy',
+            'filter',
+            'match',
+            'in',
           ];
           for (const m of methods) {
             c[m] = vi.fn().mockImplementation(() => createChain());
@@ -491,9 +567,28 @@ describe('processSequences', () => {
         const createChain = (): Record<string, unknown> => {
           const c: Record<string, unknown> = {};
           const methods = [
-            'select', 'insert', 'update', 'delete', 'eq', 'lte', 'order',
-            'limit', 'range', 'neq', 'gt', 'gte', 'lt', 'ilike', 'is',
-            'or', 'not', 'contains', 'containedBy', 'filter', 'match', 'in',
+            'select',
+            'insert',
+            'update',
+            'delete',
+            'eq',
+            'lte',
+            'order',
+            'limit',
+            'range',
+            'neq',
+            'gt',
+            'gte',
+            'lt',
+            'ilike',
+            'is',
+            'or',
+            'not',
+            'contains',
+            'containedBy',
+            'filter',
+            'match',
+            'in',
           ];
           for (const m of methods) {
             c[m] = vi.fn().mockImplementation(() => createChain());
@@ -554,9 +649,28 @@ describe('processSequences', () => {
         const createChain = (): Record<string, unknown> => {
           const c: Record<string, unknown> = {};
           const methods = [
-            'select', 'insert', 'update', 'delete', 'eq', 'lte', 'order',
-            'limit', 'range', 'neq', 'gt', 'gte', 'lt', 'ilike', 'is',
-            'or', 'not', 'contains', 'containedBy', 'filter', 'match', 'in',
+            'select',
+            'insert',
+            'update',
+            'delete',
+            'eq',
+            'lte',
+            'order',
+            'limit',
+            'range',
+            'neq',
+            'gt',
+            'gte',
+            'lt',
+            'ilike',
+            'is',
+            'or',
+            'not',
+            'contains',
+            'containedBy',
+            'filter',
+            'match',
+            'in',
           ];
           for (const m of methods) {
             c[m] = vi.fn().mockImplementation(() => createChain());
@@ -624,9 +738,28 @@ describe('processSequences', () => {
         const createChain = (): Record<string, unknown> => {
           const c: Record<string, unknown> = {};
           const methods = [
-            'select', 'insert', 'update', 'delete', 'eq', 'lte', 'order',
-            'limit', 'range', 'neq', 'gt', 'gte', 'lt', 'ilike', 'is',
-            'or', 'not', 'contains', 'containedBy', 'filter', 'match', 'in',
+            'select',
+            'insert',
+            'update',
+            'delete',
+            'eq',
+            'lte',
+            'order',
+            'limit',
+            'range',
+            'neq',
+            'gt',
+            'gte',
+            'lt',
+            'ilike',
+            'is',
+            'or',
+            'not',
+            'contains',
+            'containedBy',
+            'filter',
+            'match',
+            'in',
           ];
           for (const m of methods) {
             if (m === 'insert') {
@@ -729,9 +862,28 @@ describe('processSequences', () => {
         const createChain = (): Record<string, unknown> => {
           const c: Record<string, unknown> = {};
           const methods = [
-            'select', 'insert', 'update', 'delete', 'eq', 'lte', 'order',
-            'limit', 'range', 'neq', 'gt', 'gte', 'lt', 'ilike', 'is',
-            'or', 'not', 'contains', 'containedBy', 'filter', 'match', 'in',
+            'select',
+            'insert',
+            'update',
+            'delete',
+            'eq',
+            'lte',
+            'order',
+            'limit',
+            'range',
+            'neq',
+            'gt',
+            'gte',
+            'lt',
+            'ilike',
+            'is',
+            'or',
+            'not',
+            'contains',
+            'containedBy',
+            'filter',
+            'match',
+            'in',
           ];
           for (const m of methods) {
             if (m === 'insert') {

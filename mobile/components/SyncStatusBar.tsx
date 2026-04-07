@@ -1,11 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING } from '@/constants/config';
 import { countByStatus } from '@/lib/offline/store';
@@ -78,49 +72,28 @@ export function SyncStatusBar() {
   }
 
   return (
-    <View
-      style={[
-        styles.container,
-        !isOnline && styles.offline,
-        hasIssues && styles.hasIssues,
-      ]}
-    >
+    <View style={[styles.container, !isOnline && styles.offline, hasIssues && styles.hasIssues]}>
       <View style={styles.statusRow}>
         {/* Online/Offline indicator */}
         <View style={styles.indicator}>
           <View
-            style={[
-              styles.dot,
-              { backgroundColor: isOnline ? COLORS.success : COLORS.danger },
-            ]}
+            style={[styles.dot, { backgroundColor: isOnline ? COLORS.success : COLORS.danger }]}
           />
-          <Text style={styles.statusText}>
-            {isOnline ? 'Online' : 'Offline'}
-          </Text>
+          <Text style={styles.statusText}>{isOnline ? 'Online' : 'Offline'}</Text>
         </View>
 
         {/* Pending count */}
         {totalPending > 0 && (
           <View style={styles.pendingChip}>
-            <Ionicons
-              name="cloud-upload-outline"
-              size={14}
-              color={COLORS.warning}
-            />
-            <Text style={styles.pendingText}>
-              {totalPending} pending
-            </Text>
+            <Ionicons name="cloud-upload-outline" size={14} color={COLORS.warning} />
+            <Text style={styles.pendingText}>{totalPending} pending</Text>
           </View>
         )}
 
         {/* Dead letter warning */}
         {hasIssues && (
           <View style={styles.errorChip}>
-            <Ionicons
-              name="alert-circle"
-              size={14}
-              color={COLORS.danger}
-            />
+            <Ionicons name="alert-circle" size={14} color={COLORS.danger} />
             <Text style={styles.errorText}>
               {deadLetterCount} conflict{deadLetterCount > 1 ? 's' : ''}
             </Text>
@@ -145,11 +118,7 @@ export function SyncStatusBar() {
       </View>
 
       {/* Last sync time */}
-      {lastSync && (
-        <Text style={styles.lastSync}>
-          Last synced: {formatRelativeTime(lastSync)}
-        </Text>
-      )}
+      {lastSync && <Text style={styles.lastSync}>Last synced: {formatRelativeTime(lastSync)}</Text>}
     </View>
   );
 }

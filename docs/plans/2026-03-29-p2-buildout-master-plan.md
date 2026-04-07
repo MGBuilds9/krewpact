@@ -9,11 +9,11 @@
 
 ## Tool Decisions
 
-| Tool | Decision | Rationale |
-|------|----------|-----------|
-| **Repomix** | **Install + use** | Domain-scoped context packs for fresh agents. Full repo too large (~1M tokens), but `--include` scoped packs (50-150K tokens) are perfect for giving each phase's agents focused context. |
+| Tool                    | Decision          | Rationale                                                                                                                                                                                   |
+| ----------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Repomix**             | **Install + use** | Domain-scoped context packs for fresh agents. Full repo too large (~1M tokens), but `--include` scoped packs (50-150K tokens) are perfect for giving each phase's agents focused context.   |
 | **Codebase Memory MCP** | **Install + use** | Structural graph queries (`trace_call_path`, `detect_changes`) are valuable for 365-route codebase. Helps agents map blast radius before multi-file changes. Low-priority but worth having. |
-| **Aider** | **Skip** | Claude Code subagents + worktrees + MCP already cover everything Aider does, with better orchestration. Only unique feature (repo map) doesn't justify a second uncoordinated tool. |
+| **Aider**               | **Skip**          | Claude Code subagents + worktrees + MCP already cover everything Aider does, with better orchestration. Only unique feature (repo map) doesn't justify a second uncoordinated tool.         |
 
 ---
 
@@ -42,6 +42,7 @@ Phase 0: Tooling Setup
 ## Phase 0: Tooling Setup (1 session, ~15 min)
 
 ### Goal
+
 Install Repomix + Codebase Memory MCP. Generate baseline context packs. Index codebase.
 
 ### Steps
@@ -85,6 +86,7 @@ echo ".repomix/" >> .gitignore
 ```
 
 ### Verification
+
 - `repomix --version` returns version
 - `.repomix/` has 4 XML context packs, each < 150K tokens
 - Codebase Memory MCP responds to `search_graph` queries
@@ -94,15 +96,16 @@ echo ".repomix/" >> .gitignore
 ## Phase 1: ADP CSV Pipeline (2-3 sessions)
 
 ### Goal
+
 Build CSV export/import pipeline for ADP payroll sync. No live API — CSV files are the transport.
 
 ### Agent Team (3 agents, 1 session)
 
-| Agent | Role | Files |
-|-------|------|-------|
-| Agent 1A | Schema + migration | `supabase/migrations/`, `lib/validators/payroll.ts` |
-| Agent 1B | Service + queue | `lib/services/payroll.ts`, `lib/queue/`, `app/api/queue/process/` |
-| Agent 1C | API routes + UI | `app/api/payroll/`, `app/(dashboard)/.../timesheets/` |
+| Agent    | Role               | Files                                                             |
+| -------- | ------------------ | ----------------------------------------------------------------- |
+| Agent 1A | Schema + migration | `supabase/migrations/`, `lib/validators/payroll.ts`               |
+| Agent 1B | Service + queue    | `lib/services/payroll.ts`, `lib/queue/`, `app/api/queue/process/` |
+| Agent 1C | API routes + UI    | `app/api/payroll/`, `app/(dashboard)/.../timesheets/`             |
 
 ### Shared Task List
 
@@ -129,6 +132,7 @@ Build CSV export/import pipeline for ADP payroll sync. No live API — CSV files
 ```
 
 ### Pitfalls for Agents
+
 - `time_entries` table has `project_id`, `task_id`, `cost_code` — join these for export
 - ADP CSV format: employee_id, hours_regular, hours_overtime, cost_code, pay_rate, department
 - Field mappings should be configurable (admin UI later), hardcoded for MVP
@@ -136,6 +140,7 @@ Build CSV export/import pipeline for ADP payroll sync. No live API — CSV files
 - RBAC: only `payroll_admin` and `platform_admin` can trigger exports
 
 ### Phase Gate
+
 ```bash
 npm run lint && npm run typecheck && npm run test -- --run
 # Must pass: all existing 4,793+ tests + new payroll tests
@@ -143,6 +148,7 @@ npm run lint && npm run typecheck && npm run test -- --run
 ```
 
 ### Context Handoff (for next session)
+
 ```bash
 npx repomix --include "lib/services/payroll.ts,lib/queue/**,app/api/payroll/**,lib/validators/payroll.ts" -o .repomix/adp-phase1-complete.xml
 ```
@@ -152,26 +158,27 @@ npx repomix --include "lib/services/payroll.ts,lib/queue/**,app/api/payroll/**,l
 ## Phase 2: ERPNext Extended Mappings (3-4 sessions)
 
 ### Goal
+
 Add 31 remaining ERPNext doctype mappings. ERPNext is live, tunnel is up.
 
 ### Agent Team (3 agents per batch, 4 batches)
 
 **Batch strategy:** Group doctypes by dependency chain, 8 per batch.
 
-| Batch | Doctypes | Dependencies |
-|-------|----------|-------------|
-| 2A | Purchase Order, Purchase Receipt, Supplier Quotation, Request for Quotation, Material Request, Stock Entry, Warehouse, Item | Foundation — procurement chain |
-| 2B | Payment Entry, Journal Entry, GL Entry (read), Bank Account, Mode of Payment, Cost Center, Budget | Finance chain — depends on existing Invoice read |
-| 2C | BOM, Work Order, Quality Inspection, Serial No, Batch, UOM, Item Price, Price List | Manufacturing/inventory chain |
-| 2D | Employee, Attendance, Leave Application, Holiday List, Designation, Department, HR Settings, Company | HR/org chain — feeds into ADP |
+| Batch | Doctypes                                                                                                                    | Dependencies                                     |
+| ----- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| 2A    | Purchase Order, Purchase Receipt, Supplier Quotation, Request for Quotation, Material Request, Stock Entry, Warehouse, Item | Foundation — procurement chain                   |
+| 2B    | Payment Entry, Journal Entry, GL Entry (read), Bank Account, Mode of Payment, Cost Center, Budget                           | Finance chain — depends on existing Invoice read |
+| 2C    | BOM, Work Order, Quality Inspection, Serial No, Batch, UOM, Item Price, Price List                                          | Manufacturing/inventory chain                    |
+| 2D    | Employee, Attendance, Leave Application, Holiday List, Designation, Department, HR Settings, Company                        | HR/org chain — feeds into ADP                    |
 
 ### Per-Batch Agent Team
 
-| Agent | Role |
-|-------|------|
+| Agent           | Role                                                          |
+| --------------- | ------------------------------------------------------------- |
 | Agent 2X-Mapper | Add mapping to `lib/erp/client.ts` (CRUD methods for doctype) |
-| Agent 2X-Sync | Add QStash sync job type + processor + outbox/inbox logic |
-| Agent 2X-Test | Write integration tests (mock ERPNext responses) |
+| Agent 2X-Sync   | Add QStash sync job type + processor + outbox/inbox logic     |
+| Agent 2X-Test   | Write integration tests (mock ERPNext responses)              |
 
 ### Shared Task List (per batch, example for 2A)
 
@@ -193,6 +200,7 @@ Add 31 remaining ERPNext doctype mappings. ERPNext is live, tunnel is up.
 ```
 
 ### Pitfalls for Agents
+
 - ALL calls through `lib/erp/client.ts` — the sole ERPNext access point
 - Auth: `Authorization: token {key}:{secret}` header
 - Rate limit: 300 req/min — batch sync must respect this
@@ -202,6 +210,7 @@ Add 31 remaining ERPNext doctype mappings. ERPNext is live, tunnel is up.
 - Dead-letter after 3 retries — write to `erp_sync_errors` table
 
 ### Phase Gate
+
 Same lint/typecheck/test gate + manual ERPNext API smoke test per batch.
 
 ---
@@ -209,6 +218,7 @@ Same lint/typecheck/test gate + manual ERPNext API smoke test per batch.
 ## Phase 3: Offline/PWA Engine (3-4 sessions)
 
 ### Goal
+
 Build IndexedDB-based offline queue with sync engine and conflict resolution. This is the critical path — Phase 4 (Mobile) depends on it.
 
 ### Architecture Decision
@@ -249,12 +259,12 @@ Build IndexedDB-based offline queue with sync engine and conflict resolution. Th
 
 ### Agent Team (4 agents)
 
-| Agent | Role | Files |
-|-------|------|-------|
-| Agent 3A | IndexedDB store | `lib/offline/store.ts`, `lib/offline/types.ts` |
-| Agent 3B | Sync engine | `lib/offline/sync-engine.ts`, `lib/offline/conflict-resolver.ts` |
-| Agent 3C | React hooks | `hooks/use-offline-queue.ts`, `hooks/use-online-status.ts`, `hooks/use-sync-status.ts` |
-| Agent 3D | Service worker | `app/sw.ts` (enhance existing), `app/offline/page.tsx` |
+| Agent    | Role            | Files                                                                                  |
+| -------- | --------------- | -------------------------------------------------------------------------------------- |
+| Agent 3A | IndexedDB store | `lib/offline/store.ts`, `lib/offline/types.ts`                                         |
+| Agent 3B | Sync engine     | `lib/offline/sync-engine.ts`, `lib/offline/conflict-resolver.ts`                       |
+| Agent 3C | React hooks     | `hooks/use-offline-queue.ts`, `hooks/use-online-status.ts`, `hooks/use-sync-status.ts` |
+| Agent 3D | Service worker  | `app/sw.ts` (enhance existing), `app/offline/page.tsx`                                 |
 
 ### Shared Task List
 
@@ -288,6 +298,7 @@ Build IndexedDB-based offline queue with sync engine and conflict resolution. Th
 ```
 
 ### Pitfalls for Agents
+
 - `idb` library (tiny IndexedDB wrapper) — don't use raw IndexedDB API
 - Serwist is already configured (`@serwist/next` in devDeps) — enhance, don't replace
 - Conflict resolution must be deterministic — same inputs always produce same output
@@ -298,6 +309,7 @@ Build IndexedDB-based offline queue with sync engine and conflict resolution. Th
 - Test offline behavior: Chrome DevTools → Network → Offline toggle
 
 ### Phase Gate
+
 ```bash
 npm run lint && npm run typecheck && npm run test -- --run
 # Additional: browser test with Network → Offline
@@ -309,20 +321,22 @@ npm run lint && npm run typecheck && npm run test -- --run
 ## Phase 4: Mobile Expo App (4-5 sessions)
 
 ### Goal
+
 Build field worker mobile app using Expo SDK 54. Shares offline engine from Phase 3.
 
 ### Prerequisites
+
 - Phase 3 (Offline/PWA) complete — sync engine is the shared foundation
 - `mobile/` directory already scaffolded with Expo SDK 54
 
 ### Agent Team (4 agents)
 
-| Agent | Role | Files |
-|-------|------|-------|
-| Agent 4A | Navigation + auth | `mobile/app/`, Expo Router, Clerk auth |
-| Agent 4B | Core screens | Daily logs, time entry, safety forms |
-| Agent 4C | Camera + offline | Photo capture, offline queue (reuse Phase 3 engine) |
-| Agent 4D | Sync + notifications | Background sync, push notifications |
+| Agent    | Role                 | Files                                               |
+| -------- | -------------------- | --------------------------------------------------- |
+| Agent 4A | Navigation + auth    | `mobile/app/`, Expo Router, Clerk auth              |
+| Agent 4B | Core screens         | Daily logs, time entry, safety forms                |
+| Agent 4C | Camera + offline     | Photo capture, offline queue (reuse Phase 3 engine) |
+| Agent 4D | Sync + notifications | Background sync, push notifications                 |
 
 ### Shared Task List
 
@@ -349,6 +363,7 @@ Build field worker mobile app using Expo SDK 54. Shares offline engine from Phas
 ```
 
 ### Pitfalls for Agents
+
 - React Native doesn't have IndexedDB — use `expo-sqlite` or `@op-engineering/op-sqlite`
 - The sync engine interface from Phase 3 must be abstractable (IndexedDB for web, SQLite for mobile)
 - Expo Router uses file-based routing like Next.js — leverage that familiarity
@@ -359,6 +374,7 @@ Build field worker mobile app using Expo SDK 54. Shares offline engine from Phas
 - Clerk Expo SDK: `@clerk/clerk-expo` — different from `@clerk/nextjs`
 
 ### Phase Gate
+
 ```bash
 cd mobile && npx expo-doctor && npm run typecheck
 # EAS Build (dev client) for iOS + Android
@@ -387,6 +403,7 @@ claude
 ### How phases hand off to each other
 
 Each phase ends with:
+
 1. All tests passing (quality gate)
 2. Session log written to CLAUDE.md
 3. Updated Repomix context pack generated
@@ -394,6 +411,7 @@ Each phase ends with:
 5. `/log-and-exit` executed
 
 Each phase starts with:
+
 1. Read master plan (this file)
 2. Read previous phase's session log in CLAUDE.md
 3. Read phase-specific Repomix context pack
@@ -403,6 +421,7 @@ Each phase starts with:
 ### Codebase Memory MCP between phases
 
 After installation, each new session can:
+
 ```
 # Query structural dependencies before making changes
 search_graph("withApiRoute")  → find all routes using the wrapper
@@ -414,26 +433,26 @@ detect_changes(git_diff)  → map blast radius before PR
 
 ## Timeline Estimate
 
-| Phase | Sessions | Calendar Days | Parallel? |
-|-------|----------|---------------|-----------|
-| Phase 0 (Tooling) | 1 | Day 1 | — |
-| Phase 1 (ADP CSV) | 2-3 | Days 2-4 | Yes, with 2 & 3 |
-| Phase 2 (ERPNext) | 3-4 | Days 2-6 | Yes, with 1 & 3 |
-| Phase 3 (Offline) | 3-4 | Days 2-6 | Yes, with 1 & 2 |
-| Phase 4 (Mobile) | 4-5 | Days 7-12 | After Phase 3 |
-| **Total** | **13-17** | **~12 days** | |
+| Phase             | Sessions  | Calendar Days | Parallel?       |
+| ----------------- | --------- | ------------- | --------------- |
+| Phase 0 (Tooling) | 1         | Day 1         | —               |
+| Phase 1 (ADP CSV) | 2-3       | Days 2-4      | Yes, with 2 & 3 |
+| Phase 2 (ERPNext) | 3-4       | Days 2-6      | Yes, with 1 & 3 |
+| Phase 3 (Offline) | 3-4       | Days 2-6      | Yes, with 1 & 2 |
+| Phase 4 (Mobile)  | 4-5       | Days 7-12     | After Phase 3   |
+| **Total**         | **13-17** | **~12 days**  |                 |
 
 ---
 
 ## Success Criteria
 
-| Metric | Target |
-|--------|--------|
-| Tests | 5,500+ (current 4,793 + ~150 per phase) |
-| Type errors | 0 |
-| Lint errors | 0 |
-| ADP | CSV export + reconciliation working |
-| ERPNext | 43/43 doctype mappings (12 existing + 31 new) |
-| Offline | Daily logs, time, safety, photos work offline with sync |
-| Mobile | Expo dev build on iOS + Android, field test passing |
-| Blueprint alignment | 98+/100 |
+| Metric              | Target                                                  |
+| ------------------- | ------------------------------------------------------- |
+| Tests               | 5,500+ (current 4,793 + ~150 per phase)                 |
+| Type errors         | 0                                                       |
+| Lint errors         | 0                                                       |
+| ADP                 | CSV export + reconciliation working                     |
+| ERPNext             | 43/43 doctype mappings (12 existing + 31 new)           |
+| Offline             | Daily logs, time, safety, photos work offline with sync |
+| Mobile              | Expo dev build on iOS + Android, field test passing     |
+| Blueprint alignment | 98+/100                                                 |

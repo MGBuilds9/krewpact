@@ -25,9 +25,7 @@ export interface JournalEntryAccountInput {
 /**
  * Map a KrewPact journal entry to an ERPNext Journal Entry document.
  */
-export function mapJournalEntryToErp(
-  entry: JournalEntryMapInput,
-): Record<string, unknown> {
+export function mapJournalEntryToErp(entry: JournalEntryMapInput): Record<string, unknown> {
   return {
     naming_series: 'ACC-JV-.YYYY.-',
     voucher_type: entry.voucher_type || 'Journal Entry',
@@ -52,9 +50,7 @@ export function mapJournalEntryToErp(
 /**
  * Map an ERPNext Journal Entry document to a KrewPact record.
  */
-export function fromErpJournalEntry(
-  erpEntry: Record<string, unknown>,
-): Record<string, unknown> {
+export function fromErpJournalEntry(erpEntry: Record<string, unknown>): Record<string, unknown> {
   return {
     erp_journal_name: erpEntry.name || '',
     erp_doctype: 'Journal Entry',

@@ -1,11 +1,4 @@
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   forceCheck,
@@ -42,27 +35,21 @@ describe('Online Detector', () => {
 
   describe('heartbeatCheck', () => {
     it('returns true when fetch succeeds', async () => {
-      vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-        new Response(null, { status: 200 }),
-      );
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 200 }));
 
       const result = await heartbeatCheck();
       expect(result).toBe(true);
     });
 
     it('returns false when fetch fails', async () => {
-      vi.spyOn(globalThis, 'fetch').mockRejectedValue(
-        new Error('Network error'),
-      );
+      vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('Network error'));
 
       const result = await heartbeatCheck();
       expect(result).toBe(false);
     });
 
     it('returns false when server returns 500', async () => {
-      vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-        new Response(null, { status: 500 }),
-      );
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 500 }));
 
       const result = await heartbeatCheck();
       expect(result).toBe(false);
@@ -83,9 +70,7 @@ describe('Online Detector', () => {
       subscribe(callback);
 
       // Go offline
-      vi.spyOn(globalThis, 'fetch').mockRejectedValue(
-        new Error('offline'),
-      );
+      vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('offline'));
       await forceCheck();
 
       expect(callback).toHaveBeenCalledWith(false);
@@ -93,9 +78,7 @@ describe('Online Detector', () => {
 
     it('does not call subscriber when state stays the same', async () => {
       // Ensure we start online
-      vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-        new Response(null, { status: 200 }),
-      );
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 200 }));
       await forceCheck(); // sets state to true
 
       const callback = vi.fn();
@@ -110,9 +93,7 @@ describe('Online Detector', () => {
 
   describe('forceCheck', () => {
     it('updates online state based on heartbeat result', async () => {
-      vi.spyOn(globalThis, 'fetch').mockRejectedValue(
-        new Error('offline'),
-      );
+      vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('offline'));
 
       const result = await forceCheck();
       expect(result).toBe(false);
@@ -120,9 +101,7 @@ describe('Online Detector', () => {
     });
 
     it('returns true when server is reachable', async () => {
-      vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-        new Response(null, { status: 200 }),
-      );
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 200 }));
 
       const result = await forceCheck();
       expect(result).toBe(true);

@@ -100,10 +100,7 @@ export default function MoreScreen() {
             label="Offline Queue"
             subtitle="View pending offline changes"
             onPress={() =>
-              Alert.alert(
-                'Offline Queue',
-                'View your sync status on the Dashboard tab.',
-              )
+              Alert.alert('Offline Queue', 'View your sync status on the Dashboard tab.')
             }
           />
         </View>
@@ -114,17 +111,26 @@ export default function MoreScreen() {
             icon="person-outline"
             label="Profile"
             subtitle={userEmail}
-            onPress={() => Alert.alert('Profile', 'Profile editing will be available in the next update.')}
+            onPress={() =>
+              Alert.alert('Profile', 'Profile editing will be available in the next update.')
+            }
           />
           <MenuItem
             icon="notifications-outline"
             label="Notifications"
-            onPress={() => Alert.alert('Notifications', 'Push notifications will be available in the next update.')}
+            onPress={() =>
+              Alert.alert(
+                'Notifications',
+                'Push notifications will be available in the next update.',
+              )
+            }
           />
           <MenuItem
             icon="settings-outline"
             label="Settings"
-            onPress={() => Alert.alert('Settings', 'App settings will be available in the next update.')}
+            onPress={() =>
+              Alert.alert('Settings', 'App settings will be available in the next update.')
+            }
           />
         </View>
 
@@ -140,10 +146,7 @@ export default function MoreScreen() {
         <Text style={styles.version}>KrewPact Mobile v0.1.0</Text>
       </ScrollView>
 
-      <SyncConflictSheet
-        visible={showConflicts}
-        onClose={() => setShowConflicts(false)}
-      />
+      <SyncConflictSheet visible={showConflicts} onClose={() => setShowConflicts(false)} />
     </>
   );
 }

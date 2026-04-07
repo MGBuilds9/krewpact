@@ -66,13 +66,7 @@ export async function syncPriceList(
       erpDocname = result.name;
     }
 
-    await upsertSyncMap(
-      supabase,
-      'price_list',
-      priceListId,
-      'Price List',
-      erpDocname,
-    );
+    await upsertSyncMap(supabase, 'price_list', priceListId, 'Price List', erpDocname);
     await logEvent(supabase, job.id, 'sync_completed', {
       entity_type: 'price_list',
       entity_id: priceListId,

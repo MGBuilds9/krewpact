@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { ApiError, dbError,forbidden, notFound } from '@/lib/api/errors';
+import { ApiError, dbError, forbidden, notFound } from '@/lib/api/errors';
 import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 

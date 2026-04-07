@@ -26,9 +26,7 @@ export interface PurchaseReceiptItemInput {
 /**
  * Map a KrewPact goods receipt to an ERPNext Purchase Receipt document.
  */
-export function mapPurchaseReceiptToErp(
-  receipt: PurchaseReceiptMapInput,
-): Record<string, unknown> {
+export function mapPurchaseReceiptToErp(receipt: PurchaseReceiptMapInput): Record<string, unknown> {
   return {
     naming_series: 'MAT-PRE-.YYYY.-',
     title: receipt.receipt_number,

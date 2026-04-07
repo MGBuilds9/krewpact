@@ -43,28 +43,32 @@ export const GET = withApiRoute({}, async ({ req, logger }) => {
   return NextResponse.json({ data });
 });
 
-export const POST = withApiRoute({ bodySchema: subscriptionCreateSchema }, async ({ body, logger, orgId }) => {
-  const roles = await getKrewpactRoles();
-  const hasAccess = roles.some((r) => WRITE_ROLES.includes(r));
-  if (!hasAccess) {
-    throw forbidden('Forbidden: platform_admin role required');
-  }
+export const POST = withApiRoute(
+  { bodySchema: subscriptionCreateSchema },
+  async ({ body, logger, orgId }) => {
+    const roles = await getKrewpactRoles();
+    const hasAccess = roles.some((r) => WRITE_ROLES.includes(r));
+    if (!hasAccess) {
+      throw forbidden('Forbidden: platform_admin role required');
+    }
 
-  const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
-  if (!orgId) return NextResponse.json({ error: 'Organization context required' }, { status: 500 });
+    if (!orgId)
+      return NextResponse.json({ error: 'Organization context required' }, { status: 500 });
 
-  const { data, error } = await supabase
-    .from('executive_subscriptions')
-    .insert({ ...body, org_id: orgId })
-    .select()
-    .single();
+    const { data, error } = await supabase
+      .from('executive_subscriptions')
+      .insert({ ...body, org_id: orgId })
+      .select()
+      .single();
 
-  if (error) {
-    logger.error('Failed to create subscription', { message: error.message });
-    throw dbError('Failed to create subscription');
-  }
+    if (error) {
+      logger.error('Failed to create subscription', { message: error.message });
+      throw dbError('Failed to create subscription');
+    }
 
-  return NextResponse.json({ data }, { status: 201 });
-});
+    return NextResponse.json({ data }, { status: 201 });
+  },
+);

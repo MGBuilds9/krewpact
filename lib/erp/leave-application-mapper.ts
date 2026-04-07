@@ -18,9 +18,7 @@ export interface LeaveApplicationMapInput {
 /**
  * Map a KrewPact leave application to an ERPNext Leave Application document.
  */
-export function mapLeaveApplicationToErp(
-  leave: LeaveApplicationMapInput,
-): Record<string, unknown> {
+export function mapLeaveApplicationToErp(leave: LeaveApplicationMapInput): Record<string, unknown> {
   return {
     naming_series: 'HR-LAP-.YYYY.-',
     employee: leave.employee,

@@ -64,8 +64,18 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
     e.preventDefault();
     if (!title.trim()) return;
     createActivity.mutate(
-      { title: title.trim(), activity_type: activityType, due_at: dueAt || null, details: notes.trim() || null },
-      { onSuccess: () => { reset(); onOpenChange(false); } },
+      {
+        title: title.trim(),
+        activity_type: activityType,
+        due_at: dueAt || null,
+        details: notes.trim() || null,
+      },
+      {
+        onSuccess: () => {
+          reset();
+          onOpenChange(false);
+        },
+      },
     );
   }
 
@@ -78,7 +88,13 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="task-title">Title *</Label>
-            <Input id="task-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Task title..." required />
+            <Input
+              id="task-title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Task title..."
+              required
+            />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="task-type">Type</Label>
@@ -86,14 +102,27 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="task-due">Due Date</Label>
-            <Input id="task-due" type="datetime-local" value={dueAt} onChange={(e) => setDueAt(e.target.value)} />
+            <Input
+              id="task-due"
+              type="datetime-local"
+              value={dueAt}
+              onChange={(e) => setDueAt(e.target.value)}
+            />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="task-notes">Notes</Label>
-            <Textarea id="task-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional notes..." rows={2} />
+            <Textarea
+              id="task-notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Optional notes..."
+              rows={2}
+            />
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
             <Button type="submit" disabled={!title.trim() || createActivity.isPending}>
               {createActivity.isPending ? 'Creating...' : 'Create Task'}
             </Button>

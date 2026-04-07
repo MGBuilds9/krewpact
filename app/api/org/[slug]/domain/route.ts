@@ -34,7 +34,8 @@ export const POST = withApiRoute(
     if (orgError || !org) throw notFound('Organization');
 
     const callerOrgId = await getKrewpactOrgId();
-    if (callerOrgId && callerOrgId !== org.id) throw forbidden('You do not belong to this organization');
+    if (callerOrgId && callerOrgId !== org.id)
+      throw forbidden('You do not belong to this organization');
 
     const result = await addCustomDomain(domain);
     if (!result.success) {
@@ -74,7 +75,8 @@ export const DELETE = withApiRoute(
     if (orgError || !org) throw notFound('Organization');
 
     const callerOrgId = await getKrewpactOrgId();
-    if (callerOrgId && callerOrgId !== org.id) throw forbidden('You do not belong to this organization');
+    if (callerOrgId && callerOrgId !== org.id)
+      throw forbidden('You do not belong to this organization');
 
     const { error: updateError } = await serviceClient
       .from('organizations')
@@ -85,7 +87,10 @@ export const DELETE = withApiRoute(
 
     const result = await removeCustomDomain(domain);
     if (!result.success) {
-      logger.warn('Vercel domain removal failed after DB clear, manual cleanup needed', { domain, error: result.error });
+      logger.warn('Vercel domain removal failed after DB clear, manual cleanup needed', {
+        domain,
+        error: result.error,
+      });
     }
 
     return NextResponse.json({ custom_domain: null });

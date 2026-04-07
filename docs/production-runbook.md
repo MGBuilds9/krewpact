@@ -41,7 +41,7 @@
 | Vercel Analytics   | https://vercel.com/mkg-builds/krewpact/analytics             | Vercel team   |
 | Vercel Logs        | https://vercel.com/mkg-builds/krewpact/logs                  | Vercel team   |
 | Supabase Dashboard | https://supabase.com/dashboard/project/_your-project-ref_    | Supabase team |
-| ERPNext            | Via Cloudflare Tunnel (see ERPNEXT_BASE_URL env var)          | ERPNext admin |
+| ERPNext            | Via Cloudflare Tunnel (see ERPNEXT_BASE_URL env var)         | ERPNext admin |
 
 ---
 

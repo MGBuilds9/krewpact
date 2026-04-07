@@ -9,7 +9,7 @@ import {
 } from '@/lib/microsoft/graph';
 import type { SendMessagePayload } from '@/lib/microsoft/types';
 import { createUserClientSafe } from '@/lib/supabase/server';
-import { type SendEmail,sendEmailSchema } from '@/lib/validators/email';
+import { type SendEmail, sendEmailSchema } from '@/lib/validators/email';
 
 export const POST = withApiRoute({ bodySchema: sendEmailSchema }, async ({ body, userId }) => {
   const {

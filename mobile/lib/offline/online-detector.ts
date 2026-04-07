@@ -41,10 +41,7 @@ function setOnlineState(isOnline: boolean): void {
 export async function heartbeatCheck(): Promise<boolean> {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(
-      () => controller.abort(),
-      HEARTBEAT_TIMEOUT_MS,
-    );
+    const timeoutId = setTimeout(() => controller.abort(), HEARTBEAT_TIMEOUT_MS);
 
     const response = await fetch(`${API_BASE_URL}/api/health`, {
       method: 'HEAD',
@@ -72,10 +69,7 @@ function handleAppStateChange(nextState: AppStateStatus): void {
  */
 export function startMonitoring(): void {
   // Check connectivity on app foreground
-  appStateSubscription = AppState.addEventListener(
-    'change',
-    handleAppStateChange,
-  );
+  appStateSubscription = AppState.addEventListener('change', handleAppStateChange);
 
   // Initial check
   void heartbeatCheck().then((reachable) => {

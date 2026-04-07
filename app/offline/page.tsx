@@ -4,12 +4,7 @@ import { CloudOff, RefreshCw, WifiOff } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { useSyncStatus } from '@/hooks/useSyncStatus';
 import type { SyncStatus } from '@/lib/offline/types';
@@ -59,10 +54,7 @@ export default function OfflinePage() {
   const { isOnline, checkNow } = useOnlineStatus();
   const syncStatus = useSyncStatus();
 
-  const totalQueued =
-    syncStatus.pending_count +
-    syncStatus.failed_count +
-    syncStatus.syncing_count;
+  const totalQueued = syncStatus.pending_count + syncStatus.failed_count + syncStatus.syncing_count;
 
   const showQueue = totalQueued > 0 || syncStatus.dead_letter_count > 0;
 

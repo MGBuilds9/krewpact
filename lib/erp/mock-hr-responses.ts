@@ -9,11 +9,7 @@ import { nextMockId } from './mock-types';
 /**
  * Generate a mock ERPNext Employee response.
  */
-export function mockEmployeeResponse(emp: {
-  id: string;
-  employee_name: string;
-  company: string;
-}): {
+export function mockEmployeeResponse(emp: { id: string; employee_name: string; company: string }): {
   doctype: string;
   name: string;
   data: Record<string, unknown>;
@@ -135,10 +131,7 @@ export function mockHolidayListResponse(hl: {
 /**
  * Generate a mock ERPNext Designation response.
  */
-export function mockDesignationResponse(desg: {
-  name: string;
-  designation: string;
-}): {
+export function mockDesignationResponse(desg: { name: string; designation: string }): {
   doctype: string;
   name: string;
   data: Record<string, unknown>;
@@ -214,10 +207,7 @@ export function mockHrSettingsResponse(): {
 /**
  * Generate a mock ERPNext Company response.
  */
-export function mockCompanyResponse(company: {
-  name: string;
-  company_name: string;
-}): {
+export function mockCompanyResponse(company: { name: string; company_name: string }): {
   doctype: string;
   name: string;
   data: Record<string, unknown>;

@@ -7,7 +7,6 @@ import { fixtures, orgUrl } from '../helpers/fixtures';
 // storageState handles auth for chromium/full projects.
 
 test.describe('Project Lifecycle', () => {
-
   test('view projects list', async ({ page }) => {
     await page.goto(orgUrl('/projects'));
     await expect(page.getByRole('heading', { name: /projects/i })).toBeVisible({ timeout: 10_000 });

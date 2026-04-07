@@ -12,7 +12,8 @@ vi.mock('@ai-sdk/google', () => ({
 vi.mock('@/lib/tenant/branding', () => ({
   getOrgBranding: vi.fn().mockResolvedValue({
     company_name: 'MDM Group Inc.',
-    company_description: 'a construction conglomerate in the Greater Toronto Area (GTA), Ontario, Canada',
+    company_description:
+      'a construction conglomerate in the Greater Toronto Area (GTA), Ontario, Canada',
     erp_company: 'MDM Group Inc.',
     logo_url: null,
     favicon_url: null,
@@ -61,9 +62,14 @@ describe('deepResearchLead', () => {
       text: 'Research report about Acme.',
     } as Awaited<ReturnType<typeof generateText>>);
 
-    const result = await deepResearchLead('Acme Corp', 'https://acme.com', {
-      google_maps: { google_rating: 4.5 },
-    }, 'test-org-id');
+    const result = await deepResearchLead(
+      'Acme Corp',
+      'https://acme.com',
+      {
+        google_maps: { google_rating: 4.5 },
+      },
+      'test-org-id',
+    );
 
     expect(mockFetch).toHaveBeenCalledWith(
       'https://api.tavily.com/extract',
@@ -88,9 +94,14 @@ describe('deepResearchLead', () => {
       text: 'Report.',
     } as Awaited<ReturnType<typeof generateText>>);
 
-    await deepResearchLead('Test', 'acme.com', {
-      google_maps: { address: '123 Main St' },
-    }, 'test-org-id');
+    await deepResearchLead(
+      'Test',
+      'acme.com',
+      {
+        google_maps: { address: '123 Main St' },
+      },
+      'test-org-id',
+    );
 
     const fetchBody = JSON.parse(mockFetch.mock.calls[0][1].body as string);
     expect(fetchBody.urls[0]).toBe('https://acme.com');
@@ -103,9 +114,14 @@ describe('deepResearchLead', () => {
       text: 'Report from other sources.',
     } as Awaited<ReturnType<typeof generateText>>);
 
-    const result = await deepResearchLead('Test Co', 'test.com', {
-      brave: { description: 'Construction company' },
-    }, 'test-org-id');
+    const result = await deepResearchLead(
+      'Test Co',
+      'test.com',
+      {
+        brave: { description: 'Construction company' },
+      },
+      'test-org-id',
+    );
 
     expect(result.research_report).toBe('Report from other sources.');
   });
@@ -115,14 +131,19 @@ describe('deepResearchLead', () => {
       text: 'Report with maps data.',
     } as Awaited<ReturnType<typeof generateText>>);
 
-    await deepResearchLead('Maps Co', null, {
-      google_maps: {
-        address: '789 Elm St, Toronto',
-        google_rating: 4.2,
-        google_reviews_count: 50,
-        business_status: 'OPERATIONAL',
+    await deepResearchLead(
+      'Maps Co',
+      null,
+      {
+        google_maps: {
+          address: '789 Elm St, Toronto',
+          google_rating: 4.2,
+          google_reviews_count: 50,
+          business_status: 'OPERATIONAL',
+        },
       },
-    }, 'test-org-id');
+      'test-org-id',
+    );
 
     const prompt = mockGenerateText.mock.calls[0][0].prompt as string;
     expect(prompt).toContain('789 Elm St');
@@ -135,12 +156,17 @@ describe('deepResearchLead', () => {
       text: 'Full report.',
     } as Awaited<ReturnType<typeof generateText>>);
 
-    await deepResearchLead('Full Co', null, {
-      google_maps: { google_rating: 4.0 },
-      brave: { description: 'Full service construction' },
-      apollo_match: { title: 'CEO', email: 'ceo@full.com' },
-      tavily: { answer: 'Leading builder in GTA' },
-    }, 'test-org-id');
+    await deepResearchLead(
+      'Full Co',
+      null,
+      {
+        google_maps: { google_rating: 4.0 },
+        brave: { description: 'Full service construction' },
+        apollo_match: { title: 'CEO', email: 'ceo@full.com' },
+        tavily: { answer: 'Leading builder in GTA' },
+      },
+      'test-org-id',
+    );
 
     const prompt = mockGenerateText.mock.calls[0][0].prompt as string;
     expect(prompt).toContain('Full service construction');
@@ -154,9 +180,14 @@ describe('deepResearchLead', () => {
     } as Awaited<ReturnType<typeof generateText>>);
 
     const before = new Date().toISOString();
-    const result = await deepResearchLead('Test', null, {
-      brave: { description: 'Test' },
-    }, 'test-org-id');
+    const result = await deepResearchLead(
+      'Test',
+      null,
+      {
+        brave: { description: 'Test' },
+      },
+      'test-org-id',
+    );
     const after = new Date().toISOString();
 
     expect(result.researched_at >= before).toBe(true);

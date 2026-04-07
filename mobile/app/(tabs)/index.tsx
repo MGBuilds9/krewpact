@@ -20,22 +20,16 @@ import { useRouter } from 'expo-router';
 
 export default function DashboardScreen() {
   const router = useRouter();
-  const { data, isLoading, isError, refetch, isFetching } =
-    useQuery<DashboardData>({
-      queryKey: queryKeys.dashboard,
-      queryFn: api.dashboard.get,
-    });
+  const { data, isLoading, isError, refetch, isFetching } = useQuery<DashboardData>({
+    queryKey: queryKeys.dashboard,
+    queryFn: api.dashboard.get,
+  });
 
   return (
     <ScrollView
       style={styles.container}
       contentContainerStyle={styles.content}
-      refreshControl={
-        <RefreshControl
-          refreshing={isFetching && !isLoading}
-          onRefresh={refetch}
-        />
-      }
+      refreshControl={<RefreshControl refreshing={isFetching && !isLoading} onRefresh={refetch} />}
     >
       <Text style={styles.header}>Dashboard</Text>
 
@@ -49,9 +43,7 @@ export default function DashboardScreen() {
 
       {isError && (
         <View style={styles.errorBox}>
-          <Text style={styles.errorText}>
-            Failed to load dashboard. Pull to refresh.
-          </Text>
+          <Text style={styles.errorText}>Failed to load dashboard. Pull to refresh.</Text>
         </View>
       )}
 
@@ -63,11 +55,7 @@ export default function DashboardScreen() {
               value={data.atAGlance.activeProjects}
               color={COLORS.primary}
             />
-            <KPICard
-              label="Open Leads"
-              value={data.atAGlance.openLeads}
-              color={COLORS.success}
-            />
+            <KPICard label="Open Leads" value={data.atAGlance.openLeads} color={COLORS.success} />
           </View>
           <View style={[styles.kpiGrid, { marginTop: SPACING.sm }]}>
             <KPICard
@@ -89,11 +77,7 @@ export default function DashboardScreen() {
               style={styles.actionButton}
               onPress={() => router.push('/(tabs)/logs')}
             >
-              <Ionicons
-                name="document-text"
-                size={24}
-                color={COLORS.primary}
-              />
+              <Ionicons name="document-text" size={24} color={COLORS.primary} />
               <Text style={styles.actionText}>New Log</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -107,11 +91,7 @@ export default function DashboardScreen() {
               style={styles.actionButton}
               onPress={() => router.push('/(tabs)/safety')}
             >
-              <Ionicons
-                name="shield-checkmark"
-                size={24}
-                color={COLORS.warning}
-              />
+              <Ionicons name="shield-checkmark" size={24} color={COLORS.warning} />
               <Text style={styles.actionText}>Safety</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -135,13 +115,9 @@ export default function DashboardScreen() {
                 <Text style={styles.projectRowName} numberOfLines={1}>
                   {project.project_name}
                 </Text>
-                <Text style={styles.projectRowNumber}>
-                  {project.project_number}
-                </Text>
+                <Text style={styles.projectRowNumber}>{project.project_number}</Text>
               </View>
-              <Text style={styles.projectRowStatus}>
-                {formatStatus(project.status)}
-              </Text>
+              <Text style={styles.projectRowStatus}>{formatStatus(project.status)}</Text>
             </TouchableOpacity>
           ))}
 

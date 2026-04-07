@@ -61,7 +61,9 @@ export async function syncAttendance(
         id: attendanceId,
         employee: record.employee as string,
         attendance_date: record.attendance_date as string,
-        status: (record.status as 'Present' | 'Absent' | 'Half Day' | 'On Leave' | 'Work From Home') || 'Present',
+        status:
+          (record.status as 'Present' | 'Absent' | 'Half Day' | 'On Leave' | 'Work From Home') ||
+          'Present',
         leave_type: record.leave_type as string | null,
         company: (record.company as string) || erpCompany,
         shift: record.shift as string | null,

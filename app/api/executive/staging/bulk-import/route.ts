@@ -90,23 +90,27 @@ async function processOneFile(
   return { status: 'imported' };
 }
 
-export const POST = withApiRoute({ roles: ADMIN_ROLES, bodySchema: stagingBulkImportSchema }, async ({ body, orgId }) => {
-  if (!orgId) return NextResponse.json({ error: 'Organization context required' }, { status: 500 });
+export const POST = withApiRoute(
+  { roles: ADMIN_ROLES, bodySchema: stagingBulkImportSchema },
+  async ({ body, orgId }) => {
+    if (!orgId)
+      return NextResponse.json({ error: 'Organization context required' }, { status: 500 });
 
-  const supabase = await createServiceClient();
+    const supabase = await createServiceClient();
 
-  let imported = 0;
-  let skipped = 0;
-  let errors = 0;
-  const details: FileDetail[] = [];
+    let imported = 0;
+    let skipped = 0;
+    let errors = 0;
+    const details: FileDetail[] = [];
 
-  for (const file of body.files) {
-    const result = await processOneFile(supabase, file, orgId);
-    details.push({ path: file.path, status: result.status, reason: result.reason });
-    if (result.status === 'imported') imported++;
-    else if (result.status === 'skipped') skipped++;
-    else errors++;
-  }
+    for (const file of body.files) {
+      const result = await processOneFile(supabase, file, orgId);
+      details.push({ path: file.path, status: result.status, reason: result.reason });
+      if (result.status === 'imported') imported++;
+      else if (result.status === 'skipped') skipped++;
+      else errors++;
+    }
 
-  return NextResponse.json({ imported, skipped, errors, details });
-});
+    return NextResponse.json({ imported, skipped, errors, details });
+  },
+);

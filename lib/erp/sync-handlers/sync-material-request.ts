@@ -17,7 +17,6 @@ import {
   upsertSyncMap,
 } from './sync-helpers';
 
- 
 export async function syncMaterialRequest(
   mrId: string,
   _userId: string,

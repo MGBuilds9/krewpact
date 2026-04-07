@@ -178,7 +178,9 @@ async function main() {
       console.log(`  → Applied`);
       applied++;
     } else {
-      console.log(`  → Would update Clerk + upsert ${mergedRoles.filter((r) => !dbRoles.includes(r)).length} roles in DB`);
+      console.log(
+        `  → Would update Clerk + upsert ${mergedRoles.filter((r) => !dbRoles.includes(r)).length} roles in DB`,
+      );
     }
   }
 

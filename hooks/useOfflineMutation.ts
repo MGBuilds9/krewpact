@@ -50,9 +50,9 @@ interface OfflineMutationResult<T> {
  * const result = await mutate({ project_id: '...', notes: '...' });
  * ```
  */
-export function useOfflineMutation<
-  T extends Record<string, unknown>,
->(options: OfflineMutationOptions<T>): OfflineMutationResult<T> {
+export function useOfflineMutation<T extends Record<string, unknown>>(
+  options: OfflineMutationOptions<T>,
+): OfflineMutationResult<T> {
   const { isOnline } = useOnlineStatus();
   const { enqueue } = useOfflineQueue();
 

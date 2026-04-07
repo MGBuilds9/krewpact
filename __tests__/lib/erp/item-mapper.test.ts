@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { type ItemMapInput,mapItemToErp } from '@/lib/erp/item-mapper';
+import { type ItemMapInput, mapItemToErp } from '@/lib/erp/item-mapper';
 
 function makeInput(overrides: Partial<ItemMapInput> = {}): ItemMapInput {
   return {

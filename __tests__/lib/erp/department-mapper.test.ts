@@ -25,9 +25,7 @@ describe('mapDepartmentToErp', () => {
   });
 
   it('includes parent_department when provided', () => {
-    const result = mapDepartmentToErp(
-      makeInput({ parent_department: 'All Departments' }),
-    );
+    const result = mapDepartmentToErp(makeInput({ parent_department: 'All Departments' }));
     expect(result.parent_department).toBe('All Departments');
   });
 

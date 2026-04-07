@@ -11,12 +11,15 @@ const querySchema = z.object({
   project_id: z.string().uuid(),
 });
 
-export const GET = withApiRoute({ querySchema, roles: FINANCE_ROLES }, async ({ query, logger }) => {
-  const { project_id } = query as { project_id: string };
-  const history = await getPaymentHistory(project_id).catch((err: unknown) => {
-    logger.error('GET /api/finance/payment-entries failed', { projectId: project_id, err });
-    throw dbError('Failed to fetch payment history');
-  });
+export const GET = withApiRoute(
+  { querySchema, roles: FINANCE_ROLES },
+  async ({ query, logger }) => {
+    const { project_id } = query as { project_id: string };
+    const history = await getPaymentHistory(project_id).catch((err: unknown) => {
+      logger.error('GET /api/finance/payment-entries failed', { projectId: project_id, err });
+      throw dbError('Failed to fetch payment history');
+    });
 
-  return NextResponse.json(history);
-});
+    return NextResponse.json(history);
+  },
+);

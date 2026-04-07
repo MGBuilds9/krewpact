@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useBiddingOpportunities,useDeleteBidding } from '@/hooks/useCRM';
+import { useBiddingOpportunities, useDeleteBidding } from '@/hooks/useCRM';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { BIDDING_SOURCES, BIDDING_STATUSES, getSourceLabel } from '@/lib/crm/bidding';
 
@@ -126,10 +126,7 @@ export default function BiddingListPage() {
           {bids.map((bid) => (
             <div key={bid.id} className="relative">
               <BiddingCard bid={bid} onClick={() => orgPush(`/crm/bidding/${bid.id}`)} />
-              <div
-                className="absolute top-2 right-2 z-10"
-                onClick={(e) => e.stopPropagation()}
-              >
+              <div className="absolute top-2 right-2 z-10" onClick={(e) => e.stopPropagation()}>
                 <RowActionMenu
                   entityName={bid.title || 'this bid'}
                   onEdit={() => orgPush(`/crm/bidding/${bid.id}`)}

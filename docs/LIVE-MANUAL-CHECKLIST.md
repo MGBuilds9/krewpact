@@ -178,6 +178,6 @@
 
 ## Sign-Off
 
-| Role          | Name             | Date | Notes |
-| ------------- | ---------------- | ---- | ----- |
-| Product Owner |                  |      |       |
+| Role          | Name | Date | Notes |
+| ------------- | ---- | ---- | ----- |
+| Product Owner |      |      |       |

@@ -6,28 +6,16 @@
  */
 
 /** Entity types that support offline mutations */
-export type OfflineEntityType =
-  | 'daily_logs'
-  | 'time_entries'
-  | 'safety_forms'
-  | 'photos';
+export type OfflineEntityType = 'daily_logs' | 'time_entries' | 'safety_forms' | 'photos';
 
 /** CRUD actions that can be queued */
 export type OfflineAction = 'create' | 'update' | 'delete';
 
 /** Queue item lifecycle status */
-export type OfflineQueueStatus =
-  | 'pending'
-  | 'syncing'
-  | 'synced'
-  | 'failed'
-  | 'dead_letter';
+export type OfflineQueueStatus = 'pending' | 'syncing' | 'synced' | 'failed' | 'dead_letter';
 
 /** Conflict resolution strategies */
-export type ConflictStrategy =
-  | 'last_write_wins'
-  | 'merge'
-  | 'always_keep_both';
+export type ConflictStrategy = 'last_write_wins' | 'merge' | 'always_keep_both';
 
 /**
  * A single queued offline mutation.
@@ -105,10 +93,7 @@ export const CONFLICT_STRATEGIES: Record<OfflineEntityType, ConflictStrategy> = 
 };
 
 /** API endpoint factory — real routes are project-scoped */
-export const ENTITY_API_ENDPOINTS: Record<
-  OfflineEntityType,
-  (projectId: string) => string
-> = {
+export const ENTITY_API_ENDPOINTS: Record<OfflineEntityType, (projectId: string) => string> = {
   daily_logs: (pid) => `/api/projects/${pid}/daily-logs`,
   time_entries: (pid) => `/api/projects/${pid}/time-entries`,
   safety_forms: (pid) => `/api/projects/${pid}/safety/forms`,

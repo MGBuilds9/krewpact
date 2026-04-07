@@ -49,19 +49,14 @@ export function ProjectFilesTab({ projectId }: ProjectFilesTabProps) {
             onChange={handleUpload}
             accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.png,.jpg,.jpeg,.gif,.zip"
           />
-          <Button
-            onClick={() => inputRef.current?.click()}
-            disabled={upload.isPending || !orgId}
-          >
+          <Button onClick={() => inputRef.current?.click()} disabled={upload.isPending || !orgId}>
             <Upload className="h-4 w-4 mr-2" />
             {upload.isPending ? 'Uploading...' : 'Upload Files'}
           </Button>
         </div>
       </div>
 
-      {upload.isError && (
-        <p className="text-sm text-destructive">{upload.error.message}</p>
-      )}
+      {upload.isError && <p className="text-sm text-destructive">{upload.error.message}</p>}
 
       {isLoading ? (
         <Card>

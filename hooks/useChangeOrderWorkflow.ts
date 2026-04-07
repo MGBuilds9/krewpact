@@ -17,7 +17,11 @@ export interface WorkflowActionResult {
   updated_at: string;
 }
 
-function invalidateKeys(queryClient: ReturnType<typeof useQueryClient>, projectId: string, coId: string) {
+function invalidateKeys(
+  queryClient: ReturnType<typeof useQueryClient>,
+  projectId: string,
+  coId: string,
+) {
   queryClient.invalidateQueries({ queryKey: ['change-orders', projectId] });
   queryClient.invalidateQueries({ queryKey: ['change-order', projectId, coId] });
 }
@@ -26,10 +30,10 @@ export function useApproveChangeOrder(projectId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ coId, comment }: { coId: string; comment?: string }) =>
-      apiFetch<WorkflowActionResult>(
-        `/api/projects/${projectId}/change-orders/${coId}/approve`,
-        { method: 'POST', body: { comment } },
-      ),
+      apiFetch<WorkflowActionResult>(`/api/projects/${projectId}/change-orders/${coId}/approve`, {
+        method: 'POST',
+        body: { comment },
+      }),
     onSuccess: (_, variables) => {
       invalidateKeys(queryClient, projectId, variables.coId);
     },
@@ -40,10 +44,10 @@ export function useRejectChangeOrder(projectId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ coId, reason }: { coId: string; reason: string }) =>
-      apiFetch<WorkflowActionResult>(
-        `/api/projects/${projectId}/change-orders/${coId}/reject`,
-        { method: 'POST', body: { reason } },
-      ),
+      apiFetch<WorkflowActionResult>(`/api/projects/${projectId}/change-orders/${coId}/reject`, {
+        method: 'POST',
+        body: { reason },
+      }),
     onSuccess: (_, variables) => {
       invalidateKeys(queryClient, projectId, variables.coId);
     },

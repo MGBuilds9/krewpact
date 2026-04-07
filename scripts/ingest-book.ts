@@ -48,7 +48,9 @@ async function embedAndStoreChunks(
     });
   }
 
-  const { error: embedError } = await supabase.from('knowledge_embeddings').insert(embeddingsToInsert);
+  const { error: embedError } = await supabase
+    .from('knowledge_embeddings')
+    .insert(embeddingsToInsert);
   if (embedError) console.error(embedError);
   else process.stdout.write('✓');
 }
@@ -133,7 +135,9 @@ interface ProcessFileOptions {
   manifest: Manifest;
 }
 
-async function processFile(opts: ProcessFileOptions): Promise<{ ingested: boolean; sensitive: boolean }> {
+async function processFile(
+  opts: ProcessFileOptions,
+): Promise<{ ingested: boolean; sensitive: boolean }> {
   const { filePath, bookPath, dir, isDryRun, supabase, openai, manifest } = opts;
   const relPath = path.relative(bookPath, filePath);
   const content = await fs.readFile(filePath, 'utf-8');
@@ -152,7 +156,8 @@ async function processFile(opts: ProcessFileOptions): Promise<{ ingested: boolea
   manifest.ingested.push(relPath);
 
   if (!isDryRun && supabase && openai) {
-    const title = (metadata.title as string | undefined) || path.basename(filePath, '.md').replace(/-/g, ' ');
+    const title =
+      (metadata.title as string | undefined) || path.basename(filePath, '.md').replace(/-/g, ' ');
     const checksum = Buffer.from(body).toString('base64').slice(0, 32);
     await upsertDoc({ supabase, openai, relPath, dir, body, title, checksum });
   }
@@ -174,7 +179,9 @@ async function main() {
 
   if (!isDryRun) {
     if (!supabaseUrl || !supabaseKey) {
-      console.error('❌ Missing Supabase credentials (NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)');
+      console.error(
+        '❌ Missing Supabase credentials (NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)',
+      );
       process.exit(1);
     }
     if (!openaiKey) {
@@ -212,7 +219,15 @@ async function main() {
 
     const files = await getMarkdownFiles(dirPath);
     for (const filePath of files) {
-      const result = await processFile({ filePath, bookPath, dir, isDryRun, supabase, openai, manifest });
+      const result = await processFile({
+        filePath,
+        bookPath,
+        dir,
+        isDryRun,
+        supabase,
+        openai,
+        manifest,
+      });
       if (result.ingested) totalDocs++;
       if (result.sensitive) sensitiveDocs++;
     }

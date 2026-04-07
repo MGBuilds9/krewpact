@@ -55,9 +55,7 @@ export function resolveConflict(
  * Last-write-wins: client payload overwrites server entirely.
  * Used for: daily_logs (append-only, low conflict risk), safety_forms (atomic).
  */
-function resolveLastWriteWins(
-  item: OfflineQueueItem,
-): ConflictResult {
+function resolveLastWriteWins(item: OfflineQueueItem): ConflictResult {
   return {
     resolved_payload: { ...item.payload },
     auto_resolved: true,
@@ -70,10 +68,7 @@ function resolveLastWriteWins(
  * Merge strategy: combine client and server fields intelligently.
  * Used for: time_entries (sum hours if same day/project).
  */
-function resolveMerge(
-  item: OfflineQueueItem,
-  serverData: Record<string, unknown>,
-): ConflictResult {
+function resolveMerge(item: OfflineQueueItem, serverData: Record<string, unknown>): ConflictResult {
   if (item.entity_type === 'time_entries') {
     return mergeTimeEntries(item, serverData);
   }
@@ -82,8 +77,7 @@ function resolveMerge(
   return {
     resolved_payload: { ...serverData, ...item.payload },
     auto_resolved: true,
-    resolution_note:
-      `${item.entity_type}: fields merged (client overrides server)`,
+    resolution_note: `${item.entity_type}: fields merged (client overrides server)`,
     create_new: false,
   };
 }
@@ -146,8 +140,7 @@ function resolveKeepBoth(item: OfflineQueueItem): ConflictResult {
     return {
       resolved_payload: {},
       auto_resolved: false,
-      resolution_note:
-        'photos: delete conflict — both versions kept, manual review needed',
+      resolution_note: 'photos: delete conflict — both versions kept, manual review needed',
       create_new: false,
     };
   }
@@ -158,8 +151,7 @@ function resolveKeepBoth(item: OfflineQueueItem): ConflictResult {
       _offline_duplicate: true,
     },
     auto_resolved: true,
-    resolution_note:
-      'photos: both versions kept (new record created)',
+    resolution_note: 'photos: both versions kept (new record created)',
     create_new: true,
   };
 }

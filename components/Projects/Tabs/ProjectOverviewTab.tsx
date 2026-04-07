@@ -1,6 +1,14 @@
 'use client';
 
-import { Building, Calendar, Clock, DollarSign, ExternalLink, MapPin, TrendingUp } from 'lucide-react';
+import {
+  Building,
+  Calendar,
+  Clock,
+  DollarSign,
+  ExternalLink,
+  MapPin,
+  TrendingUp,
+} from 'lucide-react';
 import * as React from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -145,16 +153,24 @@ function AccountContactCard({ project }: { project: Project }) {
 }
 
 export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
-  const budgetProgress = project.baseline_budget ? (project.current_budget / project.baseline_budget) * 100 : 0;
+  const budgetProgress = project.baseline_budget
+    ? (project.current_budget / project.baseline_budget) * 100
+    : 0;
   const [now] = React.useState(() => Date.now());
   const ms = 86_400_000;
   const start = project.start_date ? new Date(project.start_date).getTime() : 0;
-  const end = project.target_completion_date ? new Date(project.target_completion_date).getTime() : 0;
+  const end = project.target_completion_date
+    ? new Date(project.target_completion_date).getTime()
+    : 0;
   const daysElapsed = start ? Math.floor((now - start) / ms) : 0;
   const totalDays = start && end ? Math.floor((end - start) / ms) : 0;
   const timeProgress = totalDays > 0 ? (daysElapsed / totalDays) * 100 : 0;
-  const startStr = project.start_date ? new Date(project.start_date).toLocaleDateString() : 'Not set';
-  const endStr = project.target_completion_date ? new Date(project.target_completion_date).toLocaleDateString() : 'Not set';
+  const startStr = project.start_date
+    ? new Date(project.start_date).toLocaleDateString()
+    : 'Not set';
+  const endStr = project.target_completion_date
+    ? new Date(project.target_completion_date).toLocaleDateString()
+    : 'Not set';
 
   return (
     <div className="space-y-6">

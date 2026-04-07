@@ -124,7 +124,10 @@ describe('GET /api/payroll/exports/[id]', () => {
   it('returns 404 when export not found', async () => {
     mockClerkAuth(mockAuth);
     mockCreateServiceClient.mockReturnValue(
-      makeMockSupabase({ data: null, error: { message: 'not found' } }, { data: [], error: null }) as never,
+      makeMockSupabase(
+        { data: null, error: { message: 'not found' } },
+        { data: [], error: null },
+      ) as never,
     );
     const { GET } = await import('@/app/api/payroll/exports/[id]/route');
     const res = await GET(makeRequest(`/api/payroll/exports/${EXPORT_ID}`), {
@@ -155,9 +158,9 @@ describe('GET /api/payroll/exports/[id]', () => {
         return {
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
-              order: vi.fn().mockImplementation(() =>
-                Promise.resolve({ data: SAMPLE_ROWS, error: null }),
-              ),
+              order: vi
+                .fn()
+                .mockImplementation(() => Promise.resolve({ data: SAMPLE_ROWS, error: null })),
             }),
           }),
         };

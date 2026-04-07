@@ -5,29 +5,32 @@ import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { estimateAlternateUpdateSchema } from '@/lib/validators/estimating';
 
-export const PATCH = withApiRoute({ bodySchema: estimateAlternateUpdateSchema }, async ({ body, params }) => {
-  const { id, altId } = params;
+export const PATCH = withApiRoute(
+  { bodySchema: estimateAlternateUpdateSchema },
+  async ({ body, params }) => {
+    const { id, altId } = params;
 
-  const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
-  const { data, error } = await supabase
-    .from('estimate_alternates')
-    .update(body)
-    .eq('id', altId)
-    .eq('estimate_id', id)
-    .select()
-    .single();
+    const { data, error } = await supabase
+      .from('estimate_alternates')
+      .update(body)
+      .eq('id', altId)
+      .eq('estimate_id', id)
+      .select()
+      .single();
 
-  if (error) {
-    return NextResponse.json(
-      { error: error.message },
-      { status: error.code === 'PGRST116' ? 404 : 500 },
-    );
-  }
+    if (error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.code === 'PGRST116' ? 404 : 500 },
+      );
+    }
 
-  return NextResponse.json(data);
-});
+    return NextResponse.json(data);
+  },
+);
 
 export const DELETE = withApiRoute({}, async ({ params }) => {
   const { id, altId } = params;

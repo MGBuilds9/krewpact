@@ -134,10 +134,7 @@ export function mockStockEntryResponse(entry: {
 /**
  * Generate a mock ERPNext Warehouse response.
  */
-export function mockWarehouseResponse(wh: {
-  id: string;
-  warehouse_name: string;
-}): {
+export function mockWarehouseResponse(wh: { id: string; warehouse_name: string }): {
   doctype: string;
   name: string;
   data: Record<string, unknown>;
@@ -162,11 +159,7 @@ export function mockWarehouseResponse(wh: {
 /**
  * Generate a mock ERPNext Item response.
  */
-export function mockItemResponse(item: {
-  id: string;
-  item_code: string;
-  item_name: string;
-}): {
+export function mockItemResponse(item: { id: string; item_code: string; item_name: string }): {
   doctype: string;
   name: string;
   data: Record<string, unknown>;

@@ -51,7 +51,9 @@ export async function createBatch(
       submitted_by: submittedBy,
       status: 'draft',
     })
-    .select('id, division_id, period_start, period_end, submitted_by, approved_by, status, adp_export_reference, exported_at, created_at, updated_at')
+    .select(
+      'id, division_id, period_start, period_end, submitted_by, approved_by, status, adp_export_reference, exported_at, created_at, updated_at',
+    )
     .single();
 
   if (error) {
@@ -74,7 +76,9 @@ export async function submitBatch(
     .update({ status: 'submitted', updated_at: new Date().toISOString() })
     .eq('id', batchId)
     .eq('status', 'draft')
-    .select('id, division_id, period_start, period_end, submitted_by, approved_by, status, adp_export_reference, exported_at, created_at, updated_at')
+    .select(
+      'id, division_id, period_start, period_end, submitted_by, approved_by, status, adp_export_reference, exported_at, created_at, updated_at',
+    )
     .single();
 
   if (error) {
@@ -102,7 +106,9 @@ export async function approveBatch(
     })
     .eq('id', batchId)
     .eq('status', 'submitted')
-    .select('id, division_id, period_start, period_end, submitted_by, approved_by, status, adp_export_reference, exported_at, created_at, updated_at')
+    .select(
+      'id, division_id, period_start, period_end, submitted_by, approved_by, status, adp_export_reference, exported_at, created_at, updated_at',
+    )
     .single();
 
   if (error) {
@@ -132,7 +138,9 @@ export async function rejectBatch(
     })
     .eq('id', batchId)
     .eq('status', 'submitted')
-    .select('id, division_id, period_start, period_end, submitted_by, approved_by, status, adp_export_reference, exported_at, created_at, updated_at')
+    .select(
+      'id, division_id, period_start, period_end, submitted_by, approved_by, status, adp_export_reference, exported_at, created_at, updated_at',
+    )
     .single();
 
   if (error) {

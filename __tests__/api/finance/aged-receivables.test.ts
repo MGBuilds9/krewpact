@@ -122,7 +122,9 @@ describe('GET /api/finance/aged-receivables', () => {
     const { GET } = await import('@/app/api/finance/aged-receivables/route');
     const res = await GET(makeRequest('/api/finance/aged-receivables'));
     expect(res.status).toBe(200);
-    expect(mockGetAgedReceivables).toHaveBeenCalledWith('test-org-00000000-0000-0000-0000-000000000000');
+    expect(mockGetAgedReceivables).toHaveBeenCalledWith(
+      'test-org-00000000-0000-0000-0000-000000000000',
+    );
   });
 
   it('returns 500 when service throws', async () => {

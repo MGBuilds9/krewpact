@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { type PayrollPeriod,useTimesheetBatchList } from '@/hooks/usePayroll';
+import { type PayrollPeriod, useTimesheetBatchList } from '@/hooks/usePayroll';
 import { useUserRBAC } from '@/hooks/useRBAC';
 
 const APPROVER_ROLES = ['payroll_admin', 'executive', 'platform_admin'];
@@ -42,17 +42,12 @@ export default function PayrollPageContent() {
   const batches = data?.data ?? [];
 
   const filteredBatches = period
-    ? batches.filter(
-        (b) => b.period_start === period.start && b.period_end === period.end,
-      )
+    ? batches.filter((b) => b.period_start === period.start && b.period_end === period.end)
     : batches;
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Payroll"
-        description="ADP payroll export and timesheet management"
-      />
+      <PageHeader title="Payroll" description="ADP payroll export and timesheet management" />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <PayrollPeriodSelector value={period} onChange={setPeriod} />

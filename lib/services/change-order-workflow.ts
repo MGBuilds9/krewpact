@@ -45,7 +45,9 @@ export async function submitForApproval(
     .from('change_orders')
     .update({ status: 'submitted', updated_at: now })
     .eq('id', coId)
-    .select('id, project_id, status, title, amount_delta, reason, approved_at, approved_by, created_at, updated_at')
+    .select(
+      'id, project_id, status, title, amount_delta, reason, approved_at, approved_by, created_at, updated_at',
+    )
     .single();
 
   if (updateError) {
@@ -94,7 +96,9 @@ export async function approveChangeOrder(
     .from('change_orders')
     .update({ status: 'approved', approved_at: now, approved_by: approverId, updated_at: now })
     .eq('id', coId)
-    .select('id, project_id, status, title, amount_delta, reason, approved_at, approved_by, created_at, updated_at')
+    .select(
+      'id, project_id, status, title, amount_delta, reason, approved_at, approved_by, created_at, updated_at',
+    )
     .single();
 
   if (updateError) {
@@ -146,7 +150,9 @@ export async function rejectChangeOrder(
     .from('change_orders')
     .update({ status: 'rejected', reason, updated_at: now })
     .eq('id', coId)
-    .select('id, project_id, status, title, amount_delta, reason, approved_at, approved_by, created_at, updated_at')
+    .select(
+      'id, project_id, status, title, amount_delta, reason, approved_at, approved_by, created_at, updated_at',
+    )
     .single();
 
   if (updateError) {
@@ -191,7 +197,9 @@ export async function submitToClient(coId: string): Promise<WorkflowResult> {
     .from('change_orders')
     .update({ status: 'client_review', updated_at: now })
     .eq('id', coId)
-    .select('id, project_id, status, title, amount_delta, reason, approved_at, approved_by, created_at, updated_at')
+    .select(
+      'id, project_id, status, title, amount_delta, reason, approved_at, approved_by, created_at, updated_at',
+    )
     .single();
 
   if (updateError) {

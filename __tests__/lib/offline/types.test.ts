@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  CONFLICT_STRATEGIES,
-  ENTITY_API_ENDPOINTS,
-} from '@/lib/offline/types';
+import { CONFLICT_STRATEGIES, ENTITY_API_ENDPOINTS } from '@/lib/offline/types';
 
 describe('Offline Types', () => {
   describe('CONFLICT_STRATEGIES', () => {
@@ -37,8 +34,7 @@ describe('Offline Types', () => {
     it('has a factory function for every entity type', () => {
       const entityTypes = Object.keys(CONFLICT_STRATEGIES);
       for (const type of entityTypes) {
-        const factory =
-          ENTITY_API_ENDPOINTS[type as keyof typeof ENTITY_API_ENDPOINTS];
+        const factory = ENTITY_API_ENDPOINTS[type as keyof typeof ENTITY_API_ENDPOINTS];
         expect(typeof factory).toBe('function');
         expect(factory('proj-123')).toMatch(/^\/api\/projects\/proj-123\//);
       }
@@ -46,18 +42,10 @@ describe('Offline Types', () => {
 
     it('produces correct project-scoped paths', () => {
       const pid = 'abc-123';
-      expect(ENTITY_API_ENDPOINTS.daily_logs(pid)).toBe(
-        `/api/projects/${pid}/daily-logs`,
-      );
-      expect(ENTITY_API_ENDPOINTS.time_entries(pid)).toBe(
-        `/api/projects/${pid}/time-entries`,
-      );
-      expect(ENTITY_API_ENDPOINTS.safety_forms(pid)).toBe(
-        `/api/projects/${pid}/safety/forms`,
-      );
-      expect(ENTITY_API_ENDPOINTS.photos(pid)).toBe(
-        `/api/projects/${pid}/photos`,
-      );
+      expect(ENTITY_API_ENDPOINTS.daily_logs(pid)).toBe(`/api/projects/${pid}/daily-logs`);
+      expect(ENTITY_API_ENDPOINTS.time_entries(pid)).toBe(`/api/projects/${pid}/time-entries`);
+      expect(ENTITY_API_ENDPOINTS.safety_forms(pid)).toBe(`/api/projects/${pid}/safety/forms`);
+      expect(ENTITY_API_ENDPOINTS.photos(pid)).toBe(`/api/projects/${pid}/photos`);
     });
   });
 });

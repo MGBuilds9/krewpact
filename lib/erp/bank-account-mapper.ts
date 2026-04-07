@@ -19,9 +19,7 @@ export interface BankAccountMapInput {
 /**
  * Map a KrewPact bank account to an ERPNext Bank Account document.
  */
-export function mapBankAccountToErp(
-  ba: BankAccountMapInput,
-): Record<string, unknown> {
+export function mapBankAccountToErp(ba: BankAccountMapInput): Record<string, unknown> {
   return {
     account_name: ba.account_name,
     bank: ba.bank,

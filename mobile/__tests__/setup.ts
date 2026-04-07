@@ -4,7 +4,8 @@ if (typeof _globalAny.__ExpoImportMetaRegistry === 'undefined') {
   _globalAny.__ExpoImportMetaRegistry = { url: null };
 }
 if (typeof globalThis.structuredClone === 'undefined') {
-  (globalThis as Record<string, unknown>).structuredClone = (val: unknown) => JSON.parse(JSON.stringify(val));
+  (globalThis as Record<string, unknown>).structuredClone = (val: unknown) =>
+    JSON.parse(JSON.stringify(val));
 } else {
   void globalThis.structuredClone;
 }
@@ -77,14 +78,18 @@ jest.mock('expo-image-picker', () => ({
 jest.mock('expo-location', () => ({
   requestForegroundPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
   getCurrentPositionAsync: jest.fn().mockResolvedValue({
-    coords: { latitude: 43.5890, longitude: -79.6441 },
+    coords: { latitude: 43.589, longitude: -79.6441 },
   }),
 }));
 
 // Mock offline modules
 jest.mock('@/lib/offline/store', () => ({
   countByStatus: jest.fn().mockResolvedValue({
-    pending: 0, syncing: 0, synced: 0, failed: 0, dead_letter: 0,
+    pending: 0,
+    syncing: 0,
+    synced: 0,
+    failed: 0,
+    dead_letter: 0,
   }),
   getItemsByStatus: jest.fn().mockResolvedValue([]),
 }));

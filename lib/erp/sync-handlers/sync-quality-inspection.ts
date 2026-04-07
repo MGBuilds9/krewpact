@@ -86,7 +86,13 @@ export async function syncQualityInspection(
       erpDocname = result.name;
     }
 
-    await upsertSyncMap(supabase, 'quality_inspection', inspectionId, 'Quality Inspection', erpDocname);
+    await upsertSyncMap(
+      supabase,
+      'quality_inspection',
+      inspectionId,
+      'Quality Inspection',
+      erpDocname,
+    );
     await logEvent(supabase, job.id, 'sync_completed', {
       entity_type: 'quality_inspection',
       entity_id: inspectionId,

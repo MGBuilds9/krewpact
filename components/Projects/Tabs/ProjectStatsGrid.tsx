@@ -15,7 +15,13 @@ interface Props {
   totalDays: number;
 }
 
-export function ProjectStatsGrid({ project, budgetProgress, timeProgress, daysElapsed, totalDays }: Props) {
+export function ProjectStatsGrid({
+  project,
+  budgetProgress,
+  timeProgress,
+  daysElapsed,
+  totalDays,
+}: Props) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <Card>
@@ -24,7 +30,9 @@ export function ProjectStatsGrid({ project, budgetProgress, timeProgress, daysEl
           <DollarSign className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">${(project.baseline_budget || 0).toLocaleString()}</div>
+          <div className="text-2xl font-bold">
+            ${(project.baseline_budget || 0).toLocaleString()}
+          </div>
           <p className="text-xs text-muted-foreground mt-1">
             Current: ${(project.current_budget || 0).toLocaleString()}
           </p>
@@ -47,7 +55,9 @@ export function ProjectStatsGrid({ project, budgetProgress, timeProgress, daysEl
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{timeProgress.toFixed(0)}%</div>
-          <p className="text-xs text-muted-foreground mt-1">{daysElapsed} of {totalDays} days</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {daysElapsed} of {totalDays} days
+          </p>
         </CardContent>
       </Card>
       <Card>

@@ -180,11 +180,28 @@ interface DestCounts {
 
 async function loadDestCounts(supabase: SupabaseClient, divisionId: string): Promise<DestCounts> {
   const [itemsRes, catsRes, serialsRes, ledgerCountRes, ledgerDataRes] = await Promise.all([
-    supabase.from('inventory_items').select('*', { count: 'exact', head: true }).eq('division_id', divisionId),
-    supabase.from('inventory_item_categories').select('*', { count: 'exact', head: true }).eq('division_id', divisionId),
-    supabase.from('inventory_serials').select('*', { count: 'exact', head: true }).eq('division_id', divisionId),
-    supabase.from('inventory_ledger').select('*', { count: 'exact', head: true }).eq('division_id', divisionId).eq('transaction_type', 'initial_stock'),
-    supabase.from('inventory_ledger').select('value_change').eq('division_id', divisionId).eq('transaction_type', 'initial_stock'),
+    supabase
+      .from('inventory_items')
+      .select('*', { count: 'exact', head: true })
+      .eq('division_id', divisionId),
+    supabase
+      .from('inventory_item_categories')
+      .select('*', { count: 'exact', head: true })
+      .eq('division_id', divisionId),
+    supabase
+      .from('inventory_serials')
+      .select('*', { count: 'exact', head: true })
+      .eq('division_id', divisionId),
+    supabase
+      .from('inventory_ledger')
+      .select('*', { count: 'exact', head: true })
+      .eq('division_id', divisionId)
+      .eq('transaction_type', 'initial_stock'),
+    supabase
+      .from('inventory_ledger')
+      .select('value_change')
+      .eq('division_id', divisionId)
+      .eq('transaction_type', 'initial_stock'),
   ]);
 
   const destStockValue = parseFloat(
@@ -209,32 +226,42 @@ function buildComparisonRows(
 ): VerificationRow[] {
   return [
     {
-      metric: 'Items (Parts)', division: label,
-      source: src.validParts.length, destination: dest.itemCount,
+      metric: 'Items (Parts)',
+      division: label,
+      source: src.validParts.length,
+      destination: dest.itemCount,
       match: src.validParts.length === dest.itemCount,
       delta: dest.itemCount - src.validParts.length,
     },
     {
-      metric: 'Categories', division: label,
-      source: src.validCategories.length, destination: dest.catCount,
+      metric: 'Categories',
+      division: label,
+      source: src.validCategories.length,
+      destination: dest.catCount,
       match: src.validCategories.length === dest.catCount,
       delta: dest.catCount - src.validCategories.length,
     },
     {
-      metric: 'Serials (Active)', division: label,
-      source: src.validSerials.length, destination: dest.serialCount,
+      metric: 'Serials (Active)',
+      division: label,
+      source: src.validSerials.length,
+      destination: dest.serialCount,
       match: src.validSerials.length === dest.serialCount,
       delta: dest.serialCount - src.validSerials.length,
     },
     {
-      metric: 'Initial Stock Entries', division: label,
-      source: src.sourceStockCount, destination: dest.ledgerCount,
+      metric: 'Initial Stock Entries',
+      division: label,
+      source: src.sourceStockCount,
+      destination: dest.ledgerCount,
       match: src.sourceStockCount === dest.ledgerCount,
       delta: dest.ledgerCount - src.sourceStockCount,
     },
     {
-      metric: 'Stock Value ($)', division: label,
-      source: src.sourceStockValue, destination: dest.destStockValue,
+      metric: 'Stock Value ($)',
+      division: label,
+      source: src.sourceStockValue,
+      destination: dest.destStockValue,
       match: Math.abs(src.sourceStockValue - dest.destStockValue) < 0.01,
       delta: parseFloat((dest.destStockValue - src.sourceStockValue).toFixed(2)),
     },

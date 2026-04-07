@@ -28,9 +28,7 @@ export interface QualityReadingInput {
 /**
  * Map a KrewPact quality inspection to an ERPNext Quality Inspection document.
  */
-export function mapQualityInspectionToErp(
-  qi: QualityInspectionMapInput,
-): Record<string, unknown> {
+export function mapQualityInspectionToErp(qi: QualityInspectionMapInput): Record<string, unknown> {
   return {
     naming_series: 'QI-.YYYY.-',
     inspection_type: qi.inspection_type,

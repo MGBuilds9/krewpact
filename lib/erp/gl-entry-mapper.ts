@@ -17,9 +17,7 @@ function toStr(value: unknown, fallback = ''): string {
 /**
  * Map an ERPNext GL Entry document to a KrewPact record.
  */
-export function fromErpGlEntry(
-  erpEntry: Record<string, unknown>,
-): Record<string, unknown> {
+export function fromErpGlEntry(erpEntry: Record<string, unknown>): Record<string, unknown> {
   return {
     erp_gl_name: toStr(erpEntry.name),
     erp_doctype: 'GL Entry',

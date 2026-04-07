@@ -9,7 +9,6 @@ import { fixtures, orgUrl } from '../helpers/fixtures';
 // in all environments — seeding via API isn't feasible without an expenses POST endpoint.
 
 test.describe('Expense Submission', () => {
-
   test('expenses page loads', async ({ page }) => {
     await page.goto(orgUrl('/expenses'));
     await expect(page.locator('main')).toBeVisible({ timeout: 10_000 });

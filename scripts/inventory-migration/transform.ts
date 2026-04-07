@@ -196,7 +196,9 @@ const DIVISION_MAP: Record<string, string> = JSON.parse(process.env.DIVISION_MAP
 // Default location IDs per division (for initial_stock ledger entries)
 // These must be created in inventory_locations before running load.ts
 // Set via DEFAULT_LOCATION_MAP env var (JSON object)
-const DEFAULT_LOCATION_MAP: Record<string, string> = JSON.parse(process.env.DEFAULT_LOCATION_MAP || '{}');
+const DEFAULT_LOCATION_MAP: Record<string, string> = JSON.parse(
+  process.env.DEFAULT_LOCATION_MAP || '{}',
+);
 
 // System user for migration entries — set via MIGRATION_USER_ID env var
 const MIGRATION_USER_ID = process.env.MIGRATION_USER_ID || '';
@@ -427,11 +429,17 @@ function buildItemFromPart(
   const sku = resolvePartSku(part, partNo, opts.company);
   const useSerial = part.UseSerial?.trim() === '1' || part.UseSerial?.trim() === '-1';
   return {
-    id: itemId, name: description ?? sku, sku, division_id: opts.divisionId,
+    id: itemId,
+    name: description ?? sku,
+    sku,
+    division_id: opts.divisionId,
     unit_of_measure: resolveUom(part, opts.companyUomMap),
     tracking_type: useSerial ? 'serial' : 'none',
-    valuation_method: 'weighted_average', is_active: true,
-    almyta_part_no: partNo, almyta_short_id: shortId, description,
+    valuation_method: 'weighted_average',
+    is_active: true,
+    almyta_part_no: partNo,
+    almyta_short_id: shortId,
+    description,
     category_id: opts.companyCatMap.get(part.Category?.trim() ?? '') ?? null,
     manufacturer: part.ManModel?.trim() || null,
     min_stock_level: positiveFloatOrNull(part.ReOrder),
@@ -452,10 +460,15 @@ function buildLedgerEntry(
   const curCost = parseFloat(part.curCost);
   const safeRate = isNaN(curCost) ? 0 : curCost;
   return {
-    id: uuid(), item_id: itemId, division_id: opts.divisionId,
-    transaction_type: 'initial_stock', qty_change: inStock, valuation_rate: safeRate,
+    id: uuid(),
+    item_id: itemId,
+    division_id: opts.divisionId,
+    transaction_type: 'initial_stock',
+    qty_change: inStock,
+    valuation_rate: safeRate,
     value_change: parseFloat((inStock * safeRate).toFixed(2)),
-    location_id: opts.locationId, transacted_by: MIGRATION_USER_ID,
+    location_id: opts.locationId,
+    transacted_by: MIGRATION_USER_ID,
     notes: `Almyta migration — ${opts.company} PartNo ${partNo}`,
   };
 }
@@ -473,14 +486,20 @@ async function transformParts(
 
   for (const part of parts) {
     const partNo = parseInt(part.PartNo, 10);
-    if (isNaN(partNo) || partNo < 0) { skippedCount++; continue; }
+    if (isNaN(partNo) || partNo < 0) {
+      skippedCount++;
+      continue;
+    }
 
     const itemId = uuid();
     partIdMap.set(part.PartNo, itemId);
     outItems.push(buildItemFromPart(part, partNo, itemId, opts));
 
     const ledgerEntry = buildLedgerEntry(part, partNo, itemId, opts);
-    if (ledgerEntry) { outLedger.push(ledgerEntry); stockCount++; }
+    if (ledgerEntry) {
+      outLedger.push(ledgerEntry);
+      stockCount++;
+    }
     partCount++;
   }
   return { parts, partIdMap, partCount, skippedCount, stockCount };
@@ -508,7 +527,9 @@ async function transformSerials(
   opts: TransformSerialsOptions,
   outSerials: KrewpactSerial[],
 ): Promise<number> {
-  const actives = await readCSV<AlmytaPartsActive>(join(EXPORTS_DIR, `${opts.company}_PartsActive.csv`));
+  const actives = await readCSV<AlmytaPartsActive>(
+    join(EXPORTS_DIR, `${opts.company}_PartsActive.csv`),
+  );
   let serialCount = 0;
 
   for (const active of actives) {
@@ -522,8 +543,11 @@ async function transformSerials(
     const recNo = parseInt(active.RecNo, 10);
     const unitPrice = parseFloat(active.UnitPrice);
     outSerials.push({
-      id: uuid(), item_id: itemId, division_id: opts.divisionId,
-      serial_number: serialNum, secondary_serial: active.Serial2?.trim() || null,
+      id: uuid(),
+      item_id: itemId,
+      division_id: opts.divisionId,
+      serial_number: serialNum,
+      secondary_serial: active.Serial2?.trim() || null,
       status: active.Active?.trim() === '1' ? 'in_stock' : 'decommissioned',
       almyta_rec_id: isNaN(recNo) ? 0 : recNo,
       acquisition_cost: isNaN(unitPrice) ? null : unitPrice,
@@ -544,7 +568,8 @@ function ensureVendorEntry(
       almyta_vendor_id: vid,
       almyta_vendor_name: vendor.Name?.trim() ?? '',
       almyta_vendor_short_id: vendor.ShortID?.trim() ?? '',
-      company, items: [],
+      company,
+      items: [],
     });
   }
 }
@@ -572,10 +597,7 @@ function addVendorCatalogEntry(
   });
 }
 
-async function buildVendorMappings(
-  company: string,
-  outMappings: VendorMapping[],
-): Promise<number> {
+async function buildVendorMappings(company: string, outMappings: VendorMapping[]): Promise<number> {
   const vendors = await readCSV<AlmytaVendor>(join(EXPORTS_DIR, `${company}_Vendor.csv`));
   const vendorMap = new Map<string, AlmytaVendor>();
   for (const v of vendors) {
@@ -644,11 +666,14 @@ async function run(): Promise<void> {
 
     const partsResult = await transformParts(
       { company, divisionId, locationId, companyUomMap, companyCatMap },
-      allItems, allLedger,
+      allItems,
+      allLedger,
     );
     totalParts += partsResult.partCount;
     totalSkipped += partsResult.skippedCount;
-    console.log(`  Parts: ${partsResult.partCount} items (${partsResult.skippedCount} system records skipped)`);
+    console.log(
+      `  Parts: ${partsResult.partCount} items (${partsResult.skippedCount} system records skipped)`,
+    );
     console.log(`  Initial stock entries: ${partsResult.stockCount}`);
 
     const serialCount = await transformSerials(

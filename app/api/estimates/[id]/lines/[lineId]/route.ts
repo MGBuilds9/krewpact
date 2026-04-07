@@ -32,39 +32,40 @@ async function resolveLineTotal(
   return { lineTotal: calculateLineTotal(qty, cost, markup) };
 }
 
-export const PATCH = withApiRoute({ bodySchema: estimateLineUpdateSchema }, async ({ body, params }) => {
-  const { id, lineId } = params;
+export const PATCH = withApiRoute(
+  { bodySchema: estimateLineUpdateSchema },
+  async ({ body, params }) => {
+    const { id, lineId } = params;
 
-  const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
-  const updateData: Record<string, unknown> = { ...body };
+    const updateData: Record<string, unknown> = { ...body };
 
-  const needsRecalc =
-    body.quantity !== undefined ||
-    body.unit_cost !== undefined ||
-    body.markup_pct !== undefined;
-  if (needsRecalc) {
-    const { lineTotal, error } = await resolveLineTotal(supabase, lineId, body);
-    if (error) return error;
-    updateData.line_total = lineTotal;
-  }
+    const needsRecalc =
+      body.quantity !== undefined || body.unit_cost !== undefined || body.markup_pct !== undefined;
+    if (needsRecalc) {
+      const { lineTotal, error } = await resolveLineTotal(supabase, lineId, body);
+      if (error) return error;
+      updateData.line_total = lineTotal;
+    }
 
-  const { data, error } = await supabase
-    .from('estimate_lines')
-    .update(updateData)
-    .eq('id', lineId)
-    .select()
-    .single();
+    const { data, error } = await supabase
+      .from('estimate_lines')
+      .update(updateData)
+      .eq('id', lineId)
+      .select()
+      .single();
 
-  if (error) {
-    const status = error.code === 'PGRST116' ? 404 : 500;
-    return NextResponse.json({ error: error.message }, { status });
-  }
+    if (error) {
+      const status = error.code === 'PGRST116' ? 404 : 500;
+      return NextResponse.json({ error: error.message }, { status });
+    }
 
-  await recalculateParentTotals(supabase, id);
-  return NextResponse.json(data);
-});
+    await recalculateParentTotals(supabase, id);
+    return NextResponse.json(data);
+  },
+);
 
 export const DELETE = withApiRoute({}, async ({ params }) => {
   const { id, lineId } = params;

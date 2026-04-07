@@ -22,7 +22,8 @@ export const GET = withApiRoute({ roles: ALLOWED_ROLES }, async ({ params }) => 
   if (orgError || !org) throw notFound('Organization');
 
   const callerOrgId = await getKrewpactOrgId();
-  if (callerOrgId && callerOrgId !== org.id) throw forbidden('You do not belong to this organization');
+  if (callerOrgId && callerOrgId !== org.id)
+    throw forbidden('You do not belong to this organization');
 
   const { data: settings, error } = await serviceClient
     .from('org_settings')
@@ -51,7 +52,8 @@ export const PATCH = withApiRoute(
     if (orgError || !org) throw notFound('Organization');
 
     const callerOrgId = await getKrewpactOrgId();
-    if (callerOrgId && callerOrgId !== org.id) throw forbidden('You do not belong to this organization');
+    if (callerOrgId && callerOrgId !== org.id)
+      throw forbidden('You do not belong to this organization');
 
     const { data: existing } = await serviceClient
       .from('org_settings')

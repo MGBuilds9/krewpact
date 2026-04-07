@@ -68,9 +68,7 @@ function makeMockSupabase(exportData: unknown, rowsData: unknown) {
       if (fromCallCount === 2) {
         return {
           select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockImplementation(() =>
-              Promise.resolve(rowsData),
-            ),
+            eq: vi.fn().mockImplementation(() => Promise.resolve(rowsData)),
           }),
         };
       }

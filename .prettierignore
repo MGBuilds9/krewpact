@@ -7,3 +7,9 @@ types/supabase.ts
 scripts/ralph/archive
 mobile/.expo
 mobile/dist
+
+# Generated artifacts (do not format)
+docs/architecture/krewpact-architecture.html
+load-tests/results.json
+e2e/qa/.auth/qa-user.json
+.gstack/

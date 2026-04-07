@@ -90,12 +90,11 @@ async function main() {
 
   for (const result of results) {
     const status = result.passed ? 'PASS' : 'FAIL';
-    const detail =
-      result.passed
-        ? result.count !== undefined
-          ? ` (${result.count} record${result.count !== 1 ? 's' : ''} returned)`
-          : ''
-        : ` — ${result.error}`;
+    const detail = result.passed
+      ? result.count !== undefined
+        ? ` (${result.count} record${result.count !== 1 ? 's' : ''} returned)`
+        : ''
+      : ` — ${result.error}`;
     console.log(`[${status}] ${result.name}${detail}`);
     if (result.passed) {
       passed++;

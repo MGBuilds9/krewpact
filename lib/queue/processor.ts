@@ -89,8 +89,7 @@ const syncHandlers: Partial<Record<JobType, SyncHandler>> = {
     syncService.syncSupplierQuotation(id, uid, ctx),
   [JobType.ERPSyncRequestForQuotation]: (id, uid, ctx) =>
     syncService.syncRequestForQuotation(id, uid, ctx),
-  [JobType.ERPSyncMaterialRequest]: (id, uid, ctx) =>
-    syncService.syncMaterialRequest(id, uid, ctx),
+  [JobType.ERPSyncMaterialRequest]: (id, uid, ctx) => syncService.syncMaterialRequest(id, uid, ctx),
   [JobType.ERPSyncStockEntry]: (id, uid, ctx) => syncService.syncStockEntry(id, uid, ctx),
   [JobType.ERPSyncWarehouse]: (id, uid, ctx) => syncService.syncWarehouse(id, uid, ctx),
   [JobType.ERPSyncItem]: (id, uid, ctx) => syncService.syncItem(id, uid, ctx),
@@ -125,8 +124,7 @@ const syncHandlers: Partial<Record<JobType, SyncHandler>> = {
   [JobType.ERPSyncBidEntry]: (id, uid, ctx) => syncService.syncBid(id, uid, ctx),
   [JobType.ERPSyncAward]: (id, uid, ctx) => syncService.syncAward(id, uid, ctx),
   [JobType.ERPSyncComplianceDoc]: (id, uid, ctx) => syncService.syncComplianceDoc(id, uid, ctx),
-  [JobType.ERPSyncSelectionSheet]: (id, uid, ctx) =>
-    syncService.syncSelectionSheet(id, uid, ctx),
+  [JobType.ERPSyncSelectionSheet]: (id, uid, ctx) => syncService.syncSelectionSheet(id, uid, ctx),
 };
 
 export async function processJob(job: Job): Promise<void> {

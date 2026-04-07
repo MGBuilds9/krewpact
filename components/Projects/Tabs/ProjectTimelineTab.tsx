@@ -51,9 +51,7 @@ function MilestoneItem({ milestone, isLast }: { milestone: Milestone; isLast: bo
       <div className="flex-1 pb-8">
         <div className="flex items-center justify-between mb-2">
           <h4 className="font-semibold">{milestone.milestone_name}</h4>
-          <Badge variant={getMilestoneStatusVariant(status)}>
-            {status.replace('_', ' ')}
-          </Badge>
+          <Badge variant={getMilestoneStatusVariant(status)}>{status.replace('_', ' ')}</Badge>
         </div>
         {displayDate && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -71,7 +69,8 @@ function TimelineSummary({ project }: { project: Project }) {
   const endDate = project.target_completion_date ? new Date(project.target_completion_date) : null;
   const [now] = React.useState(() => Date.now());
   const daysElapsed = startDate ? Math.floor((now - startDate.getTime()) / 86_400_000) : 0;
-  const totalDays = startDate && endDate ? Math.floor((endDate.getTime() - startDate.getTime()) / 86_400_000) : 0;
+  const totalDays =
+    startDate && endDate ? Math.floor((endDate.getTime() - startDate.getTime()) / 86_400_000) : 0;
   const pct = totalDays > 0 ? (daysElapsed / totalDays) * 100 : 0;
 
   return (
@@ -82,7 +81,9 @@ function TimelineSummary({ project }: { project: Project }) {
           <Calendar className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{startDate ? startDate.toLocaleDateString() : 'Not set'}</div>
+          <div className="text-2xl font-bold">
+            {startDate ? startDate.toLocaleDateString() : 'Not set'}
+          </div>
         </CardContent>
       </Card>
       <Card>
@@ -91,7 +92,9 @@ function TimelineSummary({ project }: { project: Project }) {
           <Calendar className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{endDate ? endDate.toLocaleDateString() : 'Not set'}</div>
+          <div className="text-2xl font-bold">
+            {endDate ? endDate.toLocaleDateString() : 'Not set'}
+          </div>
         </CardContent>
       </Card>
       <Card>
@@ -101,7 +104,9 @@ function TimelineSummary({ project }: { project: Project }) {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{pct.toFixed(0)}%</div>
-          <p className="text-xs text-muted-foreground mt-1">{daysElapsed} of {totalDays} days</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {daysElapsed} of {totalDays} days
+          </p>
         </CardContent>
       </Card>
     </div>
@@ -122,7 +127,9 @@ export function ProjectTimelineTab({ project, projectId }: ProjectTimelineTabPro
         <CardContent>
           {isLoading ? (
             <div className="space-y-6">
-              {[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 w-full rounded" />)}
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-16 w-full rounded" />
+              ))}
             </div>
           ) : milestones.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
@@ -132,7 +139,9 @@ export function ProjectTimelineTab({ project, projectId }: ProjectTimelineTabPro
             </div>
           ) : (
             <div className="relative space-y-8">
-              {milestones.map((m: Milestone, i: number) => <MilestoneItem key={m.id} milestone={m} isLast={i === milestones.length - 1} />)}
+              {milestones.map((m: Milestone, i: number) => (
+                <MilestoneItem key={m.id} milestone={m} isLast={i === milestones.length - 1} />
+              ))}
             </div>
           )}
         </CardContent>

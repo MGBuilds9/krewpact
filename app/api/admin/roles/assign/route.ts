@@ -21,7 +21,6 @@ export const POST = withApiRoute(
     bodySchema: assignSchema,
   },
   async ({ body, userId, logger: reqLogger }) => {
-
     const { user_id: clerkUserId, role_keys, division_ids } = body;
 
     try {

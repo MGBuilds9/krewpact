@@ -124,7 +124,9 @@ describe('validateTenantConfig', () => {
     const cfg = validConfig();
     cfg.divisions = [{ code: 'good-code', name: '', description: '' }];
     const errors = validateTenantConfig(cfg);
-    expect(errors.some((e) => e.field.includes('divisions') && e.message === 'Required')).toBe(true);
+    expect(errors.some((e) => e.field.includes('divisions') && e.message === 'Required')).toBe(
+      true,
+    );
   });
 
   it('rejects admin with invalid email', () => {

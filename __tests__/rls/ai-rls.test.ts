@@ -46,9 +46,7 @@ describe('AI RLS: org-scoped access', () => {
   it('returns 401 when unauthenticated', async () => {
     mockClerkUnauth(mockAuth);
 
-    const res = await GET(
-      makeRequest('/api/ai/insights?entity_type=lead&entity_id=' + ENTITY_ID),
-    );
+    const res = await GET(makeRequest('/api/ai/insights?entity_type=lead&entity_id=' + ENTITY_ID));
 
     expect(res.status).toBe(401);
   });
@@ -78,9 +76,7 @@ describe('AI RLS: org-scoped access', () => {
       error: null,
     } as never);
 
-    const res = await GET(
-      makeRequest(`/api/ai/insights?entity_type=lead&entity_id=${ENTITY_ID}`),
-    );
+    const res = await GET(makeRequest(`/api/ai/insights?entity_type=lead&entity_id=${ENTITY_ID}`));
 
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -99,9 +95,7 @@ describe('AI RLS: org-scoped access', () => {
       error: null,
     } as never);
 
-    const res = await GET(
-      makeRequest('/api/ai/insights?entity_type=lead&entity_id=' + ENTITY_ID),
-    );
+    const res = await GET(makeRequest('/api/ai/insights?entity_type=lead&entity_id=' + ENTITY_ID));
 
     expect(res.status).toBe(200);
     const body = await res.json();

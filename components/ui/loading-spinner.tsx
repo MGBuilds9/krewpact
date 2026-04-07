@@ -36,7 +36,6 @@ export function LoadingCard({ className, lines = 3 }: LoadingCardProps) {
   return (
     <div className={cn('space-y-3', className)}>
       {Array.from({ length: lines }).map((_, i) => (
-         
         <div
           key={i}
           className={cn(

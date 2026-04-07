@@ -14,12 +14,7 @@
 import { API_BASE_URL } from '@/constants/config';
 import { resolveConflict } from './conflict-resolver';
 import { getOnlineState, subscribe as subscribeOnline } from './online-detector';
-import {
-  clearSyncedItems,
-  getItem,
-  getItemsByStatus,
-  updateItem,
-} from './store';
+import { clearSyncedItems, getItem, getItemsByStatus, updateItem } from './store';
 import type { OfflineQueueItem, SyncResult } from './types';
 import { ENTITY_API_ENDPOINTS } from './types';
 
@@ -39,9 +34,7 @@ let lastSyncAt: string | null = null;
 let _getToken: (() => Promise<string | null>) | null = null;
 
 /** Initialize auth for sync — call from app _layout.tsx */
-export function initSyncAuth(
-  getToken: () => Promise<string | null>,
-): void {
+export function initSyncAuth(getToken: () => Promise<string | null>): void {
   _getToken = getToken;
 }
 
@@ -133,10 +126,7 @@ async function processItem(item: OfflineQueueItem): Promise<SyncResult> {
       return handleConflict(item);
     }
 
-    return handleFailure(
-      item,
-      `API error: ${response.status} ${response.statusText}`,
-    );
+    return handleFailure(item, `API error: ${response.status} ${response.statusText}`);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     return handleFailure(item, message);
@@ -187,16 +177,10 @@ async function handleConflict(item: OfflineQueueItem): Promise<SyncResult> {
     const headers: Record<string, string> = {};
     const token = await _getToken?.();
     if (token) headers['Authorization'] = `Bearer ${token}`;
-    const serverResponse = await fetch(
-      `${API_BASE_URL}${basePath}/${item.entity_id}`,
-      { headers },
-    );
+    const serverResponse = await fetch(`${API_BASE_URL}${basePath}/${item.entity_id}`, { headers });
 
     if (!serverResponse.ok) {
-      return handleFailure(
-        item,
-        'Could not fetch server state for conflict resolution',
-      );
+      return handleFailure(item, 'Could not fetch server state for conflict resolution');
     }
 
     const serverData = (await serverResponse.json()) as Record<string, unknown>;
@@ -237,20 +221,14 @@ async function handleConflict(item: OfflineQueueItem): Promise<SyncResult> {
       };
     }
 
-    return handleFailure(
-      item,
-      `Conflict resolution retry failed: ${retryResponse.status}`,
-    );
+    return handleFailure(item, `Conflict resolution retry failed: ${retryResponse.status}`);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     return handleFailure(item, `Conflict handling error: ${message}`);
   }
 }
 
-async function handleFailure(
-  item: OfflineQueueItem,
-  error: string,
-): Promise<SyncResult> {
+async function handleFailure(item: OfflineQueueItem, error: string): Promise<SyncResult> {
   if (item.id === undefined) {
     return { item_id: 0, success: false, error };
   }
@@ -284,9 +262,7 @@ async function handleFailure(
   return { item_id: item.id, success: false, error };
 }
 
-async function safeParseJson(
-  response: Response,
-): Promise<Record<string, unknown> | null> {
+async function safeParseJson(response: Response): Promise<Record<string, unknown> | null> {
   try {
     return (await response.json()) as Record<string, unknown>;
   } catch {

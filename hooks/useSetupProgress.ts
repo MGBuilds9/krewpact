@@ -28,7 +28,9 @@ export function useSetupProgress() {
         key: 'branding',
         label: 'Customize branding',
         description: 'Add your logo and brand colors',
-        completed: Boolean(branding.logo_url) || (!!branding.primary_color && branding.primary_color !== DEFAULT_PRIMARY_COLOR),
+        completed:
+          Boolean(branding.logo_url) ||
+          (!!branding.primary_color && branding.primary_color !== DEFAULT_PRIMARY_COLOR),
         href: '/settings/branding',
       },
       {

@@ -138,9 +138,7 @@ describe('RLS: leads table — division-scoped isolation', () => {
       error: null,
     });
 
-    const res = await leadsGET(
-      makeRequest(`/api/crm/leads?division_id=${DIVISION_CONTRACTING}`),
-    );
+    const res = await leadsGET(makeRequest(`/api/crm/leads?division_id=${DIVISION_CONTRACTING}`));
     expect(res.status).toBe(200);
     const body = (await res.json()) as { data: { division_id: string }[] };
     expect(body.data).toHaveLength(2);
@@ -159,9 +157,7 @@ describe('RLS: leads table — division-scoped isolation', () => {
       error: null,
     });
 
-    const res = await leadsGET(
-      makeRequest(`/api/crm/leads?division_id=${DIVISION_CONTRACTING}`),
-    );
+    const res = await leadsGET(makeRequest(`/api/crm/leads?division_id=${DIVISION_CONTRACTING}`));
     expect(res.status).toBe(200);
     const body = (await res.json()) as { data: unknown[] };
     expect(body.data).toHaveLength(0);
@@ -208,9 +204,7 @@ describe('RLS: leads table — division-scoped isolation', () => {
     });
 
     // POST a lead to the wrong division
-    const res = await leadsGET(
-      makeRequest(`/api/crm/leads?division_id=${DIVISION_HOMES}`),
-    );
+    const res = await leadsGET(makeRequest(`/api/crm/leads?division_id=${DIVISION_HOMES}`));
     // Even a GET that returns empty is valid — RLS enforces it silently
     expect([200, 400, 403, 500].includes(res.status)).toBe(true);
   });
@@ -263,9 +257,7 @@ describe('RLS: projects table — org-scoped isolation', () => {
       error: null,
     });
 
-    const res = await projectsGET(
-      makeRequest(`/api/projects?division_id=${DIVISION_CONTRACTING}`),
-    );
+    const res = await projectsGET(makeRequest(`/api/projects?division_id=${DIVISION_CONTRACTING}`));
     expect(res.status).toBe(200);
     const body = (await res.json()) as { data: { division_id: string }[] };
     expect(body.data).toHaveLength(1);
@@ -281,9 +273,7 @@ describe('RLS: projects table — org-scoped isolation', () => {
       error: null,
     });
 
-    const res = await projectsGET(
-      makeRequest(`/api/projects?division_id=${DIVISION_CONTRACTING}`),
-    );
+    const res = await projectsGET(makeRequest(`/api/projects?division_id=${DIVISION_CONTRACTING}`));
     expect(res.status).toBe(200);
     const body = (await res.json()) as { data: unknown[] };
     expect(body.data).toHaveLength(0);

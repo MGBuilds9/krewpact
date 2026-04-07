@@ -75,7 +75,7 @@ export async function addToQueue(params: AddToQueueParams): Promise<number> {
   if (quota.percent_used >= QUOTA_BLOCK_PERCENT) {
     throw new Error(
       `Storage quota exceeded (${quota.percent_used.toFixed(1)}%). ` +
-      'Clear synced items or free device storage.',
+        'Clear synced items or free device storage.',
     );
   }
 
@@ -119,9 +119,7 @@ export async function getAllItems(): Promise<OfflineQueueItem[]> {
 }
 
 /** Get items filtered by status */
-export async function getItemsByStatus(
-  status: OfflineQueueStatus,
-): Promise<OfflineQueueItem[]> {
+export async function getItemsByStatus(status: OfflineQueueStatus): Promise<OfflineQueueItem[]> {
   const database = await getDB();
   const rows = await database.getAllAsync(
     'SELECT * FROM queue WHERE status = ? ORDER BY created_at ASC',
@@ -131,14 +129,9 @@ export async function getItemsByStatus(
 }
 
 /** Get a single item by ID */
-export async function getItem(
-  id: number,
-): Promise<OfflineQueueItem | undefined> {
+export async function getItem(id: number): Promise<OfflineQueueItem | undefined> {
   const database = await getDB();
-  const row = await database.getFirstAsync(
-    'SELECT * FROM queue WHERE id = ?',
-    id,
-  );
+  const row = await database.getFirstAsync('SELECT * FROM queue WHERE id = ?', id);
   return row ? parseRow(row as Record<string, unknown>) : undefined;
 }
 
@@ -194,16 +187,12 @@ export async function deleteItem(id: number): Promise<void> {
  */
 export async function clearSyncedItems(): Promise<number> {
   const database = await getDB();
-  const result = await database.runAsync(
-    "DELETE FROM queue WHERE status = 'synced'",
-  );
+  const result = await database.runAsync("DELETE FROM queue WHERE status = 'synced'");
   return result.changes;
 }
 
 /** Count items by status (for sync status display) */
-export async function countByStatus(): Promise<
-  Record<OfflineQueueStatus, number>
-> {
+export async function countByStatus(): Promise<Record<OfflineQueueStatus, number>> {
   const database = await getDB();
   const rows = await database.getAllAsync(
     'SELECT status, COUNT(*) as count FROM queue GROUP BY status',
@@ -255,9 +244,7 @@ export async function getStorageQuota(): Promise<StorageQuota> {
  * Check if storage quota is in warning zone.
  * Returns 'ok' | 'warning' | 'blocked'.
  */
-export async function checkQuotaHealth(): Promise<
-  'ok' | 'warning' | 'blocked'
-> {
+export async function checkQuotaHealth(): Promise<'ok' | 'warning' | 'blocked'> {
   const quota = await getStorageQuota();
   if (quota.percent_used >= QUOTA_BLOCK_PERCENT) return 'blocked';
   if (quota.percent_used >= QUOTA_WARN_PERCENT) return 'warning';

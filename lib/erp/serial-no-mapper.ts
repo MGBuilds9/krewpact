@@ -28,8 +28,6 @@ export function mapSerialNoToErp(sn: SerialNoMapInput): Record<string, unknown> 
     description: sn.description || sn.item_name,
     krewpact_id: sn.id,
     ...(sn.purchase_date ? { purchase_date: sn.purchase_date } : {}),
-    ...(sn.warranty_expiry_date
-      ? { warranty_expiry_date: sn.warranty_expiry_date }
-      : {}),
+    ...(sn.warranty_expiry_date ? { warranty_expiry_date: sn.warranty_expiry_date } : {}),
   };
 }

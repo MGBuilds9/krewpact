@@ -25,9 +25,7 @@ export interface MaterialRequestItemInput {
 /**
  * Map a KrewPact material request to an ERPNext Material Request document.
  */
-export function mapMaterialRequestToErp(
-  mr: MaterialRequestMapInput,
-): Record<string, unknown> {
+export function mapMaterialRequestToErp(mr: MaterialRequestMapInput): Record<string, unknown> {
   return {
     naming_series: 'MAT-MR-.YYYY.-',
     title: mr.request_number,

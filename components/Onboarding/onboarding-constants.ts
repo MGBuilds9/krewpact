@@ -13,7 +13,10 @@ export const DIVISION_LABELS: Record<DivisionCode, string> = {
 };
 
 // Re-export with `value` shape for backwards compatibility with onboarding UI
-export const INTERNAL_ROLES = REGISTRY_INTERNAL_ROLES.map((r) => ({ value: r.key, label: r.label }));
+export const INTERNAL_ROLES = REGISTRY_INTERNAL_ROLES.map((r) => ({
+  value: r.key,
+  label: r.label,
+}));
 
 export interface PendingInvite {
   email: string;

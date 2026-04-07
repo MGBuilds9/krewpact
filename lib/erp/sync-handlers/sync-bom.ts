@@ -33,13 +33,7 @@ export async function syncBom(
       .single();
 
     if (bomError || !bom) {
-      return failJob(
-        supabase,
-        job,
-        'bom',
-        bomId,
-        `BOM not found: ${bomError?.message || 'null'}`,
-      );
+      return failJob(supabase, job, 'bom', bomId, `BOM not found: ${bomError?.message || 'null'}`);
     }
 
     const record = bom as Record<string, unknown>;
@@ -65,18 +59,16 @@ export async function syncBom(
         is_default: (record.is_default as boolean) ?? true,
         currency: (record.currency as string) || 'CAD',
         remarks: record.remarks as string | null,
-        items: ((record.items as Record<string, unknown>[]) || []).map(
-          (item) => ({
-            item_code: item.item_code as string,
-            item_name: item.item_name as string,
-            description: (item.description as string) || '',
-            qty: item.qty as number,
-            uom: (item.uom as string) || 'Nos',
-            rate: item.rate as number,
-            amount: item.amount as number,
-            source_warehouse: item.source_warehouse as string | null,
-          }),
-        ),
+        items: ((record.items as Record<string, unknown>[]) || []).map((item) => ({
+          item_code: item.item_code as string,
+          item_name: item.item_name as string,
+          description: (item.description as string) || '',
+          qty: item.qty as number,
+          uom: (item.uom as string) || 'Nos',
+          rate: item.rate as number,
+          amount: item.amount as number,
+          source_warehouse: item.source_warehouse as string | null,
+        })),
       });
       const result = await client.create<{ name: string }>('BOM', mapped);
       erpDocname = result.name;

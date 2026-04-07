@@ -24,8 +24,6 @@ export function mapBatchToErp(batch: BatchMapInput): Record<string, unknown> {
     description: batch.description || batch.item_name,
     krewpact_id: batch.id,
     ...(batch.expiry_date ? { expiry_date: batch.expiry_date } : {}),
-    ...(batch.manufacturing_date
-      ? { manufacturing_date: batch.manufacturing_date }
-      : {}),
+    ...(batch.manufacturing_date ? { manufacturing_date: batch.manufacturing_date } : {}),
   };
 }

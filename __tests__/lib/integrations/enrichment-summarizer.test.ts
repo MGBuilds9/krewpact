@@ -12,7 +12,8 @@ vi.mock('@ai-sdk/google', () => ({
 vi.mock('@/lib/tenant/branding', () => ({
   getOrgBranding: vi.fn().mockResolvedValue({
     company_name: 'MDM Group Inc.',
-    company_description: 'a construction conglomerate in the Greater Toronto Area (GTA), Ontario, Canada',
+    company_description:
+      'a construction conglomerate in the Greater Toronto Area (GTA), Ontario, Canada',
     erp_company: 'MDM Group Inc.',
     logo_url: null,
     favicon_url: null,
@@ -46,14 +47,18 @@ describe('summarizeEnrichment', () => {
       text: 'Acme Corp is a construction company in Mississauga.',
     } as Awaited<ReturnType<typeof generateText>>);
 
-    const result = await summarizeEnrichment('Acme Corp', {
-      google_maps: {
-        address: '123 Main St, Mississauga, ON',
-        google_rating: 4.5,
-        google_reviews_count: 120,
-        business_status: 'OPERATIONAL',
+    const result = await summarizeEnrichment(
+      'Acme Corp',
+      {
+        google_maps: {
+          address: '123 Main St, Mississauga, ON',
+          google_rating: 4.5,
+          google_reviews_count: 120,
+          business_status: 'OPERATIONAL',
+        },
       },
-    }, 'test-org-id');
+      'test-org-id',
+    );
 
     expect(result).toBe('Acme Corp is a construction company in Mississauga.');
     expect(mockGenerateText).toHaveBeenCalledOnce();
@@ -68,12 +73,16 @@ describe('summarizeEnrichment', () => {
       text: 'Summary with web data.',
     } as Awaited<ReturnType<typeof generateText>>);
 
-    await summarizeEnrichment('Test Co', {
-      brave: {
-        website: 'https://testco.ca',
-        description: 'Leading construction firm in Ontario',
+    await summarizeEnrichment(
+      'Test Co',
+      {
+        brave: {
+          website: 'https://testco.ca',
+          description: 'Leading construction firm in Ontario',
+        },
       },
-    }, 'test-org-id');
+      'test-org-id',
+    );
 
     const prompt = mockGenerateText.mock.calls[0][0].prompt as string;
     expect(prompt).toContain('testco.ca');
@@ -85,12 +94,16 @@ describe('summarizeEnrichment', () => {
       text: 'Summary with contact.',
     } as Awaited<ReturnType<typeof generateText>>);
 
-    await summarizeEnrichment('Test Co', {
-      apollo_match: {
-        email: 'john@test.com',
-        title: 'CEO',
+    await summarizeEnrichment(
+      'Test Co',
+      {
+        apollo_match: {
+          email: 'john@test.com',
+          title: 'CEO',
+        },
       },
-    }, 'test-org-id');
+      'test-org-id',
+    );
 
     const prompt = mockGenerateText.mock.calls[0][0].prompt as string;
     expect(prompt).toContain('CEO');
@@ -102,11 +115,15 @@ describe('summarizeEnrichment', () => {
       text: 'Summary with research.',
     } as Awaited<ReturnType<typeof generateText>>);
 
-    await summarizeEnrichment('Test Co', {
-      tavily: {
-        answer: 'Test Co specializes in commercial renovations',
+    await summarizeEnrichment(
+      'Test Co',
+      {
+        tavily: {
+          answer: 'Test Co specializes in commercial renovations',
+        },
       },
-    }, 'test-org-id');
+      'test-org-id',
+    );
 
     const prompt = mockGenerateText.mock.calls[0][0].prompt as string;
     expect(prompt).toContain('commercial renovations');
@@ -117,12 +134,16 @@ describe('summarizeEnrichment', () => {
       text: 'Comprehensive summary.',
     } as Awaited<ReturnType<typeof generateText>>);
 
-    await summarizeEnrichment('Full Co', {
-      google_maps: { google_rating: 4.8, address: '456 Oak Ave' },
-      brave: { website: 'fullco.ca', description: 'Full service builder' },
-      apollo_match: { title: 'VP Operations' },
-      tavily: { answer: 'Award-winning firm' },
-    }, 'test-org-id');
+    await summarizeEnrichment(
+      'Full Co',
+      {
+        google_maps: { google_rating: 4.8, address: '456 Oak Ave' },
+        brave: { website: 'fullco.ca', description: 'Full service builder' },
+        apollo_match: { title: 'VP Operations' },
+        tavily: { answer: 'Award-winning firm' },
+      },
+      'test-org-id',
+    );
 
     const prompt = mockGenerateText.mock.calls[0][0].prompt as string;
     expect(prompt).toContain('Full Co');
@@ -137,9 +158,13 @@ describe('summarizeEnrichment', () => {
       text: '  Trimmed summary.  \n',
     } as Awaited<ReturnType<typeof generateText>>);
 
-    const result = await summarizeEnrichment('Test', {
-      google_maps: { google_rating: 4.0 },
-    }, 'test-org-id');
+    const result = await summarizeEnrichment(
+      'Test',
+      {
+        google_maps: { google_rating: 4.0 },
+      },
+      'test-org-id',
+    );
 
     expect(result).toBe('Trimmed summary.');
   });

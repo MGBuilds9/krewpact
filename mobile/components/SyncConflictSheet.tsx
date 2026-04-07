@@ -1,20 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  FlatList,
-  StyleSheet,
-  Alert,
-  Modal,
-} from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, StyleSheet, Alert, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING } from '@/constants/config';
-import {
-  getItemsByStatus,
-  updateItem,
-  deleteItem,
-} from '@/lib/offline/store';
+import { getItemsByStatus, updateItem, deleteItem } from '@/lib/offline/store';
 import { processQueue } from '@/lib/offline/sync-engine';
 import type { OfflineQueueItem } from '@/lib/offline/types';
 
@@ -27,10 +15,7 @@ interface SyncConflictSheetProps {
  * Modal sheet showing dead-lettered items that need manual resolution.
  * Users can retry, discard, or keep-both for each conflict.
  */
-export function SyncConflictSheet({
-  visible,
-  onClose,
-}: SyncConflictSheetProps) {
+export function SyncConflictSheet({ visible, onClose }: SyncConflictSheetProps) {
   const [items, setItems] = useState<OfflineQueueItem[]>([]);
 
   const refresh = useCallback(async () => {
@@ -85,9 +70,7 @@ export function SyncConflictSheet({
       <View style={styles.card}>
         <View style={styles.cardHeader}>
           <View style={styles.entityBadge}>
-            <Text style={styles.entityType}>
-              {item.entity_type.replace(/_/g, ' ')}
-            </Text>
+            <Text style={styles.entityType}>{item.entity_type.replace(/_/g, ' ')}</Text>
           </View>
           <Text style={styles.action}>{item.action}</Text>
         </View>
@@ -105,18 +88,12 @@ export function SyncConflictSheet({
         </Text>
 
         <View style={styles.actions}>
-          <TouchableOpacity
-            style={styles.retryButton}
-            onPress={() => handleRetry(item)}
-          >
+          <TouchableOpacity style={styles.retryButton} onPress={() => handleRetry(item)}>
             <Ionicons name="refresh" size={16} color={COLORS.primary} />
             <Text style={styles.retryText}>Retry</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.discardButton}
-            onPress={() => handleDiscard(item)}
-          >
+          <TouchableOpacity style={styles.discardButton} onPress={() => handleDiscard(item)}>
             <Ionicons name="trash-outline" size={16} color={COLORS.danger} />
             <Text style={styles.discardText}>Discard</Text>
           </TouchableOpacity>
@@ -127,11 +104,7 @@ export function SyncConflictSheet({
   );
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      presentationStyle="pageSheet"
-    >
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
       <View style={styles.container}>
         <View style={styles.handleBar} />
 
@@ -143,8 +116,8 @@ export function SyncConflictSheet({
         </View>
 
         <Text style={styles.description}>
-          These items could not be synced automatically. Review each one
-          and choose to retry or discard.
+          These items could not be synced automatically. Review each one and choose to retry or
+          discard.
         </Text>
 
         <FlatList
@@ -154,19 +127,11 @@ export function SyncConflictSheet({
           contentContainerStyle={styles.list}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Ionicons
-                name="checkmark-circle-outline"
-                size={48}
-                color={COLORS.success}
-              />
-              <Text style={styles.emptyText}>
-                No conflicts to resolve.
-              </Text>
+              <Ionicons name="checkmark-circle-outline" size={48} color={COLORS.success} />
+              <Text style={styles.emptyText}>No conflicts to resolve.</Text>
             </View>
           }
-          ItemSeparatorComponent={() => (
-            <View style={styles.separator} />
-          )}
+          ItemSeparatorComponent={() => <View style={styles.separator} />}
         />
       </View>
     </Modal>

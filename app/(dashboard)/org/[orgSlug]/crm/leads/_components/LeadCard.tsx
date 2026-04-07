@@ -67,7 +67,10 @@ export function LeadCard({ lead, selected, onSelect, onNavigate, onDelete }: Lea
               )}
             </div>
           </div>
-          <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="flex items-center gap-1 flex-shrink-0"
+            onClick={(e) => e.stopPropagation()}
+          >
             {onDelete && (
               <RowActionMenu
                 entityName={lead.company_name || 'this lead'}

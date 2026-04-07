@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { dbError,forbidden } from '@/lib/api/errors';
+import { dbError, forbidden } from '@/lib/api/errors';
 import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
 import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';

@@ -73,6 +73,13 @@ export const REFERRAL_TEMPLATES: BrandedTemplate[] = [
     subject: 'A quick ask, {{first_name}} — do you know anyone we could help?',
     body_html: referralRequestBody,
     body_text: referralRequestText,
-    merge_fields: ['logo_url', 'first_name', 'company_name', 'sender_company', 'referral_url', 'unsubscribe_url'],
+    merge_fields: [
+      'logo_url',
+      'first_name',
+      'company_name',
+      'sender_company',
+      'referral_url',
+      'unsubscribe_url',
+    ],
   },
 ];

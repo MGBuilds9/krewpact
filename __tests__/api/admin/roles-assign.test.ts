@@ -30,7 +30,10 @@ vi.mock('@/lib/supabase/server', () => ({
     from: vi.fn().mockReturnValue({
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: { id: 'uuid-123', clerk_user_id: 'user_target' }, error: null }),
+          single: vi.fn().mockResolvedValue({
+            data: { id: 'uuid-123', clerk_user_id: 'user_target' },
+            error: null,
+          }),
         }),
       }),
     }),

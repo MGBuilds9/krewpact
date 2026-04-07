@@ -5,10 +5,7 @@ import { paginatedResponse } from '@/lib/api/pagination';
 import { withApiRoute } from '@/lib/api/with-api-route';
 import { createPayrollExport } from '@/lib/services/payroll-export';
 import { createServiceClient } from '@/lib/supabase/server';
-import {
-  payrollExportCreateSchema,
-  payrollExportQuerySchema,
-} from '@/lib/validators/payroll';
+import { payrollExportCreateSchema, payrollExportQuerySchema } from '@/lib/validators/payroll';
 
 const PAYROLL_ROLES = ['platform_admin', 'payroll_admin'];
 
@@ -64,9 +61,6 @@ export const POST = withApiRoute(
       throw dbError('Failed to create payroll export');
     });
 
-    return NextResponse.json(
-      { id: result.exportId, row_count: result.rowCount },
-      { status: 201 },
-    );
+    return NextResponse.json({ id: result.exportId, row_count: result.rowCount }, { status: 201 });
   },
 );

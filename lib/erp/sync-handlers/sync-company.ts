@@ -58,11 +58,16 @@ export async function syncCompany(
       const mapped = mapCompanyToErp({
         id: orgId,
         company_name: record.name as string,
-        abbreviation: (record.abbreviation as string) || (record.name as string).slice(0, 3).toUpperCase(),
+        abbreviation:
+          (record.abbreviation as string) || (record.name as string).slice(0, 3).toUpperCase(),
         default_currency: (record.default_currency as string) || 'CAD',
         country: (record.country as string) || 'Canada',
       });
-      const result = await client.update<{ name: string }>('Company', record.name as string, mapped);
+      const result = await client.update<{ name: string }>(
+        'Company',
+        record.name as string,
+        mapped,
+      );
       erpDocname = result.name;
     }
 

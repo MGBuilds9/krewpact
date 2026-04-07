@@ -41,35 +41,38 @@ export const GET = withApiRoute({}, async ({ orgId }) => {
   return NextResponse.json({ sessions: sessions ?? [] });
 });
 
-export const DELETE = withApiRoute({ bodySchema: deleteBodySchema }, async ({ body, userId, orgId }) => {
-  const roles = await getKrewpactRoles();
-  if (!roles.some((r) => EXECUTIVE_ROLES.includes(r))) {
-    throw forbidden('Forbidden');
-  }
+export const DELETE = withApiRoute(
+  { bodySchema: deleteBodySchema },
+  async ({ body, userId, orgId }) => {
+    const roles = await getKrewpactRoles();
+    if (!roles.some((r) => EXECUTIVE_ROLES.includes(r))) {
+      throw forbidden('Forbidden');
+    }
 
-  const supabase = await createServiceClient();
+    const supabase = await createServiceClient();
 
-  // Verify ownership + org scope before deleting
-  const { data: session, error: sessionError } = await supabase
-    .from('ai_chat_sessions')
-    .select('id, user_id')
-    .eq('id', body.sessionId)
-    .eq('org_id', orgId ?? '')
-    .single();
+    // Verify ownership + org scope before deleting
+    const { data: session, error: sessionError } = await supabase
+      .from('ai_chat_sessions')
+      .select('id, user_id')
+      .eq('id', body.sessionId)
+      .eq('org_id', orgId ?? '')
+      .single();
 
-  if (sessionError || !session) {
-    return NextResponse.json({ error: 'Session not found' }, { status: 404 });
-  }
+    if (sessionError || !session) {
+      return NextResponse.json({ error: 'Session not found' }, { status: 404 });
+    }
 
-  if (session.user_id !== userId) {
-    throw forbidden('Forbidden');
-  }
+    if (session.user_id !== userId) {
+      throw forbidden('Forbidden');
+    }
 
-  const { error } = await supabase.from('ai_chat_sessions').delete().eq('id', body.sessionId);
+    const { error } = await supabase.from('ai_chat_sessions').delete().eq('id', body.sessionId);
 
-  if (error) {
-    return NextResponse.json({ error: 'Failed to delete session' }, { status: 500 });
-  }
+    if (error) {
+      return NextResponse.json({ error: 'Failed to delete session' }, { status: 500 });
+    }
 
-  return NextResponse.json({ ok: true });
-});
+    return NextResponse.json({ ok: true });
+  },
+);

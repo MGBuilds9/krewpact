@@ -1,4 +1,4 @@
-import { describe, expect,it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { wrapInBrandedTemplate } from '@/lib/email/branded-template';
 import type { BrandingConfig } from '@/lib/validators/branding';

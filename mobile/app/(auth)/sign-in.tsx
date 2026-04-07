@@ -41,8 +41,7 @@ export default function SignInScreen() {
         setError('Sign in incomplete. Please try again.');
       }
     } catch (err: unknown) {
-      const msg =
-        err instanceof Error ? err.message : 'Invalid email or password.';
+      const msg = err instanceof Error ? err.message : 'Invalid email or password.';
       setError(msg);
     } finally {
       setLoading(false);
@@ -54,10 +53,7 @@ export default function SignInScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        keyboardShouldPersistTaps="handled"
-      >
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.brand}>
           <Text style={styles.brandName}>KrewPact</Text>
           <Text style={styles.brandTagline}>Field Operations Platform</Text>
@@ -124,14 +120,40 @@ const styles = StyleSheet.create({
   brand: { alignItems: 'center', marginBottom: SPACING.xl },
   brandName: { fontSize: 32, fontWeight: '800', color: COLORS.primary },
   brandTagline: { fontSize: 14, color: COLORS.textSecondary, marginTop: SPACING.xs },
-  form: { backgroundColor: COLORS.surface, borderRadius: 16, padding: SPACING.lg, borderWidth: 1, borderColor: COLORS.border },
+  form: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 16,
+    padding: SPACING.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
   title: { fontSize: 20, fontWeight: '700', color: COLORS.text, marginBottom: SPACING.md },
-  errorBox: { backgroundColor: '#FEE2E2', borderRadius: 8, padding: SPACING.sm, marginBottom: SPACING.md },
+  errorBox: {
+    backgroundColor: '#FEE2E2',
+    borderRadius: 8,
+    padding: SPACING.sm,
+    marginBottom: SPACING.md,
+  },
   errorText: { color: COLORS.danger, fontSize: 14 },
   field: { marginBottom: SPACING.md },
   label: { fontSize: 14, fontWeight: '600', color: COLORS.text, marginBottom: SPACING.xs },
-  input: { backgroundColor: COLORS.background, borderRadius: 8, borderWidth: 1, borderColor: COLORS.border, paddingHorizontal: SPACING.md, paddingVertical: 12, fontSize: 16, color: COLORS.text },
-  button: { backgroundColor: COLORS.primary, borderRadius: 8, paddingVertical: 14, alignItems: 'center', marginTop: SPACING.sm },
+  input: {
+    backgroundColor: COLORS.background,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: COLORS.text,
+  },
+  button: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 8,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: SPACING.sm,
+  },
   buttonDisabled: { opacity: 0.6 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
 });

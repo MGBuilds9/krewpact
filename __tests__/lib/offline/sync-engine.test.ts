@@ -33,9 +33,7 @@ import {
 } from '@/lib/offline/sync-engine';
 import type { OfflineQueueItem } from '@/lib/offline/types';
 
-function makePendingItem(
-  overrides: Partial<OfflineQueueItem> = {},
-): OfflineQueueItem {
+function makePendingItem(overrides: Partial<OfflineQueueItem> = {}): OfflineQueueItem {
   return {
     id: 1,
     entity_type: 'daily_logs',
@@ -82,9 +80,7 @@ describe('Sync Engine', () => {
     it('processes pending items and marks as synced on success', async () => {
       const item = makePendingItem();
       // First call returns items, second call (re-fetch) returns empty
-      vi.mocked(getItemsByStatus)
-        .mockResolvedValueOnce([item])
-        .mockResolvedValue([]);
+      vi.mocked(getItemsByStatus).mockResolvedValueOnce([item]).mockResolvedValue([]);
 
       vi.spyOn(globalThis, 'fetch').mockResolvedValue(
         new Response(JSON.stringify({ version: 2 }), {
@@ -102,13 +98,9 @@ describe('Sync Engine', () => {
 
     it('handles API errors and increments retry_count', async () => {
       const item = makePendingItem();
-      vi.mocked(getItemsByStatus)
-        .mockResolvedValueOnce([item])
-        .mockResolvedValue([]);
+      vi.mocked(getItemsByStatus).mockResolvedValueOnce([item]).mockResolvedValue([]);
 
-      vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-        new Response(null, { status: 500 }),
-      );
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 500 }));
 
       const results = await processQueue();
 
@@ -118,13 +110,9 @@ describe('Sync Engine', () => {
 
     it('dead-letters after max retries', async () => {
       const item = makePendingItem({ retry_count: 2 }); // Will become 3
-      vi.mocked(getItemsByStatus)
-        .mockResolvedValueOnce([item])
-        .mockResolvedValue([]);
+      vi.mocked(getItemsByStatus).mockResolvedValueOnce([item]).mockResolvedValue([]);
 
-      vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-        new Response(null, { status: 500 }),
-      );
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 500 }));
 
       const results = await processQueue();
 
@@ -135,21 +123,16 @@ describe('Sync Engine', () => {
 
     it('handles 409 conflict responses', async () => {
       const item = makePendingItem({ action: 'update' });
-      vi.mocked(getItemsByStatus)
-        .mockResolvedValueOnce([item])
-        .mockResolvedValue([]);
+      vi.mocked(getItemsByStatus).mockResolvedValueOnce([item]).mockResolvedValue([]);
 
       // First call: 409, second: fetch server state, third: retry
       vi.spyOn(globalThis, 'fetch')
         .mockResolvedValueOnce(new Response(null, { status: 409 }))
         .mockResolvedValueOnce(
-          new Response(
-            JSON.stringify({ notes: 'server', version: 2 }),
-            {
-              status: 200,
-              headers: { 'Content-Type': 'application/json' },
-            },
-          ),
+          new Response(JSON.stringify({ notes: 'server', version: 2 }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
         )
         .mockResolvedValueOnce(
           new Response(JSON.stringify({ version: 3 }), {
@@ -169,9 +152,7 @@ describe('Sync Engine', () => {
       const listener = vi.fn();
       onSyncComplete(listener);
 
-      vi.mocked(getItemsByStatus)
-        .mockResolvedValueOnce([makePendingItem()])
-        .mockResolvedValue([]);
+      vi.mocked(getItemsByStatus).mockResolvedValueOnce([makePendingItem()]).mockResolvedValue([]);
 
       vi.spyOn(globalThis, 'fetch').mockResolvedValue(
         new Response(JSON.stringify({ version: 2 }), {
@@ -184,16 +165,12 @@ describe('Sync Engine', () => {
 
       expect(listener).toHaveBeenCalledTimes(1);
       expect(listener).toHaveBeenCalledWith(
-        expect.arrayContaining([
-          expect.objectContaining({ success: true }),
-        ]),
+        expect.arrayContaining([expect.objectContaining({ success: true })]),
       );
     });
 
     it('clears synced items after successful sync', async () => {
-      vi.mocked(getItemsByStatus)
-        .mockResolvedValueOnce([makePendingItem()])
-        .mockResolvedValue([]);
+      vi.mocked(getItemsByStatus).mockResolvedValueOnce([makePendingItem()]).mockResolvedValue([]);
 
       vi.spyOn(globalThis, 'fetch').mockResolvedValue(
         new Response(JSON.stringify({ version: 2 }), {

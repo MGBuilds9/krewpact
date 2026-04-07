@@ -25,9 +25,7 @@ export interface BudgetAccountInput {
 /**
  * Map a KrewPact budget to an ERPNext Budget document.
  */
-export function mapBudgetToErp(
-  budget: BudgetMapInput,
-): Record<string, unknown> {
+export function mapBudgetToErp(budget: BudgetMapInput): Record<string, unknown> {
   return {
     naming_series: 'BDG-.YYYY.-',
     budget_against: budget.budget_against || 'Cost Center',
@@ -51,9 +49,7 @@ export function mapBudgetToErp(
 /**
  * Map an ERPNext Budget document to a KrewPact record.
  */
-export function fromErpBudget(
-  erpBudget: Record<string, unknown>,
-): Record<string, unknown> {
+export function fromErpBudget(erpBudget: Record<string, unknown>): Record<string, unknown> {
   return {
     erp_budget_name: erpBudget.name || '',
     erp_doctype: 'Budget',
@@ -63,8 +59,7 @@ export function fromErpBudget(
     cost_center: erpBudget.cost_center || '',
     project: erpBudget.project || '',
     monthly_distribution: erpBudget.monthly_distribution || '',
-    action_if_annual_budget_exceeded:
-      erpBudget.action_if_annual_budget_exceeded || 'Warn',
+    action_if_annual_budget_exceeded: erpBudget.action_if_annual_budget_exceeded || 'Warn',
     accounts: Array.isArray(erpBudget.accounts)
       ? (erpBudget.accounts as Record<string, unknown>[]).map((acct) => ({
           account: acct.account || '',

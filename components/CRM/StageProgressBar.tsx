@@ -23,10 +23,7 @@ interface StageProgressBarProps {
  * Build a set of stages the lead has actually visited,
  * based on the stage_history audit trail.
  */
-function getVisitedStages(
-  currentStage: LeadStage,
-  history?: StageHistoryEntry[],
-): Set<string> {
+function getVisitedStages(currentStage: LeadStage, history?: StageHistoryEntry[]): Set<string> {
   const visited = new Set<string>();
   visited.add(currentStage);
   visited.add('new');
@@ -87,9 +84,7 @@ export function StageProgressBar({ currentStage, stageHistory }: StageProgressBa
               data-skipped={state === 'skipped' ? 'true' : undefined}
             >
               <div className={cn('h-2 rounded-full mb-1.5 transition-colors', BAR_STYLES[state])} />
-              <span className={cn('text-xs font-medium', LABEL_STYLES[state])}>
-                {stage.label}
-              </span>
+              <span className={cn('text-xs font-medium', LABEL_STYLES[state])}>{stage.label}</span>
             </div>
           );
         })}

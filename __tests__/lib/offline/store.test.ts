@@ -16,37 +16,21 @@ vi.mock('idb', () => {
           mockStore.set(autoId, withId);
           return Promise.resolve(autoId);
         }),
-        getAll: vi.fn(() =>
-          Promise.resolve(Array.from(mockStore.values())),
-        ),
-        getAllFromIndex: vi.fn(
-          (
-            _storeName: string,
-            indexName: string,
-            key: unknown,
-          ) => {
-            const items = Array.from(mockStore.values());
-            if (indexName === 'by-status') {
-              return Promise.resolve(
-                items.filter((i) => i.status === key),
-              );
-            }
-            if (indexName === 'by-entity') {
-              const [entityType, entityId] = key as [string, string];
-              return Promise.resolve(
-                items.filter(
-                  (i) =>
-                    i.entity_type === entityType &&
-                    i.entity_id === entityId,
-                ),
-              );
-            }
-            return Promise.resolve([]);
-          },
-        ),
-        get: vi.fn((_storeName: string, id: number) =>
-          Promise.resolve(mockStore.get(id)),
-        ),
+        getAll: vi.fn(() => Promise.resolve(Array.from(mockStore.values()))),
+        getAllFromIndex: vi.fn((_storeName: string, indexName: string, key: unknown) => {
+          const items = Array.from(mockStore.values());
+          if (indexName === 'by-status') {
+            return Promise.resolve(items.filter((i) => i.status === key));
+          }
+          if (indexName === 'by-entity') {
+            const [entityType, entityId] = key as [string, string];
+            return Promise.resolve(
+              items.filter((i) => i.entity_type === entityType && i.entity_id === entityId),
+            );
+          }
+          return Promise.resolve([]);
+        }),
+        get: vi.fn((_storeName: string, id: number) => Promise.resolve(mockStore.get(id))),
         put: vi.fn((_storeName: string, item: Record<string, unknown>) => {
           if (item.id !== undefined) {
             mockStore.set(item.id as number, item);
@@ -127,7 +111,13 @@ describe('Offline Store', () => {
 
   describe('addToQueue', () => {
     it('adds an item and returns its id', async () => {
-      const id = await enqueueV({ t: 'daily_logs', id: 'entity-1', a: 'create', p: { notes: 'test' }, v: 1 });
+      const id = await enqueueV({
+        t: 'daily_logs',
+        id: 'entity-1',
+        a: 'create',
+        p: { notes: 'test' },
+        v: 1,
+      });
 
       expect(id).toBe(1);
       expect(mockStore.size).toBe(1);
@@ -223,9 +213,9 @@ describe('Offline Store', () => {
     });
 
     it('throws when item has no id', async () => {
-      await expect(
-        updateItem({ entity_type: 'daily_logs' } as never),
-      ).rejects.toThrow('Cannot update item without id');
+      await expect(updateItem({ entity_type: 'daily_logs' } as never)).rejects.toThrow(
+        'Cannot update item without id',
+      );
     });
   });
 

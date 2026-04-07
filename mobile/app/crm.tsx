@@ -1,5 +1,13 @@
 import React, { memo } from 'react';
-import { View, Text, FlatList, RefreshControl, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  ActivityIndicator,
+  TouchableOpacity,
+} from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -83,7 +91,9 @@ export default function CRMScreen() {
         <FlatList
           data={data ?? []}
           keyExtractor={(item) => item.id}
-          refreshControl={<RefreshControl refreshing={isFetching && !isLoading} onRefresh={refetch} />}
+          refreshControl={
+            <RefreshControl refreshing={isFetching && !isLoading} onRefresh={refetch} />
+          }
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={<Text style={styles.empty}>No leads found.</Text>}
           renderItem={({ item }) => <LeadCard lead={item} />}
@@ -151,7 +161,12 @@ const styles = StyleSheet.create({
   scoreText: { fontSize: 12, color: COLORS.primary, fontWeight: '600' },
   separator: { height: SPACING.sm },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  errorBox: { backgroundColor: '#FEE2E2', borderRadius: 8, padding: SPACING.md, margin: SPACING.md },
+  errorBox: {
+    backgroundColor: '#FEE2E2',
+    borderRadius: 8,
+    padding: SPACING.md,
+    margin: SPACING.md,
+  },
   errorText: { color: COLORS.danger },
   empty: { color: COLORS.muted, textAlign: 'center', paddingVertical: SPACING.lg },
 });

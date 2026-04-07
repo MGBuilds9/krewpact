@@ -40,8 +40,7 @@ export async function resolveTenant(hostname: string): Promise<TenantInfo | null
   let result: TenantInfo | null = null;
 
   const parts = host.split('.');
-  const isKrewpactSubdomain =
-    parts.length === 3 && parts.slice(1).join('.') === KREWPACT_BASE;
+  const isKrewpactSubdomain = parts.length === 3 && parts.slice(1).join('.') === KREWPACT_BASE;
 
   const supabase = createServiceClient();
 
@@ -54,9 +53,7 @@ export async function resolveTenant(hostname: string): Promise<TenantInfo | null
       .maybeSingle();
 
     if (data) {
-      const settings = Array.isArray(data.org_settings)
-        ? data.org_settings[0]
-        : data.org_settings;
+      const settings = Array.isArray(data.org_settings) ? data.org_settings[0] : data.org_settings;
       result = {
         orgId: data.id as string,
         orgSlug: data.slug as string,
@@ -71,9 +68,7 @@ export async function resolveTenant(hostname: string): Promise<TenantInfo | null
       .maybeSingle();
 
     if (data) {
-      const settings = Array.isArray(data.org_settings)
-        ? data.org_settings[0]
-        : data.org_settings;
+      const settings = Array.isArray(data.org_settings) ? data.org_settings[0] : data.org_settings;
       result = {
         orgId: data.id as string,
         orgSlug: data.slug as string,

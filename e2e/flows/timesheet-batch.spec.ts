@@ -9,7 +9,6 @@ import { orgUrl } from '../helpers/fixtures';
 // which can't be seeded cheaply — timesheets require an employee + project context.
 
 test.describe('Timesheet Batch', () => {
-
   test('timesheets page renders without errors', async ({ page }) => {
     await page.goto(orgUrl('/timesheets'));
     await expect(page.locator('main')).toBeVisible({ timeout: 10_000 });

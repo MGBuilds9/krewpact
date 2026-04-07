@@ -32,9 +32,7 @@ export interface CompressedImage {
  * 2. Compress with decreasing JPEG quality until under 2MB
  * 3. Returns the compressed URI and metadata
  */
-export async function compressImage(
-  sourceUri: string,
-): Promise<CompressedImage> {
+export async function compressImage(sourceUri: string): Promise<CompressedImage> {
   // First pass: resize if needed, compress at 0.8
   let result = await ImageManipulator.manipulateAsync(
     sourceUri,

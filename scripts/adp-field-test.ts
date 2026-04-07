@@ -17,9 +17,7 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
-  console.error(
-    '❌  Missing env vars: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY',
-  );
+  console.error('❌  Missing env vars: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY');
   process.exit(1);
 }
 
@@ -188,12 +186,8 @@ async function main() {
 
     if (stats.withCode === 0) {
       console.log('\n  ⚠  No users have adp_employee_code set.');
-      console.log(
-        '     ADP export will fall back to internal UUIDs — ADP will reject the file.',
-      );
-      console.log(
-        '     Run: UPDATE users SET adp_employee_code = <code> WHERE id = <id>;',
-      );
+      console.log('     ADP export will fall back to internal UUIDs — ADP will reject the file.');
+      console.log('     Run: UPDATE users SET adp_employee_code = <code> WHERE id = <id>;');
     } else if (stats.withoutCode > 0) {
       console.log(`\n  ⚠  ${stats.withoutCode} users lack ADP codes — their rows will use UUIDs.`);
     }
@@ -210,9 +204,15 @@ async function main() {
   console.log(csv);
 
   console.log('\n  Notes on the sample CSV:');
-  console.log('  • "Smith, John" row uses RFC 4180 quoted field — parser must handle comma-in-name');
-  console.log('  • ADP-XXXX is intentionally missing from the export — should flag missing_in_export');
-  console.log('  • To test: POST this CSV to /api/payroll/reconcile with a matching export batch ID');
+  console.log(
+    '  • "Smith, John" row uses RFC 4180 quoted field — parser must handle comma-in-name',
+  );
+  console.log(
+    '  • ADP-XXXX is intentionally missing from the export — should flag missing_in_export',
+  );
+  console.log(
+    '  • To test: POST this CSV to /api/payroll/reconcile with a matching export batch ID',
+  );
 
   // Overall readiness
   const allPassed = checks.every((c) => c.passed);
@@ -235,12 +235,8 @@ async function main() {
   }
 
   if (stats.withCode === 0 && stats.total > 0) {
-    console.log(
-      '  3. Set adp_employee_code on users before running a live export.',
-    );
-    console.log(
-      '     Format: "ADP-NNNN" (matches ADP Workforce Now employee IDs).\n',
-    );
+    console.log('  3. Set adp_employee_code on users before running a live export.');
+    console.log('     Format: "ADP-NNNN" (matches ADP Workforce Now employee IDs).\n');
   }
 
   if (allPassed) {

@@ -107,7 +107,6 @@ interface QuickAccessToolbarProps {
   className?: string;
 }
 
- 
 export function QuickAccessToolbar({ className }: QuickAccessToolbarProps) {
   const { push: orgPush } = useOrgRouter();
   const pathname = usePathname();

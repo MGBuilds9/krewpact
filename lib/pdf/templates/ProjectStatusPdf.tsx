@@ -58,10 +58,7 @@ function ProjectHeader({ data }: { data: ProjectStatusPdfData }) {
             <Text style={styles.projectInfo}>Project: {data.project.code}</Text>
           )}
           {data.project.status && (
-            <Text style={styles.projectInfo}>
-              Status:{' '}
-              {formatStatus(data.project.status)}
-            </Text>
+            <Text style={styles.projectInfo}>Status: {formatStatus(data.project.status)}</Text>
           )}
           {data.project.startDate && data.project.endDate && (
             <Text style={styles.projectInfo}>

@@ -51,10 +51,7 @@ export default function PhotosScreen() {
   const takePhoto = useCallback(async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert(
-        'Permission Required',
-        'Camera access is needed to take site photos.',
-      );
+      Alert.alert('Permission Required', 'Camera access is needed to take site photos.');
       return;
     }
 
@@ -90,10 +87,7 @@ export default function PhotosScreen() {
   const pickFromLibrary = useCallback(async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert(
-        'Permission Required',
-        'Photo library access is needed to select photos.',
-      );
+      Alert.alert('Permission Required', 'Photo library access is needed to select photos.');
       return;
     }
 
@@ -150,7 +144,11 @@ export default function PhotosScreen() {
 
       {/* Project Selector */}
       {projectsLoading ? (
-        <ActivityIndicator size="small" color={COLORS.primary} style={{ marginBottom: SPACING.md }} />
+        <ActivityIndicator
+          size="small"
+          color={COLORS.primary}
+          style={{ marginBottom: SPACING.md }}
+        />
       ) : (
         <FlatList
           horizontal

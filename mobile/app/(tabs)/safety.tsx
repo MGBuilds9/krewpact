@@ -97,9 +97,7 @@ export default function SafetyScreen() {
   }
 
   function toggleHazard(h: string) {
-    setHazards((prev) =>
-      prev.includes(h) ? prev.filter((x) => x !== h) : [...prev, h],
-    );
+    setHazards((prev) => (prev.includes(h) ? prev.filter((x) => x !== h) : [...prev, h]));
   }
 
   const isValid =
@@ -152,9 +150,7 @@ export default function SafetyScreen() {
         <TouchableOpacity onPress={resetForm} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={24} color={COLORS.text} />
         </TouchableOpacity>
-        <Text style={styles.formTitle}>
-          {FORM_TYPES.find((f) => f.key === formType)?.label}
-        </Text>
+        <Text style={styles.formTitle}>{FORM_TYPES.find((f) => f.key === formType)?.label}</Text>
       </View>
 
       {/* Project Selector */}
@@ -237,9 +233,7 @@ export default function SafetyScreen() {
                   style={[styles.hazardChip, hazards.includes(h) && styles.hazardChipSel]}
                   onPress={() => toggleHazard(h)}
                 >
-                  <Text
-                    style={[styles.hazardText, hazards.includes(h) && styles.hazardTextSel]}
-                  >
+                  <Text style={[styles.hazardText, hazards.includes(h) && styles.hazardTextSel]}>
                     {h}
                   </Text>
                 </TouchableOpacity>
@@ -308,7 +302,10 @@ export default function SafetyScreen() {
 
       {/* Submit */}
       <TouchableOpacity
-        style={[styles.submitButton, (!isValid || submitMutation.isPending) && styles.submitDisabled]}
+        style={[
+          styles.submitButton,
+          (!isValid || submitMutation.isPending) && styles.submitDisabled,
+        ]}
         onPress={() => submitMutation.mutate()}
         disabled={!isValid || submitMutation.isPending}
         activeOpacity={0.8}

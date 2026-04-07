@@ -1,12 +1,7 @@
 'use client';
 
 import { SequenceStepForm } from '@/components/CRM/SequenceStepForm';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import type { SequenceStep } from '@/hooks/useCRM';
 
 import { EnrollLeadDialog } from './SequenceContent';

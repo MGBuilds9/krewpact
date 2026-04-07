@@ -32,8 +32,7 @@ export async function registerForPushNotifications(): Promise<string | null> {
     return null;
   }
 
-  const { status: existingStatus } =
-    await Notifications.getPermissionsAsync();
+  const { status: existingStatus } = await Notifications.getPermissionsAsync();
   let finalStatus = existingStatus;
 
   if (existingStatus !== 'granted') {
@@ -62,10 +61,7 @@ export async function registerForPushNotifications(): Promise<string | null> {
  * Register the push token with the KrewPact API.
  * Called after auth is established.
  */
-export async function registerTokenWithApi(
-  pushToken: string,
-  authToken: string,
-): Promise<void> {
+export async function registerTokenWithApi(pushToken: string, authToken: string): Promise<void> {
   try {
     await fetch(`${API_BASE_URL}/api/notifications/register-device`, {
       method: 'POST',
@@ -87,10 +83,7 @@ export async function registerTokenWithApi(
 /**
  * Schedule a local notification (e.g., sync complete).
  */
-export async function scheduleLocalNotification(
-  title: string,
-  body: string,
-): Promise<void> {
+export async function scheduleLocalNotification(title: string, body: string): Promise<void> {
   await Notifications.scheduleNotificationAsync({
     content: {
       title,
@@ -112,15 +105,11 @@ export function addNotificationListeners(handlers: {
   const subs: Notifications.Subscription[] = [];
 
   if (handlers.onReceived) {
-    subs.push(
-      Notifications.addNotificationReceivedListener(handlers.onReceived),
-    );
+    subs.push(Notifications.addNotificationReceivedListener(handlers.onReceived));
   }
 
   if (handlers.onTapped) {
-    subs.push(
-      Notifications.addNotificationResponseReceivedListener(handlers.onTapped),
-    );
+    subs.push(Notifications.addNotificationResponseReceivedListener(handlers.onTapped));
   }
 
   return () => {

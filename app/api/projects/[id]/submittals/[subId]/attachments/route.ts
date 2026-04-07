@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { notFound,serverError } from '@/lib/api/errors';
+import { notFound, serverError } from '@/lib/api/errors';
 import { withApiRoute } from '@/lib/api/with-api-route';
 import {
   deleteAttachment,

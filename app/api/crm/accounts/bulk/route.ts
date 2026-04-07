@@ -59,7 +59,14 @@ export const POST = withApiRoute({ bodySchema: bulkSchema }, async ({ body }) =>
         logger.error('Bulk account export failed', { error: error.message });
         throw dbError(error.message);
       }
-      const columns = ['account_name', 'account_type', 'industry', 'website', 'phone', 'created_at'];
+      const columns = [
+        'account_name',
+        'account_type',
+        'industry',
+        'website',
+        'phone',
+        'created_at',
+      ];
       const csv = exportToCSV((data ?? []) as Record<string, unknown>[], columns);
       return new NextResponse(csv, {
         status: 200,

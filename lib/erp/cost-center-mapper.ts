@@ -14,9 +14,7 @@ export interface CostCenterMapInput {
 /**
  * Map a KrewPact cost center to an ERPNext Cost Center document.
  */
-export function mapCostCenterToErp(
-  cc: CostCenterMapInput,
-): Record<string, unknown> {
+export function mapCostCenterToErp(cc: CostCenterMapInput): Record<string, unknown> {
   return {
     cost_center_name: cc.cost_center_name,
     parent_cost_center: cc.parent_cost_center || '',
@@ -29,9 +27,7 @@ export function mapCostCenterToErp(
 /**
  * Map an ERPNext Cost Center document to a KrewPact record.
  */
-export function fromErpCostCenter(
-  erpCostCenter: Record<string, unknown>,
-): Record<string, unknown> {
+export function fromErpCostCenter(erpCostCenter: Record<string, unknown>): Record<string, unknown> {
   return {
     erp_cost_center_name: erpCostCenter.name || '',
     erp_doctype: 'Cost Center',

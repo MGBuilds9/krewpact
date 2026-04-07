@@ -154,7 +154,6 @@ function FileList({ files, onRemove }: FileListProps) {
   return (
     <div className="space-y-2">
       {files.map((file, i) => (
-         
         <div
           key={`${file.name}-${i}`}
           className="flex items-center justify-between text-sm border rounded-lg px-3 py-2"

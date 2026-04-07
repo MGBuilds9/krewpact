@@ -1,7 +1,4 @@
-import {
-  CONFLICT_STRATEGIES,
-  ENTITY_API_ENDPOINTS,
-} from '@/lib/offline/types';
+import { CONFLICT_STRATEGIES, ENTITY_API_ENDPOINTS } from '@/lib/offline/types';
 import type {
   OfflineEntityType,
   OfflineAction,
@@ -11,12 +8,7 @@ import type {
 
 describe('offline/types', () => {
   it('defines all entity types with conflict strategies', () => {
-    const entities: OfflineEntityType[] = [
-      'daily_logs',
-      'time_entries',
-      'safety_forms',
-      'photos',
-    ];
+    const entities: OfflineEntityType[] = ['daily_logs', 'time_entries', 'safety_forms', 'photos'];
 
     for (const entity of entities) {
       expect(CONFLICT_STRATEGIES[entity]).toBeDefined();
@@ -39,17 +31,9 @@ describe('offline/types', () => {
   it('defines API endpoint factories for all entity types', () => {
     const pid = 'proj-456';
     expect(typeof ENTITY_API_ENDPOINTS.daily_logs).toBe('function');
-    expect(ENTITY_API_ENDPOINTS.daily_logs(pid)).toBe(
-      `/api/projects/${pid}/daily-logs`,
-    );
-    expect(ENTITY_API_ENDPOINTS.time_entries(pid)).toBe(
-      `/api/projects/${pid}/time-entries`,
-    );
-    expect(ENTITY_API_ENDPOINTS.safety_forms(pid)).toBe(
-      `/api/projects/${pid}/safety/forms`,
-    );
-    expect(ENTITY_API_ENDPOINTS.photos(pid)).toBe(
-      `/api/projects/${pid}/photos`,
-    );
+    expect(ENTITY_API_ENDPOINTS.daily_logs(pid)).toBe(`/api/projects/${pid}/daily-logs`);
+    expect(ENTITY_API_ENDPOINTS.time_entries(pid)).toBe(`/api/projects/${pid}/time-entries`);
+    expect(ENTITY_API_ENDPOINTS.safety_forms(pid)).toBe(`/api/projects/${pid}/safety/forms`);
+    expect(ENTITY_API_ENDPOINTS.photos(pid)).toBe(`/api/projects/${pid}/photos`);
   });
 });

@@ -48,4 +48,3 @@ describe('metadata claim helpers', () => {
     await expect(getKrewpactDivisions()).resolves.toEqual([]);
   });
 });
-

@@ -10,14 +10,24 @@ export const brandingSchema = z.object({
   company_description: z.union([emptyToUndefined, z.string().max(500)]).optional(),
   logo_url: optionalUrl,
   favicon_url: optionalUrl,
-  primary_color: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
-  accent_color: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+  primary_color: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/)
+    .optional(),
+  accent_color: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/)
+    .optional(),
   support_email: optionalEmail,
   support_url: optionalUrl,
   footer_text: z.union([emptyToUndefined, z.string().max(200)]).optional(),
   login_background_url: optionalUrl,
   custom_domain: z.string().max(253).optional(),
-  subdomain: z.string().max(63).regex(/^[a-z0-9-]+$/).optional(),
+  subdomain: z
+    .string()
+    .max(63)
+    .regex(/^[a-z0-9-]+$/)
+    .optional(),
   erp_company: z.union([emptyToUndefined, z.string().max(100)]).optional(),
   boldsign_brand_id: z.union([emptyToUndefined, z.string().max(100)]).optional(),
 });

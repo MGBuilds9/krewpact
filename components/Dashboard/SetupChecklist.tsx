@@ -54,7 +54,9 @@ export function SetupChecklist() {
 
         <div className="mb-3">
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-            <span>{completed} of {total} complete</span>
+            <span>
+              {completed} of {total} complete
+            </span>
             <span>{progressPercent}%</span>
           </div>
           <Progress value={progressPercent} className="h-1.5" />

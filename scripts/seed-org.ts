@@ -74,7 +74,11 @@ const MDM_SEED: SeedData = {
     { code: 'homes', name: 'Acme Homes', description: 'Residential construction division' },
     { code: 'wood', name: 'Acme Lumber', description: 'Wood/lumber division' },
     { code: 'telecom', name: 'Acme Telecom', description: 'Telecommunications division' },
-    { code: 'group-inc', name: 'Acme Construction Inc.', description: 'Parent company / corporate' },
+    {
+      code: 'group-inc',
+      name: 'Acme Construction Inc.',
+      description: 'Parent company / corporate',
+    },
     { code: 'management', name: 'Acme Management', description: 'Property management division' },
   ],
   roles: [

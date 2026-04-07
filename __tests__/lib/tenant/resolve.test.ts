@@ -1,4 +1,4 @@
-import { beforeEach,describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ---------------------------------------------------------------------------
 // Unit tests for hostname parsing logic in lib/tenant/resolve.ts
@@ -28,14 +28,13 @@ describe('resolveTenant — hostname parsing', () => {
   });
 
   describe('main domain detection (returns null)', () => {
-    it.each([
-      ['krewpact.com'],
-      ['www.krewpact.com'],
-      ['localhost'],
-    ])('returns null for main domain %s', async (hostname) => {
-      const result = await resolveTenant(hostname);
-      expect(result).toBeNull();
-    });
+    it.each([['krewpact.com'], ['www.krewpact.com'], ['localhost']])(
+      'returns null for main domain %s',
+      async (hostname) => {
+        const result = await resolveTenant(hostname);
+        expect(result).toBeNull();
+      },
+    );
   });
 
   describe('subdomain extraction from *.krewpact.com', () => {

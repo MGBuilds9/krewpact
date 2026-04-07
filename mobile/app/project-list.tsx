@@ -128,7 +128,12 @@ const styles = StyleSheet.create({
   date: { fontSize: 13, color: COLORS.muted, marginTop: SPACING.xs },
   separator: { height: SPACING.sm },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  errorBox: { backgroundColor: '#FEE2E2', borderRadius: 8, padding: SPACING.md, margin: SPACING.md },
+  errorBox: {
+    backgroundColor: '#FEE2E2',
+    borderRadius: 8,
+    padding: SPACING.md,
+    margin: SPACING.md,
+  },
   errorText: { color: COLORS.danger },
   empty: { color: COLORS.muted, textAlign: 'center', paddingVertical: SPACING.lg },
 });

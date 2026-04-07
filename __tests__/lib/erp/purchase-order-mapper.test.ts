@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  mapPurchaseOrderToErp,
-  type PurchaseOrderMapInput,
-} from '@/lib/erp/purchase-order-mapper';
+import { mapPurchaseOrderToErp, type PurchaseOrderMapInput } from '@/lib/erp/purchase-order-mapper';
 
 function makeInput(overrides: Partial<PurchaseOrderMapInput> = {}): PurchaseOrderMapInput {
   return {

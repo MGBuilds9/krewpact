@@ -46,9 +46,7 @@ describe('mapBankAccountToErp', () => {
   });
 
   it('maps false booleans to 0', () => {
-    const result = mapBankAccountToErp(
-      makeInput({ is_default: false, is_company_account: false }),
-    );
+    const result = mapBankAccountToErp(makeInput({ is_default: false, is_company_account: false }));
     expect(result.is_default).toBe(0);
     expect(result.is_company_account).toBe(0);
   });

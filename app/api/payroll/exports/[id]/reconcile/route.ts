@@ -27,7 +27,12 @@ export const POST = withApiRoute(
 
     if (exportRecord.status !== 'completed') {
       return NextResponse.json(
-        { error: { code: 'INVALID_STATE', message: 'Export must be completed before reconciliation' } },
+        {
+          error: {
+            code: 'INVALID_STATE',
+            message: 'Export must be completed before reconciliation',
+          },
+        },
         { status: 400 },
       );
     }
@@ -35,7 +40,9 @@ export const POST = withApiRoute(
     // Fetch export rows for comparison
     const { data: rows, error: rowsError } = await supabase
       .from('payroll_export_rows')
-      .select('employee_id, hours_regular, hours_overtime, cost_code, pay_rate, department, project_id')
+      .select(
+        'employee_id, hours_regular, hours_overtime, cost_code, pay_rate, department, project_id',
+      )
       .eq('export_id', id);
 
     if (rowsError) throw dbError(rowsError.message);
@@ -53,7 +60,8 @@ export const POST = withApiRoute(
 
     const result = reconcileExport(exportRows, typedBody.csv_content);
 
-    const isClean = result.mismatched === 0 && result.missing_in_adp === 0 && result.missing_in_export === 0;
+    const isClean =
+      result.mismatched === 0 && result.missing_in_adp === 0 && result.missing_in_export === 0;
     await supabase
       .from('payroll_exports')
       .update({

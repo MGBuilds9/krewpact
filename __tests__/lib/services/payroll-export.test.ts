@@ -55,9 +55,27 @@ describe('buildExportBatch', () => {
 
   it('aggregates time entries by employee with division filter', async () => {
     const entries = [
-      { user_id: TEST_USER_1, hours_regular: 8, hours_overtime: 1, cost_code: 'CC-100', project_id: TEST_PROJECT_1 },
-      { user_id: TEST_USER_1, hours_regular: 8, hours_overtime: 0, cost_code: 'CC-100', project_id: TEST_PROJECT_1 },
-      { user_id: TEST_USER_2, hours_regular: 6, hours_overtime: 2, cost_code: 'CC-200', project_id: TEST_PROJECT_2 },
+      {
+        user_id: TEST_USER_1,
+        hours_regular: 8,
+        hours_overtime: 1,
+        cost_code: 'CC-100',
+        project_id: TEST_PROJECT_1,
+      },
+      {
+        user_id: TEST_USER_1,
+        hours_regular: 8,
+        hours_overtime: 0,
+        cost_code: 'CC-100',
+        project_id: TEST_PROJECT_1,
+      },
+      {
+        user_id: TEST_USER_2,
+        hours_regular: 6,
+        hours_overtime: 2,
+        cost_code: 'CC-200',
+        project_id: TEST_PROJECT_2,
+      },
     ];
 
     const supabase = mockSupabaseClient({
@@ -163,7 +181,9 @@ describe('generateCSV', () => {
     const csv = generateCSV(rows);
     const lines = csv.split('\n');
 
-    expect(lines[0]).toBe('Employee ID,Hours - Regular,Hours - Overtime,Cost Code,Pay Rate,Department');
+    expect(lines[0]).toBe(
+      'Employee ID,Hours - Regular,Hours - Overtime,Cost Code,Pay Rate,Department',
+    );
     expect(lines).toHaveLength(3); // header + 2 rows
     expect(lines[1]).toContain('40.00');
     expect(lines[1]).toContain('5.00');

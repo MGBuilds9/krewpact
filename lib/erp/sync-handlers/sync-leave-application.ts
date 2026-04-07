@@ -73,13 +73,7 @@ export async function syncLeaveApplication(
       erpDocname = result.name;
     }
 
-    await upsertSyncMap(
-      supabase,
-      'leave_application',
-      leaveId,
-      'Leave Application',
-      erpDocname,
-    );
+    await upsertSyncMap(supabase, 'leave_application', leaveId, 'Leave Application', erpDocname);
     await logEvent(supabase, job.id, 'sync_completed', {
       entity_type: 'leave_application',
       entity_id: leaveId,

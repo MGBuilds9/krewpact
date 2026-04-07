@@ -27,9 +27,7 @@ export interface SupplierQuotationItemInput {
 /**
  * Map a KrewPact supplier quotation to an ERPNext Supplier Quotation document.
  */
-export function mapSupplierQuotationToErp(
-  sq: SupplierQuotationMapInput,
-): Record<string, unknown> {
+export function mapSupplierQuotationToErp(sq: SupplierQuotationMapInput): Record<string, unknown> {
   return {
     naming_series: 'SQTN-.YYYY.-',
     title: sq.quotation_number,

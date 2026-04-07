@@ -76,9 +76,7 @@ export function ProjectDetailHeader({ project, projectId }: Props) {
         confirmLabel="Delete"
         destructive
         reasonRequired={false}
-        onConfirm={() =>
-          deleteProject.mutate(projectId, { onSuccess: () => orgPush('/projects') })
-        }
+        onConfirm={() => deleteProject.mutate(projectId, { onSuccess: () => orgPush('/projects') })}
       />
     </div>
   );

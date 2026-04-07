@@ -11,7 +11,9 @@ import {
 } from '@/lib/rbac/permissions.shared';
 
 // ALL_PERMISSIONS is internal — derive from platform_admin's permissions for tests
-const ALL_PERMISSIONS = ROLE_PERMISSIONS['platform_admin'] as import('@/lib/rbac/permissions.shared').Permission[];
+const ALL_PERMISSIONS = ROLE_PERMISSIONS[
+  'platform_admin'
+] as import('@/lib/rbac/permissions.shared').Permission[];
 
 describe('isInternalRole', () => {
   it('returns true for all internal roles', () => {

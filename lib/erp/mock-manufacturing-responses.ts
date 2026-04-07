@@ -43,11 +43,7 @@ export function mockBomResponse(bom: {
 /**
  * Generate a mock ERPNext Work Order response.
  */
-export function mockWorkOrderResponse(wo: {
-  id: string;
-  production_item: string;
-  qty: number;
-}): {
+export function mockWorkOrderResponse(wo: { id: string; production_item: string; qty: number }): {
   doctype: string;
   name: string;
   data: Record<string, unknown>;
@@ -104,11 +100,7 @@ export function mockQualityInspectionResponse(qi: {
 /**
  * Generate a mock ERPNext Serial No response.
  */
-export function mockSerialNoResponse(sn: {
-  id: string;
-  serial_no: string;
-  item_code: string;
-}): {
+export function mockSerialNoResponse(sn: { id: string; serial_no: string; item_code: string }): {
   doctype: string;
   name: string;
   data: Record<string, unknown>;
@@ -134,11 +126,7 @@ export function mockSerialNoResponse(sn: {
 /**
  * Generate a mock ERPNext Batch response.
  */
-export function mockBatchResponse(batch: {
-  id: string;
-  batch_id: string;
-  item_code: string;
-}): {
+export function mockBatchResponse(batch: { id: string; batch_id: string; item_code: string }): {
   doctype: string;
   name: string;
   data: Record<string, unknown>;
@@ -163,10 +151,7 @@ export function mockBatchResponse(batch: {
 /**
  * Generate a mock ERPNext UOM response.
  */
-export function mockUomResponse(uom: {
-  id: string;
-  uom_name: string;
-}): {
+export function mockUomResponse(uom: { id: string; uom_name: string }): {
   doctype: string;
   name: string;
   data: Record<string, unknown>;
@@ -223,10 +208,7 @@ export function mockItemPriceResponse(ip: {
 /**
  * Generate a mock ERPNext Price List response.
  */
-export function mockPriceListResponse(pl: {
-  id: string;
-  price_list_name: string;
-}): {
+export function mockPriceListResponse(pl: { id: string; price_list_name: string }): {
   doctype: string;
   name: string;
   data: Record<string, unknown>;

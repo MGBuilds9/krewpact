@@ -17,7 +17,6 @@ import {
   upsertSyncMap,
 } from './sync-helpers';
 
- 
 export async function syncStockEntry(
   entryId: string,
   _userId: string,

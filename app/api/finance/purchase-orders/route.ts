@@ -44,16 +44,19 @@ export const GET = withApiRoute({ querySchema, roles: FINANCE_ROLES }, async ({ 
   return NextResponse.json(paginatedResponse(data, count, limit, offset));
 });
 
-export const POST = withApiRoute({ bodySchema: createSchema, roles: FINANCE_ROLES }, async ({ body }) => {
-  const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
+export const POST = withApiRoute(
+  { bodySchema: createSchema, roles: FINANCE_ROLES },
+  async ({ body }) => {
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
-  const { data, error } = await supabase
-    .from('po_snapshots')
-    .insert(body as z.infer<typeof createSchema>)
-    .select()
-    .single();
+    const { data, error } = await supabase
+      .from('po_snapshots')
+      .insert(body as z.infer<typeof createSchema>)
+      .select()
+      .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data, { status: 201 });
-});
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(data, { status: 201 });
+  },
+);

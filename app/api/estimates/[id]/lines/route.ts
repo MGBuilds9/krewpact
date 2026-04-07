@@ -33,33 +33,36 @@ export const GET = withApiRoute({}, async ({ req, params }) => {
   return NextResponse.json(paginatedResponse(data, count, limit, offset));
 });
 
-export const POST = withApiRoute({ bodySchema: estimateLineCreateSchema }, async ({ body, params }) => {
-  const { id } = params;
+export const POST = withApiRoute(
+  { bodySchema: estimateLineCreateSchema },
+  async ({ body, params }) => {
+    const { id } = params;
 
-  const { quantity, unit_cost, markup_pct } = body;
-  const line_total = calculateLineTotal(quantity, unit_cost, markup_pct ?? 0);
+    const { quantity, unit_cost, markup_pct } = body;
+    const line_total = calculateLineTotal(quantity, unit_cost, markup_pct ?? 0);
 
-  const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
-  const { data, error } = await supabase
-    .from('estimate_lines')
-    .insert({
-      ...body,
-      estimate_id: id,
-      line_total,
-    })
-    .select()
-    .single();
+    const { data, error } = await supabase
+      .from('estimate_lines')
+      .insert({
+        ...body,
+        estimate_id: id,
+        line_total,
+      })
+      .select()
+      .single();
 
-  if (error) {
-    throw dbError(error.message);
-  }
+    if (error) {
+      throw dbError(error.message);
+    }
 
-  await recalculateParentTotals(supabase, id);
+    await recalculateParentTotals(supabase, id);
 
-  return NextResponse.json(data, { status: 201 });
-});
+    return NextResponse.json(data, { status: 201 });
+  },
+);
 
 const batchCreateSchema = z.array(estimateLineCreateSchema);
 

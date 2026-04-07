@@ -78,15 +78,30 @@ describe('toErpAddress', () => {
   });
 
   it('sets correct link doctype and name for Customer', () => {
-    const address = { street: '1 Bay St', city: 'Toronto', province: 'Ontario', postal_code: 'M5J 2T3' };
+    const address = {
+      street: '1 Bay St',
+      city: 'Toronto',
+      province: 'Ontario',
+      postal_code: 'M5J 2T3',
+    };
 
-    const result = toErpAddress({ ...baseInput, address, linkDoctype: 'Customer', linkName: 'CUST-0042' });
+    const result = toErpAddress({
+      ...baseInput,
+      address,
+      linkDoctype: 'Customer',
+      linkName: 'CUST-0042',
+    });
 
     expect(result?.links).toEqual([{ link_doctype: 'Customer', link_name: 'CUST-0042' }]);
   });
 
   it('sets correct link doctype and name for Supplier', () => {
-    const address = { street: '2 Front St', city: 'Brampton', province: 'Ontario', postal_code: 'L6T 4B3' };
+    const address = {
+      street: '2 Front St',
+      city: 'Brampton',
+      province: 'Ontario',
+      postal_code: 'L6T 4B3',
+    };
 
     const result = toErpAddress({
       ...baseInput,
@@ -111,7 +126,12 @@ describe('toErpAddress', () => {
   });
 
   it('sets is_primary_address to 1', () => {
-    const address = { street: '100 City Centre Dr', city: 'Mississauga', province: 'Ontario', postal_code: 'L5B 2T4' };
+    const address = {
+      street: '100 City Centre Dr',
+      city: 'Mississauga',
+      province: 'Ontario',
+      postal_code: 'L5B 2T4',
+    };
 
     const result = toErpAddress({ ...baseInput, address });
 
@@ -119,7 +139,12 @@ describe('toErpAddress', () => {
   });
 
   it('sets address_type to Billing', () => {
-    const address = { street: '200 Dundas St E', city: 'Mississauga', province: 'Ontario', postal_code: 'L4X 2Z4' };
+    const address = {
+      street: '200 Dundas St E',
+      city: 'Mississauga',
+      province: 'Ontario',
+      postal_code: 'L4X 2Z4',
+    };
 
     const result = toErpAddress({ ...baseInput, address });
 

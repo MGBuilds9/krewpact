@@ -12,13 +12,13 @@
 
 ## File Map
 
-| Task | Create | Modify |
-|------|--------|--------|
-| 1. Build blocker | — | `types/supabase.ts` (regenerate) |
-| 2. Empty states | — | `crm/leads/_components/LeadsContent.tsx`, `crm/accounts/AccountsViewParts.tsx`, `crm/contacts/_page-content.tsx` |
-| 3. Opportunities table | `crm/opportunities/_components/OpportunitiesTable.tsx` | `crm/opportunities/OpportunitiesView.tsx` |
-| 4. Bulk actions | `app/api/crm/accounts/bulk/route.ts` | `crm/accounts/AccountsView.tsx`, `crm/accounts/AccountsViewParts.tsx`, `crm/contacts/_page-content.tsx` |
-| 5. Task nav links | `crm/tasks/_components/TaskItem.tsx`, `crm/tasks/_components/TaskFilterBar.tsx`, `crm/tasks/_components/TaskListContent.tsx` | `crm/tasks/_page-content.tsx` |
+| Task                   | Create                                                                                                                       | Modify                                                                                                           |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| 1. Build blocker       | —                                                                                                                            | `types/supabase.ts` (regenerate)                                                                                 |
+| 2. Empty states        | —                                                                                                                            | `crm/leads/_components/LeadsContent.tsx`, `crm/accounts/AccountsViewParts.tsx`, `crm/contacts/_page-content.tsx` |
+| 3. Opportunities table | `crm/opportunities/_components/OpportunitiesTable.tsx`                                                                       | `crm/opportunities/OpportunitiesView.tsx`                                                                        |
+| 4. Bulk actions        | `app/api/crm/accounts/bulk/route.ts`                                                                                         | `crm/accounts/AccountsView.tsx`, `crm/accounts/AccountsViewParts.tsx`, `crm/contacts/_page-content.tsx`          |
+| 5. Task nav links      | `crm/tasks/_components/TaskItem.tsx`, `crm/tasks/_components/TaskFilterBar.tsx`, `crm/tasks/_components/TaskListContent.tsx` | `crm/tasks/_page-content.tsx`                                                                                    |
 
 ---
 
@@ -27,6 +27,7 @@
 The migration `supabase/migrations/20260330_002_adp_employee_code.sql` exists locally but was never applied to the remote DB. The generated `types/supabase.ts` lacks the `adp_employee_code` column, causing 5 TS errors in `lib/services/payroll-export.ts`.
 
 **Files:**
+
 - Apply migration via Supabase MCP
 - Regenerate: `types/supabase.ts`
 
@@ -70,6 +71,7 @@ Replace ad-hoc inline empty states with the shared `EmptyState` component + CTA 
 ### Task 2a: Leads Empty State
 
 **Files:**
+
 - Modify: `app/(dashboard)/org/[orgSlug]/crm/leads/_components/LeadsContent.tsx`
 
 - [ ] **Step 1: Replace inline empty state with EmptyState component**
@@ -105,16 +107,19 @@ Import `Plus` from `lucide-react`. The `onNavigate('new')` callback navigates be
 Wait — `onNavigate` is typed for IDs. Instead, add a separate `onCreateNew` prop:
 
 Add to `LeadsContentProps`:
+
 ```tsx
 onCreateNew: () => void;
 ```
 
 Pass from parent `_page-content.tsx`:
+
 ```tsx
 onCreateNew={() => orgPush('/crm/leads/new')}
 ```
 
 Use in empty state:
+
 ```tsx
 action={
   <Button onClick={onCreateNew}>
@@ -143,6 +148,7 @@ git commit -m "feat(crm): actionable empty state on leads list with create CTA"
 ### Task 2b: Accounts Empty State
 
 **Files:**
+
 - Modify: `app/(dashboard)/org/[orgSlug]/crm/accounts/AccountsViewParts.tsx`
 
 - [ ] **Step 1: Fix isLoading guard + replace empty state**
@@ -201,6 +207,7 @@ git commit -m "feat(crm): actionable empty state on accounts list, fix loading g
 ### Task 2c: Contacts Empty State
 
 **Files:**
+
 - Modify: `app/(dashboard)/org/[orgSlug]/crm/contacts/_page-content.tsx`
 
 - [ ] **Step 1: Replace inline empty state**
@@ -247,6 +254,7 @@ git commit -m "feat(crm): actionable empty state on contacts list"
 Add a kanban/table toggle to the Opportunities page. The kanban view stays default. Table view uses the existing `useOpportunities` list hook (separate from `usePipeline`).
 
 **Files:**
+
 - Create: `app/(dashboard)/org/[orgSlug]/crm/opportunities/_components/OpportunitiesTable.tsx`
 - Modify: `app/(dashboard)/org/[orgSlug]/crm/opportunities/OpportunitiesView.tsx`
 
@@ -331,7 +339,11 @@ export function OpportunitiesTable() {
       header: 'Close Date',
       cell: ({ row }) =>
         row.original.target_close_date
-          ? new Date(row.original.target_close_date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })
+          ? new Date(row.original.target_close_date).toLocaleDateString('en-CA', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+            })
           : '-',
     },
     {
@@ -398,7 +410,9 @@ export default function OpportunitiesView() {
 
   const { totalOpps, totalValue, weightedValue } = useMemo(() => {
     if (!pipelineData) return { totalOpps: 0, totalValue: 0, weightedValue: 0 };
-    let opps = 0, val = 0, weighted = 0;
+    let opps = 0,
+      val = 0,
+      weighted = 0;
     for (const stage of Object.values(pipelineData.stages)) {
       opps += stage.count;
       val += stage.total_value;
@@ -485,6 +499,7 @@ git commit -m "feat(crm): add table view toggle to opportunities pipeline"
 Wire the existing `BulkActionBar` (supports `entityType: 'account' | 'contact'`) to Accounts and Contacts list pages. Create the missing accounts bulk API route.
 
 **Files:**
+
 - Create: `app/api/crm/accounts/bulk/route.ts`
 - Modify: `app/(dashboard)/org/[orgSlug]/crm/accounts/AccountsView.tsx`
 - Modify: `app/(dashboard)/org/[orgSlug]/crm/accounts/AccountsViewParts.tsx`
@@ -519,15 +534,27 @@ export const POST = withApiRoute({ bodySchema: bulkSchema }, async ({ body }) =>
 
   switch (action) {
     case 'delete': {
-      const { error } = await supabase.from('accounts').update({ deleted_at: new Date().toISOString() }).in('id', ids);
-      if (error) { logger.error('Bulk account delete failed', { error: error.message }); throw dbError(error.message); }
+      const { error } = await supabase
+        .from('accounts')
+        .update({ deleted_at: new Date().toISOString() })
+        .in('id', ids);
+      if (error) {
+        logger.error('Bulk account delete failed', { error: error.message });
+        throw dbError(error.message);
+      }
       return NextResponse.json({ data: { deleted: ids.length } });
     }
     case 'assign': {
       const assigneeId = params?.assignee_id as string | undefined;
       if (!assigneeId) return NextResponse.json({ error: 'assignee_id required' }, { status: 400 });
-      const { error } = await supabase.from('accounts').update({ assigned_to: assigneeId }).in('id', ids);
-      if (error) { logger.error('Bulk account assign failed', { error: error.message }); throw dbError(error.message); }
+      const { error } = await supabase
+        .from('accounts')
+        .update({ assigned_to: assigneeId })
+        .in('id', ids);
+      if (error) {
+        logger.error('Bulk account assign failed', { error: error.message });
+        throw dbError(error.message);
+      }
       return NextResponse.json({ data: { updated: ids.length } });
     }
     case 'tag': {
@@ -536,11 +563,30 @@ export const POST = withApiRoute({ bodySchema: bulkSchema }, async ({ body }) =>
       return NextResponse.json({ data: { tagged: ids.length } });
     }
     case 'export': {
-      const { data, error } = await supabase.from('accounts').select('account_name, account_type, industry, website, phone, created_at').in('id', ids);
-      if (error) { logger.error('Bulk account export failed', { error: error.message }); throw dbError(error.message); }
-      const columns = ['account_name', 'account_type', 'industry', 'website', 'phone', 'created_at'];
+      const { data, error } = await supabase
+        .from('accounts')
+        .select('account_name, account_type, industry, website, phone, created_at')
+        .in('id', ids);
+      if (error) {
+        logger.error('Bulk account export failed', { error: error.message });
+        throw dbError(error.message);
+      }
+      const columns = [
+        'account_name',
+        'account_type',
+        'industry',
+        'website',
+        'phone',
+        'created_at',
+      ];
       const csv = exportToCSV((data ?? []) as Record<string, unknown>[], columns);
-      return new NextResponse(csv, { status: 200, headers: { 'Content-Type': 'text/csv', 'Content-Disposition': 'attachment; filename="accounts-export.csv"' } });
+      return new NextResponse(csv, {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/csv',
+          'Content-Disposition': 'attachment; filename="accounts-export.csv"',
+        },
+      });
     }
   }
 });
@@ -569,6 +615,7 @@ import { BulkActionBar } from '@/components/CRM/BulkActionBar';
 ```
 
 Add state:
+
 ```tsx
 const queryClient = useQueryClient();
 const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -583,6 +630,7 @@ const toggleSelectAll = useCallback(() => {
 Pass to `AccountsBody`: `selectedIds={selectedIds} onToggleSelect={toggleSelect} onToggleSelectAll={toggleSelectAll}`
 
 Add after `<AccountsBody>`:
+
 ```tsx
 <BulkActionBar
   selectedIds={selectedIds}
@@ -611,7 +659,7 @@ git commit -m "feat(crm): add bulk actions (delete, tag, assign, export) to acco
 
 ### Task 4c: Wire BulkActionBar to Contacts
 
-- [ ] **Step 1: Add selection state + BulkActionBar to contacts _page-content.tsx**
+- [ ] **Step 1: Add selection state + BulkActionBar to contacts \_page-content.tsx**
 
 Same pattern as accounts. Add `selectedIds` state, toggle callbacks, pass to table/card views, add `<BulkActionBar entityType="contact">`.
 
@@ -641,6 +689,7 @@ git commit -m "feat(crm): add bulk actions to contacts list, align bulk API para
 The tasks page is 285 lines (limit: 150). Extract sub-components AND make entity badges clickable in one pass.
 
 **Files:**
+
 - Create: `app/(dashboard)/org/[orgSlug]/crm/tasks/_components/TaskItem.tsx`
 - Create: `app/(dashboard)/org/[orgSlug]/crm/tasks/_components/TaskFilterBar.tsx`
 - Create: `app/(dashboard)/org/[orgSlug]/crm/tasks/_components/TaskListContent.tsx`
@@ -659,7 +708,11 @@ import { Button } from '@/components/ui/button';
 
 export type Filter = 'all' | 'overdue' | 'today' | 'upcoming' | 'completed';
 
-const FILTER_OPTIONS: { value: Filter; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+const FILTER_OPTIONS: {
+  value: Filter;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+}[] = [
   { value: 'all', label: 'Active', icon: ListTodo },
   { value: 'overdue', label: 'Overdue', icon: AlertTriangle },
   { value: 'today', label: 'Today', icon: Clock },
@@ -667,13 +720,25 @@ const FILTER_OPTIONS: { value: Filter; label: string; icon: React.ComponentType<
   { value: 'completed', label: 'Completed', icon: CheckCircle2 },
 ];
 
-export function TaskFilterBar({ filter, onFilterChange }: { filter: Filter; onFilterChange: (f: Filter) => void }) {
+export function TaskFilterBar({
+  filter,
+  onFilterChange,
+}: {
+  filter: Filter;
+  onFilterChange: (f: Filter) => void;
+}) {
   return (
     <div className="flex gap-1 flex-wrap">
       {FILTER_OPTIONS.map((opt) => {
         const Icon = opt.icon;
         return (
-          <Button key={opt.value} variant={filter === opt.value ? 'default' : 'outline'} size="sm" onClick={() => onFilterChange(opt.value)} className="gap-1.5">
+          <Button
+            key={opt.value}
+            variant={filter === opt.value ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => onFilterChange(opt.value)}
+            className="gap-1.5"
+          >
             <Icon className="h-3.5 w-3.5" />
             {opt.label}
           </Button>
@@ -717,7 +782,8 @@ function formatDueDate(dueAt: string): string {
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
   if (diffDays < -1) return `${Math.abs(diffDays)} days overdue`;
   if (diffDays === -1) return 'Yesterday';
-  if (diffDays === 0) return due.toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit' });
+  if (diffDays === 0)
+    return due.toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit' });
   if (diffDays === 1) return 'Tomorrow';
   if (diffDays <= 7) return due.toLocaleDateString('en-CA', { weekday: 'short' });
   return due.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
@@ -743,7 +809,10 @@ function EntityBadge({ id, label, path, onNavigate }: EntityBadgeProps) {
     <Badge
       variant="secondary"
       className="text-xs cursor-pointer hover:bg-secondary/80 transition-colors"
-      onClick={(e) => { e.stopPropagation(); onNavigate(`${path}/${id}`); }}
+      onClick={(e) => {
+        e.stopPropagation();
+        onNavigate(`${path}/${id}`);
+      }}
     >
       {label}
     </Badge>
@@ -761,18 +830,45 @@ export function TaskItem({ task, onComplete, onDisposition, onNavigate }: TaskIt
   const urgency = getTaskUrgency(task.due_at);
   return (
     <div className="flex items-start gap-4 py-3 px-4 border-b last:border-0 hover:bg-muted/50 transition-colors">
-      <Checkbox className="mt-1" onCheckedChange={() => onComplete(task.id)} aria-label={`Complete task: ${task.title}`} />
+      <Checkbox
+        className="mt-1"
+        onCheckedChange={() => onComplete(task.id)}
+        aria-label={`Complete task: ${task.title}`}
+      />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium">{task.title}</p>
-        {task.details && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{String(task.details)}</p>}
+        {task.details && (
+          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+            {String(task.details)}
+          </p>
+        )}
         <div className="flex items-center gap-2 mt-1 flex-wrap">
-          <Badge variant="outline" className="text-xs">{task.activity_type}</Badge>
+          <Badge variant="outline" className="text-xs">
+            {task.activity_type}
+          </Badge>
           <EntityBadge id={task.lead_id} label="Lead" path="/crm/leads" onNavigate={onNavigate} />
-          <EntityBadge id={task.opportunity_id} label="Opportunity" path="/crm/opportunities" onNavigate={onNavigate} />
-          <EntityBadge id={task.account_id} label="Account" path="/crm/accounts" onNavigate={onNavigate} />
-          <EntityBadge id={task.contact_id} label="Contact" path="/crm/contacts" onNavigate={onNavigate} />
+          <EntityBadge
+            id={task.opportunity_id}
+            label="Opportunity"
+            path="/crm/opportunities"
+            onNavigate={onNavigate}
+          />
+          <EntityBadge
+            id={task.account_id}
+            label="Account"
+            path="/crm/accounts"
+            onNavigate={onNavigate}
+          />
+          <EntityBadge
+            id={task.contact_id}
+            label="Contact"
+            path="/crm/contacts"
+            onNavigate={onNavigate}
+          />
         </div>
-        {task.lead_id && <TaskDispositionButtons activityId={task.id} onDisposition={onDisposition} />}
+        {task.lead_id && (
+          <TaskDispositionButtons activityId={task.id} onDisposition={onDisposition} />
+        )}
       </div>
       {task.due_at && (
         <Badge variant="outline" className={cn('text-xs shrink-0', urgencyBadge[urgency])}>
@@ -812,11 +908,20 @@ interface TaskListContentProps {
   onNavigate: (path: string) => void;
 }
 
-export function TaskListContent({ tasks, isLoading, filter, onComplete, onDisposition, onNavigate }: TaskListContentProps) {
+export function TaskListContent({
+  tasks,
+  isLoading,
+  filter,
+  onComplete,
+  onDisposition,
+  onNavigate,
+}: TaskListContentProps) {
   if (isLoading) {
     return (
       <div className="p-4 space-y-3">
-        {[1, 2, 3, 4, 5].map((i) => <div key={i} className="h-14 bg-muted/50 rounded animate-pulse" />)}
+        {[1, 2, 3, 4, 5].map((i) => (
+          <div key={i} className="h-14 bg-muted/50 rounded animate-pulse" />
+        ))}
       </div>
     );
   }
@@ -832,14 +937,20 @@ export function TaskListContent({ tasks, isLoading, filter, onComplete, onDispos
   return (
     <>
       {tasks.map((task) => (
-        <TaskItem key={task.id} task={task} onComplete={onComplete} onDisposition={onDisposition} onNavigate={onNavigate} />
+        <TaskItem
+          key={task.id}
+          task={task}
+          onComplete={onComplete}
+          onDisposition={onDisposition}
+          onNavigate={onNavigate}
+        />
       ))}
     </>
   );
 }
 ```
 
-- [ ] **Step 4: Simplify _page-content.tsx**
+- [ ] **Step 4: Simplify \_page-content.tsx**
 
 Replace the inline `TaskItem`, `TaskFilterBar`, `TaskListContent`, `getTaskUrgency`, `formatDueDate`, `urgencyBadge`, and `EMPTY_MESSAGES` with imports from the extracted files. The main file should shrink to ~80 lines. Add `useOrgRouter` and pass `orgPush` as `onNavigate` to `TaskListContent`:
 
@@ -888,6 +999,7 @@ npm run build                       # production build succeeds (after Task 1)
 ```
 
 Manual checks:
+
 - Leads/Accounts/Contacts pages: empty state shows CTA button, clicking it navigates to create page
 - Opportunities page: kanban/table toggle works, table shows sortable columns with row actions
 - Accounts/Contacts: multi-select checkboxes, BulkActionBar appears with delete/tag

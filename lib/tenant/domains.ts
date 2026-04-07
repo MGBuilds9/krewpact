@@ -23,17 +23,14 @@ export async function addCustomDomain(
   const projectId = process.env.VERCEL_PROJECT_ID as string;
 
   try {
-    const res = await fetch(
-      buildUrl(`/v10/projects/${encodeURIComponent(projectId)}/domains`),
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${process.env.VERCEL_TOKEN}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name: domain }),
+    const res = await fetch(buildUrl(`/v10/projects/${encodeURIComponent(projectId)}/domains`), {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.VERCEL_TOKEN}`,
+        'Content-Type': 'application/json',
       },
-    );
+      body: JSON.stringify({ name: domain }),
+    });
 
     if (!res.ok) {
       const body = (await res.json().catch(() => ({}))) as { error?: { message?: string } };
@@ -44,7 +41,10 @@ export async function addCustomDomain(
 
     return { success: true };
   } catch (err) {
-    logger.error('addCustomDomain threw', { domain, error: err instanceof Error ? err.message : String(err) });
+    logger.error('addCustomDomain threw', {
+      domain,
+      error: err instanceof Error ? err.message : String(err),
+    });
     return { success: false, error: 'Failed to add domain' };
   }
 }
@@ -60,7 +60,9 @@ export async function removeCustomDomain(
 
   try {
     const res = await fetch(
-      buildUrl(`/v9/projects/${encodeURIComponent(projectId)}/domains/${encodeURIComponent(domain)}`),
+      buildUrl(
+        `/v9/projects/${encodeURIComponent(projectId)}/domains/${encodeURIComponent(domain)}`,
+      ),
       {
         method: 'DELETE',
         headers: {
@@ -78,7 +80,10 @@ export async function removeCustomDomain(
 
     return { success: true };
   } catch (err) {
-    logger.error('removeCustomDomain threw', { domain, error: err instanceof Error ? err.message : String(err) });
+    logger.error('removeCustomDomain threw', {
+      domain,
+      error: err instanceof Error ? err.message : String(err),
+    });
     return { success: false, error: 'Failed to remove domain' };
   }
 }

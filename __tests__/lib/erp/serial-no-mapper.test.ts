@@ -52,12 +52,7 @@ describe('mapSerialNoToErp', () => {
   });
 
   it('supports all status values', () => {
-    const statuses: SerialNoMapInput['status'][] = [
-      'Active',
-      'Inactive',
-      'Delivered',
-      'Expired',
-    ];
+    const statuses: SerialNoMapInput['status'][] = ['Active', 'Inactive', 'Delivered', 'Expired'];
     for (const status of statuses) {
       const result = mapSerialNoToErp(makeInput({ status }));
       expect(result.status).toBe(status);

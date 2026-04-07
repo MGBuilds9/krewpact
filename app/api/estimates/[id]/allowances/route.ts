@@ -28,21 +28,24 @@ export const GET = withApiRoute({}, async ({ req, params }) => {
   return NextResponse.json(paginatedResponse(data, count, limit, offset));
 });
 
-export const POST = withApiRoute({ bodySchema: estimateAllowanceCreateSchema }, async ({ body, params }) => {
-  const { id } = params;
+export const POST = withApiRoute(
+  { bodySchema: estimateAllowanceCreateSchema },
+  async ({ body, params }) => {
+    const { id } = params;
 
-  const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
-  const { data, error } = await supabase
-    .from('estimate_allowances')
-    .insert({ ...body, estimate_id: id })
-    .select()
-    .single();
+    const { data, error } = await supabase
+      .from('estimate_allowances')
+      .insert({ ...body, estimate_id: id })
+      .select()
+      .single();
 
-  if (error) {
-    throw dbError(error.message);
-  }
+    if (error) {
+      throw dbError(error.message);
+    }
 
-  return NextResponse.json(data, { status: 201 });
-});
+    return NextResponse.json(data, { status: 201 });
+  },
+);

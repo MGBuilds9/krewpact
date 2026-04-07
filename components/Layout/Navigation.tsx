@@ -57,7 +57,13 @@ const navigationItems: NavItem[] = [
     path: '/dashboard',
     description: 'Service gateway & quick access',
   },
-  { icon: Building2, label: 'CRM', path: '/crm', description: 'Leads, accounts & pipeline', requiredFlag: 'crm' },
+  {
+    icon: Building2,
+    label: 'CRM',
+    path: '/crm',
+    description: 'Leads, accounts & pipeline',
+    requiredFlag: 'crm',
+  },
   {
     icon: Calculator,
     label: 'Estimates',

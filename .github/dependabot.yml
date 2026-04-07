@@ -9,12 +9,12 @@ updates:
     open-pull-requests-limit: 10
     ignore:
       # Major version bumps require manual migration — suppress individual PRs
-      - dependency-name: "@clerk/nextjs"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "react-resizable-panels"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "jsdom"
-        update-types: ["version-update:semver-major"]
+      - dependency-name: '@clerk/nextjs'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'react-resizable-panels'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'jsdom'
+        update-types: ['version-update:semver-major']
     groups:
       radix-ui:
         patterns:

@@ -12,12 +12,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
-import {
-  api,
-  DailyLog,
-  DailyLogCreate,
-  Project,
-} from '@/lib/api-client';
+import { api, DailyLog, DailyLogCreate, Project } from '@/lib/api-client';
 import { queryKeys } from '@/lib/query-client';
 import { DailyLogForm } from '@/components/DailyLogForm';
 import { COLORS, SPACING } from '@/constants/config';
@@ -30,21 +25,13 @@ const LogCard = memo(function LogCard({ log }: { log: DailyLog }) {
         <Text style={styles.logDate}>{dateStr}</Text>
         {log.is_offline_origin && (
           <View style={styles.offlineBadge}>
-            <Ionicons
-              name="cloud-offline-outline"
-              size={12}
-              color={COLORS.warning}
-            />
+            <Ionicons name="cloud-offline-outline" size={12} color={COLORS.warning} />
             <Text style={styles.offlineBadgeText}>Offline</Text>
           </View>
         )}
         {log.submitted_at && (
           <View style={styles.submittedBadge}>
-            <Ionicons
-              name="checkmark-circle"
-              size={12}
-              color={COLORS.success}
-            />
+            <Ionicons name="checkmark-circle" size={12} color={COLORS.success} />
             <Text style={styles.submittedText}>Submitted</Text>
           </View>
         )}
@@ -57,36 +44,20 @@ const LogCard = memo(function LogCard({ log }: { log: DailyLog }) {
       <View style={styles.cardFooter}>
         {log.crew_count !== null && (
           <View style={styles.metaChip}>
-            <Ionicons
-              name="people-outline"
-              size={14}
-              color={COLORS.muted}
-            />
+            <Ionicons name="people-outline" size={14} color={COLORS.muted} />
             <Text style={styles.metaText}>{log.crew_count} crew</Text>
           </View>
         )}
         {log.weather && typeof log.weather === 'object' && 'condition' in log.weather && (
           <View style={styles.metaChip}>
-            <Ionicons
-              name="cloud-outline"
-              size={14}
-              color={COLORS.muted}
-            />
-            <Text style={styles.metaText}>
-              {String(log.weather.condition)}
-            </Text>
+            <Ionicons name="cloud-outline" size={14} color={COLORS.muted} />
+            <Text style={styles.metaText}>{String(log.weather.condition)}</Text>
           </View>
         )}
         {log.delays && (
           <View style={styles.metaChip}>
-            <Ionicons
-              name="alert-circle-outline"
-              size={14}
-              color={COLORS.warning}
-            />
-            <Text style={[styles.metaText, { color: COLORS.warning }]}>
-              Delays
-            </Text>
+            <Ionicons name="alert-circle-outline" size={14} color={COLORS.warning} />
+            <Text style={[styles.metaText, { color: COLORS.warning }]}>Delays</Text>
           </View>
         )}
       </View>
@@ -96,14 +67,10 @@ const LogCard = memo(function LogCard({ log }: { log: DailyLog }) {
 
 export default function LogsScreen() {
   const qc = useQueryClient();
-  const [selectedProject, setSelectedProject] = useState<string | null>(
-    null,
-  );
+  const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
 
-  const { data: projects = [], isLoading: projectsLoading } = useQuery<
-    Project[]
-  >({
+  const { data: projects = [], isLoading: projectsLoading } = useQuery<Project[]>({
     queryKey: queryKeys.projects,
     queryFn: api.projects.list,
   });
@@ -119,10 +86,7 @@ export default function LogsScreen() {
     enabled: Boolean(selectedProject),
   });
 
-  const activeProjects = useMemo(
-    () => projects.filter((p) => p.status === 'active'),
-    [projects],
-  );
+  const activeProjects = useMemo(() => projects.filter((p) => p.status === 'active'), [projects]);
 
   // Auto-select first active project
   React.useEffect(() => {
@@ -136,10 +100,7 @@ export default function LogsScreen() {
       <View style={styles.headerRow}>
         <Text style={styles.header}>Daily Logs</Text>
         {selectedProject && (
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => setShowForm(true)}
-          >
+          <TouchableOpacity style={styles.addButton} onPress={() => setShowForm(true)}>
             <Ionicons name="add" size={20} color="#fff" />
             <Text style={styles.addButtonText}>New Log</Text>
           </TouchableOpacity>
@@ -164,16 +125,14 @@ export default function LogsScreen() {
             <TouchableOpacity
               style={[
                 styles.projectChip,
-                selectedProject === item.id &&
-                  styles.projectChipSelected,
+                selectedProject === item.id && styles.projectChipSelected,
               ]}
               onPress={() => setSelectedProject(item.id)}
             >
               <Text
                 style={[
                   styles.projectChipNumber,
-                  selectedProject === item.id &&
-                    styles.chipTextSelected,
+                  selectedProject === item.id && styles.chipTextSelected,
                 ]}
               >
                 {item.project_number}
@@ -181,8 +140,7 @@ export default function LogsScreen() {
               <Text
                 style={[
                   styles.projectChipName,
-                  selectedProject === item.id &&
-                    styles.chipTextSelected,
+                  selectedProject === item.id && styles.chipTextSelected,
                 ]}
                 numberOfLines={1}
               >
@@ -196,14 +154,8 @@ export default function LogsScreen() {
       {/* Logs List */}
       {!selectedProject ? (
         <View style={styles.emptyContainer}>
-          <Ionicons
-            name="document-text-outline"
-            size={48}
-            color={COLORS.muted}
-          />
-          <Text style={styles.empty}>
-            Select a project to view daily logs.
-          </Text>
+          <Ionicons name="document-text-outline" size={48} color={COLORS.muted} />
+          <Text style={styles.empty}>Select a project to view daily logs.</Text>
         </View>
       ) : logsLoading ? (
         <View style={styles.center}>
@@ -214,31 +166,20 @@ export default function LogsScreen() {
           data={logs}
           keyExtractor={(item) => item.id}
           refreshControl={
-            <RefreshControl
-              refreshing={isFetching && !logsLoading}
-              onRefresh={refetch}
-            />
+            <RefreshControl refreshing={isFetching && !logsLoading} onRefresh={refetch} />
           }
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={
-            <Text style={styles.empty}>
-              No daily logs yet. Tap "New Log" to create one.
-            </Text>
+            <Text style={styles.empty}>No daily logs yet. Tap "New Log" to create one.</Text>
           }
           renderItem={({ item }) => <LogCard log={item} />}
-          ItemSeparatorComponent={() => (
-            <View style={styles.separator} />
-          )}
+          ItemSeparatorComponent={() => <View style={styles.separator} />}
         />
       )}
 
       {/* Daily Log Form Modal */}
       {selectedProject && (
-        <Modal
-          visible={showForm}
-          animationType="slide"
-          presentationStyle="pageSheet"
-        >
+        <Modal visible={showForm} animationType="slide" presentationStyle="pageSheet">
           <DailyLogForm
             projectId={selectedProject}
             onClose={() => setShowForm(false)}

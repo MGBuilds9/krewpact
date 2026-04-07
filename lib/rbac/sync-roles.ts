@@ -100,9 +100,7 @@ export async function syncRolesToBothStores(params: {
       .single();
 
     if (userError || !userData?.org_id) {
-      throw new Error(
-        userError?.message ?? `User ${supabaseUserId} has no org_id`,
-      );
+      throw new Error(userError?.message ?? `User ${supabaseUserId} has no org_id`);
     }
     orgId = userData.org_id;
     const org = Array.isArray(userData.organizations)

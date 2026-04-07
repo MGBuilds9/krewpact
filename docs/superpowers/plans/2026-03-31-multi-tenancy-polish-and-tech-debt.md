@@ -12,24 +12,24 @@
 
 ## File Structure
 
-| Task | Files | Action |
-|------|-------|--------|
-| 1. Branding UI | `app/(dashboard)/org/[orgSlug]/settings/branding/_page-content.tsx` | Modify |
-| 1. Branding UI | `__tests__/settings/branding-ui.test.tsx` | Create |
-| 2. Portal Org Scoping | `app/api/portal/projects/route.ts` | Modify |
-| 2. Portal Org Scoping | `app/api/portal/trade/tasks/route.ts` | Modify |
-| 2. Portal Org Scoping | `app/api/portal/trade/bids/route.ts` | Modify |
-| 2. Portal Org Scoping | `app/api/portal/trade/compliance/route.ts` | Modify |
-| 2. Portal Org Scoping | `app/api/portal/trade/submittals/route.ts` | Modify |
-| 2. Portal Org Scoping | `app/api/portal/trade/site-logs/route.ts` | Modify |
-| 2. Portal Org Scoping | `app/api/portal/projects/[id]/route.ts` + 7 sub-routes | Modify |
-| 2. Portal Org Scoping | `__tests__/api/portal/org-scoping.test.ts` | Create |
-| 3. BoldSign Tenant | `lib/esign/boldsign-client.ts` | Modify |
-| 3. BoldSign Tenant | `lib/validators/branding.ts` | Modify |
-| 3. BoldSign Tenant | `__tests__/lib/esign/boldsign-tenant.test.ts` | Create |
-| 4. Drop lead_stage | `supabase/migrations/20260401_002_drop_lead_stage_enum.sql` | Create |
-| 4. Drop lead_stage | `types/supabase.ts` | Regenerate |
-| 5. DESIGN.md | `DESIGN.md` | Create |
+| Task                  | Files                                                               | Action     |
+| --------------------- | ------------------------------------------------------------------- | ---------- |
+| 1. Branding UI        | `app/(dashboard)/org/[orgSlug]/settings/branding/_page-content.tsx` | Modify     |
+| 1. Branding UI        | `__tests__/settings/branding-ui.test.tsx`                           | Create     |
+| 2. Portal Org Scoping | `app/api/portal/projects/route.ts`                                  | Modify     |
+| 2. Portal Org Scoping | `app/api/portal/trade/tasks/route.ts`                               | Modify     |
+| 2. Portal Org Scoping | `app/api/portal/trade/bids/route.ts`                                | Modify     |
+| 2. Portal Org Scoping | `app/api/portal/trade/compliance/route.ts`                          | Modify     |
+| 2. Portal Org Scoping | `app/api/portal/trade/submittals/route.ts`                          | Modify     |
+| 2. Portal Org Scoping | `app/api/portal/trade/site-logs/route.ts`                           | Modify     |
+| 2. Portal Org Scoping | `app/api/portal/projects/[id]/route.ts` + 7 sub-routes              | Modify     |
+| 2. Portal Org Scoping | `__tests__/api/portal/org-scoping.test.ts`                          | Create     |
+| 3. BoldSign Tenant    | `lib/esign/boldsign-client.ts`                                      | Modify     |
+| 3. BoldSign Tenant    | `lib/validators/branding.ts`                                        | Modify     |
+| 3. BoldSign Tenant    | `__tests__/lib/esign/boldsign-tenant.test.ts`                       | Create     |
+| 4. Drop lead_stage    | `supabase/migrations/20260401_002_drop_lead_stage_enum.sql`         | Create     |
+| 4. Drop lead_stage    | `types/supabase.ts`                                                 | Regenerate |
+| 5. DESIGN.md          | `DESIGN.md`                                                         | Create     |
 
 ---
 
@@ -38,6 +38,7 @@
 The branding schema and API already support `company_description`, `erp_company`, `footer_text`, and `support_url`. The UI form is missing these 4 fields. Add them plus a live preview card that shows how the branding looks.
 
 **Files:**
+
 - Modify: `app/(dashboard)/org/[orgSlug]/settings/branding/_page-content.tsx`
 - Create: `__tests__/settings/branding-ui.test.tsx`
 
@@ -124,7 +125,12 @@ Add after the `support_email` field (line 103):
 ```tsx
 <div className="space-y-1">
   <Label htmlFor="support_url">Support URL</Label>
-  <Input id="support_url" type="url" {...register('support_url')} placeholder="https://support.example.com" />
+  <Input
+    id="support_url"
+    type="url"
+    {...register('support_url')}
+    placeholder="https://support.example.com"
+  />
 </div>
 ```
 
@@ -167,7 +173,14 @@ Add a second `<Card>` after the form card (before the closing `</div>` of the ou
     >
       <div className="flex items-center gap-3">
         {logoUrl && (
-          <Image src={logoUrl} alt="Logo" width={40} height={40} className="rounded object-contain" unoptimized />
+          <Image
+            src={logoUrl}
+            alt="Logo"
+            width={40}
+            height={40}
+            className="rounded object-contain"
+            unoptimized
+          />
         )}
         <div>
           <p className="font-semibold" style={{ color: watch('primary_color') || '#2563eb' }}>
@@ -216,6 +229,7 @@ git commit -m "feat(branding): add company_description, erp_company, footer_text
 RLS RESTRICTIVE policies already exist on `portal_accounts`, `portal_permissions`, `portal_messages`, and `portal_view_logs` (from `20260302_002_rls_org_scope.sql`). However, portal API routes use `createUserClientSafe()` (user-scoped) without explicit org_id assertions. Since portal users authenticate via Clerk and the RLS policies check `krewpact_org_id()` from JWT claims, the RLS layer **is** enforcing org isolation for SELECT queries.
 
 **Audit findings:**
+
 - All 17 portal API routes use `createUserClientSafe()` — RLS is active.
 - Portal accounts are scoped via `clerk_user_id` match + org_id RESTRICTIVE policy.
 - The `portal_permissions` join to `portal_accounts` inherits org scoping through the RESTRICTIVE policy.
@@ -226,6 +240,7 @@ RLS RESTRICTIVE policies already exist on `portal_accounts`, `portal_permissions
 **Assessment:** The portal is already org-scoped for reads via RLS RESTRICTIVE policies. The risk is write-path org-crossing (an internal user creating portal accounts in a different org). This needs RESTRICTIVE write policies in a migration, plus explicit `org_id` on insert calls.
 
 **Files:**
+
 - Create: `supabase/migrations/20260401_003_portal_rls_write_org_scope.sql`
 - Modify: `app/api/portal/projects/[id]/messages/route.ts` (if it has POST — add org_id)
 - Create: `__tests__/api/portal/org-scoping.test.ts`
@@ -349,6 +364,7 @@ git commit -m "fix(security): add RESTRICTIVE write-path RLS policies for portal
 BoldSign supports a `BrandId` parameter on envelope creation to control sender identity and email branding. Currently the `BoldSignClient` accepts an optional `brandId` in `CreateEnvelopeParams` (line 96 of boldsign-client.ts). The per-tenant approach: store a `boldsign_brand_id` in the branding config, and have callers pass it when creating envelopes.
 
 **Files:**
+
 - Modify: `lib/validators/branding.ts` — add `boldsign_brand_id` optional field
 - Modify: `lib/tenant/branding.ts` — expose `boldsign_brand_id` in `OrgBrandingInfo`
 - Create: `__tests__/lib/esign/boldsign-tenant.test.ts`
@@ -406,7 +422,7 @@ In `lib/validators/branding.ts`, add inside the `z.object({})` after line 21 (`e
 In `lib/tenant/branding.ts`, add to the `OrgBrandingInfo` interface (after `support_url`):
 
 ```typescript
-  boldsign_brand_id: string | null;
+boldsign_brand_id: string | null;
 ```
 
 And in the `result` object inside `getOrgBranding()` (after `support_url`):
@@ -441,6 +457,7 @@ The `leads.stage` column uses the `lead_stage` DB enum, but all application code
 **Evidence:** Zero TS code reads `leads.stage`. The stage route (`app/api/crm/leads/[id]/stage/route.ts`) reads and writes `leads.status`. The LEAD_SELECT constant on line 11 of that file does not include `stage`. The `LeadStage` TS type in `lib/crm/lead-stages.ts` is independently defined (not derived from the DB enum).
 
 **Files:**
+
 - Create: `supabase/migrations/20260401_002_drop_lead_stage_enum.sql`
 - Regenerate: `types/supabase.ts`
 
@@ -498,6 +515,7 @@ git commit -m "chore(schema): drop dead lead_stage enum column — all code uses
 The existing `design-system/krewpact/MASTER.md` describes a "Luxury/Premium Brand" theme that doesn't match the actual implementation. Create a root-level `DESIGN.md` that documents what's actually running.
 
 **Files:**
+
 - Create: `DESIGN.md`
 
 - [ ] **Step 1: Create `DESIGN.md`**
@@ -521,28 +539,28 @@ All colors use HSL CSS variables (defined in `app/globals.css`), consumed via Ta
 
 ### Light Mode
 
-| Token | HSL | Hex (approx) | Usage |
-|-------|-----|------|-------|
-| `--primary` | `25 95% 38%` | `#bd5a0a` | Construction orange — buttons, links, active states |
-| `--accent` | `25 95% 38%` | `#bd5a0a` | Same as primary (unified brand) |
-| `--background` | `0 0% 100%` | `#ffffff` | Page background |
-| `--foreground` | `221 39% 11%` | `#111827` | Body text |
-| `--muted` | `220 14% 96%` | `#f4f5f7` | Disabled, secondary surfaces |
-| `--muted-foreground` | `215 16% 42%` | `#596577` | Secondary text |
-| `--destructive` | `0 84% 60%` | `#ef4444` | Errors, delete actions |
-| `--success` | `142 71% 45%` | `#22c55e` | Positive indicators |
-| `--warning` | `48 96% 89%` | `#fef3c7` | Caution banners |
-| `--info` | `213 94% 68%` | `#60a5fa` | Informational badges |
-| `--construction-dark` | `221 39% 11%` | `#111827` | Dark headers, hero sections |
-| `--border` | `220 13% 91%` | `#e5e7eb` | Borders, dividers |
+| Token                 | HSL           | Hex (approx) | Usage                                               |
+| --------------------- | ------------- | ------------ | --------------------------------------------------- |
+| `--primary`           | `25 95% 38%`  | `#bd5a0a`    | Construction orange — buttons, links, active states |
+| `--accent`            | `25 95% 38%`  | `#bd5a0a`    | Same as primary (unified brand)                     |
+| `--background`        | `0 0% 100%`   | `#ffffff`    | Page background                                     |
+| `--foreground`        | `221 39% 11%` | `#111827`    | Body text                                           |
+| `--muted`             | `220 14% 96%` | `#f4f5f7`    | Disabled, secondary surfaces                        |
+| `--muted-foreground`  | `215 16% 42%` | `#596577`    | Secondary text                                      |
+| `--destructive`       | `0 84% 60%`   | `#ef4444`    | Errors, delete actions                              |
+| `--success`           | `142 71% 45%` | `#22c55e`    | Positive indicators                                 |
+| `--warning`           | `48 96% 89%`  | `#fef3c7`    | Caution banners                                     |
+| `--info`              | `213 94% 68%` | `#60a5fa`    | Informational badges                                |
+| `--construction-dark` | `221 39% 11%` | `#111827`    | Dark headers, hero sections                         |
+| `--border`            | `220 13% 91%` | `#e5e7eb`    | Borders, dividers                                   |
 
 ### Dark Mode
 
-| Token | HSL | Notes |
-|-------|-----|-------|
-| `--background` | `215 25% 15%` | Slate base |
-| `--primary` | `215 20% 65%` | Desaturated blue (NOT orange) |
-| `--accent` | `25 95% 38%` | Orange stays as accent |
+| Token          | HSL           | Notes                         |
+| -------------- | ------------- | ----------------------------- |
+| `--background` | `215 25% 15%` | Slate base                    |
+| `--primary`    | `215 20% 65%` | Desaturated blue (NOT orange) |
+| `--accent`     | `25 95% 38%`  | Orange stays as accent        |
 
 ### Semantic Colors
 
@@ -562,10 +580,10 @@ Use tokens, never raw hex: `text-primary`, `bg-destructive`, `text-muted-foregro
 
 ## Typography
 
-| Token | Font | Usage |
-|-------|------|-------|
-| `font-sans` | Inter | Body text, UI labels, form inputs |
-| `font-heading` | Outfit | Page titles, section headers |
+| Token          | Font   | Usage                             |
+| -------------- | ------ | --------------------------------- |
+| `font-sans`    | Inter  | Body text, UI labels, form inputs |
+| `font-heading` | Outfit | Page titles, section headers      |
 
 **Note:** `Atkinson Hyperlegible` is loaded in `app/layout.tsx` as `--font-atkinson` but not wired into Tailwind tokens. Inter is the active body font via Tailwind config.
 
@@ -588,19 +606,20 @@ shadcn/ui output — **never modify directly**. Update via `npx shadcn@latest ad
 
 ### Shared Components (`components/shared/`)
 
-| Component | Purpose |
-|-----------|---------|
-| `PageHeader` | Title + description + optional action slot |
-| `StatusBadge` | Auto-maps status string → Badge variant via `STATUS_VARIANT_MAP` |
-| `StatsCard` | Metric display (icon + value + label) |
-| `DataTable` | Sortable, filterable table with pagination |
-| `DataTableSkeleton` | Loading state for DataTable |
-| `PageSkeleton` | Full-page loading skeleton |
-| `EmptyState` | Zero-data state with icon + message + optional action |
-| `ConfirmDialog` | Destructive action confirmation (AlertDialog wrapper) |
-| `FormSection` | Fieldset with title/description for form grouping |
+| Component           | Purpose                                                          |
+| ------------------- | ---------------------------------------------------------------- |
+| `PageHeader`        | Title + description + optional action slot                       |
+| `StatusBadge`       | Auto-maps status string → Badge variant via `STATUS_VARIANT_MAP` |
+| `StatsCard`         | Metric display (icon + value + label)                            |
+| `DataTable`         | Sortable, filterable table with pagination                       |
+| `DataTableSkeleton` | Loading state for DataTable                                      |
+| `PageSkeleton`      | Full-page loading skeleton                                       |
+| `EmptyState`        | Zero-data state with icon + message + optional action            |
+| `ConfirmDialog`     | Destructive action confirmation (AlertDialog wrapper)            |
+| `FormSection`       | Fieldset with title/description for form grouping                |
 
 **Patterns all shared components follow:**
+
 - Named exports (not default)
 - Accept `className` prop, merged via `cn()`
 - Typed props interface exported alongside component
@@ -616,11 +635,12 @@ One exported component per file. No barrel files.
 ## Layout Patterns
 
 ### Dashboard Layout
-
 ```
+
 Sidebar (collapsible) | Main content area
-                      | PageHeader
-                      | Content (Cards, Tables, Forms)
+| PageHeader
+| Content (Cards, Tables, Forms)
+
 ```
 
 ### Settings Pattern
@@ -657,10 +677,12 @@ Gradient hero header → Card grid → Content sections
 ## CSS Architecture
 
 ```
-app/globals.css          → CSS variables + @layer base/components
-tailwind.config.ts       → Token mapping (hsl(var(--*))) + custom extensions
-components/ui/*.tsx       → shadcn primitives (CLI-managed)
-components/shared/*.tsx   → Composed components (cn() + semantic tokens)
+
+app/globals.css → CSS variables + @layer base/components
+tailwind.config.ts → Token mapping (hsl(var(--_))) + custom extensions
+components/ui/_.tsx → shadcn primitives (CLI-managed)
+components/shared/\*.tsx → Composed components (cn() + semantic tokens)
+
 ```
 
 No CSS modules. No styled-components. Tailwind utility classes + CSS variables only.
@@ -704,12 +726,12 @@ git commit -m "docs: add DESIGN.md documenting the actual running design system"
 
 ## Self-Review Checklist
 
-| Requirement | Task | Status |
-|-------------|------|--------|
-| Portal multi-tenancy audit | Task 2 | Covered — RLS reads already scoped, write-path migration added |
-| BoldSign per-tenant sender | Task 3 | Covered — `boldsign_brand_id` in branding config |
-| Branding settings UI (3 new fields + live preview) | Task 1 | Covered — 4 fields + preview card |
-| DESIGN.md | Task 5 | Covered — documents actual system, not aspirational |
-| Drop dead lead_stage enum | Task 4 | Covered — migration drops column + type |
-| Type consistency | All | `BrandingConfig` type auto-inferred from Zod; `OrgBrandingInfo` manually updated |
-| No placeholders | All | All code blocks complete |
+| Requirement                                        | Task   | Status                                                                           |
+| -------------------------------------------------- | ------ | -------------------------------------------------------------------------------- |
+| Portal multi-tenancy audit                         | Task 2 | Covered — RLS reads already scoped, write-path migration added                   |
+| BoldSign per-tenant sender                         | Task 3 | Covered — `boldsign_brand_id` in branding config                                 |
+| Branding settings UI (3 new fields + live preview) | Task 1 | Covered — 4 fields + preview card                                                |
+| DESIGN.md                                          | Task 5 | Covered — documents actual system, not aspirational                              |
+| Drop dead lead_stage enum                          | Task 4 | Covered — migration drops column + type                                          |
+| Type consistency                                   | All    | `BrandingConfig` type auto-inferred from Zod; `OrgBrandingInfo` manually updated |
+| No placeholders                                    | All    | All code blocks complete                                                         |

@@ -7,7 +7,6 @@ import { fixtures, orgUrl } from '../helpers/fixtures';
 // storageState handles auth for chromium/full projects.
 
 test.describe('Estimate Creation', () => {
-
   test('estimates page loads', async ({ page }) => {
     await page.goto(orgUrl('/estimates'));
     await expect(page.locator('main')).toBeVisible({ timeout: 10_000 });

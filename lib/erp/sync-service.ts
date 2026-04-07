@@ -168,11 +168,7 @@ export class SyncService {
     return syncComplianceDoc(complianceDocId, userId, jobContext);
   }
 
-  async syncSelectionSheet(
-    selectionSheetId: string,
-    userId: string,
-    jobContext?: SyncJobContext,
-  ) {
+  async syncSelectionSheet(selectionSheetId: string, userId: string, jobContext?: SyncJobContext) {
     return syncSelectionSheet(selectionSheetId, userId, jobContext);
   }
 
@@ -208,11 +204,7 @@ export class SyncService {
     return syncWorkOrder(workOrderId, userId, jobContext);
   }
 
-  async syncQualityInspection(
-    inspectionId: string,
-    userId: string,
-    jobContext?: SyncJobContext,
-  ) {
+  async syncQualityInspection(inspectionId: string, userId: string, jobContext?: SyncJobContext) {
     return syncQualityInspection(inspectionId, userId, jobContext);
   }
 

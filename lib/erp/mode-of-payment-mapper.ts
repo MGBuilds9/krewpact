@@ -7,9 +7,7 @@
 /**
  * Map an ERPNext Mode of Payment document to a KrewPact record.
  */
-export function fromErpModeOfPayment(
-  erpMode: Record<string, unknown>,
-): Record<string, unknown> {
+export function fromErpModeOfPayment(erpMode: Record<string, unknown>): Record<string, unknown> {
   return {
     erp_mode_name: erpMode.name || '',
     erp_doctype: 'Mode of Payment',

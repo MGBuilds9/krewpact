@@ -35,40 +35,44 @@ export const GET = withApiRoute({}, async ({ params, orgId }) => {
   return NextResponse.json(data);
 });
 
-export const PATCH = withApiRoute({ bodySchema: stagingUpdateSchema }, async ({ body, params, orgId }) => {
-  const { id } = params;
+export const PATCH = withApiRoute(
+  { bodySchema: stagingUpdateSchema },
+  async ({ body, params, orgId }) => {
+    const { id } = params;
 
-  const roles = await getKrewpactRoles();
-  const hasAccess = roles.some((r) => WRITE_ROLES.includes(r));
-  if (!hasAccess) {
-    throw forbidden('Forbidden: platform_admin role required');
-  }
+    const roles = await getKrewpactRoles();
+    const hasAccess = roles.some((r) => WRITE_ROLES.includes(r));
+    if (!hasAccess) {
+      throw forbidden('Forbidden: platform_admin role required');
+    }
 
-  if (!orgId) return NextResponse.json({ error: 'Organization context required' }, { status: 500 });
+    if (!orgId)
+      return NextResponse.json({ error: 'Organization context required' }, { status: 500 });
 
-  const updatePayload: Record<string, unknown> = { ...body };
+    const updatePayload: Record<string, unknown> = { ...body };
 
-  if (body.status === 'approved' || body.status === 'rejected') {
-    const krewpactUserId = await getKrewpactUserId();
-    updatePayload.reviewed_by = krewpactUserId || null;
-    updatePayload.reviewed_at = new Date().toISOString();
-  }
+    if (body.status === 'approved' || body.status === 'rejected') {
+      const krewpactUserId = await getKrewpactUserId();
+      updatePayload.reviewed_by = krewpactUserId || null;
+      updatePayload.reviewed_at = new Date().toISOString();
+    }
 
-  const supabase = await createServiceClient();
-  const { data, error } = await supabase
-    .from('knowledge_staging')
-    .update(updatePayload)
-    .eq('id', id)
-    .eq('org_id', orgId)
-    .select()
-    .single();
+    const supabase = await createServiceClient();
+    const { data, error } = await supabase
+      .from('knowledge_staging')
+      .update(updatePayload)
+      .eq('id', id)
+      .eq('org_id', orgId)
+      .select()
+      .single();
 
-  if (error || !data) {
-    throw dbError('Failed to update document');
-  }
+    if (error || !data) {
+      throw dbError('Failed to update document');
+    }
 
-  return NextResponse.json(data);
-});
+    return NextResponse.json(data);
+  },
+);
 
 export const DELETE = withApiRoute({}, async ({ params, orgId }) => {
   const { id } = params;
@@ -82,7 +86,11 @@ export const DELETE = withApiRoute({}, async ({ params, orgId }) => {
   if (!orgId) return NextResponse.json({ error: 'Organization context required' }, { status: 500 });
 
   const supabase = await createServiceClient();
-  const { error } = await supabase.from('knowledge_staging').delete().eq('id', id).eq('org_id', orgId);
+  const { error } = await supabase
+    .from('knowledge_staging')
+    .delete()
+    .eq('id', id)
+    .eq('org_id', orgId);
 
   if (error) {
     throw dbError('Failed to delete document');

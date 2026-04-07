@@ -74,10 +74,7 @@ export async function syncRequestForQuotation(
           warehouse: item.warehouse as string | null,
         })),
       });
-      const result = await client.create<{ name: string }>(
-        'Request for Quotation',
-        mapped,
-      );
+      const result = await client.create<{ name: string }>('Request for Quotation', mapped);
       erpDocname = result.name;
     }
 

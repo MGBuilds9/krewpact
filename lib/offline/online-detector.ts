@@ -47,10 +47,7 @@ function setOnlineState(isOnline: boolean): void {
 export async function heartbeatCheck(): Promise<boolean> {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(
-      () => controller.abort(),
-      HEARTBEAT_TIMEOUT_MS,
-    );
+    const timeoutId = setTimeout(() => controller.abort(), HEARTBEAT_TIMEOUT_MS);
 
     const response = await fetch(HEALTH_ENDPOINT, {
       method: 'HEAD',

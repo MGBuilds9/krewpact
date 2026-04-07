@@ -30,7 +30,6 @@ export function DataTableSkeleton({
       )}
       <div className="rounded-md border">
         {Array.from({ length: rows }).map((_, rowIdx) => (
-           
           <div
             key={rowIdx}
             className={cn('flex items-center gap-3 px-4 py-3', rowIdx < rows - 1 && 'border-b')}

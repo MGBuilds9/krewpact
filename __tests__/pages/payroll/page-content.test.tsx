@@ -47,9 +47,7 @@ describe('PayrollPageContent', () => {
   it('renders PageHeader with title and description', () => {
     render(<PayrollPageContent />);
     expect(screen.getByText('Payroll')).toBeDefined();
-    expect(
-      screen.getByText('ADP payroll export and timesheet management'),
-    ).toBeDefined();
+    expect(screen.getByText('ADP payroll export and timesheet management')).toBeDefined();
   });
 
   it('renders period selector and status filter', () => {

@@ -17,7 +17,6 @@ import {
   upsertSyncMap,
 } from './sync-helpers';
 
- 
 export async function syncSupplierQuotation(
   sqId: string,
   _userId: string,

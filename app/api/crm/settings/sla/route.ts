@@ -5,7 +5,6 @@ import { dbError } from '@/lib/api/errors';
 import { withApiRoute } from '@/lib/api/with-api-route';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
-
 const stageSchema = z.object({
   stage: z.string().min(1),
   maxHours: z.number().positive(),
@@ -53,7 +52,8 @@ export const GET = withApiRoute({}, async ({ orgId }): Promise<NextResponse> => 
 export const PATCH = withApiRoute(
   { rateLimit: { limit: 30, window: '1 m' }, bodySchema: slaSettingsSchema },
   async ({ body, orgId }): Promise<NextResponse> => {
-    if (!orgId) return NextResponse.json({ error: 'Organization context required' }, { status: 500 });
+    if (!orgId)
+      return NextResponse.json({ error: 'Organization context required' }, { status: 500 });
     const parsed = body as z.infer<typeof slaSettingsSchema>;
     const { client: supabase, error: authError } = await createUserClientSafe();
     if (authError) return authError;

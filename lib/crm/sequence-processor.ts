@@ -100,7 +100,9 @@ export async function processSequences(
     const sequenceIds = [...new Set(enrollments.map((e) => e.sequence_id as string))];
     const { data: allSteps, error: stepsError } = await supabase
       .from('sequence_steps')
-      .select('id, sequence_id, step_number, action_type, action_config, condition_type, condition_config, true_next_step_id, false_next_step_id, delay_days, delay_hours')
+      .select(
+        'id, sequence_id, step_number, action_type, action_config, condition_type, condition_config, true_next_step_id, false_next_step_id, delay_days, delay_hours',
+      )
       .in('sequence_id', sequenceIds);
 
     if (stepsError) {
@@ -158,7 +160,15 @@ async function processEnrollment(ctx: EnrollmentCtx): Promise<void> {
   await executeStepAction({ supabase, enrollment, step, actionType, actionConfig, now, options });
 
   const nextStepId = await resolveNextStepId({ supabase, enrollment, step, conditionType });
-  await advanceEnrollment({ supabase, enrollment, step, nextStepId, result, options, stepsBySequence });
+  await advanceEnrollment({
+    supabase,
+    enrollment,
+    step,
+    nextStepId,
+    result,
+    options,
+    stepsBySequence,
+  });
 
   result.processed++;
 }
@@ -301,7 +311,12 @@ async function advanceEnrollment(ctx: AdvanceEnrollmentCtx): Promise<void> {
   const { supabase, enrollment, step, nextStepId, result, options, stepsBySequence } = ctx;
   const seqSteps = stepsBySequence.get(enrollment.sequence_id as string) ?? [];
 
-  type NextStep = { id: string; step_number: number; delay_days: number | null; delay_hours: number | null };
+  type NextStep = {
+    id: string;
+    step_number: number;
+    delay_days: number | null;
+    delay_hours: number | null;
+  };
   let nextStep: NextStep | null = null;
 
   if (nextStepId) {

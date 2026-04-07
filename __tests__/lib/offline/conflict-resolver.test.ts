@@ -3,9 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { resolveConflict } from '@/lib/offline/conflict-resolver';
 import type { OfflineQueueItem } from '@/lib/offline/types';
 
-function makeItem(
-  overrides: Partial<OfflineQueueItem> = {},
-): OfflineQueueItem {
+function makeItem(overrides: Partial<OfflineQueueItem> = {}): OfflineQueueItem {
   return {
     id: 1,
     entity_type: 'daily_logs',

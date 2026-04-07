@@ -66,11 +66,8 @@ export function useTimesheetBatchList(params?: { status?: string; divisionId?: s
 export function useCreatePayrollBatch() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: {
-      division_id: string;
-      period_start: string;
-      period_end: string;
-    }) => apiFetch<TimesheetBatch>('/api/timesheet-batches', { method: 'POST', body }),
+    mutationFn: (body: { division_id: string; period_start: string; period_end: string }) =>
+      apiFetch<TimesheetBatch>('/api/timesheet-batches', { method: 'POST', body }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['payroll-batches'] }),
   });
 }

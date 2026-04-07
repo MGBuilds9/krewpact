@@ -1,7 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
-
 async function _getClerkMetadata(): Promise<Record<string, unknown>> {
   const { sessionClaims } = await auth();
   const claims = sessionClaims as Record<string, unknown> | null;

@@ -52,7 +52,11 @@ export const GET = withApiRoute({ auth: 'cron' }, async () => {
   for (const lead of batch) {
     try {
       const enrichmentData = lead.enrichment_data as Record<string, unknown>;
-      const summary = await summarizeEnrichment(lead.company_name ?? '', enrichmentData, lead.org_id ?? '');
+      const summary = await summarizeEnrichment(
+        lead.company_name ?? '',
+        enrichmentData,
+        lead.org_id ?? '',
+      );
 
       if (!summary) {
         continue; // No data to summarize

@@ -106,14 +106,15 @@ export const POST = withApiRoute(
 
     // Auto-promote leads that received their first outreach
     const sentLeadIds = new Set(
-      results.filter((r) => r.success).map((r) => {
-        const contact = uniqueContacts.find((c) => c.id === r.contact_id);
-        return contact?.lead_id;
-      }).filter(Boolean) as string[],
+      results
+        .filter((r) => r.success)
+        .map((r) => {
+          const contact = uniqueContacts.find((c) => c.id === r.contact_id);
+          return contact?.lead_id;
+        })
+        .filter(Boolean) as string[],
     );
-    await Promise.all(
-      [...sentLeadIds].map((id) => maybePromoteToContacted(id, supabase)),
-    );
+    await Promise.all([...sentLeadIds].map((id) => maybePromoteToContacted(id, supabase)));
 
     return NextResponse.json({ sent, failed, total: results.length, results });
   },

@@ -7,7 +7,9 @@ vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
   rateLimitResponse: vi.fn(),
 }));
-vi.mock('@/lib/api/org', () => ({ getKrewpactOrgId: vi.fn().mockResolvedValue('test-org-00000000-0000-0000-0000-000000000000') }));
+vi.mock('@/lib/api/org', () => ({
+  getKrewpactOrgId: vi.fn().mockResolvedValue('test-org-00000000-0000-0000-0000-000000000000'),
+}));
 vi.mock('@/lib/request-context', () => ({
   requestContext: { run: vi.fn((_ctx, fn) => fn()) },
   generateRequestId: vi.fn().mockReturnValue('req_test'),

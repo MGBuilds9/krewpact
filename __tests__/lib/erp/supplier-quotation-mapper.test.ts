@@ -5,9 +5,7 @@ import {
   type SupplierQuotationMapInput,
 } from '@/lib/erp/supplier-quotation-mapper';
 
-function makeInput(
-  overrides: Partial<SupplierQuotationMapInput> = {},
-): SupplierQuotationMapInput {
+function makeInput(overrides: Partial<SupplierQuotationMapInput> = {}): SupplierQuotationMapInput {
   return {
     id: 'sq-001',
     quotation_number: 'SQ-2026-001',

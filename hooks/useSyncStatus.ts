@@ -3,11 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import { countByStatus } from '@/lib/offline/store';
-import {
-  getIsSyncing,
-  getLastSyncAt,
-  onSyncComplete,
-} from '@/lib/offline/sync-engine';
+import { getIsSyncing, getLastSyncAt, onSyncComplete } from '@/lib/offline/sync-engine';
 import type { SyncStatus } from '@/lib/offline/types';
 
 /**

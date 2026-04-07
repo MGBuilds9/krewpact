@@ -42,7 +42,9 @@ export async function createLedgerEntry(
   const { data, error } = await supabase
     .from('inventory_ledger')
     .insert(row as LedgerInsert)
-    .select('id, item_id, division_id, transaction_type, qty_change, valuation_rate, value_change, location_id, counterpart_location_id, spot_id, serial_id, lot_number, project_id, reason_code, reference_id, reference_type, notes, transacted_by, transacted_at, org_id, created_at')
+    .select(
+      'id, item_id, division_id, transaction_type, qty_change, valuation_rate, value_change, location_id, counterpart_location_id, spot_id, serial_id, lot_number, project_id, reason_code, reference_id, reference_type, notes, transacted_by, transacted_at, org_id, created_at',
+    )
     .single();
 
   if (error) {
@@ -120,7 +122,9 @@ export async function createTransferEntries(
   const { data, error } = await supabase
     .from('inventory_ledger')
     .insert([sourceEntry as LedgerInsert, destEntry as LedgerInsert])
-    .select('id, item_id, division_id, transaction_type, qty_change, valuation_rate, value_change, location_id, counterpart_location_id, spot_id, serial_id, lot_number, project_id, reason_code, reference_id, reference_type, notes, transacted_by, transacted_at, org_id, created_at');
+    .select(
+      'id, item_id, division_id, transaction_type, qty_change, valuation_rate, value_change, location_id, counterpart_location_id, spot_id, serial_id, lot_number, project_id, reason_code, reference_id, reference_type, notes, transacted_by, transacted_at, org_id, created_at',
+    );
 
   if (error) {
     logger.error('Failed to create transfer entries', { error: error.message });
@@ -169,7 +173,9 @@ export async function getJobMaterialCost(
 ): Promise<{ total_cost: number; entries: LedgerRow[] }> {
   const { data, error } = await supabase
     .from('inventory_ledger')
-    .select('id, item_id, division_id, transaction_type, qty_change, valuation_rate, value_change, location_id, counterpart_location_id, spot_id, serial_id, lot_number, project_id, reason_code, reference_id, reference_type, notes, transacted_by, transacted_at, org_id, created_at')
+    .select(
+      'id, item_id, division_id, transaction_type, qty_change, valuation_rate, value_change, location_id, counterpart_location_id, spot_id, serial_id, lot_number, project_id, reason_code, reference_id, reference_type, notes, transacted_by, transacted_at, org_id, created_at',
+    )
     .eq('project_id', projectId)
     .order('transacted_at', { ascending: true });
 

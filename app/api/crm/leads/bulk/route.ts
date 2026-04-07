@@ -87,7 +87,9 @@ async function handleBulkStage(
     logger.error('Bulk stage history insert failed', { error: historyResult.error.message });
   }
 
-  return NextResponse.json({ data: { updated: validIds.length, skipped: ids.length - validIds.length } });
+  return NextResponse.json({
+    data: { updated: validIds.length, skipped: ids.length - validIds.length },
+  });
 }
 
 async function handleBulkDelete(supabase: SupabaseClient, ids: string[]): Promise<NextResponse> {

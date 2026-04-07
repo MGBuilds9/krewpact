@@ -34,13 +34,7 @@ export async function syncUom(
       .single();
 
     if (uomError || !uom) {
-      return failJob(
-        supabase,
-        job,
-        'uom',
-        uomId,
-        `UOM not found: ${uomError?.message || 'null'}`,
-      );
+      return failJob(supabase, job, 'uom', uomId, `UOM not found: ${uomError?.message || 'null'}`);
     }
 
     const record = uom as Record<string, unknown>;

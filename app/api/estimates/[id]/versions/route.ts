@@ -31,67 +31,70 @@ export const GET = withApiRoute({}, async ({ req, params }) => {
   return NextResponse.json(paginatedResponse(data, count, limit, offset));
 });
 
-export const POST = withApiRoute({ bodySchema: versionCreateSchema }, async ({ body, params, userId }) => {
-  const { id } = params;
+export const POST = withApiRoute(
+  { bodySchema: versionCreateSchema },
+  async ({ body, params, userId }) => {
+    const { id } = params;
 
-  const reason = body.reason || null;
+    const reason = body.reason || null;
 
-  const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
-  // 1) Fetch estimate with lines
-  const { data: estimate, error: fetchError } = await supabase
-    .from('estimates')
-    .select(
-      'id, estimate_number, status, subtotal_amount, tax_amount, total_amount, margin_pct, currency_code, revision_no, account_id, contact_id, opportunity_id, division_id, owner_user_id, approved_at, approved_by, metadata, created_at, updated_at, estimate_lines(id, estimate_id, line_type, description, quantity, unit, unit_cost, markup_pct, line_total, sort_order, is_optional, catalog_item_id, assembly_id, parent_line_id, metadata, created_at, updated_at)',
-    )
-    .eq('id', id)
-    .single();
+    // 1) Fetch estimate with lines
+    const { data: estimate, error: fetchError } = await supabase
+      .from('estimates')
+      .select(
+        'id, estimate_number, status, subtotal_amount, tax_amount, total_amount, margin_pct, currency_code, revision_no, account_id, contact_id, opportunity_id, division_id, owner_user_id, approved_at, approved_by, metadata, created_at, updated_at, estimate_lines(id, estimate_id, line_type, description, quantity, unit, unit_cost, markup_pct, line_total, sort_order, is_optional, catalog_item_id, assembly_id, parent_line_id, metadata, created_at, updated_at)',
+      )
+      .eq('id', id)
+      .single();
 
-  if (fetchError) {
-    const status = fetchError.code === 'PGRST116' ? 404 : 500;
-    return NextResponse.json({ error: fetchError.message }, { status });
-  }
+    if (fetchError) {
+      const status = fetchError.code === 'PGRST116' ? 404 : 500;
+      return NextResponse.json({ error: fetchError.message }, { status });
+    }
 
-  // 2) Build snapshot
-  const estimateRecord = estimate as Record<string, unknown>;
-  const lines = Array.isArray(estimateRecord.estimate_lines) ? estimateRecord.estimate_lines : [];
+    // 2) Build snapshot
+    const estimateRecord = estimate as Record<string, unknown>;
+    const lines = Array.isArray(estimateRecord.estimate_lines) ? estimateRecord.estimate_lines : [];
 
-  // Remove the nested lines from the estimate snapshot
-  const estimateData = Object.fromEntries(
-    Object.entries(estimateRecord).filter(([key]) => key !== 'estimate_lines'),
-  );
+    // Remove the nested lines from the estimate snapshot
+    const estimateData = Object.fromEntries(
+      Object.entries(estimateRecord).filter(([key]) => key !== 'estimate_lines'),
+    );
 
-  const snapshot = {
-    estimate: estimateData,
-    lines,
-    created_at: new Date().toISOString(),
-  };
+    const snapshot = {
+      estimate: estimateData,
+      lines,
+      created_at: new Date().toISOString(),
+    };
 
-  const currentRevision = Number(estimateRecord.revision_no) || 0;
+    const currentRevision = Number(estimateRecord.revision_no) || 0;
 
-  // 3) Insert version record
-  const { data: version, error: insertError } = await supabase
-    .from('estimate_versions')
-    .insert({
-      estimate_id: id,
-      revision_no: currentRevision,
-      snapshot,
-      reason,
-      created_by: userId,
-    })
-    .select()
-    .single();
+    // 3) Insert version record
+    const { data: version, error: insertError } = await supabase
+      .from('estimate_versions')
+      .insert({
+        estimate_id: id,
+        revision_no: currentRevision,
+        snapshot,
+        reason,
+        created_by: userId,
+      })
+      .select()
+      .single();
 
-  if (insertError) {
-    throw dbError(insertError.message);
-  }
+    if (insertError) {
+      throw dbError(insertError.message);
+    }
 
-  // 4) Increment estimate revision_no
-  await supabase
-    .from('estimates')
-    .update({ revision_no: currentRevision + 1 })
-    .eq('id', id);
+    // 4) Increment estimate revision_no
+    await supabase
+      .from('estimates')
+      .update({ revision_no: currentRevision + 1 })
+      .eq('id', id);
 
-  return NextResponse.json(version, { status: 201 });
-});
+    return NextResponse.json(version, { status: 201 });
+  },
+);

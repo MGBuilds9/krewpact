@@ -65,7 +65,14 @@ describe('TimeScreen', () => {
   it('renders project chips when projects are available', () => {
     mockUseQuery.mockReturnValue({
       data: [
-        { id: 'p1', project_name: 'Telecom Build', project_number: 'T-001', status: 'active', start_date: null, target_completion_date: null },
+        {
+          id: 'p1',
+          project_name: 'Telecom Build',
+          project_number: 'T-001',
+          status: 'active',
+          start_date: null,
+          target_completion_date: null,
+        },
       ],
       isLoading: false,
       isError: false,

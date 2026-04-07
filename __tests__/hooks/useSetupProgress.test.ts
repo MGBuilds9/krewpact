@@ -49,7 +49,9 @@ describe('useSetupProgress', () => {
   });
 
   it('marks branding complete when logo_url is set', () => {
-    mockUseOrg.mockReturnValue(makeOrg({ branding: { logo_url: '/logo.png', primary_color: '#2563eb' } }));
+    mockUseOrg.mockReturnValue(
+      makeOrg({ branding: { logo_url: '/logo.png', primary_color: '#2563eb' } }),
+    );
     const { result } = renderHook(() => useSetupProgress());
     const branding = result.current.steps.find((s) => s.key === 'branding');
     expect(branding?.completed).toBe(true);

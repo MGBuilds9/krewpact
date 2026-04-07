@@ -8,12 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useUpdateUserRoles, useUserRoles } from '@/hooks/useUserRoles';
 import { EXTERNAL_ROLES, INTERNAL_ROLES } from '@/lib/rbac/role-registry';
 
@@ -27,10 +22,7 @@ interface UserRoleEditorProps {
 export function UserRoleEditor({ userId, userName, open, onOpenChange }: UserRoleEditorProps) {
   const { data, isLoading } = useUserRoles(open ? userId : null);
   const updateRoles = useUpdateUserRoles();
-  const fetchedRoleKeys = useMemo(
-    () => data?.roles?.map((r) => r.role_key) ?? [],
-    [data?.roles],
-  );
+  const fetchedRoleKeys = useMemo(() => data?.roles?.map((r) => r.role_key) ?? [], [data?.roles]);
   const [selectedRoles, setSelectedRoles] = useState<string[] | null>(null);
 
   // Use fetched data as baseline, local edits override

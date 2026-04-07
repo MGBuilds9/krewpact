@@ -43,7 +43,8 @@ export const GET = withApiRoute({}, async ({ orgId }): Promise<NextResponse> => 
 export const PATCH = withApiRoute(
   { rateLimit: { limit: 30, window: '1 m' }, bodySchema: sequenceDefaultsSchema },
   async ({ body, orgId }): Promise<NextResponse> => {
-    if (!orgId) return NextResponse.json({ error: 'Organization context required' }, { status: 500 });
+    if (!orgId)
+      return NextResponse.json({ error: 'Organization context required' }, { status: 500 });
     const parsed = body as z.infer<typeof sequenceDefaultsSchema>;
     const { client: supabase, error: authError } = await createUserClientSafe();
     if (authError) return authError;

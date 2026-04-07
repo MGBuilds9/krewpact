@@ -21,11 +21,19 @@ vi.mock('@/hooks/useTeam', () => ({
 
 // Mock shadcn Select to render children directly
 vi.mock('@/components/ui/select', () => ({
-  Select: ({ children, onValueChange }: { children: React.ReactNode; onValueChange?: (v: string) => void }) => <div data-testid="select-root">{children}</div>,
+  Select: ({
+    children,
+    onValueChange,
+  }: {
+    children: React.ReactNode;
+    onValueChange?: (v: string) => void;
+  }) => <div data-testid="select-root">{children}</div>,
   SelectTrigger: ({ children }: { children: React.ReactNode }) => <button>{children}</button>,
   SelectValue: ({ placeholder }: { placeholder?: string }) => <span>{placeholder}</span>,
   SelectContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  SelectItem: ({ children, value }: { children: React.ReactNode; value: string }) => <div data-value={value}>{children}</div>,
+  SelectItem: ({ children, value }: { children: React.ReactNode; value: string }) => (
+    <div data-value={value}>{children}</div>
+  ),
 }));
 
 import { BulkActionBar } from '@/components/CRM/BulkActionBar';

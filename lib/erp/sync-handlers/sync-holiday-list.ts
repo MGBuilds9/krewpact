@@ -72,13 +72,7 @@ export async function syncHolidayList(
       erpDocname = result.name;
     }
 
-    await upsertSyncMap(
-      supabase,
-      'holiday_list',
-      holidayListId,
-      'Holiday List',
-      erpDocname,
-    );
+    await upsertSyncMap(supabase, 'holiday_list', holidayListId, 'Holiday List', erpDocname);
     await logEvent(supabase, job.id, 'sync_completed', {
       entity_type: 'holiday_list',
       entity_id: holidayListId,

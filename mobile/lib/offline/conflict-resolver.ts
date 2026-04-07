@@ -55,10 +55,7 @@ function resolveLastWriteWins(item: OfflineQueueItem): ConflictResult {
   };
 }
 
-function resolveMerge(
-  item: OfflineQueueItem,
-  serverData: Record<string, unknown>,
-): ConflictResult {
+function resolveMerge(item: OfflineQueueItem, serverData: Record<string, unknown>): ConflictResult {
   if (item.entity_type === 'time_entries') {
     return mergeTimeEntries(item, serverData);
   }
@@ -116,8 +113,7 @@ function resolveKeepBoth(item: OfflineQueueItem): ConflictResult {
     return {
       resolved_payload: {},
       auto_resolved: false,
-      resolution_note:
-        'photos: delete conflict — both versions kept, manual review needed',
+      resolution_note: 'photos: delete conflict — both versions kept, manual review needed',
       create_new: false,
     };
   }

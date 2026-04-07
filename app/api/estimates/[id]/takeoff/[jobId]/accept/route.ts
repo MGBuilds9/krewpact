@@ -97,7 +97,7 @@ function hasChanges(original: OriginalLine, submitted: SubmittedLine): boolean {
 /**
  * POST /api/estimates/:id/takeoff/:jobId/accept — Accept reviewed lines into estimate_lines.
  */
- 
+
 export const POST = withApiRoute(
   { bodySchema: acceptTakeoffLinesSchema },
   async ({ body, params }) => {

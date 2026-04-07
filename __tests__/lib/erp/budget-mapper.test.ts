@@ -1,10 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  type BudgetMapInput,
-  fromErpBudget,
-  mapBudgetToErp,
-} from '@/lib/erp/budget-mapper';
+import { type BudgetMapInput, fromErpBudget, mapBudgetToErp } from '@/lib/erp/budget-mapper';
 
 function makeInput(overrides: Partial<BudgetMapInput> = {}): BudgetMapInput {
   return {
@@ -103,9 +99,7 @@ describe('fromErpBudget', () => {
       project: '',
       monthly_distribution: 'Even Distribution',
       action_if_annual_budget_exceeded: 'Warn',
-      accounts: [
-        { account: '5100 - COGS - MDM', budget_amount: 500000 },
-      ],
+      accounts: [{ account: '5100 - COGS - MDM', budget_amount: 500000 }],
     });
 
     expect(result.erp_budget_name).toBe('BDG-2026-001');
