@@ -332,6 +332,12 @@ Architecture docs in `docs/architecture/`: `Master-Plan.md` (scope), `Technology
 
 ## Session Log
 
+### Apr 6, 2026 — Repo Hygiene: Sentinel webhook timing fix
+
+- **Changes:** Merged PR #122 (Sentinel): switched webhook secret validation in `/api/web/leads/route.ts` from direct equality to `timingSafeEqual` (Node `crypto`) — closes HIGH timing attack. 1 PR merged, 1 branch deleted.
+- **Tests:** 5,341/5,341 passing. 0 TS errors. Build clean.
+- **Next:** No open PRs remaining.
+
 ### Apr 6, 2026 — Console Error Stabilization + Org Data Fix
 
 - **Changes:** Fixed 6 categories of console errors via /autoplan review pipeline (CEO + Design + Eng with dual AI voices). (1) CSP: added Cloudflare Insights, Vercel Live fonts, cloudflareinsights beacon to allowlists. (2) Supabase singleton: `createBrowserClient()` now returns cached instance + `__resetBrowserClient()` for test isolation. (3) Org route: fixed silent error swallow in `/api/org/[slug]` — now logs orgError in else-branch + catch. OrgContext uses smart retry (retry 5xx, skip 404). (4) Digest: sanitized error response, DailyDigestWidget refactored to use existing `useDigest()` hook (dedup). (5) Charts: investigated, already properly guarded. (6) DialogDescription: wrapper-level fix via `aria-describedby={undefined}` on `DialogContent` + meaningful descriptions on 3 key dialogs. DB: renamed org slug `default` to `mdm-group`, created `org_settings` with 17 feature flags.
