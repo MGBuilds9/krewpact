@@ -8,7 +8,7 @@ import {
   type ProjectFormData,
   type ProjectMember,
 } from '@/components/Projects/ProjectCreationForm/types';
-import { useDivision } from '@/contexts/DivisionContext';
+import { requireConcreteDivision, useDivision } from '@/contexts/DivisionContext';
 import { type Project, useCreateProject } from '@/hooks/useProjects';
 
 function buildSiteAddress(formData: ProjectFormData): Record<string, string> | undefined {
@@ -37,8 +37,11 @@ export function useProjectCreationForm(onSuccess?: () => void) {
   const [formData, setFormData] = useState<ProjectFormData>(INITIAL_FORM_DATA);
   const [projectMembers, setProjectMembers] = useState<ProjectMember[]>([]);
 
-  const { activeDivision } = useDivision();
+  const { activeDivision, userDivisions } = useDivision();
   const createProject = useCreateProject();
+  // New projects must be scoped to a concrete division. When the user is in
+  // "All Divisions" view, fall back to their primary division.
+  const writeDivisionId = requireConcreteDivision(activeDivision, userDivisions);
 
   const updateField = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -77,7 +80,7 @@ export function useProjectCreationForm(onSuccess?: () => void) {
       target_completion_date: formData.target_completion_date || undefined,
       baseline_budget: budget,
       current_budget: budget,
-      division_id: activeDivision?.id || undefined,
+      division_id: writeDivisionId || undefined,
       site_address: buildSiteAddress(formData) ?? null,
     };
   };
@@ -85,6 +88,10 @@ export function useProjectCreationForm(onSuccess?: () => void) {
   const onSubmit = async () => {
     if (!formData.project_name.trim()) {
       toast.error('Project name is required');
+      return;
+    }
+    if (!writeDivisionId) {
+      toast.error('Select a division before creating a project');
       return;
     }
     setIsSubmitting(true);

@@ -23,7 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useDivision } from '@/contexts/DivisionContext';
+import { getDivisionFilter, useDivision } from '@/contexts/DivisionContext';
 import { useTransactionLedger } from '@/hooks/useTransactionLedger';
 import { cn } from '@/lib/utils';
 
@@ -55,7 +55,7 @@ export default function TransactionsPageContent() {
   const [search, setSearch] = useState('');
 
   const { data: transactions, isLoading } = useTransactionLedger({
-    divisionId: activeDivision?.id,
+    divisionId: getDivisionFilter(activeDivision),
     txnType: typeFilter === '_all' ? undefined : typeFilter,
     search: search || undefined,
   });

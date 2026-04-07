@@ -66,7 +66,14 @@ export const GET = withApiRoute({ querySchema }, async ({ req, query }) => {
   if (owner_user_id) dbQuery = dbQuery.eq('owner_user_id', owner_user_id);
   if (account_id) dbQuery = dbQuery.eq('account_id', account_id);
 
-  dbQuery = dbQuery.range(offset, offset + limit - 1);
+  // Pipeline view returns ALL stages — no pagination. Previously this applied
+  // range(offset, offset+limit-1) to BOTH list and pipeline views, which silently
+  // capped kanban totals at the default page size and made the dashboard disagree
+  // with the kanban for users with > limit opportunities. ISSUE-016.
+  // RLS still scopes the result; the bound is the user's accessible row count.
+  if (view !== 'pipeline') {
+    dbQuery = dbQuery.range(offset, offset + limit - 1);
+  }
 
   const { data, error, count } = await dbQuery;
   if (error) throw dbError(error.message);

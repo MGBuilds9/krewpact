@@ -39,6 +39,10 @@ vi.mock('@/contexts/DivisionContext', () => ({
     userDivisions: [{ id: 'div-1', name: 'MDM Contracting', code: 'contracting' }],
     isLoading: false,
   }),
+  getDivisionFilter: (d: { id?: string } | null | undefined) => d?.id,
+  requireConcreteDivision: (d: { id?: string } | null | undefined) => d?.id ?? null,
+  isAllDivisions: (d: { id?: string } | null | undefined) => d?.id === '__all_divisions__',
+  ALL_DIVISIONS_ID: '__all_divisions__',
 }));
 
 // Mock useIsMobile for ResponsiveTable

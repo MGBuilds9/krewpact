@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
-import { useDivision } from '@/contexts/DivisionContext';
+import { requireConcreteDivision, useDivision } from '@/contexts/DivisionContext';
 import { type InventoryItem, useInventoryItems } from '@/hooks/useInventory';
 import { useInventoryLocations } from '@/hooks/useInventoryLocations';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
@@ -207,7 +207,10 @@ export function PoForm() {
     hasMultipleDivisions,
     setActiveDivision,
   } = useDivision();
-  const divisionId = activeDivision?.id ?? '';
+  // PO creation must be scoped to a concrete division. When the user is in
+  // "All Divisions" view, fall back to their primary division so the form
+  // dropdown has something to display and the mutation has a valid UUID.
+  const divisionId = requireConcreteDivision(activeDivision, userDivisions) ?? '';
   const createPo = useCreatePurchaseOrder();
   const { data: suppliersResp } = usePortalAccounts({ actor_type: 'trade_partner' });
   const suppliers = suppliersResp?.data ?? [];

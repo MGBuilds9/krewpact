@@ -18,7 +18,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useDivision } from '@/contexts/DivisionContext';
+import {
+  getDivisionFilter,
+  requireConcreteDivision,
+  useDivision,
+} from '@/contexts/DivisionContext';
 import { useCreateLocation, useInventoryLocations } from '@/hooks/useInventoryLocations';
 import type { CreateLocation } from '@/lib/validators/inventory-items';
 
@@ -56,14 +60,18 @@ function LocationSkeleton() {
 
 // eslint-disable-next-line max-lines-per-function
 export default function LocationsPageContent() {
-  const { activeDivision } = useDivision();
+  const { activeDivision, userDivisions } = useDivision();
   const [typeFilter, setTypeFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const { data: locations, isLoading } = useInventoryLocations({
-    divisionId: activeDivision?.id,
+    divisionId: getDivisionFilter(activeDivision),
     locationType: typeFilter !== 'all' ? typeFilter : undefined,
   });
+  // For the create form, the sentinel is rejected: a new location must belong
+  // to a concrete division. Falls back to the user's primary division when
+  // the user is currently in "All Divisions" view.
+  const writeDivisionId = requireConcreteDivision(activeDivision, userDivisions);
   const createLocation = useCreateLocation();
   function handleCreate(data: CreateLocation) {
     createLocation.mutate(data as Parameters<typeof createLocation.mutate>[0], {
@@ -85,11 +93,11 @@ export default function LocationsPageContent() {
           </Button>
         }
       />
-      {activeDivision && (
+      {writeDivisionId && (
         <LocationForm
           open={formOpen}
           onOpenChange={setFormOpen}
-          divisionId={activeDivision.id}
+          divisionId={writeDivisionId}
           onSubmit={handleCreate}
           isSubmitting={createLocation.isPending}
         />

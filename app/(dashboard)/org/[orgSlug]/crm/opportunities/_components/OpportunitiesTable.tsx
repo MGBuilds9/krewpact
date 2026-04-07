@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { DataTable, type SortState } from '@/components/CRM/DataTable';
 import { RowActionMenu } from '@/components/CRM/RowActionMenu';
 import { Badge } from '@/components/ui/badge';
-import { useDivision } from '@/contexts/DivisionContext';
+import { getDivisionFilter, useDivision } from '@/contexts/DivisionContext';
 import type { Opportunity } from '@/hooks/crm/useOpportunities';
 import { useDeleteOpportunity, useOpportunities } from '@/hooks/crm/useOpportunities';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
@@ -21,11 +21,44 @@ const STAGE_COLORS: Record<string, string> = {
 };
 
 const BASE_COLUMNS: ColumnDef<Opportunity, unknown>[] = [
-  { accessorKey: 'opportunity_name', header: 'Opportunity', cell: ({ row }) => <span className="font-semibold">{row.original.opportunity_name}</span> },
-  { accessorKey: 'stage', header: 'Stage', cell: ({ row }) => <Badge className={STAGE_COLORS[row.original.stage] ?? 'bg-muted text-muted-foreground'}>{formatStatus(row.original.stage)}</Badge> },
-  { accessorKey: 'estimated_revenue', header: 'Est. Revenue', cell: ({ row }) => row.original.estimated_revenue ? `$${row.original.estimated_revenue.toLocaleString()}` : '-' },
-  { accessorKey: 'probability_pct', header: 'Probability', cell: ({ row }) => row.original.probability_pct != null ? `${row.original.probability_pct}%` : '-' },
-  { accessorKey: 'target_close_date', header: 'Close Date', cell: ({ row }) => row.original.target_close_date ? new Date(row.original.target_close_date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' }) : '-' },
+  {
+    accessorKey: 'opportunity_name',
+    header: 'Opportunity',
+    cell: ({ row }) => <span className="font-semibold">{row.original.opportunity_name}</span>,
+  },
+  {
+    accessorKey: 'stage',
+    header: 'Stage',
+    cell: ({ row }) => (
+      <Badge className={STAGE_COLORS[row.original.stage] ?? 'bg-muted text-muted-foreground'}>
+        {formatStatus(row.original.stage)}
+      </Badge>
+    ),
+  },
+  {
+    accessorKey: 'estimated_revenue',
+    header: 'Est. Revenue',
+    cell: ({ row }) =>
+      row.original.estimated_revenue ? `$${row.original.estimated_revenue.toLocaleString()}` : '-',
+  },
+  {
+    accessorKey: 'probability_pct',
+    header: 'Probability',
+    cell: ({ row }) =>
+      row.original.probability_pct != null ? `${row.original.probability_pct}%` : '-',
+  },
+  {
+    accessorKey: 'target_close_date',
+    header: 'Close Date',
+    cell: ({ row }) =>
+      row.original.target_close_date
+        ? new Date(row.original.target_close_date).toLocaleDateString('en-CA', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+          })
+        : '-',
+  },
 ];
 
 export function OpportunitiesTable() {
@@ -36,13 +69,26 @@ export function OpportunitiesTable() {
   const [pageSize, setPageSize] = useState(25);
   const [sort, setSort] = useState<SortState | null>(null);
 
-  const { data: response, isLoading } = useOpportunities({ divisionId: activeDivision?.id, limit: pageSize, offset: page * pageSize });
+  const { data: response, isLoading } = useOpportunities({
+    divisionId: getDivisionFilter(activeDivision),
+    limit: pageSize,
+    offset: page * pageSize,
+  });
   const opportunities = response?.data ?? [];
   const total = response?.total ?? 0;
 
   const columns: ColumnDef<Opportunity, unknown>[] = [
     ...BASE_COLUMNS,
-    { id: 'actions', cell: ({ row }) => <RowActionMenu entityName={row.original.opportunity_name} onEdit={() => orgPush(`/crm/opportunities/${row.original.id}`)} onDelete={() => deleteOpp.mutate(row.original.id)} /> },
+    {
+      id: 'actions',
+      cell: ({ row }) => (
+        <RowActionMenu
+          entityName={row.original.opportunity_name}
+          onEdit={() => orgPush(`/crm/opportunities/${row.original.id}`)}
+          onDelete={() => deleteOpp.mutate(row.original.id)}
+        />
+      ),
+    },
   ];
 
   return (

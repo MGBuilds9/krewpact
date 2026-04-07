@@ -9,7 +9,7 @@ import { fleetColumns } from '@/components/inventory/fleet-table';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useDivision } from '@/contexts/DivisionContext';
+import { getDivisionFilter, useDivision } from '@/contexts/DivisionContext';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import type { FleetVehicle } from '@/hooks/useFleetVehicles';
 import { useCreateVehicle, useFleetVehicles } from '@/hooks/useFleetVehicles';
@@ -33,7 +33,7 @@ export default function FleetPageContent() {
   const createVehicle = useCreateVehicle();
 
   const { data: vehicles, isLoading } = useFleetVehicles({
-    divisionId: activeDivision?.id,
+    divisionId: getDivisionFilter(activeDivision),
     search: debouncedSearch || undefined,
     vehicleType: typeFilter || undefined,
     status: statusFilter || undefined,

@@ -10,7 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useDivision } from '@/contexts/DivisionContext';
+import { getDivisionFilter, useDivision } from '@/contexts/DivisionContext';
 import type { EstimateTemplate } from '@/hooks/useEstimating';
 import { useEstimateTemplates } from '@/hooks/useEstimating';
 
@@ -53,7 +53,7 @@ export default function EstimateTemplatesPage() {
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<EstimateTemplate | undefined>();
-  const divId = activeDivision ? activeDivision.id : undefined;
+  const divId = getDivisionFilter(activeDivision);
   const { data, isLoading } = useEstimateTemplates({ divisionId: divId });
   const templates = data ? data.data || [] : [];
   const filtered = templates.filter(

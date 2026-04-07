@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useDivision } from '@/contexts/DivisionContext';
+import { getDivisionFilter, useDivision } from '@/contexts/DivisionContext';
 import { useProjects } from '@/hooks/useProjects';
 import { useTeamMembers } from '@/hooks/useTeam';
 
@@ -112,7 +112,7 @@ export default function AdminPage() {
   const { activeDivision } = useDivision();
   const { data: members, isLoading: membersLoading } = useTeamMembers();
   const { data: projects, isLoading: projectsLoading } = useProjects({
-    divisionId: activeDivision?.id,
+    divisionId: getDivisionFilter(activeDivision),
   });
   const isLoading = membersLoading || projectsLoading;
 

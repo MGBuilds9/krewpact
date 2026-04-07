@@ -15,7 +15,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
-import { useDivision } from '@/contexts/DivisionContext';
+import { getDivisionFilter, useDivision } from '@/contexts/DivisionContext';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import {
   useCreateFolder,
@@ -47,7 +47,7 @@ export default function DocumentsPage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const { data: projects = [], isLoading: projectsLoading } = useProjects({
-    divisionId: activeDivision?.id,
+    divisionId: getDivisionFilter(activeDivision),
   });
   const { data: foldersResponse } = useFolders(selectedProjectId ?? '');
   const { data: filesResponse } = useFiles(selectedProjectId ?? '', selectedFolderId);

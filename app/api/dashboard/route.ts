@@ -17,10 +17,14 @@ export const GET = withApiRoute({ querySchema }, async ({ req }) => {
   const [projectsResult, expensesResult, leadsResult, notificationsResult, recentProjectsResult] =
     await Promise.all([
       (() => {
+        // "Active Projects" stat means "in-progress" to a non-technical PM —
+        // includes planning + active + on_hold. Excludes only completed/cancelled.
+        // Previously this filtered status='active' alone, which read 0 even when
+        // a project in 'planning' was clearly visible in the Recent Projects widget.
         let q = supabase
           .from('projects')
           .select('*', { count: 'exact', head: true })
-          .eq('status', 'active');
+          .in('status', ['planning', 'active', 'on_hold']);
         if (division_id) q = q.eq('division_id', division_id);
         return q;
       })(),

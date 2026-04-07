@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useDivision } from '@/contexts/DivisionContext';
+import { getDivisionFilter, useDivision } from '@/contexts/DivisionContext';
 import { useInventoryItems } from '@/hooks/useInventory';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 
@@ -40,7 +40,7 @@ export default function ItemsPageContent() {
   const [isActive, setIsActive] = useState('all');
 
   const { data: items, isLoading } = useInventoryItems({
-    divisionId: activeDivision?.id,
+    divisionId: getDivisionFilter(activeDivision),
     search: search || undefined,
     trackingType: trackingType !== 'all' ? trackingType : undefined,
     isActive: isActive !== 'all' ? isActive === 'true' : undefined,

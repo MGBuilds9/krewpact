@@ -3,8 +3,6 @@
 import { Briefcase, Calendar, DollarSign, MapPin, Search } from 'lucide-react';
 import { useState } from 'react';
 
-import { useOrgRouter } from '@/hooks/useOrgRouter';
-
 import { ProjectCreationDialog } from '@/components/Projects/ProjectCreationDialog';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,7 +14,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useDivision } from '@/contexts/DivisionContext';
+import { getDivisionFilter, useDivision } from '@/contexts/DivisionContext';
+import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { useProjects } from '@/hooks/useProjects';
 import { cn } from '@/lib/utils';
 
@@ -138,7 +137,7 @@ const PROJECT_STATUS_LABELS: Record<string, string> = {
 export default function ProjectsPageContent() {
   const { push } = useOrgRouter();
   const { activeDivision } = useDivision();
-  const { data: projects } = useProjects({ divisionId: activeDivision?.id });
+  const { data: projects } = useProjects({ divisionId: getDivisionFilter(activeDivision) });
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const lc = search.toLowerCase();

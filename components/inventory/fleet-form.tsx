@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useDivision } from '@/contexts/DivisionContext';
+import { requireConcreteDivision, useDivision } from '@/contexts/DivisionContext';
 import type { FleetVehicle } from '@/hooks/useFleetVehicles';
 import { formatStatus } from '@/lib/format-status';
 
@@ -35,6 +35,7 @@ interface FleetFormFieldsProps {
   setAutoCreateLocation: (v: boolean) => void;
   onCancel: () => void;
   isPending?: boolean;
+  noDivisionHint?: string;
 }
 
 // eslint-disable-next-line max-lines-per-function, complexity
@@ -44,6 +45,7 @@ function FleetFormFields({
   setAutoCreateLocation,
   onCancel,
   isPending,
+  noDivisionHint,
 }: FleetFormFieldsProps) {
   return (
     <>
@@ -139,11 +141,14 @@ function FleetFormFields({
           </Label>
         </div>
       )}
+      {noDivisionHint && (
+        <div className="sm:col-span-2 text-sm text-muted-foreground">{noDivisionHint}</div>
+      )}
       <div className="sm:col-span-2 flex justify-end gap-2 pt-2">
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
-        <Button type="submit" disabled={isPending}>
+        <Button type="submit" disabled={isPending || !!noDivisionHint}>
           {isPending ? 'Saving...' : vehicle ? 'Update Vehicle' : 'Add Vehicle'}
         </Button>
       </div>
@@ -152,15 +157,19 @@ function FleetFormFields({
 }
 
 export function FleetForm({ vehicle, onSubmit, onCancel, isPending }: FleetFormProps) {
-  const { activeDivision } = useDivision();
+  const { activeDivision, userDivisions } = useDivision();
   const [autoCreateLocation, setAutoCreateLocation] = useState(!vehicle);
+  // Vehicle creation requires a concrete division. When the user is in
+  // "All Divisions" view, fall back to their primary division.
+  const writeDivisionId = requireConcreteDivision(activeDivision, userDivisions);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!writeDivisionId) return;
     const fd = new FormData(e.currentTarget);
     const data: Record<string, unknown> = {
       unit_number: fd.get('unit_number'),
-      division_id: activeDivision?.id,
+      division_id: writeDivisionId,
       vehicle_type: fd.get('vehicle_type'),
       vin: fd.get('vin') || null,
       year: fd.get('year') ? Number(fd.get('year')) : null,
@@ -184,6 +193,7 @@ export function FleetForm({ vehicle, onSubmit, onCancel, isPending }: FleetFormP
         setAutoCreateLocation={setAutoCreateLocation}
         onCancel={onCancel}
         isPending={isPending}
+        noDivisionHint={writeDivisionId ? undefined : 'Select a division to add a vehicle.'}
       />
     </form>
   );

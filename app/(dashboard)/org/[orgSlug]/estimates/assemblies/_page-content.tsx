@@ -10,7 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useDivision } from '@/contexts/DivisionContext';
+import { getDivisionFilter, useDivision } from '@/contexts/DivisionContext';
 import type { Assembly } from '@/hooks/useEstimating';
 import { useAssemblies } from '@/hooks/useEstimating';
 
@@ -53,7 +53,7 @@ export default function AssembliesPage() {
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingAssembly, setEditingAssembly] = useState<Assembly | undefined>();
-  const divId = activeDivision ? activeDivision.id : undefined;
+  const divId = getDivisionFilter(activeDivision);
   const { data, isLoading } = useAssemblies({ divisionId: divId, search: search || undefined });
   const assemblies = data ? data.data || [] : [];
 

@@ -7,7 +7,7 @@ import { useMemo, useState } from 'react';
 import { PipelineKanban } from '@/components/CRM/PipelineKanban';
 import { WeightedPipelineHeader } from '@/components/CRM/WeightedPipelineHeader';
 import { Button } from '@/components/ui/button';
-import { useDivision } from '@/contexts/DivisionContext';
+import { getDivisionFilter, useDivision } from '@/contexts/DivisionContext';
 import { usePipeline } from '@/hooks/useCRM';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 
@@ -24,7 +24,7 @@ export default function OpportunitiesView() {
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
 
   const { data: pipelineData } = usePipeline({
-    divisionId: activeDivision?.id,
+    divisionId: getDivisionFilter(activeDivision),
   });
 
   const { totalOpps, totalValue, weightedValue } = useMemo(() => {

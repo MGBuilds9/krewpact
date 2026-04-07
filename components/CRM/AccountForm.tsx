@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useDivision } from '@/contexts/DivisionContext';
+import { requireConcreteDivision, useDivision } from '@/contexts/DivisionContext';
 import { type Account, useCreateAccount, useUpdateAccount } from '@/hooks/useCRM';
 import {
   type AccountCreate,
@@ -151,11 +151,15 @@ export function AccountForm({ account, onSuccess, onCancel }: AccountFormProps) 
   const isEdit = !!account;
   const createAccount = useCreateAccount();
   const updateAccount = useUpdateAccount();
-  const { activeDivision } = useDivision();
+  const { activeDivision, userDivisions } = useDivision();
+  // New accounts must be created under a concrete division. When the user is
+  // in "All Divisions" view, default to their primary division (the user can
+  // still change the division field before submitting).
+  const defaultDivisionId = requireConcreteDivision(activeDivision, userDivisions) ?? undefined;
 
   const form = useForm<AccountCreate | AccountUpdate>({
     resolver: zodResolver(isEdit ? accountUpdateSchema : accountCreateSchema),
-    defaultValues: buildDefaultValues(account, activeDivision?.id),
+    defaultValues: buildDefaultValues(account, defaultDivisionId),
   });
 
   const isPending = createAccount.isPending || updateAccount.isPending;

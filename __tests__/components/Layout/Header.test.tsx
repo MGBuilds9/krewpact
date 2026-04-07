@@ -46,6 +46,10 @@ vi.mock('@/contexts/ImpersonationContext', () => ({
 
 vi.mock('@/contexts/DivisionContext', () => ({
   useDivision: vi.fn(() => ({ division: null })),
+  getDivisionFilter: (d: { id?: string } | null | undefined) => d?.id,
+  requireConcreteDivision: (d: { id?: string } | null | undefined) => d?.id ?? null,
+  isAllDivisions: (d: { id?: string } | null | undefined) => d?.id === '__all_divisions__',
+  ALL_DIVISIONS_ID: '__all_divisions__',
 }));
 
 // ─── Component mocks ─────────────────────────────────────────────────────────

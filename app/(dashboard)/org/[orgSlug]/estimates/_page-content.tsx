@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useDivision } from '@/contexts/DivisionContext';
+import { getDivisionFilter, useDivision } from '@/contexts/DivisionContext';
 import { useEstimates } from '@/hooks/useEstimates';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { cn } from '@/lib/utils';
@@ -98,7 +98,7 @@ export default function EstimatesListPage() {
   const { activeDivision } = useDivision();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const divId = activeDivision ? activeDivision.id : undefined;
+  const divId = getDivisionFilter(activeDivision);
   const { data: estimates, isLoading } = useEstimates({
     divisionId: divId,
     status: statusFilter !== 'all' ? statusFilter : undefined,

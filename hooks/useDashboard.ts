@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 
-import { useDivision } from '@/contexts/DivisionContext';
+import { getDivisionFilter, useDivision } from '@/contexts/DivisionContext';
 import { apiFetch } from '@/lib/api-client';
 import { queryKeys } from '@/lib/query-keys';
 
@@ -32,12 +32,13 @@ interface DashboardData {
 
 export function useDashboard() {
   const { activeDivision } = useDivision();
+  const divisionId = getDivisionFilter(activeDivision);
 
   return useQuery({
-    queryKey: [...queryKeys.dashboard.all, activeDivision?.id],
+    queryKey: [...queryKeys.dashboard.all, divisionId ?? '__all__'],
     queryFn: () =>
       apiFetch<DashboardData>('/api/dashboard', {
-        params: activeDivision?.id ? { division_id: activeDivision.id } : undefined,
+        params: divisionId ? { division_id: divisionId } : undefined,
       }),
     enabled: true,
     staleTime: 1000 * 60 * 5, // 5 minutes

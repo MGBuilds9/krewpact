@@ -5,15 +5,18 @@ import Link from 'next/link';
 
 import { ItemForm } from '@/components/inventory/item-form';
 import { Button } from '@/components/ui/button';
-import { useDivision } from '@/contexts/DivisionContext';
+import { requireConcreteDivision, useDivision } from '@/contexts/DivisionContext';
 import { useCreateItem } from '@/hooks/useInventory';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 import type { CreateItem } from '@/lib/validators/inventory-items';
 
 export default function NewItemContent() {
-  const { activeDivision } = useDivision();
+  const { activeDivision, userDivisions } = useDivision();
   const { orgPath, push } = useOrgRouter();
   const createItem = useCreateItem();
+  // New items must be scoped to a concrete division. When the user is in
+  // "All Divisions" view, fall back to their primary division.
+  const writeDivisionId = requireConcreteDivision(activeDivision, userDivisions);
 
   function handleSubmit(data: CreateItem) {
     createItem.mutate(data, {
@@ -21,7 +24,7 @@ export default function NewItemContent() {
     });
   }
 
-  if (!activeDivision) {
+  if (!writeDivisionId) {
     return <p className="text-muted-foreground">Select a division to create an item.</p>;
   }
 
@@ -37,7 +40,7 @@ export default function NewItemContent() {
       </div>
 
       <ItemForm
-        divisionId={activeDivision.id}
+        divisionId={writeDivisionId}
         onSubmit={handleSubmit}
         isSubmitting={createItem.isPending}
       />

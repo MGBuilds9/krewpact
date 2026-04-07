@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useDivision } from '@/contexts/DivisionContext';
+import { requireConcreteDivision, useDivision } from '@/contexts/DivisionContext';
 import { type Lead, useAccounts, useCreateLead, useUpdateLead } from '@/hooks/useCRM';
 import { SOURCE_CHANNELS } from '@/lib/crm/constants';
 import { formatStatus } from '@/lib/format-status';
@@ -235,12 +235,16 @@ export function LeadForm({ lead, onSuccess, onCancel }: LeadFormProps) {
   const isEdit = !!lead;
   const createLead = useCreateLead();
   const updateLead = useUpdateLead();
-  const { activeDivision } = useDivision();
+  const { activeDivision, userDivisions } = useDivision();
   const isPending = createLead.isPending || updateLead.isPending;
   const { data: accountsResponse } = useAccounts({ limit: 100 });
+  // New leads must be created under a concrete division. When the user is in
+  // "All Divisions" view, default to their primary division (the user can
+  // still change the division field in the form before submitting).
+  const defaultDivisionId = requireConcreteDivision(activeDivision, userDivisions) ?? undefined;
   const form = useForm<LeadCreate | LeadUpdate>({
     resolver: zodResolver(isEdit ? leadUpdateSchema : leadCreateSchema),
-    defaultValues: buildDefaultValues(lead, activeDivision?.id),
+    defaultValues: buildDefaultValues(lead, defaultDivisionId),
   });
 
   function onSubmit(raw: LeadCreate | LeadUpdate) {

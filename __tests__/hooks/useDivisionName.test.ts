@@ -3,6 +3,10 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/contexts/DivisionContext', () => ({
   useDivision: vi.fn(),
+  getDivisionFilter: (d: { id?: string } | null | undefined) => d?.id,
+  requireConcreteDivision: (d: { id?: string } | null | undefined) => d?.id ?? null,
+  isAllDivisions: (d: { id?: string } | null | undefined) => d?.id === '__all_divisions__',
+  ALL_DIVISIONS_ID: '__all_divisions__',
 }));
 
 import { useDivision } from '@/contexts/DivisionContext';

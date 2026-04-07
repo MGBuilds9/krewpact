@@ -15,7 +15,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useDivision } from '@/contexts/DivisionContext';
+import {
+  getDivisionFilter,
+  requireConcreteDivision,
+  useDivision,
+} from '@/contexts/DivisionContext';
 import { useAccounts } from '@/hooks/crm/useAccounts';
 import { useOpportunities } from '@/hooks/crm/useOpportunities';
 import { useCreateEstimate } from '@/hooks/useEstimates';
@@ -26,12 +30,16 @@ const CURRENCIES = ['CAD', 'USD'] as const;
 // eslint-disable-next-line max-lines-per-function
 export default function NewEstimatePageContent() {
   const { push: orgPush } = useOrgRouter();
-  const { activeDivision } = useDivision();
+  const { activeDivision, userDivisions } = useDivision();
   const createEstimate = useCreateEstimate();
 
-  const divisionId = activeDivision?.id ?? '';
-  const { data: opportunitiesResp } = useOpportunities({ divisionId });
-  const { data: accountsResp } = useAccounts({ divisionId });
+  // Reads (opportunities/accounts pickers): pass undefined when sentinel so
+  // the user sees options across all divisions they can access.
+  const readDivisionId = getDivisionFilter(activeDivision);
+  // Estimate creation requires a concrete division — fall back to primary.
+  const writeDivisionId = requireConcreteDivision(activeDivision, userDivisions) ?? '';
+  const { data: opportunitiesResp } = useOpportunities({ divisionId: readDivisionId });
+  const { data: accountsResp } = useAccounts({ divisionId: readDivisionId });
   const opportunities = opportunitiesResp?.data ?? [];
   const accounts = accountsResp?.data ?? [];
 
@@ -52,11 +60,11 @@ export default function NewEstimatePageContent() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!divisionId) return;
+    if (!writeDivisionId) return;
 
     createEstimate.mutate(
       {
-        division_id: divisionId,
+        division_id: writeDivisionId,
         opportunity_id: opportunityId && opportunityId !== '_none' ? opportunityId : undefined,
         account_id: accountId && accountId !== '_none' ? accountId : undefined,
         contact_id: contactId && contactId !== '_none' ? contactId : undefined,
@@ -94,7 +102,12 @@ export default function NewEstimatePageContent() {
               <Label htmlFor="division">Division</Label>
               <Input
                 id="division"
-                value={activeDivision?.name ?? 'No division selected'}
+                value={
+                  writeDivisionId
+                    ? (userDivisions.find((d) => d.id === writeDivisionId)?.name ??
+                      'Unknown division')
+                    : 'No division selected'
+                }
                 disabled
                 className="bg-muted"
               />
@@ -165,7 +178,7 @@ export default function NewEstimatePageContent() {
               <Button type="button" variant="outline" onClick={() => orgPush('/estimates')}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={!divisionId || createEstimate.isPending}>
+              <Button type="submit" disabled={!writeDivisionId || createEstimate.isPending}>
                 {createEstimate.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 Create Estimate
               </Button>

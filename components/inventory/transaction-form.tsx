@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useDivision } from '@/contexts/DivisionContext';
+import { getDivisionFilter, useDivision } from '@/contexts/DivisionContext';
 import { useInventoryItems } from '@/hooks/useInventory';
 import { useInventoryLocations } from '@/hooks/useInventoryLocations';
 
@@ -102,7 +102,11 @@ function _LocationSelects({
 // eslint-disable-next-line max-lines-per-function
 export function TransactionForm({ onSubmit, isPending, onCancel }: TransactionFormProps) {
   const { activeDivision } = useDivision();
-  const divisionId = activeDivision?.id ?? '';
+  // Item/location pickers are read-only; sentinel "All Divisions" passes
+  // undefined so the user sees items/locations across every division they
+  // can access. The mutation that consumes the form payload is responsible
+  // for resolving a concrete division at submit time.
+  const divisionId = getDivisionFilter(activeDivision);
   const { data: items } = useInventoryItems({ divisionId, isActive: true });
   const { data: locations } = useInventoryLocations({ divisionId, isActive: true });
 

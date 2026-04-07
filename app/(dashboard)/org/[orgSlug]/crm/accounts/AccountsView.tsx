@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useDivision } from '@/contexts/DivisionContext';
+import { getDivisionFilter, useDivision } from '@/contexts/DivisionContext';
 import { useAccounts, useDeleteAccount } from '@/hooks/useCRM';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
@@ -40,7 +40,7 @@ export default function AccountsView() {
   const [viewMode, setViewMode] = useViewMode();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
-  const divisionId = activeDivision ? activeDivision.id : undefined;
+  const divisionId = getDivisionFilter(activeDivision);
   const { data: response, isLoading } = useAccounts({
     divisionId,
     accountType: typeFilter !== 'all' ? typeFilter : undefined,

@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useDivision } from '@/contexts/DivisionContext';
+import { getDivisionFilter, useDivision } from '@/contexts/DivisionContext';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { useProjects } from '@/hooks/useProjects';
 import { useCreateReport } from '@/hooks/useReports';
@@ -34,7 +34,7 @@ function FormField({ label, children }: { label: string; children: React.ReactNo
 export default function NewReportPage() {
   const { push: orgPush } = useOrgRouter();
   const { activeDivision } = useDivision();
-  const divId = activeDivision ? activeDivision.id : undefined;
+  const divId = getDivisionFilter(activeDivision);
   const { data: projects } = useProjects({ divisionId: divId });
   const createReport = useCreateReport();
 

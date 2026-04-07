@@ -332,6 +332,12 @@ Architecture docs in `docs/architecture/`: `Master-Plan.md` (scope), `Technology
 
 ## Session Log
 
+### Apr 7, 2026 — CRM Polish PR 1: All Divisions sentinel + pipeline pagination fix + active projects filter
+
+- **Changes:** /qa on production krewpact.ca found 14 confirmed issues / health score 72/100. /autoplan ran with Codex-only dual voices (subagents broken — inherited MCP context exceeds budget). Codex eng review caught **8 errors in plan v1** with file:line citations, including a NEW critical bug the QA pass missed: **ISSUE-016 — `app/api/crm/opportunities/route.ts:64` applied `range(offset, offset+limit-1)` to `view=pipeline` queries, silently capping kanban totals at default page size**. Plan rewritten to v2. **PR 1 fully implemented + committed:** `contexts/DivisionContext.tsx` — `ALL_DIVISIONS_ID`, `ALL_DIVISIONS` sentinel, `isAllDivisions()`, `getDivisionFilter()`, `requireConcreteDivision()` helpers, provider init/derivation/setActiveDivision support sentinel, boot tolerance for unknown saved IDs. `components/Layout/DivisionSelector.tsx` — "All Divisions" dropdown item with Globe icon. `app/api/dashboard/route.ts:23` — `Active Projects` filter broadened to `status IN (planning, active, on_hold)`. `app/api/crm/opportunities/route.ts:64` — pipeline view skips pagination range (ISSUE-016). **Consumer sweep complete:** 22 read-filter consumers migrated to `getDivisionFilter()`, 11 write-mutation consumers migrated to `requireConcreteDivision()` with form-level null handling (disable submit + show hint when no concrete division). **New tests:** `__tests__/contexts/DivisionContext.test.tsx` (sentinel bootstrap, helpers, set/get round trip, fallback when saved ID unknown), `__tests__/api/crm/opportunities-pagination.test.ts` (ISSUE-016 regression — verifies `.range()` is NOT called when `view=pipeline`), `__tests__/api/dashboard.test.ts` (verifies `.in(status, [planning, active, on_hold])`).
+- **Tests:** **5,364/5,364 passing** (5,341 + 23 new). 0 TS errors. 27 lint warnings (all pre-existing). Build clean.
+- **Next:** PR 2 (titles + currency formatter sweep) → PR 3 (8 polish items including Closed Won unification via Path A2 — Supabase migration).
+
 ### Apr 6, 2026 — Repo Hygiene: Sentinel webhook timing fix
 
 - **Changes:** Merged PR #122 (Sentinel): switched webhook secret validation in `/api/web/leads/route.ts` from direct equality to `timingSafeEqual` (Node `crypto`) — closes HIGH timing attack. 1 PR merged, 1 branch deleted.

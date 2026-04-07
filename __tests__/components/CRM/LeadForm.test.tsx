@@ -27,7 +27,12 @@ vi.mock('@/hooks/useCRM', () => ({
 vi.mock('@/contexts/DivisionContext', () => ({
   useDivision: () => ({
     activeDivision: { id: 'div-1', name: 'MDM Contracting' },
+    userDivisions: [{ id: 'div-1', name: 'MDM Contracting' }],
   }),
+  getDivisionFilter: (d: { id?: string } | null | undefined) => d?.id,
+  requireConcreteDivision: (d: { id?: string } | null | undefined) => d?.id ?? null,
+  isAllDivisions: (d: { id?: string } | null | undefined) => d?.id === '__all_divisions__',
+  ALL_DIVISIONS_ID: '__all_divisions__',
 }));
 
 import { LeadForm } from '@/components/CRM/LeadForm';

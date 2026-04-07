@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useDivision } from '@/contexts/DivisionContext';
+import { getDivisionFilter, useDivision } from '@/contexts/DivisionContext';
 import type { CostCatalogItem } from '@/hooks/useEstimating';
 import { useCostCatalogItems } from '@/hooks/useEstimating';
 
@@ -74,7 +74,7 @@ export default function CostCatalogPage() {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<CostCatalogItem | undefined>();
-  const divId = activeDivision?.id;
+  const divId = getDivisionFilter(activeDivision);
   const { data, isLoading } = useCostCatalogItems({
     divisionId: divId,
     itemType: typeFilter !== 'all' ? typeFilter : undefined,

@@ -6,7 +6,11 @@ import { useForm } from 'react-hook-form';
 
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
-import { useDivision } from '@/contexts/DivisionContext';
+import {
+  getDivisionFilter,
+  requireConcreteDivision,
+  useDivision,
+} from '@/contexts/DivisionContext';
 import {
   type StockAdjustmentPayload,
   useInventoryItems,
@@ -21,18 +25,23 @@ import {
 } from './_components/AdjustmentForm';
 
 export default function AdjustmentsPageContent() {
-  const { activeDivision } = useDivision();
+  const { activeDivision, userDivisions } = useDivision();
   const adjust = useStockAdjustment();
   const [submitted, setSubmitted] = useState(false);
 
+  const readDivisionId = getDivisionFilter(activeDivision);
+  // Stock adjustments must be scoped to a concrete division — fall back to the
+  // user's primary division when "All Divisions" is the active view.
+  const writeDivisionId = requireConcreteDivision(activeDivision, userDivisions);
+
   const { data: itemsData } = useInventoryItems({
-    divisionId: activeDivision?.id,
+    divisionId: readDivisionId,
     isActive: true,
     limit: 100,
   });
 
   const { data: locationsData } = useInventoryLocations({
-    divisionId: activeDivision?.id,
+    divisionId: readDivisionId,
     isActive: true,
   });
 
@@ -47,8 +56,8 @@ export default function AdjustmentsPageContent() {
   });
 
   function onSubmit(values: AdjustmentFormValues) {
-    if (!activeDivision) return;
-    const payload: StockAdjustmentPayload = { ...values, division_id: activeDivision.id };
+    if (!writeDivisionId) return;
+    const payload: StockAdjustmentPayload = { ...values, division_id: writeDivisionId };
     adjust.mutate(payload, {
       onSuccess: () => {
         reset();
@@ -86,7 +95,7 @@ export default function AdjustmentsPageContent() {
               items={itemsData}
               locations={locationsData}
               isPending={adjust.isPending}
-              isDisabled={!activeDivision}
+              isDisabled={!writeDivisionId}
               onItemChange={(v) => setValue('item_id', v)}
               onLocationChange={(v) => setValue('location_id', v)}
               onReasonChange={(v) => setValue('reason_code', v)}

@@ -24,7 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useDivision } from '@/contexts/DivisionContext';
+import { getDivisionFilter, useDivision } from '@/contexts/DivisionContext';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { usePurchaseOrders } from '@/hooks/usePurchaseOrders';
 
@@ -46,7 +46,7 @@ export default function PurchaseOrdersPageContent() {
   const [statusFilter, setStatusFilter] = useState('_all');
 
   const { data: pos, isLoading } = usePurchaseOrders({
-    divisionId: activeDivision?.id,
+    divisionId: getDivisionFilter(activeDivision),
     status: statusFilter === '_all' ? undefined : statusFilter,
   });
 

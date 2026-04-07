@@ -6,7 +6,11 @@ import { toast } from 'sonner';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useDivision } from '@/contexts/DivisionContext';
+import {
+  getDivisionFilter,
+  requireConcreteDivision,
+  useDivision,
+} from '@/contexts/DivisionContext';
 import {
   type ExpenseCreate,
   useCreateExpense,
@@ -31,11 +35,14 @@ const EMPTY_FORM: ExpenseCreate = {
 
 // eslint-disable-next-line max-lines-per-function
 export default function ExpensesPage() {
-  const { activeDivision } = useDivision();
+  const { activeDivision, userDivisions } = useDivision();
   const { data: expenses, isLoading } = useExpenses();
-  const { data: projects } = useProjects({ divisionId: activeDivision?.id });
+  const { data: projects } = useProjects({ divisionId: getDivisionFilter(activeDivision) });
   const createExpense = useCreateExpense();
   const updateExpense = useUpdateExpense();
+  // Expense creation must be scoped to a concrete division — fall back to the
+  // user's primary division when "All Divisions" is the active view.
+  const writeDivisionId = requireConcreteDivision(activeDivision, userDivisions);
 
   const [isOpen, setIsOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -65,8 +72,12 @@ export default function ExpensesPage() {
       toast.error('Amount and category are required');
       return;
     }
+    if (!writeDivisionId) {
+      toast.error('Select a division before creating an expense');
+      return;
+    }
     try {
-      await createExpense.mutateAsync({ ...form, division_id: activeDivision?.id });
+      await createExpense.mutateAsync({ ...form, division_id: writeDivisionId });
       setIsOpen(false);
       setForm({ ...EMPTY_FORM, expense_date: new Date().toISOString().split('T')[0] });
       toast.success('Expense created');

@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useDivision } from '@/contexts/DivisionContext';
+import { getDivisionFilter, useDivision } from '@/contexts/DivisionContext';
 import { useInventoryItems, useInventoryStock, useLowStockItems } from '@/hooks/useInventory';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { usePurchaseOrders } from '@/hooks/usePurchaseOrders';
@@ -169,7 +169,7 @@ function RecentStockTable({ divisionId }: { divisionId?: string }) {
 
 export default function OverviewPageContent() {
   const { activeDivision } = useDivision();
-  const divisionId = activeDivision?.id;
+  const divisionId = getDivisionFilter(activeDivision);
   const { data: items, isLoading: itemsLoading } = useInventoryItems({ divisionId, limit: 1 });
   const { data: lowStock, isLoading: lowStockLoading } = useLowStockItems(divisionId);
   const { data: stock, isLoading: stockLoading } = useInventoryStock({ divisionId, limit: 1 });

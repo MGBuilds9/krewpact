@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useDivision } from '@/contexts/DivisionContext';
+import { getDivisionFilter, useDivision } from '@/contexts/DivisionContext';
 import { useDeleteLead, useLeads } from '@/hooks/useCRM';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
@@ -52,7 +52,7 @@ export default function LeadsPageContent() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const { data: response, isLoading } = useLeads({
-    divisionId: activeDivision ? activeDivision.id : undefined,
+    divisionId: getDivisionFilter(activeDivision),
     status: statusFilter !== 'all' ? statusFilter : undefined,
     search: debouncedSearch || undefined,
     limit: pageSize,

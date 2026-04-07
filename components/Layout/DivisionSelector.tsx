@@ -1,6 +1,6 @@
 'use client';
 
-import { Building2, Check, ChevronDown } from 'lucide-react';
+import { Building2, Check, ChevronDown, Globe } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useDivision } from '@/contexts/DivisionContext';
+import { ALL_DIVISIONS_ID, isAllDivisions, useDivision } from '@/contexts/DivisionContext';
 import { cn } from '@/lib/utils';
 
 interface DivisionSelectorProps {
@@ -51,7 +51,11 @@ export function DivisionSelector({ className }: DivisionSelectorProps) {
             className,
           )}
         >
-          <Building2 className="h-4 w-4 mr-2" />
+          {isAllDivisions(activeDivision) ? (
+            <Globe className="h-4 w-4 mr-2" />
+          ) : (
+            <Building2 className="h-4 w-4 mr-2" />
+          )}
           <span className="truncate max-w-[200px]">{activeDivision.name}</span>
           <ChevronDown className="h-4 w-4 ml-2" />
         </Button>
@@ -60,6 +64,36 @@ export function DivisionSelector({ className }: DivisionSelectorProps) {
         <DropdownMenuLabel className="text-xs text-muted-foreground uppercase tracking-wide">
           Switch Division
         </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          key={ALL_DIVISIONS_ID}
+          onClick={() => {
+            if (!isAllDivisions(activeDivision)) setActiveDivision(ALL_DIVISIONS_ID);
+          }}
+          className={cn(
+            'flex items-center justify-between p-3 cursor-pointer hover:bg-accent hover:text-accent-foreground',
+            isAllDivisions(activeDivision) && 'bg-accent text-accent-foreground',
+          )}
+        >
+          <div className="flex items-center space-x-3 flex-1 min-w-0">
+            <div className="flex-shrink-0">
+              {isAllDivisions(activeDivision) ? (
+                <Check className="h-4 w-4 text-primary" />
+              ) : (
+                <div className="h-4 w-4" />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center space-x-2">
+                <Globe className="h-4 w-4 text-muted-foreground" />
+                <p className="text-sm font-medium truncate">All Divisions</p>
+              </div>
+              <p className="text-xs text-muted-foreground truncate">
+                Aggregate view across every division
+              </p>
+            </div>
+          </div>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         {userDivisions.map((division) => {
           const isActive = division.id === activeDivision.id;

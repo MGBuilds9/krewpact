@@ -17,7 +17,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useDivision } from '@/contexts/DivisionContext';
+import { getDivisionFilter, useDivision } from '@/contexts/DivisionContext';
 import { useSequenceAnalytics, useSequences } from '@/hooks/useCRM';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 
@@ -128,7 +128,7 @@ export default function SequencesPage() {
   const { push: orgPush } = useOrgRouter();
   const { activeDivision, userDivisions } = useDivision();
   const [tab, setTab] = useState('monitor');
-  const divId = activeDivision ? activeDivision.id : undefined;
+  const divId = getDivisionFilter(activeDivision);
   const { data: sequences, isLoading } = useSequences({ divisionId: divId });
   const { data: analyticsResponse } = useSequenceAnalytics(divId);
   const analytics = analyticsResponse ? analyticsResponse.data || [] : [];
