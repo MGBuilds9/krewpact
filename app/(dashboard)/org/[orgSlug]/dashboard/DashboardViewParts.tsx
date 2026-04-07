@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useDashboard } from '@/hooks/useDashboard';
+import { formatCurrencyCompact } from '@/lib/format/currency';
 import { formatStatus } from '@/lib/format-status';
 import { cn } from '@/lib/utils';
 
@@ -275,7 +276,7 @@ export function RecentProjectRow({
         </Badge>
         {project.baseline_budget && (
           <span className="text-sm font-medium text-foreground hidden sm:inline">
-            ${(project.baseline_budget / 1000).toFixed(0)}k
+            {formatCurrencyCompact(project.baseline_budget)}
           </span>
         )}
       </div>

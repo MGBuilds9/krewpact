@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import AccountsView from './AccountsView';
 
 export const metadata: Metadata = {
-  title: 'Accounts — KrewPact',
+  title: 'Accounts',
   description: 'Manage client accounts, prospects, and partner organizations.',
 };
 

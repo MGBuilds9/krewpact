@@ -112,7 +112,6 @@ export default function EstimatesListPage() {
 
   return (
     <>
-      <title>Estimates — KrewPact</title>
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">

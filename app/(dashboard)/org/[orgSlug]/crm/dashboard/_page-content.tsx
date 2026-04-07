@@ -21,6 +21,7 @@ import {
   useDivisionComparison,
   usePipelineIntelligence,
 } from '@/hooks/useCRM';
+import { formatCurrency } from '@/lib/format/currency';
 
 type DashboardData = NonNullable<ReturnType<typeof useDashboardMetrics>['data']>;
 type IntelligenceData = NonNullable<ReturnType<typeof usePipelineIntelligence>['data']>;
@@ -34,14 +35,7 @@ const PERIOD_LABELS: Record<string, string> = {
   year: 'Year',
 };
 
-function fmt(value: number): string {
-  return new Intl.NumberFormat('en-CA', {
-    style: 'currency',
-    currency: 'CAD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
+const fmt = formatCurrency;
 
 interface KPICardProps {
   label: string;
@@ -88,10 +82,19 @@ function KPIRow({ data, isLoading }: KPIRowProps) {
   const v = data ? data.velocity : null;
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <KPICard label="Total Pipeline" value={isLoading ? undefined : fmt(p ? p.totalPipelineValue : 0)} />
-      <KPICard label="Weighted Pipeline" value={isLoading ? undefined : fmt(p ? p.weightedPipelineValue : 0)} />
-      <KPICard label="Avg Deal Size" value={isLoading ? undefined : fmt(p ? p.averageDealSize : 0)} />
-      <KPICard label="Deals Won" value={isLoading ? undefined : (v ? v.dealsClosed : 0)} />
+      <KPICard
+        label="Total Pipeline"
+        value={isLoading ? undefined : fmt(p ? p.totalPipelineValue : 0)}
+      />
+      <KPICard
+        label="Weighted Pipeline"
+        value={isLoading ? undefined : fmt(p ? p.weightedPipelineValue : 0)}
+      />
+      <KPICard
+        label="Avg Deal Size"
+        value={isLoading ? undefined : fmt(p ? p.averageDealSize : 0)}
+      />
+      <KPICard label="Deals Won" value={isLoading ? undefined : v ? v.dealsClosed : 0} />
     </div>
   );
 }
@@ -184,7 +187,6 @@ export default function CRMDashboardPage() {
 
   return (
     <>
-      <title>CRM Dashboard — KrewPact</title>
       <div className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-2xl font-bold">CRM Dashboard</h1>

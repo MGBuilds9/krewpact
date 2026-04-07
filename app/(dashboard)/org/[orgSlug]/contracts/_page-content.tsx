@@ -3,8 +3,6 @@
 import { FileText, Plus, Search } from 'lucide-react';
 import { useState } from 'react';
 
-import { useOrgRouter } from '@/hooks/useOrgRouter';
-
 import { ContractTermsForm } from '@/components/Contracting/ContractTermsForm';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -21,6 +19,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import type { ContractTerms } from '@/hooks/useContracting';
 import { useContractTerms } from '@/hooks/useContracting';
+import { useOrgRouter } from '@/hooks/useOrgRouter';
 
 const CONTRACT_STATUS_COLORS: Record<string, string> = {
   draft: 'bg-gray-100 text-gray-700 border-gray-200',
@@ -105,7 +104,6 @@ export default function ContractsPage() {
 
   return (
     <>
-      <title>Contracts — KrewPact</title>
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">

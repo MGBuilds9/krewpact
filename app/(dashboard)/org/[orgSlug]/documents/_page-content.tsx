@@ -117,7 +117,6 @@ export default function DocumentsPage() {
 
   return (
     <>
-      <title>Documents — KrewPact</title>
       <input
         ref={fileInputRef}
         type="file"

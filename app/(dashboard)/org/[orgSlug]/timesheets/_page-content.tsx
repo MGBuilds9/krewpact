@@ -158,7 +158,6 @@ export default function TimesheetsPage() {
 
   return (
     <>
-      <title>Timesheets — KrewPact</title>
       <div className="space-y-6">
         <PageHeader
           title="Timesheets"

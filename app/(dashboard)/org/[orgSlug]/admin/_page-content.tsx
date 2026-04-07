@@ -133,7 +133,6 @@ export default function AdminPage() {
 
   return (
     <>
-      <title>Admin — KrewPact</title>
       <div className="space-y-6">
         <div className="flex items-center gap-3">
           <Shield className="h-8 w-8 text-primary" />

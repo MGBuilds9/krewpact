@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import DashboardView from './_page-content';
 
 export const metadata: Metadata = {
-  title: 'Dashboard — KrewPact',
+  title: 'Dashboard',
   description: 'Overview of your active projects, leads, expenses, and team activity.',
 };
 

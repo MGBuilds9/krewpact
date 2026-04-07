@@ -74,7 +74,6 @@ export default function ReportsPage() {
 
   return (
     <>
-      <title>Reports — KrewPact</title>
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex items-center gap-3">

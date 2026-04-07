@@ -71,7 +71,6 @@ export default function SettingsPage() {
 
   return (
     <>
-      <title>Settings — KrewPact</title>
       <div className="space-y-6 max-w-3xl mx-auto">
         <div className="flex items-center gap-3">
           <Settings className="h-8 w-8 text-primary" />

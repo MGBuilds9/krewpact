@@ -5,7 +5,6 @@ import { EnrichmentDashboard } from '@/components/CRM/EnrichmentDashboard';
 export default function EnrichmentPage() {
   return (
     <>
-      <title>Enrichment — KrewPact CRM</title>
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Enrichment Management</h1>

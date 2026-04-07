@@ -26,7 +26,6 @@ export default function SubscriptionsPage() {
 
   return (
     <>
-      <title>Subscriptions — KrewPact</title>
       <div className={`flex flex-col md:flex-row gap-6 ${showForm ? 'md:items-start' : ''}`}>
         {/* Table — full width when no form, flex-1 when form open */}
         <div className={showForm ? 'flex-1 min-w-0' : 'w-full'}>

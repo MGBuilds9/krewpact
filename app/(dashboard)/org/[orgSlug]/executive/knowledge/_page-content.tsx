@@ -10,7 +10,6 @@ export default function KnowledgeLibraryPage() {
 
   return (
     <>
-      <title>Knowledge Base — KrewPact</title>
       <div className="flex flex-col md:flex-row h-auto md:h-[calc(100vh-8rem)] gap-4 p-4">
         {/* Left pane: Search */}
         <div className="w-full md:w-1/3 min-w-0 flex flex-col">

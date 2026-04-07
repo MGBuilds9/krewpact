@@ -137,66 +137,62 @@ export default function ExecutiveOverviewPage() {
   const showInsights = !showComparison && overviewData !== undefined;
 
   return (
-    <>
-      <title>Command Center — KrewPact</title>
-      <div className="space-y-6 p-4 sm:p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Command Center</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">Executive overview</p>
-          </div>
-          {primary.computedAt && (
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Clock className="h-3.5 w-3.5" />
-              <span>
-                Last updated{' '}
-                {formatDistanceToNow(new Date(primary.computedAt), { addSuffix: true })}
-              </span>
-            </div>
-          )}
+    <div className="space-y-6 p-4 sm:p-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Command Center</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Executive overview</p>
         </div>
-        <DivisionSelector
-          selectedDivision={selectedDivision}
-          compareDivision={compareDivision}
-          isComparing={isComparing}
-          onSelectDivision={setSelectedDivision}
-          onSelectCompareDivision={setCompareDivision}
-          onToggleCompare={handleToggleCompare}
-        />
-        <AlertsRibbon alerts={alerts} isLoading={alertsLoading} />
-        {showComparison ? (
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <DivPanel
-              label={`Division A — ${selectedDivision}`}
-              color="text-primary"
-              metrics={primary}
-              isLoading={overviewLoading}
-            />
-            <DivPanel
-              label={`Division B — ${compareDivision}`}
-              color="text-blue-500"
-              metrics={compare}
-              isLoading={compareLoading}
-            />
+        {primary.computedAt && (
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Clock className="h-3.5 w-3.5" />
+            <span>
+              Last updated {formatDistanceToNow(new Date(primary.computedAt), { addSuffix: true })}
+            </span>
           </div>
-        ) : (
-          <>
-            <MetricsGrid
-              pipeline={primary.pipeline}
-              portfolio={primary.portfolio}
-              estimating={primary.estimating}
-              subscriptions={primary.subscriptions}
-              isLoading={overviewLoading}
-            />
-            <ForecastChart forecast={forecast} isLoading={forecastLoading} />
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <DivisionScorecard portfolio={primary.portfolio} isLoading={overviewLoading} />
-              <SubscriptionWidget summary={primary.subscriptions} isLoading={overviewLoading} />
-            </div>
-            {showInsights && <InsightAnalyticsCard />}
-          </>
         )}
       </div>
-    </>
+      <DivisionSelector
+        selectedDivision={selectedDivision}
+        compareDivision={compareDivision}
+        isComparing={isComparing}
+        onSelectDivision={setSelectedDivision}
+        onSelectCompareDivision={setCompareDivision}
+        onToggleCompare={handleToggleCompare}
+      />
+      <AlertsRibbon alerts={alerts} isLoading={alertsLoading} />
+      {showComparison ? (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <DivPanel
+            label={`Division A — ${selectedDivision}`}
+            color="text-primary"
+            metrics={primary}
+            isLoading={overviewLoading}
+          />
+          <DivPanel
+            label={`Division B — ${compareDivision}`}
+            color="text-blue-500"
+            metrics={compare}
+            isLoading={compareLoading}
+          />
+        </div>
+      ) : (
+        <>
+          <MetricsGrid
+            pipeline={primary.pipeline}
+            portfolio={primary.portfolio}
+            estimating={primary.estimating}
+            subscriptions={primary.subscriptions}
+            isLoading={overviewLoading}
+          />
+          <ForecastChart forecast={forecast} isLoading={forecastLoading} />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <DivisionScorecard portfolio={primary.portfolio} isLoading={overviewLoading} />
+            <SubscriptionWidget summary={primary.subscriptions} isLoading={overviewLoading} />
+          </div>
+          {showInsights && <InsightAnalyticsCard />}
+        </>
+      )}
+    </div>
   );
 }

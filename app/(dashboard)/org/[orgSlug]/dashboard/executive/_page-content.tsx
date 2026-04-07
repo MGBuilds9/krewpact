@@ -95,7 +95,6 @@ export default function ExecutiveDashboardPage() {
 
   return (
     <>
-      <title>Executive Dashboard — KrewPact</title>
       <div className="space-y-6 max-w-7xl mx-auto">
         <h1 className="text-2xl font-bold tracking-tight">Executive Dashboard</h1>
         <KPIGrid kpis={data?.kpis} />

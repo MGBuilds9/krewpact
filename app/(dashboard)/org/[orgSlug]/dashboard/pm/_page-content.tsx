@@ -154,7 +154,6 @@ export default function PMDashboardPage() {
 
   return (
     <>
-      <title>PM Dashboard — KrewPact</title>
       <div className="space-y-6 max-w-7xl mx-auto">
         <div className="flex items-center gap-3">
           <FolderKanban className="h-7 w-7 text-primary" />

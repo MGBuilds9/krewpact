@@ -6,15 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUsers } from '@/hooks/useUsers';
 import type { RepPerformance } from '@/lib/crm/pipeline-intelligence';
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('en-CA', {
-    style: 'currency',
-    currency: 'CAD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
+import { formatCurrency } from '@/lib/format/currency';
 
 interface RepPerformanceCardProps {
   data: RepPerformance[];
