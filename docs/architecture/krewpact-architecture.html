@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KrewPact Architecture Map</title>
+<style>
+  :root {
+    --bg: #0a0e17;
+    --surface: #131926;
+    --surface2: #1a2235;
+    --border: #2a3550;
+    --text: #e2e8f0;
+    --text-dim: #8892a8;
+    --accent: #60a5fa;
+    --green: #34d399;
+    --orange: #fb923c;
+    --red: #f87171;
+    --purple: #a78bfa;
+    --pink: #f472b6;
+    --yellow: #fbbf24;
+    --cyan: #22d3ee;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', monospace; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  .header { padding: 24px 32px 0; display: flex; align-items: baseline; gap: 16px; }
+  .header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+  .header .badge { font-size: 11px; padding: 3px 8px; border-radius: 4px; background: var(--surface2); color: var(--text-dim); border: 1px solid var(--border); }
+  .header .stats { margin-left: auto; display: flex; gap: 16px; font-size: 11px; color: var(--text-dim); }
+  .header .stats span { color: var(--accent); font-weight: 600; }
+
+  .tabs { display: flex; gap: 2px; padding: 16px 32px 0; border-bottom: 1px solid var(--border); }
+  .tab { padding: 10px 18px; font-size: 12px; font-weight: 500; color: var(--text-dim); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; background: none; border-top: none; border-left: none; border-right: none; font-family: inherit; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .view { display: none; padding: 24px 32px; }
+  .view.active { display: block; }
+
+  /* Architecture SVG */
+  .arch-container { display: flex; gap: 24px; flex-wrap: wrap; }
+  .arch-main { flex: 1; min-width: 700px; }
+  .arch-side { width: 300px; }
+
+  .layer { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 12px; position: relative; }
+  .layer-label { position: absolute; top: -9px; left: 12px; background: var(--bg); padding: 0 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); }
+  .layer-content { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .node { padding: 8px 12px; border-radius: 6px; font-size: 11px; cursor: default; transition: all 0.2s; border: 1px solid; position: relative; }
+  .node:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+  .node.blue { background: rgba(96,165,250,0.1); border-color: rgba(96,165,250,0.3); color: var(--accent); }
+  .node.green { background: rgba(52,211,153,0.1); border-color: rgba(52,211,153,0.3); color: var(--green); }
+  .node.orange { background: rgba(251,146,60,0.1); border-color: rgba(251,146,60,0.3); color: var(--orange); }
+  .node.purple { background: rgba(167,139,250,0.1); border-color: rgba(167,139,250,0.3); color: var(--purple); }
+  .node.pink { background: rgba(244,114,182,0.1); border-color: rgba(244,114,182,0.3); color: var(--pink); }
+  .node.red { background: rgba(248,113,113,0.1); border-color: rgba(248,113,113,0.3); color: var(--red); }
+  .node.cyan { background: rgba(34,211,238,0.1); border-color: rgba(34,211,238,0.3); color: var(--cyan); }
+  .node.yellow { background: rgba(251,191,36,0.1); border-color: rgba(251,191,36,0.3); color: var(--yellow); }
+  .node-count { font-size: 9px; opacity: 0.6; margin-left: 4px; }
+
+  .connector { display: flex; align-items: center; justify-content: center; padding: 4px 0; }
+  .connector svg { width: 20px; height: 20px; }
+  .connector-label { font-size: 9px; color: var(--text-dim); margin: 0 8px; }
+
+  /* Data Authority */
+  .authority-grid { display: grid; grid-template-columns: 1fr 80px 1fr; gap: 0; margin-top: 16px; }
+  .authority-col { padding: 16px; }
+  .authority-col h3 { font-size: 13px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  .authority-col.supabase { background: rgba(52,211,153,0.05); border-radius: 8px 0 0 8px; border: 1px solid rgba(52,211,153,0.2); }
+  .authority-col.shared { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .authority-col.erp { background: rgba(251,146,60,0.05); border-radius: 0 8px 8px 0; border: 1px solid rgba(251,146,60,0.2); }
+  .authority-item { font-size: 11px; padding: 4px 0; color: var(--text-dim); display: flex; align-items: center; gap: 6px; }
+  .authority-item::before { content: ''; width: 4px; height: 4px; border-radius: 50%; flex-shrink: 0; }
+  .authority-col.supabase .authority-item::before { background: var(--green); }
+  .authority-col.erp .authority-item::before { background: var(--orange); }
+  .sync-arrow { font-size: 20px; color: var(--text-dim); writing-mode: vertical-lr; }
+
+  /* Auth Flow */
+  .auth-flow { display: flex; flex-direction: column; gap: 0; max-width: 800px; margin: 16px auto; }
+  .auth-step { display: flex; align-items: stretch; gap: 0; }
+  .auth-num { width: 40px; display: flex; flex-direction: column; align-items: center; }
+  .auth-num .circle { width: 28px; height: 28px; border-radius: 50%; background: var(--surface2); border: 2px solid var(--accent); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--accent); }
+  .auth-num .line { flex: 1; width: 2px; background: var(--border); }
+  .auth-body { flex: 1; padding: 4px 16px 20px; }
+  .auth-body h4 { font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+  .auth-body p { font-size: 11px; color: var(--text-dim); line-height: 1.5; }
+  .auth-body code { background: var(--surface2); padding: 1px 5px; border-radius: 3px; font-size: 10px; color: var(--accent); }
+
+  /* Module Map */
+  .module-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin-top: 16px; }
+  .module-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px; cursor: default; transition: all 0.2s; }
+  .module-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+  .module-card h4 { font-size: 12px; font-weight: 600; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+  .module-card .dot { width: 6px; height: 6px; border-radius: 50%; }
+  .module-card p { font-size: 10px; color: var(--text-dim); line-height: 1.4; }
+  .module-card .deps { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px; }
+  .module-card .dep { font-size: 9px; padding: 2px 6px; border-radius: 3px; background: var(--surface2); color: var(--text-dim); border: 1px solid var(--border); }
+
+  /* Cron & Queue */
+  .cron-table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 11px; }
+  .cron-table th { text-align: left; padding: 8px 12px; color: var(--text-dim); font-weight: 500; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
+  .cron-table td { padding: 6px 12px; border-bottom: 1px solid var(--border); }
+  .cron-table tr:hover { background: var(--surface); }
+  .freq-badge { padding: 2px 6px; border-radius: 3px; font-size: 9px; font-weight: 600; }
+  .freq-high { background: rgba(248,113,113,0.15); color: var(--red); }
+  .freq-med { background: rgba(251,191,36,0.15); color: var(--yellow); }
+  .freq-low { background: rgba(52,211,153,0.15); color: var(--green); }
+
+  /* Legend */
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; padding: 12px 16px; background: var(--surface); border-radius: 8px; margin-bottom: 16px; font-size: 10px; }
+  .legend-item { display: flex; align-items: center; gap: 5px; color: var(--text-dim); }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  .section-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .section-desc { font-size: 11px; color: var(--text-dim); margin-bottom: 16px; line-height: 1.5; }
+
+  /* Flow diagram */
+  .flow-container { overflow-x: auto; padding: 16px 0; }
+  .flow-row { display: flex; align-items: center; gap: 0; min-width: 900px; margin-bottom: 8px; }
+  .flow-box { padding: 10px 14px; border-radius: 6px; font-size: 11px; font-weight: 500; white-space: nowrap; border: 1px solid; min-width: 100px; text-align: center; }
+  .flow-arrow { padding: 0 6px; color: var(--text-dim); font-size: 16px; flex-shrink: 0; }
+  .flow-label { font-size: 9px; color: var(--text-dim); text-align: center; padding: 2px 6px; }
+
+  .info-box { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-top: 16px; }
+  .info-box h4 { font-size: 12px; margin-bottom: 8px; }
+  .info-box ul { list-style: none; padding: 0; }
+  .info-box li { font-size: 11px; color: var(--text-dim); padding: 3px 0; padding-left: 12px; position: relative; }
+  .info-box li::before { content: ''; position: absolute; left: 0; top: 10px; width: 4px; height: 4px; border-radius: 50%; background: var(--accent); }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>KrewPact</h1>
+  <span class="badge">Construction Operations Platform</span>
+  <span class="badge">MDM Group Inc.</span>
+  <div class="stats">
+    <div><span>129</span> pages</div>
+    <div><span>373</span> API routes</div>
+    <div><span>5,330</span> tests</div>
+    <div><span>20</span> modules</div>
+    <div><span>6</span> divisions</div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="showView('system')">System Architecture</button>
+  <button class="tab" onclick="showView('data')">Data Authority</button>
+  <button class="tab" onclick="showView('auth')">Auth Flow</button>
+  <button class="tab" onclick="showView('modules')">Module Map</button>
+  <button class="tab" onclick="showView('cron')">Cron &amp; Queue</button>
+  <button class="tab" onclick="showView('request')">Request Lifecycle</button>
+</div>
+
+<!-- ==================== SYSTEM ARCHITECTURE ==================== -->
+<div class="view active" id="view-system">
+  <p class="section-title">System Architecture</p>
+  <p class="section-desc">How every service connects. ERPNext owns finance. Supabase owns operations. Clerk owns identity. KrewPact is the orchestrator in the middle.</p>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>Presentation</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div>Orchestration</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Data Store</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div>External System</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--pink)"></div>Background Jobs</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--cyan)"></div>Monitoring</div>
+  </div>
+
+  <div class="arch-container">
+    <div class="arch-main">
+      <!-- Client Layer -->
+      <div class="layer">
+        <div class="layer-label">Clients</div>
+        <div class="layer-content">
+          <div class="node blue">Web App <span class="node-count">(Next.js 16 / React 19)</span></div>
+          <div class="node blue">Mobile App <span class="node-count">(Expo SDK 54)</span></div>
+          <div class="node blue">Client Portal <span class="node-count">(external users)</span></div>
+          <div class="node blue">Trade Partner Portal</div>
+          <div class="node blue">PWA / Offline <span class="node-count">(IndexedDB queue)</span></div>
+        </div>
+      </div>
+
+      <div class="connector"><div class="connector-label">HTTPS / Vercel Edge Network</div></div>
+
+      <!-- Middleware Layer -->
+      <div class="layer">
+        <div class="layer-label">Edge + Auth</div>
+        <div class="layer-content">
+          <div class="node purple">proxy.ts <span class="node-count">(Clerk middleware)</span></div>
+          <div class="node purple">Rate Limiter <span class="node-count">(Upstash Redis)</span></div>
+          <div class="node purple">Security Headers <span class="node-count">(CSP, HSTS, etc.)</span></div>
+        </div>
+      </div>
+
+      <div class="connector"><div class="connector-label">Authenticated Request + JWT Claims</div></div>
+
+      <!-- API Layer -->
+      <div class="layer">
+        <div class="layer-label">API / BFF Layer &mdash; 46 route groups, 373 routes</div>
+        <div class="layer-content">
+          <div class="node purple">CRM APIs <span class="node-count">(leads, contacts, opps)</span></div>
+          <div class="node purple">Project APIs <span class="node-count">(milestones, logs)</span></div>
+          <div class="node purple">Finance APIs <span class="node-count">(invoices, expenses)</span></div>
+          <div class="node purple">Estimate APIs</div>
+          <div class="node purple">Inventory APIs</div>
+          <div class="node purple">Executive APIs</div>
+          <div class="node purple">Webhook Receivers <span class="node-count">(Clerk, BoldSign)</span></div>
+          <div class="node purple">Cron Handlers <span class="node-count">(15 jobs)</span></div>
+          <div class="node purple">Queue Processor</div>
+          <div class="node purple">Health Check</div>
+        </div>
+      </div>
+
+      <div class="connector"><div class="connector-label">Business Logic + Validation (Zod)</div></div>
+
+      <!-- Service Layer -->
+      <div class="layer">
+        <div class="layer-label">Service Layer &mdash; lib/*</div>
+        <div class="layer-content">
+          <div class="node purple">erp/client.ts <span class="node-count">(circuit breaker)</span></div>
+          <div class="node purple">crm/ <span class="node-count">(scoring, enrichment)</span></div>
+          <div class="node purple">services/ <span class="node-count">(financial ops, payroll)</span></div>
+          <div class="node purple">ai/ <span class="node-count">(chat, embeddings)</span></div>
+          <div class="node purple">knowledge/ <span class="node-count">(RAG, pgvector)</span></div>
+          <div class="node purple">inventory/ <span class="node-count">(ledger, fleet)</span></div>
+          <div class="node purple">offline/ <span class="node-count">(sync engine)</span></div>
+        </div>
+      </div>
+
+      <div class="connector"><div class="connector-label">Data Layer</div></div>
+
+      <!-- Data Layer -->
+      <div class="layer">
+        <div class="layer-label">Data + External</div>
+        <div class="layer-content">
+          <div class="node green">Supabase Postgres <span class="node-count">(RLS, Realtime)</span></div>
+          <div class="node green">Supabase Storage <span class="node-count">(docs, photos)</span></div>
+          <div class="node green">pgvector <span class="node-count">(embeddings)</span></div>
+          <div class="node orange">ERPNext <span class="node-count">(Cloudflare Tunnel)</span></div>
+          <div class="node orange">Microsoft Graph <span class="node-count">(email, calendar)</span></div>
+          <div class="node orange">Resend <span class="node-count">(transactional email)</span></div>
+          <div class="node pink">QStash <span class="node-count">(57 job types)</span></div>
+          <div class="node orange">BoldSign <span class="node-count">(e-signatures)</span></div>
+        </div>
+      </div>
+
+      <!-- Monitoring Layer -->
+      <div class="layer" style="margin-top: 16px;">
+        <div class="layer-label">Observability</div>
+        <div class="layer-content">
+          <div class="node cyan">Sentry <span class="node-count">(errors + cron monitors)</span></div>
+          <div class="node cyan">BetterStack <span class="node-count">(uptime, 5 monitors)</span></div>
+          <div class="node cyan">Vercel Analytics <span class="node-count">(performance)</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arch-side">
+      <div class="info-box">
+        <h4>Key Boundaries</h4>
+        <ul>
+          <li><strong>GPL v3 Firewall</strong> &mdash; ERPNext accessed only via REST API through Cloudflare Tunnel. No shared code. Prevents license contamination.</li>
+          <li><strong>RLS Boundary</strong> &mdash; Every Supabase query runs under Clerk JWT claims. Division + org scoping enforced at the database level.</li>
+          <li><strong>BFF Pattern</strong> &mdash; API routes are thin orchestrators: authenticate, validate, call lib/, return. No business logic in routes.</li>
+          <li><strong>Offline Boundary</strong> &mdash; IndexedDB queue syncs to Supabase. Conflict resolution per entity type (last-write-wins, merge, keep-both).</li>
+        </ul>
+      </div>
+      <div class="info-box" style="margin-top: 12px;">
+        <h4>Connection Patterns</h4>
+        <ul>
+          <li><strong>ERPNext</strong>: Token auth, 300 req/min, 3 retries, circuit breaker (opens after 5 failures, 30s reset)</li>
+          <li><strong>Supabase</strong>: Pooler port 6543 (transaction mode) from serverless. Direct port 5432 never used.</li>
+          <li><strong>QStash</strong>: HTTP POST with HMAC verification. Dead-letter after 3 failures. In-memory fallback for dev.</li>
+          <li><strong>Clerk</strong>: Third-Party Auth. Native session token passed to Supabase. No custom JWT template.</li>
+        </ul>
+      </div>
+      <div class="info-box" style="margin-top: 12px;">
+        <h4>MDM Divisions</h4>
+        <ul>
+          <li>MDM Contracting (general)</li>
+          <li>MDM Homes (residential)</li>
+          <li>MDM Wood (lumber)</li>
+          <li>MDM Telecom</li>
+          <li>MDM Group Inc. (parent)</li>
+          <li>MDM Management (property)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== DATA AUTHORITY ==================== -->
+<div class="view" id="view-data">
+  <p class="section-title">Data Authority Map</p>
+  <p class="section-desc">Two systems of record. ERPNext is the financial brain. Supabase is the operational brain. They sync via QStash with eventual consistency, idempotent upsert, and dead-letter queues. No two-phase commit.</p>
+
+  <div class="authority-grid">
+    <div class="authority-col supabase">
+      <h3 style="color:var(--green)">Supabase (Operational)</h3>
+      <div class="authority-item">Workflows &amp; field operations</div>
+      <div class="authority-item">CRM: leads, contacts, opportunities, scoring</div>
+      <div class="authority-item">Project execution, milestones, daily logs</div>
+      <div class="authority-item">Estimates &amp; templates</div>
+      <div class="authority-item">Inventory (append-only ledger, 1,700 items)</div>
+      <div class="authority-item">Portals (client + trade partner)</div>
+      <div class="authority-item">Audit trails &amp; change history</div>
+      <div class="authority-item">User/RBAC (13 roles)</div>
+      <div class="authority-item">Lead scoring &amp; outreach sequences</div>
+      <div class="authority-item">Knowledge embeddings (pgvector)</div>
+      <div class="authority-item">AI chat sessions &amp; messages</div>
+      <div class="authority-item">Feature flags (per-org JSONB)</div>
+      <div class="authority-item">Cron run history</div>
+      <div class="authority-item">Webhook event log</div>
+      <div class="authority-item">Document storage (Supabase Storage)</div>
+      <div class="authority-item">Offline sync queue</div>
+    </div>
+    <div class="authority-col shared">
+      <div style="font-size:10px;color:var(--text-dim);margin-bottom:8px;">SYNC</div>
+      <div class="sync-arrow">&harr;</div>
+      <div style="font-size:9px;color:var(--text-dim);margin-top:8px;text-align:center;">QStash<br>57 job types<br>Eventual consistency<br>Idempotent upsert</div>
+      <div style="margin-top:16px;font-size:9px;color:var(--text-dim);text-align:center;padding:8px;background:var(--surface);border-radius:6px;border:1px solid var(--border);">
+        Link key:<br><code style="color:var(--accent);font-size:10px;">krewpact_id</code><br>on ERPNext doctypes
+      </div>
+    </div>
+    <div class="authority-col erp">
+      <h3 style="color:var(--orange)">ERPNext (Financial)</h3>
+      <div class="authority-item">General Ledger</div>
+      <div class="authority-item">Sales Invoices</div>
+      <div class="authority-item">Purchase Invoices</div>
+      <div class="authority-item">Payments &amp; Journal Entries</div>
+      <div class="authority-item">Purchase Orders</div>
+      <div class="authority-item">Supplier Quotations &amp; RFQs</div>
+      <div class="authority-item">Material Requests</div>
+      <div class="authority-item">Stock Entry &amp; Warehouses</div>
+      <div class="authority-item">BOM &amp; Work Orders</div>
+      <div class="authority-item">Employee Records</div>
+      <div class="authority-item">Attendance &amp; Leave</div>
+      <div class="authority-item">Bank Accounts &amp; Cost Centers</div>
+      <div class="authority-item">Item Prices &amp; Price Lists</div>
+      <div class="authority-item">Quality Inspections</div>
+      <div class="authority-item">Budgets</div>
+      <div class="authority-item" style="margin-top:8px;font-style:italic;">47 mappings complete</div>
+    </div>
+  </div>
+
+  <div class="two-col" style="margin-top: 20px;">
+    <div class="info-box">
+      <h4>Sync Rules</h4>
+      <ul>
+        <li>Outbox/inbox pattern with idempotent upsert</li>
+        <li>Retry with exponential backoff</li>
+        <li>Dead-letter queue after 3 failures</li>
+        <li>No two-phase commit &mdash; eventual consistency</li>
+        <li>ERPNext rate limit: 300 req/min</li>
+        <li>Inventory: ERPNext gets cost journal entries only</li>
+      </ul>
+    </div>
+    <div class="info-box">
+      <h4>What Flows Where</h4>
+      <ul>
+        <li><strong>KP &rarr; ERP:</strong> New customers, estimates approved &rarr; sales orders, timesheets &rarr; invoices, expenses &rarr; claims</li>
+        <li><strong>ERP &rarr; KP:</strong> Invoice status, payment confirmations, GL snapshots, stock levels</li>
+        <li><strong>Bidirectional:</strong> Project status, supplier updates, employee changes</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== AUTH FLOW ==================== -->
+<div class="view" id="view-auth">
+  <p class="section-title">Authentication &amp; Authorization Flow</p>
+  <p class="section-desc">Clerk owns identity. Supabase enforces data isolation via RLS. The JWT carries org, division, and role claims that the database trusts.</p>
+
+  <div class="two-col">
+    <div>
+      <div class="auth-flow">
+        <div class="auth-step">
+          <div class="auth-num"><div class="circle">1</div><div class="line"></div></div>
+          <div class="auth-body">
+            <h4>User hits any route</h4>
+            <p><code>proxy.ts</code> (Next.js middleware) runs <code>clerkMiddleware</code> with <code>auth.protect()</code>. Public routes (/sign-in, /api/web/*, /api/health) are excluded. Everything else requires authentication.</p>
+          </div>
+        </div>
+        <div class="auth-step">
+          <div class="auth-num"><div class="circle">2</div><div class="line"></div></div>
+          <div class="auth-body">
+            <h4>Clerk issues session token</h4>
+            <p>Third-Party Auth integration. Clerk's native session token (not a custom JWT template) contains <code>metadata</code> with custom claims set during user provisioning.</p>
+          </div>
+        </div>
+        <div class="auth-step">
+          <div class="auth-num"><div class="circle">3</div><div class="line"></div></div>
+          <div class="auth-body">
+            <h4>JWT claims extracted</h4>
+            <p>Token carries: <code>metadata.krewpact_user_id</code>, <code>metadata.krewpact_org_id</code>, <code>metadata.division_ids</code> (JSONB array), <code>metadata.role_keys</code> (role array).</p>
+          </div>
+        </div>
+        <div class="auth-step">
+          <div class="auth-num"><div class="circle">4</div><div class="line"></div></div>
+          <div class="auth-body">
+            <h4>Supabase client created with token</h4>
+            <p><code>createUserClient()</code> passes the Clerk token as <code>Authorization: Bearer</code> header. Supabase validates the JWT and extracts claims for RLS evaluation.</p>
+          </div>
+        </div>
+        <div class="auth-step">
+          <div class="auth-num"><div class="circle">5</div><div class="line"></div></div>
+          <div class="auth-body">
+            <h4>RLS policies enforce isolation</h4>
+            <p>Every table has RLS enabled (deny by default). Policies use <code>auth.jwt() -> 'metadata' -> 'division_ids'</code> to filter rows. The <code>krewpact_divisions()</code> function resolves division codes to UUIDs. <strong>Never</strong> <code>auth.uid()</code> &mdash; Clerk UUIDs differ from Supabase.</p>
+          </div>
+        </div>
+        <div class="auth-step">
+          <div class="auth-num"><div class="circle">6</div><div class="line"></div></div>
+          <div class="auth-body">
+            <h4>Role-based UI gating</h4>
+            <p><code>FeatureGate</code> component checks <code>org_settings.feature_flags</code> at the layout level. Admin bypass built in. 10 route layouts gated. Navigation items hidden when flag is absent.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="info-box">
+        <h4>Canonical Roles (13)</h4>
+        <ul>
+          <li><strong>Internal (9):</strong> platform_admin, executive, operations_manager, project_manager, project_coordinator, estimator, field_supervisor, accounting, payroll_admin</li>
+          <li><strong>External (4):</strong> client_owner, client_delegate, trade_partner_admin, trade_partner_user</li>
+        </ul>
+      </div>
+      <div class="info-box" style="margin-top: 12px;">
+        <h4>Three Client Types</h4>
+        <ul>
+          <li><code>createUserClient()</code> &mdash; RLS-scoped via Clerk JWT. Used in API routes for authenticated queries.</li>
+          <li><code>createUserClientSafe()</code> &mdash; Same as above but returns <code>{client, error}</code> instead of throwing.</li>
+          <li><code>createServiceClient()</code> &mdash; Bypasses RLS using service_role key. Server-only. Used for cron jobs, webhooks, admin operations.</li>
+        </ul>
+      </div>
+      <div class="info-box" style="margin-top: 12px;">
+        <h4>Critical Rules</h4>
+        <ul>
+          <li>Never use <code>auth.uid()</code> in RLS &mdash; Clerk UUIDs != Supabase UUIDs</li>
+          <li>Never use <code>service_role</code> key in client code</li>
+          <li>Index every column referenced in RLS policies</li>
+          <li>Always validate Server Action input with Zod (TypeScript types are NOT runtime-enforced)</li>
+          <li>Division IDs in JWT are codes ["contracting","homes"] resolved to UUIDs by <code>krewpact_divisions()</code></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODULE MAP ==================== -->
+<div class="view" id="view-modules">
+  <p class="section-title">Module Map &mdash; 20 Feature Domains</p>
+  <p class="section-desc">Each module maps to a route group, component directory, and API surface. Colors indicate the primary data authority. Hover for dependencies.</p>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Supabase-primary</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div>ERPNext-primary</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div>Hybrid (both systems)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--cyan)"></div>Internal/system</div>
+  </div>
+
+  <div class="module-grid">
+    <div class="module-card"><h4><div class="dot" style="background:var(--green)"></div>CRM</h4><p>Leads, contacts, opportunities, pipeline. Lead scoring engine (rules-based). Outreach sequences with auto-enrollment. Enrichment pipeline (Apollo, Clearbit, LinkedIn, Google).</p><div class="deps"><span class="dep">Supabase</span><span class="dep">QStash</span><span class="dep">Resend</span><span class="dep">MS Graph</span></div></div>
+
+    <div class="module-card"><h4><div class="dot" style="background:var(--purple)"></div>Projects</h4><p>Project lifecycle, milestones, daily logs, tasks, change orders, RFIs, submittals. Syncs to ERPNext Project + Task doctypes.</p><div class="deps"><span class="dep">Supabase</span><span class="dep">ERPNext</span><span class="dep">QStash</span></div></div>
+
+    <div class="module-card"><h4><div class="dot" style="background:var(--green)"></div>Estimates</h4><p>Estimate builder with line items, assemblies, cost catalog. Templates library. Approval workflow. Converts to ERPNext Quotation on approval.</p><div class="deps"><span class="dep">Supabase</span><span class="dep">ERPNext</span><span class="dep">BoldSign</span></div></div>
+
+    <div class="module-card"><h4><div class="dot" style="background:var(--green)"></div>Inventory</h4><p>Append-only double-entry ledger replacing Almyta. 1,700 items across 3 divisions. Fleet vehicles. ERPNext gets cost journal entries only.</p><div class="deps"><span class="dep">Supabase</span><span class="dep">ERPNext (cost only)</span></div></div>
+
+    <div class="module-card"><h4><div class="dot" style="background:var(--orange)"></div>Finance</h4><p>Invoice snapshots, expense claims, payment tracking. Read-only views of ERPNext GL data. Expense submission workflow.</p><div class="deps"><span class="dep">ERPNext</span><span class="dep">Supabase (snapshots)</span></div></div>
+
+    <div class="module-card"><h4><div class="dot" style="background:var(--green)"></div>Executive</h4><p>C-suite intelligence dashboard. Role-gated (executive + platform_admin only). Supabase RPCs for aggregated metrics. No full-table JS aggregation.</p><div class="deps"><span class="dep">Supabase RPCs</span><span class="dep">ERPNext (read)</span></div></div>
+
+    <div class="module-card"><h4><div class="dot" style="background:var(--purple)"></div>Timesheets</h4><p>Time entry, batch submission, approval workflow. Syncs to ERPNext Timesheet doctype.</p><div class="deps"><span class="dep">Supabase</span><span class="dep">ERPNext</span><span class="dep">QStash</span></div></div>
+
+    <div class="module-card"><h4><div class="dot" style="background:var(--green)"></div>Expenses</h4><p>Expense submission with receipt photos. Approval workflow. Syncs to ERPNext Expense Claim.</p><div class="deps"><span class="dep">Supabase</span><span class="dep">Supabase Storage</span><span class="dep">ERPNext</span></div></div>
+
+    <div class="module-card"><h4><div class="dot" style="background:var(--green)"></div>Documents</h4><p>Document control, versioning, access control. Supabase Storage for files. BoldSign for e-signatures.</p><div class="deps"><span class="dep">Supabase Storage</span><span class="dep">BoldSign</span></div></div>
+
+    <div class="module-card"><h4><div class="dot" style="background:var(--green)"></div>Portals</h4><p>Client portal + trade partner portal. External-facing. Separate auth context (Clerk portal accounts). Message threads, document sharing.</p><div class="deps"><span class="dep">Supabase</span><span class="dep">Clerk</span></div></div>
+
+    <div class="module-card"><h4><div class="dot" style="background:var(--green)"></div>Schedule</h4><p>Project scheduling, resource allocation, calendar views. Integrates with Microsoft Calendar.</p><div class="deps"><span class="dep">Supabase</span><span class="dep">MS Graph</span></div></div>
+
+    <div class="module-card"><h4><div class="dot" style="background:var(--orange)"></div>Payroll</h4><p>Payroll processing, CSV export for ADP. Employee management synced with ERPNext HR module.</p><div class="deps"><span class="dep">ERPNext HR</span><span class="dep">ADP (CSV)</span><span class="dep">Supabase</span></div></div>
+
+    <div class="module-card"><h4><div class="dot" style="background:var(--green)"></div>Contracts</h4><p>Contract management, change orders, holdback tracking. Ontario Construction Act compliance (lien/holdback/notice).</p><div class="deps"><span class="dep">Supabase</span><span class="dep">BoldSign</span></div></div>
+
+    <div class="module-card"><h4><div class="dot" style="background:var(--green)"></div>Reports</h4><p>Cross-module reporting. Financial summaries, project status, CRM analytics. Division-scoped.</p><div class="deps"><span class="dep">Supabase RPCs</span><span class="dep">ERPNext (read)</span></div></div>
+
+    <div class="module-card"><h4><div class="dot" style="background:var(--green)"></div>AI / Knowledge</h4><p>pgvector semantic search. Knowledge embeddings (OpenAI ada-002, 1536 dims). AI chat with project context. MERX bid import.</p><div class="deps"><span class="dep">pgvector</span><span class="dep">OpenAI</span><span class="dep">Supabase</span></div></div>
+
+    <div class="module-card"><h4><div class="dot" style="background:var(--cyan)"></div>Settings</h4><p>Org settings, team management, feature flags, branding, BoldSign config. Division management.</p><div class="deps"><span class="dep">Supabase</span><span class="dep">Clerk</span></div></div>
+
+    <div class="module-card"><h4><div class="dot" style="background:var(--cyan)"></div>Admin</h4><p>Platform admin tools. User provisioning, org management, system governance. RBAC dual-write (Clerk + Supabase).</p><div class="deps"><span class="dep">Clerk</span><span class="dep">Supabase</span></div></div>
+
+    <div class="module-card"><h4><div class="dot" style="background:var(--green)"></div>Dashboard</h4><p>Landing page per role. Stats cards, recent activity, quick actions. Division-scoped data.</p><div class="deps"><span class="dep">Supabase</span></div></div>
+
+    <div class="module-card"><h4><div class="dot" style="background:var(--green)"></div>Notifications</h4><p>In-app notifications, email dispatch (Resend + MS Graph). Webhook event processing.</p><div class="deps"><span class="dep">Supabase</span><span class="dep">Resend</span><span class="dep">MS Graph</span></div></div>
+
+    <div class="module-card"><h4><div class="dot" style="background:var(--green)"></div>Tasks</h4><p>Cross-project task management. Assignment, priorities, due dates. Different from ERPNext tasks (which are project sub-tasks).</p><div class="deps"><span class="dep">Supabase</span></div></div>
+  </div>
+</div>
+
+<!-- ==================== CRON & QUEUE ==================== -->
+<div class="view" id="view-cron">
+  <p class="section-title">Cron Jobs &amp; Background Queue</p>
+  <p class="section-desc">15 Vercel Cron jobs + QStash queue with 57 job types. Cron auth via Bearer token. Queue verification via HMAC. Dead-letter after 3 retries.</p>
+
+  <div class="two-col">
+    <div>
+      <h4 style="font-size:12px;margin-bottom:8px;">Scheduled Cron Jobs (Vercel)</h4>
+      <table class="cron-table">
+        <thead><tr><th>Job</th><th>Schedule</th><th>Freq</th></tr></thead>
+        <tbody>
+          <tr><td>sequence-processor</td><td>*/15 * * * *</td><td><span class="freq-badge freq-high">15 min</span></td></tr>
+          <tr><td>erp-sync</td><td>*/30 * * * *</td><td><span class="freq-badge freq-high">30 min</span></td></tr>
+          <tr><td>smoke-test</td><td>0 * * * *</td><td><span class="freq-badge freq-med">hourly</span></td></tr>
+          <tr><td>watchdog</td><td>30 * * * *</td><td><span class="freq-badge freq-med">hourly</span></td></tr>
+          <tr><td>scoring</td><td>0 */4 * * *</td><td><span class="freq-badge freq-low">4 hours</span></td></tr>
+          <tr><td>generate-insights</td><td>0 3 * * *</td><td><span class="freq-badge freq-low">daily</span></td></tr>
+          <tr><td>enrichment</td><td>0 11 * * 1,3,5</td><td><span class="freq-badge freq-low">MWF</span></td></tr>
+          <tr><td>merx-sync</td><td>0 11 * * 1-5</td><td><span class="freq-badge freq-low">weekdays</span></td></tr>
+          <tr><td>sla-alerts</td><td>0 12 * * 1-5</td><td><span class="freq-badge freq-low">weekdays</span></td></tr>
+          <tr><td>daily-digest</td><td>0 12 * * 1-5</td><td><span class="freq-badge freq-low">weekdays</span></td></tr>
+          <tr><td>portal-reminders</td><td>0 13 * * 1-5</td><td><span class="freq-badge freq-low">weekdays</span></td></tr>
+          <tr><td>followup-reminders</td><td>0 14 * * 1-5</td><td><span class="freq-badge freq-low">weekdays</span></td></tr>
+          <tr><td>summarize</td><td>0 22 * * 1-5</td><td><span class="freq-badge freq-low">weekdays</span></td></tr>
+          <tr><td>apollo-pump</td><td>0 10 * * 1</td><td><span class="freq-badge freq-low">weekly</span></td></tr>
+          <tr><td>icp-refresh</td><td>0 11 * * 1</td><td><span class="freq-badge freq-low">weekly</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <div class="info-box">
+        <h4>QStash Queue (57 Job Types)</h4>
+        <ul>
+          <li><strong>ERP Sync (47):</strong> Customer, Contact, Opportunity, Quotation, Sales Order, Project, Task, Invoice (read), Purchase Invoice, Supplier, Expense, Timesheet, PO, Receipt, RFQ, Material Request, Stock Entry, Warehouse, Item, Payment, Journal, GL, Bank, Cost Center, Budget, BOM, Work Order, QI, Serial, Batch, UOM, Price, Price List, Employee, Attendance, Leave, Holiday, Designation, Dept, HR Settings, Company, Award, Bid, Compliance, Goods Receipt, Selection Sheet, Material Cost</li>
+          <li><strong>Non-ERP (2):</strong> TakeoffFeedback, PayrollCSVExport</li>
+          <li><strong>Job states:</strong> pending &rarr; running &rarr; succeeded | failed &rarr; dead_letter</li>
+          <li><strong>Retry:</strong> 3 attempts, exponential backoff</li>
+          <li><strong>Dev mode:</strong> In-memory queue (no QStash dependency)</li>
+        </ul>
+      </div>
+      <div class="info-box" style="margin-top: 12px;">
+        <h4>Monitoring (Sentry Crons)</h4>
+        <ul>
+          <li>Each cron handler calls <code>createCronLogger(name, schedule?)</code></li>
+          <li>Sentry check-in: in_progress &rarr; ok | error</li>
+          <li>Per-cron schedule config (not hardcoded)</li>
+          <li>DB logging to <code>cron_runs</code> table (always)</li>
+          <li>Sentry DSN missing? Graceful skip (try/catch)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== REQUEST LIFECYCLE ==================== -->
+<div class="view" id="view-request">
+  <p class="section-title">Request Lifecycle</p>
+  <p class="section-desc">Follow a single API request from browser to database and back. This is what happens when a project manager creates a daily log.</p>
+
+  <div class="flow-container">
+    <div style="margin-bottom: 24px;">
+      <h4 style="font-size:12px;margin-bottom:12px;">Read Path (GET /api/projects/[id]/daily-logs)</h4>
+      <div class="flow-row">
+        <div class="flow-box blue">Browser</div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box purple">Vercel Edge</div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box purple">proxy.ts<div class="flow-label">Clerk auth.protect()</div></div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box purple">Rate Limiter<div class="flow-label">Upstash sliding window</div></div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box purple">route.ts<div class="flow-label">withApiRoute({ auth: 'user' })</div></div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box purple">createUserClient()<div class="flow-label">Clerk JWT &rarr; Supabase</div></div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box green">Supabase<div class="flow-label">RLS filters by division</div></div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box blue">JSON Response</div>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 24px;">
+      <h4 style="font-size:12px;margin-bottom:12px;">Write Path (POST /api/projects/[id]/daily-logs)</h4>
+      <div class="flow-row">
+        <div class="flow-box blue">Browser</div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box purple">proxy.ts</div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box purple">route.ts<div class="flow-label">Zod validation</div></div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box green">Supabase INSERT<div class="flow-label">RLS + audit trail</div></div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box pink">QStash<div class="flow-label">enqueue ERP sync</div></div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box blue">201 Created</div>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 24px;">
+      <h4 style="font-size:12px;margin-bottom:12px;">Background Sync (QStash &rarr; ERPNext)</h4>
+      <div class="flow-row">
+        <div class="flow-box pink">QStash webhook</div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box purple">/api/queue/process<div class="flow-label">HMAC verify</div></div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box purple">lib/erp/client.ts<div class="flow-label">Circuit breaker</div></div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box orange">ERPNext API<div class="flow-label">via Cloudflare Tunnel</div></div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box green">Update sync status<div class="flow-label">Supabase service client</div></div>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 24px;">
+      <h4 style="font-size:12px;margin-bottom:12px;">Offline Path (PWA / Field Worker)</h4>
+      <div class="flow-row">
+        <div class="flow-box blue">PWA (offline)</div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box yellow">IndexedDB Queue<div class="flow-label">pending &rarr; syncing</div></div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box blue">Online detected</div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box purple">Sync Engine<div class="flow-label">conflict resolution</div></div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box green">Supabase</div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box yellow">synced<div class="flow-label">or dead_letter</div></div>
+      </div>
+    </div>
+
+    <div>
+      <h4 style="font-size:12px;margin-bottom:12px;">Webhook Path (Clerk user created)</h4>
+      <div class="flow-row">
+        <div class="flow-box orange">Clerk</div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box purple">/api/webhooks/clerk<div class="flow-label">svix signature verify</div></div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box purple">Provision user<div class="flow-label">service client</div></div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box green">Supabase users table</div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box pink">QStash<div class="flow-label">sync to ERPNext Employee</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>
