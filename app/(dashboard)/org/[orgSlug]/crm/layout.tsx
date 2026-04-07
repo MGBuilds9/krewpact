@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 import { GlobalSearch } from '@/components/CRM/GlobalSearch';
+import { FeatureGate } from '@/components/shared/FeatureGate';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { cn } from '@/lib/utils';
 
@@ -25,31 +26,33 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
   const strippedPath = pathname.replace(/^\/org\/[^/]+/, '');
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <nav className="inline-flex h-auto items-center justify-start rounded-md bg-muted p-1 text-muted-foreground flex-wrap gap-0.5">
-          {crmTabs.map((tab) => {
-            const isActive = strippedPath === tab.href || strippedPath.startsWith(tab.href + '/');
-            return (
-              <Link
-                key={tab.href}
-                href={orgPath(tab.href)}
-                className={cn(
-                  'inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-                  isActive
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'hover:bg-background/50 hover:text-foreground',
-                )}
-              >
-                {tab.label}
-              </Link>
-            );
-          })}
-        </nav>
-        <GlobalSearch />
-      </div>
+    <FeatureGate flag="crm">
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <nav className="inline-flex h-auto items-center justify-start rounded-md bg-muted p-1 text-muted-foreground flex-wrap gap-0.5">
+            {crmTabs.map((tab) => {
+              const isActive = strippedPath === tab.href || strippedPath.startsWith(tab.href + '/');
+              return (
+                <Link
+                  key={tab.href}
+                  href={orgPath(tab.href)}
+                  className={cn(
+                    'inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                    isActive
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'hover:bg-background/50 hover:text-foreground',
+                  )}
+                >
+                  {tab.label}
+                </Link>
+              );
+            })}
+          </nav>
+          <GlobalSearch />
+        </div>
 
-      {children}
-    </div>
+        {children}
+      </div>
+    </FeatureGate>
   );
 }

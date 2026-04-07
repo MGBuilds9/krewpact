@@ -14,6 +14,17 @@ vi.mock('@/components/CRM/GlobalSearch', () => ({
   GlobalSearch: () => <div data-testid="global-search" />,
 }));
 
+vi.mock('@/contexts/OrgContext', () => ({
+  useOrg: () => ({
+    currentOrg: { feature_flags: { crm: true } },
+    isLoading: false,
+  }),
+}));
+
+vi.mock('@/hooks/useRBAC', () => ({
+  useUserRBAC: () => ({ isAdmin: false }),
+}));
+
 import CRMLayout from '@/app/(dashboard)/org/[orgSlug]/crm/layout';
 
 describe('CRMLayout', () => {
