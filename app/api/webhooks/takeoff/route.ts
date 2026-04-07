@@ -69,7 +69,10 @@ function verifySignature(payload: string, signature: string, secret: string): bo
   if (!signature) return false;
   const expected = createHmac('sha256', secret).update(payload).digest('hex');
   try {
-    return timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(signature, 'hex'));
+    const expectedBuf = Buffer.from(expected, 'hex');
+    const signatureBuf = Buffer.from(signature, 'hex');
+    if (expectedBuf.byteLength !== signatureBuf.byteLength) return false;
+    return timingSafeEqual(expectedBuf, signatureBuf);
   } catch {
     return false;
   }

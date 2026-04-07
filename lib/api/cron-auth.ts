@@ -29,9 +29,11 @@ export async function verifyCronAuth(
   const cronSecret = process.env.CRON_SECRET || process.env.WEBHOOK_SIGNING_SECRET;
   if (cronSecret && authHeader) {
     const expected = `Bearer ${cronSecret}`;
+    const headerBuf = Buffer.from(authHeader);
+    const expectedBuf = Buffer.from(expected);
     if (
-      authHeader.length === expected.length &&
-      timingSafeEqual(Buffer.from(authHeader), Buffer.from(expected))
+      headerBuf.byteLength === expectedBuf.byteLength &&
+      timingSafeEqual(headerBuf, expectedBuf)
     ) {
       return { authorized: true };
     }

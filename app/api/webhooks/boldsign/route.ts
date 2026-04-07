@@ -32,7 +32,10 @@ function verifyBoldSignSignature(payload: string, signature: string, secret: str
   hmac.update(payload);
   const expected = hmac.digest('hex');
   try {
-    return timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(signature, 'hex'));
+    const expectedBuf = Buffer.from(expected, 'hex');
+    const signatureBuf = Buffer.from(signature, 'hex');
+    if (expectedBuf.byteLength !== signatureBuf.byteLength) return false;
+    return timingSafeEqual(expectedBuf, signatureBuf);
   } catch {
     return false;
   }

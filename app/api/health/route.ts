@@ -1,3 +1,5 @@
+import { timingSafeEqual } from 'node:crypto';
+
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -196,7 +198,20 @@ export async function GET(req: NextRequest) {
   if (deep) {
     const cronSecret = process.env.CRON_SECRET;
     const authHeader = req.headers.get('authorization');
-    const hasCronAuth = cronSecret && authHeader === `Bearer ${cronSecret}`;
+
+    // Security: Use timingSafeEqual to prevent timing attacks on secret comparison
+    let hasCronAuth = false;
+    if (cronSecret && authHeader) {
+      const expected = `Bearer ${cronSecret}`;
+      const headerBuf = Buffer.from(authHeader);
+      const expectedBuf = Buffer.from(expected);
+      if (
+        headerBuf.byteLength === expectedBuf.byteLength &&
+        timingSafeEqual(headerBuf, expectedBuf)
+      ) {
+        hasCronAuth = true;
+      }
+    }
 
     if (!hasCronAuth) {
       const { userId } = await auth();
