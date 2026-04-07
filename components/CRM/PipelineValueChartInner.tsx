@@ -9,6 +9,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
+import { formatCurrencyCompact } from '@/lib/format/currency';
 
 const STAGE_LABELS: Record<string, string> = {
   intake: 'Intake',
@@ -68,7 +69,7 @@ export function PipelineValueChartInner({ chartData }: PipelineValueChartInnerPr
             />
             <XAxis
               type="number"
-              tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+              tickFormatter={(v) => formatCurrencyCompact(v)}
               tickLine={false}
               axisLine={false}
             />
