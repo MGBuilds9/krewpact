@@ -87,3 +87,10 @@ reference/
 
 # Repomix context packs
 .repomix/
+
+# /qa pipeline captures + Playwright report (regenerated each run)
+.gstack/qa-reports/playwright-captures/
+.gstack/qa-reports/playwright-html/
+.gstack/qa-reports/playwright-results.json
+test-results/
+playwright-report/

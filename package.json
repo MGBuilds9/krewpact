@@ -20,6 +20,7 @@
     "seed:reference": "npx tsx scripts/seed-reference-data.ts",
     "test:e2e": "playwright test --project=chromium",
     "test:e2e:full": "E2E_FULL=true playwright test --project=full",
+    "qa:e2e": "playwright test --config=playwright-qa.config.ts",
     "health": "tsx scripts/health-check.ts",
     "health:deep": "tsx scripts/health-check.ts --deep",
     "format": "prettier --write .",
@@ -101,6 +102,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.1",
+    "@clerk/testing": "^2.0.11",
     "@next/bundle-analyzer": "^16.2.2",
     "@playwright/test": "^1.59.1",
     "@serwist/next": "^9.5.7",

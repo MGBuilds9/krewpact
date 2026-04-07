@@ -26,7 +26,8 @@ npm run lint           # ESLint (flat config)
 npm run typecheck      # tsc --noEmit (strict mode)
 npm run test           # Vitest unit tests
 npm run test:coverage  # Unit tests with coverage
-npm run test:e2e       # Playwright E2E (chromium)
+npm run test:e2e       # Playwright E2E (chromium, local dev server)
+npm run qa:e2e         # Authenticated production QA via @clerk/testing — see "Authenticated Production QA" section
 npm run format:check   # Prettier check (CI-safe)
 npm run health         # Health check script
 npm run health:deep    # Deep health check (all services)
@@ -177,6 +178,51 @@ Key rules enforced: `no-console` (error, allow warn/error), `@typescript-eslint/
 - Environment: jsdom, setup file: `__tests__/setup.ts`
 - Mock helpers in `__tests__/helpers/`
 - Mocks ONLY in `__tests__/` and `e2e/` — never in production code
+
+### E2E (Playwright)
+
+Two separate suites with different configs:
+
+**`npm run test:e2e`** — Dev/CI suite. `playwright.config.ts`. Spins up `npm run dev` as a `webServer`, runs `e2e/*.spec.ts` against `http://localhost:3000`. Auth via `e2e/auth.setup.ts` (UI form-fill flow against dev Clerk instance). Used by CI on PRs.
+
+**`npm run qa:e2e`** — Authenticated production QA. `playwright-qa.config.ts`. NO webServer — hits `https://krewpact.ca` (or `QA_BASE_URL` env override) directly. Auth via `e2e/qa/qa-auth.setup.ts` which uses `@clerk/testing` `clerk.signIn()` to bypass Clerk's bot detection. Runs `e2e/qa/*.spec.ts`. Used by `gstack /qa` skill for ad-hoc verification of shipped work.
+
+The two suites are isolated:
+
+- Different testDir (`e2e/` vs `e2e/qa/`)
+- Different storage state (`e2e/.auth/user.json` vs `e2e/qa/.auth/qa-user.json`)
+- Different auth path (UI form-fill vs Clerk Testing Token API)
+- The qa suite captures screenshots, page text, and console errors to `.gstack/qa-reports/playwright-captures/` for the /qa skill to parse into a report
+
+## Authenticated Production QA
+
+The `npm run qa:e2e` pipeline is the canonical way to run authenticated browser QA against production. Built 2026-04-07 to replace the failing browse + cookie-export workflow that hit Clerk's WAF bot detection.
+
+**Why `@clerk/testing`:** Clerk's WAF actively blocks Playwright/Puppeteer/automated browsers from completing sign-in (the `Failed to sign in: bot detected` error). `@clerk/testing` is Clerk's official solution: `clerkSetup()` fetches a Testing Token from the Backend API, and `clerk.signIn()` calls Clerk's API directly (not via UI form-fill), bypassing every bot detection check. Documented at https://clerk.com/docs/guides/development/testing/playwright/overview.
+
+**Required env vars in `.env.local` (gitignored):**
+
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` — auto-bridged to `CLERK_PUBLISHABLE_KEY` by `playwright-qa.config.ts`
+- `CLERK_SECRET_KEY` — required by `clerkSetup()` to mint Testing Tokens
+- `QA_TEST_EMAIL` — test user email (production: `ci-test@mdmgroupinc.ca`)
+- `QA_TEST_PASSWORD` — test user password
+
+**Test user requirement:** must have **password authentication enabled** in Clerk. `clerk.signIn()` in production only supports `strategy: 'password'` (not magic-link or email-code). The ci-test user is pre-configured with this. To use a different user, either set a password on it via Clerk dashboard, OR use a `+clerk_test` subaddress test user (Clerk Test Mode must be enabled in the dashboard).
+
+**To target a non-prod environment:**
+
+```bash
+QA_BASE_URL=https://krewpact-git-feature.vercel.app npm run qa:e2e
+```
+
+**Files:**
+
+- `playwright-qa.config.ts` — config (separate from `playwright.config.ts`)
+- `e2e/qa/qa-auth.setup.ts` — auth setup using `@clerk/testing`
+- `e2e/qa/qa-verification.spec.ts` — the QA spec; assert one ISSUE-### per test
+- `e2e/qa/.auth/` — gitignored storage state
+- `.gstack/qa-reports/playwright-captures/` — gitignored captures (text + console + screenshots) for the /qa skill to parse
+- `.gstack/qa-reports/playwright-html/` — gitignored Playwright HTML report (open with `npx playwright show-report`)
 
 ## Feature Flags
 
