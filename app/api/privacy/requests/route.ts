@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { dbError } from '@/lib/api/errors';
 import { getKrewpactRoles } from '@/lib/api/org';
 import { withApiRoute } from '@/lib/api/with-api-route';
+import { logger } from '@/lib/logger';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { privacyRequestCreateSchema } from '@/lib/validators/migration';
 
@@ -44,7 +45,10 @@ export const GET = withApiRoute({ querySchema }, async ({ req, userId: _userId }
   if (request_type) query = query.eq('request_type', request_type);
 
   const { data, error, count } = await query;
-  if (error) throw dbError(error.message);
+  if (error) {
+    logger.error('Failed to list privacy requests', { error: error.message });
+    throw dbError('Database query failed');
+  }
 
   const total = count ?? 0;
   return NextResponse.json({ data, total, hasMore: offset + limit < total });
@@ -66,7 +70,10 @@ export const POST = withApiRoute(
       .select()
       .single();
 
-    if (error) throw dbError(error.message);
+    if (error) {
+      logger.error('Failed to create privacy request', { error: error.message });
+      throw dbError('Database query failed');
+    }
     return NextResponse.json(data, { status: 201 });
   },
 );
