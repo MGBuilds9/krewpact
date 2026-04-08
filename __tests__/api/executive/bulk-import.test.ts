@@ -117,7 +117,7 @@ describe('POST /api/executive/staging/bulk-import', () => {
       from: vi.fn().mockReturnValue({ select: selectFn, insert: insertFn }),
     } as unknown as Awaited<ReturnType<typeof createServiceClient>>);
 
-    const res = await POST(makeRequest({ files: [{ path: '/vault/test.md', category: 'sop' }] }));
+    const res = await POST(makeRequest({ files: [{ path: 'vault/test.md', category: 'sop' }] }));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.imported).toBe(1);
@@ -145,7 +145,7 @@ describe('POST /api/executive/staging/bulk-import', () => {
       from: vi.fn().mockReturnValue({ select: selectFn }),
     } as unknown as Awaited<ReturnType<typeof createServiceClient>>);
 
-    const res = await POST(makeRequest({ files: [{ path: '/vault/dup.md' }] }));
+    const res = await POST(makeRequest({ files: [{ path: 'vault/dup.md' }] }));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.imported).toBe(0);
@@ -163,7 +163,7 @@ describe('POST /api/executive/staging/bulk-import', () => {
       from: vi.fn(),
     } as unknown as Awaited<ReturnType<typeof createServiceClient>>);
 
-    const res = await POST(makeRequest({ files: [{ path: '/nonexistent/file.md' }] }));
+    const res = await POST(makeRequest({ files: [{ path: 'nonexistent/file.md' }] }));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.imported).toBe(0);

@@ -29,16 +29,23 @@ interface ProcessResult {
   reason?: string;
 }
 
+const IMPORT_BASE_DIR = path.resolve(process.cwd(), process.env.STAGING_IMPORT_DIR || 'data/imports');
+
 async function processOneFile(
   supabase: SupabaseClient,
   file: FileInput,
   orgId: string,
 ): Promise<ProcessResult> {
-  const filePath = file.path;
+  // Security: Prevent path traversal by resolving against a known base directory
+  // and verifying the resolved path stays within the base directory.
+  const resolvedPath = path.resolve(IMPORT_BASE_DIR, file.path);
+  if (!resolvedPath.startsWith(IMPORT_BASE_DIR + path.sep) && resolvedPath !== IMPORT_BASE_DIR) {
+    return { status: 'error', reason: 'Invalid file path: path traversal detected' };
+  }
 
   let isFile = false;
   try {
-    const fileStats = await stat(filePath);
+    const fileStats = await stat(resolvedPath);
     isFile = fileStats.isFile();
   } catch {
     return { status: 'error', reason: 'File not found or inaccessible' };
@@ -48,7 +55,7 @@ async function processOneFile(
 
   let rawContent: string;
   try {
-    rawContent = await readFile(filePath, 'utf-8');
+    rawContent = await readFile(resolvedPath, 'utf-8');
   } catch {
     return { status: 'error', reason: 'Failed to read file' };
   }
@@ -58,7 +65,7 @@ async function processOneFile(
   const headingMatch = rawContent.match(/^#\s+(.+)$/m);
   const title = headingMatch
     ? headingMatch[1].trim()
-    : path.basename(filePath, path.extname(filePath));
+    : path.basename(resolvedPath, path.extname(resolvedPath));
 
   const contentChecksum = createHash('sha256').update(rawContent).digest('hex');
 
@@ -76,7 +83,7 @@ async function processOneFile(
     title,
     raw_content: strippedContent,
     source_type: 'vault_import',
-    source_path: filePath,
+    source_path: resolvedPath,
     content_checksum: contentChecksum,
     org_id: orgId,
     status: 'pending_review',
