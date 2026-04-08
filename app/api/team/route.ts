@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { dbError } from '@/lib/api/errors';
 import { withApiRoute } from '@/lib/api/with-api-route';
+import { logger } from '@/lib/logger';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 const querySchema = z.object({
@@ -34,7 +35,10 @@ export const GET = withApiRoute({ querySchema }, async ({ query }) => {
   }
 
   const { data, error } = await dbQuery;
-  if (error) throw dbError(error.message);
+  if (error) {
+    logger.error('Failed to query team users', { error: error.message });
+    throw dbError('Database query failed');
+  }
 
   // Client-side search filtering
   let filtered = data || [];
