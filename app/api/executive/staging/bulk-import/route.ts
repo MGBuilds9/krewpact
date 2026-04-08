@@ -29,7 +29,10 @@ interface ProcessResult {
   reason?: string;
 }
 
-const IMPORT_BASE_DIR = path.resolve(process.cwd(), process.env.STAGING_IMPORT_DIR || 'data/imports');
+const IMPORT_BASE_DIR = path.resolve(
+  process.cwd(),
+  process.env.STAGING_IMPORT_DIR || 'data/imports',
+);
 
 async function processOneFile(
   supabase: SupabaseClient,
