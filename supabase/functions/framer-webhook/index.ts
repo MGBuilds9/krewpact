@@ -1,3 +1,4 @@
+import { timingSafeEqual } from 'https://deno.land/std@0.208.0/crypto/timing_safe_equal.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
@@ -17,18 +18,6 @@ const SERVICE_TO_DIVISION: Record<string, string> = {
   wood: 'wood',
 };
 
-function timingSafeEqual(a: string, b: string): boolean {
-  const encoder = new TextEncoder();
-  const aBuf = encoder.encode(a);
-  const bBuf = encoder.encode(b);
-  if (aBuf.byteLength !== bBuf.byteLength) return false;
-  let result = 0;
-  for (let i = 0; i < aBuf.byteLength; i++) {
-    result |= aBuf[i] ^ bBuf[i];
-  }
-  return result === 0;
-}
-
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -44,7 +33,18 @@ Deno.serve(async (req) => {
   // Verify webhook secret
   const secret = Deno.env.get('FRAMER_WEBHOOK_SECRET');
   const provided = req.headers.get('x-webhook-secret') ?? '';
-  if (!secret || !timingSafeEqual(secret, provided)) {
+
+  let isAuthorized = false;
+  if (secret) {
+    const encoder = new TextEncoder();
+    const expected = encoder.encode(secret);
+    const received = encoder.encode(provided);
+    if (expected.byteLength === received.byteLength) {
+      isAuthorized = timingSafeEqual(expected, received);
+    }
+  }
+
+  if (!isAuthorized) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
