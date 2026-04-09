@@ -9507,6 +9507,43 @@ export type Database = {
           },
         ]
       }
+      inventory_stock_summary_secure: {
+        Row: {
+          item_id: string | null
+          location_id: string | null
+          spot_id: string | null
+          qty_on_hand: number | null
+          total_value: number | null
+          last_transaction_at: string | null
+          item_name: string | null
+          item_sku: string | null
+          division_id: string | null
+          location_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_ledger_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_ledger_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_ledger_spot_id_fkey"
+            columns: ["spot_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_spots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       default_org_id: { Args: never; Returns: string }

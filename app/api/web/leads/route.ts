@@ -130,6 +130,12 @@ export const POST = withApiRoute(
       );
     }
 
+    // Checkly synthetic monitoring: accept the POST but skip DB write
+    if ((body as LeadData).source === 'synthetic_monitor') {
+      logger.info('Synthetic monitor probe accepted — no DB write');
+      return NextResponse.json({ success: true, lead_id: null, message: 'Synthetic probe OK' });
+    }
+
     const supabase = createServiceClient();
     return insertLeadAndContact(supabase, body as LeadData);
   },

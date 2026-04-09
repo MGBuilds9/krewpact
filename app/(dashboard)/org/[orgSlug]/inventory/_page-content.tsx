@@ -18,7 +18,12 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { getDivisionFilter, useDivision } from '@/contexts/DivisionContext';
-import { useInventoryItems, useInventoryStock, useLowStockItems } from '@/hooks/useInventory';
+import {
+  useInventoryItemsPaginated,
+  useInventoryStock,
+  useInventoryStockPaginated,
+  useLowStockItems,
+} from '@/hooks/useInventory';
 import { useOrgRouter } from '@/hooks/useOrgRouter';
 import { usePurchaseOrders } from '@/hooks/usePurchaseOrders';
 import { formatCurrency } from '@/lib/date';
@@ -170,9 +175,15 @@ function RecentStockTable({ divisionId }: { divisionId?: string }) {
 export default function OverviewPageContent() {
   const { activeDivision } = useDivision();
   const divisionId = getDivisionFilter(activeDivision);
-  const { data: items, isLoading: itemsLoading } = useInventoryItems({ divisionId, limit: 1 });
+  const { data: itemsPage, isLoading: itemsLoading } = useInventoryItemsPaginated({
+    divisionId,
+    limit: 1,
+  });
   const { data: lowStock, isLoading: lowStockLoading } = useLowStockItems(divisionId);
-  const { data: stock, isLoading: stockLoading } = useInventoryStock({ divisionId, limit: 1 });
+  const { data: stockPage, isLoading: stockLoading } = useInventoryStockPaginated({
+    divisionId,
+    limit: 1,
+  });
   const { data: poData, isLoading: poLoading } = usePurchaseOrders({
     status: 'submitted',
     limit: 100,
@@ -186,13 +197,17 @@ export default function OverviewPageContent() {
       <PageHeader title="Inventory Overview" action={<QuickActions />} />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StockCard label="Total Items" value={items?.length ?? 0} isLoading={summaryLoading} />
+        <StockCard label="Total Items" value={itemsPage?.total ?? 0} isLoading={summaryLoading} />
         <StockCard
           label="Low Stock Alerts"
           value={lowStock?.length ?? 0}
           isLoading={summaryLoading}
         />
-        <StockCard label="Stock Positions" value={stock?.length ?? 0} isLoading={summaryLoading} />
+        <StockCard
+          label="Stock Positions"
+          value={stockPage?.total ?? 0}
+          isLoading={summaryLoading}
+        />
         <StockCard label="Active POs" value={activePOCount} isLoading={summaryLoading} />
       </div>
 

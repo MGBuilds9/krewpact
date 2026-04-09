@@ -89,3 +89,20 @@ export async function apiFetchList<T>(path: string, options?: FetchOptions): Pro
   const result = await apiFetch<PaginatedResponse<T>>(path, options);
   return result.data;
 }
+
+/**
+ * Fetch a paginated list endpoint and return the full PaginatedResponse.
+ * Use when you need both the data and the real total count from the server.
+ * Falls back safely if the API route does not return total/hasMore.
+ */
+export async function apiFetchPaginated<T>(
+  path: string,
+  options?: FetchOptions,
+): Promise<PaginatedResponse<T>> {
+  const result = await apiFetch<PaginatedResponse<T>>(path, options);
+  return {
+    data: result.data ?? [],
+    total: result.total ?? result.data?.length ?? 0,
+    hasMore: result.hasMore ?? false,
+  };
+}

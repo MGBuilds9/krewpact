@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ApiError, apiFetch } from '@/lib/api-client';
+import { ApiError, apiFetch, apiFetchPaginated } from '@/lib/api-client';
 
 describe('apiFetch', () => {
   beforeEach(() => {
@@ -84,5 +84,46 @@ describe('apiFetch', () => {
       expect(err).toBeInstanceOf(ApiError);
       expect((err as ApiError).status).toBe(500);
     }
+  });
+});
+
+describe('apiFetchPaginated', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('returns the full PaginatedResponse from the server', async () => {
+    const payload = { data: [{ id: '1' }], total: 42, hasMore: true };
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify(payload), { status: 200 }),
+    );
+
+    const result = await apiFetchPaginated<{ id: string }>('/api/inventory/items');
+    expect(result.data).toEqual([{ id: '1' }]);
+    expect(result.total).toBe(42);
+    expect(result.hasMore).toBe(true);
+  });
+
+  it('falls back to data.length when total is missing from the response', async () => {
+    const payload = { data: [{ id: '1' }, { id: '2' }] };
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify(payload), { status: 200 }),
+    );
+
+    const result = await apiFetchPaginated<{ id: string }>('/api/inventory/items');
+    expect(result.total).toBe(2);
+    expect(result.hasMore).toBe(false);
+  });
+
+  it('falls back to empty array when data is missing from the response', async () => {
+    const payload = {};
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify(payload), { status: 200 }),
+    );
+
+    const result = await apiFetchPaginated<{ id: string }>('/api/inventory/items');
+    expect(result.data).toEqual([]);
+    expect(result.total).toBe(0);
+    expect(result.hasMore).toBe(false);
   });
 });
