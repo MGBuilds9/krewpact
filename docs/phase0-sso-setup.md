@@ -106,11 +106,16 @@ Install a custom ERPNext app or CSS override that adds a top bar on ERPNext page
 
 ## Step 7: Supabase PITR Backup Drill
 
+**Status: BLOCKED** — KrewPact's Supabase project is not on Pro plan, so PITR and
+restore-to-branch are unavailable. Daily automated backups are active (free tier).
+Upgrade to Pro when the project enters Phase 5 (pilot rollout) to enable PITR with
+15-minute RPO.
+
+When available, the drill steps are:
+
 1. In Supabase dashboard → **Database** → **Backups**
 2. Note the latest PITR restore point timestamp
-3. Create a new **branch** (not the main database) and restore to it:
-   - Branch name: `pitr-drill-YYYYMMDD`
-   - Restore to: latest available point
+3. Create a new **branch** (not the main database) and restore to it
 4. Time the operation (should be < 15 min for RPO compliance)
 5. Verify data in the branch (spot-check a few tables)
 6. Delete the branch after verification

@@ -12,7 +12,7 @@
  */
 import { ApiCheck, AssertionBuilder } from 'checkly/constructs';
 
-const BASE_URL = process.env.APP_URL || 'https://hub.mdmgroupinc.ca';
+const BASE_URL = process.env.APP_URL || 'https://krewpact.ca';
 
 // 1. Health API — shallow check (every 1 min)
 new ApiCheck('krewpact-health-api', {
@@ -61,11 +61,14 @@ new ApiCheck('krewpact-web-leads-api', {
   request: {
     url: `${BASE_URL}/api/web/leads`,
     method: 'POST',
-    headers: [{ key: 'Content-Type', value: 'application/json' }],
+    headers: [
+      { key: 'Content-Type', value: 'application/json' },
+      { key: 'x-webhook-secret', value: process.env.WEBHOOK_SIGNING_SECRET || '' },
+    ],
     body: JSON.stringify({
-      company_name: 'Checkly Synthetic Monitor',
-      contact_name: 'Checkly Bot',
+      name: 'Checkly Bot',
       email: 'checkly-monitor@synthetic.invalid',
+      companyName: 'Checkly Synthetic Monitor',
       source: 'synthetic_monitor',
     }),
     assertions: [
