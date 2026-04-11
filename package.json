@@ -118,7 +118,7 @@
     "autoprefixer": "^10.4.27",
     "dotenv": "^17.4.1",
     "eslint": "^10.2.0",
-    "eslint-config-next": "^16.2.2",
+    "eslint-config-next": "^16.2.3",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-simple-import-sort": "^13.0.0",
     "gray-matter": "^4.0.3",
