@@ -102,7 +102,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.1",
-    "@clerk/testing": "^2.0.11",
+    "@clerk/testing": "^2.0.12",
     "@next/bundle-analyzer": "^16.2.2",
     "@playwright/test": "^1.59.1",
     "@serwist/next": "^9.5.7",
