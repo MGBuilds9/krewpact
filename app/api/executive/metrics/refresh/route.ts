@@ -15,7 +15,19 @@ export const POST = withApiRoute({ auth: 'public' }, async ({ req, logger }) => 
   const authHeader = req.headers.get('authorization');
   const qstashSignature = req.headers.get('upstash-signature');
 
-  if (!qstashSignature && authHeader !== `Bearer ${process.env.QSTASH_TOKEN}`) {
+  let isAuthorized = false;
+  if (authHeader === `Bearer ${process.env.QSTASH_TOKEN}`) {
+    isAuthorized = true;
+  } else if (qstashSignature) {
+    const rawBody = await req.text();
+    const { verifyQStashSignature } = await import('@/lib/queue/verify');
+    const verification = await verifyQStashSignature(qstashSignature, rawBody);
+    if (verification.valid) {
+      isAuthorized = true;
+    }
+  }
+
+  if (!isAuthorized) {
     const { auth } = await import('@clerk/nextjs/server');
     const { userId } = await auth();
     if (!userId) throw forbidden('Unauthorized');

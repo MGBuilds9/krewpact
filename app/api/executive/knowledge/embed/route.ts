@@ -7,11 +7,17 @@ import { createServiceClient } from '@/lib/supabase/server';
 
 type ServiceClient = Awaited<ReturnType<typeof createServiceClient>>;
 
-async function verifyEmbedAuth(req: Request): Promise<void> {
+async function verifyEmbedAuth(req: Request, rawBody: string): Promise<void> {
   const qstashSignature = req.headers.get('upstash-signature');
   const authHeader = req.headers.get('authorization');
 
-  if (qstashSignature || authHeader === `Bearer ${process.env.QSTASH_TOKEN}`) return;
+  if (authHeader === `Bearer ${process.env.QSTASH_TOKEN}`) return;
+
+  if (qstashSignature) {
+    const { verifyQStashSignature } = await import('@/lib/queue/verify');
+    const verification = await verifyQStashSignature(qstashSignature, rawBody);
+    if (verification.valid) return;
+  }
 
   const { auth } = await import('@clerk/nextjs/server');
   const { userId } = await auth();
@@ -49,11 +55,12 @@ export const POST = withApiRoute({ auth: 'public' }, async ({ req }) => {
     return NextResponse.json({ error: 'AI features are disabled' }, { status: 503 });
   }
 
-  await verifyEmbedAuth(req);
+  const rawBody = await req.text();
+  await verifyEmbedAuth(req, rawBody);
 
   let body: { stagingId?: string };
   try {
-    body = await req.json();
+    body = JSON.parse(rawBody);
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
