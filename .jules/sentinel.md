@@ -1,0 +1,4 @@
+## 2024-04-11 - QStash Authorization Bypass Vulnerability
+**Vulnerability:** `app/api/executive/knowledge/embed/route.ts` and `app/api/executive/metrics/refresh/route.ts` only check for the presence of the `upstash-signature` header (`if (qstashSignature || authHeader === \`Bearer ${process.env.QSTASH_TOKEN}\`)`) without actually cryptographically verifying the signature using the payload. This allows an attacker to bypass authorization simply by sending a request with an arbitrary `upstash-signature` header.
+**Learning:** Checking for the presence of a signature header is not enough to secure a webhook endpoint. The signature must be verified against the request body using the shared secret.
+**Prevention:** Always use `verifyQStashSignature(signature, rawBody)` from `@/lib/queue/verify` (or equivalent cryptographic validation) when securing endpoints intended for QStash webhooks. Do not just check truthiness of `req.headers.get('upstash-signature')`.
