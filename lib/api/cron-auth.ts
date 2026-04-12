@@ -15,7 +15,7 @@ export async function verifyCronAuth(
 ): Promise<{ authorized: boolean; body?: string }> {
   const qstashSig = req.headers.get('upstash-signature');
   if (qstashSig) {
-    const rawBody = await req.text();
+    const rawBody = await req.clone().text();
     const result = await verifyQStashSignature(qstashSig, rawBody);
     if (result.valid) {
       logger.info('Cron auth: QStash signature verified');

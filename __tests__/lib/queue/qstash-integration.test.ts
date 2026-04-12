@@ -18,7 +18,10 @@ describe('Queue (in-memory mode)', () => {
   });
 
   it('should not be in QStash mode without env vars', () => {
+    const originalToken = process.env.QSTASH_TOKEN;
+    delete process.env.QSTASH_TOKEN;
     expect(q.isQStashMode()).toBe(false);
+    process.env.QSTASH_TOKEN = originalToken;
   });
 
   it('enqueueSync creates a pending job in memory', () => {
