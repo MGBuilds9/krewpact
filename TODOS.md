@@ -33,14 +33,55 @@ Deferred work captured during eng review (2026-03-30).
 - `payroll/exports/route.ts` — lists payroll_exports globally (needs org filter if table has org_id)
   **Depends on:** Phase 1 multi-tenancy core.
 
-### BoldSign Sender Email
+### BoldSign Sender Email — UI-configurable design (Phase 6 prerequisite)
 
-**What:** `contracts@krewpact.com` is hardcoded as the e-sign sender. Make configurable per-tenant.
-**Why:** Second tenant's contracts will send from KrewPact's email, not their own brand. Confusing for their clients.
-**Pros:** Professional per-tenant contract experience.
-**Cons:** Requires per-tenant email setup (DNS, SPF/DKIM) or shared KrewPact sender with dynamic branding.
-**Context:** Check if `contracts@krewpact.com` actually exists (it may not be set up yet). Add `boldsign_sender_email` to org_settings or branding config. Contracts are behind feature flag — second tenant may not need them in wedge mode.
-**Depends on:** Nothing (can be done independently).
+**What:** `contracts@krewpact.com` is hardcoded as the e-sign sender. The domain doesn't exist in any M365 tenant and probably shouldn't — KrewPact is MDM's internal tool, not a SaaS product with its own external identity. Replace with a per-org, UI-configurable sender email stored in `org_settings`, defaulting to a domain the org actually owns (e.g., `contracts@mdmgroupinc.ca` for MDM Group).
+
+**Why:**
+
+- `krewpact.ca` isn't in MDM's M365 tenant and hasn't had DNS configured
+- Clients should receive contract emails from a domain they recognize (MDM's own)
+- Multi-tenant-ready design — each org should configure their own sender independently
+- Per-division overrides allow divisions with separate brands (e.g., MDM Homes, MDM Telecom) to use their own sender
+
+**Shape (when built in Phase 6):**
+
+1. **Schema** — add columns to `org_settings`:
+
+   ```sql
+   ALTER TABLE org_settings ADD COLUMN contract_sender_email TEXT;
+   ALTER TABLE org_settings ADD COLUMN contract_sender_name TEXT;
+   ALTER TABLE org_settings ADD COLUMN contract_reply_to_email TEXT;
+   ```
+
+   Per-division overrides on `divisions` table: `contract_sender_email`, `contract_sender_name`.
+
+2. **UI** — new section in `app/(dashboard)/org/[orgSlug]/settings/branding/_page-content.tsx` for "Contract Email" with:
+   - Sender email, sender name, reply-to fields
+   - Per-division overrides (collapsible)
+   - "Verify DNS" button that runs SPF/DKIM checks
+   - Warn if domain is `krewpact.ca` (not MDM-owned)
+   - Access: `platform_admin` + `operations_manager` only
+
+3. **Wire-in** — `lib/esign/boldsign.ts` reads sender config via `getContractSenderConfig(orgId, divisionId)` helper that:
+   - Checks division-level override first
+   - Falls back to org-level setting
+   - Falls back to a safe system default (e.g., `noreply@mdmgroupinc.ca`)
+   - Never uses a hardcoded value
+
+4. **Validation** — Zod schema rejects malformed emails, warns on unverified domains
+
+**Dependencies:** None blocking. But the BoldSign integration itself is dormant in plan v2 (Phase 0-4) and only reactivates in Phase 6 if real e-sign demand materializes. This TODO becomes relevant at that point.
+
+**Before Phase 6 starts:**
+
+- Confirm which MDM domain to use (recommended: `mdmgroupinc.ca`, since MDM already owns it)
+- Create the mailbox in M365
+- Configure BoldSign's SPF/DKIM records in DNS
+- Then build the UI-configurable sender design above
+- Then reactivate the BoldSign integration behind feature flag
+
+**Depends on:** Phase 6 reactivation of BoldSign.
 
 ## Design
 

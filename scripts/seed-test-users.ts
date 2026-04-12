@@ -177,21 +177,65 @@ const TEST_USERS: TestUser[] = [
   },
 ];
 
-async function clerkApiCall(path: string, method: string, body?: unknown) {
-  const res = await fetch(`https://api.clerk.com/v1${path}`, {
-    method,
-    headers: {
-      Authorization: `Bearer ${CLERK_SECRET_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
+async function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
-  if (!res.ok) {
+async function clerkApiCall(
+  path: string,
+  method: string,
+  body?: unknown,
+  maxRetries = 3,
+): Promise<Record<string, unknown>> {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    const res = await fetch(`https://api.clerk.com/v1${path}`, {
+      method,
+      headers: {
+        Authorization: `Bearer ${CLERK_SECRET_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+
+    if (res.ok) return res.json() as Promise<Record<string, unknown>>;
+
+    // 429 rate limit — back off and retry
+    if (res.status === 429 && attempt < maxRetries) {
+      const retryAfter = parseInt(res.headers.get('retry-after') ?? '2', 10);
+      console.warn(
+        `  Clerk 429 rate limit — waiting ${retryAfter}s (attempt ${attempt}/${maxRetries})`,
+      );
+      await sleep(retryAfter * 1000);
+      continue;
+    }
+
+    // 5xx transient — back off and retry
+    if (res.status >= 500 && attempt < maxRetries) {
+      const backoff = attempt * 2;
+      console.warn(
+        `  Clerk ${res.status} — waiting ${backoff}s (attempt ${attempt}/${maxRetries})`,
+      );
+      await sleep(backoff * 1000);
+      continue;
+    }
+
     const text = await res.text();
     throw new Error(`Clerk API ${method} ${path} failed (${res.status}): ${text}`);
   }
-  return res.json();
+  throw new Error(`Clerk API ${method} ${path} failed after ${maxRetries} retries`);
+}
+
+async function findClerkUserByEmail(email: string): Promise<{ id: string } | null> {
+  try {
+    const result = (await clerkApiCall(
+      `/users?email_address=${encodeURIComponent(email)}`,
+      'GET',
+    )) as unknown as Array<{ id: string }>;
+    if (Array.isArray(result) && result.length > 0) return result[0];
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 async function getOrgId(): Promise<string> {
@@ -328,54 +372,67 @@ async function main() {
       continue;
     }
 
-    // Create Clerk user
+    // Create Clerk user (or find existing — handles 422 idempotently)
     let clerkUser: { id: string };
     try {
-      clerkUser = await clerkApiCall('/users', 'POST', {
+      clerkUser = (await clerkApiCall('/users', 'POST', {
         email_address: [user.email],
         password: TEST_PASSWORD,
         first_name: user.firstName,
         last_name: user.lastName,
         skip_password_checks: true,
-      });
+      })) as { id: string };
     } catch (err) {
-      console.error(`    Clerk create failed: ${err}`);
-      continue;
+      // Clerk 422: email already taken — look up existing user
+      if (!String(err).includes('422')) {
+        console.error(`    Clerk create failed: ${err}`);
+        continue;
+      }
+      const existing = await findClerkUserByEmail(user.email);
+      if (!existing) {
+        console.error(`    Clerk 422 but user not found via search — skipping`);
+        continue;
+      }
+      clerkUser = existing;
+      console.log(`    Clerk user exists (${clerkUser.id}) — reusing`);
     }
 
-    // Insert Supabase user
+    // Upsert Supabase user (idempotent on clerk_id)
     const { data: dbUser, error: userError } = await supabase
       .from('users')
-      .insert({
-        clerk_id: clerkUser.id,
-        email: user.email,
-        full_name: `${user.firstName} ${user.lastName}`,
-        org_id: orgId,
-        is_active: true,
-      })
+      .upsert(
+        {
+          clerk_id: clerkUser.id,
+          email: user.email,
+          full_name: `${user.firstName} ${user.lastName}`,
+          org_id: orgId,
+          is_active: true,
+        },
+        { onConflict: 'clerk_id' },
+      )
       .select('id')
       .single();
 
     if (userError || !dbUser) {
-      console.error(`    Supabase user insert failed: ${userError?.message}`);
+      console.error(`    Supabase user upsert failed: ${userError?.message}`);
       continue;
     }
 
-    // Insert user_roles
+    // Upsert user_roles (idempotent)
     const roleId = await getRoleId(user.roleKey);
-    await supabase.from('user_roles').insert({
-      user_id: dbUser.id,
-      role_id: roleId,
-    });
+    await supabase
+      .from('user_roles')
+      .upsert({ user_id: dbUser.id, role_id: roleId }, { onConflict: 'user_id,role_id' });
 
-    // Insert user_divisions
+    // Upsert user_divisions (idempotent)
     const divisionIds = await getDivisionIds(orgId, user.divisionCodes);
     if (divisionIds.length > 0) {
-      await supabase.from('user_divisions').insert(
+      await supabase.from('user_divisions').upsert(
         divisionIds.map((divId) => ({
           user_id: dbUser.id,
           division_id: divId,
         })),
+        { onConflict: 'user_id,division_id' },
       );
     }
 

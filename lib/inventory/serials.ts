@@ -6,6 +6,7 @@ import type { Database } from '@/types/supabase';
 
 type SerialRow = Database['public']['Tables']['inventory_serials']['Row'];
 type SerialInsert = Database['public']['Tables']['inventory_serials']['Insert'];
+type SerialUpdate = Database['public']['Tables']['inventory_serials']['Update'];
 type LedgerRow = Database['public']['Tables']['inventory_ledger']['Row'];
 
 // Valid status transitions (non-checkout/return)
@@ -188,15 +189,13 @@ export async function returnSerial(
   });
 
   // 3. Update serial
-  const updateData: Record<string, unknown> = {
+  const updateData: SerialUpdate = {
     status: 'in_stock',
     checked_out_to: null,
     current_location_id: data.return_location_id,
     current_spot_id: data.return_spot_id ?? null,
+    ...(data.condition_notes !== undefined && { condition_notes: data.condition_notes }),
   };
-  if (data.condition_notes !== undefined) {
-    updateData.condition_notes = data.condition_notes;
-  }
 
   const { data: updated, error } = await supabase
     .from('inventory_serials')
@@ -232,8 +231,10 @@ export async function updateSerialStatus(
     throw new Error(`Cannot transition from ${serial.status} to ${status}`);
   }
 
-  const updateData: Record<string, unknown> = { status };
-  if (notes !== undefined) updateData.condition_notes = notes;
+  const updateData: SerialUpdate = {
+    status,
+    ...(notes !== undefined && { condition_notes: notes }),
+  };
 
   const { data, error } = await supabase
     .from('inventory_serials')

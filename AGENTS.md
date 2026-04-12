@@ -2,6 +2,63 @@
 
 This file provides guidance to non-Claude AI agents (Codex, Gemini, Cursor) when working in this repository. For Claude-specific instructions, see `CLAUDE.md`.
 
+## Code Discovery
+
+This project uses `codebase-memory-mcp` to maintain a knowledge graph of the codebase.
+Prefer MCP graph tools over grep/glob/file-search for code discovery.
+
+Priority order:
+
+1. `search_graph` — find functions, classes, routes, variables by pattern
+2. `trace_call_path` — trace who calls a function or what it calls
+3. `get_code_snippet` — read specific function/class source code
+4. `query_graph` — run Cypher queries for complex patterns
+5. `get_architecture` — high-level project summary
+
+Fall back to grep/glob only for:
+
+- String literals, error messages, config values
+- Non-code files such as Markdown, YAML, shell scripts, Dockerfiles, and generated outputs
+- Cases where MCP graph tools are insufficient
+
+## Agent Workflow
+
+1. Read this `AGENTS.md` and review `CLAUDE.md` for repo-specific nuance when needed.
+2. Check `.env.local` for required environment variables before attempting integrations.
+3. Review feature flags before touching gated UI or navigation.
+4. Log discovered issues or architecture drift in `docs/issues-log.md` when the task calls for ongoing audit work.
+
+## Blueprint Audit
+
+`blueprint-audit` is an available workspace skill and should be used for milestone drift checks, architecture reviews, and "did we build what we planned" validation.
+
+Repo-specific blueprint sources:
+
+- `docs/architecture/KrewPact-Master-Plan.md`
+- `docs/architecture/KrewPact-Technology-Stack-ADRs.md`
+- `docs/architecture/KrewPact-Feature-Function-PRD-Checklist.md`
+- `docs/architecture/KrewPact-Integration-Contracts.md`
+- `docs/architecture/KrewPact-Architecture-Overview.md`
+- `docs/plans/*.md`
+- `docs/superpowers/specs/*.md`
+- `docs/audits/*.md`
+
+Blueprint audit protocol for this repo:
+
+1. Treat code as the source of truth.
+2. Compare implementation against the blueprint and ADRs.
+3. Record drift as one of: missing, unexpected, naming drift, or behavior drift.
+4. Verify critical integration seams explicitly: Clerk → Supabase RLS, Next.js BFF routes, ERPNext via `lib/erp/client.ts`, QStash jobs, and feature-flag gating.
+5. If implementation is better or more current than the blueprint, update the blueprint rather than forcing the code backward.
+
+When auditing, always check:
+
+- Architectural alignment
+- Security and auth assumptions
+- Data authority boundaries between Supabase and ERPNext
+- Feature-flag coverage for gated surfaces
+- Test and validation status
+
 ## Project Overview
 
 KrewPact is a construction operations platform for MDM Group Inc. (Mississauga, Ontario). It follows a hybrid ERPNext-first architecture: ERPNext owns finance, accounting, and procurement; KrewPact owns UX, field operations, portals, identity, inventory (Mar 2026 — replaces Almyta), and reporting. One Supabase instance. One Clerk auth. One event bus.
@@ -130,22 +187,35 @@ For current route and feature counts, see `docs/audits/`. As of Mar 28, 2026: 12
 - ERPNext auth: `Authorization: token {key}:{secret}` header
 - Supabase generated types: `supabase gen types typescript --local > types/supabase.ts 2>/dev/null`
 - API routes are thin BFF orchestrators — auth, validate (Zod), call `lib/`, return typed response
+- Server Actions are public HTTP endpoints — always validate input, authenticate, authorize, and avoid exposing raw DB errors
 - DB from serverless: use Supabase Supavisor pooler (port 6543, transaction mode), not direct (port 5432)
 - Server Components by default; `'use client'` only when genuinely needed
 - No barrel files — import directly: `import { Button } from '@/components/ui/button'`
 - No `any` — use `unknown` with type guards or Zod
 - No `console.log` — use `lib/logger.ts`
 - Feature flags in `org_settings.feature_flags` (JSONB, per-org) — served via `OrgContext`; never add nav items without a flag
+- Never modify `components/ui/` directly — update via shadcn CLI only
+- Never use `service_role` in client code
+- Never use `auth.uid()` in Supabase RLS with Clerk — use `auth.jwt()` claims
+- No mock data in production code
+- No `window.prompt()` or `window.confirm()` — use dialogs
+- No raw IDs or UUIDs in end-user UI
 
 ## Build Commands
 
 ```bash
 npm run dev            # Next.js dev server (Turbopack)
+npm run validate       # Canonical local validation pass
 npm run build          # Production build
 npm run lint           # ESLint (flat config)
 npm run typecheck      # tsc --noEmit (strict mode)
 npm run test           # Vitest unit tests
+npm run test:coverage  # Unit tests with coverage
 npm run test:e2e       # Playwright E2E (chromium)
+npm run qa:e2e         # Authenticated production QA against deployed app
+npm run format:check   # Prettier check
+npm run health         # Health check script
+npm run health:deep    # Deep health check
 ```
 
 After Supabase schema changes: `supabase gen types typescript --local > types/supabase.ts 2>/dev/null`
@@ -159,6 +229,15 @@ After Supabase schema changes: `supabase gen types typescript --local > types/su
 - **App:** `NEXT_PUBLIC_APP_URL`, `WEBHOOK_SIGNING_SECRET`
 
 Full template and setup: `docs/local-dev.md`
+
+## Planning And Audit Documents
+
+- Core planning docs live in `docs/architecture/`
+- Active implementation plans live in `docs/plans/` and `docs/superpowers/plans/`
+- Detailed specs live in `docs/superpowers/specs/`
+- Historical blueprint and production-readiness audits live in `docs/audits/`
+
+Before large refactors or audit work, read the relevant plan or ADR first.
 
 ## Compliance
 

@@ -23,9 +23,11 @@ import type {
 /**
  * Retrieves paginated stock summary with item and location names.
  *
- * Since Supabase materialized views may not support joins via the
- * PostgREST client, we aggregate from the ledger directly with
- * GROUP BY, joining inventory_items and inventory_locations for names.
+ * Uses the `inventory_stock_summary_secure` view which is a SECURITY INVOKER
+ * wrapper over the materialized view. The view INNER JOINs inventory_items
+ * and inventory_locations, so Supabase RLS on those tables automatically
+ * filters out rows the caller is not authorized to see. No application-layer
+ * RLS filtering needed.
  */
 export async function getStockSummary(
   supabase: SupabaseClient<Database>,
@@ -34,16 +36,21 @@ export async function getStockSummary(
   const pageLimit = filters.limit ?? 50;
   const pageOffset = filters.offset ?? 0;
 
-  // Build the base query on the materialized view
+  // Build the base query on the secure view (RLS via INNER JOIN)
   let query = supabase
-    .from('inventory_stock_summary')
-    .select('item_id, location_id, spot_id, qty_on_hand, total_value, last_transaction_at');
+    .from('inventory_stock_summary_secure')
+    .select(
+      'item_id, location_id, spot_id, qty_on_hand, total_value, last_transaction_at, item_name, item_sku, division_id, location_name',
+    );
 
   if (filters.itemId) {
     query = query.eq('item_id', filters.itemId);
   }
   if (filters.locationId) {
     query = query.eq('location_id', filters.locationId);
+  }
+  if (filters.divisionId) {
+    query = query.eq('division_id', filters.divisionId);
   }
 
   const { data: summaryData, error: summaryError } = await query.range(
@@ -60,75 +67,18 @@ export async function getStockSummary(
     return { data: [], total: 0 };
   }
 
-  // Collect unique item_ids and location_ids for name resolution
-  const itemIds = [...new Set(summaryData.map((r) => r.item_id).filter(Boolean))] as string[];
-  const locationIds = [
-    ...new Set(summaryData.map((r) => r.location_id).filter(Boolean)),
-  ] as string[];
-
-  // Fetch item names and location names in parallel
-  const [itemsResult, locationsResult] = await Promise.all([
-    itemIds.length > 0
-      ? supabase.from('inventory_items').select('id, name, sku, division_id').in('id', itemIds)
-      : Promise.resolve({ data: [], error: null }),
-    locationIds.length > 0
-      ? supabase.from('inventory_locations').select('id, name').in('id', locationIds)
-      : Promise.resolve({ data: [], error: null }),
-  ]);
-
-  const itemMap = new Map(
-    (itemsResult.data ?? []).map((i) => [
-      i.id,
-      { name: i.name, sku: i.sku, division_id: i.division_id },
-    ]),
-  );
-  const locationMap = new Map((locationsResult.data ?? []).map((l) => [l.id, l.name]));
-
-  // RLS consistency: inventory_stock_summary is a materialized view aggregated
-  // from inventory_ledger with no row-level security, so it returns rows for
-  // every item/location regardless of the caller's division access. The
-  // inventory_items and inventory_locations SELECTs above ARE RLS-gated, so
-  // unresolved keys in the maps mean the caller does not have permission to
-  // see those rows. Drop them rather than displaying 'Unknown' fallbacks —
-  // showing aggregated stock numbers for items the user can't open is both a
-  // UX bug and a soft information leak. The underlying matview RLS gap is
-  // tracked separately and needs a SECURITY INVOKER wrapper.
-  const visibleRows = summaryData.filter(
-    (r) => r.item_id && r.location_id && itemMap.has(r.item_id) && locationMap.has(r.location_id),
-  );
-
-  if (visibleRows.length < summaryData.length) {
-    logger.warn('Stock summary filtered RLS-restricted rows', {
-      total: summaryData.length,
-      visible: visibleRows.length,
-      hidden: summaryData.length - visibleRows.length,
-    });
-  }
-
-  // Build enriched rows. Non-null assertions are safe because the filter above
-  // guarantees both maps have the keys.
-  let enriched: StockSummaryRow[] = visibleRows.map((r) => {
-    const item = itemMap.get(r.item_id!)!;
-    return {
-      item_id: r.item_id!,
-      item_name: item.name,
-      item_sku: item.sku ?? '',
-      location_id: r.location_id!,
-      location_name: locationMap.get(r.location_id!)!,
-      spot_id: r.spot_id ?? null,
-      qty_on_hand: Number(r.qty_on_hand ?? 0),
-      total_value: Number(r.total_value ?? 0),
-      last_transaction_at: r.last_transaction_at ?? null,
-      _division_id: item.division_id,
-    };
-  });
-
-  // Division filter
-  if (filters.divisionId) {
-    enriched = enriched.filter(
-      (r) => (r as unknown as { _division_id?: string })._division_id === filters.divisionId,
-    );
-  }
+  // Build enriched rows directly from the view — no separate lookups needed
+  let enriched: StockSummaryRow[] = summaryData.map((r) => ({
+    item_id: r.item_id!,
+    item_name: r.item_name ?? '',
+    item_sku: r.item_sku ?? '',
+    location_id: r.location_id!,
+    location_name: r.location_name ?? '',
+    spot_id: r.spot_id ?? null,
+    qty_on_hand: Number(r.qty_on_hand ?? 0),
+    total_value: Number(r.total_value ?? 0),
+    last_transaction_at: r.last_transaction_at ?? null,
+  }));
 
   // Search filter (item name or SKU)
   if (filters.search) {
@@ -138,13 +88,7 @@ export async function getStockSummary(
     );
   }
 
-  // Clean internal _division_id before returning
-  const result = enriched.map(({ ...r }) => {
-    const { _division_id, ...clean } = r as StockSummaryRow & { _division_id?: string };
-    return clean;
-  });
-
-  return { data: result, total: result.length };
+  return { data: enriched, total: enriched.length };
 }
 
 // ============================================================
@@ -218,10 +162,10 @@ export async function getLowStockItems(
     return [];
   }
 
-  // Get stock levels from the summary view for these items
+  // Get stock levels from the secure view for these items
   const itemIds = items.map((i) => i.id);
   const { data: stockData, error: stockError } = await supabase
-    .from('inventory_stock_summary')
+    .from('inventory_stock_summary_secure')
     .select('item_id, location_id, qty_on_hand')
     .in('item_id', itemIds);
 

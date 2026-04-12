@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { apiFetch, apiFetchList } from '@/lib/api-client';
+import { apiFetch, apiFetchList, apiFetchPaginated } from '@/lib/api-client';
 import { queryKeys } from '@/lib/query-keys';
 
 export interface InventoryItem {
@@ -96,6 +96,38 @@ export function useInventoryItems(options?: UseInventoryItemsOptions) {
   });
 }
 
+export function useInventoryItemsPaginated(options?: UseInventoryItemsOptions) {
+  const { search, divisionId, category, trackingType, isActive, limit, offset } = options ?? {};
+
+  return useQuery({
+    queryKey: [
+      ...queryKeys.inventoryItems.list({
+        search,
+        divisionId,
+        category,
+        trackingType,
+        isActive,
+        limit,
+        offset,
+      }),
+      'paginated',
+    ],
+    queryFn: () =>
+      apiFetchPaginated<InventoryItem>('/api/inventory/items', {
+        params: {
+          search,
+          division_id: divisionId,
+          category,
+          tracking_type: trackingType,
+          is_active: isActive,
+          limit,
+          offset,
+        },
+      }),
+    staleTime: 30_000,
+  });
+}
+
 export function useInventoryItem(id: string) {
   return useQuery({
     queryKey: queryKeys.inventoryItems.detail(id),
@@ -159,6 +191,34 @@ export function useInventoryStock(options?: UseInventoryStockOptions) {
     }),
     queryFn: () =>
       apiFetchList<StockSummaryItem>('/api/inventory/stock', {
+        params: {
+          location_id: locationId,
+          division_id: divisionId,
+          item_id: itemId,
+          limit,
+          offset,
+        },
+      }),
+    staleTime: 30_000,
+  });
+}
+
+export function useInventoryStockPaginated(options?: UseInventoryStockOptions) {
+  const { locationId, divisionId, itemId, limit, offset } = options ?? {};
+
+  return useQuery({
+    queryKey: [
+      ...queryKeys.inventoryStock.list({
+        locationId,
+        divisionId,
+        itemId,
+        limit,
+        offset,
+      }),
+      'paginated',
+    ],
+    queryFn: () =>
+      apiFetchPaginated<StockSummaryItem>('/api/inventory/stock', {
         params: {
           location_id: locationId,
           division_id: divisionId,

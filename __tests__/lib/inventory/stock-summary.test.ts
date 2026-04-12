@@ -127,7 +127,7 @@ describe('getStockSummary', () => {
     mock = createMockSupabase();
   });
 
-  it('returns paginated results with item and location names', async () => {
+  it('returns paginated results with item and location names from secure view', async () => {
     const summaryData = [
       {
         item_id: UUID.item1,
@@ -136,6 +136,10 @@ describe('getStockSummary', () => {
         qty_on_hand: 100,
         total_value: 2500,
         last_transaction_at: '2026-03-20T00:00:00Z',
+        item_name: 'Copper Wire',
+        item_sku: 'CW-001',
+        division_id: UUID.div1,
+        location_name: 'Main Warehouse',
       },
       {
         item_id: UUID.item2,
@@ -144,24 +148,15 @@ describe('getStockSummary', () => {
         qty_on_hand: 50,
         total_value: 1000,
         last_transaction_at: '2026-03-19T00:00:00Z',
+        item_name: 'PVC Conduit',
+        item_sku: 'PVC-002',
+        division_id: UUID.div1,
+        location_name: 'Main Warehouse',
       },
     ];
 
-    resolveAt(mock.table('inventory_stock_summary'), 'range', {
+    resolveAt(mock.table('inventory_stock_summary_secure'), 'range', {
       data: summaryData,
-      error: null,
-    });
-
-    resolveAt(mock.table('inventory_items'), 'in', {
-      data: [
-        { id: UUID.item1, name: 'Copper Wire', sku: 'CW-001', division_id: UUID.div1 },
-        { id: UUID.item2, name: 'PVC Conduit', sku: 'PVC-002', division_id: UUID.div1 },
-      ],
-      error: null,
-    });
-
-    resolveAt(mock.table('inventory_locations'), 'in', {
-      data: [{ id: UUID.loc1, name: 'Main Warehouse' }],
       error: null,
     });
 
@@ -176,7 +171,7 @@ describe('getStockSummary', () => {
   });
 
   it('returns empty array when no stock data', async () => {
-    resolveAt(mock.table('inventory_stock_summary'), 'range', {
+    resolveAt(mock.table('inventory_stock_summary_secure'), 'range', {
       data: [],
       error: null,
     });
@@ -188,7 +183,7 @@ describe('getStockSummary', () => {
   });
 
   it('applies item filter', async () => {
-    resolveAt(mock.table('inventory_stock_summary'), 'range', {
+    resolveAt(mock.table('inventory_stock_summary_secure'), 'range', {
       data: [
         {
           item_id: UUID.item1,
@@ -197,28 +192,25 @@ describe('getStockSummary', () => {
           qty_on_hand: 10,
           total_value: 100,
           last_transaction_at: null,
+          item_name: 'Item A',
+          item_sku: 'A-001',
+          division_id: UUID.div1,
+          location_name: 'Warehouse',
         },
       ],
       error: null,
     });
 
-    resolveAt(mock.table('inventory_items'), 'in', {
-      data: [{ id: UUID.item1, name: 'Item A', sku: 'A-001', division_id: UUID.div1 }],
-      error: null,
-    });
-
-    resolveAt(mock.table('inventory_locations'), 'in', {
-      data: [{ id: UUID.loc1, name: 'Warehouse' }],
-      error: null,
-    });
-
     await getStockSummary(mock.client, { itemId: UUID.item1 });
 
-    expect(mock.table('inventory_stock_summary').eq).toHaveBeenCalledWith('item_id', UUID.item1);
+    expect(mock.table('inventory_stock_summary_secure').eq).toHaveBeenCalledWith(
+      'item_id',
+      UUID.item1,
+    );
   });
 
   it('applies search filter on item name', async () => {
-    resolveAt(mock.table('inventory_stock_summary'), 'range', {
+    resolveAt(mock.table('inventory_stock_summary_secure'), 'range', {
       data: [
         {
           item_id: UUID.item1,
@@ -227,6 +219,10 @@ describe('getStockSummary', () => {
           qty_on_hand: 10,
           total_value: 100,
           last_transaction_at: null,
+          item_name: 'Copper Wire',
+          item_sku: 'CW-001',
+          division_id: UUID.div1,
+          location_name: 'Warehouse',
         },
         {
           item_id: UUID.item2,
@@ -235,21 +231,12 @@ describe('getStockSummary', () => {
           qty_on_hand: 20,
           total_value: 200,
           last_transaction_at: null,
+          item_name: 'Steel Pipe',
+          item_sku: 'SP-002',
+          division_id: UUID.div1,
+          location_name: 'Warehouse',
         },
       ],
-      error: null,
-    });
-
-    resolveAt(mock.table('inventory_items'), 'in', {
-      data: [
-        { id: UUID.item1, name: 'Copper Wire', sku: 'CW-001', division_id: UUID.div1 },
-        { id: UUID.item2, name: 'Steel Pipe', sku: 'SP-002', division_id: UUID.div1 },
-      ],
-      error: null,
-    });
-
-    resolveAt(mock.table('inventory_locations'), 'in', {
-      data: [{ id: UUID.loc1, name: 'Warehouse' }],
       error: null,
     });
 
@@ -260,7 +247,7 @@ describe('getStockSummary', () => {
   });
 
   it('throws on query error', async () => {
-    resolveAt(mock.table('inventory_stock_summary'), 'range', {
+    resolveAt(mock.table('inventory_stock_summary_secure'), 'range', {
       data: null,
       error: { message: 'view not found' },
     });
@@ -268,18 +255,15 @@ describe('getStockSummary', () => {
     await expect(getStockSummary(mock.client, {})).rejects.toThrow('Stock summary query failed');
   });
 
-  // Regression: F1 — inventory items rendered as "Unknown"
-  // Found by /qa on 2026-04-07
-  // Report: .gstack/qa-reports/qa-report-krewpact-ca-2026-04-07-pr-verification.md
-  //
-  // The matview inventory_stock_summary has no RLS, so it returns rows for
-  // items/locations the caller cannot SELECT. The previous implementation
-  // fell back to 'Unknown' for unresolved rows, which displayed phantom
-  // stock positions to users who couldn't actually open the items. The fix
-  // filters those rows out so the UI shows only stock the user is authorized
-  // to inspect.
-  it('filters out rows whose item is RLS-restricted (no Unknown fallback)', async () => {
-    resolveAt(mock.table('inventory_stock_summary'), 'range', {
+  // RLS is now enforced at the database level via the SECURITY INVOKER view.
+  // The INNER JOIN on inventory_items and inventory_locations means rows for
+  // items/locations the caller cannot SELECT are automatically excluded.
+  // These tests verify the function correctly handles what the view returns.
+
+  it('filters out items from other divisions via RLS (secure view returns only visible)', async () => {
+    // The secure view's INNER JOIN + RLS means only visible items are returned.
+    // Mock: the view returns only item1 (item2 is filtered by RLS at DB level).
+    resolveAt(mock.table('inventory_stock_summary_secure'), 'range', {
       data: [
         {
           item_id: UUID.item1,
@@ -288,62 +272,28 @@ describe('getStockSummary', () => {
           qty_on_hand: 10,
           total_value: 100,
           last_transaction_at: null,
-        },
-        {
-          // RLS-restricted: not present in itemMap
-          item_id: UUID.item2,
-          location_id: UUID.loc1,
-          spot_id: null,
-          qty_on_hand: 20,
-          total_value: 200,
-          last_transaction_at: null,
+          item_name: 'Visible Item',
+          item_sku: 'V-001',
+          division_id: UUID.div1,
+          location_name: 'Warehouse A',
         },
       ],
       error: null,
     });
 
-    resolveAt(mock.table('inventory_items'), 'in', {
-      // Only item1 returned; item2 is RLS-blocked
-      data: [{ id: UUID.item1, name: 'Visible Item', sku: 'V-001', division_id: UUID.div1 }],
-      error: null,
-    });
-
-    resolveAt(mock.table('inventory_locations'), 'in', {
-      data: [{ id: UUID.loc1, name: 'Warehouse A' }],
-      error: null,
-    });
-
     const result = await getStockSummary(mock.client, { limit: 10 });
 
-    // Hidden row is dropped, not displayed with 'Unknown' fallback
+    // Only the visible item is returned; RLS-restricted item2 never arrives
     expect(result.data).toHaveLength(1);
     expect(result.data[0].item_id).toBe(UUID.item1);
     expect(result.data[0].item_name).toBe('Visible Item');
     expect(result.data.some((r) => r.item_name === 'Unknown')).toBe(false);
   });
 
-  it('filters out rows whose location is RLS-restricted (no Unknown fallback)', async () => {
-    resolveAt(mock.table('inventory_stock_summary'), 'range', {
-      data: [
-        {
-          item_id: UUID.item1,
-          location_id: UUID.loc1,
-          spot_id: null,
-          qty_on_hand: 10,
-          total_value: 100,
-          last_transaction_at: null,
-        },
-      ],
-      error: null,
-    });
-
-    resolveAt(mock.table('inventory_items'), 'in', {
-      data: [{ id: UUID.item1, name: 'Visible Item', sku: 'V-001', division_id: UUID.div1 }],
-      error: null,
-    });
-
-    resolveAt(mock.table('inventory_locations'), 'in', {
-      // Location is RLS-blocked
+  it('returns empty when user has no division access (secure view returns [])', async () => {
+    // User with zero division access: the secure view returns nothing
+    // because all INNER JOINs on inventory_items fail RLS.
+    resolveAt(mock.table('inventory_stock_summary_secure'), 'range', {
       data: [],
       error: null,
     });
@@ -351,40 +301,42 @@ describe('getStockSummary', () => {
     const result = await getStockSummary(mock.client, { limit: 10 });
 
     expect(result.data).toHaveLength(0);
-    expect(result.data.some((r) => r.location_name === 'Unknown')).toBe(false);
+    expect(result.total).toBe(0);
   });
 
-  it('returns empty result when caller cannot resolve any rows (full RLS gap)', async () => {
-    resolveAt(mock.table('inventory_stock_summary'), 'range', {
-      data: [
-        {
-          item_id: UUID.item1,
-          location_id: UUID.loc1,
-          spot_id: null,
-          qty_on_hand: 10,
-          total_value: 100,
-          last_transaction_at: null,
-        },
-        {
-          item_id: UUID.item2,
-          location_id: UUID.loc1,
-          spot_id: null,
-          qty_on_hand: 20,
-          total_value: 200,
-          last_transaction_at: null,
-        },
-      ],
+  it('handles matview with RLS join correctly — enriched fields come from view directly', async () => {
+    // Verify that item_name, item_sku, division_id, and location_name
+    // are read directly from the secure view, not from separate lookups.
+    const viewRow = {
+      item_id: UUID.item1,
+      location_id: UUID.loc1,
+      spot_id: null,
+      qty_on_hand: 42,
+      total_value: 1050,
+      last_transaction_at: '2026-04-09T12:00:00Z',
+      item_name: 'Fiber Optic Cable',
+      item_sku: 'FOC-100',
+      division_id: UUID.divTelecom,
+      location_name: 'Telecom Yard',
+    };
+
+    resolveAt(mock.table('inventory_stock_summary_secure'), 'range', {
+      data: [viewRow],
       error: null,
     });
 
-    // Caller has zero division access — items list is empty
-    resolveAt(mock.table('inventory_items'), 'in', { data: [], error: null });
-    resolveAt(mock.table('inventory_locations'), 'in', { data: [], error: null });
-
     const result = await getStockSummary(mock.client, { limit: 10 });
 
-    expect(result.data).toHaveLength(0);
-    expect(result.total).toBe(0);
+    expect(result.data).toHaveLength(1);
+    expect(result.data[0].item_name).toBe('Fiber Optic Cable');
+    expect(result.data[0].item_sku).toBe('FOC-100');
+    expect(result.data[0].location_name).toBe('Telecom Yard');
+    expect(result.data[0].qty_on_hand).toBe(42);
+    expect(result.data[0].total_value).toBe(1050);
+
+    // No separate inventory_items or inventory_locations queries should exist
+    expect(mock.from).not.toHaveBeenCalledWith('inventory_items');
+    expect(mock.from).not.toHaveBeenCalledWith('inventory_locations');
   });
 });
 
@@ -414,7 +366,7 @@ describe('getLowStockItems', () => {
       error: null,
     });
 
-    resolveAt(mock.table('inventory_stock_summary'), 'in', {
+    resolveAt(mock.table('inventory_stock_summary_secure'), 'in', {
       data: [
         { item_id: UUID.item1, location_id: UUID.loc1, qty_on_hand: 30 },
         { item_id: UUID.item2, location_id: UUID.loc1, qty_on_hand: 60 },
@@ -482,7 +434,7 @@ describe('getLowStockItems', () => {
     });
 
     // No stock rows for this item
-    resolveAt(mock.table('inventory_stock_summary'), 'in', {
+    resolveAt(mock.table('inventory_stock_summary_secure'), 'in', {
       data: [],
       error: null,
     });

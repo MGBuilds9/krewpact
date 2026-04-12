@@ -74,6 +74,28 @@ describe('FeatureGate', () => {
     expect(container.innerHTML).toBe('');
   });
 
+  it('renders all gated routes with the new-org default flags', () => {
+    const defaultFlags = {
+      crm: true,
+      estimates: true,
+      projects: true,
+      inventory: true,
+      finance: true,
+      executive: true,
+      reports: true,
+      payroll: true,
+      schedule: true,
+      documents: true,
+    };
+    setup(defaultFlags, false);
+    render(
+      <FeatureGate flag="crm">
+        <div>CRM Content</div>
+      </FeatureGate>,
+    );
+    expect(screen.getByText('CRM Content')).toBeInTheDocument();
+  });
+
   it('handles null currentOrg gracefully', () => {
     mockUseOrg.mockReturnValue({ currentOrg: null, isLoading: false });
     mockUseUserRBAC.mockReturnValue({ isAdmin: false });

@@ -5,7 +5,7 @@ Construction operations platform for MDM Group Inc. (Mississauga, Ontario). Hybr
 ## Stack
 
 - **Framework:** Next.js 16 (App Router, React 19, Server Components) on Vercel
-- **Database:** Supabase PostgreSQL (Pro tier) — RLS, Realtime, Storage
+- **Database:** Supabase PostgreSQL (free tier, upgrade to Pro before Phase 5 pilot) — RLS, Realtime, Storage
 - **Auth:** Clerk (Third-Party Auth session tokens → Supabase RLS)
 - **Styling:** Tailwind CSS + shadcn/ui (New York style, Radix primitives for WCAG AA)
 - **Validation:** Zod + React Hook Form + @hookform/resolvers
@@ -74,16 +74,17 @@ app/
       settings/                    # Org settings, team management
       ...
   (portal)/                        # External client/trade partner portal
-  api/                             # ~50 route groups (BFF pattern)
+  api/                             # 374 route handlers (BFF pattern)
     webhooks/                      # Clerk, BoldSign receivers
     erp/                           # ERPNext proxy endpoints
     queue/                         # QStash job processing
     health/                        # Health check endpoint
 components/
   ui/                              # shadcn/ui output — NEVER modify directly
-  shared/                          # Composed components (DataTable, ConfirmDialog,
-                                   # PageHeader, StatusBadge, StatsCard, PageSkeleton,
-                                   # DataTableSkeleton, EmptyState, FormSection)
+  shared/                          # Composed components (PageHeader, StatusBadge,
+                                   # StatsCard, PageSkeleton, DataTableSkeleton,
+                                   # EmptyState, FormSection, FeatureGate,
+                                   # OfflineSyncListener)
   [Domain]/                        # Domain-grouped (CRM/, Projects/, Layout/)
 hooks/
   use-[domain].ts                  # React Query hooks
@@ -250,6 +251,50 @@ Three parallel jobs in `.github/workflows/ci.yml`:
 
 Node 20. Runs on push to main, PRs to main, and manual dispatch. Vercel auto-deploys on merge.
 
+## GitButler Workflow
+
+KrewPact uses GitButler for virtual branches. This enables parallel workstreams within each phase without merge conflicts.
+
+### Rules for Claude Code + GitButler
+
+- Each virtual branch = one logical workstream (e.g., "bridge-read-layer", "hook-rewrites"), not one file
+- Subagents with worktree isolation can work on separate virtual branches in parallel
+- When all virtual branches in a phase are complete, integrate in GitButler → single PR → review team dispatch
+- Never force-push a virtual branch another subagent is working on
+- Use GitButler's conflict resolution UI when hunks overlap between branches
+- For Phase 1+: plan virtual branch splits before starting implementation — list them in the phase work items
+
+### Typical phase pattern
+
+1. Plan → identify 3-5 virtual branches per phase
+2. Implement in parallel (subagents or sequential, branch per workstream)
+3. Integrate in GitButler when all branches green
+4. `npm run validate` on integrated result
+5. Dispatch review team
+6. PR → merge
+
+## ERPNext SSO Configuration
+
+**Frappe Social Login Key gotcha:** Custom providers do NOT include `response_type=code` in the authorize URL automatically. The `rauth` library constructs `authorize_url + "?" + urlencode(params)` but never adds `response_type`. Fix (one-time global):
+
+```javascript
+// Run in ERPNext browser console (F12)
+fetch('/api/method/frappe.client.set_value', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', 'X-Frappe-CSRF-Token': frappe.csrf_token },
+  body: JSON.stringify({
+    doctype: 'Social Login Key',
+    name: 'clerk',
+    fieldname: 'auth_url_data',
+    value: '{"response_type":"code","scope":"openid profile email"}',
+  }),
+})
+  .then((r) => r.json())
+  .then((d) => console.log('Done:', d));
+```
+
+ERPNext VM: `192.168.128.21` on Hyper-V host `MDM-Server` (`100.81.237.43` via Netbird). SSH from host requires VM credentials (not the Windows host password).
+
 ## Agent Rules
 
 ### Session Protocol
@@ -377,6 +422,35 @@ Deferred: Azure/M365, ADP, BoldSign (Week 7+). Full template: `docs/local-dev.md
 Architecture docs in `docs/architecture/`: `Master-Plan.md` (scope), `Technology-Stack-ADRs.md` (25 ADRs), `Feature-Function-PRD-Checklist.md` (16 epics), `Integration-Contracts.md` (ERPNext mappings). Internal planning docs (decisions register, cost analysis, strategy brief) archived to OneDrive.
 
 ## Session Log
+
+### April 12, 2026 — Blueprint Audit (88/100) + TS Build Fix
+
+- **Changes:** Full blueprint audit across all architecture docs. 6 parallel subagents audited: blueprints, architectural inventory, ERPNext integration, auth/security, feature completeness, plan phase status. Score 88/100. Single P0 found: Supabase JS v2.102+ `RejectExcessProperties` broke `Record<string, unknown>` patterns in `lib/inventory/serials.ts` (lines 203, 240) and `scripts/inventory-migration/load.ts` (line 118). Fixed: added `SerialUpdate` type alias, replaced untyped `Record` with generated Supabase types; script uses `as any` cast (acceptable for migration tooling).
+- **Auth/security:** 12/12 checks pass. 0 unprotected routes. 0 `auth.uid()` in RLS. `timingSafeEqual` on all webhooks. `service_role` server-only.
+- **ERPNext:** 47/47 mappings match. 0 production bypasses of `lib/erp/client.ts`. Circuit breaker + retry + idempotent upsert all present.
+- **Feature completeness:** CRM, Estimates, Inventory, Executive, Portal, Settings complete. Projects missing dedicated milestones/punch-list routes (embedded in overview). Finance missing AR aging/budgets (ERPNext authoritative — intentional).
+- **CLAUDE.md cleanup:** Fixed shared components list (removed nonexistent ConfirmDialog/DataTable, added FeatureGate/OfflineSyncListener). Updated API route count (374). DataTable lives in `components/CRM/`, not shared.
+- **Tests:** 5,445/5,445 vitest passing. 0 TS errors. Build ✓. Lint 0 errors, 29 warnings (baseline).
+- **Audit report:** `docs/audits/2026-04-12-blueprint-audit.md`
+
+### April 9-10, 2026 — Phase 0 Complete: Foundation + SSO Unlock
+
+- **Changes:** PR #136 (`phase-0/foundation`, 3 commits). 21 files, +1,629/-263 lines. Closed all 5 known gaps (matview RLS SECURITY INVOKER wrapper, F2 prefetch fix, apiFetchPaginated with real totals, Checkly synthetic filter, FeatureGate new-org default). Built `/go/erpnext/[...slug]` SSO redirect route with slug validation + origin-checked return cookie. 27 webhook timing-attack regression tests across 6 endpoints. Seed script retry (Clerk 429 backoff) + idempotent upserts. ERPNext reconcile cron script. Service client audit (4 routes, acceptable risk). Dead lead_stage already cleaned.
+- **SSO unlocked live:** Configured Clerk as OIDC IdP → ERPNext via `frappe-oidc-extended`. Discovered Frappe bug: `rauth` library doesn't add `response_type=code` to authorize URL for Custom providers. Fixed by setting `auth_url_data` field on Social Login Key doctype. Back-to-KrewPact banner bar installed on ERPNext via Website Settings.
+- **Monitoring live:** Sentry "Fatal Event → Phone Alert" rule created. Checkly 4 monitors deployed (health API 1m, auth page 5m, web-leads with webhook secret 5m, homepage 5m). Supabase PITR drill blocked (not Pro) — documented, upgrade before Phase 5.
+- **Review team:** 4 agents dispatched (silent-failure-hunter, code-reviewer, security, test-coverage). P0 findings fixed: anon GRANT removed from secure view, kp_return_url cookie origin-validated, erp-reconcile console.log replaced, 4 missing test cases added. Gate GREEN.
+- **GitButler workflow adopted:** Plan updated with virtual branch patterns for Phase 1+. CLAUDE.md updated with GitButler rules + Frappe SSO gotcha.
+- **Tests:** 5,445/5,445 vitest passing (+41). 0 TS errors. Format clean. Build ✓. Lint 29 warnings (baseline).
+- **Next:** Merge PR #136. Start Phase 1 from plan (ERPNext proper setup for MDM). Use GitButler virtual branches for parallel workstreams (master data imports / user provisioning / runbooks).
+
+### April 8-9, 2026 — Plan v2: Unified Gateway (scope shrink + /autoplan dual-voice review)
+
+- **Changes:** No code changes in the krewpact repo beyond a single `TODOS.md` edit (BoldSign Sender Email entry expanded with the UI-configurable design spec + prettier autofix). The rest of the session was strategic: ran `/autoplan` which dispatched both Codex (via `codex exec`) and an independent Claude subagent for dual-voice CEO review. Both voices converged INDEPENDENTLY on the same critical finding: the original 373-route KrewPact platform was too broad for 22 daily users + solo+AI dev. Codex specifically recommended a "Phase -1 kill-or-commit evaluation" and shrinking KrewPact to a narrow operating layer over ERPNext. After working through alternatives (Xero, Procore, Buildertrend, Odoo SaaS, NetSuite, Frappe Cloud — all ruled out by the user's flat-cost-at-scale constraint), locked in a new architecture: **Unified Gateway** where KrewPact is the single URL users touch, Clerk acts as OIDC Identity Provider to ERPNext (confirmed via research — free tier 50K MAU, `frappe-oidc-extended` plugin v0.4.0 active), and workflows render via one of three patterns: A (KrewPact native), B (KrewPact shell over ERPNext REST), or C (SSO deep-link to ERPNext native UI). Wrote the full plan v2 to `~/.claude/plans/polymorphic-conjuring-stream.md` (~800 lines). Designed the AI agent layer as first-class scope: Vercel AI SDK v6 + AI Gateway + MCP (both client and server), role-aware tool sets (field/pm/estimator/accounting/exec), in-app Cmd-K chat, Daily Log Summarizer as the first live agent in Phase 4. Made explicit per-domain decisions for estimating (Pattern B), procurement (hybrid B+C), and inventory (KP stays source of truth — the one place custom wins). Saved `project_plan_v2_unified_gateway.md` to project memory + updated `MEMORY.md` index. TODOS.md "BoldSign Sender Email" entry expanded to reflect the user's answer ("`contracts@krewpact.ca` doesn't exist, domain not in M365 tenant") with a full UI-configurable design spec deferred to Phase 6 (schema, UI location, per-division overrides, DNS verification, wire-in strategy). Plan file updated to move BoldSign DNS out of Phase 0 blockers into Phase 6 prerequisites.
+- **Key decisions locked (plan v2):** (1) ERPNext stays as financial backbone — premise challenged and re-confirmed via user's flat-cost-at-scale constraint. SaaS alternatives (Xero, QBO, Procore, Buildertrend) ruled out because per-user pricing punishes growth. Self-hosted ERPNext + Vercel + Supabase = ~$100-500/mo flat from 22 → 100+ users. (2) Scope shrunk per dual-voice convergence — dormant code stays in repo, feature-flagged off, active surface ~200 routes instead of 373. (3) Takeoff deferred to Phase 7 — no good open-source AI takeoff exists in 2026, will integrate Togal/Kreo API or build custom vision-model tool later. (4) AI agent layer is first-class Phase 4 scope — not a bolt-on. (5) Per-phase review team pattern: each phase dispatches 4-5 named review agents after implementation, before gate. No phase advances without green review. (6) Pilot will be workflow-balanced, NOT role-balanced (per Codex) — one division, one end-to-end revenue path, not 5-8 people across all roles.
+- **Files touched:** `TODOS.md` (BoldSign entry rewrite + prettier), `~/.claude/plans/polymorphic-conjuring-stream.md` (full v2 rewrite), `~/.claude/projects/.../memory/project_plan_v2_unified_gateway.md` (new), `~/.claude/projects/.../memory/MEMORY.md` (index update). Restore point at `~/.gstack/projects/MGBuilds9-krewpact/main-autoplan-restore-20260407-220103.md`.
+- **Tests:** 5,404/5,404 vitest passing. Zero TypeScript errors. Format clean after prettier autofix on TODOS.md. Build ✓ 170 static pages. Lint 29 warnings (all pre-existing). `npm run validate` green end-to-end.
+- **Follow-ups in TODOS.md:** Matview RLS gap (Phase 0 item #1), F2 slow inventory (Phase 0 item #2), Checkly synthetic filter, FeatureGate new-org default, apiFetchList total-count discard, BoldSign UI-configurable sender (Phase 6), MDM needs to confirm contract sender domain before Phase 6 (recommended: `mdmgroupinc.ca`).
+- **Next session:** Start Phase 0 from `~/.claude/plans/polymorphic-conjuring-stream.md`. Use the review team dispatch pattern (4-5 named agents) at the phase gate. Don't re-litigate ERPNext or scope — both locked in plan v2. Auto-memory will load `project_plan_v2_unified_gateway.md` for context. Phase 0 work: close 5 known gaps + 7 critical error/rescue gaps + SSO unlock (Clerk OIDC → ERPNext via `frappe-oidc-extended`) + webhook timing regression tests + cherry-picks (C3 backup drill, C7 tests, dead lead_stage cleanup, service client audit). Target: ~1 week focused work.
 
 ### April 8, 2026 - Repo Hygiene #47
 
