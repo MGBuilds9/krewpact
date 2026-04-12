@@ -8,6 +8,7 @@ import {
   computeProjectPortfolio,
   computeSubscriptionSummary,
 } from '@/lib/executive/metrics';
+import { verifyQStashSignature } from '@/lib/queue/verify';
 import { createServiceClient } from '@/lib/supabase/server';
 
 export const POST = withApiRoute({ auth: 'public' }, async ({ req, logger }) => {
@@ -15,7 +16,18 @@ export const POST = withApiRoute({ auth: 'public' }, async ({ req, logger }) => 
   const authHeader = req.headers.get('authorization');
   const qstashSignature = req.headers.get('upstash-signature');
 
-  if (!qstashSignature && authHeader !== `Bearer ${process.env.QSTASH_TOKEN}`) {
+  let isQstashValid = false;
+  if (qstashSignature) {
+    const rawBody = await req.clone().text();
+    const verification = await verifyQStashSignature(qstashSignature, rawBody);
+    if (verification.valid) {
+      isQstashValid = true;
+    } else {
+      throw forbidden('Invalid QStash signature');
+    }
+  }
+
+  if (!isQstashValid && authHeader !== `Bearer ${process.env.QSTASH_TOKEN}`) {
     const { auth } = await import('@clerk/nextjs/server');
     const { userId } = await auth();
     if (!userId) throw forbidden('Unauthorized');
