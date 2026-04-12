@@ -188,7 +188,7 @@ export async function returnSerial(
   });
 
   // 3. Update serial
-  const updateData: Record<string, unknown> = {
+  const updateData: Database['public']['Tables']['inventory_serials']['Update'] = {
     status: 'in_stock',
     checked_out_to: null,
     current_location_id: data.return_location_id,
@@ -232,7 +232,7 @@ export async function updateSerialStatus(
     throw new Error(`Cannot transition from ${serial.status} to ${status}`);
   }
 
-  const updateData: Record<string, unknown> = { status };
+  const updateData: Database['public']['Tables']['inventory_serials']['Update'] = { status };
   if (notes !== undefined) updateData.condition_notes = notes;
 
   const { data, error } = await supabase

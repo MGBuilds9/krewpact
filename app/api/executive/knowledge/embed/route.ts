@@ -7,11 +7,20 @@ import { createServiceClient } from '@/lib/supabase/server';
 
 type ServiceClient = Awaited<ReturnType<typeof createServiceClient>>;
 
+import { verifyQStashSignature } from '@/lib/queue/verify';
+
 async function verifyEmbedAuth(req: Request): Promise<void> {
   const qstashSignature = req.headers.get('upstash-signature');
   const authHeader = req.headers.get('authorization');
 
-  if (qstashSignature || authHeader === `Bearer ${process.env.QSTASH_TOKEN}`) return;
+  if (qstashSignature) {
+    const rawBody = await req.clone().text();
+    const result = await verifyQStashSignature(qstashSignature, rawBody);
+    if (!result.valid) throw forbidden('Invalid QStash signature');
+    return;
+  }
+
+  if (authHeader === `Bearer ${process.env.QSTASH_TOKEN}`) return;
 
   const { auth } = await import('@clerk/nextjs/server');
   const { userId } = await auth();

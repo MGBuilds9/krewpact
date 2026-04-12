@@ -108,14 +108,14 @@ interface RecoverOptions<T> {
   result: LoadResult;
 }
 
-async function recoverBatchRowByRow<T extends Record<string, unknown>>(
+async function recoverBatchRowByRow<T extends Record<string, any>>(
   opts: RecoverOptions<T>,
 ): Promise<void> {
   const { supabase, table, batch, batchNum, result } = opts;
   console.log(`    Retrying batch ${batchNum} row-by-row...`);
   let recovered = 0;
   for (const row of batch) {
-    const { error: rowError } = await supabase.from(table).insert(row);
+    const { error: rowError } = await supabase.from(table).insert(row as any);
     if (rowError) {
       result.errors.push(
         `Row error: ${rowError.message} — ${JSON.stringify(row).substring(0, 200)}`,
@@ -133,7 +133,7 @@ async function recoverBatchRowByRow<T extends Record<string, unknown>>(
  * Batch insert rows into a Supabase table.
  * Processes BATCH_SIZE rows at a time, logs progress, collects errors.
  */
-async function batchInsert<T extends Record<string, unknown>>(
+async function batchInsert<T extends Record<string, any>>(
   supabase: SupabaseClient,
   table: string,
   rows: T[],
@@ -159,7 +159,7 @@ async function batchInsert<T extends Record<string, unknown>>(
 
     process.stdout.write(`  ${table}: batch ${batchNum}/${totalBatches} (${batch.length} rows)...`);
 
-    const { error } = await supabase.from(table).insert(batch);
+    const { error } = await supabase.from(table).insert(batch as any[]);
 
     if (error) {
       result.failed += batch.length;
@@ -231,7 +231,7 @@ async function run(): Promise<void> {
     await batchInsert(
       supabase,
       'inventory_item_categories',
-      categories as unknown as Record<string, unknown>[],
+      categories as unknown as Record<string, any>[],
     ),
   );
 
@@ -239,7 +239,7 @@ async function run(): Promise<void> {
   console.log('\nStep 2/4: inventory_items');
   const items = loadJSON<TransformedItem>('items.json');
   results.push(
-    await batchInsert(supabase, 'inventory_items', items as unknown as Record<string, unknown>[]),
+    await batchInsert(supabase, 'inventory_items', items as unknown as Record<string, any>[]),
   );
 
   // 3. Serials (depends on items)
@@ -247,11 +247,7 @@ async function run(): Promise<void> {
   const serials = loadJSON<TransformedSerial>('serials.json');
   if (serials.length > 0) {
     results.push(
-      await batchInsert(
-        supabase,
-        'inventory_serials',
-        serials as unknown as Record<string, unknown>[],
-      ),
+      await batchInsert(supabase, 'inventory_serials', serials as unknown as Record<string, any>[]),
     );
   } else {
     console.log('  No serial records to insert.');
@@ -263,11 +259,7 @@ async function run(): Promise<void> {
   const ledger = loadJSON<TransformedLedgerEntry>('initial_stock.json');
   if (ledger.length > 0) {
     results.push(
-      await batchInsert(
-        supabase,
-        'inventory_ledger',
-        ledger as unknown as Record<string, unknown>[],
-      ),
+      await batchInsert(supabase, 'inventory_ledger', ledger as unknown as Record<string, any>[]),
     );
   } else {
     console.log('  No initial stock entries to insert.');
