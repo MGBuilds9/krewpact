@@ -1,3 +1,5 @@
+import { timingSafeEqual } from 'node:crypto';
+
 import { NextResponse } from 'next/server';
 
 import { forbidden, serverError } from '@/lib/api/errors';
@@ -8,14 +10,39 @@ import {
   computeProjectPortfolio,
   computeSubscriptionSummary,
 } from '@/lib/executive/metrics';
+import { verifyQStashSignature } from '@/lib/queue/verify';
 import { createServiceClient } from '@/lib/supabase/server';
 
+// eslint-disable-next-line max-lines-per-function, complexity
 export const POST = withApiRoute({ auth: 'public' }, async ({ req, logger }) => {
   // Auth: QStash signature, bearer token, or platform_admin
   const authHeader = req.headers.get('authorization');
   const qstashSignature = req.headers.get('upstash-signature');
+  const qstashToken = process.env.QSTASH_TOKEN;
 
-  if (!qstashSignature && authHeader !== `Bearer ${process.env.QSTASH_TOKEN}`) {
+  let isQueueAuthorized = false;
+
+  if (qstashSignature) {
+    const rawBody = await req.clone().text();
+    const verification = await verifyQStashSignature(qstashSignature, rawBody);
+    if (verification.valid) {
+      isQueueAuthorized = true;
+    }
+  }
+
+  if (!isQueueAuthorized && qstashToken && authHeader) {
+    const expected = `Bearer ${qstashToken}`;
+    const headerBuf = Buffer.from(authHeader);
+    const expectedBuf = Buffer.from(expected);
+    if (
+      headerBuf.byteLength === expectedBuf.byteLength &&
+      timingSafeEqual(headerBuf, expectedBuf)
+    ) {
+      isQueueAuthorized = true;
+    }
+  }
+
+  if (!isQueueAuthorized) {
     const { auth } = await import('@clerk/nextjs/server');
     const { userId } = await auth();
     if (!userId) throw forbidden('Unauthorized');

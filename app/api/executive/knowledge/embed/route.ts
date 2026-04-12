@@ -1,8 +1,11 @@
+import { timingSafeEqual } from 'node:crypto';
+
 import { NextResponse } from 'next/server';
 
 import { forbidden, notFound, serverError } from '@/lib/api/errors';
 import { withApiRoute } from '@/lib/api/with-api-route';
 import { chunkDocument, embedChunks } from '@/lib/knowledge/embeddings';
+import { verifyQStashSignature } from '@/lib/queue/verify';
 import { createServiceClient } from '@/lib/supabase/server';
 
 type ServiceClient = Awaited<ReturnType<typeof createServiceClient>>;
@@ -11,7 +14,25 @@ async function verifyEmbedAuth(req: Request): Promise<void> {
   const qstashSignature = req.headers.get('upstash-signature');
   const authHeader = req.headers.get('authorization');
 
-  if (qstashSignature || authHeader === `Bearer ${process.env.QSTASH_TOKEN}`) return;
+  if (qstashSignature) {
+    const rawBody = await req.clone().text();
+    const verification = await verifyQStashSignature(qstashSignature, rawBody);
+    if (verification.valid) return;
+  }
+
+  const qstashToken = process.env.QSTASH_TOKEN;
+  if (qstashToken && authHeader) {
+    const expected = `Bearer ${qstashToken}`;
+    const headerBuf = Buffer.from(authHeader);
+    const expectedBuf = Buffer.from(expected);
+    if (
+      headerBuf.byteLength === expectedBuf.byteLength &&
+      timingSafeEqual(headerBuf, expectedBuf)
+    ) {
+      return;
+    }
+  }
+
 
   const { auth } = await import('@clerk/nextjs/server');
   const { userId } = await auth();

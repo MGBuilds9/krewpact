@@ -18,7 +18,14 @@ describe('Queue (in-memory mode)', () => {
   });
 
   it('should not be in QStash mode without env vars', () => {
+    const orig = process.env.QSTASH_TOKEN;
+    delete process.env.QSTASH_TOKEN;
     expect(q.isQStashMode()).toBe(false);
+    if (orig === undefined) {
+      delete process.env.QSTASH_TOKEN;
+    } else {
+      process.env.QSTASH_TOKEN = orig;
+    }
   });
 
   it('enqueueSync creates a pending job in memory', () => {
@@ -34,6 +41,8 @@ describe('Queue (in-memory mode)', () => {
   });
 
   it('async enqueue falls back to in-memory when no QStash token', async () => {
+    const orig = process.env.QSTASH_TOKEN;
+    delete process.env.QSTASH_TOKEN;
     const job = await q.enqueue(JobType.ERPSyncContact, {
       entityId: '456',
       userId: 'user-2',
@@ -41,6 +50,11 @@ describe('Queue (in-memory mode)', () => {
 
     expect(job.status).toBe('pending');
     expect(q.getJob(job.id)).toBeDefined();
+    if (orig === undefined) {
+      delete process.env.QSTASH_TOKEN;
+    } else {
+      process.env.QSTASH_TOKEN = orig;
+    }
   });
 
   it('getStats returns correct counts', () => {
