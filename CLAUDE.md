@@ -5,7 +5,7 @@ Construction operations platform for MDM Group Inc. (Mississauga, Ontario). Hybr
 ## Stack
 
 - **Framework:** Next.js 16 (App Router, React 19, Server Components) on Vercel
-- **Database:** Supabase PostgreSQL (Pro tier) — RLS, Realtime, Storage
+- **Database:** Supabase PostgreSQL (free tier, upgrade to Pro before Phase 5 pilot) — RLS, Realtime, Storage
 - **Auth:** Clerk (Third-Party Auth session tokens → Supabase RLS)
 - **Styling:** Tailwind CSS + shadcn/ui (New York style, Radix primitives for WCAG AA)
 - **Validation:** Zod + React Hook Form + @hookform/resolvers
@@ -250,6 +250,50 @@ Three parallel jobs in `.github/workflows/ci.yml`:
 
 Node 20. Runs on push to main, PRs to main, and manual dispatch. Vercel auto-deploys on merge.
 
+## GitButler Workflow
+
+KrewPact uses GitButler for virtual branches. This enables parallel workstreams within each phase without merge conflicts.
+
+### Rules for Claude Code + GitButler
+
+- Each virtual branch = one logical workstream (e.g., "bridge-read-layer", "hook-rewrites"), not one file
+- Subagents with worktree isolation can work on separate virtual branches in parallel
+- When all virtual branches in a phase are complete, integrate in GitButler → single PR → review team dispatch
+- Never force-push a virtual branch another subagent is working on
+- Use GitButler's conflict resolution UI when hunks overlap between branches
+- For Phase 1+: plan virtual branch splits before starting implementation — list them in the phase work items
+
+### Typical phase pattern
+
+1. Plan → identify 3-5 virtual branches per phase
+2. Implement in parallel (subagents or sequential, branch per workstream)
+3. Integrate in GitButler when all branches green
+4. `npm run validate` on integrated result
+5. Dispatch review team
+6. PR → merge
+
+## ERPNext SSO Configuration
+
+**Frappe Social Login Key gotcha:** Custom providers do NOT include `response_type=code` in the authorize URL automatically. The `rauth` library constructs `authorize_url + "?" + urlencode(params)` but never adds `response_type`. Fix (one-time global):
+
+```javascript
+// Run in ERPNext browser console (F12)
+fetch('/api/method/frappe.client.set_value', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', 'X-Frappe-CSRF-Token': frappe.csrf_token },
+  body: JSON.stringify({
+    doctype: 'Social Login Key',
+    name: 'clerk',
+    fieldname: 'auth_url_data',
+    value: '{"response_type":"code","scope":"openid profile email"}',
+  }),
+})
+  .then((r) => r.json())
+  .then((d) => console.log('Done:', d));
+```
+
+ERPNext VM: `192.168.128.21` on Hyper-V host `MDM-Server` (`100.81.237.43` via Netbird). SSH from host requires VM credentials (not the Windows host password).
+
 ## Agent Rules
 
 ### Session Protocol
@@ -377,6 +421,16 @@ Deferred: Azure/M365, ADP, BoldSign (Week 7+). Full template: `docs/local-dev.md
 Architecture docs in `docs/architecture/`: `Master-Plan.md` (scope), `Technology-Stack-ADRs.md` (25 ADRs), `Feature-Function-PRD-Checklist.md` (16 epics), `Integration-Contracts.md` (ERPNext mappings). Internal planning docs (decisions register, cost analysis, strategy brief) archived to OneDrive.
 
 ## Session Log
+
+### April 9-10, 2026 — Phase 0 Complete: Foundation + SSO Unlock
+
+- **Changes:** PR #136 (`phase-0/foundation`, 3 commits). 21 files, +1,629/-263 lines. Closed all 5 known gaps (matview RLS SECURITY INVOKER wrapper, F2 prefetch fix, apiFetchPaginated with real totals, Checkly synthetic filter, FeatureGate new-org default). Built `/go/erpnext/[...slug]` SSO redirect route with slug validation + origin-checked return cookie. 27 webhook timing-attack regression tests across 6 endpoints. Seed script retry (Clerk 429 backoff) + idempotent upserts. ERPNext reconcile cron script. Service client audit (4 routes, acceptable risk). Dead lead_stage already cleaned.
+- **SSO unlocked live:** Configured Clerk as OIDC IdP → ERPNext via `frappe-oidc-extended`. Discovered Frappe bug: `rauth` library doesn't add `response_type=code` to authorize URL for Custom providers. Fixed by setting `auth_url_data` field on Social Login Key doctype. Back-to-KrewPact banner bar installed on ERPNext via Website Settings.
+- **Monitoring live:** Sentry "Fatal Event → Phone Alert" rule created. Checkly 4 monitors deployed (health API 1m, auth page 5m, web-leads with webhook secret 5m, homepage 5m). Supabase PITR drill blocked (not Pro) — documented, upgrade before Phase 5.
+- **Review team:** 4 agents dispatched (silent-failure-hunter, code-reviewer, security, test-coverage). P0 findings fixed: anon GRANT removed from secure view, kp_return_url cookie origin-validated, erp-reconcile console.log replaced, 4 missing test cases added. Gate GREEN.
+- **GitButler workflow adopted:** Plan updated with virtual branch patterns for Phase 1+. CLAUDE.md updated with GitButler rules + Frappe SSO gotcha.
+- **Tests:** 5,445/5,445 vitest passing (+41). 0 TS errors. Format clean. Build ✓. Lint 29 warnings (baseline).
+- **Next:** Merge PR #136. Start Phase 1 from plan (ERPNext proper setup for MDM). Use GitButler virtual branches for parallel workstreams (master data imports / user provisioning / runbooks).
 
 ### April 8-9, 2026 — Plan v2: Unified Gateway (scope shrink + /autoplan dual-voice review)
 
