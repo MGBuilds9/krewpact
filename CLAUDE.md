@@ -74,16 +74,17 @@ app/
       settings/                    # Org settings, team management
       ...
   (portal)/                        # External client/trade partner portal
-  api/                             # ~50 route groups (BFF pattern)
+  api/                             # 374 route handlers (BFF pattern)
     webhooks/                      # Clerk, BoldSign receivers
     erp/                           # ERPNext proxy endpoints
     queue/                         # QStash job processing
     health/                        # Health check endpoint
 components/
   ui/                              # shadcn/ui output — NEVER modify directly
-  shared/                          # Composed components (DataTable, ConfirmDialog,
-                                   # PageHeader, StatusBadge, StatsCard, PageSkeleton,
-                                   # DataTableSkeleton, EmptyState, FormSection)
+  shared/                          # Composed components (PageHeader, StatusBadge,
+                                   # StatsCard, PageSkeleton, DataTableSkeleton,
+                                   # EmptyState, FormSection, FeatureGate,
+                                   # OfflineSyncListener)
   [Domain]/                        # Domain-grouped (CRM/, Projects/, Layout/)
 hooks/
   use-[domain].ts                  # React Query hooks
@@ -421,6 +422,16 @@ Deferred: Azure/M365, ADP, BoldSign (Week 7+). Full template: `docs/local-dev.md
 Architecture docs in `docs/architecture/`: `Master-Plan.md` (scope), `Technology-Stack-ADRs.md` (25 ADRs), `Feature-Function-PRD-Checklist.md` (16 epics), `Integration-Contracts.md` (ERPNext mappings). Internal planning docs (decisions register, cost analysis, strategy brief) archived to OneDrive.
 
 ## Session Log
+
+### April 12, 2026 — Blueprint Audit (88/100) + TS Build Fix
+
+- **Changes:** Full blueprint audit across all architecture docs. 6 parallel subagents audited: blueprints, architectural inventory, ERPNext integration, auth/security, feature completeness, plan phase status. Score 88/100. Single P0 found: Supabase JS v2.102+ `RejectExcessProperties` broke `Record<string, unknown>` patterns in `lib/inventory/serials.ts` (lines 203, 240) and `scripts/inventory-migration/load.ts` (line 118). Fixed: added `SerialUpdate` type alias, replaced untyped `Record` with generated Supabase types; script uses `as any` cast (acceptable for migration tooling).
+- **Auth/security:** 12/12 checks pass. 0 unprotected routes. 0 `auth.uid()` in RLS. `timingSafeEqual` on all webhooks. `service_role` server-only.
+- **ERPNext:** 47/47 mappings match. 0 production bypasses of `lib/erp/client.ts`. Circuit breaker + retry + idempotent upsert all present.
+- **Feature completeness:** CRM, Estimates, Inventory, Executive, Portal, Settings complete. Projects missing dedicated milestones/punch-list routes (embedded in overview). Finance missing AR aging/budgets (ERPNext authoritative — intentional).
+- **CLAUDE.md cleanup:** Fixed shared components list (removed nonexistent ConfirmDialog/DataTable, added FeatureGate/OfflineSyncListener). Updated API route count (374). DataTable lives in `components/CRM/`, not shared.
+- **Tests:** 5,445/5,445 vitest passing. 0 TS errors. Build ✓. Lint 0 errors, 29 warnings (baseline).
+- **Audit report:** `docs/audits/2026-04-12-blueprint-audit.md`
 
 ### April 9-10, 2026 — Phase 0 Complete: Foundation + SSO Unlock
 

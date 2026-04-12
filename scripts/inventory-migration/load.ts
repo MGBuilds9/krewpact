@@ -115,7 +115,8 @@ async function recoverBatchRowByRow<T extends Record<string, unknown>>(
   console.log(`    Retrying batch ${batchNum} row-by-row...`);
   let recovered = 0;
   for (const row of batch) {
-    const { error: rowError } = await supabase.from(table).insert(row);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- untyped client in migration script
+    const { error: rowError } = await supabase.from(table).insert(row as any);
     if (rowError) {
       result.errors.push(
         `Row error: ${rowError.message} — ${JSON.stringify(row).substring(0, 200)}`,
@@ -159,7 +160,8 @@ async function batchInsert<T extends Record<string, unknown>>(
 
     process.stdout.write(`  ${table}: batch ${batchNum}/${totalBatches} (${batch.length} rows)...`);
 
-    const { error } = await supabase.from(table).insert(batch);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- untyped client in migration script
+    const { error } = await supabase.from(table).insert(batch as any);
 
     if (error) {
       result.failed += batch.length;
