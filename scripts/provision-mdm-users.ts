@@ -16,7 +16,9 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const DEFAULT_PASSWORD = process.env.QA_TEST_PASSWORD!;
 
 if (!CLERK_SECRET_KEY || !SUPABASE_URL || !SUPABASE_KEY || !DEFAULT_PASSWORD) {
-  console.error('Missing env vars: CLERK_SECRET_KEY, NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, QA_TEST_PASSWORD');
+  console.error(
+    'Missing env vars: CLERK_SECRET_KEY, NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, QA_TEST_PASSWORD',
+  );
   process.exit(1);
 }
 
@@ -57,25 +59,116 @@ interface MDMUser {
 }
 
 const USERS: MDMUser[] = [
-  { email: 'daliasidhom@mdmcontracting.ca', first: 'Dalia', last: 'Sidhom', role: 'estimator', divisions: ['contracting'] },
-  { email: 'david.guirguis@mdmcontracting.ca', first: 'David', last: 'Guirguis', role: 'project_manager', divisions: ALL_DIVS },
-  { email: 'david.mikhail@mdmgroupinc.ca', first: 'David', last: 'Mikhail', role: 'operations_manager', divisions: ['group-inc', 'contracting'] },
-  { email: 'ehabk@mdmcontracting.ca', first: 'Ehab', last: 'Guirguis', role: 'executive', divisions: ALL_DIVS },
-  { email: 'fady.gorgy@mdmgroupinc.ca', first: 'Fady', last: 'Gorgy', role: 'field_supervisor', divisions: ['contracting', 'group-inc'] },
-  { email: 'hani@mdmcontracting.ca', first: 'Hani', last: 'Abdelmalek', role: 'project_coordinator', divisions: ['contracting'] },
-  { email: 'helena.awad@mdmcontracting.ca', first: 'Helena', last: 'Awad', role: 'project_coordinator', divisions: ['contracting'] },
-  { email: 'mahmoud.assi@mdmtelecom.ca', first: 'Mahmoud', last: 'Assi', role: 'operations_manager', divisions: ['telecom'] },
-  { email: 'marian.alfons@mdmgroupinc.ca', first: 'Marian', last: 'Alfons', role: 'accounting', divisions: ALL_DIVS },
-  { email: 'mary.guirguis@mdmgroupinc.ca', first: 'Mary', last: 'Guirguis', role: 'payroll_admin', divisions: ALL_DIVS },
-  { email: 'nagy.salib@mdmgroupinc.ca', first: 'Nagy', last: 'Salib', role: 'project_coordinator', divisions: ['group-inc', 'contracting'] },
-  { email: 'nervine@mdmgroupinc.ca', first: 'Nervine', last: 'Wassef', role: 'executive', divisions: ALL_DIVS },
-  { email: 'karan.singh@mdmgroupinc.ca', first: 'Prabhkaran', last: 'Singh', role: 'field_supervisor', divisions: ['wood', 'contracting'] },
-  { email: 'ragy.awadallah@mdmgroupinc.ca', first: 'Ragy', last: 'Awadallah', role: 'accounting', divisions: ALL_DIVS },
+  {
+    email: 'daliasidhom@mdmcontracting.ca',
+    first: 'Dalia',
+    last: 'Sidhom',
+    role: 'estimator',
+    divisions: ['contracting'],
+  },
+  {
+    email: 'david.guirguis@mdmcontracting.ca',
+    first: 'David',
+    last: 'Guirguis',
+    role: 'project_manager',
+    divisions: ALL_DIVS,
+  },
+  {
+    email: 'david.mikhail@mdmgroupinc.ca',
+    first: 'David',
+    last: 'Mikhail',
+    role: 'operations_manager',
+    divisions: ['group-inc', 'contracting'],
+  },
+  {
+    email: 'ehabk@mdmcontracting.ca',
+    first: 'Ehab',
+    last: 'Guirguis',
+    role: 'executive',
+    divisions: ALL_DIVS,
+  },
+  {
+    email: 'fady.gorgy@mdmgroupinc.ca',
+    first: 'Fady',
+    last: 'Gorgy',
+    role: 'field_supervisor',
+    divisions: ['contracting', 'group-inc'],
+  },
+  {
+    email: 'hani@mdmcontracting.ca',
+    first: 'Hani',
+    last: 'Abdelmalek',
+    role: 'project_coordinator',
+    divisions: ['contracting'],
+  },
+  {
+    email: 'helena.awad@mdmcontracting.ca',
+    first: 'Helena',
+    last: 'Awad',
+    role: 'project_coordinator',
+    divisions: ['contracting'],
+  },
+  {
+    email: 'mahmoud.assi@mdmtelecom.ca',
+    first: 'Mahmoud',
+    last: 'Assi',
+    role: 'operations_manager',
+    divisions: ['telecom'],
+  },
+  {
+    email: 'marian.alfons@mdmgroupinc.ca',
+    first: 'Marian',
+    last: 'Alfons',
+    role: 'accounting',
+    divisions: ALL_DIVS,
+  },
+  {
+    email: 'mary.guirguis@mdmgroupinc.ca',
+    first: 'Mary',
+    last: 'Guirguis',
+    role: 'payroll_admin',
+    divisions: ALL_DIVS,
+  },
+  {
+    email: 'nagy.salib@mdmgroupinc.ca',
+    first: 'Nagy',
+    last: 'Salib',
+    role: 'project_coordinator',
+    divisions: ['group-inc', 'contracting'],
+  },
+  {
+    email: 'nervine@mdmgroupinc.ca',
+    first: 'Nervine',
+    last: 'Wassef',
+    role: 'executive',
+    divisions: ALL_DIVS,
+  },
+  {
+    email: 'karan.singh@mdmgroupinc.ca',
+    first: 'Prabhkaran',
+    last: 'Singh',
+    role: 'field_supervisor',
+    divisions: ['wood', 'contracting'],
+  },
+  {
+    email: 'ragy.awadallah@mdmgroupinc.ca',
+    first: 'Ragy',
+    last: 'Awadallah',
+    role: 'accounting',
+    divisions: ALL_DIVS,
+  },
 ];
 
-function sleep(ms: number) { return new Promise(r => setTimeout(r, ms)); }
+function sleep(ms: number) {
+  return new Promise((r) => setTimeout(r, ms));
+}
 
-async function clerkApi(path: string, method: string, body?: unknown, retries = 3): Promise<Record<string, unknown>> {
+async function clerkApi(
+  path: string,
+  method: string,
+  body?: unknown,
+  retries = 3,
+): Promise<Record<string, unknown>> {
   for (let attempt = 1; attempt <= retries; attempt++) {
     const res = await fetch(`https://api.clerk.com/v1${path}`, {
       method,
@@ -83,8 +176,14 @@ async function clerkApi(path: string, method: string, body?: unknown, retries = 
       body: body ? JSON.stringify(body) : undefined,
     });
     if (res.ok) return res.json() as Promise<Record<string, unknown>>;
-    if (res.status === 429 && attempt < retries) { await sleep(3000); continue; }
-    if (res.status >= 500 && attempt < retries) { await sleep(2000 * attempt); continue; }
+    if (res.status === 429 && attempt < retries) {
+      await sleep(3000);
+      continue;
+    }
+    if (res.status >= 500 && attempt < retries) {
+      await sleep(2000 * attempt);
+      continue;
+    }
     const text = await res.text();
     if (res.status === 422 && text.includes('already exists')) return { already_exists: true };
     throw new Error(`Clerk ${method} ${path} (${res.status}): ${text.substring(0, 200)}`);
@@ -93,7 +192,10 @@ async function clerkApi(path: string, method: string, body?: unknown, retries = 
 }
 
 async function findClerkUser(email: string): Promise<string | null> {
-  const result = await clerkApi(`/users?email_address=${encodeURIComponent(email)}`, 'GET') as unknown as Array<{ id: string }>;
+  const result = (await clerkApi(
+    `/users?email_address=${encodeURIComponent(email)}`,
+    'GET',
+  )) as unknown as Array<{ id: string }>;
   if (Array.isArray(result) && result.length > 0) return result[0].id;
   return null;
 }
@@ -120,26 +222,40 @@ async function provisionUser(user: MDMUser): Promise<void> {
     } else {
       clerkId = result.id as string;
     }
-    if (!clerkId) { console.error('  ERROR: Could not create/find Clerk user'); return; }
+    if (!clerkId) {
+      console.error('  ERROR: Could not create/find Clerk user');
+      return;
+    }
     console.log(`  Clerk: created (${clerkId.substring(0, 20)}...)`);
   }
 
   // 2. Find or create Supabase user
-  const { data: existing } = await supabase.from('users').select('id').eq('clerk_user_id', clerkId).limit(1);
+  const { data: existing } = await supabase
+    .from('users')
+    .select('id')
+    .eq('clerk_user_id', clerkId)
+    .limit(1);
   let dbId: string;
   if (existing && existing.length > 0) {
     dbId = existing[0].id;
     console.log(`  Supabase: exists (${dbId.substring(0, 12)}...)`);
   } else {
-    const { data: created, error } = await supabase.from('users').insert({
-      clerk_user_id: clerkId,
-      email: user.email,
-      first_name: user.first,
-      last_name: user.last,
-      org_id: ORG_ID,
-      status: 'active',
-    }).select('id').single();
-    if (error || !created) { console.error(`  ERROR: Supabase insert failed: ${error?.message}`); return; }
+    const { data: created, error } = await supabase
+      .from('users')
+      .insert({
+        clerk_user_id: clerkId,
+        email: user.email,
+        first_name: user.first,
+        last_name: user.last,
+        org_id: ORG_ID,
+        status: 'active',
+      })
+      .select('id')
+      .single();
+    if (error || !created) {
+      console.error(`  ERROR: Supabase insert failed: ${error?.message}`);
+      return;
+    }
     dbId = created.id;
     console.log(`  Supabase: created (${dbId.substring(0, 12)}...)`);
   }
@@ -147,13 +263,15 @@ async function provisionUser(user: MDMUser): Promise<void> {
   // 3. Assign role
   const roleId = ROLE_IDS[user.role];
   if (roleId) {
-    await supabase.from('user_roles').upsert({ user_id: dbId, role_id: roleId }, { onConflict: 'user_id,role_id' });
+    await supabase
+      .from('user_roles')
+      .upsert({ user_id: dbId, role_id: roleId }, { onConflict: 'user_id,role_id' });
     console.log(`  Role: ${user.role}`);
   }
 
   // 4. Assign divisions
-  const divIds = user.divisions.map(d => DIVS[d]);
-  const divRows = divIds.map(divId => ({ user_id: dbId, division_id: divId }));
+  const divIds = user.divisions.map((d) => DIVS[d]);
+  const divRows = divIds.map((divId) => ({ user_id: dbId, division_id: divId }));
   await supabase.from('user_divisions').upsert(divRows, { onConflict: 'user_id,division_id' });
   console.log(`  Divisions: ${user.divisions.join(', ')}`);
 
@@ -184,4 +302,7 @@ async function main() {
   console.log(`\n=== ${success}/${USERS.length} provisioned successfully ===`);
 }
 
-main().catch(err => { console.error('FATAL:', err); process.exit(1); });
+main().catch((err) => {
+  console.error('FATAL:', err);
+  process.exit(1);
+});

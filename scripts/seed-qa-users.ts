@@ -257,9 +257,7 @@ async function main() {
   console.log('\n=== QA Users Ready ===');
   console.log('Run E2E as each user:');
   for (const user of QA_USERS) {
-    console.log(
-      `  QA_TEST_EMAIL=${user.email} QA_TEST_PASSWORD=$QA_TEST_PASSWORD npm run qa:e2e`,
-    );
+    console.log(`  QA_TEST_EMAIL=${user.email} QA_TEST_PASSWORD=$QA_TEST_PASSWORD npm run qa:e2e`);
   }
   console.log('\nTo run all roles in sequence:');
   console.log('  npm run qa:e2e:multi  (add this script to package.json)');
