@@ -11,7 +11,17 @@ async function verifyEmbedAuth(req: Request): Promise<void> {
   const qstashSignature = req.headers.get('upstash-signature');
   const authHeader = req.headers.get('authorization');
 
-  if (qstashSignature || authHeader === `Bearer ${process.env.QSTASH_TOKEN}`) return;
+  if (qstashSignature) {
+    const { verifyQStashSignature } = await import('@/lib/queue/verify');
+    const rawBody = await req.clone().text();
+    const verification = await verifyQStashSignature(qstashSignature, rawBody);
+    if (!verification.valid) {
+      throw forbidden('Invalid QStash signature');
+    }
+    return;
+  }
+
+  if (authHeader === `Bearer ${process.env.QSTASH_TOKEN}`) return;
 
   const { auth } = await import('@clerk/nextjs/server');
   const { userId } = await auth();
