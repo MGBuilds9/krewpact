@@ -5,6 +5,7 @@
 **Who can do this:** Platform Admin
 
 ## Symptoms
+
 - KrewPact shows "Something went wrong" on data-heavy pages (Inventory, Projects, CRM)
 - Errors in Vercel logs: `remaining connection slots are reserved`, `too many connections`, or `connection pool exhausted`
 - Health check at https://krewpact.ca/api/health returns an error or slow response
@@ -20,20 +21,25 @@
 2. **Check for stuck/idle connections**
    - In Supabase dashboard, go to **Database** → **SQL Editor**
    - Run this query to see who is holding connections:
+
    ```sql
    SELECT pid, state, query_start, query, client_addr
    FROM pg_stat_activity
    WHERE state != 'idle'
    ORDER BY query_start;
    ```
+
    - If you see queries that have been running for more than 5 minutes, they are likely stuck.
 
 3. **Terminate stuck connections**
    - To kill a specific stuck connection (replace `12345` with the actual `pid`):
+
    ```sql
    SELECT pg_terminate_backend(12345);
    ```
+
    - To kill ALL idle connections at once (safe — Vercel will reconnect automatically):
+
    ```sql
    SELECT pg_terminate_backend(pid)
    FROM pg_stat_activity
@@ -56,6 +62,7 @@
    - Reload a data-heavy page like Inventory
 
 ## Escalation
+
 - Michael Guirguis if connections keep exhausting within minutes of being killed (may indicate a runaway background job or missing connection cleanup)
 - Supabase support: https://supabase.com/support (free tier has email support)
 - Note: Upgrade to Supabase Pro before Phase 5 pilot — Pro tier has higher connection limits

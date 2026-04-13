@@ -5,6 +5,7 @@
 **Who can do this:** Platform Admin or Developer
 
 ## Symptoms
+
 - Phone alert fires (Sentry "Fatal Event → Phone Alert" rule)
 - Sentry shows a sudden spike in fatal errors — many in a short window
 - Users report crashes, blank screens, or "Something went wrong" across the platform
@@ -53,6 +54,7 @@
    - The fix must be confirmed locally before re-deploying
 
 ## Escalation
+
 - Michael Guirguis if you cannot identify the cause or the rollback does not stop the spike
 - Sentry support: https://sentry.io/support
 - Vercel support: https://vercel.com/support

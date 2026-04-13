@@ -5,6 +5,7 @@
 **Who can do this:** Developer (or Platform Admin for env var fixes)
 
 ## Symptoms
+
 - GitHub shows a red X on the latest commit to `main`
 - Vercel dashboard shows a red "Error" deployment
 - No new code reaches production — users stay on the previous version
@@ -21,36 +22,46 @@
    - Common patterns and fixes:
 
    **TypeScript error:**
+
    ```
    Type error: Property 'X' does not exist on type 'Y'
    ```
+
    - A developer introduced a type error. The code must be fixed and re-pushed.
    - Do NOT try to "skip" TypeScript errors — they are enforced for safety.
 
    **Missing environment variable:**
+
    ```
    Error: Missing required environment variable: SOME_VAR
    ```
+
    - Go to Vercel → Project Settings → Environment Variables
    - Add the missing variable. Ask Michael Guirguis for the value — never guess.
    - After adding, trigger a redeploy: Deployments → latest commit → **Redeploy**
 
    **npm install / dependency error:**
+
    ```
    npm ERR! peer dep missing
    ```
+
    - A package conflict was introduced. The developer needs to fix `package.json` and `package-lock.json`.
 
    **Build memory/timeout:**
+
    ```
    Error: The build exceeded the memory limit
    ```
+
    - Contact Michael Guirguis — this needs a Vercel plan or build config change.
 
    **ESLint error:**
+
    ```
    Error: X problems (X errors, X warnings)
    ```
+
    - A developer pushed code that fails the linter. Must be fixed in code.
 
 3. **Trigger a redeploy after an env var fix**
@@ -66,5 +77,6 @@
    - Check https://krewpact.ca loads normally
 
 ## Escalation
+
 - Michael Guirguis for TypeScript/lint errors (requires a code fix)
 - Vercel support for build infrastructure issues: https://vercel.com/support

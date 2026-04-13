@@ -5,6 +5,7 @@
 **Who can do this:** Platform Admin or IT
 
 ## Symptoms
+
 - Users see "Sign in failed" or a blank screen at krewpact.ca/sign-in
 - Microsoft SSO button does nothing or loops back to login
 - Slack/email reports of "can't get in"
@@ -39,6 +40,7 @@
    - Complete a full sign-in with Microsoft
 
 ## Escalation
+
 - Clerk support: https://clerk.com/support (include your Clerk Application ID)
 - Michael Guirguis (platform owner) — call if P0 lasts more than 15 minutes
 - Vercel support: https://vercel.com/support

@@ -5,6 +5,7 @@
 **Who can do this:** Platform Admin
 
 ## Symptoms
+
 - A user account is suspected compromised (phishing, leaked password, unauthorized activity)
 - An API key or secret was accidentally committed to GitHub or shared publicly
 - Unusual activity detected in Sentry, Vercel logs, or Supabase audit logs
@@ -24,9 +25,11 @@
    - Go to https://supabase.com/dashboard → KrewPact → **Authentication** → **Users**
    - Find the user → click **Delete user** or look for a way to sign out sessions
    - Alternatively, run in the SQL editor:
+
    ```sql
    DELETE FROM auth.sessions WHERE user_id = 'the-users-supabase-uuid';
    ```
+
    - Note: With Clerk Third-Party Auth, Supabase sessions are tied to Clerk tokens. Disabling in Clerk is the primary control.
 
 3. **Check what the user accessed recently**
@@ -58,6 +61,7 @@
    - Note findings in `docs/issues-log.md`
 
 ## Escalation
+
 - Michael Guirguis must be notified for any security incident within 1 hour
 - If personal data may have been accessed: notify PIPEDA obligations may apply (72-hour breach notification window)
 - For GitHub key exposure: use GitHub's secret scanning alerts as a starting point

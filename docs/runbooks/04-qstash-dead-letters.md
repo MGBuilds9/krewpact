@@ -5,6 +5,7 @@
 **Who can do this:** Platform Admin
 
 ## Symptoms
+
 - ERPNext sync appears delayed or stale (data in KrewPact doesn't match ERPNext)
 - Email notifications are not being sent
 - Sentry shows errors from `/api/queue/process`
@@ -47,6 +48,7 @@
    - Check that ERPNext data appears updated in KrewPact (e.g., open a finance screen)
 
 ## Escalation
+
 - Michael Guirguis if jobs keep failing after replay (may indicate a broken endpoint or changed API contract)
 - Upstash support: https://upstash.com/support
 - Check `lib/queue/` in the codebase for job definitions if you need to understand what a job does
