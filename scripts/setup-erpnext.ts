@@ -104,14 +104,11 @@ async function erpUpdate(
     );
     return;
   }
-  const res = await fetch(
-    `${BASE_URL}/api/resource/${doctype}/${encodeURIComponent(name)}`,
-    {
-      method: 'PUT',
-      headers: { Authorization: AUTH, 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    },
-  );
+  const res = await fetch(`${BASE_URL}/api/resource/${doctype}/${encodeURIComponent(name)}`, {
+    method: 'PUT',
+    headers: { Authorization: AUTH, 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`UPDATE ${doctype}/${name} failed (${res.status}): ${text.substring(0, 300)}`);
@@ -217,10 +214,7 @@ async function fixOntarioHST(): Promise<void> {
     console.log(`  Using existing HST account: ${taxAccount}`);
   } else {
     // Fallback: find any non-group tax account
-    const anyTax = await erpList(
-      'Account',
-      '[["account_type","=","Tax"],["is_group","=",0]]',
-    );
+    const anyTax = await erpList('Account', '[["account_type","=","Tax"],["is_group","=",0]]');
     if (anyTax.length === 0) throw new Error('No non-group tax account found');
     taxAccount = anyTax[0].name as string;
     console.log(`  Fallback tax account: ${taxAccount}`);
