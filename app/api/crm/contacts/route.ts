@@ -4,6 +4,9 @@ import { z } from 'zod';
 import { dbError } from '@/lib/api/errors';
 import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
 import { withApiRoute } from '@/lib/api/with-api-route';
+import { logger } from '@/lib/logger';
+import { queue } from '@/lib/queue/client';
+import { JobType } from '@/lib/queue/types';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { contactCreateSchema } from '@/lib/validators/crm';
 
@@ -40,7 +43,7 @@ export const GET = withApiRoute({ querySchema }, async ({ req, query }) => {
   return NextResponse.json(paginatedResponse(data, count, limit, offset));
 });
 
-export const POST = withApiRoute({ bodySchema: contactCreateSchema }, async ({ body }) => {
+export const POST = withApiRoute({ bodySchema: contactCreateSchema }, async ({ body, userId }) => {
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -51,6 +54,13 @@ export const POST = withApiRoute({ bodySchema: contactCreateSchema }, async ({ b
     .single();
 
   if (error) throw dbError(error.message);
+
+  queue.enqueue(JobType.ERPSyncContact, { entityId: data.id, userId }).catch((err) => {
+    logger.error('Failed to enqueue ERPNext contact sync', {
+      contactId: data.id,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  });
 
   return NextResponse.json(data, { status: 201 });
 });

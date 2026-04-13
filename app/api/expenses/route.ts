@@ -4,6 +4,9 @@ import { z } from 'zod';
 import { dbError } from '@/lib/api/errors';
 import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
 import { withApiRoute } from '@/lib/api/with-api-route';
+import { logger } from '@/lib/logger';
+import { queue } from '@/lib/queue/client';
+import { JobType } from '@/lib/queue/types';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 const querySchema = z.object({
@@ -50,7 +53,7 @@ export const GET = withApiRoute({ querySchema }, async ({ req }) => {
   return NextResponse.json(paginatedResponse(data, count, limit, offset));
 });
 
-export const POST = withApiRoute({ bodySchema: createSchema }, async ({ body }) => {
+export const POST = withApiRoute({ bodySchema: createSchema }, async ({ body, userId }) => {
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
@@ -61,5 +64,13 @@ export const POST = withApiRoute({ bodySchema: createSchema }, async ({ body }) 
     .single();
 
   if (error) throw dbError(error.message);
+
+  queue.enqueue(JobType.ERPSyncExpense, { entityId: data.id, userId }).catch((err) => {
+    logger.error('Failed to enqueue ERPNext expense sync', {
+      expenseId: data.id,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  });
+
   return NextResponse.json(data, { status: 201 });
 });

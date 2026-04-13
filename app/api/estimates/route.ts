@@ -5,6 +5,9 @@ import { dbError } from '@/lib/api/errors';
 import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
 import { withApiRoute } from '@/lib/api/with-api-route';
 import { generateEstimateNumber } from '@/lib/estimating/calculations';
+import { logger } from '@/lib/logger';
+import { queue } from '@/lib/queue/client';
+import { JobType } from '@/lib/queue/types';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { estimateCreateSchema } from '@/lib/validators/estimating';
 
@@ -54,31 +57,35 @@ export const GET = withApiRoute({ querySchema }, async ({ req, query: qp }) => {
   return NextResponse.json(paginatedResponse(data, count, limit, offset));
 });
 
-export const POST = withApiRoute(
-  { bodySchema: estimateCreateSchema },
-  async ({ body, userId: _userId }) => {
-    const { client: supabase, error: authError } = await createUserClientSafe();
-    if (authError) return authError;
+export const POST = withApiRoute({ bodySchema: estimateCreateSchema }, async ({ body, userId }) => {
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
-    // Count existing estimates to generate next number
-    const { count } = await supabase.from('estimates').select('*', { count: 'exact', head: true });
+  // Count existing estimates to generate next number
+  const { count } = await supabase.from('estimates').select('*', { count: 'exact', head: true });
 
-    const estimate_number = generateEstimateNumber(count ?? 0);
+  const estimate_number = generateEstimateNumber(count ?? 0);
 
-    const { data, error } = await supabase
-      .from('estimates')
-      .insert({
-        ...body,
-        estimate_number,
-        status: 'draft',
-      })
-      .select()
-      .single();
+  const { data, error } = await supabase
+    .from('estimates')
+    .insert({
+      ...body,
+      estimate_number,
+      status: 'draft',
+    })
+    .select()
+    .single();
 
-    if (error) {
-      throw dbError(error.message);
-    }
+  if (error) {
+    throw dbError(error.message);
+  }
 
-    return NextResponse.json(data, { status: 201 });
-  },
-);
+  queue.enqueue(JobType.ERPSyncEstimate, { entityId: data.id, userId }).catch((err) => {
+    logger.error('Failed to enqueue ERPNext estimate sync', {
+      estimateId: data.id,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  });
+
+  return NextResponse.json(data, { status: 201 });
+});
