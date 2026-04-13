@@ -1,7 +1,9 @@
+import { timingSafeEqual } from 'crypto';
 import { NextResponse } from 'next/server';
 
 import { forbidden, serverError } from '@/lib/api/errors';
 import { withApiRoute } from '@/lib/api/with-api-route';
+import { verifyQStashSignature } from '@/lib/queue/verify';
 import {
   computeEstimatingVelocity,
   computePipelineSummary,
@@ -15,7 +17,24 @@ export const POST = withApiRoute({ auth: 'public' }, async ({ req, logger }) => 
   const authHeader = req.headers.get('authorization');
   const qstashSignature = req.headers.get('upstash-signature');
 
-  if (!qstashSignature && authHeader !== `Bearer ${process.env.QSTASH_TOKEN}`) {
+  let isQStashAuthorized = false;
+
+  if (qstashSignature) {
+    // SECURITY: Must cryptographically verify QStash signature instead of just checking presence
+    const rawBody = await req.clone().text();
+    const verification = await verifyQStashSignature(qstashSignature, rawBody);
+    isQStashAuthorized = verification.valid;
+  }
+
+  // SECURITY: Use timing-safe comparison for bearer token
+  const expectedToken = process.env.QSTASH_TOKEN ? `Bearer ${process.env.QSTASH_TOKEN}` : null;
+  const isBearerAuthorized =
+    expectedToken && authHeader
+      ? Buffer.byteLength(authHeader) === Buffer.byteLength(expectedToken) &&
+        timingSafeEqual(Buffer.from(authHeader), Buffer.from(expectedToken))
+      : false;
+
+  if (!isQStashAuthorized && !isBearerAuthorized) {
     const { auth } = await import('@clerk/nextjs/server');
     const { userId } = await auth();
     if (!userId) throw forbidden('Unauthorized');
