@@ -4,6 +4,9 @@ import { z } from 'zod';
 import { dbError } from '@/lib/api/errors';
 import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
 import { withApiRoute } from '@/lib/api/with-api-route';
+import { logger } from '@/lib/logger';
+import { queue } from '@/lib/queue/client';
+import { JobType } from '@/lib/queue/types';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { accountCreateSchema } from '@/lib/validators/crm';
 
@@ -43,20 +46,24 @@ export const GET = withApiRoute({ querySchema }, async ({ req, query }) => {
   return NextResponse.json(paginatedResponse(data, count, limit, offset));
 });
 
-export const POST = withApiRoute(
-  { bodySchema: accountCreateSchema },
-  async ({ body, userId: _userId }) => {
-    const { client: supabase, error: authError } = await createUserClientSafe();
-    if (authError) return authError;
+export const POST = withApiRoute({ bodySchema: accountCreateSchema }, async ({ body, userId }) => {
+  const { client: supabase, error: authError } = await createUserClientSafe();
+  if (authError) return authError;
 
-    const { data, error } = await supabase
-      .from('accounts')
-      .insert({ ...(body as z.infer<typeof accountCreateSchema>) })
-      .select()
-      .single();
+  const { data, error } = await supabase
+    .from('accounts')
+    .insert({ ...(body as z.infer<typeof accountCreateSchema>) })
+    .select()
+    .single();
 
-    if (error) throw dbError(error.message);
+  if (error) throw dbError(error.message);
 
-    return NextResponse.json(data, { status: 201 });
-  },
-);
+  queue.enqueue(JobType.ERPSyncAccount, { entityId: data.id, userId }).catch((err) => {
+    logger.error('Failed to enqueue ERPNext account sync', {
+      accountId: data.id,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  });
+
+  return NextResponse.json(data, { status: 201 });
+});

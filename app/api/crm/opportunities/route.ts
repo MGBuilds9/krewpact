@@ -4,6 +4,9 @@ import { z } from 'zod';
 import { dbError } from '@/lib/api/errors';
 import { paginatedResponse, parsePagination } from '@/lib/api/pagination';
 import { withApiRoute } from '@/lib/api/with-api-route';
+import { logger } from '@/lib/logger';
+import { queue } from '@/lib/queue/client';
+import { JobType } from '@/lib/queue/types';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { opportunityCreateSchema } from '@/lib/validators/crm';
 
@@ -84,16 +87,30 @@ export const GET = withApiRoute({ querySchema }, async ({ req, query }) => {
   return NextResponse.json(paginatedResponse(data, count, limit, offset));
 });
 
-export const POST = withApiRoute({ bodySchema: opportunityCreateSchema }, async ({ body }) => {
-  const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
+export const POST = withApiRoute(
+  { bodySchema: opportunityCreateSchema },
+  async ({ body, userId }) => {
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
-  const insertData = {
-    ...(body as z.infer<typeof opportunityCreateSchema>),
-    stage: (body as z.infer<typeof opportunityCreateSchema>).stage ?? 'intake',
-  };
-  const { data, error } = await supabase.from('opportunities').insert(insertData).select().single();
-  if (error) throw dbError(error.message);
+    const insertData = {
+      ...(body as z.infer<typeof opportunityCreateSchema>),
+      stage: (body as z.infer<typeof opportunityCreateSchema>).stage ?? 'intake',
+    };
+    const { data, error } = await supabase
+      .from('opportunities')
+      .insert(insertData)
+      .select()
+      .single();
+    if (error) throw dbError(error.message);
 
-  return NextResponse.json(data, { status: 201 });
-});
+    queue.enqueue(JobType.ERPSyncOpportunity, { entityId: data.id, userId }).catch((err) => {
+      logger.error('Failed to enqueue ERPNext opportunity sync', {
+        opportunityId: data.id,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    });
+
+    return NextResponse.json(data, { status: 201 });
+  },
+);
