@@ -423,17 +423,22 @@ Architecture docs in `docs/architecture/`: `Master-Plan.md` (scope), `Technology
 
 ## Session Log
 
-### April 14, 2026 — Phase 1 Closeout Artifacts (PR #167)
+### April 14, 2026 — Phase 1 Closeout: Artifacts + Role Fixes + Seed Live (PRs #166, #167 + direct-to-main)
 
-- **PR #166 merged.** (Or CI-blocked and being re-pushed — pre-req for this session's branch.)
-- **PR #167 open** (`phase-1/closeout`): three walkthrough artifacts so Michael can exercise the system against real data and verify RBAC.
-  - `scripts/seed-demo-workflow.ts`: idempotent upsert of 1 linked `account → contact → lead → opportunity → estimate (3 lines) → project`. Marker columns (`company_code`, `external_id`, `estimate_number`, `project_number`) make re-runs safe and give `scripts/unseed-demo.ts` a clean deletion path. Supports `--dry-run`, `--org`, `--division`.
-  - `scripts/audit-write-paths.ts`: smoke-tests 18 write endpoints (POST/PATCH/DELETE × 6 families: projects, accounts, contacts, opportunities, estimates, expenses) via service-role Supabase with a queue.enqueue spy. Verifies row persisted / actually changed / actually gone, and that the expected `JobType` + `meta.operation` was enqueued. First run: 17/18 pass; caught a real issue — `DELETE /api/projects/[id]` trips PostgREST FK-probe on `inventory_ledger` ("gave unexpected result"), likely RLS on the referencing table preventing the referential integrity check. Documented, not in scope this session.
-  - `docs/training/role-walkthrough-matrix.md` + `scripts/generate-role-matrix.ts`: programmatically enumerates all 113 pages under `app/(dashboard)/org/[orgSlug]/...` and emits one row per page × 9 canonical internal roles. Expected outcome (admin/edit/view/limited/403) is rule-based per section; Actual column blank for Michael to fill.
-- **Known gaps carried over**: `inventory_stock_summary_secure` missing in prod (pre-existing); CI E2E `continue-on-error: true` pending `@clerk/testing` migration of `auth.setup.ts`; `SUPABASE_SERVICE_ROLE_KEY` not a GH secret (audit script runs locally only).
-- **Not touched**: Phase 2 (Qdrant migration), Phase 3 (inventory — already 1,698 rows), Phase 4 (AI agents + Mobile), Phase 5 (pilot). Per plan, blocked on walkthrough completion.
-- **Tests:** 5,450/5,450 vitest. 0 TS errors. Prettier clean. `npm run validate` green.
-- **Next:** Merge PR #167. Michael walks role matrix end-to-end, fills Actual column, files `rbac-audit` tickets for any mismatches. Fix PostgREST/RLS interaction on `inventory_ledger` before any project-delete UI ships.
+- **PR #166 merged** (`aa84e2d0`): prettier on `run-sync-test.ts` unblocked CI; reverse-webhook + mapper fix + UUID→TEXT migration landed.
+- **PR #167 merged** (`f71b63ed`): Phase 1 closeout artifacts.
+  - `scripts/seed-demo-workflow.ts` + `scripts/unseed-demo.ts` — idempotent upsert of one linked `account → contact → lead → opportunity → estimate (3 lines) → project`. Deterministic markers (`company_code`, `external_id`, `estimate_number`, `project_number`). Supports `--dry-run` / `--org` / `--division`.
+  - `scripts/audit-write-paths.ts` — smoke-tests 18 write endpoints (POST/PATCH/DELETE × 6 families) via service-role Supabase with queue-enqueue spy. **First run: 17/18 pass.** Surfaced a real bug: `DELETE /api/projects/[id]` 500s via PostgREST FK-probe on `inventory_ledger` ("gave unexpected result"), likely RLS on the referencing table. Captured in vault `krewpact.md ## Known Gotchas`.
+  - `docs/training/role-walkthrough-matrix.md` + `scripts/generate-role-matrix.ts` — programmatic enumeration of 113 pages × 9 canonical internal roles with rule-based expected outcomes.
+- **Direct to main** (`3a038942`): `scripts/fix-role-config.ts` — reusable dual-write (Supabase + Clerk) for role shuffles via `syncRolesToBothStores`. Applied to prod:
+  - David Guirguis: `project_manager` → `platform_admin` primary, PM secondary (redundancy).
+  - CI Test: `project_coordinator` → `platform_admin` (widest auth smoke coverage; RBAC regressions covered by 4 QA users).
+  - Hani Abdelmalek: `project_coordinator` → `estimator` (canonical sales-rep mapping).
+  - Nagy Salib: `project_coordinator` → `executive`.
+- **Demo workflow seeded to prod**: account `e6aafb06`, lead `2d3f76e7`, contact `aa7c604d`, opportunity `ad4e450e`, estimate `487cd25e` (3 lines, $2.72M), project `8146b7ce` ($2.72M budget).
+- **"View As User" feature** — platform_admin impersonation dialog at Header → search icon. **UI preview only** — swaps `/api/user/current` response but RLS runs on the admin's Clerk JWT. Real RBAC testing requires actually signing in as each user.
+- **Tests:** 5,450/5,450 vitest. 0 TS errors. Lint 0 errors / 40 warnings (baseline). Build ✓. `npm run validate` green.
+- **Next:** Verify David G + CI Test can sign in as platform_admin (JWT refresh 1-2 min). Walk role matrix as self + 4 QA users, fill Actual column, file rbac-audit tickets. Fix `inventory_ledger` FK-probe. Start Phase 2 (Qdrant SMB inventory + ERPNext bridge).
 
 ### April 14, 2026 — Real ERPNext Sync Validation + Reverse Webhook Wiring (PR #166)
 
@@ -454,46 +459,7 @@ Architecture docs in `docs/architecture/`: `Master-Plan.md` (scope), `Technology
 - **Tests:** 5,450/5,450 vitest passing. 0 TS errors. Prettier clean. Build ✓ (170 static pages). `npm run validate` green.
 - **Next session:** Merge PR #166 once CI green. Build 3 deliverables for Phase 1 closeout: (1) `scripts/seed-demo-workflow.ts` (one linked account→contact→lead→opportunity→estimate→project so Michael can walk the UI against real data), (2) `scripts/audit-write-paths.ts` (smoke-tests every POST/PATCH/DELETE for 6 core entities — verifies Supabase row actually changes and `erp_sync_jobs` was enqueued), (3) `docs/training/role-walkthrough-matrix.md` (route × role expected-outcome skeleton for manual QA).
 
-### April 13, 2026 — Phase 1 Followup: Update/Delete Sync Wired (PR #165)
-
-- **PR #164 MERGED** (Phase 1 base — all yesterday's work: ERPNext config, 21 users, Microsoft SSO, 10 runbooks, reference project, blueprint audit, sync on create for 6 routes).
-- **PR #165 open**: extends sync handlers to full CRUD lifecycle.
-  - `SyncJobContext.operation: 'create' | 'update' | 'delete'` (defaults to upsert semantics when omitted)
-  - New helpers: `lookupErpDocname()` (looks up prior `erp_sync_map` entry), `deleteSyncMap()` (cleanup after ERPNext delete)
-  - 6 sync handlers updated: project, contact, customer, expense, opportunity, quotation
-  - `app/api/projects/[id]/route.ts` PATCH + DELETE now trigger ERPNext sync with proper operation context
-  - `lib/queue/processor.ts` routes operation field correctly to handlers
-- **Flow (update):** `PATCH /api/projects/[id]` → Supabase update → `queue.enqueue(ERPSyncProject, {operation: 'update'})` → sync-project looks up existing `erp_docname` from `erp_sync_map` → `ErpClient.update()` on that docname → `logEvent('sync_updated')`
-- **Flow (delete):** `DELETE /api/projects/[id]` → Supabase delete → `queue.enqueue(ERPSyncProject, {operation: 'delete'})` → `ErpClient.delete()` on existing docname → `deleteSyncMap()` to prevent stale reads → `logEvent('sync_deleted')`
-- **Test coverage:** added "reuses existing ERPNext docname on update sync" test in `__tests__/lib/erp/sync-service.test.ts` (+69 lines, 5,445+ tests maintained)
-- **Tests:** 5,445/5,445 vitest passing. 0 TS errors. Prettier clean after auto-fix on processor.ts. Build ✓. `npm run validate` green.
-- **Next:** Merge PR #165. Test update/delete end-to-end manually (update Lakeshore Condo Tower in KrewPact, verify ERPNext reflects; soft-delete a test project, verify cleanup). Then start Phase 2: reverse sync (ERPNext webhooks → KrewPact) for Pattern B screens. Build FileUploadDropzone component.
-
-### April 13, 2026 — Phase 1: ERPNext Setup, User Provisioning, SSO Automation (PR #164)
-
-- **PR #164 open** (phase-1/erp-setup): Phase 1 of the Unified Gateway Plan. PR #136 merged earlier today.
-- **ERPNext configured** via `scripts/setup-erpnext.ts` (idempotent, --dry-run supported): 6 division cost centers, Ontario HST 13% tax templates (fixes 15% default), 7 role profiles. Applied to production `erp.mdmgroupinc.ca`.
-- **21 users provisioned** in Clerk + Supabase with full role/division sync:
-  - 14 real MDM employees pulled from M365 Graph API (required `User.Read.All` as **Application** permission, not Delegated, + admin consent)
-  - 4 QA test users (qa-pm, qa-estimator, qa-exec, qa-field) for multi-role E2E via `@clerk/testing`
-  - Each has Clerk publicMetadata (krewpact_user_id, org_id, division_ids, role_keys) and matching Supabase user_roles + user_divisions rows
-- **Microsoft SSO enabled** in Clerk dashboard (verified via `clerk.krewpact.ca/v1/environment`: `oauth_microsoft.enabled=true, authenticatable=true`). Azure AD app `ab1eda20-...` in tenant `mdmgroupinc.ca`.
-- **Auto-provisioning wired**: `ALLOWED_DOMAINS` env var set (6 MDM domains). New SSO sign-ins auto-create Supabase user + assign `project_coordinator` role via `app/api/webhooks/clerk/route.ts` → `handleUserUpsert` → `syncRolesToBothStores`.
-- **ERPNext sync on create wired**: 6 POST routes now enqueue `JobType.ERPSync*` after Supabase insert: `app/api/projects/route.ts`, `app/api/crm/{opportunities,accounts,contacts}/route.ts`, `app/api/estimates/route.ts`, `app/api/expenses/route.ts`. Queue infrastructure (47 sync handlers, QStash, processor) already existed — only trigger calls were missing.
-- **10 operational runbooks** in `docs/runbooks/`: Clerk outage, ERPNext down, Supabase pool, QStash dead letters, Sentry spike, Vercel deploy, security lockdown, PIPEDA request, employee onboarding, Supabase backup restore.
-- **Construction document categories** defined (`lib/constants/document-categories.ts`): 10 categories (Drawings, Contracts, RFQs, Change Orders, Submittals, Photos, Safety/Compliance, Correspondence, Invoices, Reports).
-- **Reference project created**: PROJ-0001 "Lakeshore Condo Tower - Phase 1" in ERPNext + Supabase, customer "Lakeshore Properties Inc.", supplier "Brampton Steel & Rebar Ltd.", $2.45M budget, Contracting division.
-- **Blueprint audit (88/100)** at `docs/audits/2026-04-12-blueprint-audit.md`. Found and fixed P0 Supabase SDK type regression (`RejectExcessProperties` rejects `Record<string, unknown>` in `.update()`/`.insert()`) — added `SerialUpdate` type alias in `lib/inventory/serials.ts`, cast as `any` in migration script.
-- **/autoplan reviewed all phases**: CEO + Design + Eng, dual voices (Claude subagent + Codex). 31 decisions logged, 25 tactical improvements written to plan. 3 user challenges presented, all rejected (AI stays Phase 4, audit stays before demo, flexible timeline kept). 6 cross-phase themes surfaced.
-- **GitButler workflow**: created 4 virtual branches (erp-config, user-provisioning, doc-management, runbooks), committed independently, cherry-picked into single `phase-1/erp-setup` PR branch.
-- **Gotchas learned**:
-  - Supabase users table uses `clerk_user_id` (not `clerk_id`), `first_name`/`last_name` (not `full_name`), `status` (not `is_active`)
-  - `user_roles` has unique constraint `user_roles_one_primary_per_user` — only one primary role per user; use UPDATE not INSERT for role changes
-  - Azure token caching: permission changes need 2-5 min + fresh token request to propagate
-  - Cloudflare blocks Python `urllib` with error 1010; use Node.js `fetch` for Clerk API scripts
-  - Initial role provisioning used placeholder UUIDs — had to fix via SQL UPDATE against real role IDs
-- **Tests:** 5,445/5,445 vitest passing. 0 TypeScript errors. Lint 0 errors, 29 warnings (baseline). Build ✓. `npm run validate` green.
-- **Next session:** Check PR #164 CI, merge if green. Test Microsoft SSO end-to-end with a real employee. Build FileUploadDropzone component (doc-management upload UI). Wire update/delete routes to ERPNext sync. Start Phase 2 (reverse sync: ERPNext → KrewPact webhooks).
+- Apr 13: **Phase 1 base + update/delete sync (PRs #164 + #165 merged)** — ERPNext configured (6 cost centers, HST 13%, 7 role profiles via `scripts/setup-erpnext.ts`), 21 users (14 real MDM + 4 QA) provisioned in Clerk + Supabase, Microsoft SSO live with `ALLOWED_DOMAINS` auto-provisioning, ERPNext sync wired on 6 create routes + extended to update/delete via `SyncJobContext.operation`. PROJ-0001 reference project ($2.45M Lakeshore). 10 runbooks. Blueprint audit 88/100. 5,445 tests. **Gotchas**: Supabase uses `clerk_user_id`/`first_name`/`status`; `user_roles_one_primary_per_user` unique constraint; Azure perms need Application (not Delegated) + 2-5min propagation; Cloudflare blocks Python urllib (use Node fetch).
 
 - Apr 12: Blueprint audit (88/100) via 6 parallel subagents. P0 Supabase SDK `RejectExcessProperties` type regression fixed (added `SerialUpdate` alias). Report at `docs/audits/2026-04-12-blueprint-audit.md`. CLAUDE.md shared-components list corrected.
 - Apr 9-10: **Phase 0 complete** (PR #136). Closed 5 known gaps (matview RLS, F2 prefetch, apiFetchPaginated, Checkly synthetic filter, FeatureGate default). SSO live via Clerk OIDC → `frappe-oidc-extended` (Frappe `response_type` gotcha fixed via `auth_url_data` Social Login Key patch). 27 webhook timing-attack regression tests. Sentry fatal alert + 4 Checkly monitors deployed. GitButler virtual branches adopted.
