@@ -9,13 +9,18 @@ import { toErpQuotation } from '../quotation-mapper';
 import { isMockMode } from '../sync-service';
 import {
   createSyncJob,
+  deleteSyncMap,
   failJob,
   logEvent,
+  lookupErpDocname,
   type SyncJobContext,
   SyncResult,
   updateJobStatus,
   upsertSyncMap,
 } from './sync-helpers';
+
+const ENTITY = 'estimate';
+const DOCTYPE = 'Quotation';
 
 type MappedLine = {
   description: string;
@@ -36,12 +41,15 @@ function mapLines(rawLines: unknown): MappedLine[] {
   }));
 }
 
-async function createErpQuotation(
+ 
+async function upsertErpQuotation(
   estimateId: string,
   estimateData: Record<string, unknown>,
   lines: MappedLine[],
+  existingDocname: string | null,
 ): Promise<string> {
   if (isMockMode()) {
+    if (existingDocname) return existingDocname;
     const mockResp = mockQuotationResponse(
       {
         id: estimateId,
@@ -73,19 +81,49 @@ async function createErpQuotation(
     },
     lines,
   );
-  const result = await client.create<{ name: string }>('Quotation', mapped);
+  if (existingDocname) {
+    await client.update<{ name: string }>(DOCTYPE, existingDocname, mapped);
+    return existingDocname;
+  }
+  const result = await client.create<{ name: string }>(DOCTYPE, mapped);
   return result.name;
 }
 
+ 
 export async function syncEstimate(
   estimateId: string,
   _userId: string,
   jobContext?: SyncJobContext,
 ): Promise<SyncResult> {
   const supabase = createScopedServiceClient('erp-sync:estimate');
-  const job = await createSyncJob(supabase, 'estimate', estimateId, jobContext);
+  const job = await createSyncJob(supabase, ENTITY, estimateId, jobContext);
+  const existingDocname = await lookupErpDocname(supabase, ENTITY, estimateId);
 
   try {
+    if (jobContext?.operation === 'delete') {
+      if (existingDocname && !isMockMode()) {
+        const { ErpClient } = await import('../client');
+        await new ErpClient().delete(DOCTYPE, existingDocname);
+      }
+      if (existingDocname) {
+        await deleteSyncMap(supabase, ENTITY, estimateId);
+      }
+      await logEvent(supabase, job.id, 'sync_deleted', {
+        entity_type: ENTITY,
+        entity_id: estimateId,
+        erp_docname: existingDocname,
+      });
+      await updateJobStatus(supabase, job, 'succeeded');
+      return {
+        id: job.id,
+        status: 'succeeded',
+        entity_type: ENTITY,
+        entity_id: estimateId,
+        erp_docname: existingDocname,
+        attempt_count: job.attempt_count,
+      };
+    }
+
     const { data: estimate, error: estimateError } = await supabase
       .from('estimates')
       .select('*, estimate_lines(*)')
@@ -96,7 +134,7 @@ export async function syncEstimate(
       return failJob(
         supabase,
         job,
-        'estimate',
+        ENTITY,
         estimateId,
         `Estimate not found: ${estimateError?.message || 'null'}`,
       );
@@ -104,11 +142,11 @@ export async function syncEstimate(
 
     const estimateData = estimate as Record<string, unknown>;
     const lines = mapLines(estimateData.estimate_lines);
-    const erpDocname = await createErpQuotation(estimateId, estimateData, lines);
+    const erpDocname = await upsertErpQuotation(estimateId, estimateData, lines, existingDocname);
 
-    await upsertSyncMap(supabase, 'estimate', estimateId, 'Quotation', erpDocname);
-    await logEvent(supabase, job.id, 'sync_completed', {
-      entity_type: 'estimate',
+    await upsertSyncMap(supabase, ENTITY, estimateId, DOCTYPE, erpDocname);
+    await logEvent(supabase, job.id, existingDocname ? 'sync_updated' : 'sync_completed', {
+      entity_type: ENTITY,
       entity_id: estimateId,
       erp_docname: erpDocname,
       line_count: lines.length,
@@ -118,13 +156,13 @@ export async function syncEstimate(
     return {
       id: job.id,
       status: 'succeeded',
-      entity_type: 'estimate',
+      entity_type: ENTITY,
       entity_id: estimateId,
       erp_docname: erpDocname,
       attempt_count: job.attempt_count,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return failJob(supabase, job, 'estimate', estimateId, message);
+    return failJob(supabase, job, ENTITY, estimateId, message);
   }
 }

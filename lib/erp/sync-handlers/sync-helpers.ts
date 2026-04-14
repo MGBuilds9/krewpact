@@ -16,10 +16,18 @@ export interface SyncResult {
   error?: string;
 }
 
+export type SyncOperation = 'create' | 'update' | 'delete';
+
 export interface SyncJobContext {
   jobId?: string;
   attemptCount?: number;
   maxAttempts?: number;
+  /**
+   * The CRUD operation this sync represents. Defaults to upsert semantics
+   * when omitted — handlers look up `erp_sync_map` and create or update
+   * based on whether a prior mapping exists.
+   */
+  operation?: SyncOperation;
 }
 
 export interface SyncJobRecord {
@@ -140,6 +148,41 @@ export async function updateJobStatus(
       last_error: status === 'succeeded' ? null : undefined,
     })
     .eq('id', getJobId(job));
+}
+
+/**
+ * Look up an existing ERPNext docname for a KrewPact entity.
+ * Returns null when no prior sync mapping exists.
+ */
+export async function lookupErpDocname(
+  supabase: SupabaseClient,
+  entityType: string,
+  localId: string,
+): Promise<string | null> {
+  const { data } = await supabase
+    .from('erp_sync_map')
+    .select('erp_docname')
+    .eq('entity_type', entityType)
+    .eq('local_id', localId)
+    .maybeSingle();
+  const docname = (data as { erp_docname?: string } | null)?.erp_docname;
+  return typeof docname === 'string' && docname.length > 0 ? docname : null;
+}
+
+/**
+ * Remove the sync map entry for a deleted entity. Called after a successful
+ * ERPNext delete so future reads don't resurrect a stale docname.
+ */
+export async function deleteSyncMap(
+  supabase: SupabaseClient,
+  entityType: string,
+  localId: string,
+): Promise<void> {
+  await supabase
+    .from('erp_sync_map')
+    .delete()
+    .eq('entity_type', entityType)
+    .eq('local_id', localId);
 }
 
 // eslint-disable-next-line max-params

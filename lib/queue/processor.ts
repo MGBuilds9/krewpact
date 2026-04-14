@@ -13,20 +13,42 @@ import { Job, JobType } from './types';
 const syncService = new SyncService();
 
 type SyncResult = { status?: string; error?: string } | undefined;
-type JobContext = { jobId: string; attemptCount?: number; maxAttempts?: number } | undefined;
+type SyncOperation = 'create' | 'update' | 'delete';
+type JobContext =
+  | {
+      jobId?: string;
+      attemptCount?: number;
+      maxAttempts?: number;
+      operation?: SyncOperation;
+    }
+  | undefined;
+
+function readOperation(meta: Job['payload']['meta']): SyncOperation | undefined {
+  if (
+    meta?.operation === 'create' ||
+    meta?.operation === 'update' ||
+    meta?.operation === 'delete'
+  ) {
+    return meta.operation;
+  }
+  return undefined;
+}
 
 function buildJobContext(meta: Job['payload']['meta']): JobContext {
-  if (typeof meta?.syncJobId !== 'string') return undefined;
+  const operation = readOperation(meta);
+  const hasSyncJobId = typeof meta?.syncJobId === 'string';
+  if (!hasSyncJobId && !operation) return undefined;
   return {
-    jobId: meta.syncJobId,
+    jobId: hasSyncJobId ? (meta!.syncJobId as string) : undefined,
     attemptCount:
-      typeof meta.attemptCount === 'number' && Number.isFinite(meta.attemptCount)
+      typeof meta?.attemptCount === 'number' && Number.isFinite(meta.attemptCount)
         ? meta.attemptCount
         : undefined,
     maxAttempts:
-      typeof meta.maxAttempts === 'number' && Number.isFinite(meta.maxAttempts)
+      typeof meta?.maxAttempts === 'number' && Number.isFinite(meta.maxAttempts)
         ? meta.maxAttempts
         : undefined,
+    operation,
   };
 }
 

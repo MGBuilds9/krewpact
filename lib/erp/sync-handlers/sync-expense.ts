@@ -9,23 +9,54 @@ import { mockExpenseClaimResponse } from '../mock-responses';
 import { isMockMode } from '../sync-service';
 import {
   createSyncJob,
+  deleteSyncMap,
   failJob,
   logEvent,
+  lookupErpDocname,
   type SyncJobContext,
   SyncResult,
   updateJobStatus,
   upsertSyncMap,
 } from './sync-helpers';
 
+const ENTITY = 'expense_claim';
+const DOCTYPE = 'Expense Claim';
+
+// eslint-disable-next-line max-lines-per-function
 export async function syncExpenseClaim(
   expenseClaimId: string,
   _userId: string,
   jobContext?: SyncJobContext,
 ): Promise<SyncResult> {
   const supabase = createScopedServiceClient('erp-sync:expense-claim');
-  const job = await createSyncJob(supabase, 'expense_claim', expenseClaimId, jobContext);
+  const job = await createSyncJob(supabase, ENTITY, expenseClaimId, jobContext);
+  const existingDocname = await lookupErpDocname(supabase, ENTITY, expenseClaimId);
 
   try {
+    if (jobContext?.operation === 'delete') {
+      if (existingDocname && !isMockMode()) {
+        const { ErpClient } = await import('../client');
+        await new ErpClient().delete(DOCTYPE, existingDocname);
+      }
+      if (existingDocname) {
+        await deleteSyncMap(supabase, ENTITY, expenseClaimId);
+      }
+      await logEvent(supabase, job.id, 'sync_deleted', {
+        entity_type: ENTITY,
+        entity_id: expenseClaimId,
+        erp_docname: existingDocname,
+      });
+      await updateJobStatus(supabase, job, 'succeeded');
+      return {
+        id: job.id,
+        status: 'succeeded',
+        entity_type: ENTITY,
+        entity_id: expenseClaimId,
+        erp_docname: existingDocname,
+        attempt_count: job.attempt_count,
+      };
+    }
+
     const { data: expense, error: expenseError } = await supabase
       .from('expense_claims')
       .select('*')
@@ -36,7 +67,7 @@ export async function syncExpenseClaim(
       return failJob(
         supabase,
         job,
-        'expense_claim',
+        ENTITY,
         expenseClaimId,
         `Expense claim not found: ${expenseError?.message || 'null'}`,
       );
@@ -46,12 +77,16 @@ export async function syncExpenseClaim(
     let erpDocname: string;
 
     if (isMockMode()) {
-      const mockResp = mockExpenseClaimResponse({
-        id: expenseClaimId,
-        amount: e.amount as number,
-        expense_date: e.expense_date as string,
-      });
-      erpDocname = mockResp.name;
+      if (existingDocname) {
+        erpDocname = existingDocname;
+      } else {
+        const mockResp = mockExpenseClaimResponse({
+          id: expenseClaimId,
+          amount: e.amount as number,
+          expense_date: e.expense_date as string,
+        });
+        erpDocname = mockResp.name;
+      }
     } else {
       const { ErpClient } = await import('../client');
       const client = new ErpClient();
@@ -66,13 +101,19 @@ export async function syncExpenseClaim(
         expense_date: e.expense_date as string,
         currency_code: e.currency_code as string | null,
       });
-      const result = await client.create<{ name: string }>('Expense Claim', mapped);
-      erpDocname = result.name;
+
+      if (existingDocname) {
+        await client.update<{ name: string }>(DOCTYPE, existingDocname, mapped);
+        erpDocname = existingDocname;
+      } else {
+        const result = await client.create<{ name: string }>(DOCTYPE, mapped);
+        erpDocname = result.name;
+      }
     }
 
-    await upsertSyncMap(supabase, 'expense_claim', expenseClaimId, 'Expense Claim', erpDocname);
-    await logEvent(supabase, job.id, 'sync_completed', {
-      entity_type: 'expense_claim',
+    await upsertSyncMap(supabase, ENTITY, expenseClaimId, DOCTYPE, erpDocname);
+    await logEvent(supabase, job.id, existingDocname ? 'sync_updated' : 'sync_completed', {
+      entity_type: ENTITY,
       entity_id: expenseClaimId,
       erp_docname: erpDocname,
     });
@@ -81,13 +122,13 @@ export async function syncExpenseClaim(
     return {
       id: job.id,
       status: 'succeeded',
-      entity_type: 'expense_claim',
+      entity_type: ENTITY,
       entity_id: expenseClaimId,
       erp_docname: erpDocname,
       attempt_count: job.attempt_count,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return failJob(supabase, job, 'expense_claim', expenseClaimId, message);
+    return failJob(supabase, job, ENTITY, expenseClaimId, message);
   }
 }

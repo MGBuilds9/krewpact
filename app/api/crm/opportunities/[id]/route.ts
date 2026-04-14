@@ -3,6 +3,9 @@ import { z } from 'zod';
 
 import { dbError, notFound } from '@/lib/api/errors';
 import { withApiRoute } from '@/lib/api/with-api-route';
+import { logger } from '@/lib/logger';
+import { queue } from '@/lib/queue/client';
+import { JobType } from '@/lib/queue/types';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { opportunityUpdateSchema } from '@/lib/validators/crm';
 
@@ -72,17 +75,43 @@ export const PATCH = withApiRoute(
       throw dbError(error.message);
     }
 
+    queue
+      .enqueue(JobType.ERPSyncOpportunity, {
+        entityId: data.id,
+        userId,
+        meta: { operation: 'update' },
+      })
+      .catch((err) => {
+        logger.error('Failed to enqueue ERPNext opportunity update sync', {
+          opportunityId: data.id,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      });
+
     return NextResponse.json(data);
   },
 );
 
-export const DELETE = withApiRoute({}, async ({ params }) => {
+export const DELETE = withApiRoute({}, async ({ params, userId }) => {
   const { id } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
   const { error } = await supabase.from('opportunities').delete().eq('id', id);
   if (error) throw dbError(error.message);
+
+  queue
+    .enqueue(JobType.ERPSyncOpportunity, {
+      entityId: id,
+      userId,
+      meta: { operation: 'delete' },
+    })
+    .catch((err) => {
+      logger.error('Failed to enqueue ERPNext opportunity delete sync', {
+        opportunityId: id,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    });
 
   return NextResponse.json({ success: true });
 });

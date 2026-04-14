@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 
 import { dbError, notFound } from '@/lib/api/errors';
 import { withApiRoute } from '@/lib/api/with-api-route';
+import { logger } from '@/lib/logger';
+import { queue } from '@/lib/queue/client';
+import { JobType } from '@/lib/queue/types';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { contactUpdateSchema } from '@/lib/validators/crm';
 
@@ -24,30 +27,59 @@ export const GET = withApiRoute({}, async ({ params }) => {
   return NextResponse.json(data);
 });
 
-export const PATCH = withApiRoute({ bodySchema: contactUpdateSchema }, async ({ params, body }) => {
-  const { id } = params;
-  const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
+export const PATCH = withApiRoute(
+  { bodySchema: contactUpdateSchema },
+  async ({ params, body, userId }) => {
+    const { id } = params;
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
 
-  const { data, error } = await supabase
-    .from('contacts')
-    .update(body as Record<string, unknown>)
-    .eq('id', id)
-    .select()
-    .single();
+    const { data, error } = await supabase
+      .from('contacts')
+      .update(body as Record<string, unknown>)
+      .eq('id', id)
+      .select()
+      .single();
 
-  if (error) throw error.code === 'PGRST116' ? notFound('Contact') : dbError(error.message);
+    if (error) throw error.code === 'PGRST116' ? notFound('Contact') : dbError(error.message);
 
-  return NextResponse.json(data);
-});
+    queue
+      .enqueue(JobType.ERPSyncContact, {
+        entityId: data.id,
+        userId,
+        meta: { operation: 'update' },
+      })
+      .catch((err) => {
+        logger.error('Failed to enqueue ERPNext contact update sync', {
+          contactId: data.id,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      });
 
-export const DELETE = withApiRoute({}, async ({ params }) => {
+    return NextResponse.json(data);
+  },
+);
+
+export const DELETE = withApiRoute({}, async ({ params, userId }) => {
   const { id } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
   const { error } = await supabase.from('contacts').delete().eq('id', id);
   if (error) throw dbError(error.message);
+
+  queue
+    .enqueue(JobType.ERPSyncContact, {
+      entityId: id,
+      userId,
+      meta: { operation: 'delete' },
+    })
+    .catch((err) => {
+      logger.error('Failed to enqueue ERPNext contact delete sync', {
+        contactId: id,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    });
 
   return NextResponse.json({ success: true });
 });
