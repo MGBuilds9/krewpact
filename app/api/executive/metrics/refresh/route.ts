@@ -1,4 +1,5 @@
 import { timingSafeEqual } from 'node:crypto';
+
 import { NextResponse } from 'next/server';
 
 import { forbidden, serverError } from '@/lib/api/errors';
@@ -27,7 +28,10 @@ export const POST = withApiRoute({ auth: 'public' }, async ({ req, logger }) => 
       const expected = `Bearer ${process.env.QSTASH_TOKEN}`;
       const headerBuf = Buffer.from(authHeader);
       const expectedBuf = Buffer.from(expected);
-      if (headerBuf.byteLength === expectedBuf.byteLength && timingSafeEqual(headerBuf, expectedBuf)) {
+      if (
+        headerBuf.byteLength === expectedBuf.byteLength &&
+        timingSafeEqual(headerBuf, expectedBuf)
+      ) {
         hasValidToken = true;
       }
     }

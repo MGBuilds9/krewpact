@@ -1,4 +1,5 @@
 import { timingSafeEqual } from 'node:crypto';
+
 import { NextResponse } from 'next/server';
 
 import { forbidden, notFound, serverError } from '@/lib/api/errors';
@@ -25,7 +26,10 @@ async function verifyEmbedAuth(req: Request): Promise<void> {
     const expected = `Bearer ${process.env.QSTASH_TOKEN}`;
     const headerBuf = Buffer.from(authHeader);
     const expectedBuf = Buffer.from(expected);
-    if (headerBuf.byteLength === expectedBuf.byteLength && timingSafeEqual(headerBuf, expectedBuf)) {
+    if (
+      headerBuf.byteLength === expectedBuf.byteLength &&
+      timingSafeEqual(headerBuf, expectedBuf)
+    ) {
       return;
     }
   }

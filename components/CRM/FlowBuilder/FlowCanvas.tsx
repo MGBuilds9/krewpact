@@ -1,6 +1,5 @@
 'use client';
 
-import { nanoid } from 'nanoid';
 import { useCallback, useMemo, useState } from 'react';
 
 import { ConditionNode } from './ConditionNode';
@@ -180,7 +179,7 @@ export function FlowCanvas({
     (type: FlowStep['action_type']) => {
       const maxNum = steps.length > 0 ? Math.max(...steps.map((s) => s.step_number)) : 0;
       const newStep: FlowStep = {
-        id: nanoid(),
+        id: crypto.randomUUID(),
         step_number: maxNum + 1,
         action_type: type,
         action_config: {},
