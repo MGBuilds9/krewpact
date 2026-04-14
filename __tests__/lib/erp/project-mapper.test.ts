@@ -60,9 +60,14 @@ describe('mapProjectToErp', () => {
     expect(result.estimated_costing).toBe(0);
   });
 
-  it('defaults customer to empty string when account_id is null', () => {
+  it('omits customer when account_id is null (empty string fails link validation)', () => {
     const result = mapProjectToErp(makeInput({ account_id: null }));
-    expect(result.customer).toBe('');
+    expect(result).not.toHaveProperty('customer');
+  });
+
+  it('omits department — ERPNext rejects Supabase UUIDs on the Department link', () => {
+    const result = mapProjectToErp(makeInput({ division_id: 'div-any-value' }));
+    expect(result).not.toHaveProperty('department');
   });
 
   it('always sets currency to CAD', () => {

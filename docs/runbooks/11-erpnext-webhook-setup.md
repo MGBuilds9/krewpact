@@ -10,20 +10,35 @@ Configures ERPNext to POST document events to KrewPact so ERPNext-authoritative 
 
 ## Prerequisites
 
-- `ERPNEXT_WEBHOOK_SECRET` is set in Vercel (all environments) and stored in 1Password.
+- `ERPNEXT_WEBHOOK_SECRET` is set in Vercel (Production + Development; Preview
+  needs `vercel env add ERPNEXT_WEBHOOK_SECRET preview <branch>` per branch)
+  and stored in 1Password.
 - `NEXT_PUBLIC_APP_URL` points at the production URL (`https://krewpact.ca`).
-- ERPNext System Manager access.
+- ERPNext System Manager access (or an API key with `Webhook` write permission).
+- Migration `20260413_001_erp_sync_text_entity_ids.sql` applied — `erp_sync_jobs.entity_id`
+  and `erp_sync_map.local_id` must be `text`, not `uuid`, because inbound docnames
+  (`SINV-2026-0042`, `PROJ-0003`) are not UUIDs and previously caused silent insert
+  failures in `createSyncJob`.
+
+## Current production state (as of 2026-04-13)
+
+7 webhooks registered and enabled, all pointing at `https://krewpact.ca/api/webhooks/erpnext`:
+`KP Sales Invoice Submit` / `Update`, `KP Purchase Invoice Submit` / `Update`,
+`KP Payment Entry Submit` / `Cancel`, `KP GL Entry AfterInsert`.
+Endpoint verified: fresh POST returns `{"received":true,...}`; repeat within 5 min
+returns `{"received":true,"deduplicated":true}`. End-to-end outbound CRUD also
+validated against real ERPNext (see "Verify" below for the reproducible steps).
 
 ## Supported doctypes
 
 The endpoint at `POST https://krewpact.ca/api/webhooks/erpnext` accepts the following:
 
-| Doctype          | Events                   | Action on KrewPact         |
-| ---------------- | ------------------------ | -------------------------- |
-| Sales Invoice    | `on_submit`, `on_update` | Upsert `invoice_snapshots` |
-| Purchase Invoice | `on_submit`, `on_update` | Upsert `po_snapshots`      |
-| Payment Entry    | `on_submit`, `on_cancel` | Log to `erp_sync_events`   |
-| GL Entry         | `on_submit`              | Log to `erp_sync_events`   |
+| Doctype          | Events                                | Action on KrewPact         |
+| ---------------- | ------------------------------------- | -------------------------- |
+| Sales Invoice    | `on_submit`, `on_update_after_submit` | Upsert `invoice_snapshots` |
+| Purchase Invoice | `on_submit`, `on_update_after_submit` | Upsert `po_snapshots`      |
+| Payment Entry    | `on_submit`, `on_cancel`              | Log to `erp_sync_events`   |
+| GL Entry         | `after_insert` (not submittable)      | Log to `erp_sync_events`   |
 
 Outbound-only doctypes (Customer, Project, Opportunity, Contact, Quotation, Sales Order, Expense Claim, Item, Supplier, Employee, Stock Entry) are accepted by the endpoint to avoid 4xx noise in ERPNext logs, but no KrewPact write-back occurs — KrewPact is the source of truth for those.
 
