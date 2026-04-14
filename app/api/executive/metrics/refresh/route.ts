@@ -1,3 +1,5 @@
+import { timingSafeEqual } from 'node:crypto';
+
 import { NextResponse } from 'next/server';
 
 import { forbidden, serverError } from '@/lib/api/errors';
@@ -20,14 +22,29 @@ export const POST = withApiRoute({ auth: 'public' }, async ({ req, logger }) => 
     const rawBody = await req.clone().text();
     const result = await verifyQStashSignature(qstashSignature, rawBody);
     if (!result.valid) throw forbidden('Invalid QStash signature');
-  } else if (authHeader !== `Bearer ${process.env.QSTASH_TOKEN}`) {
-    const { auth } = await import('@clerk/nextjs/server');
-    const { userId } = await auth();
-    if (!userId) throw forbidden('Unauthorized');
-    const { getKrewpactRoles } = await import('@/lib/api/org');
-    const roles = await getKrewpactRoles();
-    if (!roles.includes('platform_admin')) {
-      throw forbidden('Forbidden');
+  } else {
+    let hasValidToken = false;
+    if (authHeader && process.env.QSTASH_TOKEN) {
+      const expected = `Bearer ${process.env.QSTASH_TOKEN}`;
+      const headerBuf = Buffer.from(authHeader);
+      const expectedBuf = Buffer.from(expected);
+      if (
+        headerBuf.byteLength === expectedBuf.byteLength &&
+        timingSafeEqual(headerBuf, expectedBuf)
+      ) {
+        hasValidToken = true;
+      }
+    }
+
+    if (!hasValidToken) {
+      const { auth } = await import('@clerk/nextjs/server');
+      const { userId } = await auth();
+      if (!userId) throw forbidden('Unauthorized');
+      const { getKrewpactRoles } = await import('@/lib/api/org');
+      const roles = await getKrewpactRoles();
+      if (!roles.includes('platform_admin')) {
+        throw forbidden('Forbidden');
+      }
     }
   }
 

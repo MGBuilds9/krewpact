@@ -1,3 +1,5 @@
+import { timingSafeEqual } from 'node:crypto';
+
 import { NextResponse } from 'next/server';
 
 import { forbidden, notFound, serverError } from '@/lib/api/errors';
@@ -20,7 +22,17 @@ async function verifyEmbedAuth(req: Request): Promise<void> {
     return;
   }
 
-  if (authHeader === `Bearer ${process.env.QSTASH_TOKEN}`) return;
+  if (authHeader && process.env.QSTASH_TOKEN) {
+    const expected = `Bearer ${process.env.QSTASH_TOKEN}`;
+    const headerBuf = Buffer.from(authHeader);
+    const expectedBuf = Buffer.from(expected);
+    if (
+      headerBuf.byteLength === expectedBuf.byteLength &&
+      timingSafeEqual(headerBuf, expectedBuf)
+    ) {
+      return;
+    }
+  }
 
   const { auth } = await import('@clerk/nextjs/server');
   const { userId } = await auth();
