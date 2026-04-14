@@ -3,6 +3,9 @@ import { z } from 'zod';
 
 import { dbError, notFound } from '@/lib/api/errors';
 import { withApiRoute } from '@/lib/api/with-api-route';
+import { logger } from '@/lib/logger';
+import { queue } from '@/lib/queue/client';
+import { JobType } from '@/lib/queue/types';
 import { createUserClientSafe } from '@/lib/supabase/server';
 
 const updateSchema = z.object({
@@ -44,32 +47,61 @@ export const GET = withApiRoute({}, async ({ params }) => {
   return NextResponse.json(data);
 });
 
-export const PATCH = withApiRoute({ bodySchema: updateSchema }, async ({ params, body }) => {
-  const { id } = params;
-  const { client: supabase, error: authError } = await createUserClientSafe();
-  if (authError) return authError;
-  const { data, error } = await supabase
-    .from('projects')
-    .update(body)
-    .eq('id', id)
-    .select()
-    .single();
+export const PATCH = withApiRoute(
+  { bodySchema: updateSchema },
+  async ({ params, body, userId }) => {
+    const { id } = params;
+    const { client: supabase, error: authError } = await createUserClientSafe();
+    if (authError) return authError;
+    const { data, error } = await supabase
+      .from('projects')
+      .update(body)
+      .eq('id', id)
+      .select()
+      .single();
 
-  if (error) {
-    if (error.code === 'PGRST116') throw notFound('Project');
-    throw dbError(error.message);
-  }
+    if (error) {
+      if (error.code === 'PGRST116') throw notFound('Project');
+      throw dbError(error.message);
+    }
 
-  return NextResponse.json(data);
-});
+    queue
+      .enqueue(JobType.ERPSyncProject, {
+        entityId: data.id,
+        userId,
+        meta: { operation: 'update' },
+      })
+      .catch((err) => {
+        logger.error('Failed to enqueue ERPNext project update sync', {
+          projectId: data.id,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      });
 
-export const DELETE = withApiRoute({}, async ({ params }) => {
+    return NextResponse.json(data);
+  },
+);
+
+export const DELETE = withApiRoute({}, async ({ params, userId }) => {
   const { id } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
   const { error } = await supabase.from('projects').delete().eq('id', id);
 
   if (error) throw dbError(error.message);
+
+  queue
+    .enqueue(JobType.ERPSyncProject, {
+      entityId: id,
+      userId,
+      meta: { operation: 'delete' },
+    })
+    .catch((err) => {
+      logger.error('Failed to enqueue ERPNext project delete sync', {
+        projectId: id,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    });
 
   return NextResponse.json({ success: true });
 });

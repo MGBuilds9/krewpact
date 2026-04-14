@@ -6,6 +6,8 @@ import type { EstimateStatus } from '@/lib/estimating/estimate-status';
 import { validateStatusTransition } from '@/lib/estimating/estimate-status';
 import { logger } from '@/lib/logger';
 import { dispatchNotification } from '@/lib/notifications/dispatcher';
+import { queue } from '@/lib/queue/client';
+import { JobType } from '@/lib/queue/types';
 import { createUserClientSafe } from '@/lib/supabase/server';
 import { estimateUpdateSchema } from '@/lib/validators/estimating';
 
@@ -67,7 +69,7 @@ export const GET = withApiRoute({}, async ({ params }) => {
   return NextResponse.json(data);
 });
 
-export const PATCH = withApiRoute({}, async ({ req, params }) => {
+export const PATCH = withApiRoute({}, async ({ req, params, userId }) => {
   const { id } = params;
 
   let body: unknown;
@@ -106,16 +108,42 @@ export const PATCH = withApiRoute({}, async ({ req, params }) => {
     fireApprovalNotification(data as Record<string, unknown>, id);
   }
 
+  queue
+    .enqueue(JobType.ERPSyncEstimate, {
+      entityId: id,
+      userId,
+      meta: { operation: 'update' },
+    })
+    .catch((err) => {
+      logger.error('Failed to enqueue ERPNext estimate update sync', {
+        estimateId: id,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    });
+
   return NextResponse.json(data);
 });
 
-export const DELETE = withApiRoute({}, async ({ params }) => {
+export const DELETE = withApiRoute({}, async ({ params, userId }) => {
   const { id } = params;
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) return authError;
 
   const { error } = await supabase.from('estimates').delete().eq('id', id);
   if (error) throw dbError(error.message);
+
+  queue
+    .enqueue(JobType.ERPSyncEstimate, {
+      entityId: id,
+      userId,
+      meta: { operation: 'delete' },
+    })
+    .catch((err) => {
+      logger.error('Failed to enqueue ERPNext estimate delete sync', {
+        estimateId: id,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    });
 
   return NextResponse.json({ success: true });
 });
