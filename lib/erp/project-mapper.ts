@@ -24,17 +24,26 @@ export interface ProjectMapInput {
  * docname, NOT the KrewPact UUID, or ERPNext customer field validation will fail.
  */
 export function mapProjectToErp(project: ProjectMapInput): Record<string, unknown> {
-  return {
+  // ERPNext's `department` field is a link to the Department doctype, not a
+  // free-text tag. MDM's divisions live as Cost Centers, not Departments, so
+  // passing division_id here made ERPNext reject the insert with
+  // "Could not find Department: <uuid>". Division→cost-center mapping belongs
+  // on downstream records (Task, Timesheet, Expense Claim), not the Project
+  // header.
+  void project.division_id;
+  const mapped: Record<string, unknown> = {
     project_name: `${project.project_number} — ${project.project_name}`,
     status: mapProjectStatus(project.status),
     expected_start_date: project.start_date,
     expected_end_date: project.target_completion_date,
     estimated_costing: project.baseline_budget || 0,
-    customer: project.account_id || '',
-    department: project.division_id || '',
     currency: 'CAD',
     krewpact_id: project.id,
   };
+  // Only include customer when the handler resolved it to a real ERPNext
+  // Customer docname. Empty string triggers link-field validation errors.
+  if (project.account_id) mapped.customer = project.account_id;
+  return mapped;
 }
 
 function mapProjectStatus(status: string): string {
