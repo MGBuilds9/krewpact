@@ -350,6 +350,75 @@ describe('SyncService', () => {
       expect(result.status).toBe('succeeded');
       expect(client.from).toHaveBeenCalledWith('erp_sync_map');
     });
+
+    it('reuses existing ERPNext docname on update sync', async () => {
+      const account = makeAccount({ id: VALID_ACCOUNT_ID });
+      const existingSyncMap = {
+        erp_docname: 'CUST-MOCK-EXISTING-042',
+      };
+
+      const client = mockSupabaseClient({
+        tables: {
+          accounts: { data: account, error: null },
+          erp_sync_jobs: { data: { id: VALID_JOB_ID, status: 'queued' }, error: null },
+          erp_sync_map: { data: existingSyncMap, error: null },
+          erp_sync_events: { data: { id: 'event-1' }, error: null },
+        },
+      });
+      mockCreateScopedServiceClient.mockReturnValue(client);
+
+      const service = new SyncService();
+      const result = await service.syncAccount(VALID_ACCOUNT_ID, VALID_USER_ID, {
+        operation: 'update',
+      });
+
+      expect(result.status).toBe('succeeded');
+      expect(result.erp_docname).toBe('CUST-MOCK-EXISTING-042');
+    });
+  });
+
+  describe('delete operation', () => {
+    it('succeeds and returns existing docname when deleting a synced entity', async () => {
+      const client = mockSupabaseClient({
+        tables: {
+          erp_sync_jobs: { data: { id: VALID_JOB_ID, status: 'queued' }, error: null },
+          erp_sync_map: { data: { erp_docname: 'CUST-MOCK-TO-DELETE' }, error: null },
+          erp_sync_events: { data: { id: 'event-1' }, error: null },
+        },
+      });
+      mockCreateScopedServiceClient.mockReturnValue(client);
+
+      const service = new SyncService();
+      const result = await service.syncAccount(VALID_ACCOUNT_ID, VALID_USER_ID, {
+        operation: 'delete',
+      });
+
+      expect(result.status).toBe('succeeded');
+      expect(result.erp_docname).toBe('CUST-MOCK-TO-DELETE');
+      // Account row should NOT be fetched for delete — handler skips straight
+      // to the sync_map lookup and delete path.
+      expect(client.from).not.toHaveBeenCalledWith('accounts');
+    });
+
+    it('succeeds even when there is no prior sync mapping (idempotent)', async () => {
+      const client = mockSupabaseClient({
+        tables: {
+          erp_sync_jobs: { data: { id: VALID_JOB_ID, status: 'queued' }, error: null },
+          // No erp_docname in the map row — represents "never synced".
+          erp_sync_map: { data: null, error: null },
+          erp_sync_events: { data: { id: 'event-1' }, error: null },
+        },
+      });
+      mockCreateScopedServiceClient.mockReturnValue(client);
+
+      const service = new SyncService();
+      const result = await service.syncProject(VALID_ACCOUNT_ID, VALID_USER_ID, {
+        operation: 'delete',
+      });
+
+      expect(result.status).toBe('succeeded');
+      expect(result.erp_docname).toBeNull();
+    });
   });
 });
 
