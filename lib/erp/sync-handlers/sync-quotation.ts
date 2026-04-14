@@ -41,7 +41,6 @@ function mapLines(rawLines: unknown): MappedLine[] {
   }));
 }
 
- 
 async function upsertErpQuotation(
   estimateId: string,
   estimateData: Record<string, unknown>,
@@ -89,7 +88,6 @@ async function upsertErpQuotation(
   return result.name;
 }
 
- 
 export async function syncEstimate(
   estimateId: string,
   _userId: string,

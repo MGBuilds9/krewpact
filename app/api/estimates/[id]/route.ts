@@ -69,7 +69,6 @@ export const GET = withApiRoute({}, async ({ params }) => {
   return NextResponse.json(data);
 });
 
- 
 export const PATCH = withApiRoute({}, async ({ req, params, userId }) => {
   const { id } = params;
 
