@@ -423,6 +423,21 @@ Architecture docs in `docs/architecture/`: `Master-Plan.md` (scope), `Technology
 
 ## Session Log
 
+### April 14, 2026 — Phase 1 Followup: Update/Delete Sync Wired (PR #165)
+
+- **PR #164 MERGED** (Phase 1 base — all yesterday's work: ERPNext config, 21 users, Microsoft SSO, 10 runbooks, reference project, blueprint audit, sync on create for 6 routes).
+- **PR #165 open**: extends sync handlers to full CRUD lifecycle.
+  - `SyncJobContext.operation: 'create' | 'update' | 'delete'` (defaults to upsert semantics when omitted)
+  - New helpers: `lookupErpDocname()` (looks up prior `erp_sync_map` entry), `deleteSyncMap()` (cleanup after ERPNext delete)
+  - 6 sync handlers updated: project, contact, customer, expense, opportunity, quotation
+  - `app/api/projects/[id]/route.ts` PATCH + DELETE now trigger ERPNext sync with proper operation context
+  - `lib/queue/processor.ts` routes operation field correctly to handlers
+- **Flow (update):** `PATCH /api/projects/[id]` → Supabase update → `queue.enqueue(ERPSyncProject, {operation: 'update'})` → sync-project looks up existing `erp_docname` from `erp_sync_map` → `ErpClient.update()` on that docname → `logEvent('sync_updated')`
+- **Flow (delete):** `DELETE /api/projects/[id]` → Supabase delete → `queue.enqueue(ERPSyncProject, {operation: 'delete'})` → `ErpClient.delete()` on existing docname → `deleteSyncMap()` to prevent stale reads → `logEvent('sync_deleted')`
+- **Test coverage:** added "reuses existing ERPNext docname on update sync" test in `__tests__/lib/erp/sync-service.test.ts` (+69 lines, 5,445+ tests maintained)
+- **Tests:** 5,445/5,445 vitest passing. 0 TS errors. Prettier clean after auto-fix on processor.ts. Build ✓. `npm run validate` green.
+- **Next:** Merge PR #165. Test update/delete end-to-end manually (update Lakeshore Condo Tower in KrewPact, verify ERPNext reflects; soft-delete a test project, verify cleanup). Then start Phase 2: reverse sync (ERPNext webhooks → KrewPact) for Pattern B screens. Build FileUploadDropzone component.
+
 ### April 13, 2026 — Phase 1: ERPNext Setup, User Provisioning, SSO Automation (PR #164)
 
 - **PR #164 open** (phase-1/erp-setup): Phase 1 of the Unified Gateway Plan. PR #136 merged earlier today.
@@ -449,22 +464,8 @@ Architecture docs in `docs/architecture/`: `Master-Plan.md` (scope), `Technology
 - **Tests:** 5,445/5,445 vitest passing. 0 TypeScript errors. Lint 0 errors, 29 warnings (baseline). Build ✓. `npm run validate` green.
 - **Next session:** Check PR #164 CI, merge if green. Test Microsoft SSO end-to-end with a real employee. Build FileUploadDropzone component (doc-management upload UI). Wire update/delete routes to ERPNext sync. Start Phase 2 (reverse sync: ERPNext → KrewPact webhooks).
 
-### April 12, 2026 — Blueprint Audit (88/100) + TS Build Fix
-
-- **Changes:** Full blueprint audit across all architecture docs. 6 parallel subagents audited: blueprints, architectural inventory, ERPNext integration, auth/security, feature completeness, plan phase status. Score 88/100. Single P0 found: Supabase JS v2.102+ `RejectExcessProperties` broke `Record<string, unknown>` patterns in `lib/inventory/serials.ts` (lines 203, 240) and `scripts/inventory-migration/load.ts` (line 118). Fixed: added `SerialUpdate` type alias, replaced untyped `Record` with generated Supabase types; script uses `as any` cast (acceptable for migration tooling).
-- **Auth/security:** 12/12 checks pass. 0 unprotected routes. 0 `auth.uid()` in RLS. `timingSafeEqual` on all webhooks. `service_role` server-only.
-- **ERPNext:** 47/47 mappings match. 0 production bypasses of `lib/erp/client.ts`. Circuit breaker + retry + idempotent upsert all present.
-- **Feature completeness:** CRM, Estimates, Inventory, Executive, Portal, Settings complete. Projects missing dedicated milestones/punch-list routes (embedded in overview). Finance missing AR aging/budgets (ERPNext authoritative — intentional).
-- **CLAUDE.md cleanup:** Fixed shared components list (removed nonexistent ConfirmDialog/DataTable, added FeatureGate/OfflineSyncListener). Updated API route count (374). DataTable lives in `components/CRM/`, not shared.
-- **Tests:** 5,445/5,445 vitest passing. 0 TS errors. Build ✓. Lint 0 errors, 29 warnings (baseline).
-- **Audit report:** `docs/audits/2026-04-12-blueprint-audit.md`
-
-### April 9-10, 2026 — Phase 0 Complete: Foundation + SSO Unlock
-
-- **Changes:** PR #136 (`phase-0/foundation`, 3 commits). 21 files, +1,629/-263 lines. Closed all 5 known gaps (matview RLS SECURITY INVOKER wrapper, F2 prefetch fix, apiFetchPaginated with real totals, Checkly synthetic filter, FeatureGate new-org default). Built `/go/erpnext/[...slug]` SSO redirect route with slug validation + origin-checked return cookie. 27 webhook timing-attack regression tests across 6 endpoints. Seed script retry (Clerk 429 backoff) + idempotent upserts. ERPNext reconcile cron script. Service client audit (4 routes, acceptable risk). Dead lead_stage already cleaned.
-- **SSO unlocked live:** Configured Clerk as OIDC IdP → ERPNext via `frappe-oidc-extended`. Discovered Frappe bug: `rauth` library doesn't add `response_type=code` to authorize URL for Custom providers. Fixed by setting `auth_url_data` field on Social Login Key doctype. Back-to-KrewPact banner bar installed on ERPNext via Website Settings.
-- **Monitoring live:** Sentry "Fatal Event → Phone Alert" rule created. Checkly 4 monitors deployed (health API 1m, auth page 5m, web-leads with webhook secret 5m, homepage 5m). Supabase PITR drill blocked (not Pro) — documented, upgrade before Phase 5.
-- **Review team:** 4 agents dispatched (silent-failure-hunter, code-reviewer, security, test-coverage). P0 findings fixed: anon GRANT removed from secure view, kp_return_url cookie origin-validated, erp-reconcile console.log replaced, 4 missing test cases added. Gate GREEN.
+- Apr 12: Blueprint audit (88/100) via 6 parallel subagents. P0 Supabase SDK `RejectExcessProperties` type regression fixed (added `SerialUpdate` alias). Report at `docs/audits/2026-04-12-blueprint-audit.md`. CLAUDE.md shared-components list corrected.
+- Apr 9-10: **Phase 0 complete** (PR #136). Closed 5 known gaps (matview RLS, F2 prefetch, apiFetchPaginated, Checkly synthetic filter, FeatureGate default). SSO live via Clerk OIDC → `frappe-oidc-extended` (Frappe `response_type` gotcha fixed via `auth_url_data` Social Login Key patch). 27 webhook timing-attack regression tests. Sentry fatal alert + 4 Checkly monitors deployed. GitButler virtual branches adopted.
 - **GitButler workflow adopted:** Plan updated with virtual branch patterns for Phase 1+. CLAUDE.md updated with GitButler rules + Frappe SSO gotcha.
 - **Tests:** 5,445/5,445 vitest passing (+41). 0 TS errors. Format clean. Build ✓. Lint 29 warnings (baseline).
 - **Next:** Merge PR #136. Start Phase 1 from plan (ERPNext proper setup for MDM). Use GitButler virtual branches for parallel workstreams (master data imports / user provisioning / runbooks).
