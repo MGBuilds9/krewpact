@@ -34,6 +34,9 @@ describe('GET /go/erpnext/[...slug]', () => {
   beforeEach(() => {
     vi.resetModules();
     process.env.ERPNEXT_BASE_URL = 'https://erpnext.mdmgroupinc.ca';
+    // Origin check in the route uses NEXT_PUBLIC_APP_URL. CI secrets may differ
+    // from the canonical origin, so pin it here to make the test hermetic.
+    process.env.NEXT_PUBLIC_APP_URL = 'https://krewpact.ca';
   });
 
   it('redirects authenticated user to correct ERPNext URL', async () => {
