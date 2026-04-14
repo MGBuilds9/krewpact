@@ -43,6 +43,16 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          # lib/env.ts enforces these in production mode. `next build` runs
+          # with NODE_ENV=production, so CI has to supply values that pass
+          # validation — otherwise env validation throws during static page
+          # collection. SUPABASE_SERVICE_ROLE_KEY is not mirrored from Vercel
+          # to GH secrets (by design — CI never talks to prod Supabase), so
+          # fall back to a placeholder that satisfies the min(1) check.
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'ci-build-placeholder-not-a-real-key' }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
 
       - name: Install Playwright (chromium)
         run: npx playwright install --with-deps chromium
