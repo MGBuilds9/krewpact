@@ -14,7 +14,9 @@ export default defineConfig({
   projects: [
     {
       name: 'setup',
-      testMatch: /auth\.setup\.ts/,
+      // Only match the dev/CI auth setup at e2e/auth.setup.ts. The qa suite has
+      // its own auth.setup at e2e/qa/qa-auth.setup.ts driven by playwright-qa.config.ts.
+      testMatch: /^auth\.setup\.ts$/,
     },
     {
       name: 'chromium',
@@ -23,7 +25,7 @@ export default defineConfig({
         storageState: 'e2e/.auth/user.json',
       },
       dependencies: ['setup'],
-      testIgnore: /flows\//,
+      testIgnore: [/flows\//, /qa\//],
     },
     {
       name: 'full',
