@@ -64,6 +64,10 @@ jobs:
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
           CLERK_TEST_EMAIL: ${{ secrets.CLERK_TEST_EMAIL }}
           CLERK_TEST_PASSWORD: ${{ secrets.CLERK_TEST_PASSWORD }}
+          # next start during E2E boots with NODE_ENV=production and hits the
+          # same env validation as the Build step — supply the same values.
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'ci-build-placeholder-not-a-real-key' }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
 
       - name: Upload E2E Results
         if: failure()

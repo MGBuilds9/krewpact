@@ -12,7 +12,7 @@ const putBodySchema = z.object({
 });
 
 export const GET = withApiRoute({ permission: 'users.manage' }, async ({ params }) => {
-  const targetUserId = params['userId'];
+  const targetUserId = params['id'];
   const { client: supabase, error: authError } = await createUserClientSafe();
   if (authError) throw dbError('Auth failed');
 
@@ -44,7 +44,7 @@ export const GET = withApiRoute({ permission: 'users.manage' }, async ({ params 
 export const PUT = withApiRoute(
   { permission: 'users.manage', bodySchema: putBodySchema },
   async ({ params, body, userId }) => {
-    const targetUserId = params['userId'];
+    const targetUserId = params['id'];
     const db = createServiceClient();
 
     const { data: targetUser, error: userError } = await db
