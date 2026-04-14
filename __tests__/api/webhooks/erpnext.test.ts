@@ -7,6 +7,8 @@ vi.mock('@clerk/nextjs/server', () => ({
 
 const mockReadSalesInvoice = vi.fn();
 const mockReadPurchaseInvoice = vi.fn();
+const mockReadPaymentEntry = vi.fn();
+const mockReadGlEntry = vi.fn();
 const mockSyncPaymentEntry = vi.fn();
 const mockSyncStockEntry = vi.fn();
 const mockSyncEmployee = vi.fn();
@@ -21,6 +23,8 @@ vi.mock('@/lib/erp/sync-service', () => ({
   SyncService: class MockSyncService {
     readSalesInvoice = mockReadSalesInvoice;
     readPurchaseInvoice = mockReadPurchaseInvoice;
+    readPaymentEntry = mockReadPaymentEntry;
+    readGlEntry = mockReadGlEntry;
     syncPaymentEntry = mockSyncPaymentEntry;
     syncStockEntry = mockSyncStockEntry;
     syncEmployee = mockSyncEmployee;
@@ -182,6 +186,28 @@ describe('POST /api/webhooks/erpnext', () => {
     expect(body.doctype).toBe('Journal Entry');
   });
 
+  it('processes GL Entry webhook via readGlEntry', async () => {
+    mockReadGlEntry.mockResolvedValue({
+      id: 'job-gl',
+      status: 'succeeded',
+      entity_type: 'gl_entry',
+      entity_id: 'GL-001',
+      erp_docname: 'GL-001',
+      attempt_count: 1,
+    });
+
+    const res = await POST(
+      makeWebhookRequest(
+        { doctype: 'GL Entry', name: 'GL-001', event: 'on_submit' },
+        WEBHOOK_SECRET,
+      ),
+    );
+    expect(res.status).toBe(200);
+    expect(mockReadGlEntry).toHaveBeenCalledWith('GL-001');
+    // Outbound-only handler for Payment Entry must NOT fire — reverse sync uses read path.
+    expect(mockSyncPaymentEntry).not.toHaveBeenCalled();
+  });
+
   it('returns 400 for Sales Invoice without document name', async () => {
     const res = await POST(
       makeWebhookRequest(
@@ -208,8 +234,15 @@ describe('POST /api/webhooks/erpnext', () => {
     expect(body.errors[0]).toContain('ERPNext connection failed');
   });
 
-  it('processes Payment Entry webhook via syncPaymentEntry', async () => {
-    mockSyncPaymentEntry.mockResolvedValue({ status: 'succeeded' });
+  it('processes Payment Entry webhook via readPaymentEntry (inbound)', async () => {
+    mockReadPaymentEntry.mockResolvedValue({
+      id: 'job-pe',
+      status: 'succeeded',
+      entity_type: 'payment_entry',
+      entity_id: 'PAY-001',
+      erp_docname: 'PAY-001',
+      attempt_count: 1,
+    });
 
     const res = await POST(
       makeWebhookRequest(
@@ -218,14 +251,13 @@ describe('POST /api/webhooks/erpnext', () => {
       ),
     );
     expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.received).toBe(true);
-    expect(mockSyncPaymentEntry).toHaveBeenCalledWith('PAY-001', 'webhook');
+    expect(mockReadPaymentEntry).toHaveBeenCalledWith('PAY-001');
+    // The outbound path must NOT fire — that would push a KrewPact payment back
+    // into ERPNext and create a write-back loop.
+    expect(mockSyncPaymentEntry).not.toHaveBeenCalled();
   });
 
-  it('processes Stock Entry webhook via syncStockEntry', async () => {
-    mockSyncStockEntry.mockResolvedValue({ status: 'succeeded' });
-
+  it('ignores Stock Entry webhooks (outbound-only, KrewPact owns inventory)', async () => {
     const res = await POST(
       makeWebhookRequest(
         { doctype: 'Stock Entry', name: 'STE-001', event: 'on_submit' },
@@ -233,14 +265,10 @@ describe('POST /api/webhooks/erpnext', () => {
       ),
     );
     expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.received).toBe(true);
-    expect(mockSyncStockEntry).toHaveBeenCalledWith('STE-001', 'webhook');
+    expect(mockSyncStockEntry).not.toHaveBeenCalled();
   });
 
-  it('processes Employee webhook via syncEmployee', async () => {
-    mockSyncEmployee.mockResolvedValue({ status: 'succeeded' });
-
+  it('ignores Employee webhooks (outbound-only, KrewPact owns HR identity)', async () => {
     const res = await POST(
       makeWebhookRequest(
         { doctype: 'Employee', name: 'EMP-001', event: 'on_update' },
@@ -248,8 +276,6 @@ describe('POST /api/webhooks/erpnext', () => {
       ),
     );
     expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.received).toBe(true);
-    expect(mockSyncEmployee).toHaveBeenCalledWith('EMP-001', 'webhook');
+    expect(mockSyncEmployee).not.toHaveBeenCalled();
   });
 });

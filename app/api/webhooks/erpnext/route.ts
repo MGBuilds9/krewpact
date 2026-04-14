@@ -43,17 +43,14 @@ async function dispatchDoctype(
 ): Promise<NextResponse | null> {
   if (!docname) return NextResponse.json({ error: 'Missing document name' }, { status: 400 });
 
-  // Read-only inbound sync (ERPNext → KrewPact)
+  // Read-only inbound sync (ERPNext → KrewPact). ERPNext is authoritative for
+  // financial doctypes; KrewPact mirrors them into snapshot tables or event
+  // logs for reporting and reconciliation.
   const readHandlers: Record<string, (name: string) => Promise<unknown>> = {
     'Sales Invoice': (name) => service.readSalesInvoice(name),
     'Purchase Invoice': (name) => service.readPurchaseInvoice(name),
-  };
-
-  // Bidirectional sync (ERPNext change triggers KrewPact update)
-  const syncHandlers: Record<string, (name: string) => Promise<unknown>> = {
-    'Payment Entry': (name) => service.syncPaymentEntry(name, 'webhook'),
-    'Stock Entry': (name) => service.syncStockEntry(name, 'webhook'),
-    Employee: (name) => service.syncEmployee(name, 'webhook'),
+    'Payment Entry': (name) => service.readPaymentEntry(name),
+    'GL Entry': (name) => service.readGlEntry(name),
   };
 
   const readHandler = readHandlers[doctype];
@@ -63,15 +60,22 @@ async function dispatchDoctype(
     return null;
   }
 
-  const syncHandler = syncHandlers[doctype];
-  if (syncHandler) {
-    const result = await syncHandler(docname);
-    logger.info(`${doctype} bidirectional sync complete`, { docname, event, result });
-    return null;
-  }
-
-  // Known outbound-only doctypes — we receive events but don't need to process inbound
-  const outboundOnly = ['Customer', 'Project', 'Supplier', 'Item', 'Quotation'];
+  // Known outbound-only doctypes — we receive events but don't need to process inbound.
+  // KrewPact is the source of truth for these; webhooks from ERPNext are ignored to
+  // avoid write-back loops.
+  const outboundOnly = [
+    'Customer',
+    'Project',
+    'Supplier',
+    'Item',
+    'Quotation',
+    'Opportunity',
+    'Contact',
+    'Expense Claim',
+    'Sales Order',
+    'Employee',
+    'Stock Entry',
+  ];
   if (outboundOnly.includes(doctype)) {
     logger.info(`${doctype} event received — outbound-only, no inbound action`, { docname, event });
     return null;
