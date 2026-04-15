@@ -40,7 +40,7 @@ function getAttemptCount(request: NextRequest): number {
 
 export const POST = withApiRoute({ auth: 'public' }, async ({ req }) => {
   // 1. Read body once, then verify signature
-  const rawBody = await req.text();
+  const rawBody = await req.clone().text();
   const signature = req.headers.get('upstash-signature');
 
   const verification = await verifyQStashSignature(signature, rawBody);
