@@ -50,10 +50,15 @@ const DIVISIONS = {
   management: '41e7ee09-2a2a-4cd6-b8aa-11131a099392',
 } as const;
 const ROLES = {
-  project_manager: '2c1e8336-b0cd-43b1-b7f0-80a670fad7d0',
-  estimator: 'ae694783-0f56-4036-bd96-857b16204779',
+  platform_admin: 'a32bef3d-cb69-40ec-b674-1722d89a6cee',
   executive: '155e0806-9057-4eed-805c-97e39c8e81a0',
+  operations_manager: '5baec73b-bbeb-4a6c-ad51-312bd803fc21',
+  project_manager: '2c1e8336-b0cd-43b1-b7f0-80a670fad7d0',
+  project_coordinator: '408e473c-6dc5-4982-b855-d482232475f2',
+  estimator: 'ae694783-0f56-4036-bd96-857b16204779',
   field_supervisor: '0dfbc832-0e01-4cea-bf2a-ae6d76def3fc',
+  accounting: '73f9b9aa-ead7-4668-a75d-dc69e0699e9a',
+  payroll_admin: '8f9f53cd-655a-4574-8edf-3880b4588274',
 } as const;
 
 interface QAUser {
@@ -64,12 +69,49 @@ interface QAUser {
   divisionCodes: (keyof typeof DIVISIONS)[];
 }
 
+const ALL_DIVISIONS: (keyof typeof DIVISIONS)[] = [
+  'contracting',
+  'homes',
+  'wood',
+  'telecom',
+  'group-inc',
+  'management',
+];
+
 const QA_USERS: QAUser[] = [
+  {
+    email: 'qa-admin@mdmgroupinc.ca',
+    firstName: 'QA-Admin',
+    lastName: 'Test',
+    roleKey: 'platform_admin',
+    divisionCodes: ALL_DIVISIONS,
+  },
+  {
+    email: 'qa-exec@mdmgroupinc.ca',
+    firstName: 'QA-Executive',
+    lastName: 'Test',
+    roleKey: 'executive',
+    divisionCodes: ALL_DIVISIONS,
+  },
+  {
+    email: 'qa-opsmgr@mdmgroupinc.ca',
+    firstName: 'QA-OpsMgr',
+    lastName: 'Test',
+    roleKey: 'operations_manager',
+    divisionCodes: ['contracting', 'homes'],
+  },
   {
     email: 'qa-pm@mdmgroupinc.ca',
     firstName: 'QA-PM',
     lastName: 'Test',
     roleKey: 'project_manager',
+    divisionCodes: ['contracting'],
+  },
+  {
+    email: 'qa-coord@mdmgroupinc.ca',
+    firstName: 'QA-Coordinator',
+    lastName: 'Test',
+    roleKey: 'project_coordinator',
     divisionCodes: ['contracting'],
   },
   {
@@ -80,18 +122,25 @@ const QA_USERS: QAUser[] = [
     divisionCodes: ['homes', 'contracting'],
   },
   {
-    email: 'qa-exec@mdmgroupinc.ca',
-    firstName: 'QA-Executive',
-    lastName: 'Test',
-    roleKey: 'executive',
-    divisionCodes: ['contracting', 'homes', 'wood', 'telecom', 'group-inc', 'management'],
-  },
-  {
     email: 'qa-field@mdmgroupinc.ca',
     firstName: 'QA-Field',
     lastName: 'Test',
     roleKey: 'field_supervisor',
     divisionCodes: ['contracting'],
+  },
+  {
+    email: 'qa-accounting@mdmgroupinc.ca',
+    firstName: 'QA-Accounting',
+    lastName: 'Test',
+    roleKey: 'accounting',
+    divisionCodes: ALL_DIVISIONS,
+  },
+  {
+    email: 'qa-payroll@mdmgroupinc.ca',
+    firstName: 'QA-Payroll',
+    lastName: 'Test',
+    roleKey: 'payroll_admin',
+    divisionCodes: ALL_DIVISIONS,
   },
 ];
 

@@ -67,6 +67,7 @@ scripts/inventory-migration/transformed/
 playwright-report/
 test-results/
 e2e/.auth/
+e2e/qa/.auth/
 
 # Expo local state and web export artifacts
 mobile/.expo/

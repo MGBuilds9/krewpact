@@ -62,6 +62,7 @@ export default defineConfig({
     navigationTimeout: 30_000,
   },
   projects: [
+    // --- Single-user QA (existing) ---
     {
       name: 'qa-setup',
       testMatch: /qa-auth\.setup\.ts/,
@@ -73,7 +74,21 @@ export default defineConfig({
         storageState: 'e2e/qa/.auth/qa-user.json',
       },
       dependencies: ['qa-setup'],
-      testIgnore: /qa-auth\.setup\.ts/,
+      testIgnore: [/qa-auth\.setup\.ts/, /rbac-/],
+    },
+
+    // --- Per-role RBAC matrix (9 roles x 19 sections) ---
+    {
+      name: 'rbac-setup',
+      testMatch: /rbac-auth\.setup\.ts/,
+    },
+    {
+      name: 'rbac-matrix',
+      use: {
+        ...devices['Desktop Chrome'],
+      },
+      dependencies: ['rbac-setup'],
+      testMatch: /rbac-matrix\.spec\.ts/,
     },
   ],
 });
