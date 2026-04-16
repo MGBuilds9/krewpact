@@ -423,6 +423,14 @@ Architecture docs in `docs/architecture/`: `Master-Plan.md` (scope), `Technology
 
 ## Session Log
 
+### April 15, 2026 — Repo Hygiene
+
+- **Changes:** merged 0, rewrote 0, closed 0. No open PRs, no unmerged remote branches (single `origin/main`). All Phase 1 work already landed: `#171`, `#168`, `#170`, `#167`, `#166`, `#165`, `#164`.
+- **Tests:** `npm run validate` exit 0 — lint, typecheck, format:check, vitest, and `next build` all green. (Note: sentry-cli sourcemap upload hung post-build on network; terminated manually — build itself succeeded.)
+- **Branches deleted:** 0 (tree already pruned).
+- **Pushed:** none (no new commits; main at `fb7d12af`).
+- **Blockers:** none for hygiene. Carryover items remain: `DELETE /api/projects/[id]` 500 via FK-probe on `inventory_ledger` (RLS gap), `inventory_stock_summary_secure` view missing in prod.
+
 ### April 14, 2026 — Phase 1 Closeout: Artifacts + Role Fixes + Seed Live (PRs #166, #167 + direct-to-main)
 
 - **PR #166 merged** (`aa84e2d0`): prettier on `run-sync-test.ts` unblocked CI; reverse-webhook + mapper fix + UUID→TEXT migration landed.
