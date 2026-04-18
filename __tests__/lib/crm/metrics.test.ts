@@ -13,7 +13,7 @@ import {
 
 function makeOpp(overrides: Partial<OpportunityData> = {}): OpportunityData {
   return {
-    id: `opp-${Math.random().toString(36).slice(2, 8)}`,
+    id: `opp-${crypto.randomUUID()}`,
     stage: 'proposal',
     estimated_revenue: 50000,
     probability_pct: 50,
@@ -25,7 +25,7 @@ function makeOpp(overrides: Partial<OpportunityData> = {}): OpportunityData {
 
 function makeLead(overrides: Partial<LeadData> = {}): LeadData {
   return {
-    id: `lead-${Math.random().toString(36).slice(2, 8)}`,
+    id: `lead-${crypto.randomUUID()}`,
     status: 'new',
     source_channel: 'Website',
     created_at: '2026-01-15T00:00:00Z',
@@ -242,7 +242,7 @@ function makeForecastOpp(
   overrides: Partial<ForecastOpportunityData> = {},
 ): ForecastOpportunityData {
   return {
-    id: `opp-${Math.random().toString(36).slice(2, 8)}`,
+    id: `opp-${crypto.randomUUID()}`,
     stage: 'proposal',
     estimated_revenue: 100000,
     probability_pct: 50,

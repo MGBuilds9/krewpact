@@ -31,7 +31,7 @@ const mockCreateUserClientSafe = vi.mocked(createUserClientSafe);
 // Portal account fixture
 function makePortalAccount(overrides: Record<string, unknown> = {}) {
   return {
-    id: 'pa-' + Math.random().toString(36).slice(2),
+    id: 'pa-' + crypto.randomUUID(),
     actor_type: 'client',
     clerk_user_id: null,
     invited_by: null,

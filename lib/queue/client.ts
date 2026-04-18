@@ -12,6 +12,8 @@
  *   process() → runs all pending jobs locally
  */
 
+import { randomUUID } from 'node:crypto';
+
 import * as Sentry from '@sentry/nextjs';
 
 import { logger } from '@/lib/logger';
@@ -55,10 +57,7 @@ function backoffMs(attempt: number): number {
 }
 
 function generateId(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID();
-  }
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  return randomUUID();
 }
 
 // ---------------------------------------------------------------------------

@@ -40,7 +40,7 @@ import { AiInsightBanner } from '@/components/AI/AiInsightBanner';
 
 function makeInsight(overrides: Record<string, unknown> = {}) {
   return {
-    id: `insight-${Math.random().toString(36).slice(2, 8)}`,
+    id: `insight-${crypto.randomUUID()}`,
     insight_type: 'recommendation',
     title: 'Test Insight Title',
     content: 'This is the insight content.',
