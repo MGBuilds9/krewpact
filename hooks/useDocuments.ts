@@ -180,7 +180,7 @@ export function useUploadFile(projectId: string, folderId?: string, orgId?: stri
       }
       const supabase = createBrowserClient();
       const ext = file.name.split('.').pop() ?? '';
-      const safeName = `${Date.now()}-${Math.random().toString(36).slice(2)}${ext ? `.${ext}` : ''}`;
+      const safeName = `${Date.now()}-${crypto.randomUUID()}${ext ? `.${ext}` : ''}`;
       const storagePath = `${orgId}/${projectId}/${folderId ?? 'root'}/${safeName}`;
       const { error: uploadError } = await supabase.storage
         .from(STORAGE_BUCKET)

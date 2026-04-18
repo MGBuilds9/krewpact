@@ -79,12 +79,7 @@ export interface EnvelopeStatus {
 // ============================================================
 
 export function generateMockDocumentId(): string {
-  const chars = 'abcdef0123456789';
-  let id = 'mock-bs-';
-  for (let i = 0; i < 24; i++) {
-    id += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return id;
+  return `mock-bs-${crypto.randomUUID().replace(/-/g, '').slice(0, 24)}`;
 }
 
 export function generateMockStatus(documentId: string): EnvelopeStatus {

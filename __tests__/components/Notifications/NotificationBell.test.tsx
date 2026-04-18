@@ -30,7 +30,7 @@ vi.mock('@/hooks/useRealtimeSubscription', () => ({
 
 function makeNotification(overrides: Record<string, unknown> = {}) {
   return {
-    id: `notif-${Math.random().toString(36).slice(2, 8)}`,
+    id: `notif-${crypto.randomUUID()}`,
     title: 'Test notification',
     message: 'Test message',
     channel: 'in_app',

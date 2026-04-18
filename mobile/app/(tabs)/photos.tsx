@@ -13,6 +13,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import * as Crypto from 'expo-crypto';
 import { api, Project } from '@/lib/api-client';
 import { queryKeys } from '@/lib/query-client';
 import { COLORS, SPACING } from '@/constants/config';
@@ -104,7 +105,7 @@ export default function PhotosScreen() {
         for (const asset of result.assets) {
           const compressed = await compressImage(asset.uri);
           newPhotos.push({
-            id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            id: `local-${Date.now()}-${Crypto.randomUUID()}`,
             uri: compressed.uri,
             project_id: selectedProject ?? '',
             caption: null,
